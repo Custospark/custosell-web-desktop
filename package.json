@@ -1,0 +1,130 @@
+{
+  "name": "CUSTOSELL",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Custosell — Lightweight POS for Ugandan Businesses",
+  "author": "Custospark Company Ltd",
+  "type": "module",
+  "main": "dist/desktop/main/main.js",
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:react dev:electron",
+    "dev:react": "node --max-old-space-size=8192 --stack-size=16384 ./node_modules/vite/bin/vite.js",
+    "clean": "rimraf dist",
+    "dev:electron": "npm run transpile:electron && cross-env NODE_ENV=development electron .",
+    "react:build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "vera:fast": "node scripts/vera-fast.mjs",
+    "vera:extended": "node scripts/vera-extended.mjs",
+    "preview": "vite preview",
+    "transpile:electron": "node --max-old-space-size=8192 --stack-size=16384 ./node_modules/typescript/bin/tsc --project src/tsconfig.json",
+    "build:win": "npm run transpile:electron && npm run react:build && npx electron-builder --win --x64",
+    "build:mac": "npm run transpile:electron && npm run react:build && npx electron-builder --mac --arm64",
+    "build:linux": "npm run transpile:electron && npm run react:build && npx electron-builder --linux --x64",
+    "build:all": "npm run build:win && npm run build:mac && npm run build:linux",
+    "publish:win": "npm run transpile:electron && npm run react:build && npx electron-builder --win --x64 --publish always",
+    "publish:all": "npm run transpile:electron && npm run react:build && npx electron-builder --win --mac --linux --publish always",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.12.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/react-query": "^5.100.14",
+    "@tanstack/react-query-devtools": "^5.100.14",
+    "axios": "^1.16.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^12.40.0",
+    "html2pdf.js": "^0.14.0",
+    "lucide-react": "^1.17.0",
+    "npm-run-all": "^4.1.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-icons": "^5.6.0",
+    "react-redux": "^9.3.0",
+    "react-router-dom": "^7.16.0",
+    "react-to-print": "^3.3.0",
+    "recharts": "^3.8.1",
+    "tailwindcss": "^4.3.0",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "cross-env": "^10.1.0",
+    "electron": "^42.3.1",
+    "electron-builder": "^26.8.1",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.3",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "rimraf": "^6.1.3",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  },
+  "build": {
+    "appId": "com.custospark.custosell",
+    "productName": "Custosell",
+    "directories": {
+      "output": "dist/releases/",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/desktop/**/*",
+      "dist/web/**/*",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "dist/desktop/preload/preload.js",
+        "to": "preload.js"
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "allowToChangeInstallationDirectory": false
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "extraMetadata": {
+      "main": "dist/desktop/main/main.js"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Custospark",
+      "repo": "custosell"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ]
+  }
+}

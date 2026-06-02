@@ -1,0 +1,46 @@
+/**
+ * Vera Fast — ESLint on changed .ts/.tsx files only.
+ * Usage: node scripts/vera-fast.mjs
+ */
+import { execSync } from 'child_process';
+
+function getChangedFiles() {
+  const commands = [
+    'git diff --name-only --diff-filter=ACMRTUXB HEAD',
+    'git diff --cached --name-only --diff-filter=ACMRTUXB',
+  ];
+  const files = new Set();
+  for (const cmd of commands) {
+    try {
+      const out = execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+      for (const line of out.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed && (trimmed.endsWith('.ts') || trimmed.endsWith('.tsx'))) {
+          files.add(trimmed);
+        }
+      }
+    } catch {}
+  }
+  return [...files];
+}
+
+const files = getChangedFiles();
+
+if (files.length === 0) {
+  console.log('🧪 Vera fast: no changed TS/TSX files — skipped.');
+  process.exit(0);
+}
+
+console.log(`🧪 Vera fast: eslint on ${files.length} file(s)`);
+
+try {
+  execSync(`npx eslint --no-warn-ignored ${files.join(' ')}`, {
+    stdio: 'inherit',
+    encoding: 'utf8',
+  });
+  console.log('✅ Vera fast: passed');
+  process.exit(0);
+} catch {
+  console.log('❌ Vera fast: failed');
+  process.exit(1);
+}

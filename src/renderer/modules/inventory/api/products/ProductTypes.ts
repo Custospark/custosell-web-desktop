@@ -12,7 +12,7 @@ export interface Product {
   id: number;
   business_id: number;
   category_id: number | null;
-  category?: { data: Category } | null;
+  category?: Category | null;
   name: string;
   description: string | null;
   sku: string | null;
@@ -31,7 +31,7 @@ export interface StockMovement {
   id: number;
   business_id: number;
   product_id: number;
-  product?: { data: { id: number; name: string } } | null;
+  product?: { id: number; name: string } | null;
   sale_item_id: number | null;
   type: 'purchase' | 'sale' | 'adjustment' | 'return' | 'initial';
   quantity_change: number;

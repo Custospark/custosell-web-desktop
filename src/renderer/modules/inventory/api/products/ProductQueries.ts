@@ -201,18 +201,26 @@ export function useCreateStockMovement() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<StockMovement, AxiosError<ApiError>, CreateStockMovementData>({
+  return useMutation<StockMovement, AxiosError<ApiError>, CreateStockMovementData, { previousProducts: Product[] | undefined }>({
     mutationFn: async (payload) => {
       const { data: response } = await axiosInstance.post<{ data: StockMovement }>('/stock-movements', payload);
       return response.data;
     },
-    onSuccess: () => {
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: inventoryKeys.products() });
+      const previousProducts = queryClient.getQueryData<Product[]>(inventoryKeys.products());
+      queryClient.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
+        (old ?? []).map((p) => p.id === payload.product_id ? { ...p, stock_quantity: payload.stock_after } : p),
+      );
+      return { previousProducts };
+    },
+    onError: (error, _vars, ctx) => {
+      if (ctx?.previousProducts) queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
+      showToast('error', error.response?.data?.message || 'Failed to record stock movement');
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
-      showToast('success', 'Stock movement recorded');
-    },
-    onError: (error) => {
-      showToast('error', error.response?.data?.message || 'Failed to record stock movement');
     },
   });
 }

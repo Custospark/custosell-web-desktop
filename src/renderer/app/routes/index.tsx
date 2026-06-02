@@ -15,7 +15,7 @@ const RefundsPage = lazy(() => import('../../modules/sales/RefundsPage'));
 const ProductsPage = lazy(() => import('../../modules/inventory/ProductsPage'));
 const CategoriesPage = lazy(() => import('../../modules/inventory/CategoriesPage'));
 const StockLedgerPage = lazy(() => import('../../modules/inventory/StockLedgerPage'));
-const ProductFormPage = lazy(() => import('../../modules/inventory/ProductFormPage'));
+
 const CustomerListPage = lazy(() => import('../../modules/customers/CustomerListPage'));
 const RecordExpensePage = lazy(() => import('../../modules/expenses/RecordExpensePage'));
 const ExpenseListPage = lazy(() => import('../../modules/expenses/ExpenseListPage'));
@@ -44,8 +44,8 @@ export function AppRoutes() {
           <Route path={ROUTES.SALES.REFUNDS} element={<SuspenseWrapper><RefundsPage /></SuspenseWrapper>} />
           <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
           <Route path={ROUTES.INVENTORY.PRODUCTS} element={<SuspenseWrapper><ProductsPage /></SuspenseWrapper>} />
-          <Route path="/inventory/products/new" element={<SuspenseWrapper><ProductFormPage /></SuspenseWrapper>} />
-          <Route path="/inventory/products/:id/edit" element={<SuspenseWrapper><ProductFormPage /></SuspenseWrapper>} />
+          <Route path="/inventory/products/new" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
+          <Route path="/inventory/products/:id/edit" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
           <Route path={ROUTES.INVENTORY.CATEGORIES} element={<SuspenseWrapper><CategoriesPage /></SuspenseWrapper>} />
           <Route path={ROUTES.INVENTORY.STOCK} element={<SuspenseWrapper><StockLedgerPage /></SuspenseWrapper>} />
           <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />

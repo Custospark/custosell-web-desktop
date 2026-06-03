@@ -3,7 +3,7 @@ import { useProducts } from '../inventory/api/products/ProductQueries';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
@@ -136,10 +136,15 @@ function BillingControls() {
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
               <input title="Enter amount tendered" type="number" min={0} step="100"
-                className="w-full pl-11 pr-3 py-2.5 border border-gray-200 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-11 pr-10 py-2.5 border border-gray-200 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0" value={amountTendered || ''}
                 onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
                 onFocus={(e) => e.target.select()} />
+              <button title="Fill exact total" type="button"
+                onClick={() => dispatch(setAmountTendered(total))}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <ArrowDownToLine className="w-4 h-4" />
+              </button>
             </div>
             {amountTendered > 0 && amountTendered < total && (
               <p className="text-xs text-amber-600 mt-1.5">Short by {formatCurrency(total - amountTendered)}</p>

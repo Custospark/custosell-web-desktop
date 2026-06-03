@@ -63,4 +63,5 @@ export interface SalesState {
   customerId: number | null;
   discountAmount: number;
   notes: string;
+  amountTendered: number;
 }

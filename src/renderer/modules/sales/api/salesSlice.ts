@@ -7,6 +7,7 @@ const initialState: SalesState = {
   customerId: null,
   discountAmount: 0,
   notes: '',
+  amountTendered: 0,
 };
 
 const salesSlice = createSlice({
@@ -44,6 +45,7 @@ const salesSlice = createSlice({
       state.discountAmount = 0;
       state.customerId = null;
       state.notes = '';
+      state.amountTendered = 0;
     },
     setPaymentMethod(state, action: PayloadAction<SalesState['paymentMethod']>) {
       state.paymentMethod = action.payload;
@@ -57,6 +59,9 @@ const salesSlice = createSlice({
     setNotes(state, action: PayloadAction<string>) {
       state.notes = action.payload;
     },
+    setAmountTendered(state, action: PayloadAction<number>) {
+      state.amountTendered = action.payload;
+    },
     resetSales(state) {
       Object.assign(state, initialState);
     },
@@ -65,7 +70,7 @@ const salesSlice = createSlice({
 
 export const {
   addToCart, updateQuantity, removeFromCart, clearCart,
-  setPaymentMethod, setCustomer, setDiscount, setNotes, resetSales,
+  setPaymentMethod, setCustomer, setDiscount, setNotes, setAmountTendered, resetSales,
 } = salesSlice.actions;
 
 export default salesSlice.reducer;

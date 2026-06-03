@@ -3,9 +3,10 @@ import { useProducts } from '../inventory/api/products/ProductQueries';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
+import QuantityEditModal from './ui/QuantityEditModal';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -31,7 +32,6 @@ function BillingControls() {
   const [customerSearch, setCustomerSearch] = useState('');
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const cartCount = cartItems.length;
   const discountValue = discountType === 'percentage'
     ? Math.min(subtotal * (discountAmount / 100), subtotal)
     : Math.min(discountAmount, subtotal);
@@ -234,9 +234,9 @@ export default function NewSale() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [heldModalOpen, setHeldModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
+  const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number } | null>(null);
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const cartCount = cartItems.length;
 
   // Filter products
   const results = useMemo(() => {
@@ -435,7 +435,10 @@ export default function NewSale() {
                             </button>
                             
                             {/* QUANTITY DISPLAY */}
-                            <span className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums">{item.quantity}</span>
+                            <span className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-0.5"
+                              onClick={() => setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity })}>
+                              {item.quantity}<Pencil className="w-3 h-3 text-blue-400" />
+                            </span>
                             
                             {/* PLUS BUTTON - Circular with bright green ring + shadow */}
                             <button 
@@ -503,6 +506,15 @@ export default function NewSale() {
 
       <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />
       <HoldOrderModal open={holdModalOpen} onClose={() => setHoldModalOpen(false)} />
+      {qtyEdit && (
+        <QuantityEditModal
+          open={!!qtyEdit}
+          onClose={() => setQtyEdit(null)}
+          productId={qtyEdit.productId}
+          productName={qtyEdit.productName}
+          currentQty={qtyEdit.currentQty}
+        />
+      )}
     </>
   );
 }

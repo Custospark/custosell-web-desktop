@@ -57,6 +57,18 @@ export interface RefundData {
   items: { id: number; quantity: number; amount?: number }[];
 }
 
+export interface HeldOrder {
+  id: string;
+  timestamp: number;
+  customerName: string;
+  items: CartItem[];
+  paymentMethod: 'cash' | 'mobile_money' | 'card' | 'other';
+  amountTendered: number;
+  customerId: number | null;
+  itemCount: number;
+  total: number;
+}
+
 export interface SalesState {
   cartItems: CartItem[];
   paymentMethod: 'cash' | 'mobile_money' | 'card' | 'other';
@@ -64,4 +76,5 @@ export interface SalesState {
   discountAmount: number;
   notes: string;
   amountTendered: number;
+  heldOrders: HeldOrder[];
 }

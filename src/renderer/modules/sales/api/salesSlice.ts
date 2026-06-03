@@ -1,5 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SalesState } from './salesTypes';
+import type { SalesState, HeldOrder } from './salesTypes';
+
+function loadHeldOrders(): HeldOrder[] {
+  try { return JSON.parse(localStorage.getItem('heldOrders') || '[]'); } catch { return []; }
+}
+
+function saveHeldOrders(orders: HeldOrder[]) {
+  try { localStorage.setItem('heldOrders', JSON.stringify(orders)); } catch { /* noop */ }
+}
 
 const initialState: SalesState = {
   cartItems: [],
@@ -8,6 +16,7 @@ const initialState: SalesState = {
   discountAmount: 0,
   notes: '',
   amountTendered: 0,
+  heldOrders: loadHeldOrders(),
 };
 
 const salesSlice = createSlice({
@@ -62,6 +71,40 @@ const salesSlice = createSlice({
     setAmountTendered(state, action: PayloadAction<number>) {
       state.amountTendered = action.payload;
     },
+    holdOrder(state) {
+      if (state.cartItems.length === 0) return;
+      const order: HeldOrder = {
+        id: Date.now().toString(),
+        timestamp: Date.now(),
+        customerName: state.customerId ? '' : 'Guest',
+        items: [...state.cartItems],
+        paymentMethod: state.paymentMethod,
+        amountTendered: state.amountTendered,
+        customerId: state.customerId,
+        itemCount: state.cartItems.reduce((s, c) => s + c.quantity, 0),
+        total: state.cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0),
+      };
+      state.heldOrders = [order, ...state.heldOrders];
+      saveHeldOrders(state.heldOrders);
+      state.cartItems = [];
+      state.amountTendered = 0;
+      state.customerId = null;
+    },
+    takeOrder(state, action: PayloadAction<string>) {
+      const idx = state.heldOrders.findIndex((o) => o.id === action.payload);
+      if (idx === -1) return;
+      const order = state.heldOrders[idx];
+      state.cartItems = order.items;
+      state.paymentMethod = order.paymentMethod;
+      state.amountTendered = order.amountTendered;
+      state.customerId = order.customerId;
+      state.heldOrders.splice(idx, 1);
+      saveHeldOrders(state.heldOrders);
+    },
+    removeHeldOrder(state, action: PayloadAction<string>) {
+      state.heldOrders = state.heldOrders.filter((o) => o.id !== action.payload);
+      saveHeldOrders(state.heldOrders);
+    },
     resetSales(state) {
       Object.assign(state, initialState);
     },
@@ -70,7 +113,8 @@ const salesSlice = createSlice({
 
 export const {
   addToCart, updateQuantity, removeFromCart, clearCart,
-  setPaymentMethod, setCustomer, setDiscount, setNotes, setAmountTendered, resetSales,
+  setPaymentMethod, setCustomer, setDiscount, setNotes, setAmountTendered,
+  holdOrder, takeOrder, removeHeldOrder, resetSales,
 } = salesSlice.actions;
 
 export default salesSlice.reducer;

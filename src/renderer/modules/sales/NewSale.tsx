@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
-import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered } from './api/salesSlice';
+import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, holdOrder } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle } from 'lucide-react';
+import HeldOrdersModal from './ui/HeldOrdersModal';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -34,6 +35,7 @@ export default function NewSale() {
   // Refs
   const searchRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [heldModalOpen, setHeldModalOpen] = useState(false);
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const cartCount = cartItems.length;
@@ -122,6 +124,7 @@ export default function NewSale() {
   const PayIcon = PAY_ICONS[paymentMethod];
 
   return (
+    <>
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-200 px-1">
@@ -410,9 +413,22 @@ export default function NewSale() {
               <PayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
               Complete Sale
             </Button>
+
+            {/* Hold Order & Take Order Buttons */}
+            {cartItems.length > 0 && (
+              <Button variant="outline" className="w-full h-10 text-sm" onClick={() => dispatch(holdOrder())}>
+                <PauseCircle className="w-4 h-4 mr-1.5" /> Hold Order
+              </Button>
+            )}
+            <Button variant="ghost" className="w-full h-10 text-sm" onClick={() => setHeldModalOpen(true)}>
+              <RotateCcw className="w-4 h-4 mr-1.5" /> Take Order
+            </Button>
           </div>
         </div>
       </div>
     </div>
+
+      <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />
+    </>
   );
 }

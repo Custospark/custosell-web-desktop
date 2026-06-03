@@ -416,7 +416,10 @@ export default function NewSale() {
 
             {/* Hold Order & Take Order Buttons */}
             {cartItems.length > 0 && (
-              <Button variant="outline" className="w-full h-10 text-sm" onClick={() => dispatch(holdOrder())}>
+              <Button variant="outline" className="w-full h-10 text-sm" onClick={() => {
+                const notes = window.prompt('Add notes for this held order (optional):');
+                dispatch(holdOrder(notes || undefined));
+              }}>
                 <PauseCircle className="w-4 h-4 mr-1.5" /> Hold Order
               </Button>
             )}

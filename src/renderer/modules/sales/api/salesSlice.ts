@@ -1,8 +1,16 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SalesState, HeldOrder } from './salesTypes';
 
+const EXPIRY_MS = 72 * 60 * 60 * 1000; // 72 hours
+
 function loadHeldOrders(): HeldOrder[] {
-  try { return JSON.parse(localStorage.getItem('heldOrders') || '[]'); } catch { return []; }
+  try {
+    const orders: HeldOrder[] = JSON.parse(localStorage.getItem('heldOrders') || '[]');
+    const now = Date.now();
+    const active = orders.filter((o) => now - o.timestamp < EXPIRY_MS);
+    if (active.length !== orders.length) saveHeldOrders(active);
+    return active;
+  } catch { return []; }
 }
 
 function saveHeldOrders(orders: HeldOrder[]) {
@@ -71,18 +79,19 @@ const salesSlice = createSlice({
     setAmountTendered(state, action: PayloadAction<number>) {
       state.amountTendered = action.payload;
     },
-    holdOrder(state) {
+    holdOrder(state, action: PayloadAction<string | undefined>) {
       if (state.cartItems.length === 0) return;
       const order: HeldOrder = {
         id: Date.now().toString(),
         timestamp: Date.now(),
-        customerName: state.customerId ? '' : 'Guest',
+        customerName: 'Guest',
         items: [...state.cartItems],
         paymentMethod: state.paymentMethod,
         amountTendered: state.amountTendered,
         customerId: state.customerId,
         itemCount: state.cartItems.reduce((s, c) => s + c.quantity, 0),
         total: state.cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0),
+        notes: action.payload || '',
       };
       state.heldOrders = [order, ...state.heldOrders];
       saveHeldOrders(state.heldOrders);

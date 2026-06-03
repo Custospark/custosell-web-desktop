@@ -67,6 +67,7 @@ export interface HeldOrder {
   customerId: number | null;
   itemCount: number;
   total: number;
+  notes: string;
 }
 
 export interface SalesState {

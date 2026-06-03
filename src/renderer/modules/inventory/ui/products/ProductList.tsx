@@ -17,6 +17,7 @@ import { Package, Plus, Pencil, Trash, Archive, Upload, Download } from 'lucide-
 import ProductFormDrawer from './ProductFormDrawer';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
+import ExportModal from './ExportModal';
 
 export default function ProductList() {
   const queryClient = useQueryClient();
@@ -28,24 +29,7 @@ export default function ProductList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-
-  const handleExport = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/products/export`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      const blob = await res.blob();
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'products-export.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-    } catch {
-      // silent
-    }
-  };
+  const [exportOpen, setExportOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -86,11 +70,11 @@ export default function ProductList() {
             <p className="text-sm text-gray-500 mt-1">Manage your product inventory</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-1.5" />Export
+            <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+              <Download className="w-4 h-4 mr-1.5" />Download
             </Button>
             <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-1.5" />Import
+              <Upload className="w-4 h-4 mr-1.5" />Upload
             </Button>
             <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Product</Button>
           </div>
@@ -155,6 +139,11 @@ export default function ProductList() {
           queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
           queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
         }}
+      />
+
+      <ExportModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
       />
     </>
   );

@@ -13,7 +13,7 @@ import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContex
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
-import { Package, Plus, Pencil, Trash, Archive, Upload } from 'lucide-react';
+import { Package, Plus, Pencil, Trash, Archive, Upload, Download } from 'lucide-react';
 import ProductFormDrawer from './ProductFormDrawer';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
@@ -28,6 +28,24 @@ export default function ProductList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/products/export`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'products-export.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } catch {
+      // silent
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -68,6 +86,9 @@ export default function ProductList() {
             <p className="text-sm text-gray-500 mt-1">Manage your product inventory</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-1.5" />Export
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
               <Upload className="w-4 h-4 mr-1.5" />Import
             </Button>

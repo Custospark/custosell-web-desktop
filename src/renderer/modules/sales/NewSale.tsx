@@ -334,18 +334,18 @@ export default function NewSale() {
         </div>
 
         {/* RIGHT COLUMN: Billing Controls */}
-        <div className="w-full lg:w-96 shrink-0 flex flex-col bg-white rounded-xl border border-gray-200">
+        <div className="w-full lg:w-96 shrink-0 flex flex-col bg-white rounded-xl border border-gray-200 h-fit lg:sticky lg:top-0">
           {/* Header */}
-          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
+          <div className="px-4 sm:px-5 py-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-gray-600 shrink-0" />
-              <span className="font-semibold text-gray-900">Complete Sale</span>
+              <span className="font-semibold text-gray-900">Sale</span>
               <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{cartCount}</span>
             </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-4 sm:p-5 space-y-4 sm:space-y-5 overflow-y-auto">
+          <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
             {/* Customer */}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 sm:mb-2 block">Customer</label>
@@ -421,24 +421,28 @@ export default function NewSale() {
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Discount</label>
               <div className="flex gap-1.5">
                 <div className="relative flex-1">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    {discountType === 'percentage' ? '%' : 'UGX'}
-                  </span>
-                  <input type="number" min={0} max={discountType === 'percentage' ? 100 : subtotal}
-                    className="w-full pl-7 pr-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums"
-                    placeholder="0" value={discountAmount || ''}
+                  {discountType === 'fixed' && (
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
+                  )}
+                  <input type="number" min={0}
+                    className={`border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2 ${discountType === 'fixed' ? 'pl-12 pr-3 text-lg font-bold text-gray-900' : 'pl-3 pr-3 text-lg font-bold text-gray-900'}`}
+                    placeholder={discountType === 'percentage' ? '0%' : '0'}
+                    value={discountAmount || ''}
                     onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
                     onFocus={(e) => e.target.select()} />
+                  {discountType === 'percentage' && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">%</span>
+                  )}
                 </div>
                 <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
                   <button onClick={() => dispatch(setDiscountType('percentage'))}
-                    className={`px-2.5 py-2 text-xs font-medium transition-colors ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>%</button>
+                    className={`px-3 py-2 text-xs font-medium transition-colors ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>%</button>
                   <button onClick={() => dispatch(setDiscountType('fixed'))}
-                    className={`px-2.5 py-2 text-xs font-medium transition-colors ${discountType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>Fix</button>
+                    className={`px-3 py-2 text-xs font-medium transition-colors ${discountType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>Fix</button>
                 </div>
               </div>
               {discountValue > 0 && (
-                <p className="text-xs text-green-600 mt-1">-{formatCurrency(discountValue)} off</p>
+                <p className="text-xs text-green-600 mt-1 font-medium">-{formatCurrency(discountValue)} off</p>
               )}
             </div>
 

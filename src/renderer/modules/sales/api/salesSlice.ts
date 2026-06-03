@@ -22,6 +22,7 @@ const initialState: SalesState = {
   paymentMethod: 'cash',
   customerId: null,
   discountAmount: 0,
+  discountType: 'percentage',
   notes: '',
   amountTendered: 0,
   heldOrders: loadHeldOrders(),
@@ -71,7 +72,11 @@ const salesSlice = createSlice({
       state.customerId = action.payload;
     },
     setDiscount(state, action: PayloadAction<number>) {
-      state.discountAmount = action.payload;
+      state.discountAmount = Math.max(0, action.payload);
+    },
+    setDiscountType(state, action: PayloadAction<'percentage' | 'fixed'>) {
+      state.discountType = action.payload;
+      state.discountAmount = 0;
     },
     setNotes(state, action: PayloadAction<string>) {
       state.notes = action.payload;
@@ -131,7 +136,7 @@ const salesSlice = createSlice({
 
 export const {
   addToCart, updateQuantity, removeFromCart, clearCart,
-  setPaymentMethod, setCustomer, setDiscount, setNotes, setAmountTendered,
+  setPaymentMethod, setCustomer, setDiscount, setDiscountType, setNotes, setAmountTendered,
   holdOrder, takeOrder, removeHeldOrder, renameHeldOrder, resetSales,
 } = salesSlice.actions;
 

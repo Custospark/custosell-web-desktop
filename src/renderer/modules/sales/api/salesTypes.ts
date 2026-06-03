@@ -75,6 +75,7 @@ export interface SalesState {
   paymentMethod: 'cash' | 'mobile_money' | 'card' | 'other';
   customerId: number | null;
   discountAmount: number;
+  discountType: 'percentage' | 'fixed';
   notes: string;
   amountTendered: number;
   heldOrders: HeldOrder[];

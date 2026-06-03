@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
-import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered } from './api/salesSlice';
+import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
@@ -19,6 +19,8 @@ export default function NewSale() {
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
   const amountTendered = useAppSelector((s) => s.sales.amountTendered);
   const customerId = useAppSelector((s) => s.sales.customerId);
+  const discountAmount = useAppSelector((s) => s.sales.discountAmount);
+  const discountType = useAppSelector((s) => s.sales.discountType);
   const heldOrders = useAppSelector((s) => s.sales.heldOrders);
   const { data: products } = useProducts();
   const { data: customers } = useCustomers();
@@ -42,7 +44,11 @@ export default function NewSale() {
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const cartCount = cartItems.length;
-  const changeDue = paymentMethod === 'cash' ? Math.max(0, amountTendered - subtotal) : 0;
+  const discountValue = discountType === 'percentage'
+    ? Math.min(subtotal * (discountAmount / 100), subtotal)
+    : Math.min(discountAmount, subtotal);
+  const total = Math.max(0, subtotal - discountValue);
+  const changeDue = paymentMethod === 'cash' ? Math.max(0, amountTendered - total) : 0;
   const selectedCustomer = customerId ? (customers || []).find((c: any) => c.id === customerId) : null;
 
   // Filter customers
@@ -94,7 +100,8 @@ export default function NewSale() {
           unit_price: c.unit_price
         })),
         subtotal,
-        total_amount: subtotal,
+        discount_amount: discountValue,
+        total_amount: total,
         payment_method: paymentMethod,
         customer_id: customerId,
       },
@@ -403,17 +410,53 @@ export default function NewSale() {
                     onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
                     onFocus={(e) => e.target.select()} />
                 </div>
-                {amountTendered > 0 && amountTendered < subtotal && (
-                  <p className="text-xs text-amber-600 mt-1.5 sm:mt-2">Short by {formatCurrency(subtotal - amountTendered)}</p>
+                {amountTendered > 0 && amountTendered < total && (
+                  <p className="text-xs text-amber-600 mt-1.5 sm:mt-2">Short by {formatCurrency(total - amountTendered)}</p>
                 )}
               </div>
             )}
 
+            {/* Discount */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Discount</label>
+              <div className="flex gap-1.5">
+                <div className="relative flex-1">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                    {discountType === 'percentage' ? '%' : 'UGX'}
+                  </span>
+                  <input type="number" min={0} max={discountType === 'percentage' ? 100 : subtotal}
+                    className="w-full pl-7 pr-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums"
+                    placeholder="0" value={discountAmount || ''}
+                    onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
+                    onFocus={(e) => e.target.select()} />
+                </div>
+                <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
+                  <button onClick={() => dispatch(setDiscountType('percentage'))}
+                    className={`px-2.5 py-2 text-xs font-medium transition-colors ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>%</button>
+                  <button onClick={() => dispatch(setDiscountType('fixed'))}
+                    className={`px-2.5 py-2 text-xs font-medium transition-colors ${discountType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>Fix</button>
+                </div>
+              </div>
+              {discountValue > 0 && (
+                <p className="text-xs text-green-600 mt-1">-{formatCurrency(discountValue)} off</p>
+              )}
+            </div>
+
             {/* Totals */}
             <div className="p-3 sm:p-4 bg-gray-50 rounded-xl space-y-1.5 sm:space-y-2">
+              {discountValue > 0 && (
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>Subtotal</span><span>{formatCurrency(subtotal)}</span>
+                </div>
+              )}
+              {discountValue > 0 && (
+                <div className="flex justify-between items-center text-xs text-green-600">
+                  <span>Discount</span><span>-{formatCurrency(discountValue)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-xs sm:text-sm text-gray-600">Total</span>
-                <span className="font-bold text-gray-900 text-base sm:text-lg tabular-nums">{formatCurrency(subtotal)}</span>
+                <span className="font-bold text-gray-900 text-base sm:text-lg tabular-nums">{formatCurrency(total)}</span>
               </div>
               {paymentMethod === 'cash' && amountTendered > 0 && (
                 <>
@@ -431,7 +474,7 @@ export default function NewSale() {
 
             {/* Complete Sale Button */}
             <Button className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold" onClick={handleCompleteSale} loading={createSale.isPending}
-              disabled={cartItems.length === 0 || (paymentMethod === 'cash' && amountTendered < subtotal)}>
+              disabled={cartItems.length === 0 || (paymentMethod === 'cash' && amountTendered < total)}>
               <PayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
               Complete Sale
             </Button>

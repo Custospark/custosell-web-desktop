@@ -4,6 +4,7 @@ export interface CartItem {
   unit_price: number;
   quantity: number;
   discount_amount: number;
+  unit?: string | null;
 }
 
 export interface SaleItem {

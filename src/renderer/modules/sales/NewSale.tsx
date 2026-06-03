@@ -13,7 +13,6 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { Button } from '../../shared/components/buttons/Button';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
-
 // ============================================================
 // BILLING CONTROLS COMPONENT (Right Column)
 // ============================================================
@@ -267,8 +266,8 @@ export default function NewSale() {
     }
   };
 
-  const addItem = (id: number, name: string, price: number) => {
-    dispatch(addToCart({ product_id: id, name, unit_price: price }));
+  const addItem = (id: number, name: string, price: number, unit?: string | null) => {
+    dispatch(addToCart({ product_id: id, name, unit_price: price, unit }));
     setSearch('');
     setShowResults(false);
     searchRef.current?.focus();
@@ -314,11 +313,25 @@ export default function NewSale() {
               />
               <div className="relative z-10 rounded-[6px] overflow-hidden bg-white">
                 <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} />
-                <input ref={searchRef} type="text" placeholder="Search products..." title="Search products"
+                <input ref={searchRef} type="text" placeholder="Search by name, SKU, or barcode..." title="Search products"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setShowResults(true); }}
                   onFocus={() => { setIsFocused(true); if (search.trim()) setShowResults(true); }}
                   onBlur={() => setIsFocused(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && products) {
+                      const q = search.trim().toLowerCase();
+                      const exact = products.find((p) =>
+                        p.is_active && p.stock_quantity > 0 &&
+                        (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q) || (p.barcode && p.barcode === q))
+                      );
+                      if (exact) {
+                        addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit);
+                      } else if (results.length > 0 && results[0].stock_quantity > 0) {
+                        addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit);
+                      }
+                    }
+                  }}
                   className="w-full pl-9 pr-10 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]" />
                 {search && (
                   <button title="Clear search" onClick={() => { setSearch(''); setShowResults(false); searchRef.current?.focus(); }}
@@ -352,7 +365,8 @@ export default function NewSale() {
                           </thead>
                           <tbody className="divide-y divide-gray-100">
                             {results.map((p) => (
-                              <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors" onMouseDown={() => addItem(p.id, p.name, parseFloat(p.unit_price))}>
+                              <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors"
+                                onMouseDown={() => p.stock_quantity > 0 && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit)}>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                                   <div className="flex items-center gap-2 sm:gap-3">
                                     <div className="p-1 sm:p-1.5 rounded-lg bg-gray-100 text-gray-500 shrink-0"><Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></div>
@@ -368,7 +382,7 @@ export default function NewSale() {
                                   <span className="text-sm font-semibold text-blue-600">{formatCurrency(p.unit_price)}</span>
                                 </td>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-center">
-                                  <div title="Add to cart" className="p-1 sm:p-1.5 rounded-full bg-green-50 text-green-600 inline-flex hover:bg-green-100 transition-colors">
+                                  <div className="p-1 sm:p-1.5 rounded-full bg-green-50 text-green-600 inline-flex hover:bg-green-100 transition-colors">
                                     <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                   </div>
                                 </td>
@@ -427,7 +441,7 @@ export default function NewSale() {
                           <span className="text-sm font-medium text-gray-800 truncate block max-w-[150px] sm:max-w-none">{item.name}</span>
                         </td>
                         <td className="px-4 py-3 text-right hidden sm:table-cell">
-                          <span className="text-sm text-gray-600">{formatCurrency(item.unit_price)}</span>
+                          <span className="text-sm text-gray-600">{formatCurrency(item.unit_price)}{item.unit ? ` / ${item.unit}` : ''}</span>
                         </td>
                        <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-2">

@@ -315,10 +315,10 @@ export default function NewSale() {
               </button>
             )}
             <button onClick={() => setHeldModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative overflow-visible">
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative">
               <RotateCcw className="w-4 h-4" /> Take Order
               {heldOrders.length > 0 && (
-                <span className="absolute -top-2.5 -right-2.5 bg-amber-500 text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-1 shadow-md ring-2 ring-white">
+                <span className="absolute -top-3 -right-3 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
                   {heldOrders.length}
                 </span>
               )}

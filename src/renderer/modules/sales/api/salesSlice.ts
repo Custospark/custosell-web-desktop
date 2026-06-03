@@ -115,10 +115,11 @@ const salesSlice = createSlice({
       state.heldOrders = state.heldOrders.filter((o) => o.id !== action.payload);
       saveHeldOrders(state.heldOrders);
     },
-    renameHeldOrder(state, action: PayloadAction<{ id: string; name: string }>) {
+    renameHeldOrder(state, action: PayloadAction<{ id: string; name?: string; notes?: string }>) {
       const order = state.heldOrders.find((o) => o.id === action.payload.id);
       if (order) {
-        order.customerName = action.payload.name || 'Guest';
+        if (action.payload.name !== undefined) order.customerName = action.payload.name || 'Guest';
+        if (action.payload.notes !== undefined) order.notes = action.payload.notes;
         saveHeldOrders(state.heldOrders);
       }
     },

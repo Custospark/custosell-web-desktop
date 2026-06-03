@@ -6,7 +6,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
-import { Clock, User, ShoppingBag, Play, Trash2, FileText, ArrowUpDown, Pencil } from 'lucide-react';
+import { Clock, ShoppingBag, Play, Trash2, FileText, ArrowUpDown, Pencil, Check, X } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -20,6 +20,7 @@ export default function HeldOrdersModal({ open, onClose }: Props) {
   const [sortNewest, setSortNewest] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [editNotes, setEditNotes] = useState('');
 
   const filtered = useMemo(() => {
     let list = [...heldOrders];
@@ -31,13 +32,14 @@ export default function HeldOrdersModal({ open, onClose }: Props) {
     return list;
   }, [heldOrders, search, sortNewest]);
 
-  const startRename = (order: HeldOrder) => {
+  const startEdit = (order: HeldOrder) => {
     setEditingId(order.id);
     setEditName(order.customerName === 'Guest' ? '' : order.customerName);
+    setEditNotes(order.notes);
   };
 
-  const saveRename = (id: string) => {
-    dispatch(renameHeldOrder({ id, name: editName.trim() || 'Guest' }));
+  const saveEdit = (id: string) => {
+    dispatch(renameHeldOrder({ id, name: editName.trim() || 'Guest', notes: editNotes.trim() || '' }));
     setEditingId(null);
   };
 
@@ -69,48 +71,58 @@ export default function HeldOrdersModal({ open, onClose }: Props) {
                   <Clock className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-sm">
-                    {editingId === order.id ? (
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <input value={editName} onChange={(e) => setEditName(e.target.value)}
-                          className="flex-1 px-2 py-1 border border-blue-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          placeholder="Order name..." autoFocus
-                          onKeyDown={(e) => { if (e.key === 'Enter') saveRename(order.id); if (e.key === 'Escape') setEditingId(null); }} />
-                        <button onClick={() => saveRename(order.id)} className="text-xs text-blue-600 font-medium hover:text-blue-800">Save</button>
-                        <button onClick={() => setEditingId(null)} className="text-xs text-gray-400 hover:text-gray-600">Esc</button>
+                  {editingId === order.id ? (
+                    <div className="space-y-2">
+                      <input value={editName} onChange={(e) => setEditName(e.target.value)}
+                        className="w-full px-2 py-1.5 border border-blue-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Order name..." autoFocus />
+                      <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2}
+                        className="w-full px-2 py-1.5 border border-blue-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Notes..." />
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => saveEdit(order.id)}
+                          className="flex items-center gap-1 text-xs text-blue-600 font-medium hover:text-blue-800">
+                          <Check className="w-3.5 h-3.5" /> Save
+                        </button>
+                        <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600">
+                          <X className="w-3.5 h-3.5" /> Cancel
+                        </button>
                       </div>
-                    ) : (
-                      <>
-                        <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-sm">
                         <span className="font-medium text-gray-800 truncate">{order.customerName}</span>
-                        <button onClick={() => startRename(order)} className="p-0.5 text-gray-300 hover:text-blue-500 transition-colors shrink-0">
+                        <button onClick={() => startEdit(order)} className="p-0.5 text-blue-400 hover:text-blue-600 transition-colors shrink-0">
                           <Pencil className="w-3 h-3" />
                         </button>
                         <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
                           {new Date(order.timestamp).toLocaleString()}
                         </span>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                    <span className="flex items-center gap-1"><ShoppingBag className="w-3 h-3" />{order.itemCount} item{order.itemCount > 1 ? 's' : ''}</span>
-                    <span className="font-medium text-gray-700">{formatCurrency(order.total)}</span>
-                  </div>
-                  {order.notes && (
-                    <div className="flex items-start gap-1.5 mt-1.5 text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">
-                      <FileText className="w-3 h-3 mt-0.5 shrink-0" />
-                      <span>{order.notes}</span>
-                    </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                        <span className="flex items-center gap-1"><ShoppingBag className="w-3 h-3" />{order.itemCount} item{order.itemCount > 1 ? 's' : ''}</span>
+                        <span className="font-medium text-gray-700">{formatCurrency(order.total)}</span>
+                      </div>
+                      {order.notes && (
+                        <div className="flex items-start gap-1.5 mt-1.5 text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">
+                          <FileText className="w-3 h-3 mt-0.5 shrink-0" />
+                          <span>{order.notes}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-                <div className="flex items-center gap-1 shrink-0 mt-0.5">
-                  <Button variant="ghost" size="sm" onClick={() => { dispatch(takeOrder(order.id)); onClose(); }} title="Resume">
-                    <Play className="w-4 h-4 text-green-600" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => dispatch(removeHeldOrder(order.id))} title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
+                {editingId !== order.id && (
+                  <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                    <Button variant="ghost" size="sm" onClick={() => { dispatch(takeOrder(order.id)); onClose(); }} title="Resume">
+                      <Play className="w-4 h-4 text-green-600" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => dispatch(removeHeldOrder(order.id))} title="Delete">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

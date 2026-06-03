@@ -114,6 +114,13 @@ const salesSlice = createSlice({
       state.heldOrders = state.heldOrders.filter((o) => o.id !== action.payload);
       saveHeldOrders(state.heldOrders);
     },
+    renameHeldOrder(state, action: PayloadAction<{ id: string; name: string }>) {
+      const order = state.heldOrders.find((o) => o.id === action.payload.id);
+      if (order) {
+        order.customerName = action.payload.name || 'Guest';
+        saveHeldOrders(state.heldOrders);
+      }
+    },
     resetSales(state) {
       Object.assign(state, initialState);
     },
@@ -123,7 +130,7 @@ const salesSlice = createSlice({
 export const {
   addToCart, updateQuantity, removeFromCart, clearCart,
   setPaymentMethod, setCustomer, setDiscount, setNotes, setAmountTendered,
-  holdOrder, takeOrder, removeHeldOrder, resetSales,
+  holdOrder, takeOrder, removeHeldOrder, renameHeldOrder, resetSales,
 } = salesSlice.actions;
 
 export default salesSlice.reducer;

@@ -42,6 +42,7 @@ export interface StockMovement {
   reference: string | null;
   notes: string | null;
   created_by: number | null;
+  created_by_user?: { data: { id: number; name: string } } | null;
   created_at: string;
   updated_at: string;
 }

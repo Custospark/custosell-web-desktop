@@ -221,6 +221,8 @@ export function useCreateStockMovement() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
+      // Invalidate product-specific stock movement history
+      queryClient.invalidateQueries({ queryKey: ['inventory', 'products'] });
     },
   });
 }

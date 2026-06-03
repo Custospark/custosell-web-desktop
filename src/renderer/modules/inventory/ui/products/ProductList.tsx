@@ -14,11 +14,12 @@ import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
-import { Package, Plus, Pencil, Trash, Archive, Upload, Download } from 'lucide-react';
+import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye } from 'lucide-react';
 import ProductFormDrawer from './ProductFormDrawer';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
 import ExportModal from './ExportModal';
+import LedgerHistoryModal from './LedgerHistoryModal';
 
 export default function ProductList() {
   const queryClient = useQueryClient();
@@ -31,6 +32,7 @@ export default function ProductList() {
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -64,24 +66,26 @@ export default function ProductList() {
 
   return (
     <>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Products</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your product inventory</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+            <Download className="w-4 h-4 mr-1.5" />Download
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="w-4 h-4 mr-1.5" />Upload
+          </Button>
+          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Product</Button>
+        </div>
+      </div>
+
       <ProductStatsCards products={products || []} />
       <div className="h-6" />
+
       <Card>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Products</h2>
-            <p className="text-sm text-gray-500 mt-1">Manage your product inventory</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
-              <Download className="w-4 h-4 mr-1.5" />Download
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-1.5" />Upload
-            </Button>
-            <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Product</Button>
-          </div>
-        </div>
         <div className="mb-4">
           <SearchInput placeholder="Search products by name..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
         </div>
@@ -100,9 +104,10 @@ export default function ProductList() {
             },
             { key: 'is_active', header: 'Status', render: (item) => item.is_active ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Inactive</Badge> },
             { key: 'actions', header: 'Actions', render: (item) => (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryProduct(item); }} title="View History"><Eye className="w-4 h-4 text-gray-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><Archive className="w-4 h-4 text-amber-600" /></Button>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-amber-600" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),
@@ -148,6 +153,15 @@ export default function ProductList() {
         open={exportOpen}
         onClose={() => setExportOpen(false)}
       />
+
+      {historyProduct && (
+        <LedgerHistoryModal
+          open={!!historyProduct}
+          onClose={() => setHistoryProduct(null)}
+          productId={historyProduct.id}
+          productName={historyProduct.name}
+        />
+      )}
     </>
   );
 }

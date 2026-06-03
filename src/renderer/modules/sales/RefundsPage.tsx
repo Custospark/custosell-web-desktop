@@ -1,11 +1,5 @@
-import { RotateCcw } from 'lucide-react';
+import RefundPanel from './ui/refunds/RefundPanel';
 
 export default function RefundsPage() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-      <RotateCcw className="w-16 h-16 mb-4" />
-      <h2 className="text-xl font-semibold text-gray-600 mb-1">Refunds</h2>
-      <p className="text-sm">Refund processing will be built here</p>
-    </div>
-  );
+  return <RefundPanel />;
 }

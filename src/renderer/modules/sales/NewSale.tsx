@@ -304,6 +304,20 @@ export default function NewSale() {
               </div>
             )}
           </div>
+
+          {/* Sticky Hold / Take Buttons */}
+          <div className="sticky bottom-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-2 space-y-1.5">
+            {cartItems.length > 0 && (
+              <button onClick={() => setHoldModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
+                <PauseCircle className="w-4 h-4" /> Hold Order
+              </button>
+            )}
+            <button onClick={() => setHeldModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+              <RotateCcw className="w-4 h-4" /> Take Order
+            </button>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: Billing Controls */}
@@ -414,16 +428,6 @@ export default function NewSale() {
               disabled={cartItems.length === 0 || (paymentMethod === 'cash' && amountTendered < subtotal)}>
               <PayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
               Complete Sale
-            </Button>
-
-            {/* Hold Order & Take Order Buttons */}
-            {cartItems.length > 0 && (
-              <Button variant="outline" className="w-full h-10 text-sm" onClick={() => setHoldModalOpen(true)}>
-                <PauseCircle className="w-4 h-4 mr-1.5" /> Hold Order
-              </Button>
-            )}
-            <Button variant="ghost" className="w-full h-10 text-sm" onClick={() => setHeldModalOpen(true)}>
-              <RotateCcw className="w-4 h-4 mr-1.5" /> Take Order
             </Button>
           </div>
         </div>

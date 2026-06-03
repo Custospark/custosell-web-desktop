@@ -52,13 +52,22 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
     }
   };
 
-  const handleDownloadTemplate = () => {
-    const token = localStorage.getItem('token');
-    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/products/import-template`;
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('Authorization', `Bearer ${token}`);
-    window.open(url + '?token=' + encodeURIComponent(token || ''), '_blank');
+  const handleDownloadTemplate = async () => {
+    try {
+      const { data } = await axiosInstance.get('/products/import-template', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'product-import-template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      showToast('error', 'Failed to download template');
+    }
   };
 
   const reset = () => { setFile(null); setResult(null); if (fileRef.current) fileRef.current.value = ''; };

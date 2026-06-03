@@ -14,10 +14,12 @@ export interface Product {
   category_id: number | null;
   category?: Category | null;
   name: string;
+  unit: string | null;
   description: string | null;
   sku: string | null;
   barcode: string | null;
   unit_price: string;
+  wholesale_price: string | null;
   cost_price: string | null;
   stock_quantity: number;
   low_stock_threshold: number;
@@ -46,7 +48,9 @@ export interface StockMovement {
 
 export interface CreateProductData {
   name: string;
+  unit?: string | null;
   unit_price: number;
+  wholesale_price?: number | null;
   category_id?: number | null;
   description?: string | null;
   sku?: string | null;

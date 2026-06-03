@@ -2,16 +2,16 @@ import { configureStore } from '@reduxjs/toolkit';
 import { rootReducer } from './rootReducer';
 import { buildAuthStateFromStorage } from './slices/authSlice';
 
-const preloadedToken = buildAuthStateFromStorage();
+const { token, user } = buildAuthStateFromStorage();
 
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState: {
     auth: {
-      user: null,
-      token: preloadedToken.token,
-      businessId: null,
-      isAuthenticated: false,
+      user,
+      token,
+      businessId: user?.business_id ?? null,
+      isAuthenticated: !!token,
       isLoading: false,
       isInitialized: false,
       error: null,

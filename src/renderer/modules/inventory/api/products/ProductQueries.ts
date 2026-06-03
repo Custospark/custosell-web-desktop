@@ -132,8 +132,8 @@ export function useCreateProduct() {
       const previous = qc.getQueryData<Product[]>(inventoryKeys.products());
       qc.setQueryData<Product[]>(inventoryKeys.products(), (old) => [...(old ?? []), {
         id: Date.now(), business_id: 0, category_id: p.category_id ?? null, category: null,
-        name: p.name, description: p.description ?? null, sku: p.sku ?? null, barcode: p.barcode ?? null,
-        unit_price: String(p.unit_price), cost_price: p.cost_price != null ? String(p.cost_price) : null,
+        name: p.name, unit: p.unit ?? null, description: p.description ?? null, sku: p.sku ?? null, barcode: p.barcode ?? null,
+        unit_price: String(p.unit_price), wholesale_price: p.wholesale_price != null ? String(p.wholesale_price) : null, cost_price: p.cost_price != null ? String(p.cost_price) : null,
         stock_quantity: p.stock_quantity ?? 0, low_stock_threshold: p.low_stock_threshold ?? 5,
         tax_percentage: String(p.tax_percentage ?? 0), is_active: p.is_active ?? true,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),

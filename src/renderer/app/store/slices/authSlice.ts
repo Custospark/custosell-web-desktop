@@ -21,20 +21,41 @@ interface AuthState {
   error: string | null;
 }
 
-function loadFromStorage(): { token: string | null } {
+const STORAGE_KEY_TOKEN = 'token';
+const STORAGE_KEY_USER = 'auth_user';
+
+function loadFromStorage(): { token: string | null; user: AuthUser | null } {
   try {
-    const token = localStorage.getItem('token');
-    return { token };
+    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+    const raw = localStorage.getItem(STORAGE_KEY_USER);
+    const user = raw ? JSON.parse(raw) as AuthUser : null;
+    return { token, user };
   } catch {
-    return { token: null };
+    return { token: null, user: null };
   }
 }
 
+function saveToStorage(token: string, user: AuthUser): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_TOKEN, token);
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+  } catch { /* storage full or unavailable */ }
+}
+
+function clearStorage(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_TOKEN);
+    localStorage.removeItem(STORAGE_KEY_USER);
+  } catch { /* ignore */ }
+}
+
+const { token, user } = loadFromStorage();
+
 const initialState: AuthState = {
-  user: null,
-  token: loadFromStorage().token,
-  businessId: null,
-  isAuthenticated: false,
+  user,
+  token,
+  businessId: user?.business_id ?? null,
+  isAuthenticated: !!token,
   isLoading: false,
   isInitialized: false,
   error: null,
@@ -56,7 +77,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isInitialized = true;
       state.error = null;
-      localStorage.setItem('token', action.payload.token);
+      saveToStorage(action.payload.token, action.payload.user);
     },
     loginFailure(state, action: PayloadAction<string>) {
       state.isLoading = false;
@@ -74,7 +95,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isInitialized = true;
       state.error = null;
-      localStorage.setItem('token', action.payload.token);
+      saveToStorage(action.payload.token, action.payload.user);
     },
     registerFailure(state, action: PayloadAction<string>) {
       state.isLoading = false;
@@ -88,7 +109,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isInitialized = true;
       state.error = null;
-      localStorage.removeItem('token');
+      clearStorage();
     },
     setUser(state, action: PayloadAction<AuthUser>) {
       state.user = action.payload;
@@ -106,20 +127,13 @@ const authSlice = createSlice({
 });
 
 export const {
-  loginStart,
-  loginSuccess,
-  loginFailure,
-  registerStart,
-  registerSuccess,
-  registerFailure,
-  logout,
-  setUser,
-  setInitialized,
-  clearError,
+  loginStart, loginSuccess, loginFailure,
+  registerStart, registerSuccess, registerFailure,
+  logout, setUser, setInitialized, clearError,
 } = authSlice.actions;
 
 export default authSlice.reducer;
 
-export function buildAuthStateFromStorage(): { token: string | null } {
+export function buildAuthStateFromStorage() {
   return loadFromStorage();
 }

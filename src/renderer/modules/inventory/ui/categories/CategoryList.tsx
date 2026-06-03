@@ -7,6 +7,7 @@ import { Card } from '../../../../shared/components/cards/Card';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
+import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { FolderTree, Plus, Pencil, Trash } from 'lucide-react';
 import CategoryFormDrawer from './CategoryFormDrawer';
 
@@ -28,6 +29,8 @@ export default function CategoryList() {
     });
     if (confirmed) deleteMutation.mutate(cat.id);
   };
+
+  const paginated = usePagination(categories || [], 5);
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
   if (error) {
@@ -63,7 +66,15 @@ export default function CategoryList() {
               ),
             },
           ]}
-          data={categories || []}
+          data={paginated.data}
+        />
+        <Pagination
+          currentPage={paginated.page}
+          totalPages={paginated.totalPages}
+          totalItems={paginated.totalItems}
+          pageSize={paginated.pageSize}
+          onPageChange={paginated.setPage}
+          onPageSizeChange={paginated.setPageSize}
         />
       </Card>
 

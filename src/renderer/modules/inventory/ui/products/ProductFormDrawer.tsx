@@ -10,17 +10,24 @@ interface ProductFormDrawerProps {
   product?: Product | null;
 }
 
+const COMMON_UNITS = [
+  'Pieces', 'Box', 'Carton', 'Pack', 'Pair', 'Set', 'Dozen', 'Roll', 'Sheet',
+  'Kg', 'g', 'Litre', 'mL', 'Metre', 'cm',
+  'Sachet', 'Bottle', 'Can', 'Tin', 'Jar', 'Bag', 'Crate', 'Drum', 'Bucket',
+  'Plate', 'Bowl', 'Cup', 'Glass', 'Bunch', 'Head', 'Piece',
+];
+
 interface FormState {
-  name: string; category_id: number | null; description: string | null;
+  name: string; unit: string; category_id: number | null; description: string | null;
   sku: string | null; barcode: string | null; is_active: boolean;
-  unit_price: string; cost_price: string; stock_quantity: string;
+  unit_price: string; wholesale_price: string; cost_price: string; stock_quantity: string;
   low_stock_threshold: string; tax_percentage: string;
 }
 
 const emptyForm: FormState = {
-  name: '', category_id: null, description: null,
+  name: '', unit: '', category_id: null, description: null,
   sku: null, barcode: null, is_active: true,
-  unit_price: '', cost_price: '', stock_quantity: '0',
+  unit_price: '', wholesale_price: '', cost_price: '', stock_quantity: '0',
   low_stock_threshold: '5', tax_percentage: '0',
 };
 
@@ -31,9 +38,10 @@ function toNumber(val: string): number {
 
 function toCreatePayload(f: FormState): CreateProductData {
   return {
-    name: f.name, category_id: f.category_id, description: f.description,
+    name: f.name, unit: f.unit || null, category_id: f.category_id, description: f.description,
     sku: f.sku, barcode: f.barcode, is_active: f.is_active,
     unit_price: toNumber(f.unit_price),
+    wholesale_price: f.wholesale_price === '' ? null : toNumber(f.wholesale_price),
     cost_price: f.cost_price === '' ? null : toNumber(f.cost_price),
     stock_quantity: toNumber(f.stock_quantity),
     low_stock_threshold: toNumber(f.low_stock_threshold),
@@ -53,9 +61,9 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
   useEffect(() => {
     if (product) {
       setForm({
-        name: product.name, category_id: product.category_id, description: product.description,
+        name: product.name, unit: product.unit ?? '', category_id: product.category_id, description: product.description,
         sku: product.sku, barcode: product.barcode, is_active: product.is_active,
-        unit_price: product.unit_price, cost_price: product.cost_price ?? '',
+        unit_price: product.unit_price, wholesale_price: product.wholesale_price ?? '', cost_price: product.cost_price ?? '',
         stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
         tax_percentage: product.tax_percentage,
       });
@@ -104,6 +112,16 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
             </div>
           </div>
           <div>
+            <label className={labelClass}>Unit of Measure</label>
+            <div className="relative">
+              <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input className={inputClass} value={form.unit} onChange={(e) => update('unit', e.target.value)} placeholder="e.g. Pieces, Kg, Litre" list="unit-list" />
+              <datalist id="unit-list">
+                {COMMON_UNITS.map((u) => <option key={u} value={u} />)}
+              </datalist>
+            </div>
+          </div>
+          <div>
             <label className={labelClass}>Category</label>
             <div className="relative">
               <FolderTree className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -134,6 +152,13 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input className={inputClass} type="number" step="0.01" min={0} value={form.unit_price} onChange={(e) => update('unit_price', e.target.value)} required placeholder="0.00" />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Wholesale Price (optional)</label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input className={inputClass} type="number" step="0.01" min={0} value={form.wholesale_price} onChange={(e) => update('wholesale_price', e.target.value)} placeholder="0.00" />
             </div>
           </div>
           <div>

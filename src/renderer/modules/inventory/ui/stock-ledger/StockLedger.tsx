@@ -174,6 +174,7 @@ export default function StockLedger() {
           totalItems={paginated.totalItems}
           pageSize={paginated.pageSize}
           onPageChange={paginated.setPage}
+          onPageSizeChange={paginated.setPageSize}
         />
       </Card>
 

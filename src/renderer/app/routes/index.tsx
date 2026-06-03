@@ -9,7 +9,9 @@ import { Layout } from '../../shared/components/layout/Layout';
 const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('../../modules/dashboard/DashboardPage'));
-const NewSalePage = lazy(() => import('../../modules/sales/NewSalePage'));
+const NewSalePage = lazy(() => import('../../modules/sales/NewSale'));
+
+// eslint-disable-next-line react-refresh/only-export-components -- route component
 const SalesHistoryPage = lazy(() => import('../../modules/sales/SalesHistoryPage'));
 const RefundsPage = lazy(() => import('../../modules/sales/RefundsPage'));
 const ProductsPage = lazy(() => import('../../modules/inventory/ProductsPage'));

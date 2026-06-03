@@ -307,16 +307,16 @@ export default function NewSale() {
           </div>
 
           {/* Sticky Hold / Take Buttons */}
-          <div className="sticky bottom-0 bg-white pt-2 pb-1 border-t border-gray-100 mt-2 flex items-center justify-end gap-2">
+          <div className="sticky bottom-0 bg-white pt-3 pb-2 border-t border-gray-200 mt-3 flex items-center justify-end gap-3">
             <button onClick={() => setHoldModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
-              <PauseCircle className="w-3.5 h-3.5" /> Hold Order
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm">
+              <PauseCircle className="w-4 h-4" /> Hold Order
             </button>
             <button onClick={() => setHeldModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors relative">
-              <RotateCcw className="w-3.5 h-3.5" /> Take Order
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative">
+              <RotateCcw className="w-4 h-4" /> Take Order
               {heldOrders.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[11px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 shadow-sm">
                   {heldOrders.length}
                 </span>
               )}

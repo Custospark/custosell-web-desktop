@@ -79,19 +79,20 @@ const salesSlice = createSlice({
     setAmountTendered(state, action: PayloadAction<number>) {
       state.amountTendered = action.payload;
     },
-    holdOrder(state, action: PayloadAction<string | undefined>) {
+    holdOrder(state, action: PayloadAction<{ notes?: string; customerName?: string } | undefined>) {
       if (state.cartItems.length === 0) return;
+      const payload = action.payload || {};
       const order: HeldOrder = {
         id: Date.now().toString(),
         timestamp: Date.now(),
-        customerName: 'Guest',
+        customerName: payload.customerName || 'Guest',
         items: [...state.cartItems],
         paymentMethod: state.paymentMethod,
         amountTendered: state.amountTendered,
         customerId: state.customerId,
         itemCount: state.cartItems.reduce((s, c) => s + c.quantity, 0),
         total: state.cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0),
-        notes: action.payload || '',
+        notes: payload.notes || '',
       };
       state.heldOrders = [order, ...state.heldOrders];
       saveHeldOrders(state.heldOrders);

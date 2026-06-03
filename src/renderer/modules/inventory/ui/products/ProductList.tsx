@@ -13,6 +13,7 @@ import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContex
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
+import { ProductStatsCards } from './ProductStatsCards';
 import { Package, Plus, Pencil, Trash, Archive, Upload, Download } from 'lucide-react';
 import ProductFormDrawer from './ProductFormDrawer';
 import StockAdjustDrawer from './StockAdjustDrawer';
@@ -63,6 +64,8 @@ export default function ProductList() {
 
   return (
     <>
+      <ProductStatsCards products={products || []} />
+      <div className="h-6" />
       <Card>
         <div className="flex items-center justify-between mb-6">
           <div>

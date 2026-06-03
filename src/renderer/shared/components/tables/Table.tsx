@@ -7,6 +7,7 @@ interface Column<T> {
   header: string;
   render?: (item: T) => ReactNode;
   sortable?: boolean;
+  align?: 'left' | 'center' | 'right';
 }
 
 interface TableProps<T> {
@@ -71,7 +72,8 @@ export function Table<T>({ columns, data, loading, onRowClick, sortKey, sortDir,
               <th
                 key={col.key}
                 className={cn(
-                  'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+                  'px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider',
+                  col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                   col.sortable && 'cursor-pointer select-none hover:text-gray-700',
                 )}
                 onClick={() => col.sortable && onSort?.(col.key)}
@@ -94,7 +96,10 @@ export function Table<T>({ columns, data, loading, onRowClick, sortKey, sortDir,
               onClick={() => onRowClick?.(item)}
             >
               {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                <td key={col.key} className={cn(
+                  'px-4 py-3 text-sm text-gray-700 whitespace-nowrap',
+                  col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
+                )}>
                   {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
                 </td>
               ))}

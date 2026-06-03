@@ -103,11 +103,11 @@ export default function ProductList() {
               },
             },
             { key: 'is_active', header: 'Status', render: (item) => item.is_active ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Inactive</Badge> },
-            { key: 'actions', header: 'Actions', render: (item) => (
+            { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryProduct(item); }} title="View History"><Eye className="w-4 h-4 text-gray-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-amber-600" /></Button>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-blue-600" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
-import type { Sale, CreateSaleData, RefundData } from './salesTypes';
+import type { Sale, CreateSalePayload, RefundData } from './salesTypes';
 
 export const salesKeys = {
   all: ['sales'] as const,
@@ -10,6 +10,16 @@ export const salesKeys = {
   daily: (date?: string) => [...salesKeys.all, 'daily', date] as const,
   detail: (id: number) => [...salesKeys.all, 'detail', id] as const,
 };
+
+export function useCustomers() {
+  return useQuery<any[]>({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: any[] }>('/customers');
+      return data.data;
+    },
+  });
+}
 
 export function useSales() {
   return useQuery<Sale[]>({
@@ -43,20 +53,10 @@ export function useSale(id: number) {
   });
 }
 
-export function useCustomers() {
-  return useQuery({
-    queryKey: ['customers'],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: any[] }>('/customers');
-      return data.data;
-    },
-  });
-}
-
 export function useCreateSale() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<Sale, AxiosError, CreateSaleData>({
+  return useMutation<Sale, AxiosError, CreateSalePayload>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post<{ data: Sale }>('/sales', payload);
       return data.data;

@@ -1,3 +1,11 @@
+export interface CartItem {
+  product_id: number;
+  name: string;
+  unit_price: number;
+  quantity: number;
+  discount_amount: number;
+}
+
 export interface SaleItem {
   id: number;
   sale_id: number;
@@ -28,21 +36,13 @@ export interface Sale {
   payment_status: 'paid' | 'partially_refunded' | 'refunded';
   notes: string | null;
   sale_date: string;
-  items?: SaleItem[];
   customer?: { data: { id: number; name: string } };
+  items?: SaleItem[];
   created_at: string;
   updated_at: string;
 }
 
-export interface CartItem {
-  product_id: number;
-  name: string;
-  unit_price: number;
-  quantity: number;
-  discount_amount: number;
-}
-
-export interface CreateSaleData {
+export interface CreateSalePayload {
   items: { product_id: number; quantity: number; unit_price: number; discount_amount?: number }[];
   subtotal: number;
   tax_total?: number;
@@ -55,4 +55,12 @@ export interface CreateSaleData {
 
 export interface RefundData {
   items: { id: number; quantity: number; amount?: number }[];
+}
+
+export interface SalesState {
+  cartItems: CartItem[];
+  paymentMethod: 'cash' | 'mobile_money' | 'card' | 'other';
+  customerId: number | null;
+  discountAmount: number;
+  notes: string;
 }

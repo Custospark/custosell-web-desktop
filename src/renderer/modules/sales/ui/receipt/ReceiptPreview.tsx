@@ -10,7 +10,7 @@ interface ReceiptPreviewProps {
   items: CartItem[];
   total: number;
   paymentMethod: string;
-  onClose: () => void;
+  onClose?: () => void;
   onNewSale: () => void;
 }
 

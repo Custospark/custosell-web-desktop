@@ -43,10 +43,15 @@ axiosInstance.interceptors.request.use(
       config.headers['X-User-Id'] = String(state.auth.user.id);
     }
 
-    const method = (config.method || 'get').toLowerCase();
-    const hasBody = ['post', 'put', 'patch', 'delete'].includes(method);
-    if (hasBody && config.data !== undefined) {
-      (config.headers as AxiosHeaders)?.set?.('Content-Type', 'application/json');
+    const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData;
+    if (isFormData) {
+      (config.headers as AxiosHeaders)?.delete?.('Content-Type');
+    } else {
+      const method = (config.method || 'get').toLowerCase();
+      const hasBody = ['post', 'put', 'patch', 'delete'].includes(method);
+      if (hasBody && config.data !== undefined) {
+        (config.headers as AxiosHeaders)?.set?.('Content-Type', 'application/json');
+      }
     }
 
     return config;

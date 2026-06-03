@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useProducts, useDeleteProduct } from '../../api/products/ProductQueries';
+import { useProducts, useDeleteProduct, inventoryKeys } from '../../api/products/ProductQueries';
 import type { Product } from '../../api/products/ProductTypes';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
@@ -8,6 +8,7 @@ import { Card } from '../../../../shared/components/cards/Card';
 import { Badge } from '../../../../shared/components/badges/Badge';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
+import { useQueryClient } from '@tanstack/react-query';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
@@ -18,6 +19,7 @@ import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
 
 export default function ProductList() {
+  const queryClient = useQueryClient();
   const { data: products, isLoading, error } = useProducts();
   const deleteMutation = useDeleteProduct();
   const { confirm } = useConfirm();
@@ -127,7 +129,11 @@ export default function ProductList() {
       <ImportModal
         open={importOpen}
         onClose={() => setImportOpen(false)}
-        onImported={() => setImportOpen(false)}
+        onImported={() => {
+          setImportOpen(false);
+          queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
+          queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+        }}
       />
     </>
   );

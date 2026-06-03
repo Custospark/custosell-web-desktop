@@ -81,7 +81,7 @@ function BillingControls() {
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Customer</label>
           <div className="relative">
-            <button className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors bg-white"
+            <button title="Select customer" className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors bg-white"
               onClick={() => setShowCustomerDropdown(!showCustomerDropdown)}>
               <User className="w-4 h-4 text-gray-400 shrink-0" />
               <span className={selectedCustomer ? 'text-gray-800' : 'text-gray-400 truncate'}>
@@ -90,14 +90,14 @@ function BillingControls() {
             </button>
             {showCustomerDropdown && (
               <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                <input className="w-full px-3 py-2 border-b border-gray-100 text-sm outline-none focus:bg-blue-50"
+                <input title="Search customers" className="w-full px-3 py-2 border-b border-gray-100 text-sm outline-none focus:bg-blue-50"
                   placeholder="Search customers..." value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} autoFocus />
-                <button className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-50"
+                <button title="Select walk-in customer" className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-50"
                   onClick={() => { dispatch(setCustomer(null)); setShowCustomerDropdown(false); setCustomerSearch(''); }}>
                   Walk-in customer
                 </button>
                 {filteredCustomers.map((c: any) => (
-                  <button key={c.id} className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 transition-colors"
+                  <button key={c.id} title={`Select ${c.name}`} className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 transition-colors"
                     onClick={() => { dispatch(setCustomer(c.id)); setCustomerSearch(c.name); setShowCustomerDropdown(false); }}>
                     <span className="font-medium text-gray-800">{c.name}</span>
                     <span className="text-gray-400 ml-2">{c.phone}</span>
@@ -116,7 +116,7 @@ function BillingControls() {
               const Icon = PAY_ICONS[m];
               const isActive = paymentMethod === m;
               return (
-                <button key={m}
+                <button key={m} title={`Pay with ${m === 'mobile_money' ? 'Mobile Money' : m.charAt(0).toUpperCase() + m.slice(1)}`}
                   className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all ${
                     isActive ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
@@ -135,7 +135,7 @@ function BillingControls() {
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Amount Tendered</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
-              <input type="number" min={0} step="100"
+              <input title="Enter amount tendered" type="number" min={0} step="100"
                 className="w-full pl-11 pr-3 py-2.5 border border-gray-200 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0" value={amountTendered || ''}
                 onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
@@ -155,7 +155,7 @@ function BillingControls() {
               {discountType === 'fixed' && (
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
               )}
-              <input type="number" min={0}
+              <input title="Enter discount amount" type="number" min={0}
                 className={`border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 ${discountType === 'fixed' ? 'pl-11 pr-3' : 'pl-3 pr-3'}`}
                 placeholder={discountType === 'percentage' ? '0%' : '0'}
                 value={discountAmount || ''}
@@ -166,9 +166,9 @@ function BillingControls() {
               )}
             </div>
             <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
-              <button onClick={() => dispatch(setDiscountType('percentage'))}
+              <button title="Switch to percentage discount" onClick={() => dispatch(setDiscountType('percentage'))}
                 className={`px-4 py-2.5 text-xs font-medium transition-colors ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>%</button>
-              <button onClick={() => dispatch(setDiscountType('fixed'))}
+              <button title="Switch to fixed discount" onClick={() => dispatch(setDiscountType('fixed'))}
                 className={`px-4 py-2.5 text-xs font-medium transition-colors ${discountType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>Fix</button>
             </div>
           </div>
@@ -200,7 +200,7 @@ function BillingControls() {
         </div>
 
         {/* Complete Sale Button */}
-        <Button 
+        <Button title="Finalize and complete the sale"
           className="w-full h-12 text-base font-semibold" 
           onClick={handleCompleteSale} 
           loading={createSale.isPending}
@@ -286,7 +286,7 @@ export default function NewSale() {
 
   return (
     <>
-      <div className="h-full flex gap-6">
+      <div className="h-full flex flex-col lg:flex-row gap-6">
         {/* LEFT COLUMN: Header + Search + Cart Table + Hold/Take Buttons */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header - ONLY on left column */}
@@ -309,14 +309,14 @@ export default function NewSale() {
               />
               <div className="relative z-10 rounded-[6px] overflow-hidden bg-white">
                 <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} />
-                <input ref={searchRef} type="text" placeholder="Search products..."
+                <input ref={searchRef} type="text" placeholder="Search products..." title="Search products"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setShowResults(true); }}
                   onFocus={() => { setIsFocused(true); if (search.trim()) setShowResults(true); }}
                   onBlur={() => setIsFocused(false)}
                   className="w-full pl-9 pr-10 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]" />
                 {search && (
-                  <button onClick={() => { setSearch(''); setShowResults(false); searchRef.current?.focus(); }}
+                  <button title="Clear search" onClick={() => { setSearch(''); setShowResults(false); searchRef.current?.focus(); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400">
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -347,7 +347,7 @@ export default function NewSale() {
                           </thead>
                           <tbody className="divide-y divide-gray-100">
                             {results.map((p) => (
-                              <tr key={p.id} className="hover:bg-blue-50 cursor-pointer transition-colors" onMouseDown={() => addItem(p.id, p.name, parseFloat(p.unit_price))}>
+                              <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors" onMouseDown={() => addItem(p.id, p.name, parseFloat(p.unit_price))}>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                                   <div className="flex items-center gap-2 sm:gap-3">
                                     <div className="p-1 sm:p-1.5 rounded-lg bg-gray-100 text-gray-500 shrink-0"><Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></div>
@@ -363,7 +363,7 @@ export default function NewSale() {
                                   <span className="text-sm font-semibold text-blue-600">{formatCurrency(p.unit_price)}</span>
                                 </td>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-center">
-                                  <div className="p-1 sm:p-1.5 rounded-full bg-green-50 text-green-600 inline-flex hover:bg-green-100 transition-colors">
+                                  <div title="Add to cart" className="p-1 sm:p-1.5 rounded-full bg-green-50 text-green-600 inline-flex hover:bg-green-100 transition-colors">
                                     <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                   </div>
                                 </td>
@@ -387,7 +387,7 @@ export default function NewSale() {
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Cart ({cartItems.length} {cartItems.length > 1 ? 'items' : 'item'})
               </span>
-              <button onClick={handleClearAll} className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors">
+              <button title="Remove all items from cart" onClick={handleClearAll} className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors">
                 <RotateCcw className="w-4 h-4" /> Clear All
               </button>
             </div>
@@ -406,7 +406,7 @@ export default function NewSale() {
                 <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">#</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Price</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
@@ -417,7 +417,7 @@ export default function NewSale() {
                   <tbody className="bg-white divide-y divide-gray-100">
                     {cartItems.map((item, idx) => (
                       <tr key={item.product_id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm text-gray-400">{idx + 1}</td>
+                        <td className="px-4 py-3 text-sm text-gray-400 hidden sm:table-cell">{idx + 1}</td>
                         <td className="px-4 py-3">
                           <span className="text-sm font-medium text-gray-800 truncate block max-w-[150px] sm:max-w-none">{item.name}</span>
                         </td>
@@ -427,7 +427,7 @@ export default function NewSale() {
                        <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-2">
                             {/* MINUS BUTTON - Circular with bright red ring */}
-                            <button 
+                            <button title="Decrease quantity"
                               onClick={() => dispatch(updateQuantity({ product_id: item.product_id, quantity: item.quantity - 1 }))}
                               className="w-8 h-8 rounded-full border-2 border-red-400 hover:border-red-500 hover:bg-red-50 text-red-500 hover:text-red-700 transition-all flex items-center justify-center"
                             >
@@ -435,13 +435,13 @@ export default function NewSale() {
                             </button>
                             
                             {/* QUANTITY DISPLAY */}
-                            <span className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-0.5"
+                            <span title="Click to edit quantity" className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-0.5"
                               onClick={() => setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity })}>
                               {item.quantity}<Pencil className="w-3 h-3 text-blue-400" />
                             </span>
                             
                             {/* PLUS BUTTON - Circular with bright green ring + shadow */}
-                            <button 
+                            <button title="Increase quantity"
                               onClick={() => dispatch(updateQuantity({ product_id: item.product_id, quantity: item.quantity + 1 }))}
                               className="w-8 h-8 rounded-full border-2 border-green-400 hover:border-green-500 hover:bg-green-50 text-green-600 hover:text-green-700 transition-all flex items-center justify-center shadow-sm"
                             >
@@ -454,7 +454,7 @@ export default function NewSale() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {/* LARGER DELETE BUTTON */}
-                         <button 
+                         <button title="Remove item"
                           onClick={() => dispatch(removeFromCart(item.product_id))}
                           className="w-8 h-8 hover:border-red-500 hover:bg-red-50 text-red-500 hover:text-red-700 transition-all flex items-center justify-center"
                         >
@@ -481,12 +481,12 @@ export default function NewSale() {
           {/* Hold / Take Buttons */}
           <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
             {cartItems.length > 0 && (
-              <button onClick={() => setHoldModalOpen(true)}
+              <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm">
                 <PauseCircle className="w-4 h-4" /> Hold Order
               </button>
             )}
-            <button onClick={() => setHeldModalOpen(true)}
+            <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative">
               <RotateCcw className="w-4 h-4" /> Take Order
               {heldOrders.length > 0 && (
@@ -499,7 +499,7 @@ export default function NewSale() {
         </div>
 
         {/* RIGHT COLUMN: Billing Controls */}
-        <div className="w-96 shrink-0">
+        <div className="w-full lg:w-96 shrink-0">
           <BillingControls />
         </div>
       </div>

@@ -307,7 +307,7 @@ export default function NewSale() {
           </div>
 
           {/* Sticky Hold / Take Buttons */}
-          <div className="sticky bottom-0 bg-white pt-3 pb-2 border-t border-gray-200 mt-3 flex items-center justify-end gap-3">
+          <div className="sticky bottom-0 bg-white pt-3 pb-2 border-t border-gray-200 mt-3 flex items-center justify-end gap-3 pr-1">
             {cartItems.length > 0 && (
               <button onClick={() => setHoldModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm">
@@ -315,10 +315,10 @@ export default function NewSale() {
               </button>
             )}
             <button onClick={() => setHeldModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative">
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative mr-6">
               <RotateCcw className="w-4 h-4" /> Take Order
               {heldOrders.length > 0 && (
-                <span className="absolute -top-3 -right-3 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
+                <span className="absolute -top-2.5 -right-3 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
                   {heldOrders.length}
                 </span>
               )}

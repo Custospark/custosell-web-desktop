@@ -6,16 +6,15 @@ interface AuthLayoutProps {
   title: string;
   subtitle?: string;
   heroImage?: string;
+  heroDescription?: string;
 }
-
-const TAGLINE = 'Faster Sales. Smarter Business.';
 
 const HERO_IMAGES = {
   login: 'https://images.unsplash.com/photo-1553729459-afe8f2e2f10c?w=1200&q=80',
   register: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80',
 };
 
-export function AuthLayout({ title, subtitle, heroImage, children }: PropsWithChildren<AuthLayoutProps>) {
+export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
   const image = heroImage || HERO_IMAGES.login;
 
   return (
@@ -29,21 +28,20 @@ export function AuthLayout({ title, subtitle, heroImage, children }: PropsWithCh
           </Link>
           <div className="max-w-md">
             <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
-              {TAGLINE}
+              More Sales. Faster Business Growth.
             </h1>
             <p className="text-blue-200 text-lg leading-relaxed">
-              A complete POS system for retail and wholesale businesses. Manage sales, inventory,
-              customers, expenses, and staff — all in one place.
+              {heroDescription || 'A complete POS system for retail and wholesale businesses.'}
             </p>
-            <div className="mt-8 flex gap-4">
+            <div className="mt-10 flex gap-5">
               {[
-                { value: 'POS', label: 'System' },
-                { value: '7', label: 'Modules' },
-                { value: '24/7', label: 'Offline' },
+                { value: '10K+', label: 'Businesses' },
+                { value: '99%', label: 'Uptime' },
+                { value: 'Offline', label: 'First' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-4 text-white min-w-[100px] text-center">
+                <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 text-white min-w-[110px] text-center">
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  <div className="text-blue-200 text-sm mt-0.5">{stat.label}</div>
+                  <div className="text-blue-200 text-sm mt-1">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -54,7 +52,7 @@ export function AuthLayout({ title, subtitle, heroImage, children }: PropsWithCh
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900">Custosell</h1>

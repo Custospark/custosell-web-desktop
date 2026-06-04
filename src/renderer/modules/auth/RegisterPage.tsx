@@ -54,47 +54,54 @@ export default function RegisterPage() {
     }
   };
 
-  const inputCls = "w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
+  const inputCls = "w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
   const isSubmitting = loading || loginMutation.isPending;
 
   return (
-    <AuthLayout title="Create Account" subtitle="Register your business to get started" heroImage="https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80">
+    <AuthLayout
+      title="Create Account"
+      subtitle="Register your business to get started"
+      heroImage="https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80"
+      heroDescription="Join thousands of businesses using Custosell to streamline their operations."
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input placeholder="Your name (owner)" value={form.owner_name} onChange={handleChange('owner_name')} required className={inputCls} />
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input placeholder="Your name" value={form.owner_name} onChange={handleChange('owner_name')} required className={inputCls} />
           </div>
           <div className="relative">
-            <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input placeholder="Business / Shop name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
+            <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input placeholder="Business name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
           </div>
-        </div>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
-        </div>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input type="tel" placeholder="Phone (optional)" value={form.phone} onChange={handleChange('phone')} className={inputCls} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
+          </div>
+          <div className="relative">
+            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input type="tel" placeholder="Phone (optional)" value={form.phone} onChange={handleChange('phone')} className={inputCls} />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
             <input type="password" placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={inputCls} />
           </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
             <input type="password" placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={inputCls} />
           </div>
         </div>
         {form.password_confirmation && !passwordsMatch && (
-          <p className="text-xs text-red-500 -mt-2">Passwords do not match</p>
+          <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
         <Button type="submit" className="w-full h-12 text-base" loading={isSubmitting} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
           Register Business
         </Button>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 pt-1">
           Already have an account?{' '}
           <Link to={ROUTES.LOGIN} className="text-blue-600 hover:underline font-medium">
             Sign in

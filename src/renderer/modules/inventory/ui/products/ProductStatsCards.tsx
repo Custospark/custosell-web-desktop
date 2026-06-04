@@ -33,7 +33,7 @@ export function ProductStatsCards({ products }: Props) {
         const s = cardStyles[card.color];
         return (
           <div key={card.label}
-            className={`relative overflow-hidden rounded-xl p-6 transition-all duration-300 border-2 bg-gradient-to-br from-white to-${card.color}-50/50 ${s.border} ${s.shadow} hover:-translate-y-0.5 group cursor-default min-h-[130px] flex flex-col justify-center`}>
+            className={`relative overflow-hidden rounded-xl p-6 transition-all duration-300 border-2 bg-gradient-to-br from-white to-${card.color}-50/50 ${s.border} ${s.shadow} hover:-translate-y-0.5 group cursor-pointer min-h-[130px] flex flex-col justify-center`}>
             <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${s.glow}`} />
             <div className="flex items-center justify-between mb-4 relative">
               <div className={`p-3.5 rounded-xl transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>

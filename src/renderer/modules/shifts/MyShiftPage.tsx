@@ -180,7 +180,7 @@ export default function MyShiftPage() {
           <SearchInput placeholder="Search by receipt number..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
         </div>
         {shiftSales && shiftSales.length > 0 ? (
-          <>{filteredSales.length === 0 ? (
+          filteredSales.length === 0 ? (
             <EmptyState icon={<ShoppingCart className="w-8 h-8" />} title="No matching transactions" description="Try a different receipt number." />
           ) : (
             <><Table
@@ -213,7 +213,7 @@ export default function MyShiftPage() {
             onPageSizeChange={paginated.setPageSize}
           />
           </>
-          </>
+          )
         ) : (
           <EmptyState icon={<ShoppingCart className="w-8 h-8" />} title="No transactions yet" description="Sales made during this shift will appear here." />
         )}

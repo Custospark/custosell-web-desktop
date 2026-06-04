@@ -7,6 +7,7 @@ import { useLogout } from '../../shared/api/account/AccountQueries';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
+import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { Table } from '../../shared/components/tables/Table';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Card } from '../../shared/components/cards/Card';
@@ -32,6 +33,14 @@ export default function MyShiftPage() {
   const location = useLocation();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [search, setSearch] = useState('');
+
+  const filteredSales = useMemo(() => {
+    if (!shiftSales) return [];
+    if (!search.trim()) return shiftSales;
+    const q = search.toLowerCase();
+    return shiftSales.filter((sale: any) => sale.receipt_number.toLowerCase().includes(q));
+  }, [shiftSales, search]);
 
   useEffect(() => {
     if ((location.state as any)?.openEndShift) {
@@ -43,7 +52,7 @@ export default function MyShiftPage() {
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
   const { data: shiftSales } = useShiftSales(shiftId ?? null);
-  const paginated = usePagination(shiftSales || [], 10);
+  const paginated = usePagination(filteredSales || [], 10);
 
   const totalSales = shiftSales?.reduce((s, sale) => s + parseFloat(sale.total_amount), 0) || 0;
   const cashTotal = shiftSales?.filter((s) => s.payment_method === 'cash').reduce((s, sale) => s + parseFloat(sale.total_amount), 0) || 0;
@@ -167,8 +176,14 @@ export default function MyShiftPage() {
           <h3 className="text-sm font-semibold text-gray-800">Shift Transactions</h3>
           <span className="text-lg font-bold text-gray-900">{formatCurrency(totalSales)}</span>
         </div>
+        <div className="mb-4">
+          <SearchInput placeholder="Search by receipt number..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+        </div>
         {shiftSales && shiftSales.length > 0 ? (
-          <><Table
+          <>{filteredSales.length === 0 ? (
+            <EmptyState icon={<ShoppingCart className="w-8 h-8" />} title="No matching transactions" description="Try a different receipt number." />
+          ) : (
+            <><Table
             rowKey={(sale: any) => sale.id}
             data={paginated.data}
             columns={[
@@ -197,6 +212,7 @@ export default function MyShiftPage() {
             onPageChange={paginated.setPage}
             onPageSizeChange={paginated.setPageSize}
           />
+          </>
           </>
         ) : (
           <EmptyState icon={<ShoppingCart className="w-8 h-8" />} title="No transactions yet" description="Sales made during this shift will appear here." />

@@ -1,4 +1,4 @@
-import { CheckCircle, Printer, ShoppingCart, DollarSign, Percent, CreditCard } from 'lucide-react';
+import { CheckCircle, Printer, ShoppingCart, DollarSign, Percent, CreditCard, X, Plus } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import type { Sale } from '../api/salesTypes';
@@ -43,6 +43,7 @@ export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <Button className="flex-1 order-2 sm:order-1" variant="outline" onClick={onClose}>
+            <X className="w-4 h-4 mr-1" />
             Cancel
           </Button>
           <Button className="flex-1 order-3 sm:order-2" variant="outline" onClick={onPrint}>
@@ -50,6 +51,7 @@ export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }
             Print Receipt
           </Button>
           <Button className="flex-1 order-1 sm:order-3" onClick={onNewSale}>
+            <Plus className="w-4 h-4 mr-1" />
             New Sale
           </Button>
         </div>

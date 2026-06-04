@@ -141,15 +141,15 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-30 h-full bg-[#1e293b] text-white transform transition-all duration-200 ${
+      className={`fixed top-0 left-0 z-30 h-full bg-white border-r border-gray-200 transform transition-all duration-200 ${
         collapsed ? 'w-[64px]' : 'w-[260px]'
       } ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}
     >
-      <div className={`border-b border-gray-700 flex items-center ${collapsed ? 'justify-center p-3' : 'p-6'}`}>
+      <div className={`border-b border-gray-200 flex items-center ${collapsed ? 'justify-center p-3' : 'p-6'}`}>
         {collapsed ? (
-          <h1 className="text-lg font-bold">C</h1>
+          <h1 className="text-lg font-bold text-blue-600">C</h1>
         ) : (
-          <h1 className="text-xl font-bold">Custosell</h1>
+          <h1 className="text-xl font-bold text-blue-600">Custosell</h1>
         )}
       </div>
 
@@ -178,7 +178,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
                 onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
-                    isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+                    isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`
                 }
               >
@@ -193,7 +193,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
               <button
                 onClick={() => setOpenGroup(isOpen ? null : groupIndex)}
                 className={`flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                  isOpen ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-700'
+                  isOpen ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
@@ -201,7 +201,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
                 {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
               {isOpen && (
-                <div className="ml-2 mt-1 space-y-0.5 border-l border-gray-700 pl-3">
+                <div className="ml-2 mt-1 space-y-0.5 border-l border-gray-200 pl-3">
                   {group.subItems.map((item) => {
                     const isChildActive = location.pathname === item.to;
                     return (
@@ -212,8 +212,8 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
                         onClick={onClose}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
                           isChildActive
-                            ? 'bg-blue-600 text-white font-medium'
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                         }`}
                       >
                         <item.icon className="w-4 h-4 shrink-0" />
@@ -228,25 +228,25 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
         })}
       </nav>
 
-      <div className="p-2 border-t border-gray-700 space-y-1">
+      <div className="p-2 border-t border-gray-200 space-y-1">
         {!collapsed && user && (
           <div className="flex items-center gap-3 px-3 py-2">
             {user.avatar ? (
               <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
                 {(user.name || 'U').charAt(0).toUpperCase()}
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-200 truncate">{user.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+              <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
           </div>
         )}
         <button
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR_COLLAPSED' })}
-          className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors`}
+          className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors`}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
@@ -255,7 +255,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
         <button
           onClick={handleLogout}
           disabled={logoutMutation.isPending}
-          className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors`}
+          className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors`}
           title="Logout"
         >
           <LogOut className="w-5 h-5 shrink-0" />

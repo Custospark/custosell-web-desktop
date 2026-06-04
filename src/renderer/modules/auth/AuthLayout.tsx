@@ -49,7 +49,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
               <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-3">Built for</p>
               <table className="w-full text-sm text-blue-100">
                 <tbody>
-                  {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce'].reduce<string[][]>((rows, type, i) => {
+                  {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Mobile Money', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station', 'School / Edu'].reduce<string[][]>((rows, type, i) => {
                     const col = i % 4;
                     if (col === 0) rows.push([]);
                     rows[rows.length - 1].push(type);

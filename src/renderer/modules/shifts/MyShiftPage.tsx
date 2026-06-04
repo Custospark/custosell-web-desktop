@@ -35,13 +35,6 @@ export default function MyShiftPage() {
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [search, setSearch] = useState('');
 
-  const filteredSales = useMemo(() => {
-    if (!shiftSales) return [];
-    if (!search.trim()) return shiftSales;
-    const q = search.toLowerCase();
-    return shiftSales.filter((sale: any) => sale.receipt_number.toLowerCase().includes(q));
-  }, [shiftSales, search]);
-
   useEffect(() => {
     if ((location.state as any)?.openEndShift) {
       setShowReceiptPreview(true);
@@ -52,6 +45,14 @@ export default function MyShiftPage() {
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
   const { data: shiftSales } = useShiftSales(shiftId ?? null);
+
+  const filteredSales = useMemo(() => {
+    if (!shiftSales) return [];
+    if (!search.trim()) return shiftSales;
+    const q = search.toLowerCase();
+    return shiftSales.filter((sale: any) => sale.receipt_number.toLowerCase().includes(q));
+  }, [shiftSales, search]);
+
   const paginated = usePagination(filteredSales || [], 10);
 
   const totalSales = shiftSales?.reduce((s, sale) => s + parseFloat(sale.total_amount), 0) || 0;

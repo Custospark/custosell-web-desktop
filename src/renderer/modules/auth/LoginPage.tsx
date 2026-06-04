@@ -16,7 +16,7 @@ export default function LoginPage() {
     loginMutation.mutate({ email, password });
   };
 
-  const inputCls = "w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
+  const inputCls = "w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
 
   return (
     <AuthLayout
@@ -25,7 +25,7 @@ export default function LoginPage() {
       heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
       heroDescription="Real-time dashboard, smart inventory, fast sales, customer insights, expense tracking, and shift management — everything you need to run your business."
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="relative">
           <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email address" className={inputCls} />
@@ -39,10 +39,10 @@ export default function LoginPage() {
             {(loginMutation.error as any)?.response?.data?.message || (loginMutation.error as any)?.message || 'Invalid credentials'}
           </p>
         )}
-        <Button type="submit" className="w-full h-12 text-base" loading={loginMutation.isPending}>
+        <Button type="submit" className="w-full text-base py-3.5" loading={loginMutation.isPending}>
           Sign In
         </Button>
-        <p className="text-center text-sm text-gray-500 pt-1">
+        <p className="text-center text-sm text-gray-500 pt-2">
           Don't have an account?{' '}
           <Link to={ROUTES.REGISTER} className="text-blue-600 hover:underline font-medium">
             Register your business

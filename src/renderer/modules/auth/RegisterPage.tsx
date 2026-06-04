@@ -54,7 +54,7 @@ export default function RegisterPage() {
     }
   };
 
-  const inputCls = "w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
+  const inputCls = "w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
   const isSubmitting = loading || loginMutation.isPending;
 
   return (
@@ -92,7 +92,7 @@ export default function RegisterPage() {
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
-        <Button type="submit" className="w-full h-12 text-base" loading={isSubmitting} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
+        <Button type="submit" className="w-full text-base py-3.5" loading={isSubmitting} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
           Register Business
         </Button>
         <p className="text-center text-sm text-gray-500 pt-1">

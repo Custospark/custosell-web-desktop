@@ -66,7 +66,7 @@ export default function StockAdjustModal({ open, onClose, product }: StockAdjust
           <div className="flex rounded-lg border border-gray-300 overflow-hidden">
             <button
               type="button"
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${direction === 'add' ? 'bg-emerald-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${direction === 'add' ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
               onClick={() => setDirection('add')}
             >
               <Plus className="w-4 h-4 inline mr-1" />Add Stock
@@ -128,7 +128,7 @@ export default function StockAdjustModal({ open, onClose, product }: StockAdjust
             <button
               type="submit"
               disabled={wouldGoNegative || createMovement.isPending}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-2 ${direction === 'add' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}
+              className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-2 ${direction === 'add' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
             >
               {createMovement.isPending ? 'Saving...' : `${direction === 'add' ? 'Add' : 'Remove'} Stock`}
             </button>

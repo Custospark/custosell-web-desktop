@@ -46,7 +46,7 @@ export function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50/30">
       {state.sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20 lg:hidden"

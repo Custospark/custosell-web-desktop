@@ -6,6 +6,13 @@ interface Props {
   products: Product[];
 }
 
+const cardStyles: Record<string, { border: string; shadow: string; iconBg: string; iconColor: string; badge: string; glow: string; hoverBg: string }> = {
+  blue: { border: 'border-blue-500', shadow: 'hover:shadow-blue-500/20', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700', glow: 'bg-blue-500/10', hoverBg: 'group-hover:bg-blue-200' },
+  green: { border: 'border-green-500', shadow: 'hover:shadow-green-500/20', iconBg: 'bg-green-100', iconColor: 'text-green-600', badge: 'bg-green-100 text-green-700', glow: 'bg-green-500/10', hoverBg: 'group-hover:bg-green-200' },
+  amber: { border: 'border-amber-500', shadow: 'hover:shadow-amber-500/20', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', badge: 'bg-amber-100 text-amber-700', glow: 'bg-amber-500/10', hoverBg: 'group-hover:bg-amber-200' },
+  red: { border: 'border-red-500', shadow: 'hover:shadow-red-500/20', iconBg: 'bg-red-100', iconColor: 'text-red-600', badge: 'bg-red-100 text-red-700', glow: 'bg-red-500/10', hoverBg: 'group-hover:bg-red-200' },
+};
+
 export function ProductStatsCards({ products }: Props) {
   const total = products.length;
   const active = products.filter((p) => p.is_active).length;
@@ -13,91 +20,31 @@ export function ProductStatsCards({ products }: Props) {
   const lowStock = products.filter((p) => p.stock_quantity <= p.low_stock_threshold).length;
 
   const cards = [
-    {
-      label: 'Total Products',
-      value: total.toLocaleString(),
-      sub: 'All products in inventory',
-      icon: Box,
-      color: 'blue',
-      gradient: 'from-white to-blue-50/50',
-      border: 'border-blue-200',
-      hoverBorder: 'hover:border-blue-400',
-      iconBg: 'bg-blue-100 group-hover:bg-blue-200',
-      iconColor: 'text-blue-600',
-      badge: 'Total',
-    },
-    {
-      label: 'Active Products',
-      value: active.toLocaleString(),
-      sub: `${total > 0 ? Math.round((active / total) * 100) : 0}% of total`,
-      icon: Package,
-      color: 'green',
-      gradient: 'from-white to-green-50/50',
-      border: 'border-green-200',
-      hoverBorder: 'hover:border-green-400',
-      iconBg: 'bg-green-100 group-hover:bg-green-200',
-      iconColor: 'text-green-600',
-      badge: 'Active',
-      progress: total > 0 ? (active / total) * 100 : 0,
-    },
-    {
-      label: 'Stock Value',
-      value: formatCurrency(totalValue),
-      sub: 'Total inventory value',
-      icon: TrendingUp,
-      color: 'yellow',
-      gradient: 'from-white to-yellow-50/50',
-      border: 'border-yellow-200',
-      hoverBorder: 'hover:border-yellow-400',
-      iconBg: 'bg-yellow-100 group-hover:bg-yellow-200',
-      iconColor: 'text-yellow-600',
-      badge: 'Value',
-    },
-    {
-      label: 'Low Stock Items',
-      value: lowStock.toLocaleString(),
-      sub: `${total > 0 ? Math.round((lowStock / total) * 100) : 0}% of inventory`,
-      icon: AlertTriangle,
-      color: 'red',
-      gradient: 'from-white to-red-50/50',
-      border: 'border-red-200',
-      hoverBorder: 'hover:border-red-400',
-      iconBg: 'bg-red-100 group-hover:bg-red-200',
-      iconColor: 'text-red-600',
-      badge: 'Alert',
-    },
+    { label: 'Total Products', value: total.toLocaleString(), sub: 'All products in inventory', icon: Box, color: 'blue', badge: 'Total' },
+    { label: 'Active Products', value: active.toLocaleString(), sub: `${total > 0 ? Math.round((active / total) * 100) : 0}% of total`, icon: Package, color: 'green', badge: 'Active', progress: total > 0 ? (active / total) * 100 : 0 },
+    { label: 'Stock Value', value: formatCurrency(totalValue), sub: 'Total inventory value', icon: TrendingUp, color: 'amber', badge: 'Value' },
+    { label: 'Low Stock Items', value: lowStock.toLocaleString(), sub: `${total > 0 ? Math.round((lowStock / total) * 100) : 0}% of inventory`, icon: AlertTriangle, color: 'red', badge: 'Alert' },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
+        const s = cardStyles[card.color];
         return (
-          <div
-            key={card.label}
-            className={`relative overflow-hidden rounded-xl p-5 transition-all duration-300 border-2 bg-gradient-to-br ${card.gradient} ${card.border} ${card.hoverBorder} group transform hover:-translate-y-1 hover:shadow-lg`}
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity bg-current" style={{ color: card.color === 'red' ? 'rgba(239,68,68,0.08)' : `${card.color === 'blue' ? 'rgba(59,130,246,0.08)' : card.color === 'green' ? 'rgba(34,197,94,0.08)' : 'rgba(234,179,8,0.08)'}` }} />
-
-            <div className="flex items-center justify-between mb-3">
-              <div className={`p-3 rounded-xl transition-all duration-300 ${card.iconBg} group-hover:scale-110`}>
-                <Icon className={`w-6 h-6 ${card.iconColor}`} />
+          <div key={card.label}
+            className={`relative overflow-hidden rounded-xl p-6 transition-all duration-300 border-2 bg-gradient-to-br from-white to-${card.color}-50/50 ${s.border} ${s.shadow} hover:-translate-y-0.5 group cursor-default min-h-[130px] flex flex-col justify-center`}>
+            <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${s.glow}`} />
+            <div className="flex items-center justify-between mb-4 relative">
+              <div className={`p-3.5 rounded-xl transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>
+                <Icon className={`w-6 h-6 ${s.iconColor}`} />
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                card.color === 'red' ? 'bg-red-100 text-red-700' :
-                card.color === 'green' ? 'bg-green-100 text-green-700' :
-                card.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                'bg-blue-100 text-blue-700'
-              }`}>
-                {card.badge}
-              </span>
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.badge}`}>{card.badge}</span>
             </div>
-
-            <p className="text-2xl font-bold text-gray-900 mb-0.5">{card.value}</p>
-            <p className="text-sm font-medium text-gray-500">{card.label}</p>
-
+            <p className="text-3xl font-bold text-gray-900 mb-0.5 relative">{card.value}</p>
+            <p className="text-sm font-medium text-gray-500 relative">{card.label}</p>
             {card.progress !== undefined && (
-              <div className="mt-3 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="mt-3 h-1.5 bg-gray-200 rounded-full overflow-hidden relative">
                 <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${card.progress}%` }} />
               </div>
             )}

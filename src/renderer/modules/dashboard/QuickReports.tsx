@@ -59,7 +59,7 @@ const reports: ReportConfig[] = [
   },
   {
     key: 'payment-breakdown', label: 'Payment Breakdown', description: 'Sales by payment method',
-    icon: CreditCard, color: 'yellow', bg: 'bg-yellow-50', textColor: 'text-yellow-600',
+    icon: CreditCard, color: 'amber', bg: 'bg-amber-50', textColor: 'text-amber-600',
     formats: [
       { value: 'csv', label: 'CSV', icon: File, recommended: true },
       { value: 'xlsx', label: 'Excel', icon: FileSpreadsheet },

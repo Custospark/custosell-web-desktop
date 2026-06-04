@@ -161,7 +161,7 @@ function BillingControls() {
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
               <input title="Enter amount tendered" type="number" min={0} step="100"
-                className="w-full pl-11 pr-28 py-2.5 border border-gray-200 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-11 pr-28 py-2.5 border border-gray-300 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0" value={amountTendered || ''}
                 onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
                 onFocus={(e) => e.target.select()} />
@@ -187,7 +187,7 @@ function BillingControls() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
               )}
               <input title="Enter discount amount" type="number" min={0}
-                className={`border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 ${discountType === 'fixed' ? 'pl-11 pr-3' : 'pl-3 pr-3'}`}
+                className={`border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 ${discountType === 'fixed' ? 'pl-11 pr-3' : 'pl-3 pr-3'}`}
                 placeholder={discountType === 'percentage' ? '0%' : '0'}
                 value={discountAmount || ''}
                 onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
@@ -340,7 +340,7 @@ export default function NewSale() {
                 <motion.div
                   className="absolute inset-0 rounded-lg z-0"
                   style={{
-                    background: 'linear-gradient(90deg, #3b82f6, #10b981, #6366f1, #3b82f6)',
+                    background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)',
                     backgroundSize: '300% 100%',
                   }}
                   animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
@@ -384,7 +384,7 @@ export default function NewSale() {
                   className="absolute z-30 w-full mt-1.5">
                   <div className="relative rounded-xl p-[2px]">
                     <motion.div className="absolute inset-0 rounded-xl z-0"
-                      style={{ background: 'linear-gradient(90deg, #3b82f6, #10b981, #6366f1, #3b82f6)', backgroundSize: '300% 100%' }}
+                      style={{ background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)', backgroundSize: '300% 100%' }}
                       animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                       transition={{ duration: 4, repeat: Infinity, ease: 'linear' }} />
                     <div className="relative z-10 bg-white border border-gray-200 rounded-[10px] shadow-lg max-h-72 overflow-y-auto">

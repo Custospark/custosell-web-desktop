@@ -65,7 +65,6 @@ export function useCreateSale() {
       qc.invalidateQueries({ queryKey: salesKeys.all });
       qc.invalidateQueries({ queryKey: salesKeys.list() });
       qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
-      showToast('success', 'Sale completed');
     },
     onError: (e) => {
       showToast('error', (e.response?.data as any)?.message || 'Sale failed');

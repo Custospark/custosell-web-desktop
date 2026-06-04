@@ -3,6 +3,7 @@ import { Modal } from '../../../../shared/components/modals/Modal';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { Badge } from '../../../../shared/components/badges/Badge';
 import { ShoppingBag } from 'lucide-react';
 
 interface CustomerPurchaseModalProps {
@@ -57,13 +58,9 @@ export default function CustomerPurchaseModal({ open, onClose, customerId, custo
                   <td className="py-2.5 px-3 text-right font-medium text-gray-900">{formatCurrency(p.total_amount)}</td>
                   <td className="py-2.5 px-3 capitalize text-gray-800">{p.payment_method.replace('_', ' ')}</td>
                   <td className="py-2.5 px-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      p.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
-                      p.payment_status === 'partially_refunded' ? 'bg-amber-100 text-amber-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
+                    <Badge variant={p.payment_status === 'paid' ? 'success' : p.payment_status === 'partially_refunded' ? 'warning' : 'danger'}>
                       {p.payment_status.replace('_', ' ')}
-                    </span>
+                    </Badge>
                   </td>
                 </tr>
               ))}

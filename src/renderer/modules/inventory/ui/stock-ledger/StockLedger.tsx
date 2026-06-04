@@ -327,7 +327,7 @@ export default function StockLedger() {
           <div className="p-4 space-y-4">
             <div className="flex rounded-lg border border-gray-300 overflow-hidden">
               <button type="button"
-                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${direction === 'add' ? 'bg-emerald-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${direction === 'add' ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                 onClick={() => setDirection('add')}>
                 <PlusIcon className="w-4 h-4 inline mr-1.5" />Increase Stock
               </button>

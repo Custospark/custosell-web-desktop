@@ -62,7 +62,7 @@ export default function RegisterPage() {
       title="Create Account"
       subtitle="Register your business to get started"
       heroImage="https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80"
-      heroDescription="Join thousands of businesses using Custosell to streamline their operations."
+      heroDescription="Monitor performance with dashboards, control stock with inventory, process sales seamlessly, understand your customers, manage expenses, and track shifts — all in one platform."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

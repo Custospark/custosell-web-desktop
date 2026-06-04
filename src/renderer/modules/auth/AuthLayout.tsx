@@ -27,26 +27,26 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             Custosell
           </Link>
           <div className="max-w-md">
-            <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
+            <h1 className="text-3xl font-bold text-white mb-3 leading-tight">
               More Sales. Faster Business Growth.
             </h1>
-            <p className="text-blue-200 text-lg leading-relaxed">
+            <p className="text-blue-200 text-base leading-relaxed">
               {heroDescription || 'A complete POS system for retail and wholesale businesses.'}
             </p>
-            <div className="mt-10 flex gap-5">
+            <div className="mt-6 flex gap-4">
               {[
                 { value: '10K+', label: 'Businesses' },
                 { value: '99%', label: 'Uptime' },
                 { value: 'Offline', label: 'First' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 text-white min-w-[110px] text-center">
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <div className="text-blue-200 text-sm mt-1">{stat.label}</div>
+                <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-white min-w-[90px] text-center">
+                  <div className="text-xl font-bold">{stat.value}</div>
+                  <div className="text-blue-200 text-xs mt-0.5">{stat.label}</div>
                 </div>
               ))}
             </div>
-            <div className="mt-8">
-              <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-3">Built for</p>
+            <div className="mt-6">
+              <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-2">Built for</p>
               <table className="w-full text-sm text-blue-100">
                 <tbody>
                   {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].reduce<string[][]>((rows, type, i) => {

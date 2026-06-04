@@ -30,7 +30,7 @@ export interface AuthUser {
   is_active: boolean;
   avatar?: string | null;
   business_name?: string | null;
-  business?: { data: BusinessInfo } | null;
+  business?: BusinessInfo | null;
   shift_clock_in?: string | null;
   shift_id?: number | null;
   role?: { id: number; name: string; slug: string; permissions: Record<string, boolean> } | null;
@@ -95,7 +95,9 @@ const authSlice = createSlice({
       state.error = null;
     },
     loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string }>) {
-      state.user = action.payload.user;
+      const user = action.payload.user;
+      if (user.business && 'data' in user.business) user.business = (user.business as any).data;
+      state.user = user;
       state.token = action.payload.token;
       state.businessId = action.payload.user.business_id;
       state.isAuthenticated = true;
@@ -113,7 +115,9 @@ const authSlice = createSlice({
       state.error = null;
     },
     registerSuccess(state, action: PayloadAction<{ user: AuthUser; token: string }>) {
-      state.user = action.payload.user;
+      const user = action.payload.user;
+      if (user.business && 'data' in user.business) user.business = (user.business as any).data;
+      state.user = user;
       state.token = action.payload.token;
       state.businessId = action.payload.user.business_id;
       state.isAuthenticated = true;
@@ -137,8 +141,10 @@ const authSlice = createSlice({
       clearStorage();
     },
     setUser(state, action: PayloadAction<AuthUser>) {
-      state.user = action.payload;
-      state.businessId = action.payload.business_id;
+      const user = action.payload;
+      if (user.business && 'data' in user.business) user.business = (user.business as any).data;
+      state.user = user;
+      state.businessId = user.business_id;
       state.isAuthenticated = true;
       state.isInitialized = true;
     },

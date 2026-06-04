@@ -6,7 +6,7 @@ import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
-import { Menu, X, User, LogOut, ChevronDown, Clock, Square } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, Clock } from 'lucide-react';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 
 export function Layout() {

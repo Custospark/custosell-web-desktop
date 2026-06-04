@@ -43,6 +43,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         email: staff.email,
         phone: staff.phone ?? '',
         password: '',
+        password_confirmation: '',
         role_id: staff.role_id,
         is_active: staff.is_active,
       });

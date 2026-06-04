@@ -18,7 +18,7 @@ import { formatShiftTime, formatShiftDate, formatShiftDateTime } from '../../sha
 import { cn } from '../../shared/utils/cn';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { useReactToPrint } from 'react-to-print';
-import { ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut, Play, RefreshCw, Eye } from 'lucide-react';
+import { ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut, RefreshCw } from 'lucide-react';
 import ReceiptPreviewModal from '../sales/ui/history/ReceiptPreviewModal';
 
 export default function MyShiftPage() {

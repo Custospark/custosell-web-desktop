@@ -15,7 +15,7 @@ export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 no-print">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 sm:p-10 text-center">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-10 sm:p-12 text-center">
         <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-5">
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>

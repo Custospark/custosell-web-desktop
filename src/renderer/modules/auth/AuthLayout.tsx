@@ -45,6 +45,17 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
                 </div>
               ))}
             </div>
+            <div className="mt-8">
+              <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-3">Built for</p>
+              <div className="flex flex-wrap gap-2">
+                {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique'].map((type) => (
+                  <span key={type} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-blue-100 backdrop-blur-sm border border-white/10">
+                    <svg className="w-3 h-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    {type}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="text-blue-300 text-sm">
             &copy; {new Date().getFullYear()} Custosell. All rights reserved.

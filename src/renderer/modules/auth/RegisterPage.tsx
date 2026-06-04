@@ -65,35 +65,29 @@ export default function RegisterPage() {
       heroDescription="Monitor performance with dashboards, control stock with inventory, process sales seamlessly, understand your customers, manage expenses, and track shifts — all in one platform."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input placeholder="Your name" value={form.owner_name} onChange={handleChange('owner_name')} required className={inputCls} />
-          </div>
-          <div className="relative">
-            <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input placeholder="Business name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
-          </div>
+        <div className="relative">
+          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input placeholder="Your name" value={form.owner_name} onChange={handleChange('owner_name')} required className={inputCls} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
-          </div>
-          <div className="relative">
-            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input type="tel" placeholder="Phone (optional)" value={form.phone} onChange={handleChange('phone')} className={inputCls} />
-          </div>
+        <div className="relative">
+          <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input placeholder="Business name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input type="password" placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={inputCls} />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input type="password" placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={inputCls} />
-          </div>
+        <div className="relative">
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
+        </div>
+        <div className="relative">
+          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input type="tel" placeholder="Phone (optional)" value={form.phone} onChange={handleChange('phone')} className={inputCls} />
+        </div>
+        <div className="relative">
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input type="password" placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={inputCls} />
+        </div>
+        <div className="relative">
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input type="password" placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={inputCls} />
         </div>
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>

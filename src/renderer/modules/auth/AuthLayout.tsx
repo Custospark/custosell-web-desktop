@@ -47,18 +47,11 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             </div>
             <div className="mt-8">
               <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-3">Built for</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                {[
-                  ['Retail', 'Wholesale', 'Restaurant', 'Café', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique'],
-                  ['Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce'],
-                ].map((col, ci) => (
-                  <div key={ci} className="space-y-2">
-                    {col.map((type) => (
-                      <div key={type} className="flex items-center gap-2 text-sm text-blue-100">
-                        <svg className="w-3.5 h-3.5 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        <span>{type}</span>
-                      </div>
-                    ))}
+              <div className="grid grid-cols-3 gap-x-4 gap-y-1.5">
+                {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce'].map((type) => (
+                  <div key={type} className="flex items-center gap-1.5 text-sm text-blue-100">
+                    <svg className="w-3 h-3 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <span>{type}</span>
                   </div>
                 ))}
               </div>

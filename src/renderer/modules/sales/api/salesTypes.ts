@@ -28,10 +28,19 @@ export interface BusinessInfo {
   slug: string;
   email: string | null;
   phone: string | null;
+  website: string | null;
   address: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  tax_id: string | null;
+  timezone: string | null;
+  business_type: string | null;
   currency: string;
   receipt_footer: string | null;
   logo_path: string | null;
+  status: string;
 }
 
 export interface UserInfo {

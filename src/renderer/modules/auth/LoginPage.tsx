@@ -39,7 +39,7 @@ export default function LoginPage() {
             {(loginMutation.error as any)?.response?.data?.message || (loginMutation.error as any)?.message || 'Invalid credentials'}
           </p>
         )}
-        <Button type="submit" className="w-full text-base py-3.5" loading={loginMutation.isPending}>
+        <Button type="submit" className="w-full" loading={loginMutation.isPending}>
           Sign In
         </Button>
         <p className="text-center text-sm text-gray-500 pt-2">

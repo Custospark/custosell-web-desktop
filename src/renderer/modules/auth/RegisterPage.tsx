@@ -92,7 +92,7 @@ export default function RegisterPage() {
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
-        <Button type="submit" className="w-full text-base py-3.5" loading={isSubmitting} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
+        <Button type="submit" className="w-full" loading={isSubmitting} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
           Register Business
         </Button>
         <p className="text-center text-sm text-gray-500 pt-1">

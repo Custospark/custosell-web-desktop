@@ -42,15 +42,15 @@ export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button className="flex-1 order-2 sm:order-1" variant="outline" onClick={onClose}>
+          <Button className="flex-1 order-2 sm:order-1 py-3" variant="outline" onClick={onClose}>
             <X className="w-4 h-4 mr-1" />
             Cancel
           </Button>
-          <Button className="flex-1 order-3 sm:order-2" variant="outline" onClick={onPrint}>
+          <Button className="flex-1 order-3 sm:order-2 py-3" variant="outline" onClick={onPrint}>
             <Printer className="w-4 h-4 mr-1" />
             Print Receipt
           </Button>
-          <Button className="flex-1 order-1 sm:order-3" onClick={onNewSale}>
+          <Button className="flex-1 order-1 sm:order-3 py-3" onClick={onNewSale}>
             <Plus className="w-4 h-4 mr-1" />
             New Sale
           </Button>

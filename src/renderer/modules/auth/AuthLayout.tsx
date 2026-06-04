@@ -47,10 +47,15 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             </div>
             <div className="mt-8">
               <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-3">Built for</p>
-              <div className="flex flex-wrap gap-2">
-                {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique'].map((type) => (
+              <div className="flex flex-wrap gap-x-2 gap-y-2.5">
+                {[
+                  'Retail', 'Wholesale', 'Restaurant', 'Café', 'Pharmacy',
+                  'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique',
+                  'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion',
+                  'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce',
+                ].map((type) => (
                   <span key={type} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-blue-100 backdrop-blur-sm border border-white/10">
-                    <svg className="w-3 h-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-3 h-3 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     {type}
                   </span>
                 ))}

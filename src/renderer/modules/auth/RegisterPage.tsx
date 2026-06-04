@@ -61,7 +61,7 @@ export default function RegisterPage() {
     <AuthLayout
       title="Create Account"
       subtitle="Register your business to get started"
-      heroImage="https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80"
+      heroImage="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80"
       heroDescription="Monitor performance with dashboards, control stock with inventory, process sales seamlessly, understand your customers, manage expenses, and track shifts — all in one platform."
     >
       <form onSubmit={handleSubmit} className="space-y-4">

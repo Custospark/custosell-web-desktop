@@ -10,8 +10,8 @@ interface AuthLayoutProps {
 }
 
 const HERO_IMAGES = {
-  login: 'https://images.unsplash.com/photo-1553729459-afe8f2e2f10c?w=1200&q=80',
-  register: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80',
+  login: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80',
+  register: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
 };
 
 export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {

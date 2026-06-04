@@ -22,7 +22,7 @@ export default function LoginPage() {
     <AuthLayout
       title="Sign In"
       subtitle="Welcome back to Custosell"
-      heroImage="https://images.unsplash.com/photo-1553729459-afe8f2e2f10c?w=1200&q=80"
+      heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
       heroDescription="Real-time dashboard, smart inventory, fast sales, customer insights, expense tracking, and shift management — everything you need to run your business."
     >
       <form onSubmit={handleSubmit} className="space-y-5">

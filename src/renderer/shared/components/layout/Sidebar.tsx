@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Receipt, Settings,
   LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
-  UserCog, Shield, CreditCard, Building2, ListOrdered,
+  UserCog, Shield, CreditCard, Building2, ListOrdered, Clock,
 } from 'lucide-react';
 import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -51,6 +51,7 @@ const navGroups: NavGroup[] = [
       { to: ROUTES.SALES.NEW, label: 'New Sale', icon: Plus },
       { to: ROUTES.SALES.HISTORY, label: 'History', icon: History },
       { to: ROUTES.SALES.REFUNDS, label: 'Refunds', icon: RotateCcw },
+      { to: ROUTES.SALES.MY_SHIFT, label: 'My Shift', icon: Clock },
     ],
   },
   {
@@ -73,7 +74,7 @@ const navGroups: NavGroup[] = [
     icon: Receipt,
     label: 'Expenses',
     subItems: [
-      { to: ROUTES.EXPENSES.CATEGORIES, label: 'Record Expense', icon: Receipt },
+      { to: ROUTES.EXPENSES.CATEGORIES, label: 'Expense Categories', icon: Receipt },
       { to: ROUTES.EXPENSES.LIST, label: 'Expense List', icon: ListOrdered },
     ],
   },
@@ -85,6 +86,7 @@ const navGroups: NavGroup[] = [
       { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
+      { to: ROUTES.SETTINGS.PROFILE, label: 'My Profile', icon: UserCog },
     ],
   },
 ];
@@ -227,6 +229,21 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
       </nav>
 
       <div className="p-2 border-t border-gray-700 space-y-1">
+        {!collapsed && user && (
+          <div className="flex items-center gap-3 px-3 py-2">
+            {user.avatar ? (
+              <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                {(user.name || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-200 truncate">{user.name}</p>
+              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
         <button
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR_COLLAPSED' })}
           className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors`}

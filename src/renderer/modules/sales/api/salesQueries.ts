@@ -58,11 +58,12 @@ export function useCreateSale() {
   const { showToast } = useToast();
   return useMutation<Sale, AxiosError, CreateSalePayload>({
     mutationFn: async (payload) => {
-      const { data } = await axiosInstance.post<{ data: Sale }>('/sales', payload);
-      return data.data;
+      const res = await axiosInstance.post('/sales', payload);
+      return res.data as Sale;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: salesKeys.all });
+      qc.invalidateQueries({ queryKey: salesKeys.list() });
       qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
       showToast('success', 'Sale completed');
     },

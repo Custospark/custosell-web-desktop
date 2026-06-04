@@ -1,5 +1,25 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
+export interface BusinessInfo {
+  id: number;
+  name: string;
+  slug: string;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  tax_id: string | null;
+  timezone: string | null;
+  business_type: string | null;
+  currency: string | null;
+  receipt_footer: string | null;
+  logo_path: string | null;
+  status: string;
+}
 export interface AuthUser {
   id: number;
   business_id: number | null;
@@ -8,6 +28,11 @@ export interface AuthUser {
   email: string;
   phone: string | null;
   is_active: boolean;
+  avatar?: string | null;
+  business_name?: string | null;
+  business?: { data: BusinessInfo } | null;
+  shift_clock_in?: string | null;
+  shift_id?: number | null;
   role?: { id: number; name: string; slug: string; permissions: Record<string, boolean> } | null;
 }
 
@@ -117,6 +142,13 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isInitialized = true;
     },
+    setBusiness(state, action: PayloadAction<BusinessInfo>) {
+      if (state.user) {
+        state.user.business = action.payload;
+        state.user.business_name = action.payload.name;
+        saveToStorage(state.token!, state.user);
+      }
+    },
     setInitialized(state) {
       state.isInitialized = true;
     },
@@ -129,7 +161,7 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, setUser, setInitialized, clearError,
+  logout, setUser, setBusiness, setInitialized, clearError,
 } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -41,11 +41,11 @@ export default function LedgerHistoryModal({ open, onClose, productId, productNa
           <p className="text-xs mt-1">Stock movements for this product will appear here</p>
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative max-h-[60vh] overflow-y-auto">
           {/* Vertical timeline line */}
           <div className="absolute left-[23px] top-2 bottom-2 w-px bg-gray-200" />
 
-          <div className="space-y-4">
+          <div className="space-y-4 p-0.5">
             {movements.map((m) => {
               const Icon = typeIcons[m.type] || Clock;
               const colorClass = typeColors[m.type] || 'text-gray-600 bg-gray-100';

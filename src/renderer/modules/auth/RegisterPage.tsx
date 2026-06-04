@@ -6,14 +6,14 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { useToast } from '../../app/contexts/ToastContext';
-import { Store, Mail, Lock, Phone } from 'lucide-react';
+import { Store, Mail, Lock, Phone, User } from 'lucide-react';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const loginMutation = useLogin();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password_confirmation: '' });
+  const [form, setForm] = useState({ owner_name: '', name: '', email: '', phone: '', password: '', password_confirmation: '' });
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -24,6 +24,7 @@ export default function RegisterPage() {
 
     try {
       await axiosInstance.post('/businesses/register', {
+        owner_name: form.owner_name,
         name: form.name,
         email: form.email,
         phone: form.phone || undefined,
@@ -57,6 +58,10 @@ export default function RegisterPage() {
   return (
     <AuthLayout title="Create Account" subtitle="Register your business to get started">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="relative">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input placeholder="Your name (owner)" value={form.owner_name} onChange={handleChange('owner_name')} required className={inputClass} />
+        </div>
         <div className="relative">
           <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input placeholder="Business / Shop name" value={form.name} onChange={handleChange('name')} required className={inputClass} />

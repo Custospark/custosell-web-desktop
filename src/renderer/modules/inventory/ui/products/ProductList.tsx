@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useProducts, useDeleteProduct, inventoryKeys } from '../../api/products/ProductQueries';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { axiosInstance } from '../../../../app/api/axiosConfig';
 import type { Product } from '../../api/products/ProductTypes';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
@@ -8,13 +10,12 @@ import { Card } from '../../../../shared/components/cards/Card';
 import { Badge } from '../../../../shared/components/badges/Badge';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
-import { useQueryClient } from '@tanstack/react-query';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
-import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye } from 'lucide-react';
+import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square } from 'lucide-react';
 import ProductFormDrawer from './ProductFormDrawer';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
@@ -33,6 +34,18 @@ export default function ProductList() {
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      const { data } = await axiosInstance.post('/products/bulk-delete', { ids });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      setSelectedIds(new Set());
+    },
+  });
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -53,6 +66,33 @@ export default function ProductList() {
       confirmText: 'Delete', variant: 'danger',
     });
     if (confirmed) deleteMutation.mutate(product.id);
+  };
+
+  const filteredIds = filtered.map((p) => p.id);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
+
+  const toggleAll = useCallback(() => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredIds));
+  }, [allSelected, filteredIds]);
+
+  const toggleOne = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const ok = await confirm({
+      title: 'Delete products?',
+      message: `This will permanently delete ${selectedIds.size} product(s). This action cannot be undone.`,
+      confirmText: 'Delete', variant: 'danger',
+    });
+    if (ok) bulkDeleteMutation.mutate(Array.from(selectedIds));
   };
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
@@ -86,12 +126,32 @@ export default function ProductList() {
       <div className="h-6" />
 
       <Card>
-        <div className="mb-4">
-          <SearchInput placeholder="Search products by name..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex-1">
+            <SearchInput placeholder="Search products by name..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+              {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
+              Select All
+            </button>
+            {selectedIds.size > 0 && (
+              <button onClick={handleBulkDelete} disabled={bulkDeleteMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium">
+                <Trash2 className="w-4 h-4" />
+                Delete ({selectedIds.size})
+              </button>
+            )}
+          </div>
         </div>
         <Table<Product>
           rowKey={(p) => p.id}
           columns={[
+            { key: 'select', header: '', render: (item) => (
+              <button onClick={() => toggleOne(item.id)} className="p-0.5 rounded hover:bg-gray-100 transition-colors">
+                {selectedIds.has(item.id) ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
+              </button>
+            )},
             { key: 'name', header: 'Name' },
             { key: 'category', header: 'Category', render: (item) => item.category?.name || <span className="text-gray-400">—</span> },
             { key: 'unit', header: 'Unit', render: (item) => item.unit || <span className="text-gray-400">—</span> },

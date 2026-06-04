@@ -3,6 +3,7 @@ import { useReactToPrint } from 'react-to-print';
 import type { CartItem } from '../../api/salesTypes';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { Button } from '../../../../shared/components/buttons/Button';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { Printer, Plus } from 'lucide-react';
 
 interface ReceiptPreviewProps {
@@ -16,16 +17,24 @@ interface ReceiptPreviewProps {
 
 export default function ReceiptPreview({ receiptNumber, items, total, paymentMethod, onNewSale }: ReceiptPreviewProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const business = useAppSelector((s) => s.auth.user?.business);
   const handlePrint = useReactToPrint({ contentRef: receiptRef });
+  const location = [business?.address, business?.city, business?.state, business?.country].filter(Boolean).join(', ');
 
   return (
     <div className="max-w-md mx-auto space-y-4">
       <div ref={receiptRef} className="bg-white p-6 border border-gray-200 rounded-xl">
-        <div className="text-center border-b border-gray-200 pb-4 mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Custosell</h2>
-          <p className="text-xs text-gray-500">Point of Sale</p>
-          <p className="text-xs text-gray-400 mt-1">Receipt: {receiptNumber}</p>
-        </div>
+          <div className="text-center border-b border-gray-200 pb-4 mb-4">
+            <h2 className="text-lg font-bold text-gray-900">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
+            {location && <p className="text-xs text-gray-500">{location}</p>}
+            <div className="text-xs text-gray-400 space-x-2 mt-0.5">
+              {business?.phone && <span>Tel: {business.phone}</span>}
+              {business?.email && <span>| {business.email}</span>}
+            </div>
+            {business?.website && <p className="text-xs text-gray-400">{business.website}</p>}
+            {business?.tax_id && <p className="text-xs text-gray-400">Tax ID: {business.tax_id}</p>}
+            <p className="text-xs text-gray-400 mt-1">Receipt: {receiptNumber}</p>
+          </div>
 
         <div className="space-y-2 text-sm">
           {items.map((item, i) => (

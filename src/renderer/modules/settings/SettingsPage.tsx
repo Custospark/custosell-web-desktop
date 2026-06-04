@@ -1,12 +1,9 @@
-import { Card } from '../../shared/components/cards/Card';
+import { Outlet } from 'react-router-dom';
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-      <Card>
-        <p className="text-gray-500">Configure your business, staff, roles, and subscription.</p>
-      </Card>
+    <div className="flex-1 min-w-0">
+      <Outlet />
     </div>
   );
 }

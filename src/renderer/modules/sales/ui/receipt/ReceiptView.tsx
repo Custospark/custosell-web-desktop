@@ -13,8 +13,10 @@ interface Props {
 export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
+  const business = useAppSelector((s) => s.auth.user?.business);
   const receiptRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({ contentRef: receiptRef });
+  const location = [business?.address, business?.city, business?.state, business?.country].filter(Boolean).join(', ');
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
 
@@ -24,8 +26,14 @@ export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
       <div className="flex-1 flex items-start justify-center pt-8">
         <div ref={receiptRef} className="bg-white p-6 border border-gray-200 rounded-xl w-full max-w-sm">
           <div className="text-center border-b border-gray-200 pb-4 mb-4">
-            <h2 className="text-lg font-bold text-gray-900">Custosell</h2>
-            <p className="text-xs text-gray-500">Point of Sale</p>
+            <h2 className="text-lg font-bold text-gray-900">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
+            {location && <p className="text-xs text-gray-500">{location}</p>}
+            <div className="text-xs text-gray-400 space-x-2 mt-0.5">
+              {business?.phone && <span>Tel: {business.phone}</span>}
+              {business?.email && <span>| {business.email}</span>}
+            </div>
+            {business?.website && <p className="text-xs text-gray-400">{business.website}</p>}
+            {business?.tax_id && <p className="text-xs text-gray-400">Tax ID: {business.tax_id}</p>}
             <p className="text-xs text-gray-400 mt-1">Receipt: {receiptNumber}</p>
           </div>
 

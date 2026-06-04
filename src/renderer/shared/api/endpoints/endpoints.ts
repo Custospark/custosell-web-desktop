@@ -1,8 +1,8 @@
-export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me' };
+export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me', PROFILE: '/auth/profile' };
 export const PLANS = '/plans';
-export const BUSINESSES = { REGISTER: '/businesses/register', MINE: '/businesses/mine', SETTINGS: '/businesses/settings' };
-export const ROLES = '/roles';
-export const USERS = '/users';
+export const BUSINESSES = { REGISTER: '/businesses/register', MINE: '/businesses/mine', SETTINGS: '/businesses/settings', PROFILE: '/businesses/profile' };
+export const ROLES = { BASE: '/roles', BY_ID: (id: number) => `/roles/${id}` };
+export const USERS = { BASE: '/users', BY_ID: (id: number) => `/users/${id}` };
 export const CATEGORIES = '/categories';
 export const PRODUCTS = { BASE: '/products', LOW_STOCK: '/products/low-stock' };
 export const CUSTOMERS = { BASE: '/customers', PURCHASES: (id: number) => `/customers/${id}/purchases` };

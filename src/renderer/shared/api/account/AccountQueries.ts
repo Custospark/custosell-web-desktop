@@ -102,6 +102,7 @@ export function useProfile() {
       dispatch(setUser(userData));
       return userData;
     },
+    staleTime: 0,
     retry: false,
     enabled: !!localStorage.getItem('token'),
   });

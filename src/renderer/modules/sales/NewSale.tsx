@@ -1,12 +1,16 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
+import type { Sale } from './api/salesTypes';
 import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
+import SaleCompletedModal from './ui/SaleCompletedModal';
+import PrintableReceipt from './ui/PrintableReceipt';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -26,6 +30,23 @@ function BillingControls() {
   const discountType = useAppSelector((s) => s.sales.discountType);
   const { data: customers } = useCustomers();
   const createSale = useCreateSale();
+  const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
+  const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const handlePrint = useReactToPrint({
+    contentRef: receiptRef,
+    documentTitle: completedSale?.receipt_number ?? 'receipt',
+    pageStyle: `
+      @page { margin: 8mm; }
+      @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+        .no-print { display: none !important; }
+      }
+    `,
+    onBeforePrint: async () => setIsPrinting(true),
+    onAfterPrint: async () => setIsPrinting(false),
+  });
 
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -59,13 +80,17 @@ function BillingControls() {
         total_amount: total,
         payment_method: paymentMethod,
         customer_id: customerId,
+        amount_tendered: amountTendered > 0 ? amountTendered : null,
+        change_given: paymentMethod === 'cash' && amountTendered >= total ? changeDue : null,
+        shift_id: currentShiftId || null,
       },
       {
-        onSuccess: () => {
+        onSuccess: (sale) => {
           dispatch(clearCart());
           dispatch(setAmountTendered(0));
           dispatch(setCustomer(null));
           dispatch(setDiscount(0));
+          setCompletedSale(sale);
         },
       }
     );
@@ -74,6 +99,7 @@ function BillingControls() {
   const PayIcon = PAY_ICONS[paymentMethod];
 
   return (
+    <>
     <div className="bg-white rounded-xl border border-gray-200 p-5 h-fit sticky top-0">
       <div className="space-y-5">
         {/* Customer */}
@@ -135,14 +161,15 @@ function BillingControls() {
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
               <input title="Enter amount tendered" type="number" min={0} step="100"
-                className="w-full pl-11 pr-10 py-2.5 border border-gray-200 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-11 pr-28 py-2.5 border border-gray-200 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0" value={amountTendered || ''}
                 onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
                 onFocus={(e) => e.target.select()} />
               <button title="Fill exact total" type="button"
                 onClick={() => dispatch(setAmountTendered(total))}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-                <ArrowDownToLine className="w-4 h-4" />
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
+                <ArrowDownToLine className="w-3.5 h-3.5" />
+                Auto Fill Amount
               </button>
             </div>
             {amountTendered > 0 && amountTendered < total && (
@@ -215,6 +242,14 @@ function BillingControls() {
         </Button>
       </div>
     </div>
+    <SaleCompletedModal
+      sale={completedSale}
+      onClose={() => { setCompletedSale(null); createSale.reset(); }}
+      onPrint={handlePrint}
+      onNewSale={() => { setCompletedSale(null); createSale.reset(); }}
+    />
+    {completedSale && <PrintableReceipt ref={receiptRef} sale={completedSale} isPrinting={isPrinting} />}
+    </>
   );
 }
 
@@ -300,47 +335,47 @@ export default function NewSale() {
           </div>
 
           {/* Animated Search Bar */}
-          <div ref={wrapRef} className="relative mb-4">
-            <div className="relative rounded-lg p-[2px]">
-              <motion.div
-                className="absolute inset-0 rounded-lg z-0"
-                style={{
-                  background: 'linear-gradient(90deg, #3b82f6, #10b981, #6366f1, #3b82f6)',
-                  backgroundSize: '300% 100%',
-                }}
-                animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                transition={{ duration: isFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
-              />
-              <div className="relative z-10 rounded-[6px] overflow-hidden bg-white">
-                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} />
-                <input ref={searchRef} type="text" placeholder="Search by name, SKU, or barcode..." title="Search products"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setShowResults(true); }}
-                  onFocus={() => { setIsFocused(true); if (search.trim()) setShowResults(true); }}
-                  onBlur={() => setIsFocused(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && products) {
-                      const q = search.trim().toLowerCase();
-                      const exact = products.find((p) =>
-                        p.is_active && p.stock_quantity > 0 &&
-                        (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q) || (p.barcode && p.barcode === q))
-                      );
-                      if (exact) {
-                        addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit);
-                      } else if (results.length > 0 && results[0].stock_quantity > 0) {
-                        addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit);
-                      }
-                    }
+            <div ref={wrapRef} className="relative mb-4">
+              <div className="relative rounded-lg p-[2px]">
+                <motion.div
+                  className="absolute inset-0 rounded-lg z-0"
+                  style={{
+                    background: 'linear-gradient(90deg, #3b82f6, #10b981, #6366f1, #3b82f6)',
+                    backgroundSize: '300% 100%',
                   }}
-                  className="w-full pl-9 pr-10 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]" />
-                {search && (
-                  <button title="Clear search" onClick={() => { setSearch(''); setShowResults(false); searchRef.current?.focus(); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                  transition={{ duration: isFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
+                />
+                <div className="relative z-10 rounded-[6px] overflow-hidden bg-white">
+                  <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} />
+                  <input ref={searchRef} type="text" placeholder="Search by name, SKU, or barcode..." title="Search products"
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setShowResults(true); }}
+                    onFocus={() => { setIsFocused(true); if (search.trim()) setShowResults(true); }}
+                    onBlur={() => setIsFocused(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && products) {
+                        const q = search.trim().toLowerCase();
+                        const exact = products.find((p) =>
+                          p.is_active && p.stock_quantity > 0 &&
+                          (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q) || (p.barcode && p.barcode === q))
+                        );
+                        if (exact) {
+                          addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit);
+                        } else if (results.length > 0 && results[0].stock_quantity > 0) {
+                          addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit);
+                        }
+                      }
+                    }}
+                    className="w-full pl-9 pr-10 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]" />
+                  {search && (
+                    <button title="Clear search" onClick={() => { setSearch(''); setShowResults(false); searchRef.current?.focus(); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
 
             {/* Search Results Dropdown */}
             <AnimatePresence>
@@ -501,12 +536,12 @@ export default function NewSale() {
           <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
             {cartItems.length > 0 && (
               <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm">
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm">
                 <PauseCircle className="w-4 h-4" /> Hold Order
               </button>
             )}
             <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm relative">
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm relative">
               <RotateCcw className="w-4 h-4" /> Take Order
               {heldOrders.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
@@ -533,7 +568,7 @@ export default function NewSale() {
           productName={qtyEdit.productName}
           currentQty={qtyEdit.currentQty}
         />
-      )}
+    )}
     </>
   );
 }

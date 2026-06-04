@@ -22,23 +22,45 @@ export interface SaleItem {
   refunded_amount: string;
 }
 
+export interface BusinessInfo {
+  id: number;
+  name: string;
+  slug: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  currency: string;
+  receipt_footer: string | null;
+  logo_path: string | null;
+}
+
+export interface UserInfo {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export interface Sale {
   id: number;
   business_id: number;
   user_id: number;
+  user?: UserInfo;
   customer_id: number | null;
   shift_id: number | null;
+  business?: BusinessInfo;
   receipt_number: string;
   subtotal: string;
   tax_total: string;
   discount_amount: string;
   total_amount: string;
+  amount_tendered: string | null;
+  change_given: string | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';
   payment_status: 'paid' | 'partially_refunded' | 'refunded';
   notes: string | null;
   sale_date: string;
-  customer?: { data: { id: number; name: string } };
-  items?: SaleItem[];
+  customer?: { id: number; name: string; phone?: string };
+  sale_items?: SaleItem[];
   created_at: string;
   updated_at: string;
 }
@@ -49,6 +71,9 @@ export interface CreateSalePayload {
   tax_total?: number;
   discount_amount?: number;
   total_amount: number;
+  amount_tendered?: number | null;
+  change_given?: number | null;
+  shift_id?: number | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';
   customer_id?: number | null;
   notes?: string | null;

@@ -131,11 +131,11 @@ export function Layout() {
         <main className="flex-1 overflow-auto p-4 sm:p-6">
           <Outlet />
         </main>
-        <footer className="px-6 py-3 border-t border-gray-200 flex items-center justify-between text-xs text-gray-400">
+        <footer className="px-6 py-3 border-t border-gray-200 bg-white flex items-center justify-between text-xs text-gray-400">
           <span>
-            <span className="font-medium text-gray-500">Custosell</span> &mdash; Simplify. Sell. Grow.
+            <span className="font-semibold text-blue-600">Custosell</span> &mdash; <span className="text-gray-500">Faster Sales. Smarter Business.</span>
           </span>
-          <span>Custosell is a product of <span className="font-medium text-gray-500">Custospark Company Ltd</span></span>
+          <span>Custosell is a product of <span className="font-medium text-blue-600">Custospark Company Ltd</span></span>
         </footer>
       </div>
     </div>

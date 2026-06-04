@@ -19,12 +19,12 @@ export interface AuthResponse {
 }
 
 export interface BusinessRegisterRequest {
+  owner_name: string;
   name: string;
   email: string;
   password: string;
   password_confirmation: string;
   phone?: string;
-  business_name?: string;
 }
 
 export interface ApiError {

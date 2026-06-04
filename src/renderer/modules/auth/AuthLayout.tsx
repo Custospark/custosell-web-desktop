@@ -5,18 +5,24 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 interface AuthLayoutProps {
   title: string;
   subtitle?: string;
+  heroImage?: string;
 }
 
-const TAGLINE = 'Simple Sales. Smarter Business.';
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80';
+const TAGLINE = 'Faster Sales. Smarter Business.';
 
-export function AuthLayout({ title, subtitle, children }: PropsWithChildren<AuthLayoutProps>) {
+const HERO_IMAGES = {
+  login: 'https://images.unsplash.com/photo-1553729459-afe8f2e2f10c?w=1200&q=80',
+  register: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&q=80',
+};
+
+export function AuthLayout({ title, subtitle, heroImage, children }: PropsWithChildren<AuthLayoutProps>) {
+  const image = heroImage || HERO_IMAGES.login;
+
   return (
     <div className="min-h-screen flex">
-      {/* Left: Hero section */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <img src={HERO_IMAGE} alt="POS System" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-indigo-900/80 to-black/70" />
+        <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-black/70" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <Link to={ROUTES.DASHBOARD} className="text-white text-2xl font-bold tracking-tight">
             Custosell
@@ -25,23 +31,21 @@ export function AuthLayout({ title, subtitle, children }: PropsWithChildren<Auth
             <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
               {TAGLINE}
             </h1>
-            <p className="text-blue-200 text-lg">
-              Sales, inventory, expenses, and reporting — all working offline.
-              No internet connection required for daily operations.
+            <p className="text-blue-200 text-lg leading-relaxed">
+              A complete POS system for retail and wholesale businesses. Manage sales, inventory,
+              customers, expenses, and staff — all in one place.
             </p>
             <div className="mt-8 flex gap-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
-                <div className="text-2xl font-bold">3</div>
-                <div className="text-blue-200 text-sm">Plans</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
-                <div className="text-2xl font-bold">14</div>
-                <div className="text-blue-200 text-sm">Modules</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 text-white">
-                <div className="text-2xl font-bold">121</div>
-                <div className="text-blue-200 text-sm">Tests</div>
-              </div>
+              {[
+                { value: 'POS', label: 'System' },
+                { value: '7', label: 'Modules' },
+                { value: '24/7', label: 'Offline' },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-4 text-white min-w-[100px] text-center">
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-blue-200 text-sm mt-0.5">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
           <div className="text-blue-300 text-sm">
@@ -50,14 +54,13 @@ export function AuthLayout({ title, subtitle, children }: PropsWithChildren<Auth
         </div>
       </div>
 
-      {/* Right: Form section */}
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8">
+          <div className="lg:hidden mb-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900">Custosell</h1>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">{title}</h2>
-          {subtitle && <p className="text-gray-500 mb-8">{subtitle}</p>}
+          <h2 className="text-2xl font-bold text-gray-900 mb-1.5 text-center">{title}</h2>
+          {subtitle && <p className="text-gray-500 mb-8 text-center">{subtitle}</p>}
           {children}
         </div>
       </div>

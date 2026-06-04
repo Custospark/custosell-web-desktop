@@ -136,7 +136,7 @@ export function Layout() {
             <span className="font-semibold text-blue-600">Custosell</span> &mdash; Faster Sales. Smarter Business.
           </span>
           <span className="text-blue-600">
-            Custosell is a product of <a href="https://www.custospark.com" target="_blank" rel="noopener noreferrer" className="font-medium underline hover:text-blue-800">&copy; Custospark</a>
+            Custosell is a product of <a href="https://www.custospark.com" target="_blank" rel="noopener noreferrer" className="font-medium underline hover:text-blue-800">Custospark Company Ltd.</a>
           </span>
         </footer>
       </div>

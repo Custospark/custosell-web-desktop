@@ -50,7 +50,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
               <table className="w-full text-sm text-blue-100">
                 <tbody>
                   {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].reduce<string[][]>((rows, type, i) => {
-                    const col = i % 5;
+                    const col = i % 7;
                     if (col === 0) rows.push([]);
                     rows[rows.length - 1].push(type);
                     return rows;

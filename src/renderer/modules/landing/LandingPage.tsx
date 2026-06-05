@@ -108,6 +108,37 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Built for */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Built for Every Business</h2>
+          <p className="text-gray-500">From retail shops to restaurants, pharmacies to hardware stores — Custosell works for your business type.</p>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-3xl mx-auto">
+          <table className="w-full text-sm text-gray-600">
+            <tbody>
+              {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].reduce<string[][]>((rows, type, i) => {
+                const col = i % 7;
+                if (col === 0) rows.push([]);
+                rows[rows.length - 1].push(type);
+                return rows;
+              }, []).map((row, ri) => (
+                <tr key={ri}>
+                  {row.map((type) => (
+                    <td key={type} className="py-1.5 pr-4">
+                      <span className="inline-flex items-center gap-1.5">
+                        <svg className="w-3 h-3 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        {type}
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </motion.div>
+      </section>
+
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">

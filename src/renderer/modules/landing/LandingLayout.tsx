@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Download } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { Button } from '../../shared/components/buttons/Button';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
 
@@ -16,11 +15,8 @@ export default function LandingLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
-  const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handleAction = async (action: 'login' | 'signup') => {
-    setIsLoading(action);
-    await new Promise((resolve) => setTimeout(resolve, 400));
+  const handleAction = (action: 'login' | 'signup') => {
     navigate(action === 'login' ? ROUTES.LOGIN : ROUTES.REGISTER);
   };
 
@@ -42,37 +38,52 @@ export default function LandingLayout() {
         <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
 
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2.5">
-              <LogoImage size="sm" />
-              <span className="text-lg font-bold text-blue-600">Custosell</span>
-            </div>
-            <nav className="hidden md:flex items-center gap-1">
+      <header className="sticky top-0 z-50 bg-white/75 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4" aria-label="Main navigation">
+          <div className="flex items-center justify-between">
+            <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-3">
+              <Link to={ROUTES.HOME}>
+                <LogoImage size="sm" />
+              </Link>
+              <Link to={ROUTES.HOME} className="text-lg font-bold text-blue-600">Custosell</Link>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-1 sm:gap-2">
               {navLinks.map((link) => (
-                <button
+                <Link
                   key={link.path}
-                  onClick={() => navigate(link.path)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  to={link.path}
+                  className={`px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
                     location.pathname === link.path
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   {link.label}
-                </button>
+                </Link>
               ))}
-            </nav>
-            <div className="hidden md:flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={handleDownload}>
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14V9h2v7h-2zm0-9V5h2v2h-2z"/></svg>
-                Windows App
-              </Button>
-              <Button variant="ghost" onClick={() => handleAction('login')}>Sign In</Button>
-            </div>
+
+              <div className="w-px h-6 mx-1 sm:mx-2 bg-slate-300/50" />
+
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl font-bold text-xs transition-all duration-300 border-2 shadow-sm bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 cursor-pointer"
+                aria-label="Download Windows version"
+                title="Download Custosell for Windows"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline text-xs">Windows</span>
+              </button>
+
+              <button
+                onClick={() => handleAction('login')}
+                className="px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+              >
+                Sign In
+              </button>
+            </motion.div>
           </div>
-        </div>
+        </nav>
       </header>
 
       <main className="flex-1">

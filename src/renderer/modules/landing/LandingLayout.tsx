@@ -1,14 +1,14 @@
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download } from 'lucide-react';
+import { Download, Home, CreditCard, Shield } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
 
 const navLinks = [
-  { label: 'Home', path: ROUTES.HOME },
-  { label: 'Pricing', path: ROUTES.PRICING },
-  { label: 'Privacy', path: ROUTES.PRIVACY },
+  { label: 'Home', path: ROUTES.HOME, icon: Home },
+  { label: 'Pricing', path: ROUTES.PRICING, icon: CreditCard },
+  { label: 'Privacy', path: ROUTES.PRIVACY, icon: Shield },
 ];
 
 export default function LandingLayout() {
@@ -34,7 +34,7 @@ export default function LandingLayout() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white flex flex-col">
       <header className="sticky top-0 z-50 bg-white/75 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4" aria-label="Main navigation">
+        <nav className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4" aria-label="Main navigation">
           <div className="flex items-center justify-between">
             <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-3">
               <Link to={ROUTES.HOME}>
@@ -44,25 +44,29 @@ export default function LandingLayout() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-1 sm:gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                    location.pathname === link.path
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`px-2 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 inline-flex items-center gap-1.5 ${
+                      location.pathname === link.path
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{link.label}</span>
+                  </Link>
+                );
+              })}
 
               <div className="w-px h-6 mx-1 sm:mx-2 bg-slate-300/50" />
 
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl font-bold text-xs transition-all duration-300 border-2 shadow-sm bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 cursor-pointer"
+                className="hidden md:flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl font-bold text-xs transition-all duration-300 border-2 shadow-sm bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 cursor-pointer"
                 aria-label="Download Windows version"
                 title="Download Custosell for Windows"
               >
@@ -72,7 +76,7 @@ export default function LandingLayout() {
 
               <button
                 onClick={() => handleAction('login')}
-                className="px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                className="px-2 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
               >
                 Sign In
               </button>

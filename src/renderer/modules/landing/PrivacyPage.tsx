@@ -121,9 +121,9 @@ export default function PrivacyPage() {
           Privacy & Security
         </span>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-          Your Data. Your Business.{' '}
+          Your Business Data Is{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
-            Our Commitment.
+            Always Protected
           </span>
         </h1>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
@@ -165,13 +165,13 @@ export default function PrivacyPage() {
               <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shrink-0 shadow-md">
                 <section.icon className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-lg font-bold text-gray-900">{section.title}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
             </div>
             <ul className="space-y-2 ml-1">
               {section.items.map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                  <span className="text-sm text-gray-700">{item}</span>
+                  <span className="text-base text-gray-700">{item}</span>
                 </li>
               ))}
             </ul>
@@ -185,8 +185,8 @@ export default function PrivacyPage() {
         <div className="space-y-4">
           {faqItems.map((item) => (
             <div key={item.q} className="rounded-xl border-2 border-gray-200 bg-white/80 p-5">
-              <h3 className="font-bold text-sm text-gray-900 mb-1.5">{item.q}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{item.a}</p>
+              <h3 className="font-bold text-base text-gray-900 mb-2">{item.q}</h3>
+              <p className="text-base text-gray-600 leading-relaxed">{item.a}</p>
             </div>
           ))}
         </div>

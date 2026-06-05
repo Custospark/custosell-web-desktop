@@ -35,7 +35,7 @@ export default function LandingLayout() {
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white flex flex-col">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-400/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-emerald-400/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-3xl" />
       </div>
 
       <header className="sticky top-0 z-50 bg-white/75 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300">
@@ -90,7 +90,7 @@ export default function LandingLayout() {
         <Outlet />
       </main>
 
-      <footer className="bg-white border-t border-gray-200 py-8">
+      <footer className="bg-blue-50/30 border-t border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-2.5">

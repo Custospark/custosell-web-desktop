@@ -160,11 +160,28 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonial */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-3xl mx-auto text-center p-8 rounded-2xl border border-blue-100 bg-blue-50/50">
+          <svg className="w-8 h-8 text-blue-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" /></svg>
+          <blockquote className="text-lg sm:text-xl text-gray-700 font-medium leading-relaxed mb-4">
+            "Custosell transformed how we manage our shop. Sales are faster, inventory is always accurate, and I can see my business performance anytime — even offline."
+          </blockquote>
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white">JO</div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-gray-900">James Opiyo</p>
+              <p className="text-xs text-gray-500">Owner, Oscar Shop — Kampala</p>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Trusted by Business Owners Everywhere</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">Businesses of every size and type rely on Custosell to manage sales, inventory, and growth.</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">10,000+ Businesses Trust Custosell</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">From small shops to growing enterprises — businesses rely on Custosell every day.</p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (

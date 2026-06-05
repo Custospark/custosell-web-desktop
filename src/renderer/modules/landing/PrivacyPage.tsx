@@ -113,7 +113,7 @@ const faqItems = [
 
 export default function PrivacyPage() {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-14">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold border bg-blue-50 border-blue-200 text-blue-700 mb-5">

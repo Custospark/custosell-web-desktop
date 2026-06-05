@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export default function PricingPage() {
   const navigate = useNavigate();
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-20 text-center space-y-6">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 text-center space-y-6">
       <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-emerald-600 rounded-full shadow-lg shadow-blue-500/20">
         <Sparkles className="w-4 h-4 text-white" />
         <span className="text-sm font-semibold text-white">Coming Soon</span>

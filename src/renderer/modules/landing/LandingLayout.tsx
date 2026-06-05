@@ -33,11 +33,6 @@ export default function LandingLayout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white flex flex-col">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-400/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-3xl" />
-      </div>
-
       <header className="sticky top-0 z-50 bg-white/75 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4" aria-label="Main navigation">
           <div className="flex items-center justify-between">

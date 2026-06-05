@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3, Users, Receipt, Clock } from 'lucide-react';
+import { UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3, Users, Receipt, Clock, Store, Coffee, Pill, Scissors, Apple, Wrench, Building2, Shirt, Heart, Wine, Car, Monitor, BookOpen, Globe, Printer, Droplets, Fuel, Wheat, Ruler, PawPrint, Sofa, ChefHat, UtensilsCrossed, Building } from 'lucide-react';
 
 const stats = [
   { value: '10K+', label: 'Businesses' },
@@ -116,34 +116,34 @@ export default function LandingPage() {
         </motion.div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 max-w-5xl mx-auto">
           {[
-            { name: 'Retail', icon: '🛍️' },
-            { name: 'Wholesale', icon: '📦' },
-            { name: 'Restaurant', icon: '🍽️' },
-            { name: 'Café', icon: '☕' },
-            { name: 'Supermarket', icon: '🛒' },
-            { name: 'Pharmacy', icon: '💊' },
-            { name: 'Salon', icon: '💇' },
-            { name: 'Grocery', icon: '🥦' },
-            { name: 'Hardware', icon: '🔧' },
-            { name: 'Warehouse', icon: '🏢' },
-            { name: 'Boutique', icon: '👗' },
-            { name: 'Bakery', icon: '🥖' },
-            { name: 'Clinic', icon: '🏥' },
-            { name: 'Bar', icon: '🍺' },
-            { name: 'Auto Shop', icon: '🚗' },
-            { name: 'Fashion', icon: '👔' },
-            { name: 'Electronics', icon: '📱' },
-            { name: 'Furniture', icon: '🪑' },
-            { name: 'Bookstore', icon: '📚' },
-            { name: 'Pet Shop', icon: '🐾' },
-            { name: 'E-commerce', icon: '🌐' },
-            { name: 'Hotel / Lodge', icon: '🏨' },
-            { name: 'Butchery', icon: '🥩' },
-            { name: 'Farm / Agri', icon: '🌾' },
-            { name: 'Tailor', icon: '✂️' },
-            { name: 'Printing', icon: '🖨️' },
-            { name: 'Laundry', icon: '🧺' },
-            { name: 'Fuel Station', icon: '⛽' },
+            { name: 'Retail', icon: Store, color: 'text-blue-600' },
+            { name: 'Wholesale', icon: Package, color: 'text-indigo-600' },
+            { name: 'Restaurant', icon: UtensilsCrossed, color: 'text-red-500' },
+            { name: 'Café', icon: Coffee, color: 'text-amber-600' },
+            { name: 'Supermarket', icon: ShoppingCart, color: 'text-green-600' },
+            { name: 'Pharmacy', icon: Pill, color: 'text-purple-600' },
+            { name: 'Salon', icon: Scissors, color: 'text-pink-500' },
+            { name: 'Grocery', icon: Apple, color: 'text-green-600' },
+            { name: 'Hardware', icon: Wrench, color: 'text-amber-600' },
+            { name: 'Warehouse', icon: Building2, color: 'text-gray-600' },
+            { name: 'Boutique', icon: Shirt, color: 'text-rose-500' },
+            { name: 'Bakery', icon: ChefHat, color: 'text-amber-600' },
+            { name: 'Clinic', icon: Heart, color: 'text-red-500' },
+            { name: 'Bar', icon: Wine, color: 'text-purple-600' },
+            { name: 'Auto Shop', icon: Car, color: 'text-blue-600' },
+            { name: 'Fashion', icon: Sparkles, color: 'text-pink-500' },
+            { name: 'Electronics', icon: Monitor, color: 'text-blue-600' },
+            { name: 'Furniture', icon: Sofa, color: 'text-amber-600' },
+            { name: 'Bookstore', icon: BookOpen, color: 'text-indigo-600' },
+            { name: 'Pet Shop', icon: PawPrint, color: 'text-amber-600' },
+            { name: 'E-commerce', icon: Globe, color: 'text-blue-600' },
+            { name: 'Hotel / Lodge', icon: Building, color: 'text-indigo-600' },
+            { name: 'Butchery', icon: UtensilsCrossed, color: 'text-red-500' },
+            { name: 'Farm / Agri', icon: Wheat, color: 'text-green-600' },
+            { name: 'Tailor', icon: Ruler, color: 'text-purple-600' },
+            { name: 'Printing', icon: Printer, color: 'text-blue-600' },
+            { name: 'Laundry', icon: Droplets, color: 'text-blue-600' },
+            { name: 'Fuel Station', icon: Fuel, color: 'text-amber-600' },
           ].map((type) => (
             <motion.div
               key={type.name}
@@ -153,7 +153,7 @@ export default function LandingPage() {
               whileHover={{ scale: 1.05, y: -2 }}
               className="flex flex-col items-center gap-1.5 p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer"
             >
-              <span className="text-xl">{type.icon}</span>
+              <type.icon className={`w-5 h-5 ${type.color}`} />
               <span className="text-xs font-medium text-gray-700 text-center leading-tight">{type.name}</span>
             </motion.div>
           ))}
@@ -163,7 +163,7 @@ export default function LandingPage() {
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Trusted by Business Owners Across Uganda</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Trusted by Business Owners Everywhere</h2>
           <p className="text-gray-500 max-w-2xl mx-auto">Businesses of every size and type rely on Custosell to manage sales, inventory, and growth.</p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">

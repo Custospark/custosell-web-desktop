@@ -133,7 +133,7 @@ export function Layout() {
         </main>
         <footer className="px-6 py-3 border-t border-gray-200 bg-white flex items-center justify-between text-xs">
           <span className="text-gray-500">
-            <span className="font-semibold text-blue-600">Custosell</span> &mdash; Sell It. Track It. Grow It.
+            <span className="font-semibold text-blue-600">Custosell</span> &mdash; Sell More. Track All. Grow Fast.
           </span>
           <span className="text-blue-600">
             Custosell is a product of <a href="https://www.custospark.com" target="_blank" rel="noopener noreferrer" className="font-medium underline hover:text-blue-800">Custospark Company Ltd.</a>

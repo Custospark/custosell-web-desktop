@@ -42,9 +42,9 @@ export default function LandingPage() {
               Point of Sale System
             </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
-              Sell It.{' '}
+              Sell More.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
-                Track It. Grow It.
+                Track All. Grow Fast.
               </span>
             </motion.h1>
 

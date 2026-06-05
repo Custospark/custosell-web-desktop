@@ -28,7 +28,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
           <span className="text-white text-2xl font-bold tracking-tight">Custosell</span>
           <div className="max-w-md">
             <h1 className="text-3xl font-bold text-white mb-3 leading-tight">
-              More Sales. Faster Business Growth.
+              Faster Sales. Smarter Business.
             </h1>
             <p className="text-blue-200 text-base leading-relaxed">
               {heroDescription || 'A complete POS system for retail and wholesale businesses.'}

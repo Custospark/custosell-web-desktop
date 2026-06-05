@@ -11,7 +11,7 @@ const stats = [
 ];
 
 const benefits = [
-  { icon: ShoppingCart, title: 'Fast Sales', description: 'Process transactions in seconds with an intuitive POS interface.', color: 'from-blue-500 to-blue-600', image: '/screenshots/faster_sales.png' },
+  { icon: ShoppingCart, title: 'Fast Sales', description: 'Ring up customers in seconds — cash, mobile money, or card. No more long queues.', color: 'from-blue-500 to-blue-600', image: '/screenshots/faster_sales.png' },
   { icon: Package, title: 'Smart Inventory', description: 'Track stock in real-time. Get low-stock alerts and know what to reorder.', color: 'from-emerald-500 to-emerald-600', image: '/screenshots/smart_inventory.png' },
   { icon: BarChart3, title: 'Real-time Dashboard', description: 'See daily revenue, sales trends, and business performance at a glance.', color: 'from-purple-500 to-purple-600', image: '/screenshots/real_time_dashboard.png' },
   { icon: Users, title: 'Customer Insights', description: 'Know your customers. Track purchase history and buying patterns.', color: 'from-amber-500 to-amber-600', image: '/screenshots/customer_insights.png' },
@@ -37,6 +37,9 @@ export default function LandingPage() {
               <span className="text-sm font-semibold text-white">Trusted by 10,000+ businesses</span>
             </motion.div>
 
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1">
+              Point of Sale System
+            </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
               More Sales.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
@@ -51,7 +54,7 @@ export default function LandingPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
               <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 text-base font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow cursor-pointer">
                 <UserPlus className="w-5 h-5 mr-2" />
-                Create Account
+                Start Free Trial
               </button>
               <button type="button" onClick={() => handleAction('login')} className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 text-base font-medium rounded-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
                 <LogIn className="w-5 h-5 mr-2" />
@@ -87,7 +90,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="group rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-lg hover:border-blue-400 transition-all duration-300"
+                className="group rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-lg hover:border-blue-400 transition-all duration-300 cursor-pointer"
               >
                 <div className="p-6 pb-3">
                   <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${benefit.color} shadow-sm mb-4`}>
@@ -109,7 +112,7 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="relative overflow-hidden text-center p-6 rounded-xl border-2 border-blue-500 bg-gradient-to-br from-white to-blue-50/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+            <div key={stat.label} className="relative overflow-hidden text-center p-6 rounded-xl border-2 border-blue-500 bg-gradient-to-br from-white to-blue-50/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 cursor-pointer">
               <div className="absolute -top-8 -right-8 w-20 h-20 rounded-full blur-2xl bg-blue-500/10" />
               <div className="relative text-2xl sm:text-3xl font-bold text-blue-600">{stat.value}</div>
               <div className="relative text-sm text-gray-500 mt-1">{stat.label}</div>

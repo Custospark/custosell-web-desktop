@@ -102,7 +102,7 @@ export default function LandingLayout() {
             </p>
           </div>
           <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span className="text-xs text-gray-400">Faster Sales. Smarter Business. &mdash; Point of Sale for every business.</span>
+            <span className="text-xs text-gray-400">Sell It. Track It. Grow It. &mdash; Point of Sale for every business.</span>
             <a href="/register" className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline">Start Free Trial →</a>
           </div>
         </div>

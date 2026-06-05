@@ -68,7 +68,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="hidden lg:block">
+          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="lg:block">
             <img src="/screenshots/real_time_dashboard.png" alt="Custosell Dashboard" className="rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
           </motion.div>
         </div>
@@ -162,6 +162,10 @@ export default function LandingPage() {
 
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Trusted by Business Owners Across Uganda</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">Businesses of every size and type rely on Custosell to manage sales, inventory, and growth.</p>
+        </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
             <div key={stat.label} className="relative overflow-hidden text-center p-6 rounded-xl border-2 border-blue-500 bg-gradient-to-br from-white to-blue-50/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 cursor-pointer">
@@ -177,7 +181,7 @@ export default function LandingPage() {
       <section className="py-16 relative">
         <div className="absolute inset-0 bg-blue-50/50 border-t border-b border-blue-100" />
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto px-4 text-center space-y-6 relative">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Ready to Grow Your Business?</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Start Growing Your Business Today</h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">Join thousands of businesses already using Custosell. Free trial, no credit card required.</p>
           <div className="flex items-center justify-center gap-3">
             <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center px-8 py-3.5 text-base font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow cursor-pointer">

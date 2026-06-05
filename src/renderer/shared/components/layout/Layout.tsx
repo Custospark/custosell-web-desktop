@@ -59,8 +59,8 @@ export function Layout() {
         onClose={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
       />
 
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${collapsed ? 'lg:ml-[64px]' : 'lg:ml-[260px]'}`}>
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-3">
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${collapsed ? 'lg:ml-[64px]' : 'lg:ml-[247px]'}`}>
+        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center gap-3">
           <button
             className="lg:hidden text-gray-600 hover:text-gray-900 shrink-0"
             onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}

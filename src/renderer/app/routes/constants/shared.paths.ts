@@ -1,6 +1,9 @@
 export const ROUTES = {
+  HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  PRICING: '/pricing',
+  PRIVACY: '/privacy',
   DASHBOARD: '/dashboard',
   SALES: { INDEX: '/sales', NEW: '/sales/new', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: { INDEX: '/inventory', PRODUCTS: '/inventory/products', CATEGORIES: '/inventory/categories', STOCK: '/inventory/stock' },

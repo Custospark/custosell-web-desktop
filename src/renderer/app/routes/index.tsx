@@ -28,6 +28,10 @@ const ProfileSettingsPage = lazy(() => import('../../modules/settings/ProfileSet
 const StaffSettingsPage = lazy(() => import('../../modules/settings/StaffSettingsPage'));
 const RoleSettingsPage = lazy(() => import('../../modules/settings/RoleSettingsPage'));
 const SubscriptionSettingsPage = lazy(() => import('../../modules/settings/SubscriptionSettingsPage'));
+const LandingLayout = lazy(() => import('../../modules/landing/LandingLayout'));
+const LandingPage = lazy(() => import('../../modules/landing/LandingPage'));
+const PrivacyPage = lazy(() => import('../../modules/landing/PrivacyPage'));
+const PricingPage = lazy(() => import('../../modules/landing/PricingPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>;
@@ -37,6 +41,11 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<PublicRoute />}>
+        <Route element={<SuspenseWrapper><LandingLayout /></SuspenseWrapper>}>
+          <Route path="/" element={<SuspenseWrapper><LandingPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.PRICING} element={<SuspenseWrapper><PricingPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.PRIVACY} element={<SuspenseWrapper><PrivacyPage /></SuspenseWrapper>} />
+        </Route>
         <Route path={ROUTES.LOGIN} element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER} element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />
       </Route>
@@ -68,7 +77,6 @@ export function AppRoutes() {
           </Route>
         </Route>
       </Route>
-      <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
     </Routes>
   );
 }

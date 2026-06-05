@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
+import { Home } from 'lucide-react';
 import LogoImage from '../../shared/assets/LogoImage';
 
 interface AuthLayoutProps {
@@ -24,9 +25,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
         <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-black/70" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <Link to={ROUTES.DASHBOARD}>
-            <LogoImage size="lg" />
-          </Link>
+          <span className="text-white text-2xl font-bold tracking-tight">Custosell</span>
           <div className="max-w-md">
             <h1 className="text-3xl font-bold text-white mb-3 leading-tight">
               More Sales. Faster Business Growth.
@@ -77,15 +76,24 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-gray-50">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8 flex justify-center">
-            <LogoImage size="md" />
+      <div className="flex-1 flex flex-col">
+        <header className="flex items-center gap-3 px-6 py-5 border-b border-gray-200 bg-white">
+          <LogoImage size="md" />
+          <span className="text-xl font-bold text-blue-600">Custosell</span>
+          <div className="ml-auto">
+            <Link to={ROUTES.HOME} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1.5 text-center">{title}</h2>
-          {subtitle && <p className="text-gray-500 mb-8 text-center">{subtitle}</p>}
-          {children}
-        </div>
+        </header>
+        <main className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-gray-50">
+          <div className="w-full max-w-md">
+            <h2 className="text-2xl font-bold text-gray-900 mb-1.5 text-center">{title}</h2>
+            {subtitle && <p className="text-gray-500 mb-8 text-center">{subtitle}</p>}
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

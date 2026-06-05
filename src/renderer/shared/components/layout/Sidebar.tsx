@@ -143,15 +143,12 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
   return (
     <aside
       className={`fixed top-0 left-0 z-30 h-full bg-white border-r border-gray-200 transform transition-all duration-200 ${
-        collapsed ? 'w-[64px]' : 'w-[260px]'
+        collapsed ? 'w-[64px]' : 'w-[247px]'
       } ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}
     >
-      <div className={`border-b border-gray-200 flex items-center ${collapsed ? 'justify-center p-3' : 'p-5'}`}>
-        {collapsed ? (
-          <LogoImage size="sm" />
-        ) : (
-          <LogoImage size="md" />
-        )}
+      <div className={`border-b border-gray-200 flex items-center gap-2.5 ${collapsed ? 'justify-center py-4' : 'px-6 py-4'}`}>
+        <LogoImage size="sm" />
+        {!collapsed && <span className="text-lg font-bold text-blue-600">Custosell</span>}
       </div>
 
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">

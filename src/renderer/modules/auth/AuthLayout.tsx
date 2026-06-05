@@ -47,27 +47,14 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             </div>
             <div className="mt-6">
               <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-2">Built for</p>
-              <table className="w-full text-sm text-blue-100">
-                <tbody>
-                  {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].reduce<string[][]>((rows, type, i) => {
-                    const col = i % 7;
-                    if (col === 0) rows.push([]);
-                    rows[rows.length - 1].push(type);
-                    return rows;
-                  }, []).map((row, ri) => (
-                    <tr key={ri}>
-                      {row.map((type) => (
-                        <td key={type} className="py-1 pr-4">
-                          <span className="inline-flex items-center gap-1.5">
-                            <svg className="w-3 h-3 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                            {type}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-x-3 gap-y-1.5 text-sm text-blue-100">
+                {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].map((type) => (
+                  <div key={type} className="inline-flex items-center gap-1.5">
+                    <svg className="w-3 h-3 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    {type}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div className="text-blue-300 text-sm">

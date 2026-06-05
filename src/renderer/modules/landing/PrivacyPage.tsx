@@ -19,10 +19,14 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-semibold text-gray-900">3. Data Storage & Security</h2>
         <p className="text-gray-600 leading-relaxed">Your data is stored securely with enterprise-grade encryption. All data is encrypted in transit and at rest. We implement industry-standard security measures to protect your business information.</p>
       </section>
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">4. Data Sharing</h2>
-        <p className="text-gray-600 leading-relaxed">We do not sell your data. Your business data belongs to you. We only share information with third parties as necessary to provide the service and only under strict data processing agreements.</p>
-      </section>
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">4. Data Sharing</h2>
+          <div className="bg-green-50 border border-green-200 rounded-xl p-5 space-y-3">
+            <p className="text-green-800 font-semibold text-base">We do not share your data. Period.</p>
+            <p className="text-green-700 leading-relaxed">Your business data belongs to you and only you. We never sell, rent, or share your information with third parties for their own use. We do not use your business data for advertising, profiling, or any purpose beyond operating the Custosell platform you paid for.</p>
+            <p className="text-green-700 leading-relaxed">Data is processed solely to deliver the service you requested — processing sales, storing inventory, and generating reports — all within the Custosell application infrastructure.</p>
+          </div>
+        </section>
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900">5. Offline Mode</h2>
         <p className="text-gray-600 leading-relaxed">Custosell stores transaction data locally on your device for offline functionality. This data is synchronized with our servers when connectivity is restored. Local data is encrypted and isolated to the Custosell application.</p>

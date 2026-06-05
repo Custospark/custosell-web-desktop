@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Download, Home, CreditCard, Shield } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Download, Home, CreditCard, Shield, Menu, X } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
@@ -15,6 +16,7 @@ export default function LandingLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleAction = (action: 'login' | 'signup') => {
     navigate(action === 'login' ? ROUTES.LOGIN : ROUTES.REGISTER);
@@ -80,9 +82,56 @@ export default function LandingLayout() {
               >
                 Sign In
               </button>
+
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </motion.div>
           </div>
         </nav>
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="md:hidden overflow-hidden border-t border-slate-200/60 bg-white/90 backdrop-blur-xl"
+            >
+              <div className="px-4 py-3 space-y-1">
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                        location.pathname === link.path
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+                <hr className="border-slate-200 my-2" />
+                <button
+                  onClick={() => { setMobileOpen(false); handleDownload(); }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all duration-300 w-full cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  Download for Windows
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="flex-1">

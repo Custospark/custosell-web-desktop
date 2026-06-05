@@ -109,34 +109,55 @@ export default function LandingPage() {
       </section>
 
       {/* Built for */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Built for Every Business</h2>
-          <p className="text-gray-500">From retail shops to restaurants, pharmacies to hardware stores — Custosell works for your business type.</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Built for Every Business</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">From retail shops to restaurants, pharmacies to hardware stores — Custosell works for your business type.</p>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-3xl mx-auto">
-          <table className="w-full text-sm text-gray-600">
-            <tbody>
-              {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].reduce<string[][]>((rows, type, i) => {
-                const col = i % 7;
-                if (col === 0) rows.push([]);
-                rows[rows.length - 1].push(type);
-                return rows;
-              }, []).map((row, ri) => (
-                <tr key={ri}>
-                  {row.map((type) => (
-                    <td key={type} className="py-1.5 pr-4">
-                      <span className="inline-flex items-center gap-1.5">
-                        <svg className="w-3 h-3 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        {type}
-                      </span>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </motion.div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 max-w-5xl mx-auto">
+          {[
+            { name: 'Retail', icon: '🛍️' },
+            { name: 'Wholesale', icon: '📦' },
+            { name: 'Restaurant', icon: '🍽️' },
+            { name: 'Café', icon: '☕' },
+            { name: 'Supermarket', icon: '🛒' },
+            { name: 'Pharmacy', icon: '💊' },
+            { name: 'Salon', icon: '💇' },
+            { name: 'Grocery', icon: '🥦' },
+            { name: 'Hardware', icon: '🔧' },
+            { name: 'Warehouse', icon: '🏢' },
+            { name: 'Boutique', icon: '👗' },
+            { name: 'Bakery', icon: '🥖' },
+            { name: 'Clinic', icon: '🏥' },
+            { name: 'Bar', icon: '🍺' },
+            { name: 'Auto Shop', icon: '🚗' },
+            { name: 'Fashion', icon: '👔' },
+            { name: 'Electronics', icon: '📱' },
+            { name: 'Furniture', icon: '🪑' },
+            { name: 'Bookstore', icon: '📚' },
+            { name: 'Pet Shop', icon: '🐾' },
+            { name: 'E-commerce', icon: '🌐' },
+            { name: 'Hotel / Lodge', icon: '🏨' },
+            { name: 'Butchery', icon: '🥩' },
+            { name: 'Farm / Agri', icon: '🌾' },
+            { name: 'Tailor', icon: '✂️' },
+            { name: 'Printing', icon: '🖨️' },
+            { name: 'Laundry', icon: '🧺' },
+            { name: 'Fuel Station', icon: '⛽' },
+          ].map((type) => (
+            <motion.div
+              key={type.name}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="flex flex-col items-center gap-1.5 p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer"
+            >
+              <span className="text-xl">{type.icon}</span>
+              <span className="text-xs font-medium text-gray-700 text-center leading-tight">{type.name}</span>
+            </motion.div>
+          ))}
+        </div>
       </section>
 
       {/* Stats */}

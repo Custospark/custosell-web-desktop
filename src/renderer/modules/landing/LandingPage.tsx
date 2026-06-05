@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3, Users, Receipt, Clock, Store, Coffee, Pill, Scissors, Apple, Wrench, Building2, Shirt, Heart, Wine, Car, Monitor, BookOpen, Globe, Printer, Droplets, Fuel, Wheat, Ruler, PawPrint, Sofa, ChefHat, UtensilsCrossed, Building } from 'lucide-react';
+import TestimonialCarousel from './ui/TestimonialCarousel';
 
 const stats = [
   { value: '10K+', label: 'Businesses' },
@@ -206,97 +206,5 @@ export default function LandingPage() {
         </motion.div>
       </section>
     </>
-  );
-}
-
-const testimonials = [
-  {
-    quote: "Custosell transformed how we manage our shop. Sales are faster, inventory is always accurate, and I can see my business performance anytime — even offline.",
-    name: 'James Opiyo', business: 'Oscar Shop', location: 'Kampala, Uganda', initials: 'JO', color: 'bg-blue-600',
-  },
-  {
-    quote: "Switching to Custosell was the best decision for our restaurant. Tracking orders and payments is seamless, and the offline mode saved us during network outages.",
-    name: 'Amina Diallo', business: 'Le Quartier Gourmet', location: 'Dakar, Senegal', initials: 'AD', color: 'bg-emerald-600',
-  },
-  {
-    quote: "We run a wholesale business with high volume daily. Custosell handles it all — stock tracking, customer credit, and end-of-day reports without breaking a sweat.",
-    name: 'Chidi Okonkwo', business: 'Okonkwo Wholesale', location: 'Lagos, Nigeria', initials: 'CO', color: 'bg-purple-600',
-  },
-  {
-    quote: "As a pharmacist, accuracy is everything. Custosell helps me track expiry dates, manage stock, and serve customers faster. A must-have for any pharmacy.",
-    name: 'Grace Mwangi', business: 'Mwangi Pharmacy', location: 'Nairobi, Kenya', initials: 'GM', color: 'bg-rose-600',
-  },
-  {
-    quote: "Our salon handles dozens of customers daily. Custosell makes booking, payment, and product sales so much easier. My staff learned it in one day.",
-    name: 'Fatima Ahmed', business: 'Zuri Beauty Lounge', location: 'Dar es Salaam, Tanzania', initials: 'FA', color: 'bg-pink-500',
-  },
-  {
-    quote: "Running a hardware store means tracking thousands of items. Custosell's inventory management is a game changer. I finally know what's in stock without walking the floor.",
-    name: 'Kwame Asante', business: 'Asante Hardware', location: 'Accra, Ghana', initials: 'KA', color: 'bg-amber-600',
-  },
-  {
-    quote: "We use Custosell across our supermarket chain. The dashboard gives me a real-time view of all locations — sales, stock, and staff performance. Unbelievable value.",
-    name: 'Mpho Tshabalala', business: 'Tshabalala Supermarkets', location: 'Johannesburg, South Africa', initials: 'MT', color: 'bg-indigo-600',
-  },
-  {
-    quote: "I started my boutique with just a few items. Custosell grew with me. Now with over 500 products, I manage everything from one screen — sales, suppliers, and customers.",
-    name: 'Ngozi Eze', business: 'Ngozi Fashion House', location: 'Abuja, Nigeria', initials: 'NE', color: 'bg-sky-600',
-  },
-  {
-    quote: "My butchery serves hundreds of customers on market days. Custosell's fast checkout keeps the line moving. The sales reports help me plan my stock orders perfectly.",
-    name: 'Jean-Pierre Habimana', business: 'Habimana Meats', location: 'Kigali, Rwanda', initials: 'JH', color: 'bg-red-600',
-  },
-  {
-    quote: "We run a farm supply business across three counties. Custosell helps us track sales to farmers, manage credit, and reconcile daily — even when we're in the field.",
-    name: 'Sarah Wanjiku', business: 'Wanjiku Agri Supplies', location: 'Nakuru, Kenya', initials: 'SW', color: 'bg-green-600',
-  },
-];
-
-function TestimonialCarousel() {
-  const [active, setActive] = useState(0);
-  const t = testimonials[active];
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="relative min-h-[280px] sm:min-h-[240px]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.3 }}
-            className="text-center p-8 sm:p-10 rounded-2xl border border-blue-100 bg-blue-50/50"
-          >
-            <svg className="w-8 h-8 text-blue-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" /></svg>
-            <blockquote className="text-base sm:text-lg text-gray-700 font-medium leading-relaxed mb-6">
-              &ldquo;{t.quote}&rdquo;
-            </blockquote>
-            <div className="flex items-center justify-center gap-3">
-              <div className={`w-10 h-10 rounded-full ${t.color} flex items-center justify-center text-sm font-bold text-white shrink-0`}>{t.initials}</div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-gray-900">{t.name}</p>
-                <p className="text-xs text-gray-500">{t.business} — {t.location}</p>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-      <div className="flex items-center justify-center gap-2 mt-6">
-        {testimonials.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActive(i)}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-              i === active ? 'bg-blue-600 w-6' : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-            aria-label={`Testimonial ${i + 1}`}
-          />
-        ))}
-      </div>
-      <div className="flex items-center justify-center gap-1 mt-1 text-xs text-gray-400">
-        {active + 1} / {testimonials.length}
-      </div>
-    </div>
   );
 }

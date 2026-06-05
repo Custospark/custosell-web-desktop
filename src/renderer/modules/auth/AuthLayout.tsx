@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
+import LogoImage from '../../shared/assets/LogoImage';
 
 interface AuthLayoutProps {
   title: string;
@@ -23,8 +24,8 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
         <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-black/70" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <Link to={ROUTES.DASHBOARD} className="text-white text-2xl font-bold tracking-tight">
-            Custosell
+          <Link to={ROUTES.DASHBOARD}>
+            <LogoImage size="lg" />
           </Link>
           <div className="max-w-md">
             <h1 className="text-3xl font-bold text-white mb-3 leading-tight">
@@ -47,26 +48,39 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             </div>
             <div className="mt-6">
               <p className="text-xs font-medium text-blue-200 uppercase tracking-wider mb-2">Built for</p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-x-3 gap-y-1.5 text-sm text-blue-100">
-                {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].map((type) => (
-                  <div key={type} className="inline-flex items-center gap-1.5">
-                    <svg className="w-3 h-3 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    {type}
-                  </div>
-                ))}
-              </div>
+              <table className="w-full text-sm text-blue-100">
+                <tbody>
+                  {['Retail', 'Wholesale', 'Restaurant', 'Café', 'Supermarket', 'Pharmacy', 'Salon', 'Grocery', 'Hardware', 'Warehouse', 'Boutique', 'Bakery', 'Clinic', 'Bar', 'Auto Shop', 'Fashion', 'Electronics', 'Furniture', 'Bookstore', 'Pet Shop', 'E-commerce', 'Hotel / Lodge', 'Butchery', 'Farm / Agri', 'Tailor', 'Printing', 'Laundry', 'Fuel Station'].reduce<string[][]>((rows, type, i) => {
+                    const col = i % 7;
+                    if (col === 0) rows.push([]);
+                    rows[rows.length - 1].push(type);
+                    return rows;
+                  }, []).map((row, ri) => (
+                    <tr key={ri}>
+                      {row.map((type) => (
+                        <td key={type} className="py-1 pr-4">
+                          <span className="inline-flex items-center gap-1.5">
+                            <svg className="w-3 h-3 text-blue-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            {type}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
           <div className="text-blue-300 text-sm">
-            &copy; {new Date().getFullYear()} Custosell. All rights reserved.
+            &copy; {new Date().getFullYear()} Custospark. All rights reserved.
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-gray-50">
         <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Custosell</h1>
+          <div className="lg:hidden mb-8 flex justify-center">
+            <LogoImage size="md" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-1.5 text-center">{title}</h2>
           {subtitle && <p className="text-gray-500 mb-8 text-center">{subtitle}</p>}

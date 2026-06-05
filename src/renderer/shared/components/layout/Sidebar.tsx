@@ -11,6 +11,7 @@ import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import LogoImage from '../../assets/LogoImage';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -145,11 +146,11 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
         collapsed ? 'w-[64px]' : 'w-[260px]'
       } ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}
     >
-      <div className={`border-b border-gray-200 flex items-center ${collapsed ? 'justify-center p-3' : 'p-6'}`}>
+      <div className={`border-b border-gray-200 flex items-center ${collapsed ? 'justify-center p-3' : 'p-5'}`}>
         {collapsed ? (
-          <h1 className="text-lg font-bold text-blue-600">C</h1>
+          <LogoImage size="sm" />
         ) : (
-          <h1 className="text-xl font-bold text-blue-600">Custosell</h1>
+          <LogoImage size="md" />
         )}
       </div>
 

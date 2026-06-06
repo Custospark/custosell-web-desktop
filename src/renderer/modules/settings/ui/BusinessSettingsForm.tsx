@@ -55,11 +55,18 @@ export default function BusinessSettingsForm() {
 
   useEffect(() => {
     if (business) {
+      const rawPhone = business.phone ?? '';
+      const matched = countryCodes.find((c) => rawPhone.startsWith(c.dial_code));
+      if (matched) {
+        setPhoneCountryCode(matched);
+        setPhoneLocal(rawPhone.slice(matched.dial_code.length));
+      } else {
+        setPhoneLocal(rawPhone);
+      }
       setForm({
         name: business.name || '',
         email: business.email ?? null,
-        phone: business.phone ?? null,
-        phoneLocal: business.phone ?? '',
+        phone: rawPhone,
         website: business.website ?? null,
         address: business.address ?? null,
         city: business.city ?? null,
@@ -74,6 +81,23 @@ export default function BusinessSettingsForm() {
       });
     }
   }, [business]);
+
+  const updatePhone = (localDigits: string) => {
+    const sanitized = localDigits.replace(/[^\d\s\-()]/g, '');
+    setPhoneLocal(sanitized);
+    const full = sanitized ? `${phoneCountryCode.dial_code}${sanitized.replace(/\D/g, '')}` : '';
+    setForm((p) => ({ ...p, phone: full || null }));
+  };
+
+  const selectCountryCode = (cc: CountryCode) => {
+    setPhoneCountryCode(cc);
+    setPhoneDropdownOpen(false);
+    setPhoneSearch('');
+    if (phoneLocal) {
+      const full = `${cc.dial_code}${phoneLocal.replace(/\D/g, '')}`;
+      setForm((p) => ({ ...p, phone: full }));
+    }
+  };
 
   const update = <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) => setForm((p) => ({ ...p, [key]: val }));
 
@@ -128,10 +152,41 @@ export default function BusinessSettingsForm() {
             </div>
             <div>
               <label className={labelCls}>Phone</label>
-              <div className="relative">
-                <Phone className={iconCls} />
-                <input className={inputCls} value={form.phone || ''} onChange={(e) => update('phone', e.target.value || null)} placeholder="+256 700 000 000" />
+              <div className="flex gap-2">
+                <div ref={phoneDropdownRef} className="relative shrink-0">
+                  <button type="button" onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)}
+                    className="flex items-center gap-1 h-9 px-2.5 border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors cursor-pointer">
+                    <span className="text-base">{phoneCountryCode.flag}</span>
+                    <span className="text-xs font-medium text-gray-700">{phoneCountryCode.dial_code}</span>
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  </button>
+                  {phoneDropdownOpen && (
+                    <div className="absolute top-full mt-1 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-52 overflow-y-auto">
+                      <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
+                        <input type="text" placeholder="Search..." value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                      </div>
+                      {filteredCodes.map((c) => (
+                        <button key={c.code} type="button" onClick={() => selectCountryCode(c)}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-blue-50 transition-colors cursor-pointer ${c.code === phoneCountryCode.code ? 'bg-blue-50 font-medium' : ''}`}>
+                          <span className="text-base">{c.flag}</span>
+                          <span className="text-gray-800">{c.name}</span>
+                          <span className="ml-auto text-gray-400">{c.dial_code}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <input type="tel" placeholder="700 000 000" value={phoneLocal}
+                    onChange={(e) => updatePhone(e.target.value)}
+                    className={inputCls + ' pl-9'} />
+                </div>
               </div>
+              {phoneLocal && (
+                <p className="text-xs text-gray-400 mt-1">Full number: {phoneCountryCode.dial_code} {phoneLocal}</p>
+              )}
             </div>
           </div>
           <div>

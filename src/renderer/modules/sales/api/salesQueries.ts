@@ -28,6 +28,8 @@ export function useSales() {
       const { data } = await axiosInstance.get<{ data: Sale[] }>('/sales');
       return data.data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 

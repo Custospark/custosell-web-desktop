@@ -87,6 +87,8 @@ export function useProducts() {
       const { data: response } = await axiosInstance.get<{ data: Product[] }>('/products');
       return response.data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 

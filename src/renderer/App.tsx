@@ -14,6 +14,8 @@ import './App.css';
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 const Router = isElectron ? HashRouter : BrowserRouter;
 
+const CACHE_VERSION = 'v1';
+
 const persister = createSyncStoragePersister({
   storage: window.localStorage,
   key: 'CUSTOSELL_QUERY_CACHE',
@@ -25,7 +27,7 @@ function App() {
     <Provider store={store}>
       <PersistQueryClientProvider
         client={queryClient}
-        persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+        persistOptions={{ persister, maxAge: 1000 * 60 * 30, buster: CACHE_VERSION }}
       >
         <Router>
           <AppProvider>

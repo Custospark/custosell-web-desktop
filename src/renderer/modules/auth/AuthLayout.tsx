@@ -46,8 +46,14 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
               ))}
             </div>
           </div>
-          <div className="text-blue-300 text-sm">
-            &copy; {new Date().getFullYear()} Custospark. All rights reserved.
+          <div className="text-center space-y-1">
+            <p className="text-blue-300/70 text-sm">
+              Custosell is a product of{' '}
+              <a href="https://www.custospark.com" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-white underline transition-colors">Custospark Company Ltd</a>
+            </p>
+            <div className="text-blue-300 text-xs">
+              &copy; {new Date().getFullYear()} Custospark. All rights reserved.
+            </div>
           </div>
         </div>
       </div>

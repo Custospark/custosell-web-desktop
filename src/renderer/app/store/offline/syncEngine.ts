@@ -33,10 +33,30 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
 export async function syncAllMutations(): Promise<{ synced: number; failed: number }> {
   const pending = await mutationQueue.getPending();
+  if (pending.length === 0) return { synced: 0, failed: 0 };
+
+  const saleMutations = pending.filter((m) => m.url === '/sales' && m.method === 'POST');
+  const otherMutations = pending.filter((m) => !(m.url === '/sales' && m.method === 'POST'));
   let synced = 0;
   let failed = 0;
 
-  for (const m of pending) {
+  if (saleMutations.length > 0) {
+    try {
+      const sales = saleMutations.map((m) => m.data);
+      await axiosInstance.post('/sales/batch', { sales });
+      for (const m of saleMutations) {
+        await mutationQueue.markCompleted(m.id);
+      }
+      synced += saleMutations.length;
+    } catch (e: any) {
+      for (const m of saleMutations) {
+        await mutationQueue.markFailed(m.id, e?.message || 'Batch sync failed');
+      }
+      failed += saleMutations.length;
+    }
+  }
+
+  for (const m of otherMutations) {
     const ok = await processMutation(m);
     if (ok) synced++;
     else failed++;

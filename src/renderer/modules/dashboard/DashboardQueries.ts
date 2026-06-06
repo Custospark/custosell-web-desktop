@@ -15,6 +15,8 @@ export function useDashboardSummary() {
       const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary');
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
     refetchInterval: 60_000,
   });
 }

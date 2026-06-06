@@ -18,9 +18,9 @@ function App() {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <NetworkOfflineOverlay />
           <AppProvider>
             <ToastProvider>
+              <NetworkOfflineOverlay />
               <ConfirmProvider>
                 <AppRoutes />
               </ConfirmProvider>

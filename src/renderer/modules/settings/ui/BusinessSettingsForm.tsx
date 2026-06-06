@@ -6,7 +6,7 @@ import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkele
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { useToast } from '../../../app/contexts/useToast';
 import { CURRENCIES } from '../../../shared/utils/currencies';
-import { Building2, Save, Globe, MapPin, Receipt } from 'lucide-react';
+import { Building2, Save, Globe, MapPin, Receipt, Store, Mail, Phone, Globe2, MapPinned, Building, Hash, Tag, Clock, Coins, FileText } from 'lucide-react';
 
 const emptyForm: UpdateBusinessData = {
   name: '', email: null, phone: null, website: null, address: null,
@@ -15,8 +15,10 @@ const emptyForm: UpdateBusinessData = {
   currency: null, receipt_footer: null,
 };
 
-const inputCls = "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
+const inputCls = "w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
+const selectCls = "w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white";
 const labelCls = "block text-sm font-medium text-gray-700 mb-1";
+const iconCls = "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none";
 
 export default function BusinessSettingsForm() {
   const { data: business, isLoading, error } = useBusiness();
@@ -83,21 +85,33 @@ export default function BusinessSettingsForm() {
         <div className="p-4 space-y-4">
           <div>
             <label className={labelCls}>Business Name <span className="text-red-500">*</span></label>
-            <input className={inputCls} value={form.name || ''} onChange={(e) => update('name', e.target.value)} placeholder="Enter business name" required />
+            <div className="relative">
+              <Store className={iconCls} />
+              <input className={inputCls} value={form.name || ''} onChange={(e) => update('name', e.target.value)} placeholder="Enter business name" required />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Email</label>
-              <input className={inputCls} type="email" value={form.email || ''} onChange={(e) => update('email', e.target.value || null)} placeholder="business@example.com" />
+              <div className="relative">
+                <Mail className={iconCls} />
+                <input className={inputCls} type="email" value={form.email || ''} onChange={(e) => update('email', e.target.value || null)} placeholder="business@example.com" />
+              </div>
             </div>
             <div>
               <label className={labelCls}>Phone</label>
-              <input className={inputCls} value={form.phone || ''} onChange={(e) => update('phone', e.target.value || null)} placeholder="+256 700 000 000" />
+              <div className="relative">
+                <Phone className={iconCls} />
+                <input className={inputCls} value={form.phone || ''} onChange={(e) => update('phone', e.target.value || null)} placeholder="+256 700 000 000" />
+              </div>
             </div>
           </div>
           <div>
             <label className={labelCls}>Website</label>
-            <input className={inputCls} type="url" value={form.website || ''} onChange={(e) => update('website', e.target.value || null)} placeholder="https://example.com" />
+            <div className="relative">
+              <Globe2 className={iconCls} />
+              <input className={inputCls} type="url" value={form.website || ''} onChange={(e) => update('website', e.target.value || null)} placeholder="https://example.com" />
+            </div>
           </div>
         </div>
       </div>
@@ -111,63 +125,90 @@ export default function BusinessSettingsForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Address</label>
-              <textarea className={`${inputCls} resize-none`} rows={2} value={form.address || ''} onChange={(e) => update('address', e.target.value || null)} placeholder="Street address" />
+              <div className="relative">
+                <MapPin className={iconCls} />
+                <textarea className={`${inputCls} resize-none pl-9`} rows={2} value={form.address || ''} onChange={(e) => update('address', e.target.value || null)} placeholder="Street address" />
+              </div>
             </div>
             <div className="space-y-4">
               <div>
                 <label className={labelCls}>City</label>
-                <input className={inputCls} value={form.city || ''} onChange={(e) => update('city', e.target.value || null)} placeholder="Kampala" />
+                <div className="relative">
+                  <Building className={iconCls} />
+                  <input className={inputCls} value={form.city || ''} onChange={(e) => update('city', e.target.value || null)} placeholder="Kampala" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>State</label>
-                  <input className={inputCls} value={form.state || ''} onChange={(e) => update('state', e.target.value || null)} placeholder="Central" />
+                  <div className="relative">
+                    <MapPinned className={iconCls} />
+                    <input className={inputCls} value={form.state || ''} onChange={(e) => update('state', e.target.value || null)} placeholder="Central" />
+                  </div>
                 </div>
                 <div>
                   <label className={labelCls}>Postal Code</label>
-                  <input className={inputCls} value={form.postal_code || ''} onChange={(e) => update('postal_code', e.target.value || null)} placeholder="+256" />
+                  <div className="relative">
+                    <Hash className={iconCls} />
+                    <input className={inputCls} value={form.postal_code || ''} onChange={(e) => update('postal_code', e.target.value || null)} placeholder="+256" />
+                  </div>
                 </div>
               </div>
               <div>
                 <label className={labelCls}>Country</label>
-                <input className={inputCls} value={form.country || ''} onChange={(e) => update('country', e.target.value || null)} placeholder="Uganda" />
+                <div className="relative">
+                  <Globe className={iconCls} />
+                  <input className={inputCls} value={form.country || ''} onChange={(e) => update('country', e.target.value || null)} placeholder="Uganda" />
+                </div>
               </div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Tax / VAT ID</label>
-              <input className={inputCls} value={form.tax_id || ''} onChange={(e) => update('tax_id', e.target.value || null)} placeholder="Tax registration number" />
+              <div className="relative">
+                <Tag className={iconCls} />
+                <input className={inputCls} value={form.tax_id || ''} onChange={(e) => update('tax_id', e.target.value || null)} placeholder="Tax registration number" />
+              </div>
             </div>
             <div>
               <label className={labelCls}>Business Type</label>
-              <select className={inputCls} value={form.business_type || ''} onChange={(e) => update('business_type', e.target.value || null)}>
-                <option value="">Select business type</option>
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="cafe">Café</option>
-                <option value="service">Service</option>
-                <option value="salon">Salon</option>
-                <option value="pharmacy">Pharmacy</option>
-                <option value="grocery">Grocery</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="relative">
+                <Building2 className={iconCls} />
+                <select className={selectCls} value={form.business_type || ''} onChange={(e) => update('business_type', e.target.value || null)}>
+                  <option value="">Select business type</option>
+                  <option value="retail">Retail</option>
+                  <option value="wholesale">Wholesale</option>
+                  <option value="restaurant">Restaurant</option>
+                  <option value="cafe">Café</option>
+                  <option value="service">Service</option>
+                  <option value="salon">Salon</option>
+                  <option value="pharmacy">Pharmacy</option>
+                  <option value="grocery">Grocery</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Timezone</label>
-              <input className={inputCls} value={form.timezone || ''} onChange={(e) => update('timezone', e.target.value || null)} placeholder="Africa/Kampala" />
+              <div className="relative">
+                <Clock className={iconCls} />
+                <input className={inputCls} value={form.timezone || ''} onChange={(e) => update('timezone', e.target.value || null)} placeholder="Africa/Kampala" />
+              </div>
             </div>
             <div>
               <label className={labelCls}>Currency</label>
-              <select className={inputCls} value={form.currency || ''} onChange={(e) => update('currency', e.target.value || null)}>
-                <option value="">Select currency</option>
-                {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>{c.code} — {c.symbol} — {c.name}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <Coins className={iconCls} />
+                <select className={selectCls} value={form.currency || ''} onChange={(e) => update('currency', e.target.value || null)}>
+                  <option value="">Select currency</option>
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>{c.code} — {c.symbol} — {c.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -180,7 +221,10 @@ export default function BusinessSettingsForm() {
         </div>
         <div className="p-4">
           <label className={labelCls}>Receipt Footer</label>
-          <textarea className={`${inputCls} resize-none`} rows={4} value={form.receipt_footer || ''} onChange={(e) => update('receipt_footer', e.target.value || null)} placeholder="Thank you for your business!" />
+          <div className="relative">
+            <FileText className="absolute left-3 top-3 text-gray-400 w-4 h-4 pointer-events-none" />
+            <textarea className={`${inputCls} resize-none pl-9`} rows={4} value={form.receipt_footer || ''} onChange={(e) => update('receipt_footer', e.target.value || null)} placeholder="Thank you for your business!" />
+          </div>
         </div>
       </div>
     </form>

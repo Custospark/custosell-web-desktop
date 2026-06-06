@@ -2,6 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
+import { store } from '../../../app/store/store';
+import { mutationQueue } from '../../../app/store/offline/mutationQueue';
+import { stockLedger } from '../../../app/store/offline/stockLedger';
+import { generateLocalReceiptNumber } from '../../../app/store/offline/receiptGenerator';
 import type { Sale, CreateSalePayload, RefundData } from './salesTypes';
 
 export const salesKeys = {
@@ -60,10 +64,55 @@ export function useCreateSale() {
   const { showToast } = useToast();
   return useMutation<Sale, AxiosError, CreateSalePayload>({
     mutationFn: async (payload) => {
+      const state = store.getState();
+      const isOffline = (state as any).network?.systemStatus === 'offline';
+
+      if (isOffline) {
+        const receiptNumber = generateLocalReceiptNumber();
+
+        for (const item of payload.items) {
+          await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
+        }
+
+        const localId = await mutationQueue.enqueue({
+          method: 'POST',
+          url: '/sales',
+          data: payload,
+          maxRetries: 3,
+        });
+
+        return {
+          id: Date.now(),
+          receipt_number: receiptNumber,
+          total_amount: payload.total_amount.toString(),
+          payment_method: payload.payment_method as any,
+          payment_status: 'paid',
+          subtotal: payload.subtotal.toString(),
+          discount_amount: (payload.discount_amount || 0).toString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          business_id: 0,
+          user_id: 0,
+          customer_id: payload.customer_id ?? null,
+          shift_id: null,
+          amount_tendered: payload.amount_tendered ? payload.amount_tendered.toString() : null,
+          change_given: payload.change_given ? payload.change_given.toString() : null,
+          notes: null,
+          sale_date: new Date().toISOString(),
+          sale_items: payload.items.map((item, i) => ({
+            id: Date.now() + i,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price.toString(),
+            subtotal: (item.quantity * item.unit_price).toString(),
+          } as any)),
+        } as Sale;
+      }
+
       const res = await axiosInstance.post('/sales', payload);
       return res.data as Sale;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       qc.invalidateQueries({ queryKey: salesKeys.all });
       qc.invalidateQueries({ queryKey: salesKeys.list() });
       qc.invalidateQueries({ queryKey: ['inventory', 'products'] });

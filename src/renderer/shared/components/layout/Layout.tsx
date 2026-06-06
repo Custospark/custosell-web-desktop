@@ -82,7 +82,7 @@ export function Layout() {
             {systemStatus === 'online' && (
               <button onClick={retryConnection} title={`Connected · ${latency}ms latency`} className="flex items-center gap-1.5 text-xs text-green-600 hover:text-green-700 cursor-pointer">
                 <Wifi className="w-3.5 h-3.5" />
-                <span className="font-medium">Online</span>
+                <span className="font-medium">Connected</span>
                 <span className="text-green-400 hidden sm:inline">{latency}ms</span>
               </button>
             )}
@@ -95,7 +95,7 @@ export function Layout() {
             {systemStatus === 'offline' && (
               <button onClick={retryConnection} title="No internet connection" className="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 cursor-pointer">
                 <WifiOff className="w-3.5 h-3.5" />
-                <span className="font-medium">Offline</span>
+                <span className="font-medium">No Connection</span>
               </button>
             )}
           </div>

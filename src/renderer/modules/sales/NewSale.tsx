@@ -31,6 +31,8 @@ function BillingControls() {
   const { data: customers } = useCustomers();
   const createSale = useCreateSale();
   const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
+  const authUser = useAppSelector((s) => s.auth.user);
+  const currency = authUser?.business?.currency || 'UGX';
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -159,7 +161,7 @@ function BillingControls() {
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Amount Tendered</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
               <input title="Enter amount tendered" type="number" min={0} step="100"
                 className="w-full pl-11 pr-28 py-2.5 border border-gray-300 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0" value={amountTendered || ''}
@@ -184,7 +186,7 @@ function BillingControls() {
           <div className="flex gap-1.5">
             <div className="relative flex-1">
               {discountType === 'fixed' && (
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
               )}
               <input title="Enter discount amount" type="number" min={0}
                 className={`border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 ${discountType === 'fixed' ? 'pl-11 pr-3' : 'pl-3 pr-3'}`}

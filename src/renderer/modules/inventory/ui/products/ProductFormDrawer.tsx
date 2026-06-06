@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCategories, useCreateProduct, useUpdateProduct } from '../../api/products/ProductQueries';
 import type { Product, CreateProductData } from '../../api/products/ProductTypes';
 import { SlideDrawer } from '../../../../shared/components/modals/SlideDrawer';
+import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
 import { Package, DollarSign, Barcode, Tag, Archive, AlertTriangle, Percent, FileText, FolderTree } from 'lucide-react';
 
 interface ProductFormDrawerProps {
@@ -148,7 +149,7 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
         </div>
         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Unit Price (UGX) <span className="text-red-500">*</span></label>
+            <label className={labelClass}>Unit Price ({getBusinessCurrency()}) <span className="text-red-500">*</span></label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input className={inputClass} type="number" step="0.01" min={0} value={form.unit_price} onChange={(e) => update('unit_price', e.target.value)} required placeholder="0.00" />

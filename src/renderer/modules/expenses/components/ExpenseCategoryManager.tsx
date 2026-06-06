@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useExpenseCategories, useCreateExpenseCategory, useUpdateExpenseCategory, useDeleteExpenseCategory } from '../api/ExpenseQueries';
+import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { Card } from '../../../shared/components/cards/Card';
 import { Table } from '../../../shared/components/tables/Table';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -157,7 +158,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Budget Amount</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">UGX</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{getBusinessCurrency()}</span>
                     <input type="number" min={0} value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)}
                       className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0" />
                   </div>

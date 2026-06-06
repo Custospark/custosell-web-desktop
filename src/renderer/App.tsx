@@ -1,5 +1,6 @@
 import { Provider } from 'react-redux';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { store } from './app/store/store';
 import { queryClient } from './app/api/axiosConfig';
@@ -13,21 +14,30 @@ import './App.css';
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 const Router = isElectron ? HashRouter : BrowserRouter;
 
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: 'CUSTOSELL_QUERY_CACHE',
+  throttleTime: 1000,
+});
+
 function App() {
   return (
     <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+      >
         <Router>
           <AppProvider>
             <ToastProvider>
-              {/* <NetworkOfflineOverlay /> */}
+              <NetworkOfflineOverlay />
               <ConfirmProvider>
                 <AppRoutes />
               </ConfirmProvider>
             </ToastProvider>
           </AppProvider>
         </Router>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </Provider>
   );
 }

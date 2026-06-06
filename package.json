@@ -76,6 +76,7 @@
       "output": "dist/releases/",
       "buildResources": "assets"
     },
+    "icon": "assets/icon.png",
     "files": [
       "dist/desktop/**/*",
       "dist/web/**/*",

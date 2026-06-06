@@ -14,6 +14,10 @@ function getProdIndexPath(): string {
 }
 
 function createWindow(): BrowserWindow {
+  const iconPath = isDev
+    ? path.join(__dirname, '..', '..', '..', 'assets', 'icon.png')
+    : path.join(process.resourcesPath, 'icon.png');
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -24,6 +28,7 @@ function createWindow(): BrowserWindow {
     autoHideMenuBar: true,
     backgroundColor: '#ffffff',
     fullscreenable: true,
+    icon: iconPath,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

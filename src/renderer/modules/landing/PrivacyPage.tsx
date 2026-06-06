@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, Lock, Eye, Database, Download, Building2, CheckCircle2, FileText, Globe, Clock } from 'lucide-react';
+import { Shield, Lock, Eye, Database, Download, Building2, CheckCircle2, Globe, Clock } from 'lucide-react';
 
 const sections = [
   {

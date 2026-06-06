@@ -59,6 +59,48 @@ export function useSale(id: number) {
   });
 }
 
+async function createLocalSale(payload: CreateSalePayload): Promise<Sale> {
+  const receiptNumber = generateLocalReceiptNumber();
+
+  for (const item of payload.items) {
+    await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
+  }
+
+  await mutationQueue.enqueue({
+    method: 'POST',
+    url: '/sales',
+    data: payload,
+    maxRetries: 3,
+  });
+
+  return {
+    id: Date.now(),
+    receipt_number: receiptNumber,
+    total_amount: payload.total_amount.toString(),
+    payment_method: payload.payment_method as any,
+    payment_status: 'paid' as const,
+    subtotal: payload.subtotal.toString(),
+    discount_amount: (payload.discount_amount || 0).toString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    business_id: 0,
+    user_id: 0,
+    customer_id: payload.customer_id ?? null,
+    shift_id: null,
+    amount_tendered: payload.amount_tendered ? payload.amount_tendered.toString() : null,
+    change_given: payload.change_given ? payload.change_given.toString() : null,
+    notes: null,
+    sale_date: new Date().toISOString(),
+    sale_items: payload.items.map((item, i) => ({
+      id: Date.now() + i,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unit_price: item.unit_price.toString(),
+      subtotal: (item.quantity * item.unit_price).toString(),
+    } as any)),
+  } as Sale;
+}
+
 export function useCreateSale() {
   const qc = useQueryClient();
   const { showToast } = useToast();
@@ -68,51 +110,20 @@ export function useCreateSale() {
       const isOffline = (state as any).network?.systemStatus === 'offline';
 
       if (isOffline) {
-        const receiptNumber = generateLocalReceiptNumber();
-
-        for (const item of payload.items) {
-          await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
-        }
-
-        const localId = await mutationQueue.enqueue({
-          method: 'POST',
-          url: '/sales',
-          data: payload,
-          maxRetries: 3,
-        });
-
-        return {
-          id: Date.now(),
-          receipt_number: receiptNumber,
-          total_amount: payload.total_amount.toString(),
-          payment_method: payload.payment_method as any,
-          payment_status: 'paid',
-          subtotal: payload.subtotal.toString(),
-          discount_amount: (payload.discount_amount || 0).toString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          business_id: 0,
-          user_id: 0,
-          customer_id: payload.customer_id ?? null,
-          shift_id: null,
-          amount_tendered: payload.amount_tendered ? payload.amount_tendered.toString() : null,
-          change_given: payload.change_given ? payload.change_given.toString() : null,
-          notes: null,
-          sale_date: new Date().toISOString(),
-          sale_items: payload.items.map((item, i) => ({
-            id: Date.now() + i,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price.toString(),
-            subtotal: (item.quantity * item.unit_price).toString(),
-          } as any)),
-        } as Sale;
+        return createLocalSale(payload);
       }
 
-      const res = await axiosInstance.post('/sales', payload);
-      return res.data as Sale;
+      try {
+        const res = await axiosInstance.post('/sales', payload, { timeout: 5000 });
+        return res.data as Sale;
+      } catch (err: any) {
+        if (!err?.response) {
+          return createLocalSale(payload);
+        }
+        throw err;
+      }
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: salesKeys.all });
       qc.invalidateQueries({ queryKey: salesKeys.list() });
       qc.invalidateQueries({ queryKey: ['inventory', 'products'] });

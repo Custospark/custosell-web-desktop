@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
 import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat } from 'lucide-react';
+import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import type { Expense } from '../api/ExpenseTypes';
 
 interface ExpenseFormProps {

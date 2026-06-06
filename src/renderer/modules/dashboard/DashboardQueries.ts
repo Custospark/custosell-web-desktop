@@ -17,7 +17,6 @@ export function useDashboardSummary() {
     },
     staleTime: 0,
     refetchOnMount: true,
-    refetchInterval: 60_000,
   });
 }
 

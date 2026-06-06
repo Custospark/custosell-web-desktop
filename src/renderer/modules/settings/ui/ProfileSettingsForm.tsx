@@ -7,8 +7,7 @@ import { setUser } from '../../../app/store/slices/authSlice';
 import { useToast } from '../../../app/contexts/useToast';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
-import { Card } from '../../../shared/components/cards/Card';
-import { User, Mail, Phone, Lock, Camera } from 'lucide-react';
+import { User, Mail, Phone, Lock, Camera, Image, ShieldCheck } from 'lucide-react';
 
 const inputClass = "w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
 const labelClass = "block text-sm font-medium text-gray-700 mb-1";
@@ -95,12 +94,13 @@ export default function ProfileSettingsForm() {
         </Button>
       </div>
 
-      <Card>
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 -mx-6 -mt-6 mb-6 rounded-t-xl">
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+          <Image className="w-4 h-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-800">Profile Picture</h3>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
+        <div className="p-4 flex items-center gap-6">
+          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
             {avatarPreview ? (
               <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
@@ -115,13 +115,14 @@ export default function ProfileSettingsForm() {
             <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF. Max 2MB.</p>
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card>
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 -mx-6 -mt-6 mb-6 rounded-t-xl">
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+          <User className="w-4 h-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-800">Personal Information</h3>
         </div>
-        <div className="space-y-4">
+        <div className="p-4 space-y-4">
           <div>
             <label className={labelClass}>Full Name <span className="text-red-500">*</span></label>
             <div className="relative">
@@ -146,33 +147,36 @@ export default function ProfileSettingsForm() {
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card>
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 -mx-6 -mt-6 mb-6 rounded-t-xl">
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-800">Change Password</h3>
         </div>
-        <p className="text-xs text-gray-400 mb-4 -mt-3">Leave blank to keep your current password</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className={labelClass}>New Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} type="password" value={form.password} onChange={update('password')} placeholder="Min 6 characters" />
+        <div className="p-4 space-y-4">
+          <p className="text-xs text-gray-400">Leave blank to keep your current password</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>New Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input className={inputClass} type="password" value={form.password} onChange={update('password')} placeholder="Min 6 characters" />
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Confirm Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input className={inputClass} type="password" value={form.password_confirmation} onChange={update('password_confirmation')} placeholder="Confirm password" />
+              </div>
             </div>
           </div>
-          <div>
-            <label className={labelClass}>Confirm Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} type="password" value={form.password_confirmation} onChange={update('password_confirmation')} placeholder="Confirm password" />
-            </div>
-          </div>
+          {form.password && form.password !== form.password_confirmation && (
+            <p className="text-xs text-red-500">Passwords do not match</p>
+          )}
         </div>
-        {form.password && form.password !== form.password_confirmation && (
-          <p className="text-xs text-red-500 mt-2">Passwords do not match</p>
-        )}
-      </Card>
+      </div>
     </form>
   );
 }

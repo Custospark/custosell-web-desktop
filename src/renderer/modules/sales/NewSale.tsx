@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import type { Sale } from './api/salesTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
@@ -33,6 +33,8 @@ function BillingControls() {
   const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
   const authUser = useAppSelector((s) => s.auth.user);
   const currency = authUser?.business?.currency || 'UGX';
+  const systemStatus = useAppSelector((s) => (s as any).network?.systemStatus);
+  const isOffline = systemStatus === 'offline';
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -232,6 +234,12 @@ function BillingControls() {
           </div>
         </div>
 
+        {isOffline && (
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            Offline — sale will be saved and synced when connected
+          </div>
+        )}
         {/* Complete Sale Button */}
         <Button title="Finalize and complete the sale"
           className="w-full h-12 text-base font-semibold" 

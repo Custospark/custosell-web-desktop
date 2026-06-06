@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -16,6 +17,7 @@ export function Layout() {
   const navigate = useNavigate();
   const logoutMutation = useLogout();
   const { confirm } = useConfirm();
+  const { systemStatus, latency, retryConnection } = useNetworkStatus();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -76,6 +78,26 @@ export function Layout() {
             </div>
           )}
 
+          <div className="flex items-center gap-1.5 shrink-0">
+            {systemStatus === 'online' && (
+              <button onClick={retryConnection} title={`Connected · ${latency}ms latency`} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 cursor-pointer">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                <span className="hidden sm:inline font-medium">{latency}ms</span>
+              </button>
+            )}
+            {systemStatus === 'slow' && (
+              <button onClick={retryConnection} title="Slow connection" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 cursor-pointer">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                <span className="hidden sm:inline font-medium">Slow</span>
+              </button>
+            )}
+            {systemStatus === 'offline' && (
+              <button onClick={retryConnection} title="No internet connection" className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 cursor-pointer">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+                <span className="hidden sm:inline font-medium">Offline</span>
+              </button>
+            )}
+          </div>
           <div className="flex-1 flex justify-center min-w-0">
             {user?.business_name && (
               <span className="text-sm font-semibold text-gray-700 truncate">{user.business_name}</span>

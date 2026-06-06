@@ -6,6 +6,7 @@ import { queryClient } from './app/api/axiosConfig';
 import { AppProvider } from './app/contexts/AppContext';
 import { ToastProvider } from './app/contexts/ToastContext';
 import { ConfirmProvider } from './shared/components/Feedback/ConfirmProvider';
+import NetworkOfflineOverlay from './shared/components/Errors/NetworkOfflineOverlay';
 import { AppRoutes } from './app/routes';
 import './App.css';
 
@@ -17,6 +18,7 @@ function App() {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <Router>
+          <NetworkOfflineOverlay />
           <AppProvider>
             <ToastProvider>
               <ConfirmProvider>

@@ -2,7 +2,7 @@
   "name": "CUSTOSELL",
   "private": true,
   "version": "1.0.0",
-  "description": "Custosell — Lightweight POS for Ugandan Businesses",
+  "description": "Custosell — Lightweight POS for Businesses",
   "author": "Custospark Company Ltd",
   "type": "module",
   "main": "dist/desktop/main/main.js",
@@ -70,7 +70,7 @@
     "vite": "^8.0.12"
   },
   "build": {
-    "appId": "com.custospark.custosell",
+    "appId": "com.custosell",
     "productName": "Custosell",
     "directories": {
       "output": "dist/releases/",
@@ -120,7 +120,7 @@
     "publish": {
       "provider": "github",
       "owner": "Custospark",
-      "repo": "custosell"
+      "repo": "custosell-web-desktop"
     }
   },
   "lint-staged": {

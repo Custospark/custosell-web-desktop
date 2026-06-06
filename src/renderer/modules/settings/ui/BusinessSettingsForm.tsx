@@ -179,7 +179,7 @@ export default function BusinessSettingsForm() {
                 </div>
                 <div className="relative flex-1">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                  <input type="tel" placeholder="700 000 000" value={phoneLocal}
+                  <input type="tel" placeholder="eg 734 123 456" value={phoneLocal}
                     onChange={(e) => updatePhone(e.target.value)}
                     className={inputCls + ' pl-9'} />
                 </div>

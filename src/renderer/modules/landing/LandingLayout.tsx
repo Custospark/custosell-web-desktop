@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, Home, CreditCard, Shield } from 'lucide-react';
+import { Download, Home, CreditCard, Shield, LogIn } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
@@ -76,8 +76,9 @@ export default function LandingLayout() {
 
               <button
                 onClick={() => handleAction('login')}
-                className="px-2 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
               >
+                <LogIn className="w-4 h-4" />
                 Sign In
               </button>
             </motion.div>

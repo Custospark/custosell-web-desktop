@@ -5,10 +5,10 @@ import { UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3, Us
 import TestimonialCarousel from './ui/TestimonialCarousel';
 
 const stats = [
-  { value: '10K+', label: 'Businesses' },
   { value: '99.9%', label: 'Uptime' },
   { value: '24/7', label: 'Offline Mode' },
   { value: '28', label: 'Business Types' },
+  { value: 'Free', label: '14-Day Trial' },
 ];
 
 const benefits = [
@@ -35,7 +35,7 @@ export default function LandingPage() {
           <div className="text-center lg:text-left space-y-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full shadow-lg shadow-blue-500/20 mx-auto lg:mx-0">
               <Sparkles className="w-4 h-4 text-white" />
-              <span className="text-sm font-semibold text-white">Trusted by 10,000+ businesses</span>
+              <span className="text-sm font-semibold text-white">Built for growing businesses</span>
             </motion.div>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1">
@@ -173,7 +173,7 @@ export default function LandingPage() {
       {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">10,000+ Businesses Trust Custosell</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Growing Businesses Trust Custosell</h2>
           <p className="text-gray-500 max-w-2xl mx-auto">From small shops to growing enterprises — businesses rely on Custosell every day.</p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -34,6 +34,9 @@ export default function LoginPage() {
           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" className={inputCls} />
         </div>
+        <div className="text-right -mt-3">
+          <Link to={ROUTES.FORGOT_PASSWORD} className="text-xs text-blue-600 hover:underline font-medium">Forgot password?</Link>
+        </div>
         {loginMutation.isError && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             {(loginMutation.error as any)?.response?.data?.message || (loginMutation.error as any)?.message || 'Invalid credentials'}

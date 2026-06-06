@@ -8,6 +8,8 @@ import { Layout } from '../../shared/components/layout/Layout';
 
 const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('../../modules/dashboard/DashboardPage'));
 const NewSalePage = lazy(() => import('../../modules/sales/NewSale'));
 
@@ -48,6 +50,8 @@ export function AppRoutes() {
         </Route>
         <Route path={ROUTES.LOGIN} element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER} element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<SuspenseWrapper><ForgotPasswordPage /></SuspenseWrapper>} />
+        <Route path={ROUTES.RESET_PASSWORD} element={<SuspenseWrapper><ResetPasswordPage /></SuspenseWrapper>} />
       </Route>
       <Route element={<AuthMiddlewareRoute />}>
         <Route element={<Layout />}>

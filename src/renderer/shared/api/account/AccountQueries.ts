@@ -10,7 +10,7 @@ import {
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import type { LoginRequest, RegisterRequest, AuthResponse, ApiError } from './AccountTypes';
+import type { LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest, ApiError } from './AccountTypes';
 
 export const accountKeys = {
   all: ['account'] as const,
@@ -105,5 +105,37 @@ export function useProfile() {
     staleTime: 0,
     retry: false,
     enabled: !!localStorage.getItem('token'),
+  });
+}
+
+export function useForgotPassword() {
+  const { showToast } = useToast();
+  return useMutation<{ message: string }, AxiosError<ApiError>, ForgotPasswordRequest>({
+    mutationFn: async (data) => {
+      const { data: response } = await axiosInstance.post('/auth/forgot-password', data);
+      return response;
+    },
+    onSuccess: () => {
+      showToast('success', 'If that email address is associated with an account, a password reset link has been sent.');
+    },
+    onError: () => {
+      showToast('success', 'If that email address is associated with an account, a password reset link has been sent.');
+    },
+  });
+}
+
+export function useResetPassword() {
+  const { showToast } = useToast();
+  return useMutation<{ message: string }, AxiosError<ApiError>, ResetPasswordRequest>({
+    mutationFn: async (data) => {
+      const { data: response } = await axiosInstance.post('/auth/reset-password', data);
+      return response;
+    },
+    onSuccess: () => {
+      showToast('success', 'Password has been reset successfully.');
+    },
+    onError: (e) => {
+      showToast('error', e.response?.data?.message || 'Failed to reset password.');
+    },
   });
 }

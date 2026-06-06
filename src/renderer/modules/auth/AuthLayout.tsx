@@ -35,9 +35,9 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             </p>
             <div className="mt-6 flex gap-4">
               {[
-                { value: '10K+', label: 'Businesses' },
-                { value: '99%', label: 'Uptime' },
                 { value: 'Offline', label: 'First' },
+                { value: '99%', label: 'Uptime' },
+                { value: 'Free', label: 'Trial' },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-white min-w-[90px] text-center">
                   <div className="text-xl font-bold">{stat.value}</div>

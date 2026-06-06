@@ -62,7 +62,7 @@ export default function RegisterPage() {
       title="Create Account"
       subtitle="Register your business to get started"
       heroImage="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80"
-      heroDescription="Monitor performance with dashboards, control stock with inventory, process sales seamlessly, understand your customers, manage expenses, and track shifts — all in one platform."
+      heroDescription="Stop juggling spreadsheets, paper receipts, and separate systems. Start selling faster, tracking smarter, and growing with confidence."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">

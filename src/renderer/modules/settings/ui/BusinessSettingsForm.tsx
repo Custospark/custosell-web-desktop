@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useBusiness, useUpdateBusiness } from '../api/settings/BusinessQueries';
 import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -6,7 +6,9 @@ import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkele
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { useToast } from '../../../app/contexts/useToast';
 import { CURRENCIES } from '../../../shared/utils/currencies';
-import { Building2, Save, Globe, MapPin, Receipt, Store, Mail, Phone, Globe2, MapPinned, Building, Hash, Tag, Clock, Coins, FileText } from 'lucide-react';
+import { Building2, Save, Globe, MapPin, Receipt, Store, Mail, Phone, Globe2, MapPinned, Building, Hash, Tag, Clock, Coins, FileText, ChevronDown } from 'lucide-react';
+import { countryCodes } from '../../../shared/utils/countryCodes';
+import type { CountryCode } from '../../../shared/utils/countryCodes';
 
 const emptyForm: UpdateBusinessData = {
   name: '', email: null, phone: null, website: null, address: null,
@@ -25,6 +27,31 @@ export default function BusinessSettingsForm() {
   const mutation = useUpdateBusiness();
   const { showToast } = useToast();
   const [form, setForm] = useState<UpdateBusinessData>(emptyForm);
+  const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
+  const [phoneLocal, setPhoneLocal] = useState('');
+  const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
+  const [phoneSearch, setPhoneSearch] = useState('');
+  const phoneDropdownRef = useRef<HTMLDivElement>(null);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState('');
+  const currencyRef = useRef<HTMLDivElement>(null);
+
+  const filteredCodes = countryCodes.filter((c) =>
+    c.name.toLowerCase().includes(phoneSearch.toLowerCase()) || c.dial_code.includes(phoneSearch) || c.code.toLowerCase().includes(phoneSearch)
+  );
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (phoneDropdownRef.current && !phoneDropdownRef.current.contains(e.target as Node)) {
+        setPhoneDropdownOpen(false);
+      }
+      if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) {
+        setCurrencyOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   useEffect(() => {
     if (business) {
@@ -32,6 +59,7 @@ export default function BusinessSettingsForm() {
         name: business.name || '',
         email: business.email ?? null,
         phone: business.phone ?? null,
+        phoneLocal: business.phone ?? '',
         website: business.website ?? null,
         address: business.address ?? null,
         city: business.city ?? null,
@@ -198,16 +226,31 @@ export default function BusinessSettingsForm() {
                 <input className={inputCls} value={form.timezone || ''} onChange={(e) => update('timezone', e.target.value || null)} placeholder="Africa/Kampala" />
               </div>
             </div>
-            <div>
+            <div ref={currencyRef}>
               <label className={labelCls}>Currency</label>
               <div className="relative">
                 <Coins className={iconCls} />
-                <select className={selectCls} value={form.currency || ''} onChange={(e) => update('currency', e.target.value || null)}>
-                  <option value="">Select currency</option>
-                  {CURRENCIES.map((c) => (
-                    <option key={c.code} value={c.code}>{c.code} — {c.symbol} — {c.name}</option>
-                  ))}
-                </select>
+                <button type="button" onClick={() => setCurrencyOpen(!currencyOpen)}
+                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm text-left bg-white hover:border-gray-400 transition-colors cursor-pointer flex items-center justify-between">
+                  <span className={form.currency ? 'text-gray-900' : 'text-gray-400'}>{form.currency ? `${CURRENCIES.find((c) => c.code === form.currency)?.code || form.currency} — ${CURRENCIES.find((c) => c.code === form.currency)?.symbol || ''} — ${CURRENCIES.find((c) => c.code === form.currency)?.name || form.currency}` : 'Select currency'}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                </button>
+                {currencyOpen && (
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                    <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
+                      <input type="text" placeholder="Search currency..." value={currencySearch} onChange={(e) => setCurrencySearch(e.target.value)}
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                    </div>
+                    {CURRENCIES.filter((c) => c.code.toLowerCase().includes(currencySearch.toLowerCase()) || c.name.toLowerCase().includes(currencySearch.toLowerCase())).map((c) => (
+                      <button key={c.code} type="button" onClick={() => { update('currency', c.code); setCurrencyOpen(false); setCurrencySearch(''); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-blue-50 transition-colors cursor-pointer ${form.currency === c.code ? 'bg-blue-50 font-medium' : ''}`}>
+                        <span className="text-gray-800">{c.code}</span>
+                        <span className="text-gray-400">{c.symbol}</span>
+                        <span className="text-gray-500 ml-auto truncate">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

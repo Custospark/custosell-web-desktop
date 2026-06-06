@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
 const DB_NAME = 'CustosellOffline';
-const DB_VERSION = 1;
+const DB_VERSION = 3;
 
 interface StockEntry {
   productId: number;
@@ -9,13 +9,15 @@ interface StockEntry {
   updatedAt: string;
 }
 
+export type SyncStatus = 'pending' | 'synced';
+
 interface PendingAdjustment {
   id: string;
   productId: number;
   delta: number;
   reason: string;
   createdAt: string;
-  synced: boolean;
+  syncStatus: SyncStatus;
 }
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
@@ -23,13 +25,19 @@ let dbPromise: Promise<IDBPDatabase> | null = null;
 function getDb(): Promise<IDBPDatabase> {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('stock')) {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
           db.createObjectStore('stock', { keyPath: 'productId' });
         }
-        if (!db.objectStoreNames.contains('adjustments')) {
+        if (oldVersion < 2) {
           const store = db.createObjectStore('adjustments', { keyPath: 'id' });
-          store.createIndex('synced', 'synced');
+          store.createIndex('syncStatus', 'syncStatus');
+        }
+        if (oldVersion < 3) {
+          if (!db.objectStoreNames.contains('adjustments')) {
+            const store = db.createObjectStore('adjustments', { keyPath: 'id' });
+            store.createIndex('syncStatus', 'syncStatus');
+          }
         }
       },
     });
@@ -62,29 +70,32 @@ export const stockLedger = {
       delta,
       reason,
       createdAt: new Date().toISOString(),
-      synced: false,
+      syncStatus: 'pending' as SyncStatus,
     } as PendingAdjustment);
   },
 
   async getPendingAdjustments(): Promise<PendingAdjustment[]> {
     const db = await getDb();
-    return db.getAllFromIndex('adjustments', 'synced', false);
+    const all = await db.getAll('adjustments');
+    return all.filter((a) => a.syncStatus === 'pending');
   },
 
   async markAdjustmentSynced(id: string): Promise<void> {
     const db = await getDb();
     const adj = await db.get('adjustments', id);
     if (adj) {
-      adj.synced = true;
+      adj.syncStatus = 'synced';
       await db.put('adjustments', adj);
     }
   },
 
   async clearSynced(): Promise<void> {
     const db = await getDb();
-    const all = await db.getAllFromIndex('adjustments', 'synced', true);
+    const all = await db.getAll('adjustments');
     for (const adj of all) {
-      await db.delete('adjustments', adj.id);
+      if (adj.syncStatus === 'synced') {
+        await db.delete('adjustments', adj.id);
+      }
     }
   },
 };

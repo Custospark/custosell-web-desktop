@@ -7,7 +7,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { useToast } from '../../app/contexts/ToastContext';
 import { AuthLayout } from './AuthLayout';
 import { countryCodes } from '../../shared/utils/countryCodes';
-import { Store, Mail, Lock, User, Phone, ChevronDown, X } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 import type { CountryCode } from '../../shared/utils/countryCodes';
 

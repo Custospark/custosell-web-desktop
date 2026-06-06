@@ -89,7 +89,7 @@ export function Layout() {
             {systemStatus === 'slow' && (
               <button onClick={retryConnection} title="Slow connection" className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 cursor-pointer">
                 <Signal className="w-3.5 h-3.5" />
-                <span className="font-medium">Slow</span>
+                <span className="font-medium">Slow Internet</span>
               </button>
             )}
             {systemStatus === 'offline' && (

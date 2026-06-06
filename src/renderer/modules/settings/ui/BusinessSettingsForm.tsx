@@ -129,7 +129,7 @@ export default function BusinessSettingsForm() {
         </Button>
       </div>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <div className="rounded-xl border border-gray-200 overflow-visible">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
           <Globe className="w-4 h-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-800">Business Profile</h3>
@@ -199,7 +199,7 @@ export default function BusinessSettingsForm() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <div className="rounded-xl border border-gray-200 overflow-visible">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
           <MapPin className="w-4 h-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-800">Business Details</h3>
@@ -312,7 +312,7 @@ export default function BusinessSettingsForm() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <div className="rounded-xl border border-gray-200 overflow-visible">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
           <Receipt className="w-4 h-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-gray-800">Receipt Settings</h3>

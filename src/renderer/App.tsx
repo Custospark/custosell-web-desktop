@@ -20,7 +20,7 @@ function App() {
         <Router>
           <AppProvider>
             <ToastProvider>
-              <NetworkOfflineOverlay />
+              {/* <NetworkOfflineOverlay /> */}
               <ConfirmProvider>
                 <AppRoutes />
               </ConfirmProvider>

@@ -7,7 +7,7 @@ import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
-import { Menu, X, User, LogOut, ChevronDown, Clock } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff } from 'lucide-react';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 
 export function Layout() {
@@ -80,21 +80,22 @@ export function Layout() {
 
           <div className="flex items-center gap-1.5 shrink-0">
             {systemStatus === 'online' && (
-              <button onClick={retryConnection} title={`Connected · ${latency}ms latency`} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 cursor-pointer">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-                <span className="hidden sm:inline font-medium">{latency}ms</span>
+              <button onClick={retryConnection} title={`Connected · ${latency}ms latency`} className="flex items-center gap-1.5 text-xs text-green-600 hover:text-green-700 cursor-pointer">
+                <Wifi className="w-3.5 h-3.5" />
+                <span className="font-medium">Online</span>
+                <span className="text-green-400 hidden sm:inline">{latency}ms</span>
               </button>
             )}
             {systemStatus === 'slow' && (
-              <button onClick={retryConnection} title="Slow connection" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 cursor-pointer">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-                <span className="hidden sm:inline font-medium">Slow</span>
+              <button onClick={retryConnection} title="Slow connection" className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 cursor-pointer">
+                <Signal className="w-3.5 h-3.5" />
+                <span className="font-medium">Slow</span>
               </button>
             )}
             {systemStatus === 'offline' && (
-              <button onClick={retryConnection} title="No internet connection" className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 cursor-pointer">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
-                <span className="hidden sm:inline font-medium">Offline</span>
+              <button onClick={retryConnection} title="No internet connection" className="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 cursor-pointer">
+                <WifiOff className="w-3.5 h-3.5" />
+                <span className="font-medium">Offline</span>
               </button>
             )}
           </div>

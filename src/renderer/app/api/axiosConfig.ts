@@ -70,6 +70,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
       refetchOnMount: false,
+      networkMode: 'offlineFirst',
     },
     mutations: { retry: 1 },
   },

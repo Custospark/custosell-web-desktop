@@ -16,10 +16,14 @@ export interface LocalRoleRecord {
   serverId?: number;
   createdAt: string;
   syncedAt?: string;
+  lastError?: string;
 }
 
 export type RoleWithSyncMeta = Role & {
   _pendingSync?: boolean;
+  _syncFailed?: boolean;
+  _lastError?: string;
+  _mutationType?: RoleMutationType;
   _localId?: string;
 };
 
@@ -27,6 +31,9 @@ export function toRoleWithSyncMeta(record: LocalRoleRecord): RoleWithSyncMeta {
   return {
     ...record.role,
     _pendingSync: record.syncStatus === 'pending' || record.syncStatus === 'failed',
+    _syncFailed: record.syncStatus === 'failed',
+    _lastError: record.lastError,
+    _mutationType: record.mutationType,
     _localId: record.localId,
   };
 }
@@ -68,6 +75,40 @@ export const localRolesStore = {
     return all.filter((r) => r.syncStatus === 'pending' || r.syncStatus === 'failed');
   },
 
+  async getByLocalId(localId: string): Promise<LocalRoleRecord | null> {
+    const db = await getOfflineDb();
+    return (await db.get('localRoles', localId)) ?? null;
+  },
+
+  async getByRoleId(roleId: number): Promise<LocalRoleRecord | null> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localRoles');
+    return all.find((r) => r.role.id === roleId || r.roleId === roleId) ?? null;
+  },
+
+  async updatePendingRecord(
+    localId: string,
+    role: Role,
+    payload: CreateRoleData | UpdateRoleData | { id: number },
+  ): Promise<LocalRoleRecord> {
+    const db = await getOfflineDb();
+    const record = await db.get('localRoles', localId);
+    if (!record) {
+      throw new Error('Local role record not found');
+    }
+    if (record.syncStatus === 'synced') {
+      throw new Error('Synced role records cannot be updated');
+    }
+
+    record.role = role;
+    record.roleId = role.id;
+    record.payload = payload;
+    record.syncStatus = 'pending';
+    record.lastError = undefined;
+    await db.put('localRoles', record);
+    return record;
+  },
+
   async markSyncedByMutationId(
     mutationId: string,
     serverId?: number,
@@ -92,12 +133,13 @@ export const localRolesStore = {
     return oldId;
   },
 
-  async markFailedByMutationId(mutationId: string): Promise<void> {
+  async markFailedByMutationId(mutationId: string, error?: string): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localRoles');
     const record = all.find((r) => r.mutationId === mutationId);
     if (!record) return;
     record.syncStatus = 'failed';
+    record.lastError = error;
     await db.put('localRoles', record);
   },
 

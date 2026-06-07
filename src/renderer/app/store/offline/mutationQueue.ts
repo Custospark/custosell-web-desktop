@@ -14,6 +14,8 @@ export interface QueuedMutation {
   lastError?: string;
 }
 
+type MutableMutationPatch = Partial<Pick<QueuedMutation, 'data' | 'method' | 'url' | 'headers' | 'maxRetries'>>;
+
 const STALE_SYNCING_TIMEOUT_MS = 5 * 60 * 1000;
 
 function getDb() {
@@ -98,6 +100,49 @@ export const mutationQueue = {
       entry.lastError = error;
       await db.put('mutations', entry);
     }
+  },
+
+  async updateMutation(id: string, patch: MutableMutationPatch): Promise<QueuedMutation> {
+    const db = await getDb();
+    const entry = await db.get('mutations', id);
+    if (!entry) {
+      throw new Error('Queued mutation not found');
+    }
+    if (entry.status === 'completed') {
+      throw new Error('Completed mutations cannot be updated');
+    }
+    if (entry.status === 'syncing') {
+      throw new Error('Sync in progress; try again shortly');
+    }
+
+    if ('data' in patch) entry.data = patch.data;
+    if ('method' in patch && patch.method) entry.method = patch.method;
+    if ('url' in patch && patch.url) entry.url = patch.url;
+    if ('headers' in patch) entry.headers = patch.headers;
+    if ('maxRetries' in patch && typeof patch.maxRetries === 'number') entry.maxRetries = patch.maxRetries;
+
+    await db.put('mutations', entry);
+    return entry;
+  },
+
+  async requeue(id: string): Promise<void> {
+    const db = await getDb();
+    const entry = await db.get('mutations', id);
+    if (!entry) {
+      throw new Error('Queued mutation not found');
+    }
+    if (entry.status === 'completed') {
+      throw new Error('Completed mutations cannot be requeued');
+    }
+    if (entry.status === 'syncing') {
+      throw new Error('Sync in progress; try again shortly');
+    }
+
+    entry.status = 'queued';
+    entry.lastError = undefined;
+    entry.lastAttemptAt = undefined;
+    entry.retryCount = 0;
+    await db.put('mutations', entry);
   },
 
   async remove(id: string): Promise<void> {

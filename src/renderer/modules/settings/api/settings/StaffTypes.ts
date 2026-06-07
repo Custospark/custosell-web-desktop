@@ -26,6 +26,7 @@ export interface UpdateStaffData {
   email?: string;
   phone?: string | null;
   password?: string;
+  password_confirmation?: string;
   role_id?: number;
   is_active?: boolean;
 }

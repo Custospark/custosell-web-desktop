@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCreateRole, useUpdateRole } from '../api/settings/RoleQueries';
-import type { Role, CreateRoleData } from '../api/settings/RoleTypes';
+import type { CreateRoleData } from '../api/settings/RoleTypes';
+import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
 import { PERMISSIONS } from '../api/settings/RoleTypes';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Shield, Hash, AlignLeft, ToggleLeft } from 'lucide-react';
@@ -8,7 +9,7 @@ import { Shield, Hash, AlignLeft, ToggleLeft } from 'lucide-react';
 interface RoleFormDrawerProps {
   open: boolean;
   onClose: () => void;
-  role?: Role | null;
+  role?: RoleWithSyncMeta | null;
 }
 
 interface FormState {
@@ -34,26 +35,25 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
-    if (role) {
-      setForm({
-        name: role.name,
-        slug: role.slug,
-        description: role.description ?? '',
-        permissions: role.permissions,
-        is_default: role.is_default,
-      });
-    } else {
-      setForm(emptyForm);
-    }
+    queueMicrotask(() => {
+      if (role) {
+        setForm({
+          name: role.name,
+          slug: role.slug,
+          description: role.description ?? '',
+          permissions: role.permissions,
+          is_default: role.is_default,
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    });
   }, [role, open]);
 
-  useEffect(() => {
-    if (!isEditing) {
-      setForm((p) => ({ ...p, slug: slugify(p.name) }));
-    }
-  }, [form.name, isEditing]);
-
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
+  const updateName = useCallback((name: string) => {
+    setForm((p) => ({ ...p, name, slug: isEditing ? p.slug : slugify(name) }));
+  }, [isEditing]);
 
   const togglePermission = useCallback((perm: string) => {
     setForm((p) => ({
@@ -94,6 +94,12 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
       canSubmit={canSubmit}
       width="sm:w-[640px]"
     >
+      {role?._syncFailed && (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="font-medium">Sync failed</p>
+          <p className="mt-1">{role._lastError || 'Update the role details and save to retry sync.'}</p>
+        </div>
+      )}
       <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-800">Role Details</h3>
@@ -103,7 +109,7 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
             <label className={labelClass}>Name <span className="text-red-500">*</span></label>
             <div className="relative">
               <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Enter role name" required />
+              <input className={inputClass} value={form.name} onChange={(e) => updateName(e.target.value)} placeholder="Enter role name" required />
             </div>
           </div>
           <div>

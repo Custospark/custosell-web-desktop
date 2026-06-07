@@ -11,6 +11,7 @@ import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from '../.
 import {
   completeOfflineCreateRoleInstant,
   completeOfflineDeleteRoleInstant,
+  completeOfflineUpdatePendingRoleInstant,
   completeOfflineUpdateRoleInstant,
   shouldCompleteSettingsLocally,
 } from '../../../../app/store/offline/completeOfflineSettings';
@@ -131,7 +132,7 @@ export function useUpdateRole() {
 
       const isPendingOnly = existing._pendingSync || id < 0;
       if (isPendingOnly) {
-        return { ...existing, ...data, _pendingSync: true } as RoleWithSyncMeta;
+        return completeOfflineUpdatePendingRoleInstant(existing, data);
       }
 
       if (shouldCompleteSettingsLocally()) {
@@ -158,7 +159,10 @@ export function useUpdateRole() {
         qc.setQueryData<RoleWithSyncMeta[]>(roleKeys.list(), (old) =>
           (old ?? []).filter(Boolean).map((r) => r.id === id ? role : r),
         );
-        showToast('success', 'Changes saved — will sync when online');
+        showToast(
+          'success',
+          role._mutationType ? 'Corrected changes saved — will retry sync' : 'Changes saved — will sync when online',
+        );
       } else {
         qc.invalidateQueries({ queryKey: roleKeys.list() });
       }

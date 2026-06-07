@@ -4,8 +4,8 @@ import { setBusiness } from '../slices/authSlice';
 import { mutationQueue } from './mutationQueue';
 import { shouldCompleteMutationLocally } from './offlineQueryUtils';
 import { syncPendingDataIfOnline } from './syncPendingIfOnline';
-import { localRolesStore, type RoleWithSyncMeta } from './localRolesStore';
-import { localStaffStore, type StaffWithSyncMeta } from './localStaffStore';
+import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from './localRolesStore';
+import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from './localStaffStore';
 import { localBusinessSettingsStore, type BusinessWithSyncMeta } from './localBusinessSettingsStore';
 import type { Business, UpdateBusinessData } from '../../../modules/settings/api/settings/BusinessTypes';
 import type { CreateRoleData, Role, UpdateRoleData } from '../../../modules/settings/api/settings/RoleTypes';
@@ -104,6 +104,46 @@ export function completeOfflineUpdateRoleInstant(role: Role, payload: UpdateRole
     console.error('[OfflineSettings] Role persist failed:', err);
   });
   return updated;
+}
+
+export async function completeOfflineUpdatePendingRoleInstant(
+  existing: RoleWithSyncMeta,
+  payload: UpdateRoleData,
+): Promise<RoleWithSyncMeta> {
+  const record = existing._localId
+    ? await localRolesStore.getByLocalId(existing._localId)
+    : await localRolesStore.getByRoleId(existing.id);
+  if (!record) {
+    throw new Error('Pending role record not found');
+  }
+
+  const updated: Role = {
+    ...record.role,
+    ...existing,
+    ...payload,
+    description: 'description' in payload ? payload.description ?? null : existing.description,
+    permissions: payload.permissions ?? existing.permissions,
+    is_default: payload.is_default ?? existing.is_default,
+    updated_at: new Date().toISOString(),
+  };
+  const nextPayload: CreateRoleData | UpdateRoleData =
+    record.mutationType === 'create'
+      ? {
+          ...(record.payload as CreateRoleData),
+          name: updated.name,
+          slug: updated.slug,
+          description: updated.description,
+          permissions: updated.permissions,
+          is_default: updated.is_default,
+        }
+      : { ...(record.payload as UpdateRoleData), ...payload };
+
+  await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
+  const updatedRecord = await localRolesStore.updatePendingRecord(record.localId, updated, nextPayload);
+  await mutationQueue.requeue(record.mutationId);
+  triggerSettingsSyncAfterPersist('Role');
+
+  return toRoleWithSyncMeta(updatedRecord);
 }
 
 export function completeOfflineDeleteRoleInstant(id: number): void {
@@ -211,6 +251,50 @@ export function completeOfflineUpdateStaffInstant(
     console.error('[OfflineSettings] Staff persist failed:', err);
   });
   return updated;
+}
+
+export async function completeOfflineUpdatePendingStaffInstant(
+  existing: StaffWithSyncMeta,
+  payload: UpdateStaffData,
+  role?: { id: number; name: string } | null,
+): Promise<StaffWithSyncMeta> {
+  const record = existing._localId
+    ? await localStaffStore.getByLocalId(existing._localId)
+    : await localStaffStore.getByStaffId(existing.id);
+  if (!record) {
+    throw new Error('Pending staff record not found');
+  }
+
+  const updated: StaffUser = {
+    ...record.staff,
+    ...existing,
+    ...payload,
+    phone: 'phone' in payload ? payload.phone ?? null : existing.phone,
+    role_id: payload.role_id ?? existing.role_id,
+    role: role ?? existing.role ?? null,
+    is_active: payload.is_active ?? existing.is_active,
+    updated_at: new Date().toISOString(),
+  };
+  const nextPayload: CreateStaffData | UpdateStaffData =
+    record.mutationType === 'create'
+      ? {
+          ...(record.payload as CreateStaffData),
+          name: updated.name,
+          email: updated.email,
+          phone: updated.phone,
+          password: payload.password ?? (record.payload as CreateStaffData).password,
+          password_confirmation:
+            payload.password_confirmation ?? (record.payload as CreateStaffData).password_confirmation,
+          role_id: updated.role_id,
+        }
+      : { ...(record.payload as UpdateStaffData), ...payload };
+
+  await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
+  const updatedRecord = await localStaffStore.updatePendingRecord(record.localId, updated, nextPayload);
+  await mutationQueue.requeue(record.mutationId);
+  triggerSettingsSyncAfterPersist('Staff');
+
+  return toStaffWithSyncMeta(updatedRecord);
 }
 
 export function completeOfflineDeleteStaffInstant(id: number): void {

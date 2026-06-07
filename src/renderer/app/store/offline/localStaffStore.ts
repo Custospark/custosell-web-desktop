@@ -17,10 +17,14 @@ export interface LocalStaffRecord {
   serverId?: number;
   createdAt: string;
   syncedAt?: string;
+  lastError?: string;
 }
 
 export type StaffWithSyncMeta = StaffUser & {
   _pendingSync?: boolean;
+  _syncFailed?: boolean;
+  _lastError?: string;
+  _mutationType?: StaffMutationType;
   _localId?: string;
 };
 
@@ -28,6 +32,9 @@ export function toStaffWithSyncMeta(record: LocalStaffRecord): StaffWithSyncMeta
   return {
     ...record.staff,
     _pendingSync: record.syncStatus === 'pending' || record.syncStatus === 'failed',
+    _syncFailed: record.syncStatus === 'failed',
+    _lastError: record.lastError,
+    _mutationType: record.mutationType,
     _localId: record.localId,
   };
 }
@@ -70,6 +77,41 @@ export const localStaffStore = {
     return all.filter((r) => r.syncStatus === 'pending' || r.syncStatus === 'failed');
   },
 
+  async getByLocalId(localId: string): Promise<LocalStaffRecord | null> {
+    const db = await getOfflineDb();
+    return (await db.get('localStaff', localId)) ?? null;
+  },
+
+  async getByStaffId(staffId: number): Promise<LocalStaffRecord | null> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localStaff');
+    return all.find((r) => r.staff.id === staffId || r.staffId === staffId) ?? null;
+  },
+
+  async updatePendingRecord(
+    localId: string,
+    staff: StaffUser,
+    payload: CreateStaffData | UpdateStaffData | { id: number },
+  ): Promise<LocalStaffRecord> {
+    const db = await getOfflineDb();
+    const record = await db.get('localStaff', localId);
+    if (!record) {
+      throw new Error('Local staff record not found');
+    }
+    if (record.syncStatus === 'synced') {
+      throw new Error('Synced staff records cannot be updated');
+    }
+
+    record.staff = staff;
+    record.staffId = staff.id;
+    record.roleId = staff.role_id;
+    record.payload = payload;
+    record.syncStatus = 'pending';
+    record.lastError = undefined;
+    await db.put('localStaff', record);
+    return record;
+  },
+
   async markSyncedByMutationId(
     mutationId: string,
     serverId?: number,
@@ -95,12 +137,13 @@ export const localStaffStore = {
     return oldId;
   },
 
-  async markFailedByMutationId(mutationId: string): Promise<void> {
+  async markFailedByMutationId(mutationId: string, error?: string): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localStaff');
     const record = all.find((r) => r.mutationId === mutationId);
     if (!record) return;
     record.syncStatus = 'failed';
+    record.lastError = error;
     await db.put('localStaff', record);
   },
 

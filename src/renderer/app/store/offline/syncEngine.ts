@@ -314,11 +314,11 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     }
 
     if (isRoleMutation(m)) {
-      await localRolesStore.markFailedByMutationId(m.id);
+      await localRolesStore.markFailedByMutationId(m.id, message);
     }
 
     if (isStaffMutation(m)) {
-      await localStaffStore.markFailedByMutationId(m.id);
+      await localStaffStore.markFailedByMutationId(m.id, message);
     }
 
     if (isBusinessSettingsMutation(m)) {
@@ -406,7 +406,7 @@ async function processRoleCreates(
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       const message = err?.response?.data?.message || err?.message || 'Role sync failed';
       await mutationQueue.markFailed(m.id, message);
-      await localRolesStore.markFailedByMutationId(m.id);
+      await localRolesStore.markFailedByMutationId(m.id, message);
       failed++;
     }
   }

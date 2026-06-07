@@ -12,6 +12,7 @@ import type { RoleWithSyncMeta } from '../../../../app/store/offline/localRolesS
 import {
   completeOfflineCreateStaffInstant,
   completeOfflineDeleteStaffInstant,
+  completeOfflineUpdatePendingStaffInstant,
   completeOfflineUpdateStaffInstant,
   shouldCompleteSettingsLocally,
 } from '../../../../app/store/offline/completeOfflineSettings';
@@ -149,7 +150,7 @@ export function useUpdateStaff() {
       const role = data.role_id ? resolveRole(data.role_id) : existing.role ?? null;
       const isPendingOnly = existing._pendingSync || id < 0;
       if (isPendingOnly) {
-        return { ...existing, ...data, role, _pendingSync: true } as StaffWithSyncMeta;
+        return completeOfflineUpdatePendingStaffInstant(existing, data, role);
       }
 
       if (shouldCompleteSettingsLocally()) {
@@ -176,7 +177,10 @@ export function useUpdateStaff() {
         qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) =>
           (old ?? []).filter(Boolean).map((s) => s.id === id ? staff : s),
         );
-        showToast('success', 'Changes saved — will sync when online');
+        showToast(
+          'success',
+          staff._mutationType ? 'Corrected changes saved — will retry sync' : 'Changes saved — will sync when online',
+        );
       } else {
         qc.invalidateQueries({ queryKey: staffKeys.list() });
       }

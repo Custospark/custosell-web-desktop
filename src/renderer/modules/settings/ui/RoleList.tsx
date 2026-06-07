@@ -33,13 +33,11 @@ export default function RoleList() {
 
   const openCreate = () => { setEditingRole(null); setDrawerOpen(true); };
   const openEdit = (r: RoleWithSyncMeta) => {
-    if (r._pendingSync) return;
     setEditingRole(r);
     setDrawerOpen(true);
   };
 
   const handleDelete = async (r: RoleWithSyncMeta) => {
-    if (r._pendingSync) return;
     const confirmed = await confirm({
       title: 'Delete Role',
       message: `Are you sure you want to delete "${r.name}"? This cannot be undone.`,
@@ -80,8 +78,17 @@ export default function RoleList() {
             { key: 'name', header: 'Name', render: (item) => (
                 <div className="flex items-center gap-2">
                   <span>{item.name}</span>
-                  {item._pendingSync && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending sync</span>
+                  {item._syncFailed ? (
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                      title={item._lastError || 'Sync failed'}
+                    >
+                      Sync failed
+                    </span>
+                  ) : item._pendingSync && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                      Pending sync
+                    </span>
                   )}
                 </div>
               ),
@@ -109,8 +116,8 @@ export default function RoleList() {
             },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
-                  <Button variant="ghost" size="sm" disabled={item._pendingSync} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title={item._pendingSync ? 'Sync pending before editing' : 'Edit'}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" disabled={item._pendingSync} onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title={item._pendingSync ? 'Sync pending before deleting' : 'Delete'}><Trash className="w-4 h-4 text-red-500" /></Button>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),
             },

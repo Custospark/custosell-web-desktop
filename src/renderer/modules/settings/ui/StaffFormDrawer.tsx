@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCreateStaff, useUpdateStaff } from '../api/settings/StaffQueries';
 import { useRoles } from '../api/settings/RoleQueries';
-import type { StaffUser, CreateStaffData, UpdateStaffData } from '../api/settings/StaffTypes';
+import type { CreateStaffData, UpdateStaffData } from '../api/settings/StaffTypes';
+import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffStore';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import RoleFormDrawer from './RoleFormDrawer';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -10,7 +11,7 @@ import { User, Mail, Phone, Key, ShieldCheck, ToggleLeft, Plus } from 'lucide-re
 interface StaffFormDrawerProps {
   open: boolean;
   onClose: () => void;
-  staff?: StaffUser | null;
+  staff?: StaffWithSyncMeta | null;
 }
 
 interface FormState {
@@ -27,6 +28,8 @@ const emptyForm: FormState = { name: '', email: '', phone: '', password: '', pas
 
 export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawerProps) {
   const isEditing = !!staff;
+  const isPendingCreate = Boolean(staff?._pendingSync && (staff._mutationType === 'create' || staff.id < 0));
+  const showPasswordFields = !isEditing || isPendingCreate;
   const createMutation = useCreateStaff();
   const updateMutation = useUpdateStaff();
   const { data: roles } = useRoles();
@@ -57,7 +60,14 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
 
   const passwordsMatch = form.password === form.password_confirmation;
-  const canSubmit = useMemo(() => form.name.trim().length > 0 && form.email.trim().length > 0 && (isEditing || (form.password.trim().length > 0 && passwordsMatch)) && form.role_id !== 0, [form, isEditing, passwordsMatch]);
+  const canSubmit = useMemo(
+    () =>
+      form.name.trim().length > 0 &&
+      form.email.trim().length > 0 &&
+      (!showPasswordFields || (form.password.trim().length > 0 && passwordsMatch)) &&
+      form.role_id !== 0,
+    [form, passwordsMatch, showPasswordFields],
+  );
 
   const handleSubmit = () => {
     if (isEditing && staff) {
@@ -68,7 +78,12 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         role_id: form.role_id,
         is_active: form.is_active,
       };
-      if (form.password.trim()) payload.password = form.password.trim();
+      if (form.password.trim()) {
+        payload.password = form.password.trim();
+        if (isPendingCreate) {
+          payload.password_confirmation = form.password_confirmation.trim();
+        }
+      }
       updateMutation.mutate({ id: staff.id, data: payload }, { onSuccess: onClose });
     } else {
       const payload: CreateStaffData = {
@@ -98,6 +113,12 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       isSubmitting={isSubmitting}
       canSubmit={canSubmit}
     >
+      {staff?._syncFailed && (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="font-medium">Sync failed</p>
+          <p className="mt-1">{staff._lastError || 'Update the staff details and save to retry sync.'}</p>
+        </div>
+      )}
       <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-800">Staff Information</h3>
@@ -141,7 +162,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
               Add Role
             </button>
           </div>
-          {!isEditing && (
+          {showPasswordFields && (
             <>
               <div>
                 <label className={labelClass}>Password <span className="text-red-500">*</span></label>

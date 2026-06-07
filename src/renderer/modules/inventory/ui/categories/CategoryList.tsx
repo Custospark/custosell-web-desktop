@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '../../api/products/ProductQueries';
-import type { Category } from '../../api/products/ProductTypes';
+import type { CategoryWithSyncMeta } from '../../../../app/store/offline/localCategoriesStore';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { Table } from '../../../../shared/components/tables/Table';
 import { Card } from '../../../../shared/components/cards/Card';
+import { Badge } from '../../../../shared/components/badges/Badge';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
@@ -16,12 +17,12 @@ export default function CategoryList() {
   const deleteMutation = useDeleteCategory();
   const { confirm } = useConfirm();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CategoryWithSyncMeta | null>(null);
 
   const openCreate = () => { setEditingCategory(null); setDrawerOpen(true); };
-  const openEdit = (cat: Category) => { setEditingCategory(cat); setDrawerOpen(true); };
+  const openEdit = (cat: CategoryWithSyncMeta) => { setEditingCategory(cat); setDrawerOpen(true); };
 
-  const handleDelete = async (cat: Category) => {
+  const handleDelete = async (cat: CategoryWithSyncMeta) => {
     const confirmed = await confirm({
       title: 'Delete Category', variant: 'danger',
       message: `Are you sure you want to delete "${cat.name}"? This cannot be undone.`,
@@ -50,10 +51,15 @@ export default function CategoryList() {
           </div>
           <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Category</Button>
         </div>
-        <Table<Category>
+        <Table<CategoryWithSyncMeta>
           rowKey={(c) => c.id}
           columns={[
-            { key: 'name', header: 'Name' },
+            { key: 'name', header: 'Name', render: (item) => (
+              <div className="flex items-center gap-2">
+                <span>{item.name}</span>
+                {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+              </div>
+            )},
             { key: 'description', header: 'Description', render: (item) => item.description || <span className="text-gray-400">—</span> },
             { key: 'sort_order', header: 'Sort Order' },
             {

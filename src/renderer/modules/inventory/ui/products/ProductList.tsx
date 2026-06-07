@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useProducts, useDeleteProduct, inventoryKeys } from '../../api/products/ProductQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
-import type { Product } from '../../api/products/ProductTypes';
+import type { ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../../shared/components/tables/Table';
@@ -29,11 +29,11 @@ export default function ProductList() {
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductWithSyncMeta | null>(null);
+  const [adjustingProduct, setAdjustingProduct] = useState<ProductWithSyncMeta | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
+  const [historyProduct, setHistoryProduct] = useState<ProductWithSyncMeta | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const bulkDeleteMutation = useMutation({
@@ -57,9 +57,9 @@ export default function ProductList() {
   const paginated = usePagination(filtered, 10);
 
   const openCreate = () => { setEditingProduct(null); setDrawerOpen(true); };
-  const openEdit = (p: Product) => { setEditingProduct(p); setDrawerOpen(true); };
+  const openEdit = (p: ProductWithSyncMeta) => { setEditingProduct(p); setDrawerOpen(true); };
 
-  const handleDelete = async (product: Product) => {
+  const handleDelete = async (product: ProductWithSyncMeta) => {
     const confirmed = await confirm({
       title: 'Delete Product',
       message: `Are you sure you want to delete "${product.name}"? This cannot be undone.`,
@@ -144,7 +144,7 @@ export default function ProductList() {
             )}
           </div>
         </div>
-        <Table<Product>
+        <Table<ProductWithSyncMeta>
           rowKey={(p) => p.id}
           columns={[
             { key: 'select', header: '', render: (item) => (
@@ -152,7 +152,12 @@ export default function ProductList() {
                 {selectedIds.has(item.id) ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
               </button>
             )},
-            { key: 'name', header: 'Name' },
+            { key: 'name', header: 'Name', render: (item) => (
+              <div className="flex items-center gap-2">
+                <span>{item.name}</span>
+                {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+              </div>
+            ) },
             { key: 'category', header: 'Category', render: (item) => item.category?.name || <span className="text-gray-400">—</span> },
             { key: 'unit', header: 'Unit', render: (item) => item.unit || <span className="text-gray-400">—</span> },
             { key: 'unit_price', header: 'Unit Price', render: (item) => formatCurrency(item.unit_price) },

@@ -6,6 +6,8 @@ import { stockLedger } from './stockLedger';
 import { localSalesStore } from './localSalesStore';
 import { localRefundsStore } from './localRefundsStore';
 import { localShiftsStore, type ShiftRecord } from './localShiftsStore';
+import { localProductsStore } from './localProductsStore';
+import { localCategoriesStore } from './localCategoriesStore';
 import type { QueuedMutation } from './mutationQueue';
 import type { CreateSalePayload, Sale } from '../../../modules/sales/api/salesTypes';
 
@@ -23,6 +25,14 @@ function isShiftCloseMutation(m: QueuedMutation): boolean {
 
 function isRefundMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && /^\/sales\/-?\d+\/refund$/.test(m.url);
+}
+
+function isProductMutation(m: QueuedMutation): boolean {
+  return /^\/products(\/\d+)?$/.test(m.url);
+}
+
+function isCategoryMutation(m: QueuedMutation): boolean {
+  return /^\/categories(\/\d+)?$/.test(m.url);
 }
 
 function extractBatchSales(responseData: unknown): Sale[] {
@@ -68,6 +78,26 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       await localShiftsStore.markSyncedByMutationId(m.id);
     }
 
+    if (isProductMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localProductsStore.removeByMutationId(m.id);
+      } else {
+        const responseData = response?.data as { data?: { id: number } } | undefined;
+        const serverId = responseData?.data?.id;
+        await localProductsStore.markSyncedByMutationId(m.id, serverId);
+      }
+    }
+
+    if (isCategoryMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localCategoriesStore.removeByMutationId(m.id);
+      } else {
+        const responseData = response?.data as { data?: { id: number } } | undefined;
+        const serverId = responseData?.data?.id;
+        await localCategoriesStore.markSyncedByMutationId(m.id, serverId);
+      }
+    }
+
     return true;
   } catch (error: unknown) {
     const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
@@ -82,6 +112,14 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     }
     if (isShiftOpenMutation(m)) {
       await localShiftsStore.markFailedByMutationId(m.id);
+    }
+
+    if (isProductMutation(m)) {
+      await localProductsStore.markFailedByMutationId(m.id);
+    }
+
+    if (isCategoryMutation(m)) {
+      await localCategoriesStore.markFailedByMutationId(m.id);
     }
 
     if (isServerError && m.retryCount >= m.maxRetries) {
@@ -231,6 +269,8 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   await localSalesStore.removeSynced();
   await localRefundsStore.removeSynced();
   await localShiftsStore.removeSynced();
+  await localProductsStore.removeSynced();
+  await localCategoriesStore.removeSynced();
   return { synced, failed };
 }
 

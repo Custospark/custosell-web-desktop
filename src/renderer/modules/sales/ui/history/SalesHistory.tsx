@@ -20,7 +20,7 @@ import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesS
 
 export default function SalesHistory() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
-  const { data: sales, isLoading, error, refetch, isFetching } = useSales();
+  const { data: sales = [], isLoading, error, refetch, isFetching } = useSales();
   const qc = useQueryClient();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');

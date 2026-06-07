@@ -2,6 +2,8 @@ import type { QueryClient } from '@tanstack/react-query';
 import { localSalesStore } from './localSalesStore';
 import { localRefundsStore } from './localRefundsStore';
 import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './localShiftsStore';
+import { localProductsStore, type ProductWithSyncMeta } from './localProductsStore';
+import { localCategoriesStore, type CategoryWithSyncMeta } from './localCategoriesStore';
 import type { SaleWithSyncMeta } from './localSalesStore';
 
 /** Query key literals — avoid importing from query modules (circular deps). */
@@ -105,6 +107,45 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
       const meta = s as ShiftWithSyncMeta;
       if (!meta._pendingSync) return true;
       return pendingShiftIds.has(s.id);
+    });
+  });
+
+  /** ── Strip sync meta from products and categories ── */
+  const pendingProducts = await localProductsStore.getPending();
+  const pendingProductIds = new Set(pendingProducts.map((r) => r.product.id));
+
+  qc.setQueryData<ProductWithSyncMeta[]>(['inventory', 'products'], (old) => {
+    if (!old) return old;
+    return old.filter((p) => {
+      if (!pendingProductIds.has(p.id) && (p._pendingSync || p._localId || p.id < 0)) return false;
+      return true;
+    }).map((p) => {
+      if (p._pendingSync && !pendingProductIds.has(p.id)) {
+        const cleaned = { ...p };
+        delete cleaned._pendingSync;
+        delete cleaned._localId;
+        return cleaned;
+      }
+      return p;
+    });
+  });
+
+  const pendingCategories = await localCategoriesStore.getPending();
+  const pendingCategoryIds = new Set(pendingCategories.map((r) => r.category.id));
+
+  qc.setQueryData<CategoryWithSyncMeta[]>(['inventory', 'categories'], (old) => {
+    if (!old) return old;
+    return old.filter((c) => {
+      if (!pendingCategoryIds.has(c.id) && (c._pendingSync || c._localId || c.id < 0)) return false;
+      return true;
+    }).map((c) => {
+      if (c._pendingSync && !pendingCategoryIds.has(c.id)) {
+        const cleaned = { ...c };
+        delete cleaned._pendingSync;
+        delete cleaned._localId;
+        return cleaned;
+      }
+      return c;
     });
   });
 

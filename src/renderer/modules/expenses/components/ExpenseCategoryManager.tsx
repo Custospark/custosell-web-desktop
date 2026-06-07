@@ -114,7 +114,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
             </div>
           )},
         ]}
-        data={categories || []}
+        data={(categories ?? []).filter(Boolean) as ExpenseCategoryWithSyncMeta[]}
       />
     </>
   );

@@ -56,19 +56,23 @@ async function loadLocalPendingExpenseCategories(): Promise<ExpenseCategoryWithS
 }
 
 function mergeExpenseLists(base: Expense[], local: ExpenseWithSyncMeta[]): ExpenseWithSyncMeta[] {
-  const localIds = new Set(local.map((expense) => expense.id));
-  const filtered = base.filter((expense) => !localIds.has(expense.id));
-  return [...local, ...filtered] as ExpenseWithSyncMeta[];
+  const safeBase = base.filter(Boolean) as Expense[];
+  const safeLocal = local.filter(Boolean) as ExpenseWithSyncMeta[];
+  const localIds = new Set(safeLocal.map((expense) => expense.id));
+  const filtered = safeBase.filter((expense) => !localIds.has(expense.id));
+  return [...safeLocal, ...filtered] as ExpenseWithSyncMeta[];
 }
 
 function mergeExpenseCategoryLists(
   base: ExpenseCategory[],
   local: ExpenseCategoryWithSyncMeta[],
 ): ExpenseCategoryWithSyncMeta[] {
-  const localIds = new Set(local.map((category) => category.id));
-  const localNames = new Set(local.map((category) => category.name));
-  const filtered = base.filter((category) => !localIds.has(category.id) && !localNames.has(category.name));
-  return [...local, ...filtered] as ExpenseCategoryWithSyncMeta[];
+  const safeBase = base.filter(Boolean) as ExpenseCategory[];
+  const safeLocal = local.filter(Boolean) as ExpenseCategoryWithSyncMeta[];
+  const localIds = new Set(safeLocal.map((category) => category.id));
+  const localNames = new Set(safeLocal.map((category) => category.name));
+  const filtered = safeBase.filter((category) => !localIds.has(category.id) && !localNames.has(category.name));
+  return [...safeLocal, ...filtered] as ExpenseCategoryWithSyncMeta[];
 }
 
 function getAllExpenseListQueries(qc: ReturnType<typeof useQueryClient>) {

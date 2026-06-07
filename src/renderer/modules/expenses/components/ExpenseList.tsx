@@ -28,12 +28,12 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
 
   const filtered = useMemo(() => {
     if (!expenses) return [];
-    return expenses.filter((e) => {
-      if (filterCategory && e.expense_category_id !== Number(filterCategory)) return false;
-      if (filterDateFrom && e.expense_date < filterDateFrom) return false;
-      if (filterDateTo && e.expense_date > filterDateTo) return false;
-      return true;
-    });
+    const safe = expenses.filter(Boolean) as ExpenseWithSyncMeta[];
+    let result = safe;
+    if (filterCategory) result = result.filter((e) => e.expense_category_id === Number(filterCategory));
+    if (filterDateFrom) result = result.filter((e) => e.expense_date >= filterDateFrom);
+    if (filterDateTo) result = result.filter((e) => e.expense_date <= filterDateTo);
+    return result;
   }, [expenses, filterCategory, filterDateFrom, filterDateTo]);
 
   const paginated = usePagination(filtered, 15);

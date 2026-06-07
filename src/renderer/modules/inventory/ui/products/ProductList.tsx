@@ -52,9 +52,10 @@ export default function ProductList() {
 
   const filtered = useMemo(() => {
     if (!products) return [];
-    if (!search.trim()) return products;
+    const safe = products.filter(Boolean) as ProductWithSyncMeta[];
+    if (!search.trim()) return safe;
     const q = search.toLowerCase();
-    return products.filter((p) => p.name.toLowerCase().includes(q));
+    return safe.filter((p) => p.name.toLowerCase().includes(q));
   }, [products, search]);
 
   const paginated = usePagination(filtered, 10);

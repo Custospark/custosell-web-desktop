@@ -10,7 +10,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['custosell-logo.png', 'screenshots/*.png'],
-      devOptions: { enabled: true, type: 'module' },
+      devOptions: { enabled: false },
       manifest: {
         name: 'Custosell — Sell More. Track All. Grow Fast.',
         short_name: 'Custosell',

@@ -10,7 +10,7 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { Receipt, Pencil, Trash2, Eye } from 'lucide-react';
 import ExpenseForm from './ExpenseForm';
-import type { Expense } from '../api/ExpenseTypes';
+import type { ExpenseWithSyncMeta } from '../api/ExpenseTypes';
 
 interface ExpenseListProps {
   filters?: Record<string, string>;
@@ -21,7 +21,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
   const { data: categories } = useExpenseCategories();
   const deleteMutation = useDeleteExpense();
   const { confirm } = useConfirm();
-  const [editExpense, setEditExpense] = useState<Expense | null>(null);
+  const [editExpense, setEditExpense] = useState<ExpenseWithSyncMeta | null>(null);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
@@ -38,7 +38,8 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
 
   const paginated = usePagination(filtered, 15);
 
-  const handleDelete = async (expense: Expense) => {
+  const handleDelete = async (expense: ExpenseWithSyncMeta) => {
+    if (expense._pendingSync) return;
     const ok = await confirm({
       title: 'Delete expense?',
       message: `Delete "${expense.description}" for ${formatCurrency(expense.amount)}?`,
@@ -71,22 +72,31 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
           </div>
         </div>
 
-        <Table<Expense>
+        <Table<ExpenseWithSyncMeta>
           rowKey={(e) => e.id}
           columns={[
             { key: 'date', header: 'Date', render: (e) => new Date(e.expense_date).toLocaleDateString() },
             { key: 'category', header: 'Category', render: (e) => e.expense_category?.name || <span className="text-gray-400">—</span> },
-            { key: 'description', header: 'Description' },
+            { key: 'description', header: 'Description', render: (e) => (
+              <div className="flex items-center gap-2">
+                <span>{e.description}</span>
+                {e._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+              </div>
+            ) },
             { key: 'amount', header: 'Amount', render: (e) => formatCurrency(e.amount) },
             { key: 'reference', header: 'Reference', render: (e) => e.reference || <span className="text-gray-400">—</span> },
-            { key: 'receipt', header: 'Receipt', render: (e) => e.receipt_url ? <a href={e.receipt_url} target="_blank" rel="noreferrer"><Eye className="w-4 h-4 text-blue-600" /></a> : <span className="text-gray-400">—</span> },
+            { key: 'receipt', header: 'Receipt', render: (e) => {
+              if (e.receipt_url) return <a href={e.receipt_url} target="_blank" rel="noreferrer"><Eye className="w-4 h-4 text-blue-600" /></a>;
+              if (e._pendingReceipt) return <Badge variant="warning">Pending receipt</Badge>;
+              return <span className="text-gray-400">—</span>;
+            } },
             { key: 'recurring', header: 'Recurring', render: (e) => e.is_recurring ? <Badge variant="primary">{e.recurrence_interval}</Badge> : <span className="text-gray-400">—</span> },
             { key: 'actions', header: 'Actions', render: (e) => (
               <div className="flex gap-1">
-                <button title="Edit" onClick={() => setEditExpense(e)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors">
+                <button title={e._pendingSync ? 'Sync before editing' : 'Edit'} disabled={e._pendingSync} onClick={() => setEditExpense(e)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   <Pencil className="w-4 h-4" />
                 </button>
-                <button title="Delete" onClick={() => handleDelete(e)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors">
+                <button title={e._pendingSync ? 'Sync before deleting' : 'Delete'} disabled={e._pendingSync} onClick={() => handleDelete(e)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

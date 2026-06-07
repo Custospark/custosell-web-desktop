@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
 export const OFFLINE_DB_NAME = 'CustosellOffline';
-export const OFFLINE_DB_VERSION = 6;
+export const OFFLINE_DB_VERSION = 8;
 
 const OPEN_TIMEOUT_MS = 8000;
 
@@ -44,6 +44,22 @@ function ensureObjectStores(db: IDBPDatabase): void {
     const catStore = db.createObjectStore('localCategories', { keyPath: 'localId' });
     catStore.createIndex('syncStatus', 'syncStatus');
     catStore.createIndex('mutationId', 'mutationId');
+  }
+  if (!db.objectStoreNames.contains('localCustomers')) {
+    const custStore = db.createObjectStore('localCustomers', { keyPath: 'localId' });
+    custStore.createIndex('syncStatus', 'syncStatus');
+    custStore.createIndex('mutationId', 'mutationId');
+  }
+  if (!db.objectStoreNames.contains('localExpenses')) {
+    const expStore = db.createObjectStore('localExpenses', { keyPath: 'localId' });
+    expStore.createIndex('syncStatus', 'syncStatus');
+    expStore.createIndex('mutationId', 'mutationId');
+    expStore.createIndex('expenseCategoryId', 'expenseCategoryId');
+  }
+  if (!db.objectStoreNames.contains('localExpenseCategories')) {
+    const expCatStore = db.createObjectStore('localExpenseCategories', { keyPath: 'localId' });
+    expCatStore.createIndex('syncStatus', 'syncStatus');
+    expCatStore.createIndex('mutationId', 'mutationId');
   }
 }
 

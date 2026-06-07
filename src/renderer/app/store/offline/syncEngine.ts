@@ -8,8 +8,13 @@ import { localRefundsStore } from './localRefundsStore';
 import { localShiftsStore, type ShiftRecord } from './localShiftsStore';
 import { localProductsStore } from './localProductsStore';
 import { localCategoriesStore } from './localCategoriesStore';
+import { localCustomersStore } from './localCustomersStore';
+import { localExpensesStore } from './localExpensesStore';
+import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
+import { buildExpenseFormData } from './completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
 import type { CreateSalePayload, Sale } from '../../../modules/sales/api/salesTypes';
+import type { Expense, ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
 
 function isSaleMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/sales';
@@ -35,12 +40,32 @@ function isCategoryMutation(m: QueuedMutation): boolean {
   return /^\/categories(\/\d+)?$/.test(m.url);
 }
 
+function isCustomerMutation(m: QueuedMutation): boolean {
+  return /^\/customers(\/\d+)?$/.test(m.url);
+}
+
+function isExpenseMutation(m: QueuedMutation): boolean {
+  return /^\/expenses(\/-?\d+)?$/.test(m.url);
+}
+
+function isExpenseCategoryMutation(m: QueuedMutation): boolean {
+  return /^\/expense-categories(\/-?\d+)?$/.test(m.url);
+}
+
 function isCategoryCreateMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/categories';
 }
 
 function isProductCreateMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/products';
+}
+
+function isExpenseCategoryCreateMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/expense-categories';
+}
+
+function isExpenseFormPayload(data: unknown): data is ExpenseFormPayload {
+  return Boolean(data && typeof data === 'object' && 'fields' in data);
 }
 
 function extractBatchSales(responseData: unknown): Sale[] {
@@ -56,6 +81,24 @@ function extractCategory(responseData: unknown): { id: number } | null {
   const wrapped = responseData as { data?: { id: number } };
   if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
   const direct = responseData as { id: number };
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractExpenseCategory(responseData: unknown): ExpenseCategory | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: ExpenseCategory };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as ExpenseCategory;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractExpense(responseData: unknown): Expense | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: Expense };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as Expense;
   if ('id' in direct) return direct;
   return null;
 }
@@ -82,6 +125,11 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       data: m.data,
       headers: m.headers,
     };
+
+    if (isExpenseMutation(m) && m.method === 'POST' && isExpenseFormPayload(m.data)) {
+      config.data = buildExpenseFormData(m.data, m.url === '/expenses' ? undefined : { methodOverride: 'PUT' });
+      config.headers = { 'Content-Type': 'multipart/form-data' };
+    }
 
     const response = await axiosInstance(config);
 
@@ -115,6 +163,38 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       }
     }
 
+    if (isCustomerMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localCustomersStore.removeByMutationId(m.id);
+      } else {
+        const responseData = response?.data as { data?: { id: number } } | undefined;
+        const serverId = responseData?.data?.id;
+        await localCustomersStore.markSyncedByMutationId(m.id, serverId);
+      }
+    }
+
+    if (isExpenseMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localExpensesStore.removeByMutationId(m.id);
+      } else {
+        const serverExpense = extractExpense(response?.data);
+        await localExpensesStore.markSyncedByMutationId(m.id, serverExpense?.id, serverExpense ?? undefined);
+      }
+    }
+
+    if (isExpenseCategoryMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localExpenseCategoriesStore.removeByMutationId(m.id);
+      } else {
+        const serverCategory = extractExpenseCategory(response?.data);
+        await localExpenseCategoriesStore.markSyncedByMutationId(
+          m.id,
+          serverCategory?.id,
+          serverCategory ?? undefined,
+        );
+      }
+    }
+
     return true;
   } catch (error: unknown) {
     const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
@@ -139,6 +219,18 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       await localCategoriesStore.markFailedByMutationId(m.id);
     }
 
+    if (isCustomerMutation(m)) {
+      await localCustomersStore.markFailedByMutationId(m.id);
+    }
+
+    if (isExpenseMutation(m)) {
+      await localExpensesStore.markFailedByMutationId(m.id);
+    }
+
+    if (isExpenseCategoryMutation(m)) {
+      await localExpenseCategoriesStore.markFailedByMutationId(m.id);
+    }
+
     if (isServerError && m.retryCount >= m.maxRetries) {
       await mutationQueue.markFailed(m.id, message);
     } else if (isServerError) {
@@ -148,6 +240,45 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     }
     return false;
   }
+}
+
+async function processExpenseCategoryCreates(
+  categoryCreates: QueuedMutation[],
+): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
+  const idMap = new Map<number, number>();
+  let synced = 0;
+  let failed = 0;
+
+  for (const m of categoryCreates) {
+    try {
+      await mutationQueue.markSyncing(m.id);
+      const response = await axiosInstance.post('/expense-categories', m.data);
+      const serverCategory = extractExpenseCategory(response.data);
+      await mutationQueue.markCompleted(m.id);
+
+      const oldCategoryId = await localExpenseCategoriesStore.markSyncedByMutationId(
+        m.id,
+        serverCategory?.id,
+        serverCategory ?? undefined,
+      );
+
+      if (oldCategoryId && serverCategory?.id && oldCategoryId !== serverCategory.id) {
+        idMap.set(oldCategoryId, serverCategory.id);
+        await localExpensesStore.updateCategoryIdInPending(oldCategoryId, serverCategory.id);
+        await mutationQueue.remapExpenseCategoryIdInExpenses(oldCategoryId, serverCategory.id);
+      }
+
+      synced++;
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.message || 'Expense category sync failed';
+      await mutationQueue.markFailed(m.id, message);
+      await localExpenseCategoriesStore.markFailedByMutationId(m.id);
+      failed++;
+    }
+  }
+
+  return { synced, failed, idMap };
 }
 
 async function processCategoryCreates(
@@ -255,16 +386,20 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
 
   const shiftOpens = pending.filter(isShiftOpenMutation);
   const categoryCreates = pending.filter(isCategoryCreateMutation);
+  const expenseCategoryCreates = pending.filter(isExpenseCategoryCreateMutation);
   const saleMutations = pending.filter(isSaleMutation);
   const productCreates = pending.filter(isProductCreateMutation);
+  const expenseMutations = pending.filter(isExpenseMutation);
   const refundMutations = pending.filter(isRefundMutation);
   const shiftCloses = pending.filter(isShiftCloseMutation);
   const otherMutations = pending.filter(
     (m) =>
       !isShiftOpenMutation(m) &&
       !isCategoryCreateMutation(m) &&
+      !isExpenseCategoryCreateMutation(m) &&
       !isSaleMutation(m) &&
       !isProductCreateMutation(m) &&
+      !isExpenseMutation(m) &&
       !isRefundMutation(m) &&
       !isShiftCloseMutation(m),
   );
@@ -279,6 +414,14 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   const { synced: catSynced, failed: catFailed, idMap: catIdMap } = await processCategoryCreates(categoryCreates);
   synced += catSynced;
   failed += catFailed;
+
+  const {
+    synced: expCatSynced,
+    failed: expCatFailed,
+    idMap: expCatIdMap,
+  } = await processExpenseCategoryCreates(expenseCategoryCreates);
+  synced += expCatSynced;
+  failed += expCatFailed;
 
   if (saleMutations.length > 0) {
     try {
@@ -322,6 +465,25 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
     else failed++;
   }
 
+  for (const m of expenseMutations) {
+    let remapped = m;
+    if (m.method === 'POST' && isExpenseFormPayload(m.data)) {
+      const payload: ExpenseFormPayload = {
+        ...m.data,
+        fields: { ...m.data.fields },
+      };
+      const rawCategoryId = payload.fields.expense_category_id;
+      const categoryId = rawCategoryId ? Number(rawCategoryId) : null;
+      if (categoryId && categoryId < 0 && expCatIdMap.has(categoryId)) {
+        payload.fields.expense_category_id = String(expCatIdMap.get(categoryId)!);
+      }
+      remapped = { ...m, data: payload };
+    }
+    const ok = await processMutation(remapped);
+    if (ok) synced++;
+    else failed++;
+  }
+
   for (const m of refundMutations) {
     const ok = await processMutation(m);
     if (ok) synced++;
@@ -347,6 +509,9 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   await localShiftsStore.removeSynced();
   await localProductsStore.removeSynced();
   await localCategoriesStore.removeSynced();
+  await localCustomersStore.removeSynced();
+  await localExpensesStore.removeSynced();
+  await localExpenseCategoriesStore.removeSynced();
   return { synced, failed };
 }
 

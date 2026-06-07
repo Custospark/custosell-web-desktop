@@ -10,6 +10,11 @@ export interface ExpenseCategory {
   updated_at: string;
 }
 
+export type ExpenseCategoryWithSyncMeta = ExpenseCategory & {
+  _pendingSync?: boolean;
+  _localId?: string;
+};
+
 export interface UserInfo {
   id: number;
   name: string;
@@ -36,6 +41,25 @@ export interface Expense {
   updated_at: string;
 }
 
+export type ExpenseWithSyncMeta = Expense & {
+  _pendingSync?: boolean;
+  _localId?: string;
+  _pendingReceipt?: boolean;
+};
+
+export interface ExpenseReceiptPayload {
+  blob: Blob;
+  name: string;
+  type: string;
+  size: number;
+  lastModified?: number;
+}
+
+export interface ExpenseFormPayload {
+  fields: Record<string, string>;
+  receipt?: ExpenseReceiptPayload;
+}
+
 export interface CreateExpenseData {
   expense_category_id?: number | null;
   amount: number;
@@ -49,7 +73,7 @@ export interface CreateExpenseData {
   expense_date: string;
 }
 
-export interface UpdateExpenseData extends Partial<CreateExpenseData> {}
+export type UpdateExpenseData = Partial<CreateExpenseData>;
 
 export interface CreateExpenseCategoryData {
   name: string;

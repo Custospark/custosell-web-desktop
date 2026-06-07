@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useCustomers, useDeleteCustomer } from '../../api/customers/CustomerQueries';
-import type { Customer } from '../../api/customers/CustomerTypes';
+import type { CustomerWithSyncMeta } from '../../../../app/store/offline/localCustomersStore';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../../shared/components/tables/Table';
 import { Card } from '../../../../shared/components/cards/Card';
+import { Badge } from '../../../../shared/components/badges/Badge';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
@@ -24,18 +27,20 @@ function formatDate(dateStr: string | null): string {
 export default function CustomerList() {
   const { data: customers, isLoading, error } = useCustomers();
   const deleteMutation = useDeleteCustomer();
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerWithSyncMeta | null>(null);
   const [modalCustomerId, setModalCustomerId] = useState<number | null>(null);
   const [modalCustomerName, setModalCustomerName] = useState('');
 
   const filtered = useMemo(() => {
     if (!customers) return [];
-    if (!search.trim()) return customers;
+    const safe = customers.filter(Boolean) as CustomerWithSyncMeta[];
+    if (!search.trim()) return safe;
     const q = search.toLowerCase();
-    return customers.filter((c) =>
+    return safe.filter((c) =>
       c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
     );
   }, [customers, search]);
@@ -43,14 +48,14 @@ export default function CustomerList() {
   const paginated = usePagination(filtered, 10);
 
   const openCreate = () => { setEditingCustomer(null); setDrawerOpen(true); };
-  const openEdit = (c: Customer) => { setEditingCustomer(c); setDrawerOpen(true); };
+  const openEdit = (c: CustomerWithSyncMeta) => { setEditingCustomer(c); setDrawerOpen(true); };
 
-  const openPurchases = (customer: Customer) => {
+  const openPurchases = (customer: CustomerWithSyncMeta) => {
     setModalCustomerId(customer.id);
     setModalCustomerName(customer.name);
   };
 
-  const handleDelete = async (customer: Customer) => {
+  const handleDelete = async (customer: CustomerWithSyncMeta) => {
     const confirmed = await confirm({
       title: 'Delete Customer',
       message: `Are you sure you want to delete "${customer.name}"? This cannot be undone.`,
@@ -73,7 +78,7 @@ export default function CustomerList() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your customer relationships</p>
+          <p className="text-sm text-gray-500 mt-1">Manage your customer relationships{isOffline && ' · Offline mode'}</p>
         </div>
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Customer</Button>
       </div>
@@ -87,11 +92,16 @@ export default function CustomerList() {
             <SearchInput placeholder="Search customers by name or phone..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
         </div>
-        <Table<Customer>
+        <Table<CustomerWithSyncMeta>
           rowKey={(c) => c.id}
           columns={[
             { key: 'id', header: '#' },
-            { key: 'name', header: 'Name' },
+            { key: 'name', header: 'Name', render: (item) => (
+              <div className="flex items-center gap-2">
+                <span>{item.name}</span>
+                {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+              </div>
+            )},
             { key: 'phone', header: 'Phone' },
             { key: 'email', header: 'Email', render: (item) => item.email || <span className="text-gray-400">—</span> },
             { key: 'total_purchases', header: 'Total Purchases', render: (item) => formatCurrency(item.total_purchases) },
@@ -99,9 +109,8 @@ export default function CustomerList() {
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete" disabled={item._pendingSync}><Trash className="w-4 h-4 text-red-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openPurchases(item); }} title="Purchases"><ShoppingBag className="w-4 h-4 text-blue-600" /></Button>
-
                 </div>
               ),
             },

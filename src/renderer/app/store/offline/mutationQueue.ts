@@ -118,6 +118,22 @@ export const mutationQueue = {
     }
   },
 
+  async remapExpenseCategoryIdInExpenses(oldCategoryId: number, newCategoryId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('mutations');
+
+    for (const entry of all) {
+      if (entry.method === 'POST' && /^\/expenses(\/-?\d+)?$/.test(entry.url) && entry.data) {
+        const payload = entry.data as { fields?: { expense_category_id?: string } };
+        if (payload.fields?.expense_category_id === String(oldCategoryId)) {
+          payload.fields.expense_category_id = String(newCategoryId);
+          entry.data = payload;
+          await db.put('mutations', entry);
+        }
+      }
+    }
+  },
+
   async remapShiftId(oldShiftId: number, newShiftId: number): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('mutations');

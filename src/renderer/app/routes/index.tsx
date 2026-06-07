@@ -11,6 +11,8 @@ import SalesHistoryPage from '../../modules/sales/SalesHistoryPage';
 import RefundsPage from '../../modules/sales/RefundsPage';
 import MyShiftPage from '../../modules/shifts/MyShiftPage';
 import DashboardPage from '../../modules/dashboard/DashboardPage';
+import RecordExpensePage from '../../modules/expenses/RecordExpensePage';
+import ExpenseListPage from '../../modules/expenses/ExpenseListPage';
 
 const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
@@ -21,8 +23,6 @@ const CategoriesPage = lazy(() => import('../../modules/inventory/CategoriesPage
 const StockLedgerPage = lazy(() => import('../../modules/inventory/StockLedgerPage'));
 
 const CustomerListPage = lazy(() => import('../../modules/customers/CustomerListPage'));
-const RecordExpensePage = lazy(() => import('../../modules/expenses/RecordExpensePage'));
-const ExpenseListPage = lazy(() => import('../../modules/expenses/ExpenseListPage'));
 const SettingsPage = lazy(() => import('../../modules/settings/SettingsPage'));
 const BusinessSettingsPage = lazy(() => import('../../modules/settings/BusinessSettingsPage'));
 const ProfileSettingsPage = lazy(() => import('../../modules/settings/ProfileSettingsPage'));

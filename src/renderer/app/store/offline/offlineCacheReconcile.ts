@@ -4,7 +4,11 @@ import { localRefundsStore } from './localRefundsStore';
 import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './localShiftsStore';
 import { localProductsStore, type ProductWithSyncMeta } from './localProductsStore';
 import { localCategoriesStore, type CategoryWithSyncMeta } from './localCategoriesStore';
+import { localCustomersStore, type CustomerWithSyncMeta } from './localCustomersStore';
+import { localExpensesStore } from './localExpensesStore';
+import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
 import type { SaleWithSyncMeta } from './localSalesStore';
+import type { ExpenseCategoryWithSyncMeta, ExpenseWithSyncMeta } from '../../../modules/expenses/api/ExpenseTypes';
 
 /** Query key literals — avoid importing from query modules (circular deps). */
 const SALES_LIST_KEY = ['sales', 'list'] as const;
@@ -149,6 +153,62 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
     });
   });
 
+  /** ── Strip sync meta from customers ── */
+  const pendingCustomers = await localCustomersStore.getPending();
+  const pendingCustomerIds = new Set(pendingCustomers.map((r) => r.customer.id));
+
+  qc.setQueryData<CustomerWithSyncMeta[]>(['customers', 'customers'], (old) => {
+    if (!old) return old;
+    return old.filter((c) => {
+      if (!pendingCustomerIds.has(c.id) && (c._pendingSync || c._localId || c.id < 0)) return false;
+      return true;
+    }).map((c) => {
+      if (c._pendingSync && !pendingCustomerIds.has(c.id)) {
+        const cleaned = { ...c };
+        delete cleaned._pendingSync;
+        delete cleaned._localId;
+        return cleaned;
+      }
+      return c;
+    });
+  });
+
   qc.removeQueries({ queryKey: DASHBOARD_SUMMARY_KEY });
   qc.removeQueries({ queryKey: DASHBOARD_SERVER_KEY });
+
+  /** ── Strip sync meta from expenses and expense categories ── */
+  const pendingExpenses = await localExpensesStore.getPending();
+  const pendingExpenseIds = new Set(pendingExpenses.map((r) => r.expense.id));
+
+  const expenseListQueries = qc.getQueriesData<ExpenseWithSyncMeta[]>({
+    queryKey: ['expenses', 'list'],
+  });
+  for (const [key, data] of expenseListQueries) {
+    if (!Array.isArray(data)) continue;
+    qc.setQueryData<ExpenseWithSyncMeta[]>(
+      key,
+      data.filter((expense) => {
+        if (!pendingExpenseIds.has(expense.id) && (expense._pendingSync || expense._localId || expense.id < 0)) {
+          return false;
+        }
+        return true;
+      }),
+    );
+  }
+
+  const pendingExpenseCategories = await localExpenseCategoriesStore.getPending();
+  const pendingExpenseCategoryIds = new Set(pendingExpenseCategories.map((r) => r.category.id));
+
+  qc.setQueryData<ExpenseCategoryWithSyncMeta[]>(['expenses', 'categories'], (old) => {
+    if (!old) return old;
+    return old.filter((category) => {
+      if (
+        !pendingExpenseCategoryIds.has(category.id)
+        && (category._pendingSync || category._localId || category.id < 0)
+      ) {
+        return false;
+      }
+      return true;
+    });
+  });
 }

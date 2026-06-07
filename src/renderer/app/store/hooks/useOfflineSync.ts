@@ -9,6 +9,7 @@ import { salesKeys } from '../../../modules/sales/api/salesQueries';
 import { dashboardKeys } from '../../../modules/dashboard/DashboardQueries';
 import { shiftKeys } from '../../../modules/shifts/ShiftQueries';
 import { inventoryKeys } from '../../../modules/inventory/api/products/ProductQueries';
+import { expenseKeys } from '../../../modules/expenses/api/ExpenseQueries';
 
 async function refreshAfterSync(): Promise<void> {
   await purgeSyncedOptimisticFromCache(queryClient);
@@ -17,6 +18,7 @@ async function refreshAfterSync(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
   await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
   await queryClient.invalidateQueries({ queryKey: ['customers'] });
+  await queryClient.invalidateQueries({ queryKey: expenseKeys.all });
 }
 
 /**

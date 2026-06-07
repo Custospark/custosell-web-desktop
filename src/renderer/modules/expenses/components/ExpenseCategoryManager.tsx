@@ -4,12 +4,13 @@ import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { Card } from '../../../shared/components/cards/Card';
 import { Table } from '../../../shared/components/tables/Table';
 import { Button } from '../../../shared/components/buttons/Button';
+import { Badge } from '../../../shared/components/badges/Badge';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { Pencil, Trash2, Plus, FolderOpen, Tag, FileText, DollarSign, Clock } from 'lucide-react';
-import type { ExpenseCategory } from '../api/ExpenseTypes';
+import type { ExpenseCategoryWithSyncMeta } from '../api/ExpenseTypes';
 
 interface ExpenseCategoryManagerProps {
   inline?: boolean;
@@ -23,7 +24,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
   const { confirm } = useConfirm();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState<ExpenseCategoryWithSyncMeta | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [budgetAmount, setBudgetAmount] = useState('');
@@ -38,7 +39,8 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
     setDrawerOpen(true);
   };
 
-  const openEdit = (cat: ExpenseCategory) => {
+  const openEdit = (cat: ExpenseCategoryWithSyncMeta) => {
+    if (cat._pendingSync) return;
     setEditingCategory(cat);
     setName(cat.name);
     setDescription(cat.description || '');
@@ -64,7 +66,8 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
     }
   };
 
-  const handleDelete = async (cat: ExpenseCategory) => {
+  const handleDelete = async (cat: ExpenseCategoryWithSyncMeta) => {
+    if (cat._pendingSync) return;
     const ok = await confirm({
       title: 'Delete category?',
       message: `Delete "${cat.name}"? Existing expenses in this category will not be affected.`,
@@ -88,19 +91,24 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Category</Button>
       </div>
 
-      <Table<ExpenseCategory>
+      <Table<ExpenseCategoryWithSyncMeta>
         rowKey={(c) => c.id}
         columns={[
-          { key: 'name', header: 'Name' },
+          { key: 'name', header: 'Name', render: (c) => (
+            <div className="flex items-center gap-2">
+              <span>{c.name}</span>
+              {c._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+            </div>
+          ) },
           { key: 'description', header: 'Description', render: (c) => c.description || <span className="text-gray-400">—</span> },
           { key: 'budget', header: 'Budget', render: (c) => c.budget_amount ? <span>{formatCurrency(c.budget_amount)} <span className="text-xs text-gray-400">/{c.budget_period}</span></span> : <span className="text-gray-400">—</span> },
           { key: 'sort_order', header: 'Order' },
           { key: 'actions', header: 'Actions', render: (c) => (
             <div className="flex gap-1">
-              <button title="Edit" onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors">
+              <button title={c._pendingSync ? 'Sync before editing' : 'Edit'} disabled={c._pendingSync} onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <Pencil className="w-4 h-4" />
               </button>
-              <button title="Delete" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors">
+              <button title={c._pendingSync ? 'Sync before deleting' : 'Delete'} disabled={c._pendingSync} onClick={() => handleDelete(c)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>

@@ -54,19 +54,21 @@ async function loadLocalPendingCategories(): Promise<CategoryWithSyncMeta[]> {
 
 /** Merge server products with local pending creates — local wins by id/name. */
 function mergeProductLists(base: Product[], local: ProductWithSyncMeta[]): ProductWithSyncMeta[] {
-  const localIds = new Set(local.map((p) => p.id));
-  const localNames = new Set(local.map((p) => p.name));
-  const filtered = base.filter((p) => !localIds.has(p.id) && !localNames.has(p.name));
-  const merged = [...local, ...filtered] as ProductWithSyncMeta[];
-  return merged;
+  const safeBase = base.filter(Boolean) as Product[];
+  const safeLocal = local.filter(Boolean) as ProductWithSyncMeta[];
+  const localIds = new Set(safeLocal.map((p) => p.id));
+  const localNames = new Set(safeLocal.map((p) => p.name));
+  const filtered = safeBase.filter((p) => !localIds.has(p.id) && !localNames.has(p.name));
+  return [...safeLocal, ...filtered] as ProductWithSyncMeta[];
 }
 
 function mergeCategoryLists(base: Category[], local: CategoryWithSyncMeta[]): CategoryWithSyncMeta[] {
-  const localIds = new Set(local.map((c) => c.id));
-  const localNames = new Set(local.map((c) => c.name));
-  const filtered = base.filter((c) => !localIds.has(c.id) && !localNames.has(c.name));
-  const merged = [...local, ...filtered] as CategoryWithSyncMeta[];
-  return merged;
+  const safeBase = base.filter(Boolean) as Category[];
+  const safeLocal = local.filter(Boolean) as CategoryWithSyncMeta[];
+  const localIds = new Set(safeLocal.map((c) => c.id));
+  const localNames = new Set(safeLocal.map((c) => c.name));
+  const filtered = safeBase.filter((c) => !localIds.has(c.id) && !localNames.has(c.name));
+  return [...safeLocal, ...filtered] as CategoryWithSyncMeta[];
 }
 
 /** ── Categories ── */

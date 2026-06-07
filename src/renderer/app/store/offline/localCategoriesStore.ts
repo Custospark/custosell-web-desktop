@@ -70,12 +70,13 @@ export const localCategoriesStore = {
     mutationId: string,
     serverId?: number,
     serverCategory?: Partial<Category>,
-  ): Promise<void> {
+  ): Promise<number | null> {
     const db = await getOfflineDb();
     const all = await db.getAll('localCategories');
     const record = all.find((r) => r.mutationId === mutationId);
-    if (!record) return;
+    if (!record) return null;
 
+    const oldId = record.category.id;
     record.syncStatus = 'synced';
     record.serverId = serverId;
     record.syncedAt = new Date().toISOString();
@@ -85,6 +86,7 @@ export const localCategoriesStore = {
       record.category = { ...record.category, id: serverId };
     }
     await db.put('localCategories', record);
+    return oldId;
   },
 
   async markFailedByMutationId(mutationId: string): Promise<void> {

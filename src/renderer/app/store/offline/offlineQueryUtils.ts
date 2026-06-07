@@ -61,6 +61,9 @@ export function isIndexedDbError(err: unknown): boolean {
 
 export function sanitizeErrorMessage(err: unknown, fallback: string): string {
   if (isIndexedDbError(err)) return fallback;
-  const axiosErr = err as AxiosError;
-  return axiosErr.response?.data?.message || (err as Error).message || fallback;
+  const axiosErr = err as AxiosError<{ message?: string }>;
+  const serverMessage = axiosErr.response?.data?.message;
+  if (serverMessage) return serverMessage;
+  if (err instanceof Error) return err.message;
+  return fallback;
 }

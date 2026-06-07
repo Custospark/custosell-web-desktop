@@ -35,12 +35,29 @@ function isCategoryMutation(m: QueuedMutation): boolean {
   return /^\/categories(\/\d+)?$/.test(m.url);
 }
 
+function isCategoryCreateMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/categories';
+}
+
+function isProductCreateMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/products';
+}
+
 function extractBatchSales(responseData: unknown): Sale[] {
   if (!responseData || typeof responseData !== 'object') return [];
   const data = responseData as { data?: Sale[]; sales?: Sale[] };
   if (Array.isArray(data.data)) return data.data;
   if (Array.isArray(data.sales)) return data.sales;
   return [];
+}
+
+function extractCategory(responseData: unknown): { id: number } | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: { id: number } };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as { id: number };
+  if ('id' in direct) return direct;
+  return null;
 }
 
 function extractShift(responseData: unknown): ShiftRecord | null {
@@ -133,6 +150,45 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
   }
 }
 
+async function processCategoryCreates(
+  categoryCreates: QueuedMutation[],
+): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
+  const idMap = new Map<number, number>();
+  let synced = 0;
+  let failed = 0;
+
+  for (const m of categoryCreates) {
+    try {
+      await mutationQueue.markSyncing(m.id);
+      const response = await axiosInstance.post('/categories', m.data);
+      const serverCategory = extractCategory(response.data);
+      await mutationQueue.markCompleted(m.id);
+
+      const oldCategoryId = await localCategoriesStore.markSyncedByMutationId(
+        m.id,
+        serverCategory?.id,
+        serverCategory ?? undefined,
+      );
+
+      if (oldCategoryId && serverCategory?.id && oldCategoryId !== serverCategory.id) {
+        idMap.set(oldCategoryId, serverCategory.id);
+        await localProductsStore.updateCategoryIdInPending(oldCategoryId, serverCategory.id);
+        await mutationQueue.remapCategoryIdInProducts(oldCategoryId, serverCategory.id);
+      }
+
+      synced++;
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.message || 'Category sync failed';
+      await mutationQueue.markFailed(m.id, message);
+      await localCategoriesStore.markFailedByMutationId(m.id);
+      failed++;
+    }
+  }
+
+  return { synced, failed, idMap };
+}
+
 async function processShiftOpens(
   shiftOpens: QueuedMutation[],
 ): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
@@ -198,13 +254,17 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   }
 
   const shiftOpens = pending.filter(isShiftOpenMutation);
+  const categoryCreates = pending.filter(isCategoryCreateMutation);
   const saleMutations = pending.filter(isSaleMutation);
+  const productCreates = pending.filter(isProductCreateMutation);
   const refundMutations = pending.filter(isRefundMutation);
   const shiftCloses = pending.filter(isShiftCloseMutation);
   const otherMutations = pending.filter(
     (m) =>
       !isShiftOpenMutation(m) &&
+      !isCategoryCreateMutation(m) &&
       !isSaleMutation(m) &&
+      !isProductCreateMutation(m) &&
       !isRefundMutation(m) &&
       !isShiftCloseMutation(m),
   );
@@ -215,6 +275,10 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   const { synced: shiftSynced, failed: shiftFailed, idMap } = await processShiftOpens(shiftOpens);
   synced += shiftSynced;
   failed += shiftFailed;
+
+  const { synced: catSynced, failed: catFailed, idMap: catIdMap } = await processCategoryCreates(categoryCreates);
+  synced += catSynced;
+  failed += catFailed;
 
   if (saleMutations.length > 0) {
     try {
@@ -244,6 +308,18 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
       }
       failed += saleMutations.length;
     }
+  }
+
+  for (const m of productCreates) {
+    const payload = { ...(m.data as Record<string, unknown>) };
+    const catId = payload.category_id;
+    if (typeof catId === 'number' && catId < 0 && catIdMap.has(catId)) {
+      payload.category_id = catIdMap.get(catId)!;
+    }
+    const remapped = { ...m, data: payload };
+    const ok = await processMutation(remapped);
+    if (ok) synced++;
+    else failed++;
   }
 
   for (const m of refundMutations) {

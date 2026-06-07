@@ -115,6 +115,20 @@ export const localProductsStore = {
     }
   },
 
+  async updateCategoryIdInPending(oldCategoryId: number, newCategoryId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localProducts');
+    for (const record of all) {
+      if (record.product.category_id === oldCategoryId) {
+        record.product.category_id = newCategoryId;
+        if (record.payload && typeof record.payload === 'object' && 'category_id' in record.payload) {
+          (record.payload as Record<string, unknown>).category_id = newCategoryId;
+        }
+        await db.put('localProducts', record);
+      }
+    }
+  },
+
   async removeByProductId(productId: number): Promise<string | null> {
     const db = await getOfflineDb();
     const all = await db.getAll('localProducts');

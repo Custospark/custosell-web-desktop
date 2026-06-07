@@ -102,6 +102,22 @@ export const mutationQueue = {
     await db.delete('mutations', id);
   },
 
+  async remapCategoryIdInProducts(oldCategoryId: number, newCategoryId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('mutations');
+
+    for (const entry of all) {
+      if (entry.method === 'POST' && entry.url === '/products' && entry.data) {
+        const payload = entry.data as { category_id?: number | null };
+        if (payload.category_id === oldCategoryId) {
+          payload.category_id = newCategoryId;
+          entry.data = payload;
+          await db.put('mutations', entry);
+        }
+      }
+    }
+  },
+
   async remapShiftId(oldShiftId: number, newShiftId: number): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('mutations');

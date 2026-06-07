@@ -14,7 +14,11 @@ export interface LocalSaleRecord {
   syncedAt?: string;
 }
 
-export type SaleWithSyncMeta = Sale & { _pendingSync?: boolean; _localId?: string };
+export type SaleWithSyncMeta = Sale & {
+  _pendingSync?: boolean;
+  _pendingRefundSync?: boolean;
+  _localId?: string;
+};
 
 export function toSaleWithSyncMeta(record: LocalSaleRecord): SaleWithSyncMeta {
   return {
@@ -107,5 +111,17 @@ export const localSalesStore = {
     const pending = await this.getPending();
     const today = new Date().toISOString().slice(0, 10);
     return pending.filter((r) => r.sale.sale_date.slice(0, 10) === today);
+  },
+
+  async updateShiftIdInPending(oldShiftId: number, newShiftId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localSales');
+    for (const record of all) {
+      if (record.payload.shift_id === oldShiftId) {
+        record.payload.shift_id = newShiftId;
+        record.sale.shift_id = newShiftId;
+        await db.put('localSales', record);
+      }
+    }
   },
 };

@@ -1,0 +1,113 @@
+import type { QueryClient } from '@tanstack/react-query';
+import { localSalesStore } from './localSalesStore';
+import { localRefundsStore } from './localRefundsStore';
+import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './localShiftsStore';
+import type { SaleWithSyncMeta } from './localSalesStore';
+
+/** Query key literals — avoid importing from query modules (circular deps). */
+const SALES_LIST_KEY = ['sales', 'list'] as const;
+const SHIFTS_SALES_PREFIX = ['shifts', 'sales'] as const;
+const SHIFTS_ACTIVE_KEY = ['shifts', 'active'] as const;
+const SHIFTS_LIST_KEY = ['shifts', 'list'] as const;
+const DASHBOARD_SUMMARY_KEY = ['dashboard', 'summary'] as const;
+const DASHBOARD_SERVER_KEY = ['dashboard', 'server'] as const;
+
+/** Local-only sale row — not yet confirmed on server. */
+export function isOptimisticSale(sale: SaleWithSyncMeta): boolean {
+  return Boolean(
+    sale._pendingSync ||
+    sale._localId ||
+    sale.id < 0 ||
+    (sale.receipt_number?.startsWith('OFF-') ?? false),
+  );
+}
+
+export function stripSaleSyncMeta(sale: SaleWithSyncMeta): SaleWithSyncMeta {
+  const cleaned = { ...sale };
+  delete cleaned._pendingSync;
+  delete cleaned._pendingRefundSync;
+  delete cleaned._localId;
+  return cleaned;
+}
+
+export function reconcileSaleList(
+  sales: SaleWithSyncMeta[],
+  pendingSaleIds: Set<number>,
+  pendingSaleReceipts: Set<string>,
+  pendingRefundSaleIds: Set<number>,
+): SaleWithSyncMeta[] {
+  return sales
+    .filter((s) => {
+      if (pendingSaleIds.has(s.id) || pendingSaleReceipts.has(s.receipt_number)) {
+        return true;
+      }
+      return !isOptimisticSale(s);
+    })
+    .map((s) => {
+      const row = { ...s };
+      const isPendingSale =
+        pendingSaleIds.has(s.id) || pendingSaleReceipts.has(s.receipt_number);
+
+      if (!isPendingSale) {
+        delete row._pendingSync;
+        delete row._localId;
+      }
+      if (!pendingRefundSaleIds.has(s.id)) {
+        delete row._pendingRefundSync;
+      }
+      return row;
+    });
+}
+
+/**
+ * Remove synced optimistic rows from React Query cache so UI never shows stale pending badges.
+ * Call after a successful queue drain, before refetching server data.
+ */
+export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<void> {
+  const [pendingSales, pendingRefunds, pendingShifts] = await Promise.all([
+    localSalesStore.getPending(),
+    localRefundsStore.getPending(),
+    localShiftsStore.getPending(),
+  ]);
+
+  const pendingSaleIds = new Set(pendingSales.map((r) => r.sale.id));
+  const pendingSaleReceipts = new Set(pendingSales.map((r) => r.sale.receipt_number));
+  const pendingRefundSaleIds = new Set(pendingRefunds.map((r) => r.saleId));
+  const pendingShiftIds = new Set(pendingShifts.map((r) => r.shiftId));
+
+  const reconcile = (list: SaleWithSyncMeta[]) =>
+    reconcileSaleList(list, pendingSaleIds, pendingSaleReceipts, pendingRefundSaleIds);
+
+  qc.setQueryData<SaleWithSyncMeta[]>(SALES_LIST_KEY, (old) => reconcile(old ?? []));
+
+  const shiftSalesQueries = qc.getQueriesData<SaleWithSyncMeta[]>({
+    queryKey: SHIFTS_SALES_PREFIX,
+  });
+  for (const [key, data] of shiftSalesQueries) {
+    if (Array.isArray(data)) {
+      qc.setQueryData(key, reconcile(data));
+    }
+  }
+
+  qc.setQueryData<ShiftRecord | null>(SHIFTS_ACTIVE_KEY, (old) => {
+    if (!old) return old;
+    const shift = old as ShiftWithSyncMeta;
+    if (shift._pendingSync && !pendingShiftIds.has(shift.id)) {
+      return null;
+    }
+    if (!shift._pendingSync) return old;
+    return old;
+  });
+
+  qc.setQueryData<ShiftRecord[]>(SHIFTS_LIST_KEY, (old) => {
+    if (!old) return old;
+    return old.filter((s) => {
+      const meta = s as ShiftWithSyncMeta;
+      if (!meta._pendingSync) return true;
+      return pendingShiftIds.has(s.id);
+    });
+  });
+
+  qc.removeQueries({ queryKey: DASHBOARD_SUMMARY_KEY });
+  qc.removeQueries({ queryKey: DASHBOARD_SERVER_KEY });
+}

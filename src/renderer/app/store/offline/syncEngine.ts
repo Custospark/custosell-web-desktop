@@ -1,9 +1,44 @@
 import { axiosInstance } from '../../api/axiosConfig';
+import { store } from '../store';
+import { updateShiftContext } from '../slices/authSlice';
 import { mutationQueue } from './mutationQueue';
 import { stockLedger } from './stockLedger';
 import { localSalesStore } from './localSalesStore';
+import { localRefundsStore } from './localRefundsStore';
+import { localShiftsStore, type ShiftRecord } from './localShiftsStore';
 import type { QueuedMutation } from './mutationQueue';
-import type { Sale } from '../../../modules/sales/api/salesTypes';
+import type { CreateSalePayload, Sale } from '../../../modules/sales/api/salesTypes';
+
+function isSaleMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/sales';
+}
+
+function isShiftOpenMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/shifts';
+}
+
+function isShiftCloseMutation(m: QueuedMutation): boolean {
+  return m.method === 'PUT' && /^\/shifts\/-?\d+$/.test(m.url);
+}
+
+function isRefundMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && /^\/sales\/-?\d+\/refund$/.test(m.url);
+}
+
+function extractBatchSales(responseData: unknown): Sale[] {
+  if (!responseData || typeof responseData !== 'object') return [];
+  const data = responseData as { data?: Sale[]; sales?: Sale[] };
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.sales)) return data.sales;
+  return [];
+}
+
+function extractShift(responseData: unknown): ShiftRecord | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: ShiftRecord };
+  if (wrapped.data && typeof wrapped.data === 'object') return wrapped.data;
+  return responseData as ShiftRecord;
+}
 
 export async function processMutation(m: QueuedMutation): Promise<boolean> {
   try {
@@ -21,30 +56,100 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       headers: m.headers,
     };
 
-    await axiosInstance(config);
+    const response = await axiosInstance(config);
 
     await mutationQueue.markCompleted(m.id);
+
+    if (isRefundMutation(m)) {
+      await localRefundsStore.markSyncedByMutationId(m.id);
+    }
+
+    if (isShiftCloseMutation(m)) {
+      await localShiftsStore.markSyncedByMutationId(m.id);
+    }
+
     return true;
   } catch (error: unknown) {
     const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
     const isServerError = err?.response?.status && err.response.status >= 400 && err.response.status < 500;
+    const message = err?.response?.data?.message || err?.message || 'Request failed';
+
+    if (isRefundMutation(m)) {
+      await localRefundsStore.markFailedByMutationId(m.id);
+    }
+    if (isShiftCloseMutation(m)) {
+      await localShiftsStore.markFailedByMutationId(m.id);
+    }
+    if (isShiftOpenMutation(m)) {
+      await localShiftsStore.markFailedByMutationId(m.id);
+    }
+
     if (isServerError && m.retryCount >= m.maxRetries) {
-      await mutationQueue.markFailed(m.id, err?.response?.data?.message || err.message || 'Request failed');
+      await mutationQueue.markFailed(m.id, message);
     } else if (isServerError) {
-      await mutationQueue.markFailed(m.id, err?.response?.data?.message || err.message || 'Request failed');
+      await mutationQueue.markFailed(m.id, message);
     } else {
-      await mutationQueue.markFailed(m.id, err?.message || 'Network error');
+      await mutationQueue.markFailed(m.id, message);
     }
     return false;
   }
 }
 
-function extractBatchSales(responseData: unknown): Sale[] {
-  if (!responseData || typeof responseData !== 'object') return [];
-  const data = responseData as { data?: Sale[]; sales?: Sale[] };
-  if (Array.isArray(data.data)) return data.data;
-  if (Array.isArray(data.sales)) return data.sales;
-  return [];
+async function processShiftOpens(
+  shiftOpens: QueuedMutation[],
+): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
+  const idMap = new Map<number, number>();
+  let synced = 0;
+  let failed = 0;
+
+  for (const m of shiftOpens) {
+    try {
+      await mutationQueue.markSyncing(m.id);
+      const response = await axiosInstance.post('/shifts', m.data);
+      const serverShift = extractShift(response.data);
+      await mutationQueue.markCompleted(m.id);
+
+      const oldShiftId = await localShiftsStore.markSyncedByMutationId(
+        m.id,
+        serverShift?.id,
+        serverShift ?? undefined,
+      );
+
+      if (oldShiftId && serverShift?.id && oldShiftId !== serverShift.id) {
+        idMap.set(oldShiftId, serverShift.id);
+        await localSalesStore.updateShiftIdInPending(oldShiftId, serverShift.id);
+        await mutationQueue.remapShiftId(oldShiftId, serverShift.id);
+
+        const authUser = store.getState().auth.user;
+        if (authUser?.shift_id === oldShiftId) {
+          store.dispatch(
+            updateShiftContext({
+              shift_id: serverShift.id,
+              shift_clock_in: serverShift.clock_in,
+            }),
+          );
+        }
+      }
+
+      synced++;
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.message || 'Shift open sync failed';
+      await mutationQueue.markFailed(m.id, message);
+      await localShiftsStore.markFailedByMutationId(m.id);
+      failed++;
+    }
+  }
+
+  return { synced, failed, idMap };
+}
+
+function remapShiftCloseUrl(url: string, idMap: Map<number, number>): string {
+  const match = url.match(/^\/shifts\/(-?\d+)$/);
+  if (!match) return url;
+  const localId = Number(match[1]);
+  const serverId = idMap.get(localId) ?? localId;
+  return `/shifts/${serverId}`;
 }
 
 export async function syncAllMutations(): Promise<{ synced: number; failed: number }> {
@@ -54,15 +159,34 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
     return { synced: 0, failed: 0 };
   }
 
-  const saleMutations = pending.filter((m) => m.url === '/sales' && m.method === 'POST');
-  const otherMutations = pending.filter((m) => !(m.url === '/sales' && m.method === 'POST'));
+  const shiftOpens = pending.filter(isShiftOpenMutation);
+  const saleMutations = pending.filter(isSaleMutation);
+  const refundMutations = pending.filter(isRefundMutation);
+  const shiftCloses = pending.filter(isShiftCloseMutation);
+  const otherMutations = pending.filter(
+    (m) =>
+      !isShiftOpenMutation(m) &&
+      !isSaleMutation(m) &&
+      !isRefundMutation(m) &&
+      !isShiftCloseMutation(m),
+  );
 
   let synced = 0;
   let failed = 0;
 
+  const { synced: shiftSynced, failed: shiftFailed, idMap } = await processShiftOpens(shiftOpens);
+  synced += shiftSynced;
+  failed += shiftFailed;
+
   if (saleMutations.length > 0) {
     try {
-      const sales = saleMutations.map((m) => m.data);
+      const sales = saleMutations.map((m) => {
+        const payload = { ...(m.data as CreateSalePayload) };
+        if (payload.shift_id && idMap.has(payload.shift_id)) {
+          payload.shift_id = idMap.get(payload.shift_id)!;
+        }
+        return payload;
+      });
       const response = await axiosInstance.post('/sales/batch', { sales });
       const syncedSales = extractBatchSales(response.data);
 
@@ -84,6 +208,19 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
     }
   }
 
+  for (const m of refundMutations) {
+    const ok = await processMutation(m);
+    if (ok) synced++;
+    else failed++;
+  }
+
+  for (const m of shiftCloses) {
+    const remapped = { ...m, url: remapShiftCloseUrl(m.url, idMap) };
+    const ok = await processMutation(remapped);
+    if (ok) synced++;
+    else failed++;
+  }
+
   for (const m of otherMutations) {
     const ok = await processMutation(m);
     if (ok) synced++;
@@ -92,6 +229,8 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
 
   await mutationQueue.clearCompleted();
   await localSalesStore.removeSynced();
+  await localRefundsStore.removeSynced();
+  await localShiftsStore.removeSynced();
   return { synced, failed };
 }
 
@@ -106,7 +245,7 @@ export async function processStockAdjustments(): Promise<number> {
       await axiosInstance.post('/stock-movements', {
         product_id: adj.productId,
         quantity_change: adj.delta,
-        type: adj.reason === 'sale' ? 'sale' : 'adjustment',
+        type: adj.reason === 'refund' ? 'return' : 'adjustment',
         notes: `Offline sync: ${adj.reason}`,
       });
       await stockLedger.markAdjustmentSynced(adj.id);

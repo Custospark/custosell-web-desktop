@@ -11,13 +11,16 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
-import { Receipt, Eye, RotateCcw, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
 import type { Sale } from '../../api/salesTypes';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
 
 export default function SalesHistory() {
-  const { data: sales, isLoading, error, refetch } = useSales();
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
+  const { data: sales, isLoading, error, refetch, isFetching } = useSales();
   const qc = useQueryClient();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
@@ -86,8 +89,23 @@ export default function SalesHistory() {
 
   const totalRevenue = filtered.reduce((s, sale) => s + parseFloat(sale.total_amount), 0);
 
-  if (isLoading) return <LoadingSkeleton variant="table" />;
-  if (error) return <EmptyState icon={<Receipt className="w-12 h-12" />} title="Failed to load sales" description="An error occurred" actionLabel="Retry" onAction={() => window.location.reload()} />;
+  if (isLoading && !sales?.length) return <LoadingSkeleton variant="table" />;
+
+  if (error && !sales?.length) {
+    return (
+      <EmptyState
+        icon={<WifiOff className="w-12 h-12" />}
+        title={isOffline ? 'Showing offline sales only' : 'Failed to load sales'}
+        description={
+          isOffline
+            ? 'Cached sales are unavailable. Complete new sales offline — they will appear here and sync when you reconnect.'
+            : 'Check your connection and try again.'
+        }
+        actionLabel="Retry"
+        onAction={() => void refetch()}
+      />
+    );
+  }
 
   return (
     <Card>
@@ -96,6 +114,8 @@ export default function SalesHistory() {
           <h2 className="text-lg font-semibold text-gray-900">Sales History</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {filtered.length} sale(s) · Total: {formatCurrency(totalRevenue)}
+            {isOffline && ' · Offline mode'}
+            {isFetching && !isLoading && ' · Updating…'}
           </p>
         </div>
         <button title="Refresh sales" onClick={handleRefresh} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors text-sm">
@@ -136,6 +156,9 @@ export default function SalesHistory() {
               <span>{s.receipt_number}</span>
               {s._pendingSync && (
                 <Badge variant="warning">Pending sync</Badge>
+              )}
+              {s._pendingRefundSync && (
+                <Badge variant="warning">Refund pending</Badge>
               )}
             </div>
           )},

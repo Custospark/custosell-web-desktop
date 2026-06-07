@@ -10,7 +10,8 @@ PREREQUISITES
 
 1. NORMAL DEVELOPMENT TESTING (Vite Dev Server)
 ------------------------------------------------
-This method has limited offline support because Vite serves JS from memory.
+Offline is supported in dev via service worker + IndexedDB + React Query cache.
+Ensure the backend is running at http://localhost:8000 before testing.
 
   Step 1: Start the backend
   > cd backend
@@ -27,10 +28,12 @@ This method has limited offline support because Vite serves JS from memory.
   - Navigate through the app (sales, history, products, etc.)
   - Make a test sale
 
-  Step 5: Test offline (limited — JS assets won't cache)
-  - Open DevTools → Network tab → check "Offline"
-  - The page may show a white screen for navigation
-  - To fully test offline, use Method 2 below
+  Step 5: Test offline in dev
+  - Use the app online first (loads SW + caches API GETs)
+  - DevTools → Application → Service Workers → confirm sw.js active
+  - DevTools → Network → check "Offline"
+  - Sales module should load from client cache + local IndexedDB sales
+  - Complete a sale offline → appears instantly in History
 
 
 2. PRODUCTION BUILD TESTING (Full Offline Support)
@@ -51,8 +54,14 @@ This method gives full offline functionality.
 
   Step 5: Wait for Service Worker to register
   - Open DevTools → Application → Service Workers
-  - You should see "activated" status
+  - You should see sw.js "activated" status
+  - Caches: custosell-static-v1 (JS/CSS/images), custosell-api-v1 (GET /api/v1)
   - If not, do a hard refresh (Ctrl+Shift+R)
+
+  Caching strategy (sw.js):
+  - Image/JS/CSS → cache-first (online & offline)
+  - API GET → network-first online, stale cache offline
+  - API mutations → network pass-through; app queues to IndexedDB when offline
 
   Step 6: Go offline
   - DevTools → Network tab → check "Offline"

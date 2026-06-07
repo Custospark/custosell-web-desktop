@@ -1,53 +1,45 @@
 import { useQuery } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
-import { store } from '../../app/store/store';
 import { useToast } from '../../app/contexts/useToast';
-import { computeOfflineSalesSummary, mergeDashboardWithOffline } from '../../app/store/offline/offlineSalesSummary';
+import { applyDashboardPendingOverlay } from '../../app/store/offline/offlineSalesSummary';
+import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
+import { isNetworkFailure } from '../../app/store/offline/offlineQueryUtils';
 import type { DashboardSummary } from './DashboardTypes';
 
 export const dashboardKeys = {
   all: ['dashboard'] as const,
+  /** Server-only baseline — never merged with offline overlay. */
+  server: () => [...dashboardKeys.all, 'server'] as const,
   summary: () => [...dashboardKeys.all, 'summary'] as const,
 };
 
-function isOfflineMode(): boolean {
-  const state = store.getState();
-  return (state as { network?: { systemStatus?: string } }).network?.systemStatus === 'offline';
-}
+const emptySummary = (): DashboardSummary => ({
+  today_revenue: 0,
+  today_transactions: 0,
+  today_products_sold: 0,
+  today_expenses: 0,
+  active_products: 0,
+  total_customers: 0,
+  sales_trend: [],
+  low_stock: [],
+  recent_sales: [],
+});
 
 async function fetchDashboardSummary(): Promise<DashboardSummary> {
-  const offline = await computeOfflineSalesSummary();
-
-  if (isOfflineMode()) {
-    const cached = queryClient.getQueryData<DashboardSummary>(dashboardKeys.summary());
-    if (cached) return mergeDashboardWithOffline(cached, offline);
-    return mergeDashboardWithOffline(
-      {
-        today_revenue: 0,
-        today_transactions: 0,
-        today_products_sold: 0,
-        today_expenses: 0,
-        active_products: 0,
-        total_customers: 0,
-        sales_trend: [],
-        low_stock: [],
-        recent_sales: [],
-      },
-      offline,
-    );
-  }
-
-  try {
-    const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary');
-    return mergeDashboardWithOffline(data, offline);
-  } catch (err: unknown) {
-    const axiosErr = err as AxiosError;
-    if (axiosErr.response) throw err;
-    const cached = queryClient.getQueryData<DashboardSummary>(dashboardKeys.summary());
-    if (!cached) throw err;
-    return mergeDashboardWithOffline(cached, offline);
-  }
+  return readWithOfflineStrategy({
+    readFromClient: async () => {
+      const server =
+        queryClient.getQueryData<DashboardSummary>(dashboardKeys.server()) ?? emptySummary();
+      return applyDashboardPendingOverlay(server);
+    },
+    fetchFromServer: async () => {
+      const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary', {
+        timeout: 10000,
+      });
+      queryClient.setQueryData(dashboardKeys.server(), data);
+      return applyDashboardPendingOverlay(data);
+    },
+  });
 }
 
 export function useDashboardSummary() {
@@ -55,7 +47,10 @@ export function useDashboardSummary() {
     queryKey: dashboardKeys.summary(),
     queryFn: fetchDashboardSummary,
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    placeholderData: (prev) => prev,
+    retry: (count, err) => !isNetworkFailure(err) && count < 1,
+    networkMode: 'always',
   });
 }
 

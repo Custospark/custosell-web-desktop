@@ -1,5 +1,9 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { probeNetworkConnectivity } from '../network/connectivityCheck';
+import {
+  isOfflineBannerDismissed,
+  persistOfflineBannerDismissed,
+} from '../offline/offlinePreferences';
 import type { RootState } from '../store';
 
 export type SystemStatus = 'online' | 'slow' | 'offline';
@@ -21,7 +25,7 @@ const initialState: NetworkState = {
   latency: null,
   lastCheckedAt: null,
   isChecking: false,
-  offlineBannerDismissed: false,
+  offlineBannerDismissed: isOfflineBannerDismissed(),
 };
 
 export const checkNetworkConnectivity = createAsyncThunk(
@@ -43,10 +47,16 @@ const networkSlice = createSlice({
       state.isOnline = false;
       state.latency = null;
       state.lastCheckedAt = new Date().toISOString();
-      state.offlineBannerDismissed = false;
+    },
+    /** Browser reported online — optimistic until probe confirms. Triggers immediate sync. */
+    setBrowserOnline(state) {
+      state.systemStatus = 'online';
+      state.isOnline = true;
+      state.lastCheckedAt = new Date().toISOString();
     },
     dismissOfflineBanner(state) {
       state.offlineBannerDismissed = true;
+      persistOfflineBannerDismissed();
     },
   },
   extraReducers: (builder) => {
@@ -60,9 +70,6 @@ const networkSlice = createSlice({
         state.isOnline = action.payload.isOnline;
         state.latency = action.payload.latency;
         state.lastCheckedAt = new Date().toISOString();
-        if (action.payload.systemStatus === 'offline') {
-          state.offlineBannerDismissed = false;
-        }
       })
       .addCase(checkNetworkConnectivity.rejected, (state) => {
         state.isChecking = false;
@@ -70,12 +77,11 @@ const networkSlice = createSlice({
         state.isOnline = false;
         state.latency = null;
         state.lastCheckedAt = new Date().toISOString();
-        state.offlineBannerDismissed = false;
       });
   },
 });
 
-export const { setBrowserOffline, dismissOfflineBanner } = networkSlice.actions;
+export const { setBrowserOffline, setBrowserOnline, dismissOfflineBanner } = networkSlice.actions;
 
 export const selectSystemStatus = (state: RootState): SystemStatus => state.network.systemStatus;
 export const selectIsOnline = (state: RootState): boolean => state.network.isOnline;

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useAppSelector } from './useApp';
 import { selectSystemStatus } from '../slices/networkSlice';
-import { syncAllMutations, processStockAdjustments } from '../offline/syncEngine';
+import { syncPendingDataIfOnline } from '../offline/syncPendingIfOnline';
+import { purgeSyncedOptimisticFromCache } from '../offline/offlineCacheReconcile';
 import { useToast } from '../../contexts/ToastContext';
 import { queryClient } from '../../api/axiosConfig';
 import { salesKeys } from '../../../modules/sales/api/salesQueries';
@@ -9,34 +10,53 @@ import { dashboardKeys } from '../../../modules/dashboard/DashboardQueries';
 import { shiftKeys } from '../../../modules/shifts/ShiftQueries';
 import { inventoryKeys } from '../../../modules/inventory/api/products/ProductQueries';
 
+async function refreshAfterSync(): Promise<void> {
+  await purgeSyncedOptimisticFromCache(queryClient);
+  await queryClient.invalidateQueries({ queryKey: salesKeys.all });
+  await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+  await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
+  await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+  await queryClient.invalidateQueries({ queryKey: ['customers'] });
+}
+
+/**
+ * Sync queued IndexedDB work the moment we are no longer completely offline.
+ * Purges synced rows from cache so pending badges never linger after sync.
+ */
 export function useOfflineSync(): void {
   const systemStatus = useAppSelector(selectSystemStatus);
   const { showToast } = useToast();
-  const wasOffline = useRef(systemStatus === 'offline');
+  const previousStatus = useRef(systemStatus);
 
   useEffect(() => {
-    const isNowOnline = systemStatus === 'online' || systemStatus === 'slow';
-    const justCameBack = wasOffline.current && isNowOnline;
+    const wasCompletelyOffline = previousStatus.current === 'offline';
+    const isCompletelyOffline = systemStatus === 'offline';
+    previousStatus.current = systemStatus;
 
-    if (justCameBack) {
-      (async () => {
-        const { synced, failed } = await syncAllMutations();
-        const stockSynced = await processStockAdjustments();
+    if (isCompletelyOffline) return;
 
-        if (synced > 0 || stockSynced > 0) {
-          showToast('success', `Synced ${synced + stockSynced} pending transaction(s).`);
-        }
-        if (failed > 0) {
-          showToast('error', `${failed} transaction(s) failed to sync.`);
-        }
+    let cancelled = false;
 
-        await queryClient.invalidateQueries({ queryKey: salesKeys.all });
-        await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-        await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
-        await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
-      })();
-    }
+    void (async () => {
+      const result = await syncPendingDataIfOnline();
+      if (cancelled) return;
 
-    wasOffline.current = systemStatus === 'offline';
+      const totalSynced = result.synced + result.stockSynced;
+
+      if (totalSynced > 0) {
+        showToast('success', `Synced ${totalSynced} pending transaction(s).`);
+      }
+      if (result.failed > 0) {
+        showToast('error', `${result.failed} transaction(s) failed to sync.`);
+      }
+
+      if (!result.skipped || wasCompletelyOffline || totalSynced > 0 || result.failed > 0) {
+        await refreshAfterSync();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [systemStatus, showToast]);
 }

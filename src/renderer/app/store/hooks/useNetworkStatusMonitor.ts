@@ -1,15 +1,25 @@
 import { useEffect } from 'react';
-import { useAppDispatch } from './useApp';
-import { checkNetworkConnectivity, setBrowserOffline } from '../slices/networkSlice';
+import { useAppDispatch, useAppSelector } from './useApp';
+import {
+  checkNetworkConnectivity,
+  setBrowserOffline,
+  setBrowserOnline,
+  selectSystemStatus,
+} from '../slices/networkSlice';
 
-const CHECK_INTERVAL_MS = 30_000;
+const ONLINE_CHECK_INTERVAL_MS = 30_000;
+const OFFLINE_CHECK_INTERVAL_MS = 3_000;
 
 export function useNetworkStatusMonitor(): void {
   const dispatch = useAppDispatch();
+  const systemStatus = useAppSelector(selectSystemStatus);
 
   useEffect(() => {
     const handleOffline = () => dispatch(setBrowserOffline());
-    const handleOnline = () => { void dispatch(checkNetworkConnectivity()); };
+    const handleOnline = () => {
+      dispatch(setBrowserOnline());
+      void dispatch(checkNetworkConnectivity());
+    };
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
@@ -25,13 +35,16 @@ export function useNetworkStatusMonitor(): void {
       void dispatch(checkNetworkConnectivity());
     }, 0);
 
+    const intervalMs =
+      systemStatus === 'offline' ? OFFLINE_CHECK_INTERVAL_MS : ONLINE_CHECK_INTERVAL_MS;
+
     const intervalId = window.setInterval(() => {
       void dispatch(checkNetworkConnectivity());
-    }, CHECK_INTERVAL_MS);
+    }, intervalMs);
 
     return () => {
       window.clearTimeout(initialId);
       window.clearInterval(intervalId);
     };
-  }, [dispatch]);
+  }, [dispatch, systemStatus]);
 }

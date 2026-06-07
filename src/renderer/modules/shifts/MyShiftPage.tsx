@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveShift, useClockIn, useClockOut, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
+import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 import { useLogout } from '../../shared/api/account/AccountQueries';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
@@ -18,12 +20,13 @@ import { formatShiftTime, formatShiftDate, formatShiftDateTime } from '../../sha
 import { cn } from '../../shared/utils/cn';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { useReactToPrint } from 'react-to-print';
-import { ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut, RefreshCw } from 'lucide-react';
+import { ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut, RefreshCw, WifiOff } from 'lucide-react';
 import ReceiptPreviewModal from '../sales/ui/history/ReceiptPreviewModal';
 
 export default function MyShiftPage() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const business = authUser?.business;
   const { data: shift, isLoading, isRefetching } = useActiveShift();
   const clockIn = useClockIn();
@@ -111,9 +114,13 @@ export default function MyShiftPage() {
         <EmptyState
           icon={<Clock className="w-12 h-12" />}
           title="No Active Shift"
-          description="You haven't started a shift yet. Clock in to begin."
-          actionLabel="Start Shift"
-          onAction={handleStartShift}
+          description={
+            isOffline
+              ? "You haven't started a shift yet. Clock in offline — your shift will sync when connected."
+              : "You haven't started a shift yet. Clock in to begin."
+          }
+          actionLabel={clockIn.isPending ? 'Starting…' : 'Start Shift'}
+          onAction={clockIn.isPending ? undefined : handleStartShift}
         />
       </div>
     );
@@ -126,6 +133,10 @@ export default function MyShiftPage() {
           <h1 className="text-xl font-semibold text-gray-900">My Shift</h1>
           <p className="text-sm text-gray-500 mt-1">
             Started {formatShiftDateTime(shift?.clock_in || authUser?.shift_clock_in)}
+            {isOffline && <span className="text-amber-600 font-medium"> · Offline mode</span>}
+            {(shift as { _pendingSync?: boolean })?._pendingSync && (
+              <Badge variant="warning" className="ml-2">Shift pending sync</Badge>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -136,11 +147,18 @@ export default function MyShiftPage() {
           <Button variant="outline" onClick={() => setShowReceiptPreview(true)}>
             <Printer className="w-4 h-4 mr-1.5" />Shift Receipt
           </Button>
-          <Button variant="outline" onClick={handleEndShift}>
+          <Button variant="outline" onClick={handleEndShift} loading={clockOut.isPending}>
             <LogOut className="w-4 h-4 mr-1.5" />End Shift
           </Button>
         </div>
       </div>
+      {isOffline && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          Shift changes save locally and sync when you&apos;re back online.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 border-2 border-blue-500 bg-gradient-to-br from-white to-blue-50/50 hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-0.5 group cursor-pointer min-h-[130px] flex items-center">
           <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl bg-blue-500/10" />
@@ -188,10 +206,14 @@ export default function MyShiftPage() {
             rowKey={(sale: any) => sale.id}
             data={paginated.data}
             columns={[
-              { key: 'receipt_number', header: 'Receipt', render: (sale: any) => (
-                <button onClick={() => setSelectedSale(sale)} className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors">
-                  {sale.receipt_number}
-                </button>
+              { key: 'receipt_number', header: 'Receipt', render: (sale: SaleWithSyncMeta) => (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => setSelectedSale(sale)} className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors">
+                    {sale.receipt_number}
+                  </button>
+                  {sale._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+                  {sale._pendingRefundSync && <Badge variant="warning">Refund pending</Badge>}
+                </div>
               ) },
               { key: 'created_at', header: 'Time', render: (sale: any) => formatShiftTime(sale.created_at) },
               { key: 'items', header: 'Items', render: (sale: any) => sale.sale_items?.length || 0 },
@@ -300,7 +322,14 @@ function ShiftHistory({ userId }: { userId?: number | null }) {
                 <td className="py-2 px-2 text-gray-800">{formatShiftTime(s.clock_in)}</td>
                 <td className="py-2 px-2 text-gray-800">{formatShiftTime(s.clock_out)}</td>
                 <td className="py-2 px-2 text-right text-gray-600">{s.total_sales}</td>
-                <td className="py-2 px-2 text-right font-semibold">{formatCurrency(s.total_sales)}</td>
+                <td className="py-2 px-2 text-right font-semibold">
+                  <div className="flex items-center justify-end gap-2">
+                    {formatCurrency(s.total_sales)}
+                    {(s as { _pendingSync?: boolean })._pendingSync && (
+                      <Badge variant="warning">Pending sync</Badge>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

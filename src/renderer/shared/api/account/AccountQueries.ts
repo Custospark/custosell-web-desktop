@@ -8,6 +8,7 @@ import {
   logout, setUser,
 } from '../../../app/store/slices/authSlice';
 import { axiosInstance } from '../../../app/api/axiosConfig';
+import { clearServiceWorkerApiCache } from '../../../app/sw/registerServiceWorker';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest, ApiError } from './AccountTypes';
@@ -85,6 +86,7 @@ export function useLogout() {
     onSettled: () => {
       dispatch(logout());
       queryClient.clear();
+      clearServiceWorkerApiCache();
       showToast('success', 'Logged out successfully');
       navigate(ROUTES.LOGIN);
     },

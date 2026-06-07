@@ -6,18 +6,16 @@ import { ErrorBoundary } from '../../shared/components/Feedback/ErrorBoundary';
 import { PublicRoute } from './PublicRoute';
 import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
 import { Layout } from '../../shared/components/layout/Layout';
+import NewSalePage from '../../modules/sales/NewSale';
+import SalesHistoryPage from '../../modules/sales/SalesHistoryPage';
+import RefundsPage from '../../modules/sales/RefundsPage';
+import MyShiftPage from '../../modules/shifts/MyShiftPage';
+import DashboardPage from '../../modules/dashboard/DashboardPage';
 
 const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
-const DashboardPage = lazy(() => import('../../modules/dashboard/DashboardPage'));
-const NewSalePage = lazy(() => import('../../modules/sales/NewSale'));
-
-// eslint-disable-next-line react-refresh/only-export-components -- route component
-const SalesHistoryPage = lazy(() => import('../../modules/sales/SalesHistoryPage'));
-const RefundsPage = lazy(() => import('../../modules/sales/RefundsPage'));
-const MyShiftPage = lazy(() => import('../../modules/shifts/MyShiftPage'));
 const ProductsPage = lazy(() => import('../../modules/inventory/ProductsPage'));
 const CategoriesPage = lazy(() => import('../../modules/inventory/CategoriesPage'));
 const StockLedgerPage = lazy(() => import('../../modules/inventory/StockLedgerPage'));

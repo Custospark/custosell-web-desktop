@@ -1,4 +1,5 @@
 import { localSalesStore } from './localSalesStore';
+import { localRefundsStore } from './localRefundsStore';
 import type { DashboardSummary } from '../../../modules/dashboard/DashboardTypes';
 import type { Sale } from '../../../modules/sales/api/salesTypes';
 
@@ -51,6 +52,43 @@ export async function computeOfflineSalesSummary(): Promise<OfflineSalesSummary>
     card_total,
     pending_sales,
   };
+}
+
+/** Pending offline refunds reduce today's revenue until synced. */
+export async function computeOfflineRefundAdjustments(): Promise<{ today_revenue: number }> {
+  const pending = await localRefundsStore.getPending();
+  let today_revenue = 0;
+
+  for (const record of pending) {
+    const refundTotal = record.refundData.items.reduce(
+      (sum, item) => sum + (item.amount ?? 0),
+      0,
+    );
+    today_revenue -= refundTotal;
+  }
+
+  return { today_revenue };
+}
+
+/** Server baseline + pending sales/refunds overlay — idempotent, no double-counting. */
+export async function applyDashboardPendingOverlay(
+  server: DashboardSummary,
+): Promise<DashboardSummary> {
+  const [offline, refundAdj] = await Promise.all([
+    computeOfflineSalesSummary(),
+    computeOfflineRefundAdjustments(),
+  ]);
+
+  let merged = mergeDashboardWithOffline(server, offline);
+
+  if (refundAdj.today_revenue !== 0) {
+    merged = {
+      ...merged,
+      today_revenue: Math.max(0, merged.today_revenue + refundAdj.today_revenue),
+    };
+  }
+
+  return merged;
 }
 
 export function mergeDashboardWithOffline(

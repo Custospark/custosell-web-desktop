@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { useSales, useRefund } from '../../api/salesQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { Card } from '../../../../shared/components/cards/Card';
 import { Table } from '../../../../shared/components/tables/Table';
@@ -11,10 +13,9 @@ import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSk
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { useToast } from '../../../../app/contexts/useToast';
-import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
-import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square } from 'lucide-react';
-import type { Sale } from '../../api/salesTypes';
+import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
+import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
 
 const statusLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
   paid: { label: 'Paid', variant: 'success' },
@@ -27,8 +28,9 @@ export default function RefundPanel() {
   const refundMutation = useRefund();
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const [receiptSearch, setReceiptSearch] = useState('');
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [refundQtys, setRefundQtys] = useState<Record<number, number>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const qc = useQueryClient();
@@ -77,7 +79,11 @@ export default function RefundPanel() {
     });
   };
 
-  const openRefund = (sale: Sale) => {
+  const openRefund = (sale: SaleWithSyncMeta) => {
+    if (sale._pendingSync) {
+      showToast('error', 'Sync this sale before refunding');
+      return;
+    }
     setSelectedSale(sale);
     setRefundQtys({});
   };
@@ -104,6 +110,10 @@ export default function RefundPanel() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
+    if (isOffline) {
+      showToast('error', 'Bulk delete requires an internet connection');
+      return;
+    }
     const ok = await confirm({
       title: 'Delete sales?',
       message: `This will permanently delete ${selectedIds.size} sale(s). This action cannot be undone.`,
@@ -144,9 +154,19 @@ export default function RefundPanel() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Process Refund</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Search for a sale by receipt number</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Search for a sale by receipt number
+              {isOffline && <span className="text-amber-600 font-medium"> · Offline mode</span>}
+            </p>
           </div>
         </div>
+
+        {isOffline && (
+          <div className="flex items-center gap-2 px-4 py-2.5 mb-4 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            Refunds save locally and sync when you&apos;re back online. Unsynced sales cannot be refunded.
+          </div>
+        )}
 
         <div className="flex items-center gap-4 mb-4">
           <div className="relative max-w-xs flex-1">
@@ -177,16 +197,26 @@ export default function RefundPanel() {
                 {selectedIds.has(s.id) ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
               </button>
             )},
-            { key: 'receipt_number', header: 'Receipt' },
+            { key: 'receipt_number', header: 'Receipt', render: (s: SaleWithSyncMeta) => (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span>{s.receipt_number}</span>
+                {s._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+                {s._pendingRefundSync && <Badge variant="warning">Refund pending</Badge>}
+              </div>
+            )},
             { key: 'date', header: 'Date', render: (s) => new Date(s.sale_date).toLocaleDateString() },
             { key: 'total', header: 'Total', render: (s) => formatCurrency(s.total_amount) },
             { key: 'status', header: 'Status', render: (s) => {
               const st = statusLabel[s.payment_status] || { label: s.payment_status, variant: 'neutral' };
               return <Badge variant={st.variant}>{st.label}</Badge>;
             }},
-            { key: 'action', header: 'Receipt', render: (s) => (
-              <button title="Select for refund" onClick={() => openRefund(s)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors text-sm">
+            { key: 'action', header: 'Receipt', render: (s: SaleWithSyncMeta) => (
+              <button
+                title={s._pendingSync ? 'Sync sale before refunding' : 'Select for refund'}
+                onClick={() => openRefund(s)}
+                disabled={s._pendingSync}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+              >
                 <RotateCcw className="w-4 h-4" /> Refund
               </button>
             )},
@@ -322,7 +352,7 @@ export default function RefundPanel() {
               <Button variant="outline" onClick={() => { setSelectedSale(null); setRefundQtys({}); }}>
                 Cancel
               </Button>
-              <Button onClick={handleRefund} loading={refundMutation.isPending}>
+              <Button onClick={handleRefund} loading={refundMutation.isPending} disabled={refundTotal <= 0}>
                 <RotateCcw className="w-4 h-4 mr-1.5" /> Process Refund
               </Button>
             </div>

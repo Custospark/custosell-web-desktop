@@ -3,17 +3,13 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
-import { store } from '../../../../app/store/store';
 import { applyOfflineStockOverlay } from '../../../../app/store/offline/offlineStockOverlay';
+import { isNetworkFailure } from '../../../../app/store/offline/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
 import type {
   Category, Product, StockMovement,
   CreateCategoryData, CreateProductData, UpdateProductData, CreateStockMovementData,
 } from './ProductTypes';
-
-function isOfflineMode(): boolean {
-  const state = store.getState();
-  return (state as { network?: { systemStatus?: string } }).network?.systemStatus === 'offline';
-}
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -90,19 +86,23 @@ export function useDeleteCategory() {
 export function useProducts() {
   return useQuery<Product[]>({
     queryKey: inventoryKeys.products(),
-    queryFn: async () => {
-      try {
-        const { data: response } = await axiosInstance.get<{ data: Product[] }>('/products');
-        return applyOfflineStockOverlay(response.data);
-      } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (axiosErr.response || !isOfflineMode()) throw err;
+    queryFn: async () => readWithOfflineStrategy({
+      readFromClient: async () => {
         const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
         return applyOfflineStockOverlay(cached);
-      }
-    },
+      },
+      fetchFromServer: async () => {
+        const { data: response } = await axiosInstance.get<{ data: Product[] }>('/products', {
+          timeout: 10000,
+        });
+        return applyOfflineStockOverlay(response.data);
+      },
+    }),
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    placeholderData: (prev) => prev,
+    retry: (count, err) => !isNetworkFailure(err) && count < 1,
+    networkMode: 'always',
   });
 }
 

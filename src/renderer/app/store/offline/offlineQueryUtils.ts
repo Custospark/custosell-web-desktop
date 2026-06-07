@@ -1,0 +1,45 @@
+import type { AxiosError } from 'axios';
+import { store } from '../store';
+import type { SystemStatus } from '../slices/networkSlice';
+
+/** Single source of truth: Redux network slice (driven by connectivity probe + browser events). */
+export function getSystemStatus(): SystemStatus {
+  const state = store.getState();
+  return (state as { network?: { systemStatus?: SystemStatus } }).network?.systemStatus ?? 'online';
+}
+
+/** Completely offline only. `slow` is reachable — not offline. */
+export function isOfflineMode(): boolean {
+  return getSystemStatus() === 'offline';
+}
+
+export function isCompletelyOffline(): boolean {
+  return isOfflineMode() || isBrowserOffline();
+}
+
+export function isOnlineMode(): boolean {
+  return !isOfflineMode();
+}
+
+/** Completely offline → client storage wins. Online/slow → server first. */
+export function shouldUseClientStorage(): boolean {
+  return isOfflineMode();
+}
+
+export function shouldFetchFromServer(): boolean {
+  return isOnlineMode();
+}
+
+export function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+}
+
+/** True when completely offline — queue locally instead of waiting on the API. */
+export function shouldCompleteMutationLocally(): boolean {
+  return isCompletelyOffline();
+}
+
+export function isNetworkFailure(err: unknown): boolean {
+  const axiosErr = err as AxiosError;
+  return !axiosErr.response;
+}

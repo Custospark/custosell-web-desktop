@@ -33,8 +33,7 @@ function BillingControls() {
   const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
   const authUser = useAppSelector((s) => s.auth.user);
   const currency = authUser?.business?.currency || 'UGX';
-  const systemStatus = useAppSelector((s) => (s as any).network?.systemStatus);
-  const isOffline = systemStatus === 'offline';
+  const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isPrinting, setIsPrinting] = useState(false);

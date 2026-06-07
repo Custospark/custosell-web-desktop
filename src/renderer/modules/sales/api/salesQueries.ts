@@ -2,18 +2,27 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
-import { store } from '../../../app/store/store';
-import { mutationQueue } from '../../../app/store/offline/mutationQueue';
-import { stockLedger } from '../../../app/store/offline/stockLedger';
 import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
-import { buildStockSeedMap } from '../../../app/store/offline/offlineStockOverlay';
-import { computeOfflineSalesSummary, mergeDashboardWithOffline } from '../../../app/store/offline/offlineSalesSummary';
-import { generateLocalReceiptNumber } from '../../../app/store/offline/receiptGenerator';
+import { isNetworkFailure } from '../../../app/store/offline/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
+import {
+  completeOfflineSaleInstant,
+  shouldCompleteSaleLocally,
+} from '../../../app/store/offline/completeOfflineSale';
+import {
+  canRefundSaleOffline,
+  completeOfflineRefundInstant,
+  shouldCompleteRefundLocally,
+} from '../../../app/store/offline/completeOfflineRefund';
+import { localRefundsStore, mergePendingRefunds } from '../../../app/store/offline/localRefundsStore';
+import {
+  isOptimisticSale,
+  reconcileSaleList,
+} from '../../../app/store/offline/offlineCacheReconcile';
 import { inventoryKeys } from '../../inventory/api/products/ProductQueries';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';
 import type { Product } from '../../inventory/api/products/ProductTypes';
-import type { DashboardSummary } from '../../dashboard/DashboardTypes';
 import type { Sale, CreateSalePayload, RefundData } from './salesTypes';
 
 export const salesKeys = {
@@ -23,15 +32,34 @@ export const salesKeys = {
   detail: (id: number) => [...salesKeys.all, 'detail', id] as const,
 };
 
-function isOfflineMode(): boolean {
-  const state = store.getState();
-  return (state as { network?: { systemStatus?: string } }).network?.systemStatus === 'offline';
+const SALES_READ_TIMEOUT_MS = 10000;
+
+function normalizeSalesList(payload: unknown): Sale[] {
+  if (Array.isArray(payload)) return payload as Sale[];
+  if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: Sale[] }).data)) {
+    return (payload as { data: Sale[] }).data;
+  }
+  return [];
 }
 
 function mergeSalesLists(base: Sale[], local: SaleWithSyncMeta[]): SaleWithSyncMeta[] {
   const localReceipts = new Set(local.map((s) => s.receipt_number));
-  const filtered = base.filter((s) => !localReceipts.has(s.receipt_number));
-  const merged = [...local, ...filtered];
+  const localIds = new Set(local.map((s) => s.id));
+  const pendingRefundIds = new Set<number>();
+
+  const filtered = base.filter((s) => {
+    const meta = s as SaleWithSyncMeta;
+    if (localReceipts.has(s.receipt_number) || localIds.has(s.id)) return false;
+    if (isOptimisticSale(meta)) return false;
+    return true;
+  });
+
+  const merged = reconcileSaleList(
+    [...local, ...filtered] as SaleWithSyncMeta[],
+    localIds,
+    localReceipts,
+    pendingRefundIds,
+  );
   merged.sort((a, b) => new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime());
   return merged;
 }
@@ -41,23 +69,30 @@ async function loadLocalPendingSales(): Promise<SaleWithSyncMeta[]> {
   return pending.map(toSaleWithSyncMeta);
 }
 
-async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
+function getCachedSalesList(): Sale[] {
+  return queryClient.getQueryData<Sale[]>(salesKeys.list()) ?? [];
+}
+
+async function applyPendingRefundOverlay(sales: SaleWithSyncMeta[]): Promise<SaleWithSyncMeta[]> {
+  const pendingRefunds = await localRefundsStore.getPending();
+  return mergePendingRefunds(sales, pendingRefunds);
+}
+
+async function readSalesFromClient(): Promise<SaleWithSyncMeta[]> {
   const local = await loadLocalPendingSales();
+  const cached = getCachedSalesList().filter((s) => !isOptimisticSale(s as SaleWithSyncMeta));
+  return applyPendingRefundOverlay(mergeSalesLists(cached, local));
+}
 
-  if (isOfflineMode()) {
-    const cached = queryClient.getQueryData<Sale[]>(salesKeys.list()) ?? [];
-    return mergeSalesLists(cached, local);
-  }
-
-  try {
-    const { data } = await axiosInstance.get<{ data: Sale[] }>('/sales');
-    return mergeSalesLists(data.data, local);
-  } catch (err: unknown) {
-    const axiosErr = err as AxiosError;
-    if (axiosErr.response) throw err;
-    const cached = queryClient.getQueryData<Sale[]>(salesKeys.list()) ?? [];
-    return mergeSalesLists(cached, local);
-  }
+async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
+  return readWithOfflineStrategy({
+    readFromClient: readSalesFromClient,
+    fetchFromServer: async () => {
+      const local = await loadLocalPendingSales();
+      const { data } = await axiosInstance.get('/sales', { timeout: SALES_READ_TIMEOUT_MS });
+      return applyPendingRefundOverlay(mergeSalesLists(normalizeSalesList(data), local));
+    },
+  });
 }
 
 interface CustomerListItem {
@@ -66,13 +101,32 @@ interface CustomerListItem {
   phone: string;
 }
 
+async function fetchCustomers(): Promise<CustomerListItem[]> {
+  return readWithOfflineStrategy({
+    readFromClient: () => queryClient.getQueryData<CustomerListItem[]>(['customers']) ?? [],
+    fetchFromServer: async () => {
+      const { data } = await axiosInstance.get('/customers', { timeout: SALES_READ_TIMEOUT_MS });
+      if (Array.isArray(data)) return data as CustomerListItem[];
+      if (data && typeof data === 'object' && Array.isArray((data as { data?: CustomerListItem[] }).data)) {
+        return (data as { data: CustomerListItem[] }).data;
+      }
+      return [];
+    },
+  });
+}
+
+const salesQueryDefaults = {
+  networkMode: 'always' as const,
+  retry: (failureCount: number, error: unknown) =>
+    !isNetworkFailure(error) && failureCount < 1,
+};
+
 export function useCustomers() {
   return useQuery<CustomerListItem[]>({
     queryKey: ['customers'],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: CustomerListItem[] }>('/customers');
-      return data.data;
-    },
+    queryFn: fetchCustomers,
+    placeholderData: (prev) => prev ?? [],
+    ...salesQueryDefaults,
   });
 }
 
@@ -81,7 +135,9 @@ export function useSales() {
     queryKey: salesKeys.list(),
     queryFn: fetchSalesMerged,
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    placeholderData: (prev) => prev,
+    ...salesQueryDefaults,
   });
 }
 
@@ -89,26 +145,30 @@ export function useDailySales(date?: string) {
   return useQuery<SaleWithSyncMeta[]>({
     queryKey: salesKeys.daily(date),
     queryFn: async () => {
-      const local = await loadLocalPendingSales();
       const targetDate = date ?? new Date().toISOString().slice(0, 10);
-      const localForDay = local.filter((s) => s.sale_date.slice(0, 10) === targetDate);
 
-      if (isOfflineMode()) {
-        const cached = queryClient.getQueryData<Sale[]>(salesKeys.daily(date)) ?? [];
-        return mergeSalesLists(cached, localForDay);
-      }
-
-      try {
-        const params = date ? `?date=${date}` : '';
-        const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/daily${params}`);
-        return mergeSalesLists(data.data, localForDay);
-      } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (axiosErr.response) throw err;
-        const cached = queryClient.getQueryData<Sale[]>(salesKeys.daily(date)) ?? [];
-        return mergeSalesLists(cached, localForDay);
-      }
+      return readWithOfflineStrategy({
+        readFromClient: async () => {
+          const local = await loadLocalPendingSales();
+          const localForDay = local.filter((s) => s.sale_date.slice(0, 10) === targetDate);
+          const cached = queryClient.getQueryData<Sale[]>(salesKeys.daily(date)) ?? [];
+          return mergeSalesLists(cached, localForDay);
+        },
+        fetchFromServer: async () => {
+          const local = await loadLocalPendingSales();
+          const localForDay = local.filter((s) => s.sale_date.slice(0, 10) === targetDate);
+          const params = date ? `?date=${date}` : '';
+          const { data } = await axiosInstance.get(`/sales/daily${params}`, {
+            timeout: SALES_READ_TIMEOUT_MS,
+          });
+          return mergeSalesLists(normalizeSalesList(data), localForDay);
+        },
+      });
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    placeholderData: (prev) => prev,
+    ...salesQueryDefaults,
   });
 }
 
@@ -116,81 +176,32 @@ export function useSale(id: number) {
   return useQuery<Sale>({
     queryKey: salesKeys.detail(id),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: Sale }>(`/sales/${id}`);
-      return data.data;
+      if (id < 0) {
+        const local = await localSalesStore.getPending();
+        const match = local.find((r) => r.sale.id === id);
+        if (match) return match.sale;
+      }
+
+      return readWithOfflineStrategy({
+        readFromClient: () => {
+          const fromList = getCachedSalesList().find((s) => s.id === id);
+          if (!fromList) throw new Error('Sale not available offline');
+          return fromList;
+        },
+        fetchFromServer: async () => {
+          const { data } = await axiosInstance.get(`/sales/${id}`, {
+            timeout: SALES_READ_TIMEOUT_MS,
+          });
+          if (data && typeof data === 'object' && 'data' in (data as object)) {
+            return (data as { data: Sale }).data;
+          }
+          return data as Sale;
+        },
+      });
     },
-    enabled: Boolean(id) && id > 0,
+    enabled: Boolean(id),
+    ...salesQueryDefaults,
   });
-}
-
-async function createLocalSale(payload: CreateSalePayload): Promise<SaleWithSyncMeta> {
-  const receiptNumber = generateLocalReceiptNumber();
-  const now = new Date().toISOString();
-  const localIdNum = -Date.now();
-
-  const products = queryClient.getQueryData<Product[]>(inventoryKeys.products());
-  const seedMap = products ? await buildStockSeedMap(products) : undefined;
-
-  await stockLedger.batchAdjust(
-    payload.items.map((item) => ({ productId: item.product_id, delta: -item.quantity })),
-    'sale',
-    seedMap,
-  );
-
-  let mutationId = '';
-  try {
-    mutationId = await mutationQueue.enqueue({
-      method: 'POST',
-      url: '/sales',
-      data: payload,
-      maxRetries: 3,
-    });
-  } catch (err) {
-    console.error('[OfflineSale] Enqueue failed:', err);
-  }
-
-  const sale: Sale = {
-    id: localIdNum,
-    receipt_number: receiptNumber,
-    total_amount: payload.total_amount.toString(),
-    payment_method: payload.payment_method,
-    payment_status: 'paid',
-    subtotal: payload.subtotal.toString(),
-    tax_total: (payload.tax_total ?? 0).toString(),
-    discount_amount: (payload.discount_amount || 0).toString(),
-    created_at: now,
-    updated_at: now,
-    business_id: 0,
-    user_id: 0,
-    customer_id: payload.customer_id ?? null,
-    shift_id: payload.shift_id ?? null,
-    amount_tendered: payload.amount_tendered ? payload.amount_tendered.toString() : null,
-    change_given: payload.change_given ? payload.change_given.toString() : null,
-    notes: payload.notes ?? null,
-    sale_date: now,
-    sale_items: payload.items.map((item, i) => ({
-      id: localIdNum - i,
-      sale_id: localIdNum,
-      product_id: item.product_id,
-      product_name: '',
-      product_price: item.unit_price.toString(),
-      quantity: item.quantity,
-      unit_price: item.unit_price.toString(),
-      subtotal: (item.quantity * item.unit_price).toString(),
-      tax_amount: '0',
-      discount_amount: '0',
-      refunded_quantity: 0,
-      refunded_amount: '0',
-    })),
-  };
-
-  const storedLocalId = await localSalesStore.save(sale, payload, mutationId);
-
-  return {
-    ...sale,
-    _pendingSync: true,
-    _localId: storedLocalId,
-  };
 }
 
 function applySaleOptimisticUpdates(
@@ -208,10 +219,10 @@ function applySaleOptimisticUpdates(
   });
 
   if (payload.shift_id) {
-    qc.setQueryData<Sale[]>([...shiftKeys.all, 'sales', payload.shift_id], (old) => {
+    qc.setQueryData<SaleWithSyncMeta[]>([...shiftKeys.all, 'sales', payload.shift_id], (old) => {
       const list = old ?? [];
       if (list.some((s) => s.id === sale.id)) return list;
-      return [sale, ...list];
+      return [{ ...sale, _pendingSync: true }, ...list];
     });
   }
 
@@ -223,36 +234,61 @@ function applySaleOptimisticUpdates(
     }),
   );
 
-  void computeOfflineSalesSummary().then((offline) => {
-    qc.setQueryData<DashboardSummary | undefined>(dashboardKeys.summary(), (old) => {
-      if (!old) return old;
-      return mergeDashboardWithOffline(old, offline);
-    });
-  });
+  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+}
+
+function applyRefundOptimisticUpdates(
+  qc: ReturnType<typeof useQueryClient>,
+  updatedSale: SaleWithSyncMeta,
+  refundData: RefundData,
+  originalSale: Sale,
+): void {
+  qc.setQueryData<SaleWithSyncMeta[]>(salesKeys.list(), (old) =>
+    (old ?? []).map((s) => (s.id === updatedSale.id ? updatedSale : s)),
+  );
+
+  if (originalSale.shift_id) {
+    qc.setQueryData<Sale[]>([...shiftKeys.all, 'sales', originalSale.shift_id], (old) =>
+      (old ?? []).map((s) => (s.id === updatedSale.id ? updatedSale : s)),
+    );
+  }
+
+  qc.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
+    (old ?? []).map((p) => {
+      const refundItem = refundData.items.find((item) => {
+        const saleItem = originalSale.sale_items?.find((si) => si.id === item.id);
+        return saleItem?.product_id === p.id;
+      });
+      if (!refundItem) return p;
+      return { ...p, stock_quantity: p.stock_quantity + refundItem.quantity };
+    }),
+  );
+
+  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
 }
 
 export function useCreateSale() {
   const qc = useQueryClient();
   const { showToast } = useToast();
   return useMutation<SaleWithSyncMeta, AxiosError, CreateSalePayload>({
+    networkMode: 'always',
     mutationFn: async (payload) => {
-      const offline = isOfflineMode();
-
-      if (offline) {
-        return createLocalSale(payload);
+      if (shouldCompleteSaleLocally()) {
+        return completeOfflineSaleInstant(payload);
       }
 
       try {
-        const res = await axiosInstance.post('/sales', payload, { timeout: 5000 });
+        const res = await axiosInstance.post('/sales', payload, { timeout: 4000 });
         return res.data as SaleWithSyncMeta;
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (!axiosErr.response) {
-          return createLocalSale(payload);
+          return completeOfflineSaleInstant(payload);
         }
         throw err;
       }
     },
+    retry: false,
     onSuccess: (sale, payload) => {
       const isLocal = sale.receipt_number.startsWith('OFF-') || sale._pendingSync;
 
@@ -275,18 +311,59 @@ export function useCreateSale() {
 export function useRefund() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<Sale, AxiosError, { id: number; data: RefundData }>({
+  return useMutation<SaleWithSyncMeta, AxiosError, { id: number; data: RefundData }>({
+    networkMode: 'always',
+    retry: false,
     mutationFn: async ({ id, data }) => {
-      const { data: res } = await axiosInstance.post<{ data: Sale }>(`/sales/${id}/refund`, data);
-      return res.data;
+      const sale =
+        getCachedSalesList().find((s) => s.id === id) ??
+        (await localSalesStore.getPending()).find((r) => r.sale.id === id)?.sale;
+
+      if (!sale) throw new Error('Sale not found');
+
+      if (!canRefundSaleOffline(sale)) {
+        throw new Error('Sync this sale before refunding');
+      }
+
+      if (shouldCompleteRefundLocally()) {
+        return completeOfflineRefundInstant(sale, data);
+      }
+
+      try {
+        const { data: res } = await axiosInstance.post<{ data: Sale }>(
+          `/sales/${id}/refund`,
+          data,
+          { timeout: 4000 },
+        );
+        return res.data as SaleWithSyncMeta;
+      } catch (err: unknown) {
+        const axiosErr = err as AxiosError;
+        if (!axiosErr.response) {
+          return completeOfflineRefundInstant(sale, data);
+        }
+        throw err;
+      }
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: salesKeys.all });
-      qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
-      showToast('success', 'Refund processed');
+    onSuccess: (updatedSale, { data }) => {
+      const original =
+        getCachedSalesList().find((s) => s.id === updatedSale.id) ?? updatedSale;
+
+      if (updatedSale._pendingRefundSync) {
+        applyRefundOptimisticUpdates(qc, updatedSale, data, original);
+        showToast('success', 'Refund saved locally — will sync when online');
+      } else {
+        qc.invalidateQueries({ queryKey: salesKeys.all });
+        qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
+        qc.invalidateQueries({ queryKey: shiftKeys.all });
+        showToast('success', 'Refund processed');
+      }
     },
     onError: (e) => {
-      showToast('error', (e.response?.data as { message?: string })?.message || 'Refund failed');
+      const message =
+        e.message === 'Sync this sale before refunding'
+          ? e.message
+          : (e.response?.data as { message?: string })?.message || e.message || 'Refund failed';
+      showToast('error', message);
     },
   });
 }

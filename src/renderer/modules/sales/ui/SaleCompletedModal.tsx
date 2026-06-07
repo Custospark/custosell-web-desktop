@@ -1,10 +1,10 @@
 import { CheckCircle, Printer, ShoppingCart, DollarSign, Percent, CreditCard, X, Plus } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import type { Sale } from '../api/salesTypes';
+import type { SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
 
 interface SaleCompletedModalProps {
-  sale: Sale | null;
+  sale: SaleWithSyncMeta | null;
   onClose: () => void;
   onPrint: () => void;
   onNewSale: () => void;
@@ -20,7 +20,13 @@ export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-1">Sale Completed</h2>
-        <p className="text-sm text-gray-500 mb-6">Receipt Number: {sale.receipt_number}</p>
+        <p className="text-sm text-gray-500 mb-1">Receipt Number: {sale.receipt_number}</p>
+        {sale._pendingSync && (
+          <p className="text-xs text-amber-600 font-medium mb-5">
+            Saved locally — will sync when you&apos;re back online
+          </p>
+        )}
+        {!sale._pendingSync && <div className="mb-6" />}
         <div className="text-left bg-gray-50 rounded-xl p-5 mb-6 space-y-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-gray-500 flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-gray-400" /> Items</span>

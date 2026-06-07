@@ -1,9 +1,11 @@
+import './axiosTypes';
 import axios, { AxiosHeaders, type AxiosInstance, type InternalAxiosRequestConfig, AxiosError } from 'axios';
 import { QueryClient } from '@tanstack/react-query';
 import { store } from '../store/store';
 import type { RootState } from '../store/store';
 import { logout } from '../store/slices/authSlice';
 import { API_BASE_URL, API_TIMEOUT } from './apiConfig';
+import { clearServiceWorkerApiCache } from '../sw/registerServiceWorker';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -83,10 +85,19 @@ axiosInstance.interceptors.response.use(
     const url = String(error.config?.url ?? '');
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
 
-    if (error.response?.status === 401 && hasAuthToken && !isAuthEndpoint && !_isHandling401) {
+    const skipAuthRedirect = Boolean(error.config?.skipAuthRedirect);
+
+    if (
+      error.response?.status === 401 &&
+      hasAuthToken &&
+      !isAuthEndpoint &&
+      !skipAuthRedirect &&
+      !_isHandling401
+    ) {
       _isHandling401 = true;
       store.dispatch(logout());
       queryClient.clear();
+      clearServiceWorkerApiCache();
       window.location.href = '/login';
       setTimeout(() => { _isHandling401 = false; }, 3000);
     }

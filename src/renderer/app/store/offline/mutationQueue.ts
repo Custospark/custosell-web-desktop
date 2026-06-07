@@ -96,4 +96,36 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
     return all.filter((m) => m.status === 'queued' || m.status === 'failed').length;
   },
+
+  async updateEntry(id: string, patch: Partial<Pick<QueuedMutation, 'url' | 'data'>>): Promise<void> {
+    const db = await getDb();
+    const entry = await db.get('mutations', id);
+    if (!entry) return;
+    if (patch.url !== undefined) entry.url = patch.url;
+    if (patch.data !== undefined) entry.data = patch.data;
+    await db.put('mutations', entry);
+  },
+
+  async remapShiftId(oldShiftId: number, newShiftId: number): Promise<void> {
+    const db = await getDb();
+    const all = await db.getAll('mutations');
+    for (const entry of all) {
+      if (entry.status !== 'queued' && entry.status !== 'failed') continue;
+
+      if (entry.method === 'PUT' && entry.url === `/shifts/${oldShiftId}`) {
+        entry.url = `/shifts/${newShiftId}`;
+        await db.put('mutations', entry);
+        continue;
+      }
+
+      if (entry.method === 'POST' && entry.url === '/sales' && entry.data) {
+        const payload = entry.data as { shift_id?: number | null };
+        if (payload.shift_id === oldShiftId) {
+          payload.shift_id = newShiftId;
+          entry.data = payload;
+          await db.put('mutations', entry);
+        }
+      }
+    }
+  },
 };

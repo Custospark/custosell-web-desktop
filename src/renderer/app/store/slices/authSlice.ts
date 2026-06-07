@@ -148,6 +148,15 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isInitialized = true;
     },
+    updateShiftContext(
+      state,
+      action: PayloadAction<{ shift_id: number | null; shift_clock_in: string | null }>,
+    ) {
+      if (!state.user) return;
+      state.user.shift_id = action.payload.shift_id;
+      state.user.shift_clock_in = action.payload.shift_clock_in;
+      if (state.token) saveToStorage(state.token, state.user);
+    },
     setBusiness(state, action: PayloadAction<BusinessInfo>) {
       if (state.user) {
         state.user.business = action.payload;
@@ -167,7 +176,7 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, setUser, setBusiness, setInitialized, clearError,
+  logout, setUser, setBusiness, setInitialized, clearError, updateShiftContext,
 } = authSlice.actions;
 
 export default authSlice.reducer;

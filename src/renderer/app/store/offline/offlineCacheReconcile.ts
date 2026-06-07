@@ -7,6 +7,9 @@ import { localCategoriesStore, type CategoryWithSyncMeta } from './localCategori
 import { localCustomersStore, type CustomerWithSyncMeta } from './localCustomersStore';
 import { localExpensesStore } from './localExpensesStore';
 import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
+import { localRolesStore, type RoleWithSyncMeta } from './localRolesStore';
+import { localStaffStore, type StaffWithSyncMeta } from './localStaffStore';
+import { localBusinessSettingsStore, type BusinessWithSyncMeta } from './localBusinessSettingsStore';
 import type { SaleWithSyncMeta } from './localSalesStore';
 import type { ExpenseCategoryWithSyncMeta, ExpenseWithSyncMeta } from '../../../modules/expenses/api/ExpenseTypes';
 
@@ -17,6 +20,9 @@ const SHIFTS_ACTIVE_KEY = ['shifts', 'active'] as const;
 const SHIFTS_LIST_KEY = ['shifts', 'list'] as const;
 const DASHBOARD_SUMMARY_KEY = ['dashboard', 'summary'] as const;
 const DASHBOARD_SERVER_KEY = ['dashboard', 'server'] as const;
+const ROLES_LIST_KEY = ['roles', 'list'] as const;
+const STAFF_LIST_KEY = ['staff', 'list'] as const;
+const BUSINESS_MINE_KEY = ['business', 'mine'] as const;
 
 /** Local-only sale row — not yet confirmed on server. */
 export function isOptimisticSale(sale: SaleWithSyncMeta): boolean {
@@ -210,5 +216,48 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
       }
       return true;
     });
+  });
+
+  /** ── Strip sync meta from settings rows ── */
+  const pendingRoles = await localRolesStore.getPending();
+  const pendingRoleIds = new Set(pendingRoles.map((r) => r.role.id));
+
+  qc.setQueryData<RoleWithSyncMeta[]>(ROLES_LIST_KEY, (old) => {
+    if (!old) return old;
+    return old.filter(Boolean).filter((role) => {
+      if (!pendingRoleIds.has(role.id) && (role._pendingSync || role._localId || role.id < 0)) {
+        return false;
+      }
+      return true;
+    });
+  });
+
+  const pendingStaff = await localStaffStore.getPending();
+  const pendingStaffIds = new Set(pendingStaff.map((r) => r.staff.id));
+
+  qc.setQueryData<StaffWithSyncMeta[]>(STAFF_LIST_KEY, (old) => {
+    if (!old) return old;
+    return old.filter(Boolean).filter((staff) => {
+      if (!pendingStaffIds.has(staff.id) && (staff._pendingSync || staff._localId || staff.id < 0)) {
+        return false;
+      }
+      return true;
+    });
+  });
+
+  const pendingBusiness = await localBusinessSettingsStore.getLatestPending();
+
+  qc.setQueryData<BusinessWithSyncMeta>(BUSINESS_MINE_KEY, (old) => {
+    if (!old) return old;
+    if (pendingBusiness && pendingBusiness.business.id === old.id) {
+      return old;
+    }
+    if (old._pendingSync || old._localId) {
+      const cleaned = { ...old };
+      delete cleaned._pendingSync;
+      delete cleaned._localId;
+      return cleaned;
+    }
+    return old;
   });
 }

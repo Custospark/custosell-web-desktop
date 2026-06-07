@@ -4,7 +4,6 @@ import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
-import { useToast } from '../../../app/contexts/useToast';
 import { CURRENCIES } from '../../../shared/utils/currencies';
 import { Building2, Save, Globe, MapPin, Receipt, Store, Mail, Phone, Globe2, MapPinned, Building, Hash, Tag, Clock, Coins, FileText, ChevronDown } from 'lucide-react';
 import { countryCodes } from '../../../shared/utils/countryCodes';
@@ -25,7 +24,6 @@ const iconCls = "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 
 export default function BusinessSettingsForm() {
   const { data: business, isLoading, error } = useBusiness();
   const mutation = useUpdateBusiness();
-  const { showToast } = useToast();
   const [form, setForm] = useState<UpdateBusinessData>(emptyForm);
   const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
   const [phoneLocal, setPhoneLocal] = useState('');
@@ -55,29 +53,31 @@ export default function BusinessSettingsForm() {
 
   useEffect(() => {
     if (business) {
-      const rawPhone = business.phone ?? '';
-      const matched = countryCodes.find((c) => rawPhone.startsWith(c.dial_code));
-      if (matched) {
-        setPhoneCountryCode(matched);
-        setPhoneLocal(rawPhone.slice(matched.dial_code.length));
-      } else {
-        setPhoneLocal(rawPhone);
-      }
-      setForm({
-        name: business.name || '',
-        email: business.email ?? null,
-        phone: rawPhone,
-        website: business.website ?? null,
-        address: business.address ?? null,
-        city: business.city ?? null,
-        state: business.state ?? null,
-        postal_code: business.postal_code ?? null,
-        country: business.country ?? null,
-        tax_id: business.tax_id ?? null,
-        timezone: business.timezone ?? null,
-        business_type: business.business_type ?? null,
-        currency: business.currency ?? null,
-        receipt_footer: business.receipt_footer ?? null,
+      queueMicrotask(() => {
+        const rawPhone = business.phone ?? '';
+        const matched = countryCodes.find((c) => rawPhone.startsWith(c.dial_code));
+        if (matched) {
+          setPhoneCountryCode(matched);
+          setPhoneLocal(rawPhone.slice(matched.dial_code.length));
+        } else {
+          setPhoneLocal(rawPhone);
+        }
+        setForm({
+          name: business.name || '',
+          email: business.email ?? null,
+          phone: rawPhone,
+          website: business.website ?? null,
+          address: business.address ?? null,
+          city: business.city ?? null,
+          state: business.state ?? null,
+          postal_code: business.postal_code ?? null,
+          country: business.country ?? null,
+          tax_id: business.tax_id ?? null,
+          timezone: business.timezone ?? null,
+          business_type: business.business_type ?? null,
+          currency: business.currency ?? null,
+          receipt_footer: business.receipt_footer ?? null,
+        });
       });
     }
   }, [business]);
@@ -103,10 +103,10 @@ export default function BusinessSettingsForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(form, {
-      onSuccess: () => showToast('success', 'Business settings updated'),
-    });
+    mutation.mutate(form);
   };
+
+  const hasPendingSync = Boolean(business?._pendingSync);
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -128,6 +128,12 @@ export default function BusinessSettingsForm() {
           <Save className="w-4 h-4 mr-1.5" />Save Changes
         </Button>
       </div>
+
+      {hasPendingSync && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          These business settings are saved locally and will sync when the internet connection is restored.
+        </div>
+      )}
 
       <div className="rounded-xl border border-gray-200 overflow-visible">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
@@ -258,7 +264,7 @@ export default function BusinessSettingsForm() {
               <label className={labelCls}>Business Type</label>
               <div className="relative">
                 <Building2 className={iconCls} />
-                <select className={selectCls} value={form.business_type || ''} onChange={(e) => update('business_type', e.target.value || null)}>
+                <select className={selectCls} value={form.business_type || ''} onChange={(e) => update('business_type', e.target.value || null)} title="Business type">
                   <option value="">Select business type</option>
                   <option value="retail">Retail</option>
                   <option value="wholesale">Wholesale</option>

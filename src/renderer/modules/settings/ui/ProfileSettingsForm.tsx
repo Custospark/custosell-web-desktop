@@ -4,6 +4,8 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { setUser } from '../../../app/store/slices/authSlice';
+import type { AuthUser } from '../../../app/store/slices/authSlice';
+import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
 import { useToast } from '../../../app/contexts/useToast';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -12,9 +14,13 @@ import { User, Mail, Phone, Lock, Camera, Image, ShieldCheck } from 'lucide-reac
 const inputClass = "w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
 const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
+type ProfileResponse = { data?: AuthUser } | AuthUser;
+type ProfileError = { message?: string };
+
 export default function ProfileSettingsForm() {
   const dispatch = useAppDispatch();
   const authUser = useAppSelector((s) => s.auth.user);
+  const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
   const { showToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -23,21 +29,23 @@ export default function ProfileSettingsForm() {
 
   useEffect(() => {
     if (authUser) {
-      setForm({
-        name: authUser.name || '',
-        email: authUser.email || '',
-        phone: authUser.phone || '',
-        password: '',
-        password_confirmation: '',
+      queueMicrotask(() => {
+        setForm({
+          name: authUser.name || '',
+          email: authUser.email || '',
+          phone: authUser.phone || '',
+          password: '',
+          password_confirmation: '',
+        });
+        setAvatarPreview(authUser.avatar || null);
       });
-      setAvatarPreview(authUser.avatar || null);
     }
   }, [authUser]);
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((p) => ({ ...p, [field]: e.target.value }));
 
-  const mutation = useMutation<any, AxiosError, FormData>({
+  const mutation = useMutation<ProfileResponse, AxiosError<ProfileError>, FormData>({
     mutationFn: async (formData) => {
       const { data } = await axiosInstance.post(AUTH.PROFILE + '?_method=PUT', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -45,12 +53,12 @@ export default function ProfileSettingsForm() {
       return data;
     },
     onSuccess: (data) => {
-      const userData = data?.data ?? data;
+      const userData = 'data' in data && data.data ? data.data : data;
       dispatch(setUser(userData));
       showToast('success', 'Profile updated successfully');
     },
     onError: (e) => {
-      showToast('error', (e.response?.data as any)?.message || 'Failed to update profile');
+      showToast('error', e.response?.data?.message || 'Failed to update profile');
     },
   });
 
@@ -65,6 +73,10 @@ export default function ProfileSettingsForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCompletelyOffline) {
+      showToast('error', 'Profile and password changes require internet.');
+      return;
+    }
     const formData = new FormData();
     formData.append('name', form.name.trim());
     formData.append('email', form.email.trim());
@@ -80,7 +92,7 @@ export default function ProfileSettingsForm() {
   };
 
   const canSubmit = form.name.trim().length > 0 && form.email.trim().length > 0 &&
-    (!form.password.trim() || form.password === form.password_confirmation);
+    (!form.password.trim() || form.password === form.password_confirmation) && !isCompletelyOffline;
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
@@ -93,6 +105,11 @@ export default function ProfileSettingsForm() {
           <User className="w-4 h-4 mr-1.5" />Save Changes
         </Button>
       </div>
+      {isCompletelyOffline && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Profile and password changes require internet.
+        </div>
+      )}
 
       <div className="rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
@@ -108,7 +125,7 @@ export default function ProfileSettingsForm() {
             )}
           </div>
           <div>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" aria-label="Upload profile photo" />
             <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
               <Camera className="w-4 h-4 mr-1.5" />Upload Photo
             </Button>

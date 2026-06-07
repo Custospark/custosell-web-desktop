@@ -19,6 +19,9 @@ async function refreshAfterSync(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
   await queryClient.invalidateQueries({ queryKey: ['customers'] });
   await queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+  await queryClient.invalidateQueries({ queryKey: ['roles'] });
+  await queryClient.invalidateQueries({ queryKey: ['staff'] });
+  await queryClient.invalidateQueries({ queryKey: ['business'] });
 }
 
 /**

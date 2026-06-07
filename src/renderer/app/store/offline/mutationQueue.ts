@@ -10,11 +10,24 @@ export interface QueuedMutation {
   retryCount: number;
   maxRetries: number;
   status: 'queued' | 'syncing' | 'failed' | 'completed';
+  lastAttemptAt?: string;
   lastError?: string;
 }
 
+const STALE_SYNCING_TIMEOUT_MS = 5 * 60 * 1000;
+
 function getDb() {
   return getOfflineDb();
+}
+
+function isStaleSyncingMutation(mutation: QueuedMutation, now = Date.now()): boolean {
+  if (mutation.status !== 'syncing') return false;
+
+  const lastAttemptAt = mutation.lastAttemptAt ?? mutation.createdAt;
+  const lastAttemptTime = Date.parse(lastAttemptAt);
+  if (Number.isNaN(lastAttemptTime)) return true;
+
+  return now - lastAttemptTime > STALE_SYNCING_TIMEOUT_MS;
 }
 
 export const mutationQueue = {
@@ -42,8 +55,18 @@ export const mutationQueue = {
   async getPending(): Promise<QueuedMutation[]> {
     const db = await getDb();
     const all = await db.getAll('mutations');
+    const now = Date.now();
+
+    for (const mutation of all) {
+      if (isStaleSyncingMutation(mutation, now)) {
+        mutation.status = 'queued';
+        mutation.lastError = 'Previous sync attempt timed out';
+        await db.put('mutations', mutation);
+      }
+    }
+
     const pending = all.filter((m) => m.status === 'queued' || m.status === 'failed');
-    console.log('[MutationQueue] getPending — total:', all.length, 'pending:', pending.length, 'statuses:', all.map(m => m.status));
+    console.log('[MutationQueue] getPending — total:', all.length, 'pending:', pending.length, 'statuses:', all.map((m) => m.status));
     return pending;
   },
 
@@ -52,6 +75,7 @@ export const mutationQueue = {
     const entry = await db.get('mutations', id);
     if (entry) {
       entry.status = 'syncing';
+      entry.lastAttemptAt = new Date().toISOString();
       await db.put('mutations', entry);
     }
   },
@@ -94,7 +118,8 @@ export const mutationQueue = {
   async count(): Promise<number> {
     const db = await getOfflineDb();
     const all = await db.getAll('mutations');
-    return all.filter((m) => m.status === 'queued' || m.status === 'failed').length;
+    const now = Date.now();
+    return all.filter((m) => m.status === 'queued' || m.status === 'failed' || isStaleSyncingMutation(m, now)).length;
   },
 
   async removeById(id: string): Promise<void> {
@@ -127,6 +152,22 @@ export const mutationQueue = {
         const payload = entry.data as { fields?: { expense_category_id?: string } };
         if (payload.fields?.expense_category_id === String(oldCategoryId)) {
           payload.fields.expense_category_id = String(newCategoryId);
+          entry.data = payload;
+          await db.put('mutations', entry);
+        }
+      }
+    }
+  },
+
+  async remapRoleIdInStaff(oldRoleId: number, newRoleId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('mutations');
+
+    for (const entry of all) {
+      if ((entry.method === 'POST' || entry.method === 'PUT') && /^\/users(\/-?\d+)?$/.test(entry.url) && entry.data) {
+        const payload = entry.data as { role_id?: number };
+        if (payload.role_id === oldRoleId) {
+          payload.role_id = newRoleId;
           entry.data = payload;
           await db.put('mutations', entry);
         }

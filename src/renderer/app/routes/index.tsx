@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { ROUTES } from './constants/shared.paths';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { ErrorBoundary } from '../../shared/components/Feedback/ErrorBoundary';
@@ -13,26 +13,24 @@ import MyShiftPage from '../../modules/shifts/MyShiftPage';
 import DashboardPage from '../../modules/dashboard/DashboardPage';
 import RecordExpensePage from '../../modules/expenses/RecordExpensePage';
 import ExpenseListPage from '../../modules/expenses/ExpenseListPage';
-
-const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
-const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
-const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
-const ProductsPage = lazy(() => import('../../modules/inventory/ProductsPage'));
-const CategoriesPage = lazy(() => import('../../modules/inventory/CategoriesPage'));
-const StockLedgerPage = lazy(() => import('../../modules/inventory/StockLedgerPage'));
-
-const CustomerListPage = lazy(() => import('../../modules/customers/CustomerListPage'));
-const SettingsPage = lazy(() => import('../../modules/settings/SettingsPage'));
-const BusinessSettingsPage = lazy(() => import('../../modules/settings/BusinessSettingsPage'));
-const ProfileSettingsPage = lazy(() => import('../../modules/settings/ProfileSettingsPage'));
-const StaffSettingsPage = lazy(() => import('../../modules/settings/StaffSettingsPage'));
-const RoleSettingsPage = lazy(() => import('../../modules/settings/RoleSettingsPage'));
-const SubscriptionSettingsPage = lazy(() => import('../../modules/settings/SubscriptionSettingsPage'));
-const LandingLayout = lazy(() => import('../../modules/landing/LandingLayout'));
-const LandingPage = lazy(() => import('../../modules/landing/LandingPage'));
-const PrivacyPage = lazy(() => import('../../modules/landing/PrivacyPage'));
-const PricingPage = lazy(() => import('../../modules/landing/PricingPage'));
+import LoginPage from '../../modules/auth/LoginPage';
+import RegisterPage from '../../modules/auth/RegisterPage';
+import ForgotPasswordPage from '../../modules/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../../modules/auth/ResetPasswordPage';
+import ProductsPage from '../../modules/inventory/ProductsPage';
+import CategoriesPage from '../../modules/inventory/CategoriesPage';
+import StockLedgerPage from '../../modules/inventory/StockLedgerPage';
+import CustomerListPage from '../../modules/customers/CustomerListPage';
+import SettingsPage from '../../modules/settings/SettingsPage';
+import BusinessSettingsPage from '../../modules/settings/BusinessSettingsPage';
+import ProfileSettingsPage from '../../modules/settings/ProfileSettingsPage';
+import StaffSettingsPage from '../../modules/settings/StaffSettingsPage';
+import RoleSettingsPage from '../../modules/settings/RoleSettingsPage';
+import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
+import LandingLayout from '../../modules/landing/LandingLayout';
+import LandingPage from '../../modules/landing/LandingPage';
+import PrivacyPage from '../../modules/landing/PrivacyPage';
+import PricingPage from '../../modules/landing/PricingPage';
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (

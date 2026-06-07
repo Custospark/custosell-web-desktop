@@ -37,25 +37,27 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const [roleDrawerOpen, setRoleDrawerOpen] = useState(false);
 
   useEffect(() => {
-    if (staff) {
-      setForm({
-        name: staff.name,
-        email: staff.email,
-        phone: staff.phone ?? '',
-        password: '',
-        password_confirmation: '',
-        role_id: staff.role_id,
-        is_active: staff.is_active,
-      });
-    } else {
-      setForm(emptyForm);
-    }
+    queueMicrotask(() => {
+      if (staff) {
+        setForm({
+          name: staff.name,
+          email: staff.email,
+          phone: staff.phone ?? '',
+          password: '',
+          password_confirmation: '',
+          role_id: staff.role_id,
+          is_active: staff.is_active,
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    });
   }, [staff, open]);
 
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
 
   const passwordsMatch = form.password === form.password_confirmation;
-  const canSubmit = useMemo(() => form.name.trim().length > 0 && form.email.trim().length > 0 && (isEditing || (form.password.trim().length > 0 && passwordsMatch)) && form.role_id > 0, [form, isEditing, passwordsMatch]);
+  const canSubmit = useMemo(() => form.name.trim().length > 0 && form.email.trim().length > 0 && (isEditing || (form.password.trim().length > 0 && passwordsMatch)) && form.role_id !== 0, [form, isEditing, passwordsMatch]);
 
   const handleSubmit = () => {
     if (isEditing && staff) {
@@ -126,7 +128,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
             <label className={labelClass}>Role <span className="text-red-500">*</span></label>
             <div className="relative">
               <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <select className={inputClass} value={form.role_id} onChange={(e) => update('role_id', Number(e.target.value))} required>
+              <select className={inputClass} value={form.role_id} onChange={(e) => update('role_id', Number(e.target.value))} required title="Staff role">
                 <option value={0}>Select a role</option>
                 {roles?.map((r) => (
                   <option key={r.id} value={r.id}>{r.name}</option>

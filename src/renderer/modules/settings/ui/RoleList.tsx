@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useRoles, useDeleteRole } from '../api/settings/RoleQueries';
-import type { Role } from '../api/settings/RoleTypes';
+import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../shared/components/tables/Table';
@@ -18,13 +18,13 @@ export default function RoleList() {
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editingRole, setEditingRole] = useState<RoleWithSyncMeta | null>(null);
 
   const filtered = useMemo(() => {
-    if (!roles) return [];
-    if (!search.trim()) return roles;
+    const safeRoles = (roles ?? []).filter(Boolean);
+    if (!search.trim()) return safeRoles;
     const q = search.toLowerCase();
-    return roles.filter((r) =>
+    return safeRoles.filter((r) =>
       r.name.toLowerCase().includes(q) || r.slug.toLowerCase().includes(q)
     );
   }, [roles, search]);
@@ -32,9 +32,14 @@ export default function RoleList() {
   const paginated = usePagination(filtered, 10);
 
   const openCreate = () => { setEditingRole(null); setDrawerOpen(true); };
-  const openEdit = (r: Role) => { setEditingRole(r); setDrawerOpen(true); };
+  const openEdit = (r: RoleWithSyncMeta) => {
+    if (r._pendingSync) return;
+    setEditingRole(r);
+    setDrawerOpen(true);
+  };
 
-  const handleDelete = async (r: Role) => {
+  const handleDelete = async (r: RoleWithSyncMeta) => {
+    if (r._pendingSync) return;
     const confirmed = await confirm({
       title: 'Delete Role',
       message: `Are you sure you want to delete "${r.name}"? This cannot be undone.`,
@@ -68,11 +73,19 @@ export default function RoleList() {
             <SearchInput placeholder="Search roles by name or slug..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
         </div>
-        <Table<Role>
+        <Table<RoleWithSyncMeta>
           rowKey={(r) => r.id}
           columns={[
             { key: 'id', header: '#' },
-            { key: 'name', header: 'Name' },
+            { key: 'name', header: 'Name', render: (item) => (
+                <div className="flex items-center gap-2">
+                  <span>{item.name}</span>
+                  {item._pendingSync && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending sync</span>
+                  )}
+                </div>
+              ),
+            },
             { key: 'slug', header: 'Slug' },
             { key: 'description', header: 'Description', render: (item) => {
                 const desc = item.description || '';
@@ -96,8 +109,8 @@ export default function RoleList() {
             },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                  <Button variant="ghost" size="sm" disabled={item._pendingSync} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title={item._pendingSync ? 'Sync pending before editing' : 'Edit'}><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" disabled={item._pendingSync} onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title={item._pendingSync ? 'Sync pending before deleting' : 'Delete'}><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),
             },

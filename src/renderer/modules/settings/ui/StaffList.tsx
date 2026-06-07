@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useStaff, useDeleteStaff } from '../api/settings/StaffQueries';
-import type { StaffUser } from '../api/settings/StaffTypes';
+import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../shared/components/tables/Table';
@@ -18,13 +18,13 @@ export default function StaffList() {
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffUser | null>(null);
+  const [editingStaff, setEditingStaff] = useState<StaffWithSyncMeta | null>(null);
 
   const filtered = useMemo(() => {
-    if (!staff) return [];
-    if (!search.trim()) return staff;
+    const safeStaff = (staff ?? []).filter(Boolean);
+    if (!search.trim()) return safeStaff;
     const q = search.toLowerCase();
-    return staff.filter((s) =>
+    return safeStaff.filter((s) =>
       s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.phone && s.phone.toLowerCase().includes(q))
     );
   }, [staff, search]);
@@ -32,9 +32,14 @@ export default function StaffList() {
   const paginated = usePagination(filtered, 10);
 
   const openCreate = () => { setEditingStaff(null); setDrawerOpen(true); };
-  const openEdit = (s: StaffUser) => { setEditingStaff(s); setDrawerOpen(true); };
+  const openEdit = (s: StaffWithSyncMeta) => {
+    if (s._pendingSync) return;
+    setEditingStaff(s);
+    setDrawerOpen(true);
+  };
 
-  const handleDelete = async (s: StaffUser) => {
+  const handleDelete = async (s: StaffWithSyncMeta) => {
+    if (s._pendingSync) return;
     const confirmed = await confirm({
       title: 'Delete Staff',
       message: `Are you sure you want to delete "${s.name}"? This cannot be undone.`,
@@ -68,11 +73,19 @@ export default function StaffList() {
             <SearchInput placeholder="Search staff by name, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
         </div>
-        <Table<StaffUser>
+        <Table<StaffWithSyncMeta>
           rowKey={(s) => s.id}
           columns={[
             { key: 'id', header: '#' },
-            { key: 'name', header: 'Name' },
+            { key: 'name', header: 'Name', render: (item) => (
+                <div className="flex items-center gap-2">
+                  <span>{item.name}</span>
+                  {item._pendingSync && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending sync</span>
+                  )}
+                </div>
+              ),
+            },
             { key: 'email', header: 'Email' },
             { key: 'phone', header: 'Phone', render: (item) => item.phone || <span className="text-gray-400">—</span> },
             { key: 'role', header: 'Role', render: (item) => item.role?.name || <span className="text-gray-400">—</span> },
@@ -82,8 +95,8 @@ export default function StaffList() {
             },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                  <Button variant="ghost" size="sm" disabled={item._pendingSync} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title={item._pendingSync ? 'Sync pending before editing' : 'Edit'}><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" disabled={item._pendingSync} onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title={item._pendingSync ? 'Sync pending before deleting' : 'Delete'}><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),
             },

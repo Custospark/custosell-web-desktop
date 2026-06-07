@@ -1,6 +1,6 @@
 import { axiosInstance } from '../../api/axiosConfig';
 import { store } from '../store';
-import { updateShiftContext } from '../slices/authSlice';
+import { setBusiness, updateShiftContext } from '../slices/authSlice';
 import { mutationQueue } from './mutationQueue';
 import { stockLedger } from './stockLedger';
 import { localSalesStore } from './localSalesStore';
@@ -11,10 +11,16 @@ import { localCategoriesStore } from './localCategoriesStore';
 import { localCustomersStore } from './localCustomersStore';
 import { localExpensesStore } from './localExpensesStore';
 import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
+import { localRolesStore } from './localRolesStore';
+import { localStaffStore } from './localStaffStore';
+import { localBusinessSettingsStore } from './localBusinessSettingsStore';
 import { buildExpenseFormData } from './completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
 import type { CreateSalePayload, Sale } from '../../../modules/sales/api/salesTypes';
 import type { Expense, ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
+import type { Business } from '../../../modules/settings/api/settings/BusinessTypes';
+import type { Role } from '../../../modules/settings/api/settings/RoleTypes';
+import type { StaffUser } from '../../../modules/settings/api/settings/StaffTypes';
 
 function isSaleMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/sales';
@@ -52,6 +58,18 @@ function isExpenseCategoryMutation(m: QueuedMutation): boolean {
   return /^\/expense-categories(\/-?\d+)?$/.test(m.url);
 }
 
+function isRoleMutation(m: QueuedMutation): boolean {
+  return /^\/roles(\/-?\d+)?$/.test(m.url);
+}
+
+function isStaffMutation(m: QueuedMutation): boolean {
+  return /^\/users(\/-?\d+)?$/.test(m.url);
+}
+
+function isBusinessSettingsMutation(m: QueuedMutation): boolean {
+  return m.url === '/businesses/profile' || m.url === '/businesses/settings';
+}
+
 function isCategoryCreateMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/categories';
 }
@@ -62,6 +80,14 @@ function isProductCreateMutation(m: QueuedMutation): boolean {
 
 function isExpenseCategoryCreateMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/expense-categories';
+}
+
+function isRoleCreateMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/roles';
+}
+
+function isStaffCreateMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/users';
 }
 
 function isExpenseFormPayload(data: unknown): data is ExpenseFormPayload {
@@ -99,6 +125,33 @@ function extractExpense(responseData: unknown): Expense | null {
   const wrapped = responseData as { data?: Expense };
   if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
   const direct = responseData as Expense;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractRole(responseData: unknown): Role | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: Role };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as Role;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractStaff(responseData: unknown): StaffUser | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: StaffUser };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as StaffUser;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractBusiness(responseData: unknown): Business | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: Business };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as Business;
   if ('id' in direct) return direct;
   return null;
 }
@@ -195,6 +248,35 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       }
     }
 
+    if (isRoleMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localRolesStore.removeByMutationId(m.id);
+      } else {
+        const serverRole = extractRole(response?.data);
+        await localRolesStore.markSyncedByMutationId(m.id, serverRole?.id, serverRole ?? undefined);
+      }
+    }
+
+    if (isStaffMutation(m)) {
+      if (m.method === 'DELETE') {
+        await localStaffStore.removeByMutationId(m.id);
+      } else {
+        const serverStaff = extractStaff(response?.data);
+        await localStaffStore.markSyncedByMutationId(m.id, serverStaff?.id, serverStaff ?? undefined);
+      }
+    }
+
+    if (isBusinessSettingsMutation(m)) {
+      const serverBusiness = extractBusiness(response?.data);
+      const business = await localBusinessSettingsStore.markSyncedByMutationId(
+        m.id,
+        serverBusiness ?? undefined,
+      );
+      if (serverBusiness ?? business) {
+        store.dispatch(setBusiness((serverBusiness ?? business)!));
+      }
+    }
+
     return true;
   } catch (error: unknown) {
     const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
@@ -229,6 +311,18 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     if (isExpenseCategoryMutation(m)) {
       await localExpenseCategoriesStore.markFailedByMutationId(m.id);
+    }
+
+    if (isRoleMutation(m)) {
+      await localRolesStore.markFailedByMutationId(m.id);
+    }
+
+    if (isStaffMutation(m)) {
+      await localStaffStore.markFailedByMutationId(m.id);
+    }
+
+    if (isBusinessSettingsMutation(m)) {
+      await localBusinessSettingsStore.markFailedByMutationId(m.id);
     }
 
     if (isServerError && m.retryCount >= m.maxRetries) {
@@ -274,6 +368,45 @@ async function processExpenseCategoryCreates(
       const message = err?.response?.data?.message || err?.message || 'Expense category sync failed';
       await mutationQueue.markFailed(m.id, message);
       await localExpenseCategoriesStore.markFailedByMutationId(m.id);
+      failed++;
+    }
+  }
+
+  return { synced, failed, idMap };
+}
+
+async function processRoleCreates(
+  roleCreates: QueuedMutation[],
+): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
+  const idMap = new Map<number, number>();
+  let synced = 0;
+  let failed = 0;
+
+  for (const m of roleCreates) {
+    try {
+      await mutationQueue.markSyncing(m.id);
+      const response = await axiosInstance.post('/roles', m.data);
+      const serverRole = extractRole(response.data);
+      await mutationQueue.markCompleted(m.id);
+
+      const oldRoleId = await localRolesStore.markSyncedByMutationId(
+        m.id,
+        serverRole?.id,
+        serverRole ?? undefined,
+      );
+
+      if (oldRoleId && serverRole?.id && oldRoleId !== serverRole.id) {
+        idMap.set(oldRoleId, serverRole.id);
+        await localStaffStore.updateRoleIdInPending(oldRoleId, serverRole.id);
+        await mutationQueue.remapRoleIdInStaff(oldRoleId, serverRole.id);
+      }
+
+      synced++;
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.message || 'Role sync failed';
+      await mutationQueue.markFailed(m.id, message);
+      await localRolesStore.markFailedByMutationId(m.id);
       failed++;
     }
   }
@@ -387,6 +520,8 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   const shiftOpens = pending.filter(isShiftOpenMutation);
   const categoryCreates = pending.filter(isCategoryCreateMutation);
   const expenseCategoryCreates = pending.filter(isExpenseCategoryCreateMutation);
+  const roleCreates = pending.filter(isRoleCreateMutation);
+  const staffCreates = pending.filter(isStaffCreateMutation);
   const saleMutations = pending.filter(isSaleMutation);
   const productCreates = pending.filter(isProductCreateMutation);
   const expenseMutations = pending.filter(isExpenseMutation);
@@ -397,6 +532,8 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
       !isShiftOpenMutation(m) &&
       !isCategoryCreateMutation(m) &&
       !isExpenseCategoryCreateMutation(m) &&
+      !isRoleCreateMutation(m) &&
+      !isStaffCreateMutation(m) &&
       !isSaleMutation(m) &&
       !isProductCreateMutation(m) &&
       !isExpenseMutation(m) &&
@@ -422,6 +559,28 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   } = await processExpenseCategoryCreates(expenseCategoryCreates);
   synced += expCatSynced;
   failed += expCatFailed;
+
+  const { synced: roleSynced, failed: roleFailed, idMap: roleIdMap } = await processRoleCreates(roleCreates);
+  synced += roleSynced;
+  failed += roleFailed;
+
+  for (const m of staffCreates) {
+    const payload = { ...(m.data as Record<string, unknown>) };
+    const roleId = payload.role_id;
+    if (typeof roleId === 'number' && roleId < 0 && roleIdMap.has(roleId)) {
+      payload.role_id = roleIdMap.get(roleId)!;
+    } else if (typeof roleId === 'number' && roleId < 0) {
+      console.warn('[SyncEngine] Staff create waiting for role sync before posting user:', {
+        mutationId: m.id,
+        roleId,
+      });
+      continue;
+    }
+    const remapped = { ...m, data: payload };
+    const ok = await processMutation(remapped);
+    if (ok) synced++;
+    else failed++;
+  }
 
   if (saleMutations.length > 0) {
     try {
@@ -512,6 +671,9 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   await localCustomersStore.removeSynced();
   await localExpensesStore.removeSynced();
   await localExpenseCategoriesStore.removeSynced();
+  await localRolesStore.removeSynced();
+  await localStaffStore.removeSynced();
+  await localBusinessSettingsStore.removeSynced();
   return { synced, failed };
 }
 

@@ -8,7 +8,7 @@
   "main": "dist/desktop/main/main.js",
   "scripts": {
     "dev": "npm-run-all --parallel dev:react dev:electron",
-    "dev:react": "node --max-old-space-size=8192 --stack-size=16384 ./node_modules/vite/bin/vite.js",
+    "dev:react": "node ./node_modules/vite/bin/vite.js",
     "clean": "rimraf dist",
     "dev:electron": "npm run transpile:electron && cross-env NODE_ENV=development electron .",
     "react:build": "tsc -b && vite build",
@@ -16,7 +16,7 @@
     "vera:fast": "node scripts/vera-fast.mjs",
     "vera:extended": "node scripts/vera-extended.mjs",
     "preview": "vite preview",
-    "transpile:electron": "node --max-old-space-size=8192 --stack-size=16384 ./node_modules/typescript/bin/tsc --project src/tsconfig.json",
+    "transpile:electron": "node ./node_modules/typescript/bin/tsc --project src/tsconfig.json",
     "build:win": "npm run transpile:electron && npm run react:build && npx electron-builder --win --x64",
     "build:mac": "npm run transpile:electron && npm run react:build && npx electron-builder --mac --arm64",
     "build:linux": "npm run transpile:electron && npm run react:build && npx electron-builder --linux --x64",

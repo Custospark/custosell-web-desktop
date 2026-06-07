@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
 const DB_NAME = 'CustosellOffline';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export interface QueuedMutation {
   id: string;
@@ -25,8 +25,31 @@ function getDb(): Promise<IDBPDatabase> {
         if (oldVersion < 1) {
           db.createObjectStore('stock', { keyPath: 'productId' });
           const adjStore = db.createObjectStore('adjustments', { keyPath: 'id' });
-          adjStore.createIndex('synced', 'synced');
+          adjStore.createIndex('syncStatus', 'syncStatus');
         }
+        if (oldVersion < 2) {
+          if (!db.objectStoreNames.contains('adjustments')) {
+            const adjStore = db.createObjectStore('adjustments', { keyPath: 'id' });
+            adjStore.createIndex('syncStatus', 'syncStatus');
+          }
+        }
+        if (oldVersion < 3) {
+          if (!db.objectStoreNames.contains('mutations')) {
+            db.createObjectStore('mutations', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('adjustments')) {
+            const adjStore = db.createObjectStore('adjustments', { keyPath: 'id' });
+            adjStore.createIndex('syncStatus', 'syncStatus');
+          }
+          if (!db.objectStoreNames.contains('stock')) {
+            db.createObjectStore('stock', { keyPath: 'productId' });
+          }
+        }
+      },
+    });
+  }
+  return dbPromise;
+}
         if (oldVersion < 2) {
           db.createObjectStore('mutations', { keyPath: 'id' });
         }

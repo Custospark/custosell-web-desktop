@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ROUTES } from './constants/shared.paths';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
+import { ErrorBoundary } from '../../shared/components/Feedback/ErrorBoundary';
 import { PublicRoute } from './PublicRoute';
 import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
 import { Layout } from '../../shared/components/layout/Layout';
@@ -36,7 +37,11 @@ const PrivacyPage = lazy(() => import('../../modules/landing/PrivacyPage'));
 const PricingPage = lazy(() => import('../../modules/landing/PricingPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
 }
 
 export function AppRoutes() {

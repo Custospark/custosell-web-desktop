@@ -65,25 +65,33 @@ async function createLocalSale(payload: CreateSalePayload): Promise<Sale> {
   const receiptNumber = generateLocalReceiptNumber();
   console.log('[OfflineSale] Generated receipt:', receiptNumber);
 
+  const timeout = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms));
+
   for (const item of payload.items) {
     try {
-      await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
+      await Promise.race([
+        stockLedger.adjust(item.product_id, -item.quantity, 'sale'),
+        timeout(3000),
+      ]);
       console.log('[OfflineSale] Stock adjusted for product', item.product_id, 'by', -item.quantity);
     } catch (err) {
-      console.error('[OfflineSale] Stock adjust failed:', err);
+      console.error('[OfflineSale] Stock adjust failed or timed out:', err);
     }
   }
 
   try {
-    const queueId = await mutationQueue.enqueue({
-      method: 'POST',
-      url: '/sales',
-      data: payload,
-      maxRetries: 3,
-    });
+    const queueId = await Promise.race([
+      mutationQueue.enqueue({
+        method: 'POST',
+        url: '/sales',
+        data: payload,
+        maxRetries: 3,
+      }),
+      timeout(3000),
+    ]) as string;
     console.log('[OfflineSale] Enqueued mutation:', queueId);
   } catch (err) {
-    console.error('[OfflineSale] Enqueue failed:', err);
+    console.error('[OfflineSale] Enqueue failed or timed out:', err);
   }
 
   console.log('[OfflineSale] Returning local sale object');

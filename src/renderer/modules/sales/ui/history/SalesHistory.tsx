@@ -14,6 +14,7 @@ import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContex
 import { Receipt, Eye, RotateCcw, Trash2, CheckSquare, Square } from 'lucide-react';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
 import type { Sale } from '../../api/salesTypes';
+import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
 
 export default function SalesHistory() {
   const { data: sales, isLoading, error, refetch } = useSales();
@@ -50,13 +51,13 @@ export default function SalesHistory() {
 
   const paginated = usePagination(filtered, 15);
 
-  const allSelected = paginated.data.length > 0 && paginated.data.every((s: any) => selectedIds.has(s.id));
+  const allSelected = paginated.data.length > 0 && paginated.data.every((s) => selectedIds.has(s.id));
 
   const toggleAll = useCallback(() => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(paginated.data.map((s: any) => s.id)));
+      setSelectedIds(new Set(paginated.data.map((s) => s.id)));
     }
   }, [allSelected, paginated.data]);
 
@@ -105,7 +106,7 @@ export default function SalesHistory() {
 
       <div className="flex items-center gap-4 mb-4">
         <div className="max-w-xs flex-1">
-          <SearchInput placeholder="Search receipt #..." value={search} onChange={(e: any) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+          <SearchInput placeholder="Search receipt #..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
@@ -122,7 +123,7 @@ export default function SalesHistory() {
         </div>
       </div>
 
-      <Table<any>
+      <Table<SaleWithSyncMeta>
         rowKey={(s) => s.id}
         columns={[
           { key: 'select', header: '', render: (s) => (
@@ -130,7 +131,14 @@ export default function SalesHistory() {
               {selectedIds.has(s.id) ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
             </button>
           )},
-          { key: 'receipt_number', header: 'Receipt' },
+          { key: 'receipt_number', header: 'Receipt', render: (s: SaleWithSyncMeta) => (
+            <div className="flex items-center gap-2">
+              <span>{s.receipt_number}</span>
+              {s._pendingSync && (
+                <Badge variant="warning">Pending sync</Badge>
+              )}
+            </div>
+          )},
           { key: 'sale_date', header: 'Date', render: (s) => new Date(s.sale_date).toLocaleDateString() },
           { key: 'total_amount', header: 'Total', render: (s) => formatCurrency(s.total_amount) },
           { key: 'payment_status', header: 'Status', render: (s) => s.payment_status === 'refunded' ? <Badge variant="danger">Full Refund</Badge> : s.payment_status === 'partially_refunded' ? <Badge variant="warning">Partially Refunded</Badge> : <Badge variant="success">Paid</Badge> },

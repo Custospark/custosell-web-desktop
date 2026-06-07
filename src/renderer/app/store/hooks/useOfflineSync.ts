@@ -3,6 +3,11 @@ import { useAppSelector } from './useApp';
 import { selectSystemStatus } from '../slices/networkSlice';
 import { syncAllMutations, processStockAdjustments } from '../offline/syncEngine';
 import { useToast } from '../../contexts/ToastContext';
+import { queryClient } from '../../api/axiosConfig';
+import { salesKeys } from '../../../modules/sales/api/salesQueries';
+import { dashboardKeys } from '../../../modules/dashboard/DashboardQueries';
+import { shiftKeys } from '../../../modules/shifts/ShiftQueries';
+import { inventoryKeys } from '../../../modules/inventory/api/products/ProductQueries';
 
 export function useOfflineSync(): void {
   const systemStatus = useAppSelector(selectSystemStatus);
@@ -13,18 +18,10 @@ export function useOfflineSync(): void {
     const isNowOnline = systemStatus === 'online' || systemStatus === 'slow';
     const justCameBack = wasOffline.current && isNowOnline;
 
-    console.log('[OfflineSync] systemStatus:', systemStatus, 'wasOffline:', wasOffline.current, 'isNowOnline:', isNowOnline, 'justCameBack:', justCameBack);
-
     if (justCameBack) {
-      console.log('[OfflineSync] ONLINE DETECTED — starting sync');
       (async () => {
-        console.log('[OfflineSync] Calling syncAllMutations...');
         const { synced, failed } = await syncAllMutations();
-        console.log('[OfflineSync] syncAllMutations result:', { synced, failed });
-
-        console.log('[OfflineSync] Calling processStockAdjustments...');
         const stockSynced = await processStockAdjustments();
-        console.log('[OfflineSync] processStockAdjustments result:', stockSynced);
 
         if (synced > 0 || stockSynced > 0) {
           showToast('success', `Synced ${synced + stockSynced} pending transaction(s).`);
@@ -33,8 +30,10 @@ export function useOfflineSync(): void {
           showToast('error', `${failed} transaction(s) failed to sync.`);
         }
 
-        console.log('[OfflineSync] Reloading page...');
-        window.location.reload();
+        await queryClient.invalidateQueries({ queryKey: salesKeys.all });
+        await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+        await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
+        await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       })();
     }
 

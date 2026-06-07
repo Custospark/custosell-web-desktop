@@ -1,7 +1,4 @@
-import { openDB, type IDBPDatabase } from 'idb';
-
-const DB_NAME = 'CustosellOffline';
-const DB_VERSION = 3;
+import { getOfflineDb } from './offlineDb';
 
 interface StockEntry {
   productId: number;
@@ -20,52 +17,58 @@ interface PendingAdjustment {
   syncStatus: SyncStatus;
 }
 
-let dbPromise: Promise<IDBPDatabase> | null = null;
-
-function getDb(): Promise<IDBPDatabase> {
-  if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          db.createObjectStore('stock', { keyPath: 'productId' });
-        }
-        if (oldVersion < 2) {
-          const store = db.createObjectStore('adjustments', { keyPath: 'id' });
-          store.createIndex('syncStatus', 'syncStatus');
-        }
-        if (oldVersion < 3) {
-          if (!db.objectStoreNames.contains('adjustments')) {
-            const store = db.createObjectStore('adjustments', { keyPath: 'id' });
-            store.createIndex('syncStatus', 'syncStatus');
-          }
-        }
-      },
-    });
-  }
-  return dbPromise;
+function newId(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 }
 
 export const stockLedger = {
   async get(productId: number): Promise<number | null> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     const entry = await db.get('stock', productId);
     return entry?.quantity ?? null;
   },
 
+  async getAll(): Promise<Map<number, number>> {
+    const db = await getOfflineDb();
+    const entries: StockEntry[] = await db.getAll('stock');
+    const map = new Map<number, number>();
+    for (const e of entries) {
+      map.set(e.productId, e.quantity);
+    }
+    return map;
+  },
+
   async set(productId: number, quantity: number): Promise<void> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     await db.put('stock', { productId, quantity, updatedAt: new Date().toISOString() } as StockEntry);
   },
 
-  async adjust(productId: number, delta: number, reason: string): Promise<void> {
-    const db = await getDb();
-    const current = await db.get('stock', productId);
-    const newQty = (current?.quantity ?? 0) + delta;
-    await db.put('stock', { productId, quantity: Math.max(0, newQty), updatedAt: new Date().toISOString() } as StockEntry);
+  async seedFromProducts(items: { id: number; quantity: number }[]): Promise<void> {
+    const db = await getOfflineDb();
+    const tx = db.transaction('stock', 'readwrite');
+    const store = tx.objectStore('stock');
+    for (const { id, quantity } of items) {
+      const existing = await store.get(id);
+      if (!existing) {
+        await store.put({
+          productId: id,
+          quantity,
+          updatedAt: new Date().toISOString(),
+        } as StockEntry);
+      }
+    }
+    await tx.done;
+  },
 
-    const adjId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  async adjust(productId: number, delta: number, reason: string, seedQuantity?: number): Promise<void> {
+    const db = await getOfflineDb();
+    const current = await db.get('stock', productId);
+    const baseQty = current?.quantity ?? seedQuantity ?? 0;
+    const newQty = Math.max(0, baseQty + delta);
+    await db.put('stock', { productId, quantity: newQty, updatedAt: new Date().toISOString() } as StockEntry);
+
     await db.add('adjustments', {
-      id: adjId,
+      id: newId(),
       productId,
       delta,
       reason,
@@ -74,14 +77,45 @@ export const stockLedger = {
     } as PendingAdjustment);
   },
 
+  async batchAdjust(
+    items: { productId: number; delta: number }[],
+    reason: string,
+    seedQuantities?: Map<number, number>,
+  ): Promise<void> {
+    if (items.length === 0) return;
+
+    const db = await getOfflineDb();
+    const tx = db.transaction(['stock', 'adjustments'], 'readwrite');
+    const stockStore = tx.objectStore('stock');
+    const adjStore = tx.objectStore('adjustments');
+    const now = new Date().toISOString();
+
+    for (const { productId, delta } of items) {
+      const current = await stockStore.get(productId);
+      const baseQty = current?.quantity ?? seedQuantities?.get(productId) ?? 0;
+      const newQty = Math.max(0, baseQty + delta);
+      await stockStore.put({ productId, quantity: newQty, updatedAt: now } as StockEntry);
+      await adjStore.add({
+        id: newId(),
+        productId,
+        delta,
+        reason,
+        createdAt: now,
+        syncStatus: 'pending' as SyncStatus,
+      } as PendingAdjustment);
+    }
+
+    await tx.done;
+  },
+
   async getPendingAdjustments(): Promise<PendingAdjustment[]> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     const all = await db.getAll('adjustments');
     return all.filter((a) => a.syncStatus === 'pending');
   },
 
   async markAdjustmentSynced(id: string): Promise<void> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     const adj = await db.get('adjustments', id);
     if (adj) {
       adj.syncStatus = 'synced';
@@ -90,7 +124,7 @@ export const stockLedger = {
   },
 
   async clearSynced(): Promise<void> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     const all = await db.getAll('adjustments');
     for (const adj of all) {
       if (adj.syncStatus === 'synced') {

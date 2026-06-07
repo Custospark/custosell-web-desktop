@@ -1,13 +1,20 @@
 import { axiosInstance } from '../../api/axiosConfig';
 import { mutationQueue } from './mutationQueue';
 import { stockLedger } from './stockLedger';
+import { localSalesStore } from './localSalesStore';
 import type { QueuedMutation } from './mutationQueue';
+import type { Sale } from '../../../modules/sales/api/salesTypes';
 
 export async function processMutation(m: QueuedMutation): Promise<boolean> {
   try {
     await mutationQueue.markSyncing(m.id);
 
-    const config: any = {
+    const config: {
+      method: QueuedMutation['method'];
+      url: string;
+      data?: unknown;
+      headers?: Record<string, string>;
+    } = {
       method: m.method,
       url: m.url,
       data: m.data,
@@ -18,52 +25,60 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     await mutationQueue.markCompleted(m.id);
     return true;
-  } catch (error: any) {
-    const isServerError = error?.response?.status >= 400 && error?.response?.status < 500;
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
+    const isServerError = err?.response?.status && err.response.status >= 400 && err.response.status < 500;
     if (isServerError && m.retryCount >= m.maxRetries) {
-      await mutationQueue.markFailed(m.id, error?.response?.data?.message || error.message);
+      await mutationQueue.markFailed(m.id, err?.response?.data?.message || err.message || 'Request failed');
     } else if (isServerError) {
-      await mutationQueue.markFailed(m.id, error?.response?.data?.message || error.message);
+      await mutationQueue.markFailed(m.id, err?.response?.data?.message || err.message || 'Request failed');
     } else {
-      await mutationQueue.markFailed(m.id, error?.message || 'Network error');
+      await mutationQueue.markFailed(m.id, err?.message || 'Network error');
     }
     return false;
   }
 }
 
+function extractBatchSales(responseData: unknown): Sale[] {
+  if (!responseData || typeof responseData !== 'object') return [];
+  const data = responseData as { data?: Sale[]; sales?: Sale[] };
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.sales)) return data.sales;
+  return [];
+}
+
 export async function syncAllMutations(): Promise<{ synced: number; failed: number }> {
-  console.log('[SyncEngine] syncAllMutations started');
   const pending = await mutationQueue.getPending();
-  console.log('[SyncEngine] Pending mutations:', pending.length, JSON.stringify(pending.map(m => ({ id: m.id, url: m.url, method: m.method, status: m.status }))));
 
   if (pending.length === 0) {
-    console.log('[SyncEngine] No pending mutations — skipping');
     return { synced: 0, failed: 0 };
   }
 
   const saleMutations = pending.filter((m) => m.url === '/sales' && m.method === 'POST');
   const otherMutations = pending.filter((m) => !(m.url === '/sales' && m.method === 'POST'));
-  console.log('[SyncEngine] Sale mutations:', saleMutations.length, 'Other mutations:', otherMutations.length);
 
   let synced = 0;
   let failed = 0;
 
   if (saleMutations.length > 0) {
-    console.log('[SyncEngine] Posting batch of', saleMutations.length, 'sales');
     try {
       const sales = saleMutations.map((m) => m.data);
-      console.log('[SyncEngine] Batch payload:', JSON.stringify(sales).slice(0, 500));
       const response = await axiosInstance.post('/sales/batch', { sales });
-      console.log('[SyncEngine] Batch response:', response.status, JSON.stringify(response.data).slice(0, 200));
-      for (const m of saleMutations) {
+      const syncedSales = extractBatchSales(response.data);
+
+      for (let i = 0; i < saleMutations.length; i++) {
+        const m = saleMutations[i];
+        const serverSale = syncedSales[i];
         await mutationQueue.markCompleted(m.id);
+        await localSalesStore.markSyncedByMutationId(m.id, serverSale?.id, serverSale);
       }
       synced += saleMutations.length;
-      console.log('[SyncEngine] Batch sync successful — marked', saleMutations.length, 'completed');
-    } catch (e: any) {
-      console.error('[SyncEngine] Batch sync failed:', e?.message, e?.response?.status, e?.response?.data);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.message || 'Batch sync failed';
       for (const m of saleMutations) {
-        await mutationQueue.markFailed(m.id, e?.response?.data?.message || e?.message || 'Batch sync failed');
+        await mutationQueue.markFailed(m.id, message);
+        await localSalesStore.markFailedByMutationId(m.id);
       }
       failed += saleMutations.length;
     }
@@ -76,12 +91,14 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   }
 
   await mutationQueue.clearCompleted();
-  console.log('[SyncEngine] Done — synced:', synced, 'failed:', failed);
+  await localSalesStore.removeSynced();
   return { synced, failed };
 }
 
 export async function processStockAdjustments(): Promise<number> {
-  const adjustments = await stockLedger.getPendingAdjustments();
+  const adjustments = (await stockLedger.getPendingAdjustments()).filter(
+    (adj) => adj.reason !== 'sale',
+  );
   let synced = 0;
 
   for (const adj of adjustments) {
@@ -99,5 +116,6 @@ export async function processStockAdjustments(): Promise<number> {
     }
   }
 
+  await stockLedger.clearSynced();
   return synced;
 }

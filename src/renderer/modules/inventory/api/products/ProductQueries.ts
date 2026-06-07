@@ -1,12 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { axiosInstance } from '../../../../app/api/axiosConfig';
+import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
+import { store } from '../../../../app/store/store';
+import { applyOfflineStockOverlay } from '../../../../app/store/offline/offlineStockOverlay';
 import type {
   Category, Product, StockMovement,
   CreateCategoryData, CreateProductData, UpdateProductData, CreateStockMovementData,
 } from './ProductTypes';
+
+function isOfflineMode(): boolean {
+  const state = store.getState();
+  return (state as { network?: { systemStatus?: string } }).network?.systemStatus === 'offline';
+}
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -84,8 +91,15 @@ export function useProducts() {
   return useQuery<Product[]>({
     queryKey: inventoryKeys.products(),
     queryFn: async () => {
-      const { data: response } = await axiosInstance.get<{ data: Product[] }>('/products');
-      return response.data;
+      try {
+        const { data: response } = await axiosInstance.get<{ data: Product[] }>('/products');
+        return applyOfflineStockOverlay(response.data);
+      } catch (err: unknown) {
+        const axiosErr = err as AxiosError;
+        if (axiosErr.response || !isOfflineMode()) throw err;
+        const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
+        return applyOfflineStockOverlay(cached);
+      }
     },
     staleTime: 0,
     refetchOnMount: true,

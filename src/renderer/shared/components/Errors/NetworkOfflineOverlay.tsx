@@ -3,12 +3,14 @@ import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlic
 import { useNetworkStatusMonitor } from '../../../app/store/hooks/useNetworkStatusMonitor';
 import { useNetworkStatusToasts } from '../../../app/store/hooks/useNetworkStatusToasts';
 import { useOfflineSync } from '../../../app/store/hooks/useOfflineSync';
+import { useSeedStockLedger } from '../../../app/store/hooks/useSeedStockLedger';
 import { WifiOff } from 'lucide-react';
 
 export default function NetworkOfflineOverlay() {
   useNetworkStatusMonitor();
   useNetworkStatusToasts();
   useOfflineSync();
+  useSeedStockLedger();
 
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
   const userName = useAppSelector((s) => s.auth.user?.name);

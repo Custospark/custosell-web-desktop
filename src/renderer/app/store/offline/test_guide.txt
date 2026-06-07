@@ -62,8 +62,13 @@ This method gives full offline functionality.
   ✓ The app should load without errors
   ✓ Navigate between pages (dashboard, sales, history, etc.)
   ✓ Make a sale — should show "Sale Completed" with receipt
-  ✓ The sale is queued locally (IndexedDB)
-  ✓ Stock is deducted locally
+  ✓ Sale completes in under 200ms (no long spinner)
+  ✓ Sales History shows the new sale immediately with "Pending sync" badge
+  ✓ Dashboard today's revenue/transactions update instantly
+  ✓ My Shift totals include the offline sale
+  ✓ POS product stock decreases in search results after sale
+  ✓ The sale is queued locally (IndexedDB → localSales + mutations)
+  ✓ Stock is deducted locally (stock ledger)
 
   Step 8: Come back online
   - Uncheck "Offline" in DevTools (or reconnect)
@@ -103,9 +108,10 @@ WHAT HAPPENS WHEN BACK ONLINE
 -------------------------------
   1. Network detection fires
   2. Pending sales are batched to POST /sales/batch
-  3. Pending stock adjustments are synced
+  3. Non-sale stock adjustments are synced (sale stock handled by server)
   4. Success toast: "Synced X transaction(s)"
-  5. Page reloads with fresh server data
+  5. React Query caches refresh (no full page reload)
+  6. "Pending sync" badges disappear after successful sync
 
 
 TROUBLESHOOTING

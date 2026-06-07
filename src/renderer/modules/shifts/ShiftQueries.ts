@@ -1,8 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { axiosInstance } from '../../app/api/axiosConfig';
+import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
+import { store } from '../../app/store/store';
 import { useToast } from '../../app/contexts/useToast';
+import { localSalesStore, toSaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 import type { Sale } from '../sales/api/salesTypes';
+
+function isOfflineMode(): boolean {
+  const state = store.getState();
+  return (state as { network?: { systemStatus?: string } }).network?.systemStatus === 'offline';
+}
+
+function mergeShiftSales(server: Sale[], shiftId: number) {
+  return localSalesStore.getByShiftId(shiftId).then((local) => {
+    const localSales = local.map(toSaleWithSyncMeta);
+    const localReceipts = new Set(localSales.map((s) => s.receipt_number));
+    const filtered = server.filter((s) => !localReceipts.has(s.receipt_number));
+    const merged = [...localSales, ...filtered];
+    merged.sort((a, b) => new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime());
+    return merged;
+  });
+}
 
 export interface Shift {
   id: number;
@@ -57,8 +75,22 @@ export function useShiftSales(shiftId: number | null) {
   return useQuery<Sale[]>({
     queryKey: [...shiftKeys.all, 'sales', shiftId] as const,
     queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`);
-      return data.data;
+      if (!shiftId) return [];
+
+      if (isOfflineMode()) {
+        const cached = queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [];
+        return mergeShiftSales(cached, shiftId);
+      }
+
+      try {
+        const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`);
+        return mergeShiftSales(data.data, shiftId);
+      } catch (err: unknown) {
+        const axiosErr = err as AxiosError;
+        if (axiosErr.response) throw err;
+        const cached = queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [];
+        return mergeShiftSales(cached, shiftId);
+      }
     },
     staleTime: 0,
     refetchOnMount: true,

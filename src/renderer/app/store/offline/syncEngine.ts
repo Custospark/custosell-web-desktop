@@ -32,25 +32,38 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 }
 
 export async function syncAllMutations(): Promise<{ synced: number; failed: number }> {
+  console.log('[SyncEngine] syncAllMutations started');
   const pending = await mutationQueue.getPending();
-  if (pending.length === 0) return { synced: 0, failed: 0 };
+  console.log('[SyncEngine] Pending mutations:', pending.length, JSON.stringify(pending.map(m => ({ id: m.id, url: m.url, method: m.method, status: m.status }))));
+
+  if (pending.length === 0) {
+    console.log('[SyncEngine] No pending mutations — skipping');
+    return { synced: 0, failed: 0 };
+  }
 
   const saleMutations = pending.filter((m) => m.url === '/sales' && m.method === 'POST');
   const otherMutations = pending.filter((m) => !(m.url === '/sales' && m.method === 'POST'));
+  console.log('[SyncEngine] Sale mutations:', saleMutations.length, 'Other mutations:', otherMutations.length);
+
   let synced = 0;
   let failed = 0;
 
   if (saleMutations.length > 0) {
+    console.log('[SyncEngine] Posting batch of', saleMutations.length, 'sales');
     try {
       const sales = saleMutations.map((m) => m.data);
-      await axiosInstance.post('/sales/batch', { sales });
+      console.log('[SyncEngine] Batch payload:', JSON.stringify(sales).slice(0, 500));
+      const response = await axiosInstance.post('/sales/batch', { sales });
+      console.log('[SyncEngine] Batch response:', response.status, JSON.stringify(response.data).slice(0, 200));
       for (const m of saleMutations) {
         await mutationQueue.markCompleted(m.id);
       }
       synced += saleMutations.length;
+      console.log('[SyncEngine] Batch sync successful — marked', saleMutations.length, 'completed');
     } catch (e: any) {
+      console.error('[SyncEngine] Batch sync failed:', e?.message, e?.response?.status, e?.response?.data);
       for (const m of saleMutations) {
-        await mutationQueue.markFailed(m.id, e?.message || 'Batch sync failed');
+        await mutationQueue.markFailed(m.id, e?.response?.data?.message || e?.message || 'Batch sync failed');
       }
       failed += saleMutations.length;
     }
@@ -63,6 +76,7 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   }
 
   await mutationQueue.clearCompleted();
+  console.log('[SyncEngine] Done — synced:', synced, 'failed:', failed);
   return { synced, failed };
 }
 

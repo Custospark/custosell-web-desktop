@@ -62,19 +62,23 @@ export const mutationQueue = {
       retryCount: 0,
       status: 'queued',
     };
+    console.log('[MutationQueue] enqueue:', { id, url: mutation.url, method: mutation.method, status: 'queued' });
     await db.add('mutations', entry);
     return id;
   },
 
   async getAll(): Promise<QueuedMutation[]> {
     const db = await getDb();
-    return db.getAll('mutations');
+    const all = await db.getAll('mutations');
+    return all;
   },
 
   async getPending(): Promise<QueuedMutation[]> {
     const db = await getDb();
     const all = await db.getAll('mutations');
-    return all.filter((m) => m.status === 'queued' || m.status === 'failed');
+    const pending = all.filter((m) => m.status === 'queued' || m.status === 'failed');
+    console.log('[MutationQueue] getPending — total:', all.length, 'pending:', pending.length, 'statuses:', all.map(m => m.status));
+    return pending;
   },
 
   async markSyncing(id: string): Promise<void> {

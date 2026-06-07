@@ -15,62 +15,40 @@ export interface ConnectivityProbeResult {
 
 export async function probeNetworkConnectivity(): Promise<ConnectivityProbeResult> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    console.log('[Probe] navigator.onLine is false, returning offline');
     return { systemStatus: 'offline', isOnline: false, latency: null };
   }
 
   const startTime = performance.now();
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  for (let i = 0; i < CONNECTIVITY_ENDPOINTS.length; i++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    await fetch(CONNECTIVITY_ENDPOINTS[0], {
-      method: 'HEAD',
-      mode: 'no-cors',
-      cache: 'no-cache',
-      signal: controller.signal,
-    });
+      console.log(`[Probe] Trying ${CONNECTIVITY_ENDPOINTS[i]}...`);
+      await fetch(CONNECTIVITY_ENDPOINTS[i], {
+        method: 'HEAD',
+        mode: 'no-cors',
+        cache: 'no-cache',
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    const measuredLatency = Math.round(performance.now() - startTime);
+      const measuredLatency = Math.round(performance.now() - startTime);
+      console.log(`[Probe] ${CONNECTIVITY_ENDPOINTS[i]} succeeded in ${measuredLatency}ms`);
 
-    return {
-      systemStatus: measuredLatency > SLOW_THRESHOLD_MS ? 'slow' : 'online',
-      isOnline: true,
-      latency: measuredLatency,
-    };
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      return { systemStatus: 'slow', isOnline: true, latency: TIMEOUT_MS };
+      return {
+        systemStatus: measuredLatency > SLOW_THRESHOLD_MS ? 'slow' : 'online',
+        isOnline: true,
+        latency: measuredLatency,
+      };
+    } catch (error: any) {
+      console.log(`[Probe] ${CONNECTIVITY_ENDPOINTS[i]} failed:`, error?.name || error?.message || error);
     }
-
-    for (let i = 1; i < CONNECTIVITY_ENDPOINTS.length; i++) {
-      try {
-        const backupController = new AbortController();
-        const backupTimeoutId = setTimeout(() => backupController.abort(), TIMEOUT_MS);
-
-        await fetch(CONNECTIVITY_ENDPOINTS[i], {
-          method: 'HEAD',
-          mode: 'no-cors',
-          cache: 'no-cache',
-          signal: backupController.signal,
-        });
-
-        clearTimeout(backupTimeoutId);
-
-        const measuredLatency = Math.round(performance.now() - startTime);
-
-        return {
-          systemStatus: measuredLatency > SLOW_THRESHOLD_MS ? 'slow' : 'online',
-          isOnline: true,
-          latency: measuredLatency,
-        };
-      } catch {
-        continue;
-      }
-    }
-
-    return { systemStatus: 'offline', isOnline: false, latency: null };
   }
+
+  console.log('[Probe] All endpoints failed, returning offline');
+  return { systemStatus: 'offline', isOnline: false, latency: null };
 }

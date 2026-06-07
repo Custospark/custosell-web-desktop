@@ -187,7 +187,7 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
     if (!Array.isArray(data)) continue;
     qc.setQueryData<ExpenseWithSyncMeta[]>(
       key,
-      data.filter((expense) => {
+      data.filter(Boolean).filter((expense) => {
         if (!pendingExpenseIds.has(expense.id) && (expense._pendingSync || expense._localId || expense.id < 0)) {
           return false;
         }
@@ -201,7 +201,7 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
 
   qc.setQueryData<ExpenseCategoryWithSyncMeta[]>(['expenses', 'categories'], (old) => {
     if (!old) return old;
-    return old.filter((category) => {
+    return old.filter(Boolean).filter((category) => {
       if (
         !pendingExpenseCategoryIds.has(category.id)
         && (category._pendingSync || category._localId || category.id < 0)

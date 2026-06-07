@@ -50,14 +50,6 @@ function getDb(): Promise<IDBPDatabase> {
   }
   return dbPromise;
 }
-        if (oldVersion < 2) {
-          db.createObjectStore('mutations', { keyPath: 'id' });
-        }
-      },
-    });
-  }
-  return dbPromise;
-}
 
 export const mutationQueue = {
   async enqueue(mutation: Omit<QueuedMutation, 'id' | 'createdAt' | 'retryCount' | 'status'>): Promise<string> {

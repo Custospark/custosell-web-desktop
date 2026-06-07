@@ -60,19 +60,33 @@ export function useSale(id: number) {
 }
 
 async function createLocalSale(payload: CreateSalePayload): Promise<Sale> {
+  console.log('[OfflineSale] Creating local sale', payload);
+
   const receiptNumber = generateLocalReceiptNumber();
+  console.log('[OfflineSale] Generated receipt:', receiptNumber);
 
   for (const item of payload.items) {
-    await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
+    try {
+      await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
+      console.log('[OfflineSale] Stock adjusted for product', item.product_id, 'by', -item.quantity);
+    } catch (err) {
+      console.error('[OfflineSale] Stock adjust failed:', err);
+    }
   }
 
-  await mutationQueue.enqueue({
-    method: 'POST',
-    url: '/sales',
-    data: payload,
-    maxRetries: 3,
-  });
+  try {
+    const queueId = await mutationQueue.enqueue({
+      method: 'POST',
+      url: '/sales',
+      data: payload,
+      maxRetries: 3,
+    });
+    console.log('[OfflineSale] Enqueued mutation:', queueId);
+  } catch (err) {
+    console.error('[OfflineSale] Enqueue failed:', err);
+  }
 
+  console.log('[OfflineSale] Returning local sale object');
   return {
     id: Date.now(),
     receipt_number: receiptNumber,
@@ -107,28 +121,37 @@ export function useCreateSale() {
   return useMutation<Sale, AxiosError, CreateSalePayload>({
     mutationFn: async (payload) => {
       const state = store.getState();
-      const isOffline = (state as any).network?.systemStatus === 'offline';
+      const systemStatus = (state as any).network?.systemStatus;
+      const isOffline = systemStatus === 'offline';
+      console.log('[useCreateSale] systemStatus:', systemStatus, 'isOffline:', isOffline);
 
       if (isOffline) {
+        console.log('[useCreateSale] OFFLINE — queuing locally');
         return createLocalSale(payload);
       }
 
       try {
+        console.log('[useCreateSale] ONLINE — posting to server');
         const res = await axiosInstance.post('/sales', payload, { timeout: 5000 });
+        console.log('[useCreateSale] Server response:', res.status);
         return res.data as Sale;
       } catch (err: any) {
+        console.log('[useCreateSale] Network error:', err?.message, 'has response:', !!err?.response);
         if (!err?.response) {
+          console.log('[useCreateSale] No response — falling back to local queue');
           return createLocalSale(payload);
         }
         throw err;
       }
     },
     onSuccess: () => {
+      console.log('[useCreateSale] onSuccess fired — invalidating queries');
       qc.invalidateQueries({ queryKey: salesKeys.all });
       qc.invalidateQueries({ queryKey: salesKeys.list() });
       qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
     },
     onError: (e) => {
+      console.error('[useCreateSale] onError fired:', e.message, e.response?.status);
       showToast('error', (e.response?.data as any)?.message || 'Sale failed');
     },
   });

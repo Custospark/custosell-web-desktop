@@ -123,6 +123,36 @@ function summarizeExpenses(expenses: ExpenseWithSyncMeta[]): ExpenseSummary {
   };
 }
 
+function mergeLocalExpensesIntoSummary(summary: ExpenseSummary, local: ExpenseWithSyncMeta[]): ExpenseSummary {
+  if (local.length === 0) return summary;
+  const merged = {
+    ...summary,
+    by_category: summary.by_category.map((item) => ({ ...item })),
+  };
+
+  for (const expense of local) {
+    const amount = Number(expense.amount) || 0;
+    merged.total_amount += amount;
+    merged.total_count += 1;
+
+    const categoryId = expense.expense_category_id ?? null;
+    const existing = merged.by_category.find((item) => item.category_id === categoryId);
+    if (existing) {
+      existing.total += amount;
+      existing.count += 1;
+    } else {
+      merged.by_category.push({
+        category_id: categoryId,
+        category_name: expense.expense_category?.name ?? 'Uncategorized',
+        total: amount,
+        count: 1,
+      });
+    }
+  }
+
+  return merged;
+}
+
 function getExpenseErrorMessage(e: AxiosError, fallback: string): string {
   return sanitizeErrorMessage(e, fallback);
 }
@@ -198,7 +228,8 @@ export function useExpenseSummary(filters?: Record<string, string>) {
         const { data } = await axiosInstance.get<ExpenseSummary>(`/expenses/summary${params ? `?${params}` : ''}`, {
           timeout: 10000,
         });
-        return data;
+        const local = await loadLocalPendingExpenses();
+        return mergeLocalExpensesIntoSummary(data, local);
       },
     }),
     retry: (count, err) => !isNetworkFailure(err) && count < 1,

@@ -56,7 +56,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
       <Card>
         <div className="flex items-center gap-4 mb-4 flex-wrap">
           <div className="w-48">
-            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
+            <select aria-label="Filter expenses by category" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
               <option value="">All Categories</option>
               {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -86,7 +86,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
             { key: 'amount', header: 'Amount', render: (e) => formatCurrency(e.amount) },
             { key: 'reference', header: 'Reference', render: (e) => e.reference || <span className="text-gray-400">—</span> },
             { key: 'receipt', header: 'Receipt', render: (e) => {
-              if (e.receipt_url) return <a href={e.receipt_url} target="_blank" rel="noreferrer"><Eye className="w-4 h-4 text-blue-600" /></a>;
+              if (e.receipt_url) return <a href={e.receipt_url} target="_blank" rel="noreferrer" title="View receipt" aria-label="View receipt"><Eye className="w-4 h-4 text-blue-600" /></a>;
               if (e._pendingReceipt) return <Badge variant="warning">Pending receipt</Badge>;
               return <span className="text-gray-400">—</span>;
             } },

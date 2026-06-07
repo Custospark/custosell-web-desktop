@@ -1,6 +1,6 @@
 import { localSalesStore } from './localSalesStore';
 import { localRefundsStore } from './localRefundsStore';
-import type { DashboardSummary } from '../../../modules/dashboard/DashboardTypes';
+import type { DashboardSummary, SalesTrendDay } from '../../../modules/dashboard/DashboardTypes';
 import type { Sale } from '../../../modules/sales/api/salesTypes';
 
 export interface OfflineSalesSummary {
@@ -70,16 +70,34 @@ export async function computeOfflineRefundAdjustments(): Promise<{ today_revenue
   return { today_revenue };
 }
 
+/** All pending sales grouped by date for trend overlay. */
+export async function computeOfflineSalesTrend(): Promise<Map<string, { revenue: number; transactions: number }>> {
+  const allPending = await localSalesStore.getPending();
+  const trendMap = new Map<string, { revenue: number; transactions: number }>();
+
+  for (const record of allPending) {
+    const dateKey = record.sale.sale_date.slice(0, 10);
+    const amount = parseFloat(record.sale.total_amount) || 0;
+    const existing = trendMap.get(dateKey) ?? { revenue: 0, transactions: 0 };
+    existing.revenue += amount;
+    existing.transactions += 1;
+    trendMap.set(dateKey, existing);
+  }
+
+  return trendMap;
+}
+
 /** Server baseline + pending sales/refunds overlay — idempotent, no double-counting. */
 export async function applyDashboardPendingOverlay(
   server: DashboardSummary,
 ): Promise<DashboardSummary> {
-  const [offline, refundAdj] = await Promise.all([
+  const [offline, refundAdj, offlineTrend] = await Promise.all([
     computeOfflineSalesSummary(),
     computeOfflineRefundAdjustments(),
+    computeOfflineSalesTrend(),
   ]);
 
-  let merged = mergeDashboardWithOffline(server, offline);
+  let merged = mergeDashboardWithOffline(server, offline, offlineTrend);
 
   if (refundAdj.today_revenue !== 0) {
     merged = {
@@ -91,11 +109,37 @@ export async function applyDashboardPendingOverlay(
   return merged;
 }
 
+function mergeTrendDay(
+  day: SalesTrendDay,
+  offlineTrend: Map<string, { revenue: number; transactions: number }>,
+): SalesTrendDay {
+  const dateKey = day.date.slice(0, 10);
+  const offline = offlineTrend.get(dateKey);
+  if (!offline) return day;
+  return {
+    ...day,
+    revenue: day.revenue + offline.revenue,
+    transactions: day.transactions + offline.transactions,
+  };
+}
+
 export function mergeDashboardWithOffline(
   summary: DashboardSummary,
   offline: OfflineSalesSummary,
+  offlineTrend: Map<string, { revenue: number; transactions: number }>,
 ): DashboardSummary {
-  if (offline.today_transactions === 0) return summary;
+  const trendMerged = summary.sales_trend.map((day) => mergeTrendDay(day, offlineTrend));
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayOffline = offlineTrend.get(todayKey);
+
+  if (todayOffline && !trendMerged.some((d) => d.date.slice(0, 10) === todayKey)) {
+    trendMerged.push({
+      date: todayKey,
+      revenue: todayOffline.revenue,
+      transactions: todayOffline.transactions,
+    });
+  }
 
   const offlineRecent = offline.pending_sales.slice(0, 5).map((s) => ({
     id: s.id,
@@ -117,6 +161,7 @@ export function mergeDashboardWithOffline(
     today_revenue: summary.today_revenue + offline.today_revenue,
     today_transactions: summary.today_transactions + offline.today_transactions,
     today_products_sold: summary.today_products_sold + offline.today_products_sold,
+    sales_trend: trendMerged,
     recent_sales: mergedRecent,
   };
 }

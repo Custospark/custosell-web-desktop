@@ -175,7 +175,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
                   <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select value={budgetPeriod} onChange={(e) => setBudgetPeriod(e.target.value)}
+                    <select aria-label="Budget period" value={budgetPeriod} onChange={(e) => setBudgetPeriod(e.target.value)}
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                       <option value="weekly">Weekly</option>
                       <option value="monthly">Monthly</option>

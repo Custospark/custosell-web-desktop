@@ -92,26 +92,21 @@ export const mutationQueue = {
   },
 
   async count(): Promise<number> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     const all = await db.getAll('mutations');
     return all.filter((m) => m.status === 'queued' || m.status === 'failed').length;
   },
 
-  async updateEntry(id: string, patch: Partial<Pick<QueuedMutation, 'url' | 'data'>>): Promise<void> {
-    const db = await getDb();
-    const entry = await db.get('mutations', id);
-    if (!entry) return;
-    if (patch.url !== undefined) entry.url = patch.url;
-    if (patch.data !== undefined) entry.data = patch.data;
-    await db.put('mutations', entry);
+  async removeById(id: string): Promise<void> {
+    const db = await getOfflineDb();
+    await db.delete('mutations', id);
   },
 
   async remapShiftId(oldShiftId: number, newShiftId: number): Promise<void> {
-    const db = await getDb();
+    const db = await getOfflineDb();
     const all = await db.getAll('mutations');
-    for (const entry of all) {
-      if (entry.status !== 'queued' && entry.status !== 'failed') continue;
 
+    for (const entry of all) {
       if (entry.method === 'PUT' && entry.url === `/shifts/${oldShiftId}`) {
         entry.url = `/shifts/${newShiftId}`;
         await db.put('mutations', entry);

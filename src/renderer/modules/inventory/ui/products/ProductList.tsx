@@ -3,6 +3,8 @@ import { useProducts, useDeleteProduct, inventoryKeys } from '../../api/products
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../../shared/components/tables/Table';
@@ -26,6 +28,7 @@ export default function ProductList() {
   const queryClient = useQueryClient();
   const { data: products, isLoading, error } = useProducts();
   const deleteMutation = useDeleteProduct();
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -109,13 +112,13 @@ export default function ProductList() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Products</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your product inventory</p>
+          <p className="text-sm text-gray-500 mt-1">Manage your product inventory{isOffline && ' · Offline mode'}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} disabled={isOffline} title={isOffline ? 'Unavailable offline' : ''}>
             <Download className="w-4 h-4 mr-1.5" />Download
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} disabled={isOffline} title={isOffline ? 'Unavailable offline' : ''}>
             <Upload className="w-4 h-4 mr-1.5" />Upload
           </Button>
           <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Product</Button>
@@ -136,8 +139,9 @@ export default function ProductList() {
               Select All
             </button>
             {selectedIds.size > 0 && (
-              <button onClick={handleBulkDelete} disabled={bulkDeleteMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium">
+              <button onClick={handleBulkDelete} disabled={bulkDeleteMutation.isPending || isOffline}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isOffline ? 'Unavailable offline' : ''}>
                 <Trash2 className="w-4 h-4" />
                 Delete ({selectedIds.size})
               </button>
@@ -172,8 +176,10 @@ export default function ProductList() {
                 <div className="flex items-center justify-center gap-1">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryProduct(item); }} title="View History"><Eye className="w-4 h-4 text-gray-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-blue-600" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                  {!item._pendingSync && (
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-blue-600" /></Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete" disabled={item._pendingSync}><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),
             },

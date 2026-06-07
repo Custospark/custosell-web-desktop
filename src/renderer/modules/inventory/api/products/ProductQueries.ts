@@ -6,6 +6,7 @@ import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { applyOfflineStockOverlay } from '../../../../app/store/offline/offlineStockOverlay';
 import { isNetworkFailure } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
+import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
 import { localCategoriesStore, toCategoryWithSyncMeta, type CategoryWithSyncMeta } from '../../../../app/store/offline/localCategoriesStore';
 import {
@@ -145,6 +146,11 @@ export function useUpdateCategory() {
       const existing = cached?.find((c) => c.id === id);
       if (!existing) throw new Error('Category not found');
 
+      const isPendingOnly = (existing as CategoryWithSyncMeta)._pendingSync || id < 0;
+      if (isPendingOnly) {
+        return { ...existing, ...data, _pendingSync: true } as CategoryWithSyncMeta;
+      }
+
       if (shouldCompleteCategoryLocally()) {
         return completeOfflineUpdateCategoryInstant(existing, data);
       }
@@ -182,6 +188,18 @@ export function useDeleteCategory() {
     networkMode: 'always',
     retry: false,
     mutationFn: async (id) => {
+      const cached = qc.getQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories());
+      const category = cached?.find((c) => c.id === id);
+      const isPendingOnly = category?._pendingSync || id < 0;
+
+      if (isPendingOnly) {
+        const mutationId = await localCategoriesStore.removeByCategoryId(id);
+        if (mutationId) {
+          await mutationQueue.removeById(mutationId);
+        }
+        return;
+      }
+
       if (shouldCompleteCategoryLocally()) {
         completeOfflineDeleteCategoryInstant(id);
         return;
@@ -336,6 +354,11 @@ export function useUpdateProduct() {
       const existing = cached?.find((p) => p.id === id);
       if (!existing) throw new Error('Product not found');
 
+      const isPendingOnly = (existing as ProductWithSyncMeta)._pendingSync || id < 0;
+      if (isPendingOnly) {
+        return { ...existing, ...data, _pendingSync: true } as ProductWithSyncMeta;
+      }
+
       if (shouldCompleteProductLocally()) {
         return completeOfflineUpdateProductInstant(existing, data);
       }
@@ -373,6 +396,18 @@ export function useDeleteProduct() {
     networkMode: 'always',
     retry: false,
     mutationFn: async (id) => {
+      const cached = qc.getQueryData<ProductWithSyncMeta[]>(inventoryKeys.products());
+      const product = cached?.find((p) => p.id === id);
+      const isPendingOnly = product?._pendingSync || id < 0;
+
+      if (isPendingOnly) {
+        const mutationId = await localProductsStore.removeByProductId(id);
+        if (mutationId) {
+          await mutationQueue.removeById(mutationId);
+        }
+        return;
+      }
+
       if (shouldCompleteProductLocally()) {
         completeOfflineDeleteProductInstant(id);
         return;

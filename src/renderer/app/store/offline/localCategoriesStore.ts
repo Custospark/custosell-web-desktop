@@ -114,4 +114,15 @@ export const localCategoriesStore = {
       await db.delete('localCategories', record.localId);
     }
   },
+
+  async removeByCategoryId(categoryId: number): Promise<string | null> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localCategories');
+    const record = all.find((r) => r.category.id === categoryId);
+    if (record) {
+      await db.delete('localCategories', record.localId);
+      return record.mutationId;
+    }
+    return null;
+  },
 };

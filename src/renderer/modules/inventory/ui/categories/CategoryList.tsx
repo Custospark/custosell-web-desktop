@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '../../api/products/ProductQueries';
 import type { CategoryWithSyncMeta } from '../../../../app/store/offline/localCategoriesStore';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { Table } from '../../../../shared/components/tables/Table';
 import { Card } from '../../../../shared/components/cards/Card';
@@ -15,6 +17,7 @@ import CategoryFormDrawer from './CategoryFormDrawer';
 export default function CategoryList() {
   const { data: categories, isLoading, error } = useCategories();
   const deleteMutation = useDeleteCategory();
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithSyncMeta | null>(null);
@@ -47,7 +50,7 @@ export default function CategoryList() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
-            <p className="text-sm text-gray-500 mt-1">Manage product categories</p>
+            <p className="text-sm text-gray-500 mt-1">Manage product categories{isOffline && ' · Offline mode'}</p>
           </div>
           <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Category</Button>
         </div>
@@ -67,7 +70,7 @@ export default function CategoryList() {
               render: (item) => (
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }}><Trash className="w-4 h-4 text-red-500" /></Button>
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} disabled={item._pendingSync} title={item._pendingSync ? 'Sync before deleting' : ''}><Trash className="w-4 h-4 text-red-500" /></Button>
                 </div>
               ),
             },

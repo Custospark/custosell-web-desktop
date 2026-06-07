@@ -83,14 +83,17 @@ export default function DashboardPage() {
             <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
               Low Stock Alerts
+              {summary?.low_stock && summary.low_stock.length > 0 && (
+                <span className="ml-auto text-xs font-normal text-gray-400">{summary.low_stock.length} item(s)</span>
+              )}
             </h3>
             {(!summary?.low_stock || summary.low_stock.length === 0) ? (
               <p className="text-sm text-gray-400 text-center py-8">All products are well stocked</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                 {summary.low_stock.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
-                    <span className="text-sm font-medium text-gray-800">{p.name}</span>
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg shrink-0">
+                    <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
                     <span className="text-sm font-semibold text-amber-700 shrink-0 ml-2">{p.stock_quantity} / {p.low_stock_threshold}</span>
                   </div>
                 ))}

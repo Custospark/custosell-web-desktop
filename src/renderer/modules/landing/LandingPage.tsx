@@ -3,6 +3,12 @@ import { motion } from 'framer-motion';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3, Users, Receipt, Clock, Store, Coffee, Pill, Scissors, Apple, Wrench, Building2, Shirt, Heart, Wine, Car, Monitor, BookOpen, Globe, Printer, Droplets, Fuel, Wheat, Ruler, PawPrint, Sofa, ChefHat, UtensilsCrossed, Building } from 'lucide-react';
 import TestimonialCarousel from './ui/TestimonialCarousel';
+import fasterSales from './assets/screenshots/faster_sales.png';
+import smartInventory from './assets/screenshots/smart_inventory.png';
+import realTimeDashboard from './assets/screenshots/real_time_dashboard.png';
+import customerInsights from './assets/screenshots/customer_insights.png';
+import expenseTracking from './assets/screenshots/expense_tracking.png';
+import shiftManagement from './assets/screenshots/shift_managment.png';
 
 const stats = [
   { value: '99.9%', label: 'Uptime' },
@@ -12,12 +18,12 @@ const stats = [
 ];
 
 const benefits = [
-  { icon: ShoppingCart, title: 'Fast Sales', description: 'Ring up customers in seconds — cash, mobile money, or card. No more long queues.', color: 'from-blue-500 to-blue-600', image: '/screenshots/faster_sales.png' },
-  { icon: Package, title: 'Smart Inventory', description: 'Track stock in real-time. Get low-stock alerts and know what to reorder.', color: 'from-emerald-500 to-emerald-600', image: '/screenshots/smart_inventory.png' },
-  { icon: BarChart3, title: 'Real-time Dashboard', description: 'See daily revenue, sales trends, and business performance at a glance.', color: 'from-purple-500 to-purple-600', image: '/screenshots/real_time_dashboard.png' },
-  { icon: Users, title: 'Customer Insights', description: 'Know your customers. Track purchase history and buying patterns.', color: 'from-amber-500 to-amber-600', image: '/screenshots/customer_insights.png' },
-  { icon: Receipt, title: 'Expense Tracking', description: 'Log and categorize expenses. Understand where your money goes.', color: 'from-red-500 to-red-600', image: '/screenshots/expense_tracking.png' },
-  { icon: Clock, title: 'Shift Management', description: 'Track staff shifts, sales per cashier, and end-of-day reconciliations.', color: 'from-indigo-500 to-indigo-600', image: '/screenshots/shift_managment.png' },
+  { icon: ShoppingCart, title: 'Fast Sales', description: 'Ring up customers in seconds — cash, mobile money, or card. No more long queues.', color: 'from-blue-500 to-blue-600', image: fasterSales },
+  { icon: Package, title: 'Smart Inventory', description: 'Track stock in real-time. Get low-stock alerts and know what to reorder.', color: 'from-emerald-500 to-emerald-600', image: smartInventory },
+  { icon: BarChart3, title: 'Real-time Dashboard', description: 'See daily revenue, sales trends, and business performance at a glance.', color: 'from-purple-500 to-purple-600', image: realTimeDashboard },
+  { icon: Users, title: 'Customer Insights', description: 'Know your customers. Track purchase history and buying patterns.', color: 'from-amber-500 to-amber-600', image: customerInsights },
+  { icon: Receipt, title: 'Expense Tracking', description: 'Log and categorize expenses. Understand where your money goes.', color: 'from-red-500 to-red-600', image: expenseTracking },
+  { icon: Clock, title: 'Shift Management', description: 'Track staff shifts, sales per cashier, and end-of-day reconciliations.', color: 'from-indigo-500 to-indigo-600', image: shiftManagement },
 ];
 
 export default function LandingPage() {
@@ -70,7 +76,7 @@ export default function LandingPage() {
           </div>
 
           <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="lg:block">
-            <img src="/screenshots/real_time_dashboard.png" alt="Custosell Dashboard" className="rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
+            <img src={realTimeDashboard} alt="Custosell Dashboard" className="rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
           </motion.div>
         </div>
       </section>

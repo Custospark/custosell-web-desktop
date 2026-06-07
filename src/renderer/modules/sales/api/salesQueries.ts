@@ -60,10 +60,34 @@ export function useSale(id: number) {
 }
 
 async function createLocalSale(payload: CreateSalePayload): Promise<Sale> {
-  console.log('[OfflineSale] Creating local sale — returning immediately');
+  console.log('[OfflineSale] Creating local sale', payload);
 
   const receiptNumber = generateLocalReceiptNumber();
-  const localSale: Sale = {
+  console.log('[OfflineSale] Generated receipt:', receiptNumber);
+
+  for (const item of payload.items) {
+    try {
+      await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
+      console.log('[OfflineSale] Stock adjusted for product', item.product_id, 'by', -item.quantity);
+    } catch (err) {
+      console.error('[OfflineSale] Stock adjust failed:', err);
+    }
+  }
+
+  try {
+    const queueId = await mutationQueue.enqueue({
+      method: 'POST',
+      url: '/sales',
+      data: payload,
+      maxRetries: 3,
+    });
+    console.log('[OfflineSale] Enqueued mutation:', queueId);
+  } catch (err) {
+    console.error('[OfflineSale] Enqueue failed:', err);
+  }
+
+  console.log('[OfflineSale] Returning local sale object');
+  return {
     id: Date.now(),
     receipt_number: receiptNumber,
     total_amount: payload.total_amount.toString(),
@@ -89,34 +113,6 @@ async function createLocalSale(payload: CreateSalePayload): Promise<Sale> {
       subtotal: (item.quantity * item.unit_price).toString(),
     } as any)),
   } as Sale;
-
-  persistOfflineSale(payload, localSale);
-
-  return localSale;
-}
-
-function persistOfflineSale(payload: CreateSalePayload, localSale: Sale): void {
-  setTimeout(async () => {
-    console.log('[OfflineSale] Persisting offline sale to IndexedDB...');
-    for (const item of payload.items) {
-      try {
-        await stockLedger.adjust(item.product_id, -item.quantity, 'sale');
-      } catch (err) {
-        console.error('[OfflineSale] Stock adjust failed:', err);
-      }
-    }
-    try {
-      const queueId = await mutationQueue.enqueue({
-        method: 'POST',
-        url: '/sales',
-        data: payload,
-        maxRetries: 3,
-      });
-      console.log('[OfflineSale] Persisted — queueId:', queueId, 'receipt:', localSale.receipt_number);
-    } catch (err) {
-      console.error('[OfflineSale] Enqueue failed:', err);
-    }
-  }, 0);
 }
 
 export function useCreateSale() {

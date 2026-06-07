@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
 import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
-import { isNetworkFailure } from '../../../app/store/offline/offlineQueryUtils';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
 import {
   completeOfflineSaleInstant,
@@ -303,7 +303,7 @@ export function useCreateSale() {
       }
     },
     onError: (e) => {
-      showToast('error', (e.response?.data as { message?: string })?.message || 'Sale failed');
+      showToast('error', sanitizeErrorMessage(e, 'Sale failed'));
     },
   });
 }
@@ -362,7 +362,7 @@ export function useRefund() {
       const message =
         e.message === 'Sync this sale before refunding'
           ? e.message
-          : (e.response?.data as { message?: string })?.message || e.message || 'Refund failed';
+          : sanitizeErrorMessage(e, 'Refund failed');
       showToast('error', message);
     },
   });

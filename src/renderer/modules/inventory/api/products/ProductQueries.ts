@@ -4,7 +4,7 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { applyOfflineStockOverlay } from '../../../../app/store/offline/offlineStockOverlay';
-import { isNetworkFailure } from '../../../../app/store/offline/offlineQueryUtils';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
 import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
@@ -130,7 +130,7 @@ export function useCreateCategory() {
       }
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to create category');
+      showToast('error', sanitizeErrorMessage(e, 'Failed to create category'));
     },
   });
 }
@@ -176,7 +176,7 @@ export function useUpdateCategory() {
       }
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to update category');
+      showToast('error', sanitizeErrorMessage(e, 'Failed to update category'));
     },
   });
 }
@@ -221,7 +221,7 @@ export function useDeleteCategory() {
       );
     },
     onError: (e, _id) => {
-      showToast('error', e.response?.data?.message || 'Failed to delete category');
+      showToast('error', sanitizeErrorMessage(e, 'Failed to delete category'));
     },
   });
 }
@@ -338,7 +338,7 @@ export function useCreateProduct() {
       }
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to create product');
+      showToast('error', sanitizeErrorMessage(e, 'Failed to create product'));
     },
   });
 }
@@ -384,7 +384,7 @@ export function useUpdateProduct() {
       }
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to update product');
+      showToast('error', sanitizeErrorMessage(e, 'Failed to update product'));
     },
   });
 }
@@ -432,7 +432,7 @@ export function useDeleteProduct() {
       );
     },
     onError: (e, _id) => {
-      showToast('error', e.response?.data?.message || 'Failed to delete product');
+      showToast('error', sanitizeErrorMessage(e, 'Failed to delete product'));
     },
   });
 }

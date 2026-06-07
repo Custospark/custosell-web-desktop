@@ -92,13 +92,18 @@
       }
     ],
     "asar": true,
-    "win": {
-      "target": [
-        "nsis",
-        "zip"
-      ],
-      "requestedExecutionLevel": "asInvoker"
-    },
+  "win": {
+    "target": [
+      "nsis",
+      "zip"
+    ],
+    "requestedExecutionLevel": "asInvoker",
+    "azureTrustedSigning": {
+      "endpoint": "https://REPLACE_ME.codesigning.azure.net",
+      "codeSigningAccountName": "custosell-signing",
+      "certificateProfileName": "custosell-profile"
+    }
+  },
     "nodeGypRebuild": false,
     "nsis": {
       "oneClick": true,

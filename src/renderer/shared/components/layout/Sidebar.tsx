@@ -11,6 +11,7 @@ import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { selectShowOfflineBanner } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
 
 interface SidebarProps {
@@ -140,11 +141,15 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
     logoutMutation.mutate();
   };
 
+  const showOfflineBanner = useAppSelector(selectShowOfflineBanner);
+
   return (
     <aside
-      className={`fixed top-0 left-0 z-30 h-full bg-white border-r border-gray-200 transform transition-all duration-200 ${
-        collapsed ? 'w-[64px]' : 'w-[247px]'
-      } ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}
+      className={`fixed left-0 z-30 bg-white border-r border-gray-200 transform transition-all duration-200 ${
+        showOfflineBanner ? 'top-10 h-[calc(100vh-2.5rem)]' : 'top-0 h-full'
+      } ${collapsed ? 'w-[64px]' : 'w-[247px]'} ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 flex flex-col`}
     >
       <div className={`border-b border-gray-200 flex items-center gap-2.5 ${collapsed ? 'justify-center py-4' : 'px-6 py-4'}`}>
         <LogoImage size="sm" />

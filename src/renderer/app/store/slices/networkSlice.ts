@@ -10,6 +10,7 @@ export interface NetworkState {
   latency: number | null;
   lastCheckedAt: string | null;
   isChecking: boolean;
+  offlineBannerDismissed: boolean;
 }
 
 const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
@@ -20,6 +21,7 @@ const initialState: NetworkState = {
   latency: null,
   lastCheckedAt: null,
   isChecking: false,
+  offlineBannerDismissed: false,
 };
 
 export const checkNetworkConnectivity = createAsyncThunk(
@@ -41,6 +43,10 @@ const networkSlice = createSlice({
       state.isOnline = false;
       state.latency = null;
       state.lastCheckedAt = new Date().toISOString();
+      state.offlineBannerDismissed = false;
+    },
+    dismissOfflineBanner(state) {
+      state.offlineBannerDismissed = true;
     },
   },
   extraReducers: (builder) => {
@@ -54,6 +60,9 @@ const networkSlice = createSlice({
         state.isOnline = action.payload.isOnline;
         state.latency = action.payload.latency;
         state.lastCheckedAt = new Date().toISOString();
+        if (action.payload.systemStatus === 'offline') {
+          state.offlineBannerDismissed = false;
+        }
       })
       .addCase(checkNetworkConnectivity.rejected, (state) => {
         state.isChecking = false;
@@ -61,16 +70,19 @@ const networkSlice = createSlice({
         state.isOnline = false;
         state.latency = null;
         state.lastCheckedAt = new Date().toISOString();
+        state.offlineBannerDismissed = false;
       });
   },
 });
 
-export const { setBrowserOffline } = networkSlice.actions;
+export const { setBrowserOffline, dismissOfflineBanner } = networkSlice.actions;
 
 export const selectSystemStatus = (state: RootState): SystemStatus => state.network.systemStatus;
 export const selectIsOnline = (state: RootState): boolean => state.network.isOnline;
 export const selectNetworkLatency = (state: RootState): number | null => state.network.latency;
 export const selectIsCompletelyOffline = (state: RootState): boolean => state.network.systemStatus === 'offline';
+export const selectShowOfflineBanner = (state: RootState): boolean =>
+  state.network.systemStatus === 'offline' && !state.network.offlineBannerDismissed;
 export const selectNetworkIsChecking = (state: RootState): boolean => state.network.isChecking;
 
 export default networkSlice.reducer;

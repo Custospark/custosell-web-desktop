@@ -7,6 +7,7 @@ import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
+import { OfflineBanner } from '../Errors/OfflineBanner';
 import { Menu, X, User, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff } from 'lucide-react';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 
@@ -48,20 +49,23 @@ export function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50/30">
-      {state.sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50/30">
+      <OfflineBanner />
+
+      <div className="flex flex-1 min-h-0">
+        {state.sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+            onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+          />
+        )}
+
+        <Sidebar
+          isOpen={state.sidebarOpen}
+          onClose={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
         />
-      )}
 
-      <Sidebar
-        isOpen={state.sidebarOpen}
-        onClose={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-      />
-
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${collapsed ? 'lg:ml-[64px]' : 'lg:ml-[247px]'}`}>
+        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${collapsed ? 'lg:ml-[64px]' : 'lg:ml-[247px]'}`}>
         <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center gap-3">
           <button
             className="lg:hidden text-gray-600 hover:text-gray-900 shrink-0"
@@ -162,6 +166,7 @@ export function Layout() {
             Custosell is a product of <a href="https://www.custospark.com" target="_blank" rel="noopener noreferrer" className="font-medium underline hover:text-blue-800">Custospark Company Ltd.</a>
           </span>
         </footer>
+        </div>
       </div>
     </div>
   );

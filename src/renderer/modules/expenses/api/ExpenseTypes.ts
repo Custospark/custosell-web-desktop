@@ -28,6 +28,7 @@ export interface Expense {
   expense_category?: ExpenseCategory | null;
   recorded_by: number | null;
   recorded_by_user?: { data: UserInfo } | null;
+  shift_id?: number | null;
   amount: string;
   description: string;
   reference: string | null;
@@ -71,6 +72,7 @@ export interface CreateExpenseData {
   recurrence_end_date?: string | null;
   next_due_date?: string | null;
   expense_date: string;
+  shift_id?: number | null;
 }
 
 export type UpdateExpenseData = Partial<CreateExpenseData>;

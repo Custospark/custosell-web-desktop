@@ -15,9 +15,13 @@ export const dashboardKeys = {
 
 const emptySummary = (): DashboardSummary => ({
   today_revenue: 0,
+  today_gross_sales: 0,
+  today_refunds: 0,
+  today_net_sales: 0,
   today_transactions: 0,
   today_products_sold: 0,
   today_expenses: 0,
+  today_net_after_expenses: 0,
   active_products: 0,
   total_customers: 0,
   sales_trend: [],

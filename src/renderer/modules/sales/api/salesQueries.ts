@@ -353,6 +353,7 @@ export function useRefund() {
         showToast('success', 'Refund saved locally — will sync when online');
       } else {
         qc.invalidateQueries({ queryKey: salesKeys.all });
+        qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
         qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
         qc.invalidateQueries({ queryKey: shiftKeys.all });
         showToast('success', 'Refund processed');

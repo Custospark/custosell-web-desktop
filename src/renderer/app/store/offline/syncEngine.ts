@@ -514,6 +514,7 @@ async function processShiftOpens(
       if (oldShiftId && serverShift?.id && oldShiftId !== serverShift.id) {
         idMap.set(oldShiftId, serverShift.id);
         await localSalesStore.updateShiftIdInPending(oldShiftId, serverShift.id);
+        await localExpensesStore.updateShiftIdInPending(oldShiftId, serverShift.id);
         await mutationQueue.remapShiftId(oldShiftId, serverShift.id);
 
         const authUser = store.getState().auth.user;
@@ -669,6 +670,11 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
         ...m.data,
         fields: { ...m.data.fields },
       };
+      const rawShiftId = payload.fields.shift_id;
+      const shiftId = rawShiftId ? Number(rawShiftId) : null;
+      if (shiftId && shiftId < 0 && idMap.has(shiftId)) {
+        payload.fields.shift_id = String(idMap.get(shiftId)!);
+      }
       const rawCategoryId = payload.fields.expense_category_id;
       const categoryId = rawCategoryId ? Number(rawCategoryId) : null;
       if (categoryId && categoryId < 0 && expCatIdMap.has(categoryId)) {

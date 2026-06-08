@@ -63,6 +63,16 @@ function mergeExpenseLists(base: Expense[] = [], local: ExpenseWithSyncMeta[] = 
   return [...safeLocal, ...filtered] as ExpenseWithSyncMeta[];
 }
 
+function matchesExpenseFilters(expense: ExpenseWithSyncMeta, filters?: Record<string, string>): boolean {
+  if (!filters) return true;
+  if (filters.category_id && String(expense.expense_category_id ?? '') !== filters.category_id) return false;
+  if (filters.shift_id && String(expense.shift_id ?? '') !== filters.shift_id) return false;
+  const expenseDate = expense.expense_date.slice(0, 10);
+  if (filters.date_from && expenseDate < filters.date_from.slice(0, 10)) return false;
+  if (filters.date_to && expenseDate > filters.date_to.slice(0, 10)) return false;
+  return true;
+}
+
 function mergeExpenseCategoryLists(
   base: ExpenseCategory[] = [],
   local: ExpenseCategoryWithSyncMeta[] = [],
@@ -171,21 +181,22 @@ function getExpenseErrorMessage(e: AxiosError, fallback: string): string {
   return sanitizeErrorMessage(e, fallback);
 }
 
-export function useExpenses(filters?: Record<string, string>) {
+export function useExpenses(filters?: Record<string, string>, options?: { enabled?: boolean }) {
   const params = filters ? new URLSearchParams(filters).toString() : '';
   return useQuery<ExpenseWithSyncMeta[]>({
     queryKey: expenseKeys.list(filters),
+    enabled: options?.enabled ?? true,
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
         const cached = queryClient.getQueryData<Expense[]>(expenseKeys.list(filters)) ?? [];
-        const local = await loadLocalPendingExpenses();
+        const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
         return mergeExpenseLists(cached, local);
       },
       fetchFromServer: async () => {
         const { data } = await axiosInstance.get<{ data: Expense[] }>(`/expenses${params ? `?${params}` : ''}`, {
           timeout: 10000,
         });
-        const local = await loadLocalPendingExpenses();
+        const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
         return mergeExpenseLists(data.data, local);
       },
     }),
@@ -235,14 +246,14 @@ export function useExpenseSummary(filters?: Record<string, string>) {
         const cached = queryClient.getQueryData<ExpenseSummary>(expenseKeys.summary(filters));
         if (cached) return cached;
         const expenses = queryClient.getQueryData<ExpenseWithSyncMeta[]>(expenseKeys.list(filters)) ?? [];
-        const local = await loadLocalPendingExpenses();
+        const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
         return summarizeExpenses(mergeExpenseLists(expenses, local));
       },
       fetchFromServer: async () => {
         const { data } = await axiosInstance.get<ExpenseSummary>(`/expenses/summary${params ? `?${params}` : ''}`, {
           timeout: 10000,
         });
-        const local = await loadLocalPendingExpenses();
+        const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
         return mergeLocalExpensesIntoSummary(data, local);
       },
     }),

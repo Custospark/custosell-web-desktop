@@ -5,7 +5,7 @@ import QuickReports from './QuickReports';
 import { Badge } from '../../shared/components/badges/Badge';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { DollarSign, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Clock } from 'lucide-react';
+import { DollarSign, ShoppingCart, Package, Users, ReceiptText, AlertTriangle, Clock } from 'lucide-react';
 
 const methodBadge: Record<string, 'success' | 'primary' | 'warning' | 'neutral'> = {
   cash: 'success', mobile_money: 'primary', card: 'warning', other: 'neutral',
@@ -20,16 +20,17 @@ const cardStyles = {
 };
 
 const cards = [
-  { label: "Today's Revenue", key: 'today_revenue' as const, format: true, icon: DollarSign, color: 'blue' as const, badge: 'Revenue' },
+  { label: 'Net Today', key: 'today_net_after_expenses' as const, format: true, icon: DollarSign, color: 'blue' as const, badge: 'Today' },
   { label: "Today's Sales", key: 'today_transactions' as const, format: false, icon: ShoppingCart, color: 'green' as const, badge: 'Sales' },
   { label: 'Products Sold', key: 'today_products_sold' as const, format: false, icon: Package, color: 'purple' as const, badge: 'Sold' },
-  { label: 'Active Products', key: 'active_products' as const, format: false, icon: TrendingUp, color: 'amber' as const, badge: 'Active' },
+  { label: "Today's Expenses", key: 'today_expenses' as const, format: true, icon: ReceiptText, color: 'amber' as const, badge: 'Expenses' },
   { label: 'Total Customers', key: 'total_customers' as const, format: false, icon: Users, color: 'indigo' as const, badge: 'Users' },
 ];
 
 export default function DashboardPage() {
   const { data: summary, isLoading } = useDashboardSummary();
-  const { data: expenseSummary } = useExpenseSummary();
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const { data: expenseSummary } = useExpenseSummary({ date_from: todayKey, date_to: todayKey });
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -43,7 +44,9 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Overview of your business performance</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Today&apos;s business performance · net = gross sales − refunds − expenses
+        </p>
       </div>
 
       {/* Stat Cards */}
@@ -53,6 +56,15 @@ export default function DashboardPage() {
           const s = cardStyles[card.color];
           const val = summary?.[card.key];
           const value = card.format ? formatCurrency(val ?? 0) : String(val ?? 0);
+          const showNetBreakdown = card.key === 'today_net_after_expenses' && summary
+            && ((summary.today_refunds ?? 0) > 0 || (summary.today_expenses ?? 0) > 0);
+          const secondary = showNetBreakdown && summary ? (
+            <>
+              Gross <span className="font-bold text-gray-700">{formatCurrency(summary.today_gross_sales ?? summary.today_revenue)}</span>
+              {summary.today_refunds > 0 && <> · Refunds <span className="font-bold text-red-600">-{formatCurrency(summary.today_refunds)}</span></>}
+              {summary.today_expenses > 0 && <> · Expenses <span className="font-bold text-red-600">-{formatCurrency(summary.today_expenses)}</span></>}
+            </>
+          ) : null;
           return (
             <div key={card.label}
               className={`relative overflow-hidden rounded-xl p-6 transition-all duration-300 border-2 bg-gradient-to-br from-white to-${card.color}-50/50 ${s.border} ${s.shadow} hover:-translate-y-0.5 group cursor-pointer min-h-[130px] flex flex-col justify-center`}>
@@ -67,6 +79,7 @@ export default function DashboardPage() {
               </div>
               <p className="text-3xl font-bold text-gray-900 mb-0.5 relative">{value}</p>
               <p className="text-sm font-medium text-gray-500 relative">{card.label}</p>
+              {secondary && <p className="text-xs text-gray-500 mt-1 relative">{secondary}</p>}
             </div>
           );
         })}
@@ -83,6 +96,7 @@ export default function DashboardPage() {
             <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
               Low Stock Alerts
+              <span className="text-xs font-normal text-gray-400">· {summary?.active_products ?? 0} active products</span>
               {summary?.low_stock && summary.low_stock.length > 0 && (
                 <span className="ml-auto text-xs font-normal text-gray-400">{summary.low_stock.length} item(s)</span>
               )}
@@ -101,7 +115,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <ExpensePieChart data={expenseCategories} />
+          <ExpensePieChart data={expenseCategories} title="Today's Expenses by Category" />
         </div>
 
         {/* Right Column — Reports + Recent Activity */}
@@ -124,7 +138,12 @@ export default function DashboardPage() {
                       <span className="text-sm font-medium text-gray-800 truncate">{s.receipt_number}</span>
                       <Badge variant={methodBadge[s.payment_method] || 'neutral'} className="shrink-0">{s.payment_method.replace('_', ' ')}</Badge>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 shrink-0 ml-2">{formatCurrency(s.total_amount)}</span>
+                    <div className="text-right shrink-0 ml-2">
+                      <span className="text-sm font-semibold text-gray-900">{formatCurrency(s.net_amount ?? s.total_amount)}</span>
+                      {Boolean(s.refunds) && (
+                        <p className="text-xs text-gray-400">Gross {formatCurrency(s.total_amount)}</p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -239,6 +239,15 @@ export const mutationQueue = {
           await db.put('mutations', entry);
         }
       }
+
+      if ((entry.method === 'POST' || entry.method === 'PUT') && /^\/expenses(\/-?\d+)?$/.test(entry.url) && entry.data) {
+        const payload = entry.data as { fields?: { shift_id?: string } };
+        if (payload.fields?.shift_id === String(oldShiftId)) {
+          payload.fields.shift_id = String(newShiftId);
+          entry.data = payload;
+          await db.put('mutations', entry);
+        }
+      }
     }
   },
 };

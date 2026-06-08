@@ -11,6 +11,7 @@ export interface LocalExpenseRecord {
   mutationType: ExpenseMutationType;
   expense: Expense;
   expenseCategoryId: number | null;
+  shiftId?: number | null;
   payload: ExpenseFormPayload | { id: number };
   syncStatus: LocalExpenseSyncStatus;
   serverId?: number;
@@ -48,6 +49,7 @@ export const localExpensesStore = {
       mutationType,
       expense,
       expenseCategoryId: expense.expense_category_id,
+      shiftId: expense.shift_id ?? null,
       payload,
       syncStatus: 'pending',
       createdAt: new Date().toISOString(),
@@ -85,6 +87,7 @@ export const localExpensesStore = {
       record.expense = { ...record.expense, id: serverId };
     }
     record.expenseCategoryId = record.expense.expense_category_id;
+    record.shiftId = record.expense.shift_id ?? null;
     await db.put('localExpenses', record);
   },
 
@@ -136,6 +139,26 @@ export const localExpensesStore = {
         record.expenseCategoryId = newCategoryId;
         if (record.payload && typeof record.payload === 'object' && 'fields' in record.payload) {
           record.payload.fields.expense_category_id = String(newCategoryId);
+        }
+        await db.put('localExpenses', record);
+      }
+    }
+  },
+
+  async getByShiftId(shiftId: number): Promise<LocalExpenseRecord[]> {
+    const all = await this.getPending();
+    return all.filter((record) => record.expense.shift_id === shiftId || record.shiftId === shiftId);
+  },
+
+  async updateShiftIdInPending(oldShiftId: number, newShiftId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localExpenses');
+    for (const record of all) {
+      if (record.expense.shift_id === oldShiftId || record.shiftId === oldShiftId) {
+        record.expense.shift_id = newShiftId;
+        record.shiftId = newShiftId;
+        if (record.payload && typeof record.payload === 'object' && 'fields' in record.payload) {
+          record.payload.fields.shift_id = String(newShiftId);
         }
         await db.put('localExpenses', record);
       }

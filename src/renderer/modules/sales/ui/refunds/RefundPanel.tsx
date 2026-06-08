@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useSales, useRefund } from '../../api/salesQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
@@ -16,6 +16,7 @@ import { useToast } from '../../../../app/contexts/useToast';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
+import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 
 const statusLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
   paid: { label: 'Paid', variant: 'success' },
@@ -58,7 +59,7 @@ export default function RefundPanel() {
     if (!selectedSale) return;
 
     const items = Object.entries(refundQtys)
-      .filter(([_, qty]) => qty > 0)
+      .filter(([, qty]) => qty > 0)
       .map(([id, qty]) => {
         const saleItem = selectedSale.sale_items?.find((i) => i.id === Number(id));
         if (!saleItem) return { id: Number(id), quantity: qty };
@@ -88,16 +89,16 @@ export default function RefundPanel() {
     setRefundQtys({});
   };
 
-  const paidIds = paidSales.map((s) => s.id);
+  const paidIds = useMemo(() => paidSales.map((s) => s.id), [paidSales]);
   const allSelected = paidIds.length > 0 && paidIds.every((id) => selectedIds.has(id));
 
-  const toggleAll = useCallback(() => {
+  const toggleAll = () => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(paidIds));
     }
-  }, [allSelected, paidIds]);
+  };
 
   const toggleOne = useCallback((id: number) => {
     setSelectedIds((prev) => {
@@ -136,7 +137,7 @@ export default function RefundPanel() {
 
   const refundTotal = Math.round(
     Object.entries(refundQtys)
-      .filter(([_, qty]) => qty > 0)
+      .filter(([, qty]) => qty > 0)
       .reduce((sum, [id, qty]) => {
         const item = selectedSale?.sale_items?.find((i) => i.id === Number(id));
         if (!item) return sum;
@@ -189,7 +190,7 @@ export default function RefundPanel() {
           </div>
         </div>
 
-        <Table<any>
+        <Table<SaleWithSyncMeta>
           rowKey={(s) => s.id}
           columns={[
             { key: 'select', header: '', render: (s) => (
@@ -205,7 +206,14 @@ export default function RefundPanel() {
               </div>
             )},
             { key: 'date', header: 'Date', render: (s) => new Date(s.sale_date).toLocaleDateString() },
-            { key: 'total', header: 'Total', render: (s) => formatCurrency(s.total_amount) },
+            { key: 'total', header: 'Net Total', render: (s: SaleWithSyncMeta) => (
+              <div>
+                <span className="font-semibold">{formatCurrency(netSaleAmount(s))}</span>
+                {refundedAmount(s) > 0 && (
+                  <p className="text-xs text-gray-400">Gross {formatCurrency(grossSaleAmount(s))}</p>
+                )}
+              </div>
+            )},
             { key: 'status', header: 'Status', render: (s) => {
               const st = statusLabel[s.payment_status] || { label: s.payment_status, variant: 'neutral' };
               return <Badge variant={st.variant}>{st.label}</Badge>;

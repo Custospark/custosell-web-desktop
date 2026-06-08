@@ -15,6 +15,7 @@ import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff } from 'lucide-rea
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
+import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 import type { Sale } from '../../api/salesTypes';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
 
@@ -87,7 +88,8 @@ export default function SalesHistory() {
     }
   };
 
-  const totalRevenue = filtered.reduce((s, sale) => s + parseFloat(sale.total_amount), 0);
+  const netRevenue = filtered.reduce((s, sale) => s + netSaleAmount(sale), 0);
+  const totalRefunds = filtered.reduce((s, sale) => s + refundedAmount(sale), 0);
 
   if (isLoading && !sales?.length) return <LoadingSkeleton variant="table" />;
 
@@ -113,7 +115,8 @@ export default function SalesHistory() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Sales History</h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            {filtered.length} sale(s) · Total: {formatCurrency(totalRevenue)}
+            {filtered.length} sale(s) · Net <span className="font-semibold text-gray-600">{formatCurrency(netRevenue)}</span>
+            {totalRefunds > 0 && <> · Refunds <span className="font-semibold text-gray-600">-{formatCurrency(totalRefunds)}</span></>}
             {isOffline && ' · Offline mode'}
             {isFetching && !isLoading && ' · Updating…'}
           </p>
@@ -163,7 +166,14 @@ export default function SalesHistory() {
             </div>
           )},
           { key: 'sale_date', header: 'Date', render: (s) => new Date(s.sale_date).toLocaleDateString() },
-          { key: 'total_amount', header: 'Total', render: (s) => formatCurrency(s.total_amount) },
+          { key: 'total_amount', header: 'Net Total', render: (s) => (
+            <div>
+              <span className="font-semibold">{formatCurrency(netSaleAmount(s))}</span>
+              {refundedAmount(s) > 0 && (
+                <p className="text-xs text-gray-400">Gross {formatCurrency(grossSaleAmount(s))}</p>
+              )}
+            </div>
+          )},
           { key: 'payment_status', header: 'Status', render: (s) => s.payment_status === 'refunded' ? <Badge variant="danger">Full Refund</Badge> : s.payment_status === 'partially_refunded' ? <Badge variant="warning">Partially Refunded</Badge> : <Badge variant="success">Paid</Badge> },
           { key: 'actions', header: 'Receipt', render: (s) => (
             <div className="flex gap-1">

@@ -3,18 +3,22 @@ import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
 import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import type { Expense } from '../api/ExpenseTypes';
 
 interface ExpenseFormProps {
   open: boolean;
   onClose: () => void;
   expense?: Expense | null;
+  shiftId?: number | null;
 }
 
-export default function ExpenseForm({ open, onClose, expense }: ExpenseFormProps) {
+export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
   const { data: categories } = useExpenseCategories();
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
+  const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
+  const activeShiftId = shiftId ?? authShiftId;
 
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('');
@@ -29,27 +33,29 @@ export default function ExpenseForm({ open, onClose, expense }: ExpenseFormProps
   const isEditing = !!expense;
 
   useEffect(() => {
-    if (expense) {
-      setCategoryId(expense.expense_category_id?.toString() || '');
-      setAmount(parseFloat(expense.amount).toString());
-      setDescription(expense.description);
-      setReference(expense.reference || '');
-      setExpenseDate(expense.expense_date.split(' ')[0] || expense.expense_date);
-      setIsRecurring(expense.is_recurring);
-      setRecurrenceInterval(expense.recurrence_interval || 'monthly');
-      setNextDueDate(expense.next_due_date || '');
-      setReceipt(null);
-    } else {
-      setCategoryId('');
-      setAmount('');
-      setDescription('');
-      setReference('');
-      setExpenseDate(new Date().toISOString().split('T')[0]);
-      setIsRecurring(false);
-      setRecurrenceInterval('monthly');
-      setNextDueDate('');
-      setReceipt(null);
-    }
+    queueMicrotask(() => {
+      if (expense) {
+        setCategoryId(expense.expense_category_id?.toString() || '');
+        setAmount(parseFloat(expense.amount).toString());
+        setDescription(expense.description);
+        setReference(expense.reference || '');
+        setExpenseDate(expense.expense_date.split(' ')[0] || expense.expense_date);
+        setIsRecurring(expense.is_recurring);
+        setRecurrenceInterval(expense.recurrence_interval || 'monthly');
+        setNextDueDate(expense.next_due_date || '');
+        setReceipt(null);
+      } else {
+        setCategoryId('');
+        setAmount('');
+        setDescription('');
+        setReference('');
+        setExpenseDate(new Date().toISOString().split('T')[0]);
+        setIsRecurring(false);
+        setRecurrenceInterval('monthly');
+        setNextDueDate('');
+        setReceipt(null);
+      }
+    });
   }, [expense, open]);
 
   const handleSubmit = () => {
@@ -61,6 +67,8 @@ export default function ExpenseForm({ open, onClose, expense }: ExpenseFormProps
     formData.append('description', description);
     if (reference) formData.append('reference', reference);
     formData.append('expense_date', expenseDate);
+    if (!isEditing && activeShiftId) formData.append('shift_id', String(activeShiftId));
+    if (isEditing && expense?.shift_id) formData.append('shift_id', String(expense.shift_id));
     if (receipt) formData.append('receipt', receipt);
     if (isRecurring) {
       formData.append('is_recurring', '1');
@@ -83,7 +91,7 @@ export default function ExpenseForm({ open, onClose, expense }: ExpenseFormProps
       open={open}
       onClose={onClose}
       title={isEditing ? 'Edit Expense' : 'Record Expense'}
-      subtitle="Log a business expense"
+      subtitle={activeShiftId ? 'Linked to your active shift for handover reporting' : 'Log a business expense'}
       onSubmit={handleSubmit}
       isSubmitting={isPending}
       canSubmit={canSubmit}

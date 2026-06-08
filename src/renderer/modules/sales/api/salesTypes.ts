@@ -62,6 +62,8 @@ export interface Sale {
   tax_total: string;
   discount_amount: string;
   total_amount: string;
+  refunds?: number | string;
+  net_amount?: number | string;
   amount_tendered: string | null;
   change_given: string | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';

@@ -91,6 +91,30 @@ After a successful queue drain:
 
 Dashboard uses a **server baseline** (`dashboardKeys.server`) plus a fresh pending overlay on each read — never double-counts synced sales.
 
+## Net sales accounting
+
+Shared formula components (see `shared/utils/accounting.ts`):
+
+| Scope | What is included | Net sales headline |
+|-------|------------------|-------------------|
+| **Dashboard / trend** | Business + calendar date (`sale_date`, `expense_date`) | Gross − refunds − expenses |
+| **My Shift** | All rows with matching `shift_id` | Gross − refunds |
+| **Cash handover** | Shift cash collected − shift-linked expenses | Physical cash only |
+
+Dashboard money cards use explicit backend fields for:
+
+- `today_gross_sales`: original sale totals for today.
+- `today_refunds`: refunded amounts from today's sale items.
+- `today_net_sales`: gross minus refunds.
+- `today_expenses`: operating expenses recorded today (includes shift-linked expenses).
+- `today_net_after_expenses`: gross − refunds − expenses (**Net Today** card).
+
+The seven-day chart shows blue bars for net sales, a red line for refunds + expenses, and a green line for transaction count.
+
+My Shift shows **Net sales** (gross − refunds) and **Cash to hand over** (cash collected − shift expenses) as separate headline figures. Shift expenses reduce cash handover, not mobile/card totals. Payment buckets show net collected per method after refunds.
+
+Refund amounts use proportional discount logic on both frontend and backend. List views show net remaining (`total_amount − refunds`); sale receipts keep the original gross total plus refund lines.
+
 ## UI indicators
 
 - Red offline banner above layout (dismissible — persisted in localStorage)

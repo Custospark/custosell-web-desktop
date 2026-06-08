@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react';
 import { format, subDays } from 'date-fns';
 import { usePlatformBusinesses, usePlatformBusinessStats, useUpdateBusinessStatus } from './api/PlatformQueries';
+import {
+  canChangeBusinessStatus,
+  getBusinessNextStatus,
+  validateBusinessStatsDateRange,
+} from './api/platformBusinessValidation';
 import type { ActivityStatus, PlatformBusiness } from './api/PlatformTypes';
 import { PlatformBusinessOnboardingChart } from './PlatformCharts';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Badge } from '../../shared/components/badges/Badge';
@@ -41,20 +47,29 @@ export default function PlatformBusinessesPage() {
   const [activityFilter, setActivityFilter] = useState('');
   const [dateFrom, setDateFrom] = useState(defaultRange().from);
   const [dateTo, setDateTo] = useState(defaultRange().to);
+  const [dateTouched, setDateTouched] = useState<{ from: boolean; to: boolean }>({ from: false, to: false });
 
+  const dateValidation = useMemo(
+    () => validateBusinessStatsDateRange(dateFrom, dateTo),
+    [dateFrom, dateTo],
+  );
+
+  const statsParams = useMemo(
+    () => (dateValidation.valid ? { date_from: dateFrom, date_to: dateTo } : {}),
+    [dateFrom, dateTo, dateValidation.valid],
+  );
   const [statusModal, setStatusModal] = useState<{
     business: PlatformBusiness;
     nextStatus: 'active' | 'suspended';
   } | null>(null);
 
-  const statsParams = useMemo(() => ({ date_from: dateFrom, date_to: dateTo }), [dateFrom, dateTo]);
   const listParams = useMemo(() => ({
     sort: 'gross_sales_30d',
     direction: 'desc',
     per_page: '500',
   }), []);
 
-  const { data: stats, isLoading: statsLoading } = usePlatformBusinessStats(statsParams);
+  const { data: stats, isLoading: statsLoading } = usePlatformBusinessStats(statsParams, dateValidation.valid);
   const { data, isLoading: listLoading } = usePlatformBusinesses(listParams);
   const updateStatus = useUpdateBusinessStatus();
 
@@ -73,11 +88,12 @@ export default function PlatformBusinessesPage() {
     });
   }, [data?.data, search, activityFilter]);
 
+  const paginated = usePagination(rows, 15);
+
   const openStatusModal = (business: PlatformBusiness) => {
-    setStatusModal({
-      business,
-      nextStatus: business.status === 'active' ? 'suspended' : 'active',
-    });
+    const nextStatus = getBusinessNextStatus(business);
+    if (!nextStatus || !canChangeBusinessStatus(business)) return;
+    setStatusModal({ business, nextStatus });
   };
 
   const handleStatusConfirm = (reason: string) => {
@@ -131,25 +147,52 @@ export default function PlatformBusinessesPage() {
           <input
             type="date"
             value={dateFrom}
-            max={dateTo}
+            max={dateTo || undefined}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            onBlur={() => setDateTouched((t) => ({ ...t, from: true }))}
+            aria-invalid={dateTouched.from && Boolean(dateValidation.errors.dateFrom)}
+            className={`border rounded-lg px-3 py-2 text-sm ${
+              dateTouched.from && dateValidation.errors.dateFrom
+                ? 'border-red-500 focus:ring-red-500/30'
+                : 'border-gray-200'
+            }`}
           />
+          {dateTouched.from && dateValidation.errors.dateFrom && (
+            <p className="text-xs text-red-600 mt-1">{dateValidation.errors.dateFrom}</p>
+          )}
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
           <input
             type="date"
             value={dateTo}
-            min={dateFrom}
+            min={dateFrom || undefined}
             onChange={(e) => setDateTo(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            onBlur={() => setDateTouched((t) => ({ ...t, to: true }))}
+            aria-invalid={dateTouched.to && Boolean(dateValidation.errors.dateTo)}
+            className={`border rounded-lg px-3 py-2 text-sm ${
+              dateTouched.to && dateValidation.errors.dateTo
+                ? 'border-red-500 focus:ring-red-500/30'
+                : 'border-gray-200'
+            }`}
           />
+          {dateTouched.to && dateValidation.errors.dateTo && (
+            <p className="text-xs text-red-600 mt-1">{dateValidation.errors.dateTo}</p>
+          )}
         </div>
         <p className="text-xs text-gray-500 sm:ml-auto pb-2">
-          Adjust the range to see onboarding stats and cumulative growth for that period
+          {dateValidation.valid
+            ? 'Adjust the range to see onboarding stats and cumulative growth for that period'
+            : 'Fix the date range to load onboarding statistics'}
         </p>
       </div>
+
+      {!dateValidation.valid && (dateTouched.from || dateTouched.to) && (
+        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{dateValidation.firstError ?? 'Enter a valid date range'}</span>
+        </div>
+      )}
 
       {stats && (
         <>
@@ -210,7 +253,9 @@ export default function PlatformBusinessesPage() {
               onChange={(e) => setSearch(e.target.value)}
               onClear={() => setSearch('')}
             />
-            <p className="text-xs text-gray-400 mt-1">Instant client-side search · {rows.length} of {data?.data?.length ?? 0} shown</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {rows.length} match{rows.length === 1 ? '' : 'es'} · {data?.data?.length ?? 0} total loaded
+            </p>
           </div>
           <select
             value={activityFilter}
@@ -228,49 +273,59 @@ export default function PlatformBusinessesPage() {
         {listLoading ? (
           <LoadingSkeleton variant="table" />
         ) : (
-          <Table<PlatformBusiness>
-            rowKey={(b) => b.id}
-            columns={[
-              { key: 'name', header: 'Business', render: (b) => (
-                <div>
-                  <p className="font-medium text-gray-900">{b.name}</p>
-                  <p className="text-xs text-gray-500">{b.owner_email ?? b.email ?? '—'}</p>
-                </div>
-              )},
-              { key: 'account', header: 'Account', render: (b) => (
-                <Badge variant={b.status === 'active' ? 'success' : 'danger'}>{b.status}</Badge>
-              )},
-              { key: 'activity', header: 'Activity', render: (b) => (
-                <Badge variant={activityBadge[b.activity_status]}>{b.activity_status.replace('_', ' ')}</Badge>
-              )},
-              { key: 'currency', header: 'Currency' },
-              { key: 'gross_today', header: 'Gross today', render: (b) => formatCurrency(b.gross_sales_today, b.currency) },
-              { key: 'gross_7d', header: 'Gross 7d', render: (b) => formatCurrency(b.gross_sales_7d, b.currency) },
-              { key: 'gross_30d', header: 'Gross 30d', render: (b) => (
-                <span className="font-semibold">{formatCurrency(b.gross_sales_30d, b.currency)}</span>
-              )},
-              { key: 'gross_all', header: 'Gross all time', render: (b) => formatCurrency(b.gross_sales_all_time, b.currency) },
-              { key: 'transactions_30d', header: 'Sales (30d)', render: (b) => (
-                <span title="Count of sale records in the last 30 days">{b.transactions_30d.toLocaleString()}</span>
-              )},
-              { key: 'plan', header: 'Plan', render: (b) => b.plan_name ?? '—' },
-              { key: 'actions', header: '', render: (b) => (
-                <Button
-                  variant={b.status === 'active' ? 'danger' : 'secondary'}
-                  size="sm"
-                  onClick={() => openStatusModal(b)}
-                  disabled={updateStatus.isPending}
-                >
-                  {b.status === 'active' ? (
-                    <><Ban className="w-3.5 h-3.5 mr-1" />Suspend</>
-                  ) : (
-                    <><CheckCircle className="w-3.5 h-3.5 mr-1" />Reactivate</>
-                  )}
-                </Button>
-              )},
-            ]}
-            data={rows}
-          />
+          <>
+            <Table<PlatformBusiness>
+              rowKey={(b) => b.id}
+              columns={[
+                { key: 'name', header: 'Business', render: (b) => (
+                  <div>
+                    <p className="font-medium text-gray-900">{b.name}</p>
+                    <p className="text-xs text-gray-500">{b.owner_email ?? b.email ?? '—'}</p>
+                  </div>
+                )},
+                { key: 'account', header: 'Account', render: (b) => (
+                  <Badge variant={b.status === 'active' ? 'success' : 'danger'}>{b.status}</Badge>
+                )},
+                { key: 'activity', header: 'Activity', render: (b) => (
+                  <Badge variant={activityBadge[b.activity_status]}>{b.activity_status.replace('_', ' ')}</Badge>
+                )},
+                { key: 'currency', header: 'Currency' },
+                { key: 'gross_today', header: 'Gross today', render: (b) => formatCurrency(b.gross_sales_today, b.currency) },
+                { key: 'gross_7d', header: 'Gross 7d', render: (b) => formatCurrency(b.gross_sales_7d, b.currency) },
+                { key: 'gross_30d', header: 'Gross 30d', render: (b) => (
+                  <span className="font-semibold">{formatCurrency(b.gross_sales_30d, b.currency)}</span>
+                )},
+                { key: 'gross_all', header: 'Gross all time', render: (b) => formatCurrency(b.gross_sales_all_time, b.currency) },
+                { key: 'transactions_30d', header: 'Sales (30d)', render: (b) => (
+                  <span title="Count of sale records in the last 30 days">{b.transactions_30d.toLocaleString()}</span>
+                )},
+                { key: 'plan', header: 'Plan', render: (b) => b.plan_name ?? '—' },
+                { key: 'actions', header: '', render: (b) => (
+                  <Button
+                    variant={b.status === 'active' ? 'danger' : 'secondary'}
+                    size="sm"
+                    onClick={() => openStatusModal(b)}
+                    disabled={updateStatus.isPending}
+                  >
+                    {b.status === 'active' ? (
+                      <><Ban className="w-3.5 h-3.5 mr-1" />Suspend</>
+                    ) : (
+                      <><CheckCircle className="w-3.5 h-3.5 mr-1" />Reactivate</>
+                    )}
+                  </Button>
+                )},
+              ]}
+              data={paginated.data}
+            />
+            <Pagination
+              currentPage={paginated.page}
+              totalPages={paginated.totalPages}
+              totalItems={paginated.totalItems}
+              pageSize={paginated.pageSize}
+              onPageChange={paginated.setPage}
+              onPageSizeChange={paginated.setPageSize}
+            />
+          </>
         )}
       </Card>
     </div>

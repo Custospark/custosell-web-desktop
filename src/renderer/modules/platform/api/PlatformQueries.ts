@@ -11,6 +11,7 @@ import type {
   PlatformRole,
   PlatformUser,
 } from './PlatformTypes';
+import { assertBusinessStatusReason } from './platformBusinessValidation';
 
 export const platformKeys = {
   all: ['platform'] as const,
@@ -46,13 +47,14 @@ export function usePlatformMetrics(days = 7) {
   });
 }
 
-export function usePlatformBusinessStats(params: Record<string, string> = {}) {
+export function usePlatformBusinessStats(params: Record<string, string> = {}, enabled = true) {
   return useQuery({
     queryKey: platformKeys.businessStats(params),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: PlatformBusinessStats }>(PLATFORM.BUSINESS_STATS, { params });
       return data.data;
     },
+    enabled: enabled && Boolean(params.date_from && params.date_to),
     networkMode: 'always',
   });
 }
@@ -74,7 +76,11 @@ export function useUpdateBusinessStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status, reason }: { id: number; status: 'active' | 'suspended'; reason: string }) => {
-      const { data } = await axiosInstance.patch<{ message: string }>(PLATFORM.BUSINESS_STATUS(id), { status, reason });
+      const trimmedReason = assertBusinessStatusReason(reason);
+      const { data } = await axiosInstance.patch<{ message: string }>(
+        PLATFORM.BUSINESS_STATUS(id),
+        { status, reason: trimmedReason },
+      );
       return data;
     },
     onSuccess: (data) => {

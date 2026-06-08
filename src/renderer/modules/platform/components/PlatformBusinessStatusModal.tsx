@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Ban, CheckCircle, X } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
+import { cn } from '../../../shared/utils/cn';
 import type { PlatformBusiness } from '../api/PlatformTypes';
-
-const MIN_REASON_LENGTH = 3;
-const MAX_REASON_LENGTH = 1000;
+import {
+  BUSINESS_STATUS_REASON_MAX,
+  validateBusinessStatusReason,
+} from '../api/platformBusinessValidation';
 
 export interface PlatformBusinessStatusModalProps {
   open: boolean;
@@ -25,27 +27,31 @@ export function PlatformBusinessStatusModal({
   onConfirm,
 }: PlatformBusinessStatusModalProps) {
   const [reason, setReason] = useState('');
-  const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const suspending = nextStatus === 'suspended';
+
+  const validation = useMemo(() => validateBusinessStatusReason(reason), [reason]);
+  const showReasonError = (touched || submitAttempted) && Boolean(validation.errors.reason);
+  const canSubmit = validation.valid;
 
   useEffect(() => {
     if (open) {
       setReason('');
-      setError('');
+      setTouched(false);
+      setSubmitAttempted(false);
     }
   }, [open, business?.id, nextStatus]);
 
   if (!business || !nextStatus) return null;
 
   const trimmed = reason.trim();
-  const isValid = trimmed.length >= MIN_REASON_LENGTH;
 
   const handleSubmit = () => {
-    if (!isValid) {
-      setError(`Please enter a reason (at least ${MIN_REASON_LENGTH} characters).`);
-      return;
-    }
+    setSubmitAttempted(true);
+    setTouched(true);
+    if (!validation.valid) return;
     onConfirm(trimmed);
   };
 
@@ -107,55 +113,75 @@ export function PlatformBusinessStatusModal({
               </div>
             </div>
 
-            <div className="mt-5">
+            <form
+              className="mt-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+              noValidate
+            >
               <label htmlFor="business-status-reason" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Reason <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="business-status-reason"
                 value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value.slice(0, MAX_REASON_LENGTH));
-                  if (error) setError('');
-                }}
+                onChange={(e) => setReason(e.target.value.slice(0, BUSINESS_STATUS_REASON_MAX))}
+                onBlur={() => setTouched(true)}
                 rows={4}
                 disabled={isPending}
+                aria-invalid={showReasonError}
+                aria-describedby={showReasonError ? 'business-status-reason-error' : 'business-status-reason-hint'}
                 placeholder={
                   suspending
                     ? 'e.g. Policy violation, unpaid subscription, fraudulent activity...'
                     : 'e.g. Issue resolved, payment received, account verified...'
                 }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-gray-50"
+                className={cn(
+                  'w-full border rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400',
+                  'focus:outline-none focus:ring-2 disabled:bg-gray-50',
+                  showReasonError
+                    ? 'border-red-500 focus:ring-red-500/30 focus:border-red-500'
+                    : 'border-gray-200 focus:ring-blue-500/30 focus:border-blue-500',
+                )}
               />
-              <div className="flex items-center justify-between mt-1.5">
-                <p className="text-xs text-gray-400">
-                  {trimmed.length}/{MAX_REASON_LENGTH} · included in the email to{' '}
+              <div className="flex flex-col gap-1 mt-1.5">
+                <p id="business-status-reason-hint" className="text-xs text-gray-400">
+                  {trimmed.length}/{BUSINESS_STATUS_REASON_MAX} · included in the email to{' '}
                   {business.owner_email ?? business.email ?? 'the owner'}
                 </p>
-                {error && <p className="text-xs text-red-600">{error}</p>}
+                {showReasonError && (
+                  <p id="business-status-reason-error" className="text-xs text-red-600" role="alert">
+                    {validation.errors.reason}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="flex items-start gap-2 mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800 leading-relaxed">
-                This action is audited. The reason is required and will be shared with the business owner by email.
-              </p>
-            </div>
+              <div className="flex items-start gap-2 mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  This action is audited. The reason is required and will be shared with the business owner by email.
+                </p>
+              </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <Button variant="secondary" onClick={onClose} disabled={isPending}>
-                Cancel
-              </Button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isPending || !isValid}
-                className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${confirmBg}`}
-              >
-                {isPending ? 'Saving...' : suspending ? 'Confirm Suspend' : 'Confirm Reactivate'}
-              </button>
-            </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
+                  Cancel
+                </Button>
+                <button
+                  type="submit"
+                  disabled={isPending || !canSubmit}
+                  className={cn(
+                    'px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors',
+                    'disabled:opacity-50 disabled:cursor-not-allowed',
+                    confirmBg,
+                  )}
+                >
+                  {isPending ? 'Saving...' : suspending ? 'Confirm Suspend' : 'Confirm Reactivate'}
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

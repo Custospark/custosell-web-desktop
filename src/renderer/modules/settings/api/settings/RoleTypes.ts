@@ -36,6 +36,7 @@ export const PERMISSIONS = [
   'settings.read',
   'settings.update',
   'reports.read',
+  'shifts.close_report',
   'staff.create',
   'staff.read',
   'staff.update',

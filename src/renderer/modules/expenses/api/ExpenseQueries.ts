@@ -67,7 +67,7 @@ function matchesExpenseFilters(expense: ExpenseWithSyncMeta, filters?: Record<st
   if (!filters) return true;
   if (filters.category_id && String(expense.expense_category_id ?? '') !== filters.category_id) return false;
   if (filters.shift_id && String(expense.shift_id ?? '') !== filters.shift_id) return false;
-  const expenseDate = expense.expense_date.slice(0, 10);
+  const expenseDate = (expense.expense_date ?? '').slice(0, 10);
   if (filters.date_from && expenseDate < filters.date_from.slice(0, 10)) return false;
   if (filters.date_to && expenseDate > filters.date_to.slice(0, 10)) return false;
   return true;

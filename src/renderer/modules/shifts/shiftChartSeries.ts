@@ -41,9 +41,13 @@ export function buildShiftHistorySeries(
     });
 }
 
+function saleTimestamp(sale: SaleWithSyncMeta): string {
+  return sale.sale_date || sale.created_at || '';
+}
+
 export function buildCurrentShiftProgressSeries(sales: SaleWithSyncMeta[]): ShiftProgressPoint[] {
   const sorted = [...sales].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    (a, b) => new Date(saleTimestamp(a)).getTime() - new Date(saleTimestamp(b)).getTime(),
   );
 
   let cumulative = 0;
@@ -53,7 +57,7 @@ export function buildCurrentShiftProgressSeries(sales: SaleWithSyncMeta[]): Shif
     return {
       id: sale.id,
       index: index + 1,
-      label: formatShiftTime(sale.created_at),
+      label: formatShiftTime(saleTimestamp(sale)),
       cumulative,
       saleAmount,
       receipt: sale.receipt_number,

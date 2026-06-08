@@ -10,7 +10,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import type { ShiftHistoryPoint, ShiftProgressPoint } from './shiftChartSeries';
 
@@ -42,6 +42,18 @@ function ChartTooltipShell({ title, subtitle, children }: { title: string; subti
       <div className="space-y-1.5">{children}</div>
     </div>
   );
+}
+
+function ChartContainer({ children, className }: { children: ReactNode; className: string }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  if (!ready) {
+    return <div className={className} aria-hidden />;
+  }
+  return <div className={className}>{children}</div>;
 }
 
 function TooltipRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
@@ -95,7 +107,7 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
         </div>
       </div>
 
-      <div className="h-72">
+      <ChartContainer className="h-72 min-h-[288px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <defs>
@@ -146,7 +158,7 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
             />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+      </ChartContainer>
     </div>
   );
 }
@@ -171,7 +183,7 @@ export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) 
         </div>
       </div>
 
-      <div className="h-56">
+      <ChartContainer className="h-56 min-h-[224px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
@@ -223,7 +235,7 @@ export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) 
             />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </ChartContainer>
     </div>
   );
 }

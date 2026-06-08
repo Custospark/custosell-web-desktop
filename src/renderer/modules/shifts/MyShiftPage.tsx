@@ -1,12 +1,11 @@
 import { useRef, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useActiveShift, useClockIn, useClockOut, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
+import { useActiveShift, useClockIn, useClockOut, useShiftExpenses, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
 import type { ShiftWithSyncMeta } from '../../app/store/offline/localShiftsStore';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
-import { useLogout } from '../../shared/api/account/AccountQueries';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -25,14 +24,19 @@ import {
   RefreshCw, WifiOff, ReceiptText, History,
 } from 'lucide-react';
 import ReceiptPreviewModal from '../sales/ui/history/ReceiptPreviewModal';
-import { useExpenses } from '../expenses/api/ExpenseQueries';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import ExpenseForm from '../expenses/components/ExpenseForm';
-import ShiftReceiptContent from './ShiftReceiptContent';
+import ShiftCloseReportContent from './ShiftCloseReportContent';
+import { buildShiftCloseReportData } from './buildShiftCloseReportData';
+import {
+  canDownloadShiftClosePdf,
+  downloadShiftClosePdf,
+} from './useShiftClosePdf';
 import { CurrentShiftProgressChart, ShiftHistoryTrendChart } from './ShiftCharts';
 import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shiftChartSeries';
 import { grossSaleAmount, netSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
-import { cashHandover, netSalesAfterRefunds } from '../../shared/utils/accounting';
+import { cashHandover, netSales } from '../../shared/utils/accounting';
+import { useToast } from '../../app/contexts/useToast';
 
 type ShiftLocationState = { openEndShift?: boolean };
 
@@ -80,13 +84,14 @@ export default function MyShiftPage() {
   const { data: allShifts } = useShifts();
   const clockIn = useClockIn();
   const clockOut = useClockOut();
-  const logoutMutation = useLogout();
   const { confirm } = useConfirm();
   const location = useLocation();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [search, setSearch] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     if ((location.state as ShiftLocationState | null)?.openEndShift) {
@@ -98,10 +103,7 @@ export default function MyShiftPage() {
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
   const { data: shiftSales } = useShiftSales(shiftId ?? null);
-  const { data: shiftExpenses = [] } = useExpenses(
-    shiftId ? { shift_id: String(shiftId) } : undefined,
-    { enabled: !!shiftId },
-  );
+  const { data: shiftExpenses = [] } = useShiftExpenses(shiftId ?? null);
 
   const filteredSales = useMemo(() => {
     if (!shiftSales) return [];
@@ -114,24 +116,39 @@ export default function MyShiftPage() {
 
   const shiftGrossTotal = shiftSales?.reduce((s, sale) => s + grossSaleAmount(sale), 0) || 0;
   const shiftRefundsTotal = shiftSales?.reduce((s, sale) => s + refundedAmount(sale), 0) || 0;
-  const netShiftTotal = netSalesAfterRefunds(shiftGrossTotal, shiftRefundsTotal);
+  const shiftExpenseTotal = shiftExpenses.reduce((sum, expense) => sum + toAmount(expense.amount), 0);
+  const netShiftTotal = netSales(shiftGrossTotal, shiftRefundsTotal, shiftExpenseTotal);
   const cashTotal = shiftSales?.filter((s) => s.payment_method === 'cash').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
   const mobileTotal = shiftSales?.filter((s) => s.payment_method === 'mobile_money').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
   const cardTotal = shiftSales?.filter((s) => s.payment_method === 'card' || s.payment_method === 'other').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
-  const shiftExpenseTotal = shiftExpenses.reduce((sum, expense) => sum + toAmount(expense.amount), 0);
   const handoverAmount = cashHandover(cashTotal, shiftExpenseTotal);
 
-  const shiftTotals = {
-    transactionCount: shiftSales?.length || 0,
-    grossSales: shiftGrossTotal,
-    refunds: shiftRefundsTotal,
-    cash: cashTotal,
-    mobileMoney: mobileTotal,
-    cardOther: cardTotal,
-    shiftExpenses: shiftExpenseTotal,
-  };
-
   const clockInValue = shift?.clock_in || authUser?.shift_clock_in;
+
+  const liveReportData = useMemo(
+    () =>
+      buildShiftCloseReportData({
+        business,
+        authUser,
+        clockIn: clockInValue,
+        clockOut: shift?.clock_out ?? null,
+        shiftSales: shiftSales ?? [],
+        shiftExpenses,
+        isOfflineCopy: isOffline,
+      }),
+    [
+      business,
+      authUser,
+      clockInValue,
+      shift?.clock_out,
+      shiftSales,
+      shiftExpenses,
+      isOffline,
+    ],
+  );
+
+  const reportData = liveReportData;
+  const canDownloadPdf = !isOffline && canDownloadShiftClosePdf(authUser);
 
   const completedShifts = useMemo(() => {
     if (!allShifts || !authUser?.id) return [];
@@ -153,7 +170,7 @@ export default function MyShiftPage() {
   const statCards: StatCardDef[] = [
     {
       label: 'Transactions',
-      value: String(shiftTotals.transactionCount),
+      value: String(shiftSales?.length || 0),
       badge: 'Count',
       icon: ShoppingCart,
       color: 'blue',
@@ -194,14 +211,33 @@ export default function MyShiftPage() {
 
   const handlePrintShift = useReactToPrint({
     contentRef: receiptRef,
-    documentTitle: `shift-${shiftId || 'end'}`,
-    pageStyle: `@page { margin: 8mm; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`,
+    documentTitle: `shift-close-${shiftId || 'report'}`,
+    pageStyle: `@page { size: A4; margin: 10mm; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`,
   });
 
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: shiftKeys.all });
   }, [queryClient]);
+
+  const triggerPrint = useCallback(() => {
+    requestAnimationFrame(() => {
+      handlePrintShift();
+    });
+  }, [handlePrintShift]);
+
+  const handleDownloadPdf = async () => {
+    if (!shiftId) return;
+    setPdfLoading(true);
+    try {
+      await downloadShiftClosePdf(shiftId);
+      showToast('success', 'Shift report downloaded');
+    } catch (error) {
+      showToast('error', error instanceof Error ? error.message : 'Failed to download PDF');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const handleEndShift = async () => {
     if (!shiftId) return;
@@ -213,16 +249,24 @@ export default function MyShiftPage() {
       variant: 'warning',
     });
     if (!confirmed) return;
-    setShowReceiptPreview(false);
     try {
-      await clockOut.mutateAsync(
-        { id: shiftId, totals: { total_sales: netShiftTotal, cash: cashTotal, mobile_money: mobileTotal, card: cardTotal } },
-      );
-      handlePrintShift();
-      setTimeout(() => logoutMutation.mutate(), 3000);
+      await clockOut.mutateAsync({
+        id: shiftId,
+        totals: {
+          total_sales: netShiftTotal,
+          cash: cashTotal,
+          mobile_money: mobileTotal,
+          card: cardTotal,
+        },
+      });
+      showToast('success', 'Shift ended. You can log out when ready.');
     } catch (e) {
       console.error('Failed to end shift:', e);
     }
+  };
+
+  const closeReceiptModal = () => {
+    setShowReceiptPreview(false);
   };
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
@@ -271,7 +315,7 @@ export default function MyShiftPage() {
             <RefreshCw className={cn('w-4 h-4', isRefetching && 'animate-spin')} />
           </button>
           <Button variant="outline" onClick={() => setShowReceiptPreview(true)}>
-            <Printer className="w-4 h-4 mr-1.5" />Shift Receipt
+            <Printer className="w-4 h-4 mr-1.5" />Shift Report
           </Button>
           <Button variant="outline" onClick={() => setShowExpenseForm(true)}>
             <ReceiptText className="w-4 h-4 mr-1.5" />Record Expense
@@ -300,7 +344,7 @@ export default function MyShiftPage() {
           <CurrentShiftProgressChart
             data={shiftProgressData}
             currentTotal={netShiftTotal}
-            receiptCount={shiftTotals.transactionCount}
+            receiptCount={shiftSales?.length || 0}
           />
 
           <ShiftTransactionsTable
@@ -329,7 +373,7 @@ export default function MyShiftPage() {
                 </div>
               )}
               <div className="flex justify-between border-t border-gray-100 pt-2">
-                <span className="font-medium text-gray-800">Net sales</span>
+                <span className="font-medium text-gray-800">Net sales (gross - refunds - expenses)</span>
                 <span className="font-bold tabular-nums">{formatCurrency(netShiftTotal)}</span>
               </div>
               <div className="flex justify-between">
@@ -350,24 +394,30 @@ export default function MyShiftPage() {
         </div>
       </div>
 
-      <Modal isOpen={showReceiptPreview} onClose={() => setShowReceiptPreview(false)} title="Shift Receipt" size="sm">
+      <div className="fixed -left-[9999px] top-0 w-[210mm] pointer-events-none" aria-hidden>
         <div ref={receiptRef}>
-          <ShiftReceiptContent
-            businessName={business?.name || 'CUSTOSELL'}
-            cashierName={authUser?.name || '—'}
-            clockIn={clockInValue}
-            clockOutLabel={formatShiftDateTime(new Date().toISOString())}
-            totals={shiftTotals}
-            preview
-          />
+          <ShiftCloseReportContent data={reportData} forPrint />
         </div>
-        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-200">
-          <Button variant="outline" onClick={() => setShowReceiptPreview(false)}>Cancel</Button>
-          <Button variant="outline" onClick={handlePrintShift}>
+      </div>
+
+      <Modal
+        isOpen={showReceiptPreview}
+        onClose={closeReceiptModal}
+        title="Shift Close Report"
+        size="lg"
+      >
+        <div className="max-h-[70vh] overflow-y-auto border border-gray-100 rounded-lg">
+          <ShiftCloseReportContent data={reportData} />
+        </div>
+        <div className="flex flex-wrap justify-end gap-2 mt-4 pt-3 border-t border-gray-200">
+          <Button variant="outline" onClick={closeReceiptModal}>Close</Button>
+          {canDownloadPdf && (
+            <Button variant="outline" onClick={handleDownloadPdf} loading={pdfLoading}>
+              Download PDF
+            </Button>
+          )}
+          <Button variant="outline" onClick={triggerPrint}>
             <Printer className="w-4 h-4 mr-1.5" />Print
-          </Button>
-          <Button onClick={handleEndShift} loading={clockOut.isPending}>
-            <LogOut className="w-4 h-4 mr-1.5" />End & Print
           </Button>
         </div>
       </Modal>
@@ -421,13 +471,16 @@ function ShiftTransactionsTable({
                   {sale._pendingRefundSync && <Badge variant="warning">Refund pending</Badge>}
                 </div>
               )},
-              { key: 'created_at', header: 'Time', render: (sale) => formatShiftTime(sale.created_at) },
+              { key: 'created_at', header: 'Time', render: (sale) => formatShiftTime(sale.sale_date || sale.created_at) },
               { key: 'items', header: 'Items', render: (sale) => sale.sale_items?.length || 0 },
-              { key: 'payment_method', header: 'Payment', render: (sale) => (
-                <Badge variant={sale.payment_method === 'cash' ? 'success' : sale.payment_method === 'mobile_money' ? 'primary' : 'warning'}>
-                  {sale.payment_method.replace('_', ' ')}
-                </Badge>
-              )},
+              { key: 'payment_method', header: 'Payment', render: (sale) => {
+                const method = sale.payment_method ?? 'other';
+                return (
+                  <Badge variant={method === 'cash' ? 'success' : method === 'mobile_money' ? 'primary' : 'warning'}>
+                    {method.replace(/_/g, ' ')}
+                  </Badge>
+                );
+              }},
               { key: 'total_amount', header: 'Net Total', align: 'right', render: (sale) => (
                 <div className="text-right">
                   <span className="font-semibold">{formatCurrency(netSaleAmount(sale))}</span>

@@ -6,7 +6,7 @@
  *
  * Scope determines which rows are included:
  * - Dashboard / daily trend: business + calendar date (sale_date, expense_date)
- * - My Shift: shift_id (all sales & shift-linked expenses for that shift)
+ * - My Shift / shift close & reconciliation: shift_id; net_sales = gross - refunds - shift expenses
  *
  * Shift expenses reduce cash handover, not mobile/card totals.
  */

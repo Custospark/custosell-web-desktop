@@ -19,6 +19,15 @@ import {
 import { isOptimisticSale } from '../../app/store/offline/offlineCacheReconcile';
 import { isNetworkFailure } from '../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
+import {
+  isCompletelyOffline,
+  shouldUseClientStorage,
+} from '../../app/store/offline/offlineQueryUtils';
+import {
+  localExpensesStore,
+  toExpenseWithSyncMeta,
+} from '../../app/store/offline/localExpensesStore';
+import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import type { Sale } from '../sales/api/salesTypes';
 import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 
@@ -77,7 +86,24 @@ export const shiftKeys = {
   all: ['shifts'] as const,
   active: () => [...shiftKeys.all, 'active'] as const,
   list: () => [...shiftKeys.all, 'list'] as const,
+  expenses: (shiftId: number) => [...shiftKeys.all, 'expenses', shiftId] as const,
 };
+
+async function loadShiftExpensesFromClient(shiftId: number): Promise<ExpenseWithSyncMeta[]> {
+  const cachedLists = queryClient.getQueriesData<ExpenseWithSyncMeta[]>({ queryKey: [...shiftKeys.all, 'expenses'] });
+  const cached = cachedLists.flatMap(([, data]) => data ?? []).filter((e) => e.shift_id === shiftId);
+  const localRecords = await localExpensesStore.getByShiftId(shiftId);
+  const local = localRecords
+    .filter((r) => r.mutationType !== 'delete')
+    .map(toExpenseWithSyncMeta);
+  const localIds = new Set(local.map((e) => e.id));
+  return [...local, ...cached.filter((e) => !localIds.has(e.id))];
+}
+
+async function readShiftSales(shiftId: number): Promise<SaleWithSyncMeta[]> {
+  const cached = queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [];
+  return mergeShiftSales(cached, shiftId);
+}
 
 export function useActiveShift() {
   return useQuery<Shift | null>({
@@ -100,7 +126,7 @@ export function useActiveShift() {
     staleTime: 0,
     refetchOnMount: true,
     retry: false,
-    networkMode: 'always',
+    networkMode: 'offlineFirst',
   });
 }
 
@@ -137,7 +163,7 @@ export function useShifts() {
     },
     staleTime: 0,
     refetchOnMount: true,
-    networkMode: 'always',
+    networkMode: 'offlineFirst',
   });
 }
 
@@ -147,11 +173,14 @@ export function useShiftSales(shiftId: number | null) {
     queryFn: async () => {
       if (!shiftId) return [];
 
+      const readClient = () => readShiftSales(shiftId);
+
+      if (shouldUseClientStorage() || isCompletelyOffline() || shiftId < 0) {
+        return readClient();
+      }
+
       return readWithOfflineStrategy({
-        readFromClient: () => {
-          const cached = queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [];
-          return mergeShiftSales(cached, shiftId);
-        },
+        readFromClient: readClient,
         fetchFromServer: async () => {
           const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`, {
             timeout: 10000,
@@ -163,9 +192,53 @@ export function useShiftSales(shiftId: number | null) {
     staleTime: 0,
     refetchOnMount: 'always',
     enabled: !!shiftId,
-    placeholderData: (prev) => prev,
+    placeholderData: (prev) => prev ?? [],
     retry: (count, err) => !isNetworkFailure(err) && count < 1,
-    networkMode: 'always',
+    networkMode: 'offlineFirst',
+  });
+}
+
+/** Shift-scoped expenses — local-first; tolerates missing expenses.view permission. */
+export function useShiftExpenses(shiftId: number | null) {
+  return useQuery<ExpenseWithSyncMeta[]>({
+    queryKey: shiftId ? shiftKeys.expenses(shiftId) : [...shiftKeys.all, 'expenses', 'none'] as const,
+    queryFn: async () => {
+      if (!shiftId) return [];
+
+      const readClient = () => loadShiftExpensesFromClient(shiftId);
+
+      if (shouldUseClientStorage() || isCompletelyOffline() || shiftId < 0) {
+        return readClient();
+      }
+
+      return readWithOfflineStrategy({
+        readFromClient: readClient,
+        fetchFromServer: async () => {
+          try {
+            const { data } = await axiosInstance.get<{ data: ExpenseWithSyncMeta[] }>(
+              `/expenses?shift_id=${shiftId}`,
+              { timeout: 10000 },
+            );
+            const local = await loadShiftExpensesFromClient(shiftId);
+            const localIds = new Set(local.map((e) => e.id));
+            const fromServer = (data.data ?? []).filter((e) => e.shift_id === shiftId);
+            return [...local, ...fromServer.filter((e) => !localIds.has(e.id))];
+          } catch (err: unknown) {
+            const status = (err as AxiosError).response?.status;
+            if (isNetworkFailure(err) || status === 403 || status === 404) {
+              return readClient();
+            }
+            throw err;
+          }
+        },
+      });
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    enabled: !!shiftId,
+    placeholderData: (prev) => prev ?? [],
+    retry: false,
+    networkMode: 'offlineFirst',
   });
 }
 

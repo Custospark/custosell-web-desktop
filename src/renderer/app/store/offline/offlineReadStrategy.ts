@@ -19,6 +19,11 @@ function shouldFallbackToClient(err: unknown): boolean {
     return true;
   }
 
+  // Offline-first: unreachable API or local-only resources should not break the screen.
+  if (status === 404) {
+    return true;
+  }
+
   return false;
 }
 

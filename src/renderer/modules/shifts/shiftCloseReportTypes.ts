@@ -1,0 +1,27 @@
+export interface ShiftCloseReportData {
+  businessName: string;
+  businessAddress?: string | null;
+  businessPhone?: string | null;
+  businessEmail?: string | null;
+  currency: string;
+  cashierName: string;
+  clockIn: string;
+  clockOut: string | null;
+  duration: string | null;
+  isOfflineCopy: boolean;
+  transactionCount: number;
+  grossSales: number;
+  refunds: number;
+  netSales: number;
+  cash: number;
+  mobileMoney: number;
+  cardOther: number;
+  shiftExpenses: number;
+  cashHandover: number;
+  generatedAt: string;
+}
+
+/** Matches Custosell app primary / business-summary report accent */
+export const SHIFT_REPORT_ACCENT = '#1e40af';
+
+export const SHIFT_NET_SALES_FORMULA = 'Net sales = gross sales - refunds - shift expenses';

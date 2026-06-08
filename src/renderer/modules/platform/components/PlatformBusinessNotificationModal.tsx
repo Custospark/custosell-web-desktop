@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, X } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
+import type { NotificationChannel } from '../../notifications/api/NotificationTypes';
+import { NotificationChannelPicker } from './NotificationChannelPicker';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { BusinessNotificationIntention, PlatformBusiness } from '../api/PlatformTypes';
@@ -16,7 +18,13 @@ export interface PlatformBusinessNotificationModalProps {
   businesses: PlatformBusiness[];
   isPending?: boolean;
   onClose: () => void;
-  onConfirm: (intention: BusinessNotificationIntention, message: string, subject: string, markAsNotified: boolean) => void;
+  onConfirm: (
+    intention: BusinessNotificationIntention,
+    message: string,
+    subject: string,
+    markAsNotified: boolean,
+    channel: NotificationChannel,
+  ) => void;
 }
 
 export function PlatformBusinessNotificationModal({
@@ -30,6 +38,7 @@ export function PlatformBusinessNotificationModal({
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [markAsNotified, setMarkAsNotified] = useState(true);
+  const [channel, setChannel] = useState<NotificationChannel>('both');
   const [touched, setTouched] = useState<{ message: boolean; subject: boolean }>({ message: false, subject: false });
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -44,6 +53,7 @@ export function PlatformBusinessNotificationModal({
       setSubject('');
       setMessage('');
       setMarkAsNotified(true);
+      setChannel('both');
       setTouched({ message: false, subject: false });
       setSubmitAttempted(false);
     }
@@ -55,13 +65,8 @@ export function PlatformBusinessNotificationModal({
     setSubmitAttempted(true);
     setTouched({ message: true, subject: true });
     if (!validation.valid) return;
-    onConfirm(intention, message.trim(), subject.trim(), markAsNotified);
+    onConfirm(intention, message.trim(), subject.trim(), markAsNotified, channel);
   };
-
-  const recipientPreview = businesses
-    .map((b) => b.owner_email ?? b.email)
-    .filter(Boolean)
-    .slice(0, 3);
 
   return (
     <AnimatePresence>
@@ -93,14 +98,14 @@ export function PlatformBusinessNotificationModal({
 
             <div className="flex items-start gap-4 pr-6">
               <div className="p-2.5 rounded-full shrink-0 bg-blue-50">
-                <Mail className="w-6 h-6 text-blue-600" />
+                <Bell className="w-6 h-6 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   Send notification to {businesses.length} business{businesses.length === 1 ? '' : 'es'}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Branded email to each business owner{businesses.length === 1 ? ` (${recipientPreview[0] ?? 'no email on file'})` : ''}.
+                  Reach owners and active staff via in-app alerts, email, or both.
                 </p>
               </div>
             </div>
@@ -121,6 +126,8 @@ export function PlatformBusinessNotificationModal({
               }}
               noValidate
             >
+              <NotificationChannelPicker value={channel} onChange={setChannel} disabled={isPending} />
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Intention</label>
                 <select
@@ -162,7 +169,7 @@ export function PlatformBusinessNotificationModal({
                   onBlur={() => setTouched((t) => ({ ...t, message: true }))}
                   rows={5}
                   disabled={isPending}
-                  placeholder="Write the message body included in the email..."
+                  placeholder="Write the message body for the selected channel(s)..."
                   className={cn(
                     'w-full border rounded-lg px-3 py-2 text-sm',
                     showMessageError ? 'border-red-500' : 'border-gray-200',

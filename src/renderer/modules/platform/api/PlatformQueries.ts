@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { PLATFORM } from '../../../shared/api/endpoints/endpoints';
 import { useToast } from '../../../app/contexts/ToastContext';
+import type { NotificationChannel } from '../../notifications/api/NotificationTypes';
 import type {
   BusinessAccountStatus,
   BusinessNotificationIntention,
@@ -80,11 +81,16 @@ export function useUpdateBusinessStatus() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, status, reason }: { id: number; status: BusinessAccountStatus; reason: string }) => {
+    mutationFn: async ({
+      id,
+      status,
+      reason,
+      channel = 'both',
+    }: { id: number; status: BusinessAccountStatus; reason: string; channel?: NotificationChannel }) => {
       const trimmedReason = assertBusinessStatusReason(reason);
       const { data } = await axiosInstance.patch<{ message: string }>(
         PLATFORM.BUSINESS_STATUS(id),
-        { status, reason: trimmedReason },
+        { status, reason: trimmedReason, channel },
       );
       return data;
     },
@@ -101,12 +107,18 @@ export function useBulkUpdateBusinessStatus() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ ids, status, reason }: { ids: number[]; status: BusinessAccountStatus; reason: string }) => {
+    mutationFn: async ({
+      ids,
+      status,
+      reason,
+      channel = 'both',
+    }: { ids: number[]; status: BusinessAccountStatus; reason: string; channel?: NotificationChannel }) => {
       const trimmedReason = assertBusinessStatusReason(reason);
       const { data } = await axiosInstance.post<{ message: string }>(PLATFORM.BUSINESSES_BULK_STATUS, {
         ids,
         status,
         reason: trimmedReason,
+        channel,
       });
       return data;
     },
@@ -170,12 +182,14 @@ export function useNotifyBusinesses() {
       message,
       subject,
       markAsNotified,
+      channel = 'both',
     }: {
       businessIds: number[];
       intention: BusinessNotificationIntention;
       message: string;
       subject?: string;
       markAsNotified?: boolean;
+      channel?: NotificationChannel;
     }) => {
       const payload = assertBusinessNotifyPayload(message, subject ?? '');
       const { data } = await axiosInstance.post<{ message: string }>(PLATFORM.BUSINESSES_NOTIFY, {
@@ -184,6 +198,7 @@ export function useNotifyBusinesses() {
         message: payload.message,
         subject: payload.subject,
         mark_as_notified: markAsNotified ?? false,
+        channel,
       });
       return data;
     },

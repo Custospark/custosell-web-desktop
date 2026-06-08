@@ -13,6 +13,14 @@ export const SUBSCRIPTIONS = { BASE: '/subscriptions', UPGRADE: '/subscriptions/
 export const EXPENSE_CATEGORIES = '/expense-categories';
 export const EXPENSES = '/expenses';
 export const SYNC = { PUSH: '/sync/push', PULL: '/sync/pull', FULL: '/sync/full' };
+export const NOTIFICATIONS = {
+  BASE: '/notifications',
+  UNREAD_COUNT: '/notifications/unread-count',
+  READ_ALL: '/notifications/read-all',
+  DELETE_ALL: '/notifications/delete-all',
+  MARK_READ: (id: number) => `/notifications/${id}/read`,
+  DELETE: (id: number) => `/notifications/${id}`,
+};
 export const PLATFORM = {
   OVERVIEW: '/platform/overview',
   METRICS: '/platform/metrics',

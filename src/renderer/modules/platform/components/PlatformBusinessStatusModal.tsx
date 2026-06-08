@@ -4,6 +4,8 @@ import { AlertTriangle, Shield, X } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { BusinessAccountStatus, PlatformBusiness } from '../api/PlatformTypes';
+import type { NotificationChannel } from '../../notifications/api/NotificationTypes';
+import { NotificationChannelPicker } from './NotificationChannelPicker';
 import {
   BUSINESS_ACCOUNT_STATUSES,
   BUSINESS_STATUS_REASON_MAX,
@@ -16,7 +18,7 @@ export interface PlatformBusinessStatusModalProps {
   businesses: PlatformBusiness[];
   isPending?: boolean;
   onClose: () => void;
-  onConfirm: (status: BusinessAccountStatus, reason: string) => void;
+  onConfirm: (status: BusinessAccountStatus, reason: string, channel: NotificationChannel) => void;
 }
 
 export function PlatformBusinessStatusModal({
@@ -31,6 +33,7 @@ export function PlatformBusinessStatusModal({
 
   const [status, setStatus] = useState<BusinessAccountStatus>('warning');
   const [reason, setReason] = useState('');
+  const [channel, setChannel] = useState<NotificationChannel>('both');
   const [touched, setTouched] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -45,11 +48,13 @@ export function PlatformBusinessStatusModal({
       setReason('');
       setTouched(false);
       setSubmitAttempted(false);
+      setChannel('both');
     } else if (open) {
       setStatus('warning');
       setReason('');
       setTouched(false);
       setSubmitAttempted(false);
+      setChannel('both');
     }
   }, [open, single?.id, single?.status, businesses.length]);
 
@@ -61,7 +66,7 @@ export function PlatformBusinessStatusModal({
     setSubmitAttempted(true);
     setTouched(true);
     if (!validation.valid) return;
-    onConfirm(status, trimmed);
+    onConfirm(status, trimmed, channel);
   };
 
   const title = isBulk
@@ -107,8 +112,8 @@ export function PlatformBusinessStatusModal({
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
                   {isBulk
-                    ? 'Selected businesses will receive a branded email with your reason. Restricted and suspended accounts cannot sign in.'
-                    : `Current status: ${STATUS_LABELS[single!.status]}. The owner will receive a branded email with your reason.`}
+                    ? 'Notify selected businesses via in-app, email, or both. Restricted and suspended accounts cannot sign in.'
+                    : `Current status: ${STATUS_LABELS[single!.status]}. Choose how to deliver the status update.`}
                 </p>
               </div>
             </div>
@@ -132,6 +137,8 @@ export function PlatformBusinessStatusModal({
               }}
               noValidate
             >
+              <NotificationChannelPicker value={channel} onChange={setChannel} disabled={isPending} />
+
               <div>
                 <label htmlFor="business-status-target" className="block text-sm font-medium text-gray-700 mb-1.5">
                   New status <span className="text-red-500">*</span>

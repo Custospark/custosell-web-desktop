@@ -148,16 +148,20 @@ export default function PlatformBusinessesPage() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const handleStatusConfirm = (status: BusinessAccountStatus, reason: string) => {
+  const handleStatusConfirm = (
+    status: BusinessAccountStatus,
+    reason: string,
+    channel: Parameters<typeof updateStatus.mutate>[0]['channel'],
+  ) => {
     if (!statusTargets?.length) return;
     if (statusTargets.length === 1) {
       updateStatus.mutate(
-        { id: statusTargets[0].id, status, reason },
+        { id: statusTargets[0].id, status, reason, channel },
         { onSuccess: () => { setStatusTargets(null); clearSelection(); } },
       );
     } else {
       bulkUpdateStatus.mutate(
-        { ids: statusTargets.map((b) => b.id), status, reason },
+        { ids: statusTargets.map((b) => b.id), status, reason, channel },
         { onSuccess: () => { setStatusTargets(null); clearSelection(); } },
       );
     }
@@ -168,6 +172,7 @@ export default function PlatformBusinessesPage() {
     message: string,
     subject: string,
     markAsNotified: boolean,
+    channel: Parameters<typeof notifyBusinesses.mutate>[0]['channel'],
   ) => {
     if (!notifyTargets?.length) return;
     notifyBusinesses.mutate(
@@ -177,6 +182,7 @@ export default function PlatformBusinessesPage() {
         message,
         subject: subject || undefined,
         markAsNotified,
+        channel,
       },
       { onSuccess: () => { setNotifyTargets(null); clearSelection(); } },
     );

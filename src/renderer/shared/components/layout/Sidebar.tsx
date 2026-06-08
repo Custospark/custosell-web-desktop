@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Receipt, Settings,
   LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
-  UserCog, Shield, Building2, ListOrdered, Clock,
+  UserCog, Shield, Building2, ListOrdered, Clock, Bell,
 } from 'lucide-react';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -39,6 +39,7 @@ const baseSubRoutes = [
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
+  ROUTES.SETTINGS.NOTIFICATIONS, ROUTES.NOTIFICATIONS.INDEX,
 ];
 
 const platformSubRoutes = [
@@ -107,6 +108,7 @@ const baseNavGroups: NavGroup[] = [
       // { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
+      { to: ROUTES.SETTINGS.NOTIFICATIONS, label: 'Notifications', icon: Bell },
       { to: ROUTES.SETTINGS.PROFILE, label: 'My Profile', icon: UserCog },
     ],
   },

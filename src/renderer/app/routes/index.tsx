@@ -30,6 +30,7 @@ import PlatformOverviewPage from '../../modules/platform/PlatformOverviewPage';
 import PlatformBusinessesPage from '../../modules/platform/PlatformBusinessesPage';
 import PlatformUsersPage from '../../modules/platform/PlatformUsersPage';
 import PlatformTeamPage from '../../modules/platform/PlatformTeamPage';
+import NotificationsPage from '../../modules/notifications/NotificationsPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
@@ -77,12 +78,14 @@ export function AppRoutes() {
           <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.LIST} replace />} />
           <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
           <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
+          <Route path={ROUTES.NOTIFICATIONS.INDEX} element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
           <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
             <Route index element={<Navigate to={ROUTES.SETTINGS.BUSINESS} replace />} />
             <Route path="business" element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
             <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
             <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
             <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
+            <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
             {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
           </Route>
           <Route element={<PlatformAdminRoute />}>

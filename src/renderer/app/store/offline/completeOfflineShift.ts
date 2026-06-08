@@ -4,9 +4,18 @@ import { mutationQueue } from './mutationQueue';
 import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './localShiftsStore';
 import { shouldCompleteMutationLocally } from './offlineQueryUtils';
 import { persistAuthSnapshot } from './persistAuthSnapshot';
+import { isLocalSessionToken } from './secureStorage';
 
 export function shouldCompleteShiftLocally(): boolean {
   return shouldCompleteMutationLocally();
+}
+
+/** Local shift when offline, local auth session, or account pending sync. */
+export function shouldUseLocalShiftActions(): boolean {
+  if (shouldCompleteMutationLocally()) return true;
+  const { auth } = store.getState();
+  if (auth.isLocalSession || auth.pendingAuthSync) return true;
+  return isLocalSessionToken(auth.token);
 }
 
 function buildLocalShift(): ShiftRecord {
@@ -47,18 +56,28 @@ async function persistOfflineClockInInBackground(shift: ShiftRecord): Promise<vo
   await localShiftsStore.saveOpen(shift, mutationId);
 }
 
-export function completeOfflineClockInInstant(): ShiftWithSyncMeta {
+export async function completeOfflineClockIn(): Promise<ShiftWithSyncMeta> {
   const shift = buildLocalShift();
 
   store.dispatch(
     updateShiftContext({ shift_id: shift.id, shift_clock_in: shift.clock_in }),
   );
-  void persistAuthSnapshot().catch(() => undefined);
+  await persistAuthSnapshot().catch(() => undefined);
+  await persistOfflineClockInInBackground(shift);
 
+  return { ...shift, _pendingSync: true };
+}
+
+/** @deprecated Use completeOfflineClockIn */
+export function completeOfflineClockInInstant(): ShiftWithSyncMeta {
+  const shift = buildLocalShift();
+  store.dispatch(
+    updateShiftContext({ shift_id: shift.id, shift_clock_in: shift.clock_in }),
+  );
+  void persistAuthSnapshot().catch(() => undefined);
   void persistOfflineClockInInBackground(shift).catch((err) => {
     console.error('[OfflineShift] Clock-in background persist failed:', err);
   });
-
   return { ...shift, _pendingSync: true };
 }
 

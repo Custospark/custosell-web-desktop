@@ -12,17 +12,13 @@ import {
   type ShiftWithSyncMeta,
 } from '../../app/store/offline/localShiftsStore';
 import {
-  completeOfflineClockInInstant,
+  completeOfflineClockIn,
   completeOfflineClockOutInstant,
-  shouldCompleteShiftLocally,
+  shouldUseLocalShiftActions,
 } from '../../app/store/offline/completeOfflineShift';
 import { isOptimisticSale } from '../../app/store/offline/offlineCacheReconcile';
-import { isNetworkFailure } from '../../app/store/offline/offlineQueryUtils';
+import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
-import {
-  isCompletelyOffline,
-  shouldUseClientStorage,
-} from '../../app/store/offline/offlineQueryUtils';
 import {
   localExpensesStore,
   toExpenseWithSyncMeta,
@@ -249,21 +245,21 @@ export function useClockIn() {
     networkMode: 'always',
     retry: false,
     mutationFn: async () => {
-      if (shouldCompleteShiftLocally()) {
-        return completeOfflineClockInInstant();
+      if (shouldUseLocalShiftActions()) {
+        return completeOfflineClockIn();
       }
 
       try {
         const { data } = await axiosInstance.post<{ data: Shift }>(
           '/shifts',
           { clock_in: new Date().toISOString(), status: 'active' },
-          { timeout: 4000 },
+          { timeout: 4000, skipAuthRedirect: true },
         );
         return data.data as ShiftWithSyncMeta;
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (!axiosErr.response) {
-          return completeOfflineClockInInstant();
+          return completeOfflineClockIn();
         }
         throw err;
       }
@@ -277,7 +273,9 @@ export function useClockIn() {
         showToast('success', 'Shift started');
       }
     },
-    onError: () => showToast('error', 'Failed to start shift'),
+    onError: (err) => {
+      showToast('error', sanitizeErrorMessage(err, 'Failed to start shift'));
+    },
   });
 }
 
@@ -290,7 +288,7 @@ export function useClockOut() {
     mutationFn: async ({ id, totals }) => {
       const currentShift = qc.getQueryData<Shift | null>(shiftKeys.active());
 
-      if (shouldCompleteShiftLocally()) {
+      if (shouldUseLocalShiftActions()) {
         return completeOfflineClockOutInstant(id, totals, currentShift as ShiftRecord | null);
       }
 

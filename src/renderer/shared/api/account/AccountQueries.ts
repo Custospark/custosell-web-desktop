@@ -1,14 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, setUser,
+  setUser,
 } from '../../../app/store/slices/authSlice';
 import { axiosInstance } from '../../../app/api/axiosConfig';
-import { clearServiceWorkerApiCache } from '../../../app/sw/registerServiceWorker';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type {
@@ -26,7 +25,7 @@ import {
 } from '../../../app/store/offline/offlineQueryUtils';
 import { completeOfflineRegistration } from '../../../app/store/offline/completeOfflineRegistration';
 import { completeOfflineLogin } from '../../../app/store/offline/completeOfflineLogin';
-import { clearAuthSession } from '../../../app/store/offline/secureStorage';
+import { performAppLogout } from '../../../app/store/auth/performAppLogout';
 import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/deviceCredentials';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
@@ -240,7 +239,6 @@ export function useRegister() {
 export function useLogout() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const isLocalSession = useAppSelector((state) => state.auth.isLocalSession);
 
@@ -261,12 +259,8 @@ export function useLogout() {
       }
     },
     onSettled: async () => {
-      dispatch(logout());
-      await clearAuthSession();
-      queryClient.clear();
-      clearServiceWorkerApiCache();
+      await performAppLogout(dispatch, navigate);
       showToast('success', 'Logged out successfully');
-      navigate(ROUTES.LOGIN);
     },
   });
 }

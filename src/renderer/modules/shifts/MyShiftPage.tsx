@@ -5,6 +5,8 @@ import { useActiveShift, useClockIn, useClockOut, useShiftExpenses, useShiftSale
 import type { ShiftWithSyncMeta } from '../../app/store/offline/localShiftsStore';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
+import { isCompletelyOffline } from '../../app/store/offline/offlineQueryUtils';
+import { useLogout } from '../../shared/api/account/AccountQueries';
 import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
@@ -86,6 +88,7 @@ export default function MyShiftPage() {
   const clockOut = useClockOut();
   const { confirm } = useConfirm();
   const location = useLocation();
+  const logoutMutation = useLogout();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -259,6 +262,12 @@ export default function MyShiftPage() {
           card: cardTotal,
         },
       });
+
+      if (isCompletelyOffline()) {
+        logoutMutation.mutate();
+        return;
+      }
+
       showToast('success', 'Shift ended. You can log out when ready.');
     } catch (e) {
       console.error('Failed to end shift:', e);

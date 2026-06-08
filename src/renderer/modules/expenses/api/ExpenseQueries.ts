@@ -24,6 +24,8 @@ import {
   completeOfflineUpdateExpenseCategoryInstant,
   shouldCompleteExpenseCategoryLocally,
 } from '../../../app/store/offline/completeOfflineExpenseCategory';
+import { dashboardKeys } from '../../dashboard/DashboardQueries';
+import { shiftKeys } from '../../shifts/ShiftQueries';
 import type {
   Expense,
   ExpenseCategory,
@@ -110,6 +112,61 @@ function patchExpenseLists(
   if (queries.length === 0) {
     qc.setQueryData<ExpenseWithSyncMeta[]>(expenseKeys.list(), sanitizeExpenseList(patch([])));
   }
+}
+
+function patchShiftExpenseCache(
+  qc: ReturnType<typeof useQueryClient>,
+  shiftId: number | null | undefined,
+  patch: (old: ExpenseWithSyncMeta[]) => ExpenseWithSyncMeta[],
+): void {
+  if (!shiftId) return;
+  qc.setQueryData<ExpenseWithSyncMeta[]>(
+    shiftKeys.expenses(shiftId),
+    (old) => sanitizeExpenseList(patch(sanitizeExpenseList(old ?? []))),
+  );
+}
+
+function applyExpenseOptimisticUpdates(
+  qc: ReturnType<typeof useQueryClient>,
+  expense: ExpenseWithSyncMeta,
+  mode: 'create' | 'update',
+  previousShiftId?: number | null,
+): void {
+  if (mode === 'create') {
+    patchExpenseLists(qc, (old) => {
+      if (old.some((item) => item.id === expense.id)) return old;
+      return [expense, ...old];
+    });
+    patchShiftExpenseCache(qc, expense.shift_id, (old) => {
+      if (old.some((item) => item.id === expense.id)) return old;
+      return [expense, ...old];
+    });
+  } else {
+    patchExpenseLists(qc, (old) => old.map((item) => (item.id === expense.id ? expense : item)));
+    const shiftIds = new Set(
+      [expense.shift_id, previousShiftId].filter((id): id is number => typeof id === 'number'),
+    );
+    for (const shiftId of shiftIds) {
+      patchShiftExpenseCache(qc, shiftId, (old) =>
+        old.map((item) => (item.id === expense.id ? expense : item)),
+      );
+    }
+  }
+
+  qc.setQueryData(expenseKeys.detail(expense.id), expense);
+  void qc.invalidateQueries({ queryKey: [...expenseKeys.all, 'summary'] });
+  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+}
+
+function applyExpenseDeleteOptimisticUpdates(
+  qc: ReturnType<typeof useQueryClient>,
+  expenseId: number,
+  shiftId: number | null | undefined,
+): void {
+  patchExpenseLists(qc, (old) => old.filter((expense) => expense.id !== expenseId));
+  patchShiftExpenseCache(qc, shiftId, (old) => old.filter((expense) => expense.id !== expenseId));
+  void qc.invalidateQueries({ queryKey: [...expenseKeys.all, 'summary'] });
+  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
 }
 
 function findCachedExpense(id: number): ExpenseWithSyncMeta | undefined {
@@ -290,6 +347,8 @@ export function useExpenseCategories() {
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: expenseKeys.all });
   qc.invalidateQueries({ queryKey: expenseKeys.categories() });
+  qc.invalidateQueries({ queryKey: shiftKeys.all });
+  qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
 }
 
 export function useCreateExpense() {
@@ -324,11 +383,7 @@ export function useCreateExpense() {
         return;
       }
       if (expense._pendingSync) {
-        patchExpenseLists(qc, (old) => {
-          if (old.some((item) => item.id === expense.id)) return old;
-          return [expense, ...old];
-        });
-        qc.setQueryData(expenseKeys.detail(expense.id), expense);
+        applyExpenseOptimisticUpdates(qc, expense, 'create');
         showToast('success', 'Expense saved — will sync when online');
       } else {
         invalidateAll(qc);
@@ -380,9 +435,9 @@ export function useUpdateExpense() {
         invalidateAll(qc);
         return;
       }
+      const previousShiftId = findCachedExpense(id)?.shift_id;
       if (expense._pendingSync) {
-        patchExpenseLists(qc, (old) => old.map((item) => item.id === id ? expense : item));
-        qc.setQueryData(expenseKeys.detail(id), expense);
+        applyExpenseOptimisticUpdates(qc, expense, 'update', previousShiftId);
         showToast('success', 'Changes saved — will sync when online');
       } else {
         invalidateAll(qc);
@@ -398,7 +453,7 @@ export function useUpdateExpense() {
 export function useDeleteExpense() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<void, AxiosError, number, { previous?: ExpenseWithSyncMeta[] }>({
+  return useMutation<void, AxiosError, number, { previous?: ExpenseWithSyncMeta[]; removed?: ExpenseWithSyncMeta }>({
     networkMode: 'always',
     retry: false,
     mutationFn: async (id) => {
@@ -426,16 +481,19 @@ export function useDeleteExpense() {
     },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: expenseKeys.all });
+      const existing = findCachedExpense(id);
       const previous = sanitizeExpenseList(qc.getQueryData<ExpenseWithSyncMeta[]>(expenseKeys.list()) ?? []);
-      qc.setQueryData<ExpenseWithSyncMeta[]>(expenseKeys.list(), previous.filter((e) => e.id !== id));
-      return { previous };
+      applyExpenseDeleteOptimisticUpdates(qc, id, existing?.shift_id);
+      return { previous, removed: existing };
     },
     onSuccess: (_data, id) => {
-      patchExpenseLists(qc, (old) => old.filter((expense) => expense.id !== id));
       qc.removeQueries({ queryKey: expenseKeys.detail(id) });
     },
     onError: (e, _id, ctx) => {
       if (ctx?.previous) qc.setQueryData(expenseKeys.list(), ctx.previous);
+      if (ctx?.removed) {
+        applyExpenseOptimisticUpdates(qc, ctx.removed, 'create');
+      }
       showToast('error', getExpenseErrorMessage(e, 'Failed to delete expense'));
     },
   });

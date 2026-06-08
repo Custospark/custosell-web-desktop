@@ -6,7 +6,7 @@ import type { ShiftWithSyncMeta } from '../../app/store/offline/localShiftsStore
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { isCompletelyOffline } from '../../app/store/offline/offlineQueryUtils';
-import { useLogout } from '../../shared/api/account/AccountQueries';
+import { useLogoutAction } from '../../app/contexts/LogoutContext';
 import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
@@ -88,7 +88,7 @@ export default function MyShiftPage() {
   const clockOut = useClockOut();
   const { confirm } = useConfirm();
   const location = useLocation();
-  const logoutMutation = useLogout();
+  const { logout } = useLogoutAction();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -264,7 +264,7 @@ export default function MyShiftPage() {
       });
 
       if (isCompletelyOffline()) {
-        logoutMutation.mutate();
+        void logout();
         return;
       }
 

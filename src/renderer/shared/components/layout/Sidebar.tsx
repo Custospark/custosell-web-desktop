@@ -8,7 +8,7 @@ import {
   Plus, History, RotateCcw, FolderTree, ClipboardList,
   UserCog, Shield, Building2, ListOrdered, Clock,
 } from 'lucide-react';
-import { useLogout } from '../../../shared/api/account/AccountQueries';
+import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -122,7 +122,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 }
 
 function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void }) {
-  const logoutMutation = useLogout();
+  const { logout, isLoggingOut } = useLogoutAction();
   const { state, dispatch } = useAppContext();
   const user = useAppSelector((s) => s.auth.user);
   const { confirm } = useConfirm();
@@ -139,7 +139,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
     });
     if (!confirmed) return;
     onClose();
-    logoutMutation.mutate();
+    void logout();
   };
 
   const showOfflineBanner = useAppSelector(selectShowOfflineBanner);
@@ -263,12 +263,12 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
         </button>
         <button
           onClick={handleLogout}
-          disabled={logoutMutation.isPending}
+          disabled={isLoggingOut}
           className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors`}
           title="Logout"
         >
           <LogOut className="w-5 h-5 shrink-0" />
-          {!collapsed && <span>{logoutMutation.isPending ? 'Logging out...' : 'Logout'}</span>}
+          {!collapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
         </button>
       </div>
     </aside>

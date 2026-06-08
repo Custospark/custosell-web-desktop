@@ -11,19 +11,10 @@ interface AuthLayoutProps {
   heroDescription?: string;
 }
 
-const HERO_IMAGES = {
-  login: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80',
-  register: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
-};
-
-export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
-  const image = heroImage || HERO_IMAGES.login;
-
+export function AuthLayout({ title, subtitle, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-black/70" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <span className="text-white text-2xl font-bold tracking-tight">Custosell</span>
           <div className="max-w-md">

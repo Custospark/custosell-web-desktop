@@ -77,7 +77,7 @@ export const queryClient = new QueryClient({
       refetchOnMount: false,
       networkMode: 'offlineFirst',
     },
-    mutations: { retry: 1 },
+    mutations: { retry: 0, networkMode: 'always' },
   },
 });
 
@@ -105,7 +105,13 @@ axiosInstance.interceptors.response.use(
       store.dispatch(logout());
       queryClient.clear();
       clearServiceWorkerApiCache();
-      window.location.href = '/login';
+      const isElectron = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
+      if (isElectron) {
+        const base = window.location.href.split('#')[0];
+        window.location.replace(`${base}#/login`);
+      } else {
+        window.location.href = '/login';
+      }
       setTimeout(() => { _isHandling401 = false; }, 3000);
     }
 

@@ -25,8 +25,8 @@ import {
 } from '../../../app/store/offline/offlineQueryUtils';
 import { completeOfflineRegistration } from '../../../app/store/offline/completeOfflineRegistration';
 import { completeOfflineLogin } from '../../../app/store/offline/completeOfflineLogin';
-import { performAppLogout } from '../../../app/store/auth/performAppLogout';
 import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/deviceCredentials';
+import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
 export const accountKeys = {
@@ -237,32 +237,8 @@ export function useRegister() {
 }
 
 export function useLogout() {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { showToast } = useToast();
-  const isLocalSession = useAppSelector((state) => state.auth.isLocalSession);
-
-  return useMutation({
-    mutationFn: async () => {
-      // Same detector as login/register: completely offline → local logout only, no API.
-      if (isCompletelyOffline()) {
-        return;
-      }
-
-      // Online or slow: revoke server session when holding a real (non-local) token.
-      if (!isLocalSession) {
-        try {
-          await axiosInstance.post('/auth/logout', undefined, { skipAuthRedirect: true } as never);
-        } catch {
-          /* still clear local session if server unreachable */
-        }
-      }
-    },
-    onSettled: async () => {
-      await performAppLogout(dispatch, navigate);
-      showToast('success', 'Logged out successfully');
-    },
-  });
+  const { logout, isLoggingOut } = useLogoutFallback();
+  return { logout, isLoggingOut, isPending: isLoggingOut };
 }
 
 export function useProfile() {

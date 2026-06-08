@@ -1,3 +1,51 @@
 @import "tailwindcss";
 @import "../../public/styles/index.css";
 @import "../../public/styles/loadingSkeleton.css";
+
+@keyframes sync-banner-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sync-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes sync-success-pop {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes sync-pulse-ring {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.15; transform: scale(1.08); }
+}
+
+.sync-banner-enter {
+  animation: sync-banner-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.sync-shimmer-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: sync-shimmer 1.8s ease-in-out infinite;
+}
+
+.sync-success-pop {
+  animation: sync-success-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.sync-pulse-ring {
+  animation: sync-pulse-ring 2s ease-in-out infinite;
+}
+

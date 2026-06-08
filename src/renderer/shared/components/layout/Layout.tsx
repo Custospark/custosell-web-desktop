@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
-import { useLogout } from '../../../shared/api/account/AccountQueries';
+import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
@@ -13,11 +13,10 @@ import { Menu, X, User, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff } from
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 
 export function Layout() {
-  const { state, dispatch } = useAppContext();
-  const user = useAppSelector((s) => s.auth.user);
+  const { state, dispatch } = useAppContext();  const user = useAppSelector((s) => s.auth.user);
   const collapsed = state.sidebarCollapsed;
   const navigate = useNavigate();
-  const logoutMutation = useLogout();
+  const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
   const { systemStatus, latency, retryConnection } = useNetworkStatus();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -46,7 +45,7 @@ export function Layout() {
     });
     if (!confirmed) return;
     setDropdownOpen(false);
-    logoutMutation.mutate();
+    void logout();
   };
 
   return (
@@ -150,7 +149,7 @@ export function Layout() {
                 <button type="button" onClick={handleLogout}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
                   <LogOut className="w-4 h-4" />
-                  {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </button>
               </div>
             )}

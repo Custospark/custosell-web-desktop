@@ -2,31 +2,15 @@ import { useEffect, useRef } from 'react';
 import { useAppSelector } from './useApp';
 import { selectSystemStatus } from '../slices/networkSlice';
 import { syncPendingDataIfOnline } from '../offline/syncPendingIfOnline';
-import { purgeSyncedOptimisticFromCache } from '../offline/offlineCacheReconcile';
+import {
+  invalidateAfterFullSync,
+  invalidateAfterTransactionsTier,
+} from '../offline/syncCacheRefresh';
 import { useToast } from '../../contexts/ToastContext';
-import { queryClient } from '../../api/axiosConfig';
-import { salesKeys } from '../../../modules/sales/api/salesQueries';
-import { dashboardKeys } from '../../../modules/dashboard/DashboardQueries';
-import { shiftKeys } from '../../../modules/shifts/ShiftQueries';
-import { inventoryKeys } from '../../../modules/inventory/api/products/ProductQueries';
-import { expenseKeys } from '../../../modules/expenses/api/ExpenseQueries';
-
-async function refreshAfterSync(): Promise<void> {
-  await purgeSyncedOptimisticFromCache(queryClient);
-  await queryClient.invalidateQueries({ queryKey: salesKeys.all });
-  await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-  await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
-  await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
-  await queryClient.invalidateQueries({ queryKey: ['customers'] });
-  await queryClient.invalidateQueries({ queryKey: expenseKeys.all });
-  await queryClient.invalidateQueries({ queryKey: ['roles'] });
-  await queryClient.invalidateQueries({ queryKey: ['staff'] });
-  await queryClient.invalidateQueries({ queryKey: ['business'] });
-}
 
 /**
- * Sync queued IndexedDB work the moment we are no longer completely offline.
- * Purges synced rows from cache so pending badges never linger after sync.
+ * Sync queued IndexedDB work when connectivity returns.
+ * Runs in the background — the user can keep working while sync proceeds.
  */
 export function useOfflineSync(): void {
   const systemStatus = useAppSelector(selectSystemStatus);
@@ -51,24 +35,26 @@ export function useOfflineSync(): void {
       if (result.authSynced > 0) {
         showToast('success', 'Account synced successfully.');
       }
-      if (result.authFailed > 0) {
+      if (result.authFailed > 0 || result.authBlocked) {
         showToast('error', 'Account sync failed. Check your connection or use a different email.');
       }
-      if (totalSynced > result.authSynced) {
-        showToast('success', `Synced ${totalSynced - result.authSynced} pending transaction(s).`);
+      if (result.authPaused) {
+        showToast('error', 'Sync paused — please sign in again.');
       }
-      if (result.failed > 0) {
-        showToast('error', `${result.failed} transaction(s) failed to sync.`);
+
+      if (!result.skipped && totalSynced > result.authSynced) {
+        await invalidateAfterTransactionsTier();
       }
 
       if (
         !result.skipped
-        || wasCompletelyOffline
-        || totalSynced > 0
-        || result.failed > 0
-        || result.authFailed > 0
+        && (wasCompletelyOffline || totalSynced > 0 || result.failed > 0)
       ) {
-        await refreshAfterSync();
+        await invalidateAfterFullSync();
+      }
+
+      if (!result.skipped && result.failed > 0) {
+        showToast('error', `${result.failed} item${result.failed === 1 ? '' : 's'} failed to sync.`);
       }
     })();
 

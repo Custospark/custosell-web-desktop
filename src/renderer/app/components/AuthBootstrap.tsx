@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAppDispatch } from '../store/hooks/useApp';
 import { hydrateAuth, setInitialized } from '../store/slices/authSlice';
-import { loadAuthSession, migrateLegacyAuthStorage } from '../store/offline/secureStorage';
+import { loadAuthSession, migrateLegacyAuthStorage, clearAuthSession } from '../store/offline/secureStorage';
+import { consumeLogoutIntent } from '../store/auth/runAppLogout';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 
 export function AuthBootstrap({ children }: { children: ReactNode }) {
@@ -13,6 +14,13 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
 
     void (async () => {
       try {
+        if (consumeLogoutIntent()) {
+          await clearAuthSession();
+          if (cancelled) return;
+          dispatch(setInitialized());
+          return;
+        }
+
         await migrateLegacyAuthStorage();
         const session = await loadAuthSession();
         if (cancelled) return;

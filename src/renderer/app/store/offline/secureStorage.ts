@@ -88,7 +88,12 @@ async function deleteElectronSecure(key: string): Promise<void> {
   const bridge = (window as Window & { secureStore?: { delete: (k: string) => Promise<void> } }).secureStore;
   if (!bridge?.delete) return;
   try {
-    await bridge.delete(key);
+    await Promise.race([
+      bridge.delete(key),
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, 2000);
+      }),
+    ]);
   } catch {
     /* ignore */
   }
@@ -148,15 +153,21 @@ function loadLegacyAuthSession(): StoredAuthSession | null {
 }
 
 export async function clearAuthSession(): Promise<void> {
-  const db = await getOfflineDb();
-  await db.delete('secureSecrets', AUTH_SESSION_KEY);
-  await deleteElectronSecure(AUTH_SESSION_KEY);
   try {
     localStorage.removeItem(LEGACY_TOKEN_KEY);
     localStorage.removeItem(LEGACY_USER_KEY);
   } catch {
     /* ignore */
   }
+
+  try {
+    const db = await getOfflineDb();
+    await db.delete('secureSecrets', AUTH_SESSION_KEY);
+  } catch (err) {
+    console.warn('[SecureStorage] IndexedDB session clear failed:', err);
+  }
+
+  await deleteElectronSecure(AUTH_SESSION_KEY);
 }
 
 export async function migrateLegacyAuthStorage(): Promise<void> {

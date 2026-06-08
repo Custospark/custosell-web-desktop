@@ -18,11 +18,60 @@ import { localBusinessSettingsStore } from './localBusinessSettingsStore';
 import { buildExpenseFormData } from './completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
 import { isAuthMutation } from './syncAuthEngine';
-import type { CreateSalePayload, Sale } from '../../../modules/sales/api/salesTypes';
+import { processSalesInChunks } from './syncSalesBatch';
+import type { SyncProgressReporter } from './syncProgressReporter';
+import { AuthSyncPauseError, extractErrorMessage, isAuthHttpError } from './syncErrorUtils';
 import type { Expense, ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
 import type { Business } from '../../../modules/settings/api/settings/BusinessTypes';
 import type { Role } from '../../../modules/settings/api/settings/RoleTypes';
 import type { StaffUser } from '../../../modules/settings/api/settings/StaffTypes';
+
+function getRefundSaleId(m: QueuedMutation): number | null {
+  const match = m.url.match(/^\/sales\/(-?\d+)\/refund$/);
+  return match ? Number(match[1]) : null;
+}
+
+async function isRefundBlocked(m: QueuedMutation): Promise<boolean> {
+  const saleId = getRefundSaleId(m);
+  if (!saleId || saleId > 0) return false;
+  const pending = await localSalesStore.getPending();
+  return pending.some((r) => r.sale.id === saleId && r.syncStatus === 'pending');
+}
+
+function extractShiftIdFromCloseUrl(url: string): number | null {
+  const match = url.match(/^\/shifts\/(-?\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+async function evaluateShiftClose(
+  m: QueuedMutation,
+  idMap: Map<number, number>,
+): Promise<{ allow: boolean; warn: boolean }> {
+  const localShiftId = extractShiftIdFromCloseUrl(m.url);
+  if (localShiftId == null) return { allow: true, warn: false };
+
+  const shiftIds = new Set<number>([localShiftId]);
+  const mapped = idMap.get(localShiftId);
+  if (mapped != null) shiftIds.add(mapped);
+
+  for (const shiftId of shiftIds) {
+    const pendingSales = (await localSalesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'pending');
+    if (pendingSales.length > 0) return { allow: false, warn: false };
+
+    const pendingExpenses = (await localExpensesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'pending');
+    if (pendingExpenses.length > 0) return { allow: false, warn: false };
+  }
+
+  for (const shiftId of shiftIds) {
+    const failedSales = (await localSalesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'failed');
+    const failedExpenses = (await localExpensesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'failed');
+    if (failedSales.length > 0 || failedExpenses.length > 0) {
+      return { allow: true, warn: true };
+    }
+  }
+
+  return { allow: true, warn: false };
+}
 
 function isSaleMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/sales';
@@ -94,14 +143,6 @@ function isStaffCreateMutation(m: QueuedMutation): boolean {
 
 function isExpenseFormPayload(data: unknown): data is ExpenseFormPayload {
   return Boolean(data && typeof data === 'object' && 'fields' in data);
-}
-
-function extractBatchSales(responseData: unknown): Sale[] {
-  if (!responseData || typeof responseData !== 'object') return [];
-  const data = responseData as { data?: Sale[]; sales?: Sale[] };
-  if (Array.isArray(data.data)) return data.data;
-  if (Array.isArray(data.sales)) return data.sales;
-  return [];
 }
 
 function extractCategory(responseData: unknown): { id: number } | null {
@@ -309,6 +350,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     return true;
   } catch (error: unknown) {
+    if (isAuthHttpError(error)) {
+      throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
+    }
+
     const err = error as {
       response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } };
       message?: string;
@@ -552,12 +597,14 @@ function remapShiftCloseUrl(url: string, idMap: Map<number, number>): string {
   return `/shifts/${serverId}`;
 }
 
-export async function syncAllMutations(): Promise<{ synced: number; failed: number }> {
+export async function syncAllMutations(reporter?: SyncProgressReporter): Promise<{ synced: number; failed: number }> {
   const pending = await mutationQueue.getPending();
 
   if (pending.length === 0) {
     return { synced: 0, failed: 0 };
   }
+
+  reporter?.setTier(1, 'Foundation');
 
   const shiftOpens = pending.filter(isShiftOpenMutation);
   const categoryCreates = pending.filter(isCategoryCreateMutation);
@@ -590,10 +637,12 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   const { synced: shiftSynced, failed: shiftFailed, idMap } = await processShiftOpens(shiftOpens);
   synced += shiftSynced;
   failed += shiftFailed;
+  reporter?.addProgress(shiftSynced, shiftFailed);
 
   const { synced: catSynced, failed: catFailed, idMap: catIdMap } = await processCategoryCreates(categoryCreates);
   synced += catSynced;
   failed += catFailed;
+  reporter?.addProgress(catSynced, catFailed);
 
   const {
     synced: expCatSynced,
@@ -602,10 +651,12 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   } = await processExpenseCategoryCreates(expenseCategoryCreates);
   synced += expCatSynced;
   failed += expCatFailed;
+  reporter?.addProgress(expCatSynced, expCatFailed);
 
   const { synced: roleSynced, failed: roleFailed, idMap: roleIdMap } = await processRoleCreates(roleCreates);
   synced += roleSynced;
   failed += roleFailed;
+  reporter?.addProgress(roleSynced, roleFailed);
 
   for (const m of staffCreates) {
     const payload = { ...(m.data as Record<string, unknown>) };
@@ -625,35 +676,13 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
     else failed++;
   }
 
-  if (saleMutations.length > 0) {
-    try {
-      const sales = saleMutations.map((m) => {
-        const payload = { ...(m.data as CreateSalePayload) };
-        if (payload.shift_id && idMap.has(payload.shift_id)) {
-          payload.shift_id = idMap.get(payload.shift_id)!;
-        }
-        return payload;
-      });
-      const response = await axiosInstance.post('/sales/batch', { sales });
-      const syncedSales = extractBatchSales(response.data);
+  reporter?.setTier(2, 'Transactions');
 
-      for (let i = 0; i < saleMutations.length; i++) {
-        const m = saleMutations[i];
-        const serverSale = syncedSales[i];
-        await mutationQueue.markCompleted(m.id);
-        await localSalesStore.markSyncedByMutationId(m.id, serverSale?.id, serverSale);
-      }
-      synced += saleMutations.length;
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      const message = err?.response?.data?.message || err?.message || 'Batch sync failed';
-      for (const m of saleMutations) {
-        await mutationQueue.markFailed(m.id, message);
-        await localSalesStore.markFailedByMutationId(m.id);
-      }
-      failed += saleMutations.length;
-    }
-  }
+  const salesResult = await processSalesInChunks(saleMutations, idMap, reporter);
+  synced += salesResult.synced;
+  failed += salesResult.failed;
+
+  reporter?.setTier(2, 'Products & expenses');
 
   for (const m of productCreates) {
     const payload = { ...(m.data as Record<string, unknown>) };
@@ -692,17 +721,26 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   }
 
   for (const m of refundMutations) {
+    if (await isRefundBlocked(m)) continue;
     const ok = await processMutation(m);
     if (ok) synced++;
     else failed++;
   }
 
+  reporter?.setTier(3, 'Shift closures');
+
   for (const m of shiftCloses) {
+    const closeCheck = await evaluateShiftClose(m, idMap);
+    if (!closeCheck.allow) continue;
+    if (closeCheck.warn) reporter?.recordShiftCloseWarning();
+
     const remapped = { ...m, url: remapShiftCloseUrl(m.url, idMap) };
     const ok = await processMutation(remapped);
     if (ok) synced++;
     else failed++;
   }
+
+  reporter?.setTier(3, 'Other updates');
 
   for (const m of otherMutations) {
     const ok = await processMutation(m);
@@ -723,6 +761,20 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   await localStaffStore.removeSynced();
   await localBusinessSettingsStore.removeSynced();
   return { synced, failed };
+}
+
+export interface SyncPipelineResult {
+  synced: number;
+  failed: number;
+  stockSynced: number;
+}
+
+export async function runSyncPipeline(reporter?: SyncProgressReporter): Promise<SyncPipelineResult> {
+  const { synced, failed } = await syncAllMutations(reporter);
+  reporter?.setTier(4, 'Stock');
+  const stockSynced = await processStockAdjustments();
+  if (stockSynced > 0) reporter?.addProgress(stockSynced, 0);
+  return { synced, failed, stockSynced };
 }
 
 export async function processStockAdjustments(): Promise<number> {

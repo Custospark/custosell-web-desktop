@@ -22,19 +22,15 @@ import { Pagination, usePagination } from '../../shared/components/tables/Pagina
 import { useReactToPrint } from 'react-to-print';
 import {
   ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut,
-  RefreshCw, WifiOff, ReceiptText, ChevronDown, ChevronUp, History,
+  RefreshCw, WifiOff, ReceiptText, History,
 } from 'lucide-react';
 import ReceiptPreviewModal from '../sales/ui/history/ReceiptPreviewModal';
 import { useExpenses } from '../expenses/api/ExpenseQueries';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import ExpenseForm from '../expenses/components/ExpenseForm';
 import ShiftReceiptContent from './ShiftReceiptContent';
-import {
-  CurrentShiftProgressChart,
-  ShiftHistoryTrendChart,
-  buildCurrentShiftProgressSeries,
-  buildShiftHistorySeries,
-} from './ShiftCharts';
+import { CurrentShiftProgressChart, ShiftHistoryTrendChart } from './ShiftCharts';
+import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shiftChartSeries';
 import { grossSaleAmount, netSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
 import { cashHandover, netSalesAfterRefunds } from '../../shared/utils/accounting';
 
@@ -89,7 +85,6 @@ export default function MyShiftPage() {
   const location = useLocation();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [showShiftHistory, setShowShiftHistory] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [search, setSearch] = useState('');
 
@@ -143,7 +138,7 @@ export default function MyShiftPage() {
     return allShifts
       .filter((s) => s.status === 'completed' && s.user_id === authUser.id)
       .sort((a, b) => new Date(b.clock_in).getTime() - new Date(a.clock_in).getTime());
-  }, [allShifts, authUser?.id]);
+  }, [allShifts, authUser]);
 
   const shiftProgressData = useMemo(
     () => buildCurrentShiftProgressSeries(shiftSales ?? []),
@@ -263,7 +258,7 @@ export default function MyShiftPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Shift</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Started {formatShiftDateTime(clockInValue)} · net sales = gross − refunds · scoped to this shift
+            Started {formatShiftDateTime(clockInValue)}
             {isOffline && <span className="text-amber-600 font-medium"> · Offline mode</span>}
           </p>
           {(shift as { _pendingSync?: boolean })?._pendingSync && (
@@ -302,7 +297,11 @@ export default function MyShiftPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-6">
-          <CurrentShiftProgressChart data={shiftProgressData} />
+          <CurrentShiftProgressChart
+            data={shiftProgressData}
+            currentTotal={netShiftTotal}
+            receiptCount={shiftTotals.transactionCount}
+          />
 
           <ShiftTransactionsTable
             shiftSales={shiftSales}
@@ -312,34 +311,12 @@ export default function MyShiftPage() {
             setSearch={setSearch}
             onSelectSale={setSelectedSale}
           />
-
-          {completedShifts.length > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowShiftHistory((v) => !v)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                {showShiftHistory ? (
-                  <><ChevronUp className="w-4 h-4" /> Hide shift history</>
-                ) : (
-                  <><ChevronDown className="w-4 h-4" /> View shift history</>
-                )}
-              </button>
-
-              {showShiftHistory && (
-                <div className="space-y-6">
-                  <ShiftHistoryTrendChart data={shiftHistoryChartData} />
-                  <ShiftHistoryTable shifts={completedShifts} />
-                </div>
-              )}
-            </>
-          )}
         </div>
 
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">Shift Summary</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-1">Shift Summary</h3>
+            <p className="text-xs text-gray-500 mb-4">Current shift totals</p>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Gross sales</span>
@@ -363,6 +340,13 @@ export default function MyShiftPage() {
           </div>
 
           <ShiftExpensesPanel expenses={shiftExpenses} total={shiftExpenseTotal} />
+
+          {completedShifts.length > 0 && (
+            <>
+              <ShiftHistoryTrendChart data={shiftHistoryChartData} />
+              <ShiftHistoryTable shifts={completedShifts} />
+            </>
+          )}
         </div>
       </div>
 
@@ -414,7 +398,7 @@ function ShiftTransactionsTable({
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <h3 className="text-sm font-semibold text-gray-800 mb-1">Shift Receipts</h3>
-      <p className="text-xs text-gray-500 mb-4">Sales on this shift · amounts after refunds</p>
+      <p className="text-xs text-gray-500 mb-4">Tap a receipt to preview · amounts after refunds</p>
       <div className="mb-4">
         <SearchInput placeholder="Search by receipt number..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
       </div>

@@ -43,7 +43,7 @@ export function SalesTrendChart({ data }: { data: SalesTrendDay[] }) {
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-gray-800">7-Day Net Sales Trend</h3>
         <p className="text-xs text-gray-500 mt-0.5">
-          Net = gross sales − refunds − expenses · by calendar date · whole business
+          · by calendar date · whole business
         </p>
       </div>
       <div className="flex flex-wrap gap-4 mb-3 text-xs text-gray-500">

@@ -1,119 +1,150 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  Area,
+  AreaChart,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  ReferenceLine,
+} from 'recharts';
+import type { ReactNode } from 'react';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { formatShiftDateTime, formatShiftTime } from '../../shared/utils/formatDateTime';
-import { netSaleAmount } from '../sales/utils/saleAmounts';
-import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
+import type { ShiftHistoryPoint, ShiftProgressPoint } from './shiftChartSeries';
 
-export interface ShiftHistoryPoint {
-  id: string;
-  label: string;
-  netSales: number;
+const CHART = {
+  line: '#2563eb',
+  lineLight: '#93c5fd',
+  fillStart: 'rgba(37, 99, 235, 0.22)',
+  fillEnd: 'rgba(37, 99, 235, 0.02)',
+  grid: '#eef2f7',
+  reference: '#94a3b8',
+} as const;
+
+function formatAxisCurrency(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+  return String(Math.round(value));
 }
 
-export interface ShiftProgressPoint {
-  id: number;
-  label: string;
-  cumulative: number;
-  receipt: string;
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-const LINE_COLOR = '#3b82f6';
-
-function parseShiftNetSales(value: string | number | null | undefined): number {
-  const amount = typeof value === 'number' ? value : parseFloat(value ?? '0');
-  return Number.isFinite(amount) ? amount : 0;
-}
-
-export function buildShiftHistorySeries(
-  completedShifts: Array<{ clock_in: string; total_sales: string | number }>,
-  limit = 10,
-): ShiftHistoryPoint[] {
-  return [...completedShifts]
-    .sort((a, b) => new Date(a.clock_in).getTime() - new Date(b.clock_in).getTime())
-    .slice(-limit)
-    .map((shift) => ({
-      id: shift.clock_in,
-      label: formatShiftDateTime(shift.clock_in),
-      netSales: parseShiftNetSales(shift.total_sales),
-    }));
-}
-
-export function buildCurrentShiftProgressSeries(sales: SaleWithSyncMeta[]): ShiftProgressPoint[] {
-  const sorted = [...sales].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+function ChartTooltipShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg p-3 text-xs min-w-[180px]">
+      <p className="font-semibold text-gray-900 mb-0.5 truncate">{title}</p>
+      {subtitle && <p className="text-gray-500 mb-2">{subtitle}</p>}
+      <div className="space-y-1.5">{children}</div>
+    </div>
   );
+}
 
-  let cumulative = 0;
-  return sorted.map((sale, index) => {
-    cumulative += netSaleAmount(sale);
-    return {
-      id: sale.id,
-      label: formatShiftTime(sale.created_at),
-      cumulative,
-      receipt: sale.receipt_number,
-    };
-  });
+function TooltipRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className={`flex justify-between gap-4 ${accent ? 'text-blue-700' : 'text-gray-700'}`}>
+      <span>{label}</span>
+      <span className="font-bold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+interface ProgressChartProps {
+  data: ShiftProgressPoint[];
+  currentTotal: number;
+  receiptCount: number;
 }
 
 /** Live shift momentum — cumulative net sales after each receipt. */
-export function CurrentShiftProgressChart({ data }: { data: ShiftProgressPoint[] }) {
+export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: ProgressChartProps) {
   if (data.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-800 mb-4">Shift Progress</h3>
-        <div className="h-64 flex items-center justify-center text-sm text-gray-400">
-          Sales on this shift will plot here as you record receipts
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">Shift Progress</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Running net total as receipts are recorded</p>
+          </div>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">No sales yet</span>
+        </div>
+        <div className="h-64 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
+          Your progress line appears after the first sale
         </div>
       </div>
     );
   }
 
+  const peak = Math.max(...data.map((point) => point.cumulative), currentTotal);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-800">Shift Progress</h3>
-        <p className="text-xs text-gray-500 mt-0.5">
-          Cumulative net sales on this shift · each point is a receipt
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-800">Shift Progress</h3>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {receiptCount} receipt{receiptCount === 1 ? '' : 's'} · running net after refunds
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-bold text-blue-700 tabular-nums">{formatCurrency(currentTotal)}</p>
+          <p className="text-[11px] text-gray-400 uppercase tracking-wide">Current net</p>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-4 mb-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: LINE_COLOR }} />
-          Running net total
-        </span>
-      </div>
+
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
+          <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="shiftProgressFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={CHART.fillStart} />
+                <stop offset="100%" stopColor={CHART.fillEnd} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: '#64748b' }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+              minTickGap={24}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: '#64748b' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatAxisCurrency}
+              domain={[0, Math.ceil(peak * 1.08) || 1]}
+            />
             <Tooltip
+              cursor={{ stroke: CHART.lineLight, strokeWidth: 1, strokeDasharray: '4 4' }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const row = payload[0]?.payload as ShiftProgressPoint;
                 return (
-                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs min-w-[160px]">
-                    <p className="font-semibold text-gray-800 mb-1 truncate">{row.receipt}</p>
-                    <p className="text-gray-500 mb-2">{row.label}</p>
-                    <p className="flex justify-between gap-4" style={{ color: LINE_COLOR }}>
-                      <span>Running net</span>
-                      <span className="font-bold tabular-nums">{formatCurrency(row.cumulative)}</span>
-                    </p>
-                  </div>
+                  <ChartTooltipShell title={row.receipt} subtitle={`#${row.index} · ${row.label}`}>
+                    <TooltipRow label="This sale" value={formatCurrency(row.saleAmount)} />
+                    <TooltipRow label="Running net" value={formatCurrency(row.cumulative)} accent />
+                  </ChartTooltipShell>
                 );
               }}
             />
-            <Line
+            <ReferenceLine y={currentTotal} stroke={CHART.reference} strokeDasharray="6 4" label={{ value: 'Now', position: 'insideTopRight', fill: CHART.reference, fontSize: 10 }} />
+            <Area
               type="monotone"
               dataKey="cumulative"
-              name="Running net total"
-              stroke={LINE_COLOR}
-              strokeWidth={2}
-              dot={{ fill: LINE_COLOR, r: 3 }}
-              activeDot={{ r: 5 }}
+              stroke={CHART.line}
+              strokeWidth={2.5}
+              fill="url(#shiftProgressFill)"
+              dot={{ r: 3, fill: CHART.line, strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: CHART.line, stroke: '#fff', strokeWidth: 2 }}
+              isAnimationActive
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
@@ -122,51 +153,73 @@ export function CurrentShiftProgressChart({ data }: { data: ShiftProgressPoint[]
 
 /** Past completed shifts — net sales saved when each shift was closed. */
 export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) {
-  if (data.length === 0) {
-    return null;
-  }
+  if (data.length === 0) return null;
+
+  const avg = average(data.map((point) => point.netSales));
+  const peak = Math.max(...data.map((point) => point.netSales), avg);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-800">Past Shift Net Sales</h3>
-        <p className="text-xs text-gray-500 mt-0.5">From shift history · oldest to newest</p>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-800">Past Shift Net Sales</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Last {data.length} completed shift{data.length === 1 ? '' : 's'}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-bold text-gray-800 tabular-nums">{formatCurrency(avg)}</p>
+          <p className="text-[11px] text-gray-400 uppercase tracking-wide">Average</p>
+        </div>
       </div>
+
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
             <XAxis
-              dataKey="label"
-              tick={{ fontSize: 9 }}
+              dataKey="shortLabel"
+              tick={{ fontSize: 10, fill: '#64748b' }}
+              axisLine={false}
+              tickLine={false}
               interval={0}
-              angle={-20}
-              textAnchor="end"
-              height={50}
+              angle={data.length > 6 ? -24 : 0}
+              textAnchor={data.length > 6 ? 'end' : 'middle'}
+              height={data.length > 6 ? 48 : 28}
             />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
+            <YAxis
+              tick={{ fontSize: 10, fill: '#64748b' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatAxisCurrency}
+              domain={[0, Math.ceil(peak * 1.12) || 1]}
+            />
             <Tooltip
+              cursor={{ stroke: CHART.lineLight, strokeWidth: 1 }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const row = payload[0]?.payload as ShiftHistoryPoint;
                 return (
-                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs min-w-[150px]">
-                    <p className="font-semibold text-gray-800 mb-2">{row.label}</p>
-                    <p className="flex justify-between gap-4" style={{ color: LINE_COLOR }}>
-                      <span>Net sales</span>
-                      <span className="font-bold tabular-nums">{formatCurrency(row.netSales)}</span>
-                    </p>
-                  </div>
+                  <ChartTooltipShell title={row.label}>
+                    <TooltipRow label="Net sales" value={formatCurrency(row.netSales)} accent />
+                  </ChartTooltipShell>
                 );
               }}
             />
+            {avg > 0 && (
+              <ReferenceLine
+                y={avg}
+                stroke={CHART.reference}
+                strokeDasharray="6 4"
+                label={{ value: 'Avg', position: 'insideTopRight', fill: CHART.reference, fontSize: 10 }}
+              />
+            )}
             <Line
               type="monotone"
               dataKey="netSales"
-              name="Net sales"
-              stroke={LINE_COLOR}
-              strokeWidth={2}
-              dot={{ fill: LINE_COLOR, r: 3 }}
+              stroke={CHART.line}
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: '#fff', stroke: CHART.line, strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: CHART.line, stroke: '#fff', strokeWidth: 2 }}
+              isAnimationActive
             />
           </LineChart>
         </ResponsiveContainer>
@@ -175,7 +228,5 @@ export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) 
   );
 }
 
-// Backward-compatible exports
-export type ShiftPerformancePoint = ShiftHistoryPoint;
+// Backward-compatible export
 export const ShiftPerformanceChart = ShiftHistoryTrendChart;
-export const buildShiftPerformanceSeries = buildShiftHistorySeries;

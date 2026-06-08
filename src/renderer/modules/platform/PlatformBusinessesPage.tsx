@@ -1,12 +1,23 @@
-import { useMemo, useState } from 'react';
-import { format, subDays } from 'date-fns';
-import { usePlatformBusinesses, usePlatformBusinessStats, useUpdateBusinessStatus } from './api/PlatformQueries';
+import { useCallback, useMemo, useState } from 'react';
+import { differenceInDays, format, parseISO, subDays } from 'date-fns';
 import {
-  canChangeBusinessStatus,
-  getBusinessNextStatus,
+  useBulkDeleteBusinesses,
+  useBulkUpdateBusinessStatus,
+  useDeleteBusiness,
+  useNotifyBusinesses,
+  usePlatformBusinesses,
+  usePlatformBusinessStats,
+  useUpdateBusinessStatus,
+} from './api/PlatformQueries';
+import {
+  BUSINESS_ACCOUNT_STATUSES,
+  STATUS_DURATION_DAYS,
+  STATUS_LABELS,
+  accountStatusBadge,
+  matchesStatusDurationFilter,
   validateBusinessStatsDateRange,
 } from './api/platformBusinessValidation';
-import type { ActivityStatus, PlatformBusiness } from './api/PlatformTypes';
+import type { ActivityStatus, BusinessAccountStatus, PlatformBusiness } from './api/PlatformTypes';
 import { PlatformBusinessOnboardingChart } from './PlatformCharts';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
@@ -17,8 +28,11 @@ import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { PlatformBusinessStatusModal } from './components/PlatformBusinessStatusModal';
+import { PlatformBusinessNotificationModal } from './components/PlatformBusinessNotificationModal';
+import { PlatformBusinessDeleteModal } from './components/PlatformBusinessDeleteModal';
 import {
-  Building2, Ban, CheckCircle, TrendingUp, Calendar, Users, DollarSign, Receipt, AlertTriangle,
+  Building2, Ban, TrendingUp, Calendar, Users, DollarSign, Receipt, AlertTriangle,
+  Mail, Shield, Trash2, CheckSquare, Square,
 } from 'lucide-react';
 
 const activityBadge: Record<ActivityStatus, 'success' | 'warning' | 'neutral' | 'danger'> = {
@@ -42,12 +56,25 @@ function defaultRange() {
   return { from, to };
 }
 
+function daysInStatus(business: PlatformBusiness): number | null {
+  if (!business.status_changed_at) return null;
+  return differenceInDays(new Date(), parseISO(business.status_changed_at));
+}
+
+type ModalTarget = PlatformBusiness[];
+
 export default function PlatformBusinessesPage() {
   const [search, setSearch] = useState('');
   const [activityFilter, setActivityFilter] = useState('');
+  const [accountStatusFilter, setAccountStatusFilter] = useState<BusinessAccountStatus | ''>('');
+  const [statusDurationFilter, setStatusDurationFilter] = useState<number | ''>('');
   const [dateFrom, setDateFrom] = useState(defaultRange().from);
   const [dateTo, setDateTo] = useState(defaultRange().to);
   const [dateTouched, setDateTouched] = useState<{ from: boolean; to: boolean }>({ from: false, to: false });
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [statusTargets, setStatusTargets] = useState<ModalTarget | null>(null);
+  const [notifyTargets, setNotifyTargets] = useState<ModalTarget | null>(null);
+  const [deleteTargets, setDeleteTargets] = useState<ModalTarget | null>(null);
 
   const dateValidation = useMemo(
     () => validateBusinessStatsDateRange(dateFrom, dateTo),
@@ -58,10 +85,6 @@ export default function PlatformBusinessesPage() {
     () => (dateValidation.valid ? { date_from: dateFrom, date_to: dateTo } : {}),
     [dateFrom, dateTo, dateValidation.valid],
   );
-  const [statusModal, setStatusModal] = useState<{
-    business: PlatformBusiness;
-    nextStatus: 'active' | 'suspended';
-  } | null>(null);
 
   const listParams = useMemo(() => ({
     sort: 'gross_sales_30d',
@@ -72,12 +95,18 @@ export default function PlatformBusinessesPage() {
   const { data: stats, isLoading: statsLoading } = usePlatformBusinessStats(statsParams, dateValidation.valid);
   const { data, isLoading: listLoading } = usePlatformBusinesses(listParams);
   const updateStatus = useUpdateBusinessStatus();
+  const bulkUpdateStatus = useBulkUpdateBusinessStatus();
+  const deleteBusiness = useDeleteBusiness();
+  const bulkDelete = useBulkDeleteBusinesses();
+  const notifyBusinesses = useNotifyBusinesses();
 
   const rows = useMemo(() => {
     const list = data?.data ?? [];
     const q = search.trim().toLowerCase();
     return list.filter((b) => {
       if (activityFilter && b.activity_status !== activityFilter) return false;
+      if (accountStatusFilter && b.status !== accountStatusFilter) return false;
+      if (!matchesStatusDurationFilter(b, accountStatusFilter, statusDurationFilter)) return false;
       if (!q) return true;
       return (
         b.name.toLowerCase().includes(q)
@@ -86,27 +115,85 @@ export default function PlatformBusinessesPage() {
         || (b.owner_name?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [data?.data, search, activityFilter]);
+  }, [data?.data, search, activityFilter, accountStatusFilter, statusDurationFilter]);
 
   const paginated = usePagination(rows, 15);
 
-  const openStatusModal = (business: PlatformBusiness) => {
-    const nextStatus = getBusinessNextStatus(business);
-    if (!nextStatus || !canChangeBusinessStatus(business)) return;
-    setStatusModal({ business, nextStatus });
+  const selectedBusinesses = useMemo(
+    () => rows.filter((b) => selectedIds.has(b.id)),
+    [rows, selectedIds],
+  );
+
+  const filteredIds = rows.map((b) => b.id);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
+
+  const toggleAll = useCallback(() => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredIds));
+  }, [allSelected, filteredIds]);
+
+  const toggleOne = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleStatusConfirm = (status: BusinessAccountStatus, reason: string) => {
+    if (!statusTargets?.length) return;
+    if (statusTargets.length === 1) {
+      updateStatus.mutate(
+        { id: statusTargets[0].id, status, reason },
+        { onSuccess: () => { setStatusTargets(null); clearSelection(); } },
+      );
+    } else {
+      bulkUpdateStatus.mutate(
+        { ids: statusTargets.map((b) => b.id), status, reason },
+        { onSuccess: () => { setStatusTargets(null); clearSelection(); } },
+      );
+    }
   };
 
-  const handleStatusConfirm = (reason: string) => {
-    if (!statusModal) return;
-    updateStatus.mutate(
+  const handleNotifyConfirm = (
+    intention: Parameters<typeof notifyBusinesses.mutate>[0]['intention'],
+    message: string,
+    subject: string,
+    markAsNotified: boolean,
+  ) => {
+    if (!notifyTargets?.length) return;
+    notifyBusinesses.mutate(
       {
-        id: statusModal.business.id,
-        status: statusModal.nextStatus,
-        reason,
+        businessIds: notifyTargets.map((b) => b.id),
+        intention,
+        message,
+        subject: subject || undefined,
+        markAsNotified,
       },
-      { onSuccess: () => setStatusModal(null) },
+      { onSuccess: () => { setNotifyTargets(null); clearSelection(); } },
     );
   };
+
+  const handleDeleteConfirm = (reason: string) => {
+    if (!deleteTargets?.length) return;
+    if (deleteTargets.length === 1) {
+      deleteBusiness.mutate(
+        { id: deleteTargets[0].id, reason },
+        { onSuccess: () => { setDeleteTargets(null); clearSelection(); } },
+      );
+    } else {
+      bulkDelete.mutate(
+        { ids: deleteTargets.map((b) => b.id), reason },
+        { onSuccess: () => { setDeleteTargets(null); clearSelection(); } },
+      );
+    }
+  };
+
+  const actionPending = updateStatus.isPending || bulkUpdateStatus.isPending
+    || deleteBusiness.isPending || bulkDelete.isPending || notifyBusinesses.isPending;
 
   if (statsLoading && listLoading) return <LoadingSkeleton variant="table" />;
 
@@ -117,8 +204,9 @@ export default function PlatformBusinessesPage() {
     { label: 'In Selected Range', value: String(stats.onboarding.in_range), hint: `${stats.onboarding.range_from} → ${stats.onboarding.range_to}`, icon: Calendar, color: 'amber' as const },
     { label: 'Selling (30d)', value: String(stats.totals.with_gross_sales_30d), hint: 'Businesses with sale transactions', icon: DollarSign, color: 'green' as const },
     { label: 'Sales Tx (30d)', value: stats.totals.transactions_30d.toLocaleString(), hint: 'Platform-wide sale count from sales table', icon: Receipt, color: 'blue' as const },
+    { label: 'Warnings', value: String(stats.totals.warning ?? 0), hint: 'Account warnings issued', icon: AlertTriangle, color: 'amber' as const },
+    { label: 'Notified', value: String(stats.totals.notified ?? 0), hint: 'Marked after platform notification', icon: Mail, color: 'blue' as const },
     { label: 'Suspended', value: String(stats.totals.suspended), hint: 'Blocked from sign-in', icon: Ban, color: 'red' as const },
-    { label: 'Total Businesses', value: String(stats.totals.total), hint: `${stats.totals.active_status} active accounts`, icon: Users, color: 'indigo' as const },
   ] : [];
 
   const rangeLabel = `${stats?.onboarding.range_from ?? dateFrom} to ${stats?.onboarding.range_to ?? dateTo}`;
@@ -126,18 +214,31 @@ export default function PlatformBusinessesPage() {
   return (
     <div className="space-y-6">
       <PlatformBusinessStatusModal
-        open={statusModal !== null}
-        business={statusModal?.business ?? null}
-        nextStatus={statusModal?.nextStatus ?? null}
-        isPending={updateStatus.isPending}
-        onClose={() => setStatusModal(null)}
+        open={statusTargets !== null}
+        businesses={statusTargets ?? []}
+        isPending={updateStatus.isPending || bulkUpdateStatus.isPending}
+        onClose={() => setStatusTargets(null)}
         onConfirm={handleStatusConfirm}
+      />
+      <PlatformBusinessNotificationModal
+        open={notifyTargets !== null}
+        businesses={notifyTargets ?? []}
+        isPending={notifyBusinesses.isPending}
+        onClose={() => setNotifyTargets(null)}
+        onConfirm={handleNotifyConfirm}
+      />
+      <PlatformBusinessDeleteModal
+        open={deleteTargets !== null}
+        businesses={deleteTargets ?? []}
+        isPending={deleteBusiness.isPending || bulkDelete.isPending}
+        onClose={() => setDeleteTargets(null)}
+        onConfirm={handleDeleteConfirm}
       />
 
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Businesses</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Onboarding growth, gross sales in local currency, and account control — Tx (30d) counts sale records from the sales table
+          Onboarding growth, gross sales, staff counts, account control, and targeted notifications
         </p>
       </div>
 
@@ -150,16 +251,10 @@ export default function PlatformBusinessesPage() {
             max={dateTo || undefined}
             onChange={(e) => setDateFrom(e.target.value)}
             onBlur={() => setDateTouched((t) => ({ ...t, from: true }))}
-            aria-invalid={dateTouched.from && Boolean(dateValidation.errors.dateFrom)}
             className={`border rounded-lg px-3 py-2 text-sm ${
-              dateTouched.from && dateValidation.errors.dateFrom
-                ? 'border-red-500 focus:ring-red-500/30'
-                : 'border-gray-200'
+              dateTouched.from && dateValidation.errors.dateFrom ? 'border-red-500' : 'border-gray-200'
             }`}
           />
-          {dateTouched.from && dateValidation.errors.dateFrom && (
-            <p className="text-xs text-red-600 mt-1">{dateValidation.errors.dateFrom}</p>
-          )}
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
@@ -169,30 +264,12 @@ export default function PlatformBusinessesPage() {
             min={dateFrom || undefined}
             onChange={(e) => setDateTo(e.target.value)}
             onBlur={() => setDateTouched((t) => ({ ...t, to: true }))}
-            aria-invalid={dateTouched.to && Boolean(dateValidation.errors.dateTo)}
             className={`border rounded-lg px-3 py-2 text-sm ${
-              dateTouched.to && dateValidation.errors.dateTo
-                ? 'border-red-500 focus:ring-red-500/30'
-                : 'border-gray-200'
+              dateTouched.to && dateValidation.errors.dateTo ? 'border-red-500' : 'border-gray-200'
             }`}
           />
-          {dateTouched.to && dateValidation.errors.dateTo && (
-            <p className="text-xs text-red-600 mt-1">{dateValidation.errors.dateTo}</p>
-          )}
         </div>
-        <p className="text-xs text-gray-500 sm:ml-auto pb-2">
-          {dateValidation.valid
-            ? 'Adjust the range to see onboarding stats and cumulative growth for that period'
-            : 'Fix the date range to load onboarding statistics'}
-        </p>
       </div>
-
-      {!dateValidation.valid && (dateTouched.from || dateTouched.to) && (
-        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{dateValidation.firstError ?? 'Enter a valid date range'}</span>
-        </div>
-      )}
 
       {stats && (
         <>
@@ -201,15 +278,11 @@ export default function PlatformBusinessesPage() {
               const Icon = card.icon;
               const s = cardStyles[card.color];
               return (
-                <div
-                  key={card.label}
-                  className={`rounded-xl p-5 border-2 bg-white ${s.border} hover:shadow-md transition-shadow`}
-                >
+                <div key={card.label} className={`rounded-xl p-5 border-2 bg-white ${s.border}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className={`p-2.5 rounded-lg ${s.iconBg}`}>
                       <Icon className={`w-5 h-5 ${s.iconColor}`} />
                     </div>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.badge}`}>Decision</span>
                   </div>
                   <p className="text-2xl font-bold text-gray-900">{card.value}</p>
                   <p className="text-sm font-medium text-gray-700 mt-0.5">{card.label}</p>
@@ -235,39 +308,87 @@ export default function PlatformBusinessesPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600 space-y-1">
-                <p>Platform gross (30d): <span className="font-semibold">{formatCurrency(stats.totals.gross_sales_30d, 'UGX')}</span></p>
-                <p className="text-gray-400">Mixed currencies in table below — gross per business uses local currency</p>
-              </div>
             </div>
           </div>
         </>
       )}
 
       <Card>
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-1">
-            <SearchInput
-              placeholder="Search by business name, owner email, or business email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClear={() => setSearch('')}
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              {rows.length} match{rows.length === 1 ? '' : 'es'} · {data?.data?.length ?? 0} total loaded
-            </p>
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex flex-col lg:flex-row gap-3">
+            <div className="flex-1">
+              <SearchInput
+                placeholder="Search by business name, owner email, or business email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                {rows.length} match{rows.length === 1 ? '' : 'es'} · {data?.data?.length ?? 0} total loaded
+              </p>
+            </div>
+            <select
+              value={activityFilter}
+              onChange={(e) => setActivityFilter(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
+            >
+              <option value="">All activity</option>
+              <option value="active">Active (30d)</option>
+              <option value="dormant">Dormant</option>
+              <option value="never_used">Never used</option>
+              <option value="suspended">Suspended activity</option>
+            </select>
+            <select
+              value={accountStatusFilter}
+              onChange={(e) => {
+                setAccountStatusFilter(e.target.value as BusinessAccountStatus | '');
+                if (!e.target.value) setStatusDurationFilter('');
+              }}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
+            >
+              <option value="">All account statuses</option>
+              {BUSINESS_ACCOUNT_STATUSES.map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+            <select
+              value={statusDurationFilter}
+              onChange={(e) => setStatusDurationFilter(e.target.value ? Number(e.target.value) : '')}
+              disabled={!accountStatusFilter}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit disabled:opacity-50"
+              title="Filter businesses in the selected account status for at least N days"
+            >
+              <option value="">Any duration</option>
+              {STATUS_DURATION_DAYS.map((d) => (
+                <option key={d} value={d}>In status ≥ {d} days</option>
+              ))}
+            </select>
           </div>
-          <select
-            value={activityFilter}
-            onChange={(e) => setActivityFilter(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
-          >
-            <option value="">All activity</option>
-            <option value="active">Active (30d)</option>
-            <option value="dormant">Dormant</option>
-            <option value="never_used">Never used</option>
-            <option value="suspended">Suspended</option>
-          </select>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+            >
+              {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
+              {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
+            </button>
+            {selectedIds.size > 0 && (
+              <>
+                <span className="text-gray-300">|</span>
+                <Button variant="secondary" size="sm" onClick={() => setNotifyTargets(selectedBusinesses)} disabled={actionPending}>
+                  <Mail className="w-3.5 h-3.5 mr-1" />Notify ({selectedIds.size})
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => setStatusTargets(selectedBusinesses)} disabled={actionPending}>
+                  <Shield className="w-3.5 h-3.5 mr-1" />Status ({selectedIds.size})
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => setDeleteTargets(selectedBusinesses)} disabled={actionPending}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />Delete ({selectedIds.size})
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {listLoading ? (
@@ -277,17 +398,37 @@ export default function PlatformBusinessesPage() {
             <Table<PlatformBusiness>
               rowKey={(b) => b.id}
               columns={[
+                {
+                  key: 'select',
+                  header: '',
+                  render: (b) => (
+                    <button type="button" onClick={() => toggleOne(b.id)} className="p-1 text-gray-400 hover:text-gray-700">
+                      {selectedIds.has(b.id) ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
+                    </button>
+                  ),
+                },
                 { key: 'name', header: 'Business', render: (b) => (
                   <div>
                     <p className="font-medium text-gray-900">{b.name}</p>
                     <p className="text-xs text-gray-500">{b.owner_email ?? b.email ?? '—'}</p>
                   </div>
                 )},
-                { key: 'account', header: 'Account', render: (b) => (
-                  <Badge variant={b.status === 'active' ? 'success' : 'danger'}>{b.status}</Badge>
-                )},
+                { key: 'account', header: 'Account', render: (b) => {
+                  const days = daysInStatus(b);
+                  return (
+                    <div>
+                      <Badge variant={accountStatusBadge(b.status)}>{STATUS_LABELS[b.status]}</Badge>
+                      {days !== null && (
+                        <p className="text-xs text-gray-400 mt-0.5">{days}d in status</p>
+                      )}
+                    </div>
+                  );
+                }},
                 { key: 'activity', header: 'Activity', render: (b) => (
                   <Badge variant={activityBadge[b.activity_status]}>{b.activity_status.replace('_', ' ')}</Badge>
+                )},
+                { key: 'staff', header: 'Staff', render: (b) => (
+                  <span className="font-medium" title="Users linked to this business_id">{b.staff_count.toLocaleString()}</span>
                 )},
                 { key: 'currency', header: 'Currency' },
                 { key: 'gross_today', header: 'Gross today', render: (b) => formatCurrency(b.gross_sales_today, b.currency) },
@@ -301,18 +442,17 @@ export default function PlatformBusinessesPage() {
                 )},
                 { key: 'plan', header: 'Plan', render: (b) => b.plan_name ?? '—' },
                 { key: 'actions', header: '', render: (b) => (
-                  <Button
-                    variant={b.status === 'active' ? 'danger' : 'secondary'}
-                    size="sm"
-                    onClick={() => openStatusModal(b)}
-                    disabled={updateStatus.isPending}
-                  >
-                    {b.status === 'active' ? (
-                      <><Ban className="w-3.5 h-3.5 mr-1" />Suspend</>
-                    ) : (
-                      <><CheckCircle className="w-3.5 h-3.5 mr-1" />Reactivate</>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setNotifyTargets([b])} disabled={actionPending} title="Send notification">
+                      <Mail className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setStatusTargets([b])} disabled={actionPending} title="Change status">
+                      <Shield className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTargets([b])} disabled={actionPending} title="Delete">
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </Button>
+                  </div>
                 )},
               ]}
               data={paginated.data}

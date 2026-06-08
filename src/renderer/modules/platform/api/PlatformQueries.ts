@@ -3,6 +3,8 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { PLATFORM } from '../../../shared/api/endpoints/endpoints';
 import { useToast } from '../../../app/contexts/ToastContext';
 import type {
+  BusinessAccountStatus,
+  BusinessNotificationIntention,
   PaginatedPlatformResponse,
   PlatformBusiness,
   PlatformBusinessStats,
@@ -11,7 +13,7 @@ import type {
   PlatformRole,
   PlatformUser,
 } from './PlatformTypes';
-import { assertBusinessStatusReason } from './platformBusinessValidation';
+import { assertBusinessNotifyPayload, assertBusinessStatusReason } from './platformBusinessValidation';
 
 export const platformKeys = {
   all: ['platform'] as const,
@@ -75,7 +77,7 @@ export function useUpdateBusinessStatus() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, status, reason }: { id: number; status: 'active' | 'suspended'; reason: string }) => {
+    mutationFn: async ({ id, status, reason }: { id: number; status: BusinessAccountStatus; reason: string }) => {
       const trimmedReason = assertBusinessStatusReason(reason);
       const { data } = await axiosInstance.patch<{ message: string }>(
         PLATFORM.BUSINESS_STATUS(id),
@@ -88,6 +90,105 @@ export function useUpdateBusinessStatus() {
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
     onError: (err: Error) => showToast('error', err.message || 'Failed to update business status'),
+  });
+}
+
+export function useBulkUpdateBusinessStatus() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ ids, status, reason }: { ids: number[]; status: BusinessAccountStatus; reason: string }) => {
+      const trimmedReason = assertBusinessStatusReason(reason);
+      const { data } = await axiosInstance.post<{ message: string }>(PLATFORM.BUSINESSES_BULK_STATUS, {
+        ids,
+        status,
+        reason: trimmedReason,
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', err.message || 'Failed to update businesses'),
+  });
+}
+
+export function useDeleteBusiness() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const trimmedReason = assertBusinessStatusReason(reason);
+      const { data } = await axiosInstance.delete<{ message: string }>(PLATFORM.BUSINESS_DELETE(id), {
+        data: { reason: trimmedReason },
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', err.message || 'Failed to delete business'),
+  });
+}
+
+export function useBulkDeleteBusinesses() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ ids, reason }: { ids: number[]; reason: string }) => {
+      const trimmedReason = assertBusinessStatusReason(reason);
+      const { data } = await axiosInstance.post<{ message: string }>(PLATFORM.BUSINESSES_BULK_DELETE, {
+        ids,
+        reason: trimmedReason,
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', err.message || 'Failed to delete businesses'),
+  });
+}
+
+export function useNotifyBusinesses() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      businessIds,
+      intention,
+      message,
+      subject,
+      markAsNotified,
+    }: {
+      businessIds: number[];
+      intention: BusinessNotificationIntention;
+      message: string;
+      subject?: string;
+      markAsNotified?: boolean;
+    }) => {
+      const payload = assertBusinessNotifyPayload(message, subject ?? '');
+      const { data } = await axiosInstance.post<{ message: string }>(PLATFORM.BUSINESSES_NOTIFY, {
+        business_ids: businessIds,
+        intention,
+        message: payload.message,
+        subject: payload.subject,
+        mark_as_notified: markAsNotified ?? false,
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', err.message || 'Failed to send notification'),
   });
 }
 

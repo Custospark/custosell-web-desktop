@@ -1,12 +1,23 @@
 export type ActivityStatus = 'active' | 'dormant' | 'never_used' | 'suspended';
 
+export type BusinessAccountStatus = 'active' | 'warning' | 'restricted' | 'suspended' | 'notified';
+
+export type BusinessNotificationIntention =
+  | 'announcement'
+  | 'warning_notice'
+  | 'payment_reminder'
+  | 'policy_update'
+  | 'reactivation_nudge'
+  | 'custom';
+
 export interface PlatformBusiness {
   id: number;
   name: string;
   slug: string;
   email: string | null;
   currency: string;
-  status: 'active' | 'suspended';
+  status: BusinessAccountStatus;
+  status_changed_at: string | null;
   activity_status: ActivityStatus;
   owner_name: string | null;
   owner_email: string | null;
@@ -102,6 +113,9 @@ export interface PlatformBusinessStats {
   totals: {
     total: number;
     active_status: number;
+    warning: number;
+    notified: number;
+    restricted: number;
     suspended: number;
     with_gross_sales_30d: number;
     transactions_30d: number;

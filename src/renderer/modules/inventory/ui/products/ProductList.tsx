@@ -160,7 +160,14 @@ export default function ProductList() {
             { key: 'name', header: 'Name', render: (item) => (
               <div className="flex items-center gap-2">
                 <span>{item.name}</span>
-                {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+                {item._syncFailed ? (
+                  <span
+                    className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"
+                    title={item._lastError || 'Sync failed'}
+                  >
+                    Sync failed
+                  </span>
+                ) : item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
               </div>
             ) },
             { key: 'category', header: 'Category', render: (item) => item.category?.name || <span className="text-gray-400">—</span> },

@@ -147,6 +147,34 @@ function extractStaff(responseData: unknown): StaffUser | null {
   return null;
 }
 
+async function findServerStaffByEmail(email: unknown): Promise<StaffUser | null> {
+  if (typeof email !== 'string' || !email.trim()) return null;
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const response = await axiosInstance.get<{ data: StaffUser[] }>('/users', { timeout: 10000 });
+  return response.data.data
+    .filter(Boolean)
+    .find((staff) => staff.email.trim().toLowerCase() === normalizedEmail) ?? null;
+}
+
+async function reconcileDuplicateStaffCreate(m: QueuedMutation, message: string): Promise<boolean> {
+  if (!isStaffCreateMutation(m)) return false;
+  if (!/email|duplicate|already|taken/i.test(message)) return false;
+
+  const payload = m.data as { email?: unknown } | undefined;
+  let serverStaff: StaffUser | null;
+  try {
+    serverStaff = await findServerStaffByEmail(payload?.email);
+  } catch {
+    return false;
+  }
+  if (!serverStaff) return false;
+
+  await mutationQueue.markCompleted(m.id);
+  await localStaffStore.markSyncedByMutationId(m.id, serverStaff.id, serverStaff);
+  return true;
+}
+
 function extractBusiness(responseData: unknown): Business | null {
   if (!responseData || typeof responseData !== 'object') return null;
   const wrapped = responseData as { data?: Business };
@@ -279,9 +307,19 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     return true;
   } catch (error: unknown) {
-    const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
+    const err = error as {
+      response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } };
+      message?: string;
+    };
     const isServerError = err?.response?.status && err.response.status >= 400 && err.response.status < 500;
-    const message = err?.response?.data?.message || err?.message || 'Request failed';
+    const validationMessage = err?.response?.data?.errors
+      ? Object.values(err.response.data.errors).flat().join(' ')
+      : undefined;
+    const message = validationMessage || err?.response?.data?.message || err?.message || 'Request failed';
+
+    if (await reconcileDuplicateStaffCreate(m, message)) {
+      return true;
+    }
 
     if (isRefundMutation(m)) {
       await localRefundsStore.markFailedByMutationId(m.id);
@@ -294,7 +332,7 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     }
 
     if (isProductMutation(m)) {
-      await localProductsStore.markFailedByMutationId(m.id);
+      await localProductsStore.markFailedByMutationId(m.id, message);
     }
 
     if (isCategoryMutation(m)) {

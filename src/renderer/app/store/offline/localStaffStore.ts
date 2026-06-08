@@ -10,7 +10,7 @@ export interface LocalStaffRecord {
   mutationId: string;
   mutationType: StaffMutationType;
   staffId: number;
-  roleId: number;
+  roleId: number | null;
   staff: StaffUser;
   payload: CreateStaffData | UpdateStaffData | { id: number };
   syncStatus: LocalStaffSyncStatus;

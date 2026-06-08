@@ -4,20 +4,23 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { USERS } from '../../../../shared/api/endpoints/endpoints';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
+import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
 import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from '../../../../app/store/offline/localStaffStore';
 import type { RoleWithSyncMeta } from '../../../../app/store/offline/localRolesStore';
+import type { BusinessWithSyncMeta } from '../../../../app/store/offline/localBusinessSettingsStore';
+import { store } from '../../../../app/store/store';
 import {
   completeOfflineCreateStaffInstant,
   completeOfflineDeleteStaffInstant,
   completeOfflineUpdatePendingStaffInstant,
   completeOfflineUpdateStaffInstant,
-  shouldCompleteSettingsLocally,
 } from '../../../../app/store/offline/completeOfflineSettings';
 import { roleKeys } from './RoleQueries';
+import { businessKeys } from './BusinessQueries';
 import type { StaffUser, CreateStaffData, UpdateStaffData } from './StaffTypes';
+import { assertCanDeleteStaffAccount, getBusinessOwnerId } from './staffAccountRules';
 
 export const staffKeys = {
   all: ['staff'] as const,
@@ -25,10 +28,11 @@ export const staffKeys = {
   list: () => [...staffKeys.lists()] as const,
 };
 
-function resolveRole(roleId: number): { id: number; name: string } | null {
+function resolveRole(roleId: number | null | undefined): { id: number; name: string; slug?: string | null } | null {
+  if (!roleId) return null;
   const roles = queryClient.getQueryData<RoleWithSyncMeta[]>(roleKeys.list()) ?? [];
   const role = roles.filter(Boolean).find((r) => r.id === roleId);
-  return role ? { id: role.id, name: role.name } : null;
+  return role ? { id: role.id, name: role.name, slug: role.slug } : null;
 }
 
 function withResolvedRole(staff: StaffUser): StaffUser {
@@ -36,6 +40,20 @@ function withResolvedRole(staff: StaffUser): StaffUser {
     ...staff,
     role: staff.role ?? resolveRole(staff.role_id),
   };
+}
+
+async function findServerStaffByEmail(email: string): Promise<StaffWithSyncMeta | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return null;
+
+  const { data: response } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE, {
+    timeout: 10000,
+  });
+  const staff = response.data
+    .filter(Boolean)
+    .find((item) => item.email.trim().toLowerCase() === normalizedEmail);
+
+  return staff ? withResolvedRole(staff) as StaffWithSyncMeta : null;
 }
 
 async function loadLocalPendingStaff(): Promise<{
@@ -99,7 +117,7 @@ export function useCreateStaff() {
     retry: false,
     mutationFn: async (p) => {
       const role = resolveRole(p.role_id);
-      if (shouldCompleteSettingsLocally()) {
+      if (isOfflineMode()) {
         return completeOfflineCreateStaffInstant(p, role);
       }
       try {
@@ -108,7 +126,12 @@ export function useCreateStaff() {
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (!axiosErr.response) {
-          return completeOfflineCreateStaffInstant(p, role);
+          try {
+            const serverStaff = await findServerStaffByEmail(p.email);
+            if (serverStaff) return serverStaff;
+          } catch {
+            // Online writes should not create a pending row unless the app is explicitly offline.
+          }
         }
         throw err;
       }
@@ -127,6 +150,14 @@ export function useCreateStaff() {
         });
         showToast('success', 'Staff saved — will sync when online');
       } else {
+        qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) => {
+          const list = (old ?? []).filter(Boolean);
+          if (list.some((s) => s.id === staff.id || s.email === staff.email)) {
+            return list.map((s) => s.id === staff.id || s.email === staff.email ? staff : s);
+          }
+          return [staff, ...list];
+        });
+        showToast('success', 'Staff created');
         qc.invalidateQueries({ queryKey: staffKeys.list() });
       }
     },
@@ -153,7 +184,7 @@ export function useUpdateStaff() {
         return completeOfflineUpdatePendingStaffInstant(existing, data, role);
       }
 
-      if (shouldCompleteSettingsLocally()) {
+      if (isOfflineMode()) {
         return completeOfflineUpdateStaffInstant(existing, data, role);
       }
       try {
@@ -161,7 +192,7 @@ export function useUpdateStaff() {
         return withResolvedRole(r.data) as StaffWithSyncMeta;
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (!axiosErr.response && isOfflineMode()) {
           return completeOfflineUpdateStaffInstant(existing, data, role);
         }
         throw err;
@@ -182,6 +213,10 @@ export function useUpdateStaff() {
           staff._mutationType ? 'Corrected changes saved — will retry sync' : 'Changes saved — will sync when online',
         );
       } else {
+        qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) =>
+          (old ?? []).filter(Boolean).map((s) => s.id === id ? staff : s),
+        );
+        showToast('success', 'Staff updated');
         qc.invalidateQueries({ queryKey: staffKeys.list() });
       }
     },
@@ -200,9 +235,38 @@ export function useDeleteStaff() {
     mutationFn: async (id) => {
       const cached = qc.getQueryData<StaffWithSyncMeta[]>(staffKeys.list());
       const staff = cached?.filter(Boolean).find((s) => s.id === id);
+      const authUser = store.getState().auth.user;
+      const business = qc.getQueryData<BusinessWithSyncMeta>(businessKeys.mine());
+      assertCanDeleteStaffAccount(id, {
+        currentUserId: authUser?.id ?? null,
+        businessOwnerId: getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null }),
+      });
       const isPendingOnly = staff?._pendingSync || id < 0;
 
       if (isPendingOnly) {
+        if (id > 0 && staff?._mutationType !== 'create' && !isOfflineMode()) {
+          try {
+            await axiosInstance.delete(USERS.BY_ID(id), { timeout: 10000 });
+            const mutationId = await localStaffStore.removeByStaffId(id);
+            if (mutationId) {
+              await mutationQueue.removeById(mutationId);
+            }
+            return;
+          } catch (err: unknown) {
+            const axiosErr = err as AxiosError;
+            if (axiosErr.response?.status === 404) {
+              const mutationId = await localStaffStore.removeByStaffId(id);
+              if (mutationId) {
+                await mutationQueue.removeById(mutationId);
+              }
+              return;
+            }
+            if (axiosErr.response) {
+              throw err;
+            }
+          }
+        }
+
         const mutationId = await localStaffStore.removeByStaffId(id);
         if (mutationId) {
           await mutationQueue.removeById(mutationId);
@@ -210,7 +274,7 @@ export function useDeleteStaff() {
         return;
       }
 
-      if (shouldCompleteSettingsLocally()) {
+      if (isOfflineMode()) {
         completeOfflineDeleteStaffInstant(id);
         return;
       }
@@ -219,7 +283,7 @@ export function useDeleteStaff() {
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (axiosErr.response?.status === 404) return;
-        if (!axiosErr.response) {
+        if (!axiosErr.response && isOfflineMode()) {
           completeOfflineDeleteStaffInstant(id);
           return;
         }

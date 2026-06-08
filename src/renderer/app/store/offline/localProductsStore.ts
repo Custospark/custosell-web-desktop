@@ -15,10 +15,14 @@ export interface LocalProductRecord {
   serverId?: number;
   createdAt: string;
   syncedAt?: string;
+  lastError?: string;
 }
 
 export type ProductWithSyncMeta = Product & {
   _pendingSync?: boolean;
+  _syncFailed?: boolean;
+  _lastError?: string;
+  _mutationType?: ProductMutationType;
   _localId?: string;
 };
 
@@ -26,6 +30,9 @@ export function toProductWithSyncMeta(record: LocalProductRecord): ProductWithSy
   return {
     ...record.product,
     _pendingSync: record.syncStatus === 'pending' || record.syncStatus === 'failed',
+    _syncFailed: record.syncStatus === 'failed',
+    _lastError: record.lastError,
+    _mutationType: record.mutationType,
     _localId: record.localId,
   };
 }
@@ -66,6 +73,39 @@ export const localProductsStore = {
     return all.filter((r) => r.syncStatus === 'pending' || r.syncStatus === 'failed');
   },
 
+  async getByLocalId(localId: string): Promise<LocalProductRecord | null> {
+    const db = await getOfflineDb();
+    return (await db.get('localProducts', localId)) ?? null;
+  },
+
+  async getByProductId(productId: number): Promise<LocalProductRecord | null> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localProducts');
+    return all.find((r) => r.product.id === productId) ?? null;
+  },
+
+  async updatePendingRecord(
+    localId: string,
+    product: Product,
+    payload: CreateProductData | UpdateProductData | { id: number },
+  ): Promise<LocalProductRecord> {
+    const db = await getOfflineDb();
+    const record = await db.get('localProducts', localId);
+    if (!record) {
+      throw new Error('Local product record not found');
+    }
+    if (record.syncStatus === 'synced') {
+      throw new Error('Synced product records cannot be updated');
+    }
+
+    record.product = product;
+    record.payload = payload;
+    record.syncStatus = 'pending';
+    record.lastError = undefined;
+    await db.put('localProducts', record);
+    return record;
+  },
+
   async markSyncedByMutationId(
     mutationId: string,
     serverId?: number,
@@ -87,12 +127,13 @@ export const localProductsStore = {
     await db.put('localProducts', record);
   },
 
-  async markFailedByMutationId(mutationId: string): Promise<void> {
+  async markFailedByMutationId(mutationId: string, error?: string): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localProducts');
     const record = all.find((r) => r.mutationId === mutationId);
     if (!record) return;
     record.syncStatus = 'failed';
+    record.lastError = error;
     await db.put('localProducts', record);
   },
 

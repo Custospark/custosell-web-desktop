@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCategories, useCreateProduct, useUpdateProduct } from '../../api/products/ProductQueries';
-import type { Product, CreateProductData } from '../../api/products/ProductTypes';
+import type { CreateProductData } from '../../api/products/ProductTypes';
+import type { ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
 import { SlideDrawer } from '../../../../shared/components/modals/SlideDrawer';
 import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
 import { Package, DollarSign, Barcode, Tag, Archive, AlertTriangle, Percent, FileText, FolderTree } from 'lucide-react';
@@ -8,7 +9,7 @@ import { Package, DollarSign, Barcode, Tag, Archive, AlertTriangle, Percent, Fil
 interface ProductFormDrawerProps {
   open: boolean;
   onClose: () => void;
-  product?: Product | null;
+  product?: ProductWithSyncMeta | null;
 }
 
 const COMMON_UNITS = [
@@ -60,17 +61,19 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
-    if (product) {
-      setForm({
-        name: product.name, unit: product.unit ?? '', category_id: product.category_id, description: product.description,
-        sku: product.sku, barcode: product.barcode, is_active: product.is_active,
-        unit_price: product.unit_price, wholesale_price: product.wholesale_price ?? '', cost_price: product.cost_price ?? '',
-        stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
-        tax_percentage: product.tax_percentage,
-      });
-    } else {
-      setForm(emptyForm);
-    }
+    queueMicrotask(() => {
+      if (product) {
+        setForm({
+          name: product.name, unit: product.unit ?? '', category_id: product.category_id, description: product.description,
+          sku: product.sku, barcode: product.barcode, is_active: product.is_active,
+          unit_price: product.unit_price, wholesale_price: product.wholesale_price ?? '', cost_price: product.cost_price ?? '',
+          stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
+          tax_percentage: product.tax_percentage,
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    });
   }, [product, open]);
 
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
@@ -99,6 +102,12 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
       isSubmitting={isSubmitting}
       canSubmit={canSubmit}
     >
+      {product?._syncFailed && (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="font-medium">Sync failed</p>
+          <p className="mt-1">{product._lastError || 'Update the product details and save to retry sync.'}</p>
+        </div>
+      )}
       {/* Basic Information */}
       <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
@@ -126,7 +135,7 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
             <label className={labelClass}>Category</label>
             <div className="relative">
               <FolderTree className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <select className={inputClass} value={form.category_id ?? ''} onChange={(e) => update('category_id', e.target.value ? Number(e.target.value) : null)}>
+              <select className={inputClass} title="Category" value={form.category_id ?? ''} onChange={(e) => update('category_id', e.target.value ? Number(e.target.value) : null)}>
                 <option value="">No category</option>
                 {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>

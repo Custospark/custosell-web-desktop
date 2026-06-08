@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useStaff, useDeleteStaff } from '../api/settings/StaffQueries';
+import { useBusiness } from '../api/settings/BusinessQueries';
+import { useRoles } from '../api/settings/RoleQueries';
+import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffAccountRules';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
@@ -8,17 +11,25 @@ import { Card } from '../../../shared/components/cards/Card';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
+import { useToast } from '../../../app/contexts/useToast';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import StaffFormDrawer from './StaffFormDrawer';
 import { Users, Plus, Pencil, Trash, BadgeCheck, BadgeX } from 'lucide-react';
 
 export default function StaffList() {
   const { data: staff, isLoading, error } = useStaff();
+  const { data: business } = useBusiness();
+  const { data: roles } = useRoles();
   const deleteMutation = useDeleteStaff();
   const { confirm } = useConfirm();
+  const { showToast } = useToast();
+  const authUser = useAppSelector((s) => s.auth.user);
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffWithSyncMeta | null>(null);
+  const businessOwnerId = getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null });
+  const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
 
   const filtered = useMemo(() => {
     const safeStaff = (staff ?? []).filter(Boolean);
@@ -38,6 +49,15 @@ export default function StaffList() {
   };
 
   const handleDelete = async (s: StaffWithSyncMeta) => {
+    const rules = getStaffAccountRules(
+      { ...s, role: s.role ?? rolesById.get(s.role_id) ?? null },
+      { currentUserId: authUser?.id ?? null, businessOwnerId },
+    );
+    if (!rules.canDelete) {
+      showToast('error', rules.deleteBlockedReason ?? 'This staff account cannot be deleted.');
+      return;
+    }
+
     const confirmed = await confirm({
       title: 'Delete Staff',
       message: `Are you sure you want to delete "${s.name}"? This cannot be undone.`,
@@ -78,6 +98,17 @@ export default function StaffList() {
             { key: 'name', header: 'Name', render: (item) => (
                 <div className="flex items-center gap-2">
                   <span>{item.name}</span>
+                  {getStaffAccountRules(
+                    { ...item, role: item.role ?? rolesById.get(item.role_id) ?? null },
+                    { currentUserId: authUser?.id ?? null, businessOwnerId },
+                  ).labels.map((label) => (
+                    <span
+                      key={label}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      {label}
+                    </span>
+                  ))}
                   {item._syncFailed ? (
                     <span
                       className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
@@ -103,7 +134,23 @@ export default function StaffList() {
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                  {(() => {
+                    const rules = getStaffAccountRules(
+                      { ...item, role: item.role ?? rolesById.get(item.role_id) ?? null },
+                      { currentUserId: authUser?.id ?? null, businessOwnerId },
+                    );
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item); }}
+                        title={rules.deleteBlockedReason ?? 'Delete'}
+                        disabled={!rules.canDelete}
+                      >
+                        <Trash className="w-4 h-4 text-red-500" />
+                      </Button>
+                    );
+                  })()}
                 </div>
               ),
             },

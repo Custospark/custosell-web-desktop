@@ -14,6 +14,7 @@ import {
   completeOfflineCreateProductInstant,
   completeOfflineUpdateProductInstant,
   completeOfflineDeleteProductInstant,
+  completeOfflineUpdatePendingProduct,
 } from '../../../../app/store/offline/completeOfflineProduct';
 import {
   shouldCompleteCategoryLocally,
@@ -71,6 +72,14 @@ function mergeCategoryLists(base: Category[], local: CategoryWithSyncMeta[]): Ca
   return [...safeLocal, ...filtered] as CategoryWithSyncMeta[];
 }
 
+function extractApiErrorMessage(err: unknown, fallback: string): string {
+  const axiosErr = err as AxiosError<{ message?: string; errors?: Record<string, string[]> }>;
+  const validationMessage = axiosErr.response?.data?.errors
+    ? Object.values(axiosErr.response.data.errors).flat().join(' ')
+    : undefined;
+  return validationMessage || sanitizeErrorMessage(err, fallback);
+}
+
 /** ── Categories ── */
 
 export function useCategories() {
@@ -119,7 +128,7 @@ export function useCreateCategory() {
         throw err;
       }
     },
-    onSuccess: (category, _p) => {
+    onSuccess: (category) => {
       if (category._pendingSync) {
         qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) => {
           const list = old ?? [];
@@ -222,7 +231,7 @@ export function useDeleteCategory() {
         (old ?? []).filter((c) => c.id !== id),
       );
     },
-    onError: (e, _id) => {
+    onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete category'));
     },
   });
@@ -327,7 +336,7 @@ export function useCreateProduct() {
         throw err;
       }
     },
-    onSuccess: (product, _p) => {
+    onSuccess: (product) => {
       if (product._pendingSync) {
         qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) => {
           const list = old ?? [];
@@ -352,13 +361,13 @@ export function useUpdateProduct() {
     networkMode: 'always',
     retry: false,
     mutationFn: async ({ id, data }) => {
-      const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products());
+      const cached = queryClient.getQueryData<ProductWithSyncMeta[]>(inventoryKeys.products());
       const existing = cached?.find((p) => p.id === id);
       if (!existing) throw new Error('Product not found');
 
-      const isPendingOnly = (existing as ProductWithSyncMeta)._pendingSync || id < 0;
+      const isPendingOnly = existing._pendingSync || id < 0;
       if (isPendingOnly) {
-        return { ...existing, ...data, _pendingSync: true } as ProductWithSyncMeta;
+        return completeOfflineUpdatePendingProduct(existing, data);
       }
 
       if (shouldCompleteProductLocally()) {
@@ -380,13 +389,33 @@ export function useUpdateProduct() {
         qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) =>
           (old ?? []).map((p) => p.id === id ? product : p),
         );
-        showToast('success', 'Changes saved — will sync when online');
+        showToast(
+          'success',
+          product._mutationType ? 'Corrected product saved — will retry sync' : 'Changes saved — will sync when online',
+        );
       } else {
+        qc.removeQueries({ queryKey: inventoryKeys.product(id) });
+        qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) => {
+          const withoutStale = (old ?? []).filter((p) => p.id !== id);
+          const existingIndex = withoutStale.findIndex((p) => p.id === product.id);
+          if (existingIndex >= 0) {
+            return withoutStale.map((p, index) => index === existingIndex ? product : p);
+          }
+          return [product, ...withoutStale];
+        });
         qc.invalidateQueries({ queryKey: inventoryKeys.products() });
       }
     },
-    onError: (e) => {
-      showToast('error', sanitizeErrorMessage(e, 'Failed to update product'));
+    onError: (e, { id }) => {
+      const message = extractApiErrorMessage(e, 'Failed to update product');
+      qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) =>
+        (old ?? []).map((p) =>
+          p.id === id && p._pendingSync
+            ? { ...p, _syncFailed: true, _lastError: message }
+            : p,
+        ),
+      );
+      showToast('error', message);
     },
   });
 }
@@ -433,7 +462,7 @@ export function useDeleteProduct() {
         (old ?? []).filter((p) => p.id !== id),
       );
     },
-    onError: (e, _id) => {
+    onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete product'));
     },
   });

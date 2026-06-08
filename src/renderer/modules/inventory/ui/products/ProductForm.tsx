@@ -8,7 +8,7 @@ import { Select } from '../../../../shared/components/inputs/Select';
 import { Card } from '../../../../shared/components/cards/Card';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { useToast } from '../../../../app/contexts/useToast';
-import { ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
 const emptyForm: CreateProductData = {
   name: '',
@@ -38,21 +38,23 @@ export default function ProductForm() {
   const [formData, setFormData] = useState<CreateProductData>(emptyForm);
 
   useEffect(() => {
-    if (product) {
-      setFormData({
-        name: product.name,
-        unit_price: parseFloat(product.unit_price),
-        category_id: product.category_id,
-        description: product.description,
-        sku: product.sku,
-        barcode: product.barcode,
-        cost_price: product.cost_price ? parseFloat(product.cost_price) : null,
-        stock_quantity: product.stock_quantity,
-        low_stock_threshold: product.low_stock_threshold,
-        tax_percentage: parseFloat(product.tax_percentage),
-        is_active: product.is_active,
-      });
-    }
+    queueMicrotask(() => {
+      if (product) {
+        setFormData({
+          name: product.name,
+          unit_price: parseFloat(product.unit_price),
+          category_id: product.category_id,
+          description: product.description,
+          sku: product.sku,
+          barcode: product.barcode,
+          cost_price: product.cost_price ? parseFloat(product.cost_price) : null,
+          stock_quantity: product.stock_quantity,
+          low_stock_threshold: product.low_stock_threshold,
+          tax_percentage: parseFloat(product.tax_percentage),
+          is_active: product.is_active,
+        });
+      }
+    });
   }, [product]);
 
   const updateField = <K extends keyof CreateProductData>(key: K, value: CreateProductData[K]) => {
@@ -97,6 +99,18 @@ export default function ProductForm() {
           </p>
         </div>
       </div>
+
+      {product?._syncFailed && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-medium">Sync failed</p>
+              <p className="mt-1">{product._lastError || 'Update the product details and save to retry sync.'}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card className="space-y-5">
@@ -167,8 +181,9 @@ export default function ProductForm() {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label htmlFor="product-description" className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
+              id="product-description"
               value={formData.description || ''}
               onChange={(e) => updateField('description', e.target.value || null)}
               rows={3}
@@ -181,6 +196,8 @@ export default function ProductForm() {
               type="checkbox"
               checked={formData.is_active ?? true}
               onChange={(e) => updateField('is_active', e.target.checked)}
+              aria-label="Active"
+              title="Active"
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm font-medium text-gray-700">Active</span>

@@ -1,8 +1,9 @@
-import { queryClient } from '../../api/axiosConfig';
+import type { AxiosError } from 'axios';
+import { axiosInstance, queryClient } from '../../api/axiosConfig';
 import { store } from '../store';
 import { setBusiness } from '../slices/authSlice';
 import { mutationQueue } from './mutationQueue';
-import { shouldCompleteMutationLocally } from './offlineQueryUtils';
+import { isNetworkFailure, isOfflineMode, shouldCompleteMutationLocally } from './offlineQueryUtils';
 import { syncPendingDataIfOnline } from './syncPendingIfOnline';
 import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from './localRolesStore';
 import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from './localStaffStore';
@@ -10,6 +11,7 @@ import { localBusinessSettingsStore, type BusinessWithSyncMeta } from './localBu
 import type { Business, UpdateBusinessData } from '../../../modules/settings/api/settings/BusinessTypes';
 import type { CreateRoleData, Role, UpdateRoleData } from '../../../modules/settings/api/settings/RoleTypes';
 import type { CreateStaffData, StaffUser, UpdateStaffData } from '../../../modules/settings/api/settings/StaffTypes';
+import { USERS } from '../../../shared/api/endpoints/endpoints';
 
 function newLocalNumericId(): number {
   return -Math.floor(Date.now() + Math.random() * 1000);
@@ -23,6 +25,14 @@ function triggerSettingsSyncAfterPersist(entity: 'Role' | 'Staff' | 'Business'):
 
 export function shouldCompleteSettingsLocally(): boolean {
   return shouldCompleteMutationLocally();
+}
+
+function extractServerErrorMessage(err: unknown): string {
+  const axiosErr = err as AxiosError<{ message?: string; errors?: Record<string, string[]> }>;
+  const validationError = axiosErr.response?.data?.errors
+    ? Object.values(axiosErr.response.data.errors).flat()[0]
+    : null;
+  return validationError || axiosErr.response?.data?.message || (err instanceof Error ? err.message : 'Sync failed');
 }
 
 export function buildLocalRole(payload: CreateRoleData): RoleWithSyncMeta {
@@ -288,6 +298,23 @@ export async function completeOfflineUpdatePendingStaffInstant(
           role_id: updated.role_id,
         }
       : { ...(record.payload as UpdateStaffData), ...payload };
+
+  if (!isOfflineMode()) {
+    try {
+      const { data } = record.mutationType === 'create'
+        ? await axiosInstance.post<{ data: StaffUser }>(USERS.BASE, nextPayload, { timeout: 10000 })
+        : await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(existing.id), nextPayload, { timeout: 10000 });
+
+      await localStaffStore.removeByMutationId(record.mutationId);
+      await mutationQueue.removeById(record.mutationId);
+      return data.data as StaffWithSyncMeta;
+    } catch (err: unknown) {
+      if (!isNetworkFailure(err)) {
+        await localStaffStore.markFailedByMutationId(record.mutationId, extractServerErrorMessage(err));
+      }
+      throw err;
+    }
+  }
 
   await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
   const updatedRecord = await localStaffStore.updatePendingRecord(record.localId, updated, nextPayload);

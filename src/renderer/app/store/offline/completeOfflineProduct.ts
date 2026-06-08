@@ -1,7 +1,8 @@
+import { axiosInstance } from '../../api/axiosConfig';
 import { store } from '../store';
 import { mutationQueue } from './mutationQueue';
-import { localProductsStore, type ProductWithSyncMeta } from './localProductsStore';
-import { shouldCompleteMutationLocally } from './offlineQueryUtils';
+import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from './localProductsStore';
+import { isCompletelyOffline, isNetworkFailure, shouldCompleteMutationLocally } from './offlineQueryUtils';
 import type { CreateProductData, UpdateProductData, Product } from '../../../modules/inventory/api/products/ProductTypes';
 
 export function shouldCompleteProductLocally(): boolean {
@@ -34,7 +35,65 @@ export function buildLocalProduct(payload: CreateProductData): ProductWithSyncMe
     updated_at: now,
   };
 
-  return { ...product, _pendingSync: true };
+  return { ...product, _pendingSync: true, _mutationType: 'create' };
+}
+
+function applyProductPayload(product: Product, payload: UpdateProductData): Product {
+  return {
+    ...product,
+    ...payload,
+    category_id: 'category_id' in payload ? payload.category_id ?? null : product.category_id,
+    unit: 'unit' in payload ? payload.unit ?? null : product.unit,
+    description: 'description' in payload ? payload.description ?? null : product.description,
+    sku: 'sku' in payload ? payload.sku ?? null : product.sku,
+    barcode: 'barcode' in payload ? payload.barcode ?? null : product.barcode,
+    unit_price: payload.unit_price != null ? String(payload.unit_price) : product.unit_price,
+    wholesale_price: payload.wholesale_price != null ? String(payload.wholesale_price) : product.wholesale_price,
+    cost_price: payload.cost_price != null ? String(payload.cost_price) : product.cost_price,
+    stock_quantity: payload.stock_quantity ?? product.stock_quantity,
+    low_stock_threshold: payload.low_stock_threshold ?? product.low_stock_threshold,
+    tax_percentage: payload.tax_percentage != null ? String(payload.tax_percentage) : product.tax_percentage,
+    is_active: payload.is_active ?? product.is_active,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function buildCreatePayloadFromProduct(product: Product): CreateProductData {
+  return {
+    name: product.name,
+    unit: product.unit,
+    category_id: product.category_id,
+    description: product.description,
+    sku: product.sku,
+    barcode: product.barcode,
+    unit_price: Number(product.unit_price),
+    wholesale_price: product.wholesale_price != null ? Number(product.wholesale_price) : null,
+    cost_price: product.cost_price != null ? Number(product.cost_price) : null,
+    stock_quantity: product.stock_quantity,
+    low_stock_threshold: product.low_stock_threshold,
+    tax_percentage: Number(product.tax_percentage),
+    is_active: product.is_active,
+  };
+}
+
+function extractProduct(responseData: unknown): Product | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: Product };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as Product;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractServerErrorMessage(err: unknown): string {
+  const axiosErr = err as {
+    response?: { data?: { message?: string; errors?: Record<string, string[]> } };
+    message?: string;
+  };
+  const validationMessage = axiosErr.response?.data?.errors
+    ? Object.values(axiosErr.response.data.errors).flat().join(' ')
+    : undefined;
+  return validationMessage || axiosErr.response?.data?.message || axiosErr.message || 'Product validation failed';
 }
 
 export async function persistOfflineProductInBackground(
@@ -68,6 +127,8 @@ export async function persistOfflineProductInBackground(
     console.error('[OfflineProduct] Enqueue failed:', err);
   }
 
+  if (!mutationId) return;
+
   try {
     const localId = await localProductsStore.save(product, payload, mutationId, mutationType);
     product._localId = localId;
@@ -86,19 +147,54 @@ export function completeOfflineCreateProductInstant(payload: CreateProductData):
 
 export function completeOfflineUpdateProductInstant(product: Product, payload: UpdateProductData): ProductWithSyncMeta {
   const updated: ProductWithSyncMeta = {
-    ...product,
-    ...payload,
-    unit_price: payload.unit_price != null ? String(payload.unit_price) : product.unit_price,
-    wholesale_price: payload.wholesale_price != null ? String(payload.wholesale_price) : product.wholesale_price,
-    cost_price: payload.cost_price != null ? String(payload.cost_price) : product.cost_price,
-    tax_percentage: payload.tax_percentage != null ? String(payload.tax_percentage) : product.tax_percentage,
-    updated_at: new Date().toISOString(),
+    ...applyProductPayload(product, payload),
     _pendingSync: true,
+    _mutationType: 'update',
   };
   void persistOfflineProductInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineProduct] Background persist failed:', err);
   });
   return updated;
+}
+
+export async function completeOfflineUpdatePendingProduct(
+  existing: ProductWithSyncMeta,
+  payload: UpdateProductData,
+): Promise<ProductWithSyncMeta> {
+  const record = existing._localId
+    ? await localProductsStore.getByLocalId(existing._localId)
+    : await localProductsStore.getByProductId(existing.id);
+  if (!record) {
+    throw new Error('Pending product record not found');
+  }
+
+  const updated = applyProductPayload({ ...record.product, ...existing }, payload);
+  const nextPayload: CreateProductData | UpdateProductData =
+    record.mutationType === 'create'
+      ? buildCreatePayloadFromProduct(updated)
+      : { ...(record.payload as UpdateProductData), ...payload };
+
+  if (record.mutationType === 'create' && !isCompletelyOffline()) {
+    try {
+      const { data } = await axiosInstance.post<{ data: Product }>('/products', nextPayload, { timeout: 10000 });
+      const serverProduct = extractProduct(data);
+      await localProductsStore.removeByMutationId(record.mutationId);
+      await mutationQueue.removeById(record.mutationId);
+      if (serverProduct) return serverProduct as ProductWithSyncMeta;
+      return { ...updated, _pendingSync: false };
+    } catch (err: unknown) {
+      if (!isNetworkFailure(err)) {
+        await localProductsStore.markFailedByMutationId(record.mutationId, extractServerErrorMessage(err));
+        throw err;
+      }
+    }
+  }
+
+  await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
+  const updatedRecord = await localProductsStore.updatePendingRecord(record.localId, updated, nextPayload);
+  await mutationQueue.requeue(record.mutationId);
+
+  return toProductWithSyncMeta(updatedRecord);
 }
 
 export function completeOfflineDeleteProductInstant(id: number): void {
@@ -122,6 +218,7 @@ export function completeOfflineDeleteProductInstant(id: number): void {
     created_at: '',
     updated_at: '',
     _pendingSync: true,
+    _mutationType: 'delete',
   };
   void persistOfflineProductInBackground(product, { id }, 'delete').catch((err) => {
     console.error('[OfflineProduct] Background persist failed:', err);

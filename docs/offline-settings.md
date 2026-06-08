@@ -25,7 +25,7 @@ Sync order matters for role-staff dependencies:
 
 Delete tombstones are removed from local stores after their queued delete succeeds. Failed settings records stay pending/failed so the UI can show the server validation error and retry after correction.
 
-Sync only drains when the app is not completely offline. A `slow` network state is still treated as reachable, so reads and writes try the server first and only fall back to local completion on network failure.
+Sync only drains when the app is not completely offline. A `slow` network state is still treated as reachable, so reads and writes try the server first.
 
 ## Business Settings
 
@@ -55,9 +55,25 @@ Roles and staff show a `Pending sync` badge for queued local rows and a red `Syn
 
 Pending staff creates show password and confirmation fields when edited. Passwords are not prefilled, so the user must enter a fresh password before the corrected create payload can be saved.
 
+Staff create/update/delete only creates pending local staff rows when the app is explicitly offline. When online, staff writes go straight to `/users` and the staff list cache is patched from the server response with no `Pending sync` badge. If an online staff create reaches the server but the client receives no response, the create flow checks the server staff list by email before surfacing an error; it does not queue a duplicate local create. If an older queued staff create later fails sync because the email already exists, the sync engine performs the same lookup and treats the local row as synced when it finds the matching server staff record. This prevents false `Sync failed` badges for staff that were already saved by the server.
+
+Staff lists keep the current user, business owner, and admin users visible. The UI marks them with `You`, `Business Owner`, and `Admin` badges where the current role slug is available. The current user's own account cannot be deleted, deactivated, or assigned a different role. The business owner account cannot be deleted or deactivated. These delete safeguards run before pending local deletes, offline delete queueing, or online API deletes, so protected staff deletes are never queued for sync.
+
+Staff update forms preserve locked role and status values for protected accounts. When the current user, business owner, or admin account is edited, the update payload keeps the existing `role_id` and `is_active` values instead of trusting disabled form controls or stale local edits. The same preserved payload is written to the mutation queue for offline staff updates, so sync replay keeps the locked role/status behavior.
+
+Locked owner, admin, and self staff updates can preserve an unassigned or null `role_id` and still save name, email, phone, or password changes. Attempts to clear an existing role are rejected instead of being queued or synced.
+
+Sync-failed staff rows remain editable. Correcting a rejected staff update while online tries the `/users` API immediately and removes the local staff row plus queued mutation after the server accepts it. If the app is explicitly offline, the correction rewrites the failed local row and its queued payload with the latest preserved role/status values, then requeues the same mutation instead of creating a duplicate offline update.
+
+Deleting a pending server-backed staff update while online calls the server delete endpoint first, then clears the stale local row and queued mutation after success. Pending staff creates with temporary local ids are still local-only until they sync or are discarded.
+
 Business settings show a pending sync notice when the current business came from local offline state.
 
 Profile and password changes require internet. The profile form disables save offline and shows: `Profile and password changes require internet.`
+
+## Backend Enforcement
+
+The backend remains the final authority for staff safety rules. Staff updates reject role assignments that cross business boundaries, and protected deletes reject attempts to delete the current user or the business owner. Frontend guards prevent these actions from being queued where possible, but synced payloads must still pass the backend checks before local staff rows are marked synced.
 
 ## Residual Limitations
 

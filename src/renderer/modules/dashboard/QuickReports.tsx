@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
+import { useAppSelector } from '../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { useReportDownload } from './DashboardQueries';
-import { Download, FileText, TrendingUp, Receipt, Package, CreditCard, FileSpreadsheet, File, FileDown } from 'lucide-react';
+import { Download, FileText, TrendingUp, Receipt, Package, CreditCard, FileSpreadsheet, File, FileDown, WifiOff } from 'lucide-react';
 
 interface ReportConfig {
   key: string;
@@ -70,6 +72,7 @@ const reports: ReportConfig[] = [
 ];
 
 export default function QuickReports() {
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const downloadReport = useReportDownload();
   const [selectedReport, setSelectedReport] = useState<ReportConfig | null>(null);
   const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
@@ -77,12 +80,13 @@ export default function QuickReports() {
   const [format, setFormat] = useState('');
 
   const openReport = (report: ReportConfig) => {
+    if (isOffline) return;
     setSelectedReport(report);
     setFormat(report.defaultFormat);
   };
 
   const handleDownload = () => {
-    if (!selectedReport) return;
+    if (!selectedReport || isOffline) return;
     const params = new URLSearchParams({ format });
     if (selectedReport.hasDateRange) {
       params.set('date_from', dateFrom);
@@ -100,12 +104,19 @@ export default function QuickReports() {
           <Download className="w-4 h-4 text-blue-500" />
           Quick Reports
         </h3>
+        {isOffline && (
+          <div className="flex items-center gap-2 px-3 py-2 mb-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+            <WifiOff className="w-3.5 h-3.5 shrink-0" />
+            Reports require an internet connection.
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-3">
           {reports.map((report) => {
             const Icon = report.icon;
             return (
-              <button key={report.key} onClick={() => openReport(report)}
-                className={`flex items-center gap-3 p-4 rounded-xl border border-gray-200 ${report.bg} hover:shadow-md transition-all text-left group w-full`}>
+              <button key={report.key} onClick={() => openReport(report)} disabled={isOffline}
+                title={isOffline ? 'Unavailable offline' : undefined}
+                className={`flex items-center gap-3 p-4 rounded-xl border border-gray-200 ${report.bg} hover:shadow-md transition-all text-left group w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none`}>
                 <div className={`p-2.5 rounded-lg ${report.bg} group-hover:scale-110 transition-transform shrink-0`}>
                   <Icon className={`w-5 h-5 ${report.textColor}`} />
                 </div>
@@ -163,7 +174,7 @@ export default function QuickReports() {
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-2 border-t border-gray-200">
               <Button variant="outline" onClick={() => setSelectedReport(null)}>Cancel</Button>
-              <Button onClick={handleDownload}>
+              <Button onClick={handleDownload} disabled={isOffline} title={isOffline ? 'Unavailable offline' : undefined}>
                 <FileDown className="w-4 h-4 mr-1.5" />Download
               </Button>
             </div>

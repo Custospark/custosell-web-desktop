@@ -3,7 +3,7 @@ import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
 import { useToast } from '../../app/contexts/useToast';
 import { applyDashboardPendingOverlay } from '../../app/store/offline/offlineSalesSummary';
 import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
-import { isNetworkFailure } from '../../app/store/offline/offlineQueryUtils';
+import { isCompletelyOffline, isNetworkFailure } from '../../app/store/offline/offlineQueryUtils';
 import type { DashboardSummary } from './DashboardTypes';
 
 export const dashboardKeys = {
@@ -61,6 +61,10 @@ export function useDashboardSummary() {
 export function useReportDownload() {
   const { showToast } = useToast();
   return async (endpoint: string, params: URLSearchParams, filename: string) => {
+    if (isCompletelyOffline()) {
+      showToast('error', 'Connect to the internet to download reports');
+      return;
+    }
     try {
       showToast('success', 'Downloading report...');
       const { data, headers } = await axiosInstance.get(endpoint, {

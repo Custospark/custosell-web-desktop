@@ -9,6 +9,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
 import { OfflineBanner } from '../Errors/OfflineBanner';
 import { AuthPendingBanner } from '../Errors/AuthPendingBanner';
+import { SyncProgressBanner, SyncHeaderChip } from '../Errors/SyncProgressBanner';
 import { Menu, X, User, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff } from 'lucide-react';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 
@@ -52,6 +53,7 @@ export function Layout() {
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50/30">
       <AuthPendingBanner />
       <OfflineBanner />
+      <SyncProgressBanner />
 
       <div className="flex flex-1 min-h-0">
         {state.sidebarOpen && (
@@ -84,6 +86,7 @@ export function Layout() {
           )}
 
           <div className="flex items-center gap-1.5 shrink-0">
+            <SyncHeaderChip />
             {systemStatus === 'online' && (
               <button onClick={retryConnection} title={`Connected · ${latency}ms latency`} className="flex items-center gap-1.5 text-xs text-green-600 hover:text-green-700 cursor-pointer">
                 <Wifi className="w-3.5 h-3.5" />

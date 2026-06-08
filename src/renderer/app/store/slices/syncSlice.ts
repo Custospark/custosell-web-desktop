@@ -16,7 +16,6 @@ export interface SyncState {
   completedAt: string | null;
   lastError: string | null;
   dismissed: boolean;
-  collapsed: boolean;
 }
 
 const initialState: SyncState = {
@@ -31,7 +30,6 @@ const initialState: SyncState = {
   completedAt: null,
   lastError: null,
   dismissed: false,
-  collapsed: false,
 };
 
 const syncSlice = createSlice({
@@ -50,7 +48,6 @@ const syncSlice = createSlice({
       state.completedAt = null;
       state.lastError = null;
       state.dismissed = false;
-      state.collapsed = true;
     },
     syncTierChanged(state, action: PayloadAction<{ tier: SyncTierIndex; phaseLabel?: string }>) {
       state.currentTier = action.payload.tier;
@@ -89,9 +86,6 @@ const syncSlice = createSlice({
     syncBannerDismissed(state) {
       state.dismissed = true;
     },
-    syncBannerCollapsed(state, action: PayloadAction<boolean>) {
-      state.collapsed = action.payload;
-    },
     syncReset(state) {
       Object.assign(state, initialState);
     },
@@ -108,7 +102,6 @@ export const {
   syncRunCompleted,
   syncRunFailed,
   syncBannerDismissed,
-  syncBannerCollapsed,
   syncReset,
 } = syncSlice.actions;
 

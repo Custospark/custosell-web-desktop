@@ -26,6 +26,7 @@ import {
 import { completeOfflineRegistration } from '../../../app/store/offline/completeOfflineRegistration';
 import { completeOfflineLogin } from '../../../app/store/offline/completeOfflineLogin';
 import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/deviceCredentials';
+import { updateStoredAuthUser } from '../../../app/store/offline/secureStorage';
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
@@ -258,6 +259,7 @@ export function useProfile() {
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
       dispatch(setUser(userData));
+      await updateStoredAuthUser(userData);
       if (userData?.email) {
         await refreshStoredUserSnapshot(userData.email, userData);
       }

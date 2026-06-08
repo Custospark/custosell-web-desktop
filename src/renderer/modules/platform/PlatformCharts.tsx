@@ -10,11 +10,12 @@ const TREND_COLORS = {
   grossSales: '#f59e0b',
 } as const;
 
-const PIE_COLORS = ['#10b981', '#f59e0b', '#9ca3af', '#ef4444'];
+const PIE_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#9ca3af', '#7c3aed'];
 
 const ACTIVITY_LABELS: Record<string, string> = {
-  active: 'Active (30d)',
-  dormant: 'Dormant',
+  active: 'Active (≤30d)',
+  dormant: 'Dormant (31–90d)',
+  churned: 'Churned (90d+)',
   never_used: 'Never used',
   suspended: 'Suspended',
 };
@@ -94,6 +95,7 @@ export function PlatformActivityPieChart({ overview }: { overview: PlatformOverv
   const pieData = [
     { name: ACTIVITY_LABELS.active, value: overview.businesses.active },
     { name: ACTIVITY_LABELS.dormant, value: overview.businesses.dormant },
+    { name: ACTIVITY_LABELS.churned, value: overview.businesses.churned ?? 0 },
     { name: ACTIVITY_LABELS.never_used, value: overview.businesses.never_used },
     { name: ACTIVITY_LABELS.suspended, value: overview.businesses.suspended },
   ].filter((d) => d.value > 0);

@@ -15,11 +15,14 @@ import type {
 } from './PlatformTypes';
 import { assertBusinessNotifyPayload, assertBusinessStatusReason } from './platformBusinessValidation';
 
+/** Platform admin views always refetch — never rely on cached snapshots. */
+const platformFreshQuery = { staleTime: 0, gcTime: 0, networkMode: 'always' as const };
+
 export const platformKeys = {
   all: ['platform'] as const,
   overview: () => [...platformKeys.all, 'overview'] as const,
   metrics: (days: number) => [...platformKeys.all, 'metrics', days] as const,
-  businesses: (params: Record<string, string>) => [...platformKeys.all, 'businesses', params] as const,
+  businesses: (params: Record<string, string>) => [...platformKeys.all, 'businesses', 'v2', params] as const,
   businessStats: (params: Record<string, string>) => [...platformKeys.all, 'business-stats', params] as const,
   users: (params: Record<string, string>) => [...platformKeys.all, 'users', params] as const,
   team: () => [...platformKeys.all, 'team'] as const,
@@ -34,7 +37,7 @@ export function usePlatformOverview() {
       const { data } = await axiosInstance.get<{ data: PlatformOverview }>(PLATFORM.OVERVIEW);
       return data.data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -45,7 +48,7 @@ export function usePlatformMetrics(days = 7) {
       const { data } = await axiosInstance.get<{ data: PlatformMetricDay[] }>(PLATFORM.METRICS, { params: { days } });
       return data.data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -57,7 +60,7 @@ export function usePlatformBusinessStats(params: Record<string, string> = {}, en
       return data.data;
     },
     enabled: enabled && Boolean(params.date_from && params.date_to),
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -68,7 +71,7 @@ export function usePlatformBusinesses(params: Record<string, string> = {}) {
       const { data } = await axiosInstance.get<PaginatedPlatformResponse<PlatformBusiness>>(PLATFORM.BUSINESSES, { params });
       return data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -199,7 +202,7 @@ export function usePlatformUsers(params: Record<string, string> = {}) {
       const { data } = await axiosInstance.get<PaginatedPlatformResponse<PlatformUser>>(PLATFORM.USERS, { params });
       return data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -210,7 +213,7 @@ export function usePlatformTeam() {
       const { data } = await axiosInstance.get<PaginatedPlatformResponse<PlatformUser>>(PLATFORM.TEAM);
       return data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -238,7 +241,7 @@ export function usePlatformRoles() {
       const { data } = await axiosInstance.get<{ data: PlatformRole[] }>(PLATFORM.ROLES);
       return data.data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 
@@ -249,7 +252,7 @@ export function usePlatformPermissions() {
       const { data } = await axiosInstance.get<{ data: string[] }>(PLATFORM.PERMISSIONS);
       return data.data;
     },
-    networkMode: 'always',
+    ...platformFreshQuery,
   });
 }
 

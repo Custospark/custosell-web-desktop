@@ -16,16 +16,19 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
 
     void (async () => {
       try {
-        if (consumeLogoutIntent()) {
-          await clearAuthSession();
-          if (cancelled) return;
-          dispatch(setInitialized());
-          return;
-        }
+        const hadLogoutIntent = consumeLogoutIntent();
 
         await migrateLegacyAuthStorage();
         const session = await loadAuthSession();
         if (cancelled) return;
+
+        // 401 hard-redirect: skip hydrate only when session was actually cleared.
+        // Ignore stale intent after SPA logout + re-login (session exists again).
+        if (hadLogoutIntent && !session) {
+          await clearAuthSession();
+          dispatch(setInitialized());
+          return;
+        }
 
         if (session) {
           dispatch(hydrateAuth(session));

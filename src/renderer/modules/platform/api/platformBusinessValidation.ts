@@ -1,4 +1,4 @@
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, parseISO, isValid } from 'date-fns';
 import {
   buildValidationResult,
   maxLength,
@@ -8,7 +8,12 @@ import {
   type FieldErrors,
   type ValidationResult,
 } from '../../../shared/utils/formValidation';
-import type { BusinessAccountStatus, BusinessNotificationIntention, PlatformBusiness } from './PlatformTypes';
+import type {
+  ActivityStatus,
+  BusinessAccountStatus,
+  BusinessNotificationIntention,
+  PlatformBusiness,
+} from './PlatformTypes';
 
 export const BUSINESS_STATUS_REASON_MIN = 3;
 export const BUSINESS_STATUS_REASON_MAX = 1000;
@@ -19,6 +24,68 @@ export const BUSINESS_STATS_MAX_RANGE_DAYS = 366;
 export const BUSINESS_ACCOUNT_STATUSES: BusinessAccountStatus[] = ['active', 'warning', 'notified', 'restricted', 'suspended'];
 
 export const STATUS_DURATION_DAYS = [7, 30, 60, 90] as const;
+
+export const ACTIVITY_STATUS_LABELS: Record<import('./PlatformTypes').ActivityStatus, string> = {
+  active: 'Active',
+  dormant: 'Dormant',
+  churned: 'Churned',
+  never_used: 'Never used',
+  suspended: 'Suspended',
+};
+
+export function formatDaysSinceActivity(days: number | null | undefined): string {
+  if (days === null || days === undefined || Number.isNaN(days)) {
+    return 'No activity recorded';
+  }
+  if (days === 0) return 'Last active today';
+  if (days === 1) return 'Last active yesterday';
+  return `Last active ${days}d ago`;
+}
+
+export function formatBusinessActivityRecency(business: PlatformBusiness): string {
+  if (business.days_since_activity !== null && business.days_since_activity !== undefined) {
+    return formatDaysSinceActivity(business.days_since_activity);
+  }
+  if (business.last_activity_at) {
+    const parsed = parseISO(business.last_activity_at);
+    if (isValid(parsed)) {
+      return formatDaysSinceActivity(differenceInDays(new Date(), parsed));
+    }
+  }
+  return 'No activity recorded';
+}
+
+/** Re-derive activity label when persisted cache predates API activity fields. */
+export function resolveDisplayActivityStatus(business: PlatformBusiness): ActivityStatus {
+  if (
+    business.activity_status
+    && business.activity_status !== 'never_used'
+    && business.days_since_activity !== undefined
+  ) {
+    return business.activity_status;
+  }
+
+  const activeDays = business.activity_active_days ?? 30;
+  const dormantDays = business.activity_dormant_days ?? 90;
+
+  let days: number | null = business.days_since_activity ?? null;
+  if (days === null && business.last_activity_at) {
+    const parsed = parseISO(business.last_activity_at);
+    if (isValid(parsed)) {
+      days = differenceInDays(new Date(), parsed);
+    }
+  }
+
+  if (days === null) {
+    const hasGross = parseFloat(business.gross_sales_all_time || '0') > 0
+      || business.transactions_30d > 0;
+    return hasGross ? 'active' : (business.activity_status ?? 'never_used');
+  }
+
+  if (days <= activeDays) return 'active';
+  if (days <= dormantDays) return 'dormant';
+  return 'churned';
+}
 
 export const NOTIFICATION_INTENTIONS: { value: BusinessNotificationIntention; label: string }[] = [
   { value: 'announcement', label: 'Announcement' },

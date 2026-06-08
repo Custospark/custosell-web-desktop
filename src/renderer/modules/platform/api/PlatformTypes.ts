@@ -1,4 +1,4 @@
-export type ActivityStatus = 'active' | 'dormant' | 'never_used' | 'suspended';
+export type ActivityStatus = 'active' | 'dormant' | 'churned' | 'never_used' | 'suspended';
 
 export type BusinessAccountStatus = 'active' | 'warning' | 'restricted' | 'suspended' | 'notified';
 
@@ -19,8 +19,14 @@ export interface PlatformBusiness {
   status: BusinessAccountStatus;
   status_changed_at: string | null;
   activity_status: ActivityStatus;
+  last_sale_at: string | null;
+  last_login_at: string | null;
+  days_since_activity: number | null;
+  activity_active_days: number;
+  activity_dormant_days: number;
   owner_name: string | null;
   owner_email: string | null;
+  owner_phone: string | null;
   plan_name: string | null;
   subscription_status: string | null;
   trial_ends_at: string | null;
@@ -54,6 +60,7 @@ export interface PlatformOverview {
     total: number;
     active: number;
     dormant: number;
+    churned: number;
     never_used: number;
     suspended: number;
     with_gross_sales_30d: number;

@@ -13,6 +13,9 @@ import {
   BUSINESS_ACCOUNT_STATUSES,
   STATUS_DURATION_DAYS,
   STATUS_LABELS,
+  ACTIVITY_STATUS_LABELS,
+  formatBusinessActivityRecency,
+  resolveDisplayActivityStatus,
   accountStatusBadge,
   matchesStatusDurationFilter,
   validateBusinessStatsDateRange,
@@ -35,9 +38,10 @@ import {
   Mail, Shield, Trash2, CheckSquare, Square,
 } from 'lucide-react';
 
-const activityBadge: Record<ActivityStatus, 'success' | 'warning' | 'neutral' | 'danger'> = {
+const activityBadge: Record<ActivityStatus, 'success' | 'warning' | 'neutral' | 'danger' | 'primary'> = {
   active: 'success',
   dormant: 'warning',
+  churned: 'danger',
   never_used: 'neutral',
   suspended: 'danger',
 };
@@ -113,6 +117,7 @@ export default function PlatformBusinessesPage() {
         || (b.email?.toLowerCase().includes(q) ?? false)
         || (b.owner_email?.toLowerCase().includes(q) ?? false)
         || (b.owner_name?.toLowerCase().includes(q) ?? false)
+        || (b.owner_phone?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [data?.data, search, activityFilter, accountStatusFilter, statusDurationFilter]);
@@ -332,11 +337,12 @@ export default function PlatformBusinessesPage() {
               onChange={(e) => setActivityFilter(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
             >
-              <option value="">All activity</option>
-              <option value="active">Active (30d)</option>
-              <option value="dormant">Dormant</option>
-              <option value="never_used">Never used</option>
-              <option value="suspended">Suspended activity</option>
+            <option value="">All activity</option>
+            <option value="active">Active — sale or login ≤30d</option>
+            <option value="dormant">Dormant — 31–90d since last activity</option>
+            <option value="churned">Churned — 90d+ since last activity</option>
+            <option value="never_used">Never used — no sales or logins</option>
+            <option value="suspended">Suspended account</option>
             </select>
             <select
               value={accountStatusFilter}
@@ -411,6 +417,11 @@ export default function PlatformBusinessesPage() {
                   <div>
                     <p className="font-medium text-gray-900">{b.name}</p>
                     <p className="text-xs text-gray-500">{b.owner_email ?? b.email ?? '—'}</p>
+                    {b.owner_phone && (
+                      <a href={`tel:${b.owner_phone}`} className="text-xs text-blue-600 hover:underline block">
+                        {b.owner_phone}
+                      </a>
+                    )}
                   </div>
                 )},
                 { key: 'account', header: 'Account', render: (b) => {
@@ -424,11 +435,22 @@ export default function PlatformBusinessesPage() {
                     </div>
                   );
                 }},
-                { key: 'activity', header: 'Activity', render: (b) => (
-                  <Badge variant={activityBadge[b.activity_status]}>{b.activity_status.replace('_', ' ')}</Badge>
-                )},
+                { key: 'activity', header: 'Activity', render: (b) => {
+                  const activityStatus = resolveDisplayActivityStatus(b);
+                  return (
+                    <div>
+                      <Badge variant={activityBadge[activityStatus]}>{ACTIVITY_STATUS_LABELS[activityStatus]}</Badge>
+                      <p
+                        className="text-xs text-gray-400 mt-0.5"
+                        title={`Sale/login window: ${b.activity_active_days ?? 30}d active · ${b.activity_dormant_days ?? 90}d dormant`}
+                      >
+                        {formatBusinessActivityRecency(b)}
+                      </p>
+                    </div>
+                  );
+                }},
                 { key: 'staff', header: 'Staff', render: (b) => (
-                  <span className="font-medium" title="Users linked to this business_id">{b.staff_count.toLocaleString()}</span>
+                  <span className="font-medium" title="Owner + users linked to this business">{b.staff_count.toLocaleString()}</span>
                 )},
                 { key: 'currency', header: 'Currency' },
                 { key: 'gross_today', header: 'Gross today', render: (b) => formatCurrency(b.gross_sales_today, b.currency) },

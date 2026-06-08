@@ -14,9 +14,10 @@ const cardStyles = {
   indigo: { border: 'border-indigo-500', shadow: 'hover:shadow-indigo-500/20', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700', glow: 'bg-indigo-500/10', hoverBg: 'group-hover:bg-indigo-200' },
 };
 
-const activityBadge: Record<ActivityStatus, 'success' | 'warning' | 'neutral' | 'danger'> = {
+const activityBadge: Record<ActivityStatus, 'success' | 'warning' | 'neutral' | 'danger' | 'primary'> = {
   active: 'success',
   dormant: 'warning',
+  churned: 'danger',
   never_used: 'neutral',
   suspended: 'danger',
 };
@@ -31,7 +32,7 @@ export default function PlatformOverviewPage() {
     { label: 'Total Businesses', value: String(overview.businesses.total), icon: Building2, color: 'blue' as const, badge: 'All' },
     { label: 'Selling (30d)', value: String(overview.businesses.with_gross_sales_30d), icon: DollarSign, color: 'green' as const, badge: 'Gross sales' },
     { label: 'Active (30d)', value: String(overview.businesses.active), icon: Activity, color: 'green' as const, badge: 'Active' },
-    { label: 'Idle / Never Used', value: String(overview.businesses.dormant + overview.businesses.never_used), icon: TrendingUp, color: 'amber' as const, badge: 'Idle' },
+    { label: 'Dormant / Churned', value: String(overview.businesses.dormant + overview.businesses.churned), icon: TrendingUp, color: 'amber' as const, badge: 'Idle' },
     { label: 'Total Users', value: String(overview.users.total), icon: Users, color: 'indigo' as const, badge: 'Users' },
   ];
 

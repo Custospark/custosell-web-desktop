@@ -106,9 +106,10 @@ export async function saveAuthSession(session: StoredAuthSession): Promise<void>
   await db.put('secureSecrets', { key: AUTH_SESSION_KEY, value: encrypted, updatedAt: new Date().toISOString() });
   await writeElectronSecure(AUTH_SESSION_KEY, encrypted);
 
+  // Plaintext mirror — fallback when encrypted IndexedDB read fails on refresh.
   try {
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
-    localStorage.removeItem(LEGACY_USER_KEY);
+    localStorage.setItem(LEGACY_TOKEN_KEY, session.token);
+    localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(session.user));
   } catch {
     /* ignore */
   }
@@ -150,6 +151,13 @@ function loadLegacyAuthSession(): StoredAuthSession | null {
   } catch {
     return null;
   }
+}
+
+/** Keep encrypted + legacy mirrors in sync after profile refresh. */
+export async function updateStoredAuthUser(user: AuthUser): Promise<void> {
+  const session = await loadAuthSession();
+  if (!session) return;
+  await saveAuthSession({ ...session, user });
 }
 
 export async function clearAuthSession(): Promise<void> {

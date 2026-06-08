@@ -11,13 +11,30 @@ export const ROUTES = {
   INVENTORY: { INDEX: '/inventory', PRODUCTS: '/inventory/products', CATEGORIES: '/inventory/categories', STOCK: '/inventory/stock' },
   CUSTOMERS: { INDEX: '/customers' },
   EXPENSES: { INDEX: '/expenses', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
-  NOTIFICATIONS: { INDEX: '/notifications' },
-  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', PROFILE: '/settings/profile', STAFF: '/settings/staff', ROLES: '/settings/roles', NOTIFICATIONS: '/settings/notifications', SUBSCRIPTION: '/settings/subscription' },
+  ACCOUNT: {
+    INDEX: '/account',
+    NOTIFICATIONS: '/account/notifications',
+    PROFILE: '/account/profile',
+  },
+  NOTIFICATIONS: { INDEX: '/account/notifications' },
+  GUIDE: {
+    INDEX: '/guide',
+    TUTORIALS: '/guide/tutorials',
+    FAQS: '/guide/faqs',
+    FEEDBACK: '/guide/feedback',
+  },
+  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', STAFF: '/settings/staff', ROLES: '/settings/roles', SUBSCRIPTION: '/settings/subscription' },
   PLATFORM: {
     INDEX: '/platform',
     OVERVIEW: '/platform/overview',
     BUSINESSES: '/platform/businesses',
     USERS: '/platform/users',
-    TEAM: '/platform/team',
+    ROLES: '/platform/roles',
+    GUIDE: {
+      INDEX: '/platform/guide',
+      TUTORIALS: '/platform/guide/tutorials',
+      FAQS: '/platform/guide/faqs',
+      FEEDBACK: '/platform/guide/feedback',
+    },
   },
 } as const;

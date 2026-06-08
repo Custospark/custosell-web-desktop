@@ -29,8 +29,15 @@ import RoleSettingsPage from '../../modules/settings/RoleSettingsPage';
 import PlatformOverviewPage from '../../modules/platform/PlatformOverviewPage';
 import PlatformBusinessesPage from '../../modules/platform/PlatformBusinessesPage';
 import PlatformUsersPage from '../../modules/platform/PlatformUsersPage';
-import PlatformTeamPage from '../../modules/platform/PlatformTeamPage';
+import PlatformRolesPage from '../../modules/platform/PlatformRolesPage';
+import PlatformGuideTutorialsPage from '../../modules/platform/PlatformGuideTutorialsPage';
+import PlatformGuideFaqsPage from '../../modules/platform/PlatformGuideFaqsPage';
+import PlatformGuideFeedbackPage from '../../modules/platform/PlatformGuideFeedbackPage';
+import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
+import GuideTutorialsPage from '../../modules/guide/GuideTutorialsPage';
+import GuideFaqsPage from '../../modules/guide/GuideFaqsPage';
+import GuideFeedbackPage from '../../modules/guide/GuideFeedbackPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
@@ -78,14 +85,23 @@ export function AppRoutes() {
           <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.LIST} replace />} />
           <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
           <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
-          <Route path={ROUTES.NOTIFICATIONS.INDEX} element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
+            <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+            <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
+            <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+          </Route>
+          <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+          <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
+          <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+          <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />
+          <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
           <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
             <Route index element={<Navigate to={ROUTES.SETTINGS.BUSINESS} replace />} />
             <Route path="business" element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
-            <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
             <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
             <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
-            <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
             {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
           </Route>
           <Route element={<PlatformAdminRoute />}>
@@ -93,7 +109,11 @@ export function AppRoutes() {
             <Route path={ROUTES.PLATFORM.OVERVIEW} element={<SuspenseWrapper><PlatformOverviewPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.BUSINESSES} element={<SuspenseWrapper><PlatformBusinessesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.USERS} element={<SuspenseWrapper><PlatformUsersPage /></SuspenseWrapper>} />
-            <Route path={ROUTES.PLATFORM.TEAM} element={<SuspenseWrapper><PlatformTeamPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.ROLES} element={<SuspenseWrapper><PlatformRolesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.GUIDE.INDEX} element={<Navigate to={ROUTES.PLATFORM.GUIDE.TUTORIALS} replace />} />
+            <Route path={ROUTES.PLATFORM.GUIDE.TUTORIALS} element={<SuspenseWrapper><PlatformGuideTutorialsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.GUIDE.FAQS} element={<SuspenseWrapper><PlatformGuideFaqsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.GUIDE.FEEDBACK} element={<SuspenseWrapper><PlatformGuideFeedbackPage /></SuspenseWrapper>} />
           </Route>
         </Route>
       </Route>

@@ -10,9 +10,10 @@ import { Sidebar } from './Sidebar';
 import { OfflineBanner } from '../Errors/OfflineBanner';
 import { AuthPendingBanner } from '../Errors/AuthPendingBanner';
 import { SyncProgressBanner, SyncHeaderChip } from '../Errors/SyncProgressBanner';
-import { Menu, X, User, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff, Bell } from 'lucide-react';
-import { NotificationBell } from './NotificationBell';
+import { Menu, X, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff } from 'lucide-react';
+import { GuideHeaderNav } from './GuideHeaderNav';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 export function Layout() {
   const { state, dispatch } = useAppContext();  const user = useAppSelector((s) => s.auth.user);
@@ -35,9 +36,10 @@ export function Layout() {
   }, []);
 
   const handleLogout = async () => {
+    const firstName = getUserFirstName(user?.name);
     const msg = user?.shift_clock_in
-      ? `${user?.name || 'User'}, your shift will remain active. You can resume when you log back in.`
-      : `${user?.name || 'User'}, are you sure you want to logout?`;
+      ? `${firstName}, your shift will remain active. You can resume when you log back in.`
+      : `${firstName}, are you sure you want to logout?`;
     const confirmed = await confirm({
       title: 'Logout',
       message: msg,
@@ -114,7 +116,7 @@ export function Layout() {
             )}
           </div>
 
-          <NotificationBell />
+          <GuideHeaderNav />
 
           <div ref={dropdownRef} className="relative shrink-0">
             <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -136,16 +138,6 @@ export function Layout() {
                   <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
                   {user?.email && <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>}
                 </div>
-                <button type="button" onClick={() => { setDropdownOpen(false); navigate(ROUTES.NOTIFICATIONS.INDEX); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                  <Bell className="w-4 h-4" />
-                  Notifications
-                </button>
-                <button type="button" onClick={() => { setDropdownOpen(false); navigate(ROUTES.SETTINGS.PROFILE); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                  <User className="w-4 h-4" />
-                  My Profile
-                </button>
                 {user?.shift_clock_in && (
                   <>
                     <hr className="border-gray-100" />

@@ -228,9 +228,9 @@ export default function NotificationsPage() {
                     <p className="text-sm text-gray-600 mt-3 whitespace-pre-line leading-relaxed">
                       {n.message}
                     </p>
-                    {n.metadata?.business_name && (
+                    {typeof n.metadata?.business_name === 'string' && n.metadata.business_name.trim() !== '' && (
                       <p className="text-xs text-gray-400 mt-3">
-                        For {String(n.metadata.business_name)}
+                        For {n.metadata.business_name}
                       </p>
                     )}
                   </div>

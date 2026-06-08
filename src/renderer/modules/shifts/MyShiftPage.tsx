@@ -39,6 +39,7 @@ import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shif
 import { grossSaleAmount, netSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import { useToast } from '../../app/contexts/useToast';
+import { getUserFirstName } from '../../shared/utils/userDisplayName';
 
 type ShiftLocationState = { openEndShift?: boolean };
 
@@ -244,9 +245,10 @@ export default function MyShiftPage() {
 
   const handleEndShift = async () => {
     if (!shiftId) return;
+    const firstName = getUserFirstName(authUser?.name);
     const confirmed = await confirm({
       title: 'End Shift',
-      message: `End your shift with ${shiftSales?.length || 0} transaction(s), ${formatCurrency(netShiftTotal)} net sales, and ${formatCurrency(handoverAmount)} cash at handover?`,
+      message: `${firstName}, end your shift with ${shiftSales?.length || 0} transaction(s), ${formatCurrency(netShiftTotal)} net sales, and ${formatCurrency(handoverAmount)} cash at handover?`,
       confirmText: 'End Shift',
       cancelText: 'Cancel',
       variant: 'warning',

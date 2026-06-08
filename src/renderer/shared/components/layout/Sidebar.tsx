@@ -7,6 +7,7 @@ import {
   LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
   UserCog, Shield, Building2, ListOrdered, Clock, Bell,
+  GraduationCap, HelpCircle, MessageSquareHeart, CircleUser,
 } from 'lucide-react';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -14,6 +15,7 @@ import { useConfirm } from '../Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectShowOfflineBanner } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -38,15 +40,19 @@ const baseSubRoutes = [
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
+  ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK,
+  ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
-  ROUTES.SETTINGS.NOTIFICATIONS, ROUTES.NOTIFICATIONS.INDEX,
 ];
 
 const platformSubRoutes = [
   ROUTES.PLATFORM.OVERVIEW,
   ROUTES.PLATFORM.BUSINESSES,
   ROUTES.PLATFORM.USERS,
-  ROUTES.PLATFORM.TEAM,
+  ROUTES.PLATFORM.ROLES,
+  ROUTES.PLATFORM.GUIDE.TUTORIALS,
+  ROUTES.PLATFORM.GUIDE.FAQS,
+  ROUTES.PLATFORM.GUIDE.FEEDBACK,
 ];
 
 const platformNavGroup: NavGroup = {
@@ -56,7 +62,17 @@ const platformNavGroup: NavGroup = {
     { to: ROUTES.PLATFORM.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
     { to: ROUTES.PLATFORM.BUSINESSES, label: 'Businesses', icon: Building2 },
     { to: ROUTES.PLATFORM.USERS, label: 'All Users', icon: Users },
-    { to: ROUTES.PLATFORM.TEAM, label: 'Platform Team', icon: UserCog },
+    { to: ROUTES.PLATFORM.ROLES, label: 'Platform Roles', icon: Shield },
+  ],
+};
+
+const guideSettingsNavGroup: NavGroup = {
+  icon: GraduationCap,
+  label: 'Guide Settings',
+  subItems: [
+    { to: ROUTES.PLATFORM.GUIDE.TUTORIALS, label: 'Tutorials', icon: GraduationCap },
+    { to: ROUTES.PLATFORM.GUIDE.FAQS, label: 'FAQs', icon: HelpCircle },
+    { to: ROUTES.PLATFORM.GUIDE.FEEDBACK, label: 'Feedback', icon: MessageSquareHeart },
   ],
 };
 
@@ -101,6 +117,23 @@ const baseNavGroups: NavGroup[] = [
     ],
   },
   {
+    icon: GraduationCap,
+    label: 'Custosell Guide',
+    subItems: [
+      { to: ROUTES.GUIDE.TUTORIALS, label: 'Tutorials', icon: GraduationCap },
+      { to: ROUTES.GUIDE.FAQS, label: 'FAQs', icon: HelpCircle },
+      { to: ROUTES.GUIDE.FEEDBACK, label: 'Feedback', icon: MessageSquareHeart },
+    ],
+  },
+  {
+    icon: CircleUser,
+    label: 'Account',
+    subItems: [
+      { to: ROUTES.ACCOUNT.NOTIFICATIONS, label: 'Notifications', icon: Bell },
+      { to: ROUTES.ACCOUNT.PROFILE, label: 'My Profile', icon: UserCog },
+    ],
+  },
+  {
     icon: Settings,
     label: 'Settings',
     subItems: [
@@ -108,8 +141,6 @@ const baseNavGroups: NavGroup[] = [
       // { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
-      { to: ROUTES.SETTINGS.NOTIFICATIONS, label: 'Notifications', icon: Bell },
-      { to: ROUTES.SETTINGS.PROFILE, label: 'My Profile', icon: UserCog },
     ],
   },
 ];
@@ -131,7 +162,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
   const navGroups = useMemo(
-    () => (user?.is_platform_admin ? [...baseNavGroups, platformNavGroup] : baseNavGroups),
+    () => (user?.is_platform_admin ? [...baseNavGroups, platformNavGroup, guideSettingsNavGroup] : baseNavGroups),
     [user?.is_platform_admin],
   );
   const allSubRoutes = useMemo(
@@ -161,7 +192,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
   const handleLogout = async () => {
     const confirmed = await confirm({
       title: 'Logout',
-      message: `${user?.name || 'User'}, are you sure you want to logout?`,
+      message: `${getUserFirstName(user?.name)}, are you sure you want to logout?`,
       confirmText: 'Logout',
       cancelText: 'Cancel',
       variant: 'warning',

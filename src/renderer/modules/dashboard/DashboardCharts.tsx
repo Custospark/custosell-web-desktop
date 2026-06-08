@@ -1,4 +1,5 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid } from 'recharts';
+import { ChartContainer } from '../../shared/components/charts/ChartContainer';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { totalDeductions } from '../../shared/utils/accounting';
 import type { SalesTrendDay } from './DashboardTypes';
@@ -51,8 +52,9 @@ export function SalesTrendChart({ data }: { data: SalesTrendDay[] }) {
         <span className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ backgroundColor: TREND_COLORS.deductions }} /> Refunds + expenses</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: TREND_COLORS.transactions }} /> Transactions</span>
       </div>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer className="h-72">
+        {(size) => (
+        <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
           <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} />
@@ -102,7 +104,8 @@ export function SalesTrendChart({ data }: { data: SalesTrendDay[] }) {
             <Line yAxisId="right" type="monotone" dataKey="transactions" name="Transactions" stroke={TREND_COLORS.transactions} strokeWidth={2} dot={{ fill: TREND_COLORS.transactions, r: 3 }} />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
+        )}
+      </ChartContainer>
     </div>
   );
 }
@@ -120,8 +123,9 @@ export function ExpensePieChart({ data, title = 'Expense by Category' }: { data:
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <h3 className="text-sm font-semibold text-gray-800 mb-4">{title}</h3>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer className="h-64" minHeight={256}>
+        {(size) => (
+        <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
           <PieChart>
             <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }: PieLabelProps) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}>
               {data.map((_, i) => (
@@ -132,7 +136,8 @@ export function ExpensePieChart({ data, title = 'Expense by Category' }: { data:
             <Legend />
           </PieChart>
         </ResponsiveContainer>
-      </div>
+        )}
+      </ChartContainer>
     </div>
   );
 }

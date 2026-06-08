@@ -10,7 +10,8 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { ChartContainer } from '../../shared/components/charts/ChartContainer';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import type { ShiftHistoryPoint, ShiftProgressPoint } from './shiftChartSeries';
 
@@ -42,18 +43,6 @@ function ChartTooltipShell({ title, subtitle, children }: { title: string; subti
       <div className="space-y-1.5">{children}</div>
     </div>
   );
-}
-
-function ChartContainer({ children, className }: { children: ReactNode; className: string }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-  if (!ready) {
-    return <div className={className} aria-hidden />;
-  }
-  return <div className={className}>{children}</div>;
 }
 
 function TooltipRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
@@ -107,8 +96,9 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
         </div>
       </div>
 
-      <ChartContainer className="h-72 min-h-[288px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer className="h-72" minHeight={288}>
+        {(size) => (
+        <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <defs>
               <linearGradient id="shiftProgressFill" x1="0" y1="0" x2="0" y2="1">
@@ -158,6 +148,7 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
             />
           </AreaChart>
         </ResponsiveContainer>
+        )}
       </ChartContainer>
     </div>
   );
@@ -183,8 +174,9 @@ export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) 
         </div>
       </div>
 
-      <ChartContainer className="h-56 min-h-[224px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer className="h-56" minHeight={224}>
+        {(size) => (
+        <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
           <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} vertical={false} />
             <XAxis
@@ -235,6 +227,7 @@ export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) 
             />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </ChartContainer>
     </div>
   );

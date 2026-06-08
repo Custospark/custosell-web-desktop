@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, ComposedChart, Line, Legend } from 'recharts';
+import { ChartContainer } from '../../shared/components/charts/ChartContainer';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import type { GrossIncomeDistribution, PlatformBusinessGrowthDay, PlatformMetricDay, PlatformOverview } from './api/PlatformTypes';
+import type { GrossIncomeDistribution, PlatformBusinessGrowthDay, PlatformMetricDay, PlatformOverview, PlatformUserGrowthDay } from './api/PlatformTypes';
 
 const TREND_COLORS = {
   signups: '#3b82f6',
@@ -39,8 +40,9 @@ export function PlatformBusinessOnboardingChart({ data, rangeLabel }: { data: Pl
       {chartData.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-12">No onboarding data for this range</p>
       ) : (
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
+        <ChartContainer className="h-72">
+          {(size) => (
+          <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
             <ComposedChart data={chartData} margin={{ top: 5, right: 8, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
@@ -52,7 +54,46 @@ export function PlatformBusinessOnboardingChart({ data, rangeLabel }: { data: Pl
               <Line yAxisId="right" type="monotone" dataKey="cumulative" name="Total on platform" stroke="#10b981" strokeWidth={2.5} dot={{ r: 2 }} />
             </ComposedChart>
           </ResponsiveContainer>
-        </div>
+          )}
+        </ChartContainer>
+      )}
+    </div>
+  );
+}
+
+export function PlatformUserGrowthChart({ data, rangeLabel }: { data: PlatformUserGrowthDay[]; rangeLabel?: string }) {
+  const chartData = data.map((d) => ({
+    ...d,
+    label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  }));
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-gray-800">User Growth</h3>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Daily signups and cumulative user accounts on platform{rangeLabel ? ` · ${rangeLabel}` : ''}
+        </p>
+      </div>
+      {chartData.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-12">No user growth data for this range</p>
+      ) : (
+        <ChartContainer className="h-72">
+          {(size) => (
+          <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
+            <ComposedChart data={chartData} margin={{ top: 5, right: 8, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+              <YAxis yAxisId="left" tick={{ fontSize: 11 }} allowDecimals={false} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Bar yAxisId="left" dataKey="signups" name="New users" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              <Line yAxisId="right" type="monotone" dataKey="cumulative" name="Total on platform" stroke="#10b981" strokeWidth={2.5} dot={{ r: 2 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+          )}
+        </ChartContainer>
       )}
     </div>
   );
@@ -72,8 +113,12 @@ export function PlatformActivityTrendChart({ data }: { data: PlatformMetricDay[]
         <h3 className="text-sm font-semibold text-gray-800">7-Day Platform Activity</h3>
         <p className="text-xs text-gray-500 mt-0.5">Signups, selling businesses, transactions, and platform gross sales</p>
       </div>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
+      {chartData.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-12">No activity data for this range</p>
+      ) : (
+      <ChartContainer className="h-72">
+        {(size) => (
+        <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
           <ComposedChart data={chartData} margin={{ top: 5, right: 52, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} />
@@ -87,12 +132,13 @@ export function PlatformActivityTrendChart({ data }: { data: PlatformMetricDay[]
               tickFormatter={(v: number) => `${v.toFixed(1)}M`}
             />
             <Tooltip
-              formatter={(value: number, name: string, item) => {
+              formatter={(value, name, item) => {
+                const num = typeof value === 'number' ? value : Number(value ?? 0);
                 if (name === 'Gross sales') {
-                  const gross = (item?.payload as { gross_sales_num?: number })?.gross_sales_num ?? value * 1_000_000;
+                  const gross = (item?.payload as { gross_sales_num?: number })?.gross_sales_num ?? num * 1_000_000;
                   return [formatCurrency(gross, 'UGX'), name];
                 }
-                return [value, name];
+                return [num, name];
               }}
             />
             <Legend />
@@ -111,7 +157,9 @@ export function PlatformActivityTrendChart({ data }: { data: PlatformMetricDay[]
             />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
+        )}
+      </ChartContainer>
+      )}
     </div>
   );
 }
@@ -132,8 +180,9 @@ export function PlatformActivityPieChart({ overview }: { overview: PlatformOverv
       {pieData.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-8">No business data yet</p>
       ) : (
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+        <ChartContainer className="h-64" minHeight={256}>
+          {(size) => (
+          <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
             <BarChart data={pieData} layout="vertical" margin={{ left: 8, right: 16 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
@@ -146,7 +195,8 @@ export function PlatformActivityPieChart({ overview }: { overview: PlatformOverv
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </div>
+          )}
+        </ChartContainer>
       )}
     </div>
   );
@@ -194,14 +244,18 @@ export function GrossIncomeDistributionPanel({ distributions }: { distributions:
         </div>
       )}
 
-      <div className="h-56 mb-4">
-        <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer className="h-56 mb-4" minHeight={224}>
+        {(size) => (
+        <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
           <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="shortLabel" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip
-              formatter={(value: number, name: string) => [value, name === 'business_count' ? 'Businesses' : name]}
+              formatter={(value, name) => {
+                const num = typeof value === 'number' ? value : Number(value ?? 0);
+                return [num, name === 'business_count' ? 'Businesses' : String(name)];
+              }}
               labelFormatter={(_, payload) => {
                 const tier = payload?.[0]?.payload as GrossIncomeDistribution['tiers'][0] | undefined;
                 if (!tier) return '';
@@ -215,7 +269,8 @@ export function GrossIncomeDistributionPanel({ distributions }: { distributions:
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+        )}
+      </ChartContainer>
 
       <div className="space-y-2 mb-4">
         {current.tiers.map((tier) => (

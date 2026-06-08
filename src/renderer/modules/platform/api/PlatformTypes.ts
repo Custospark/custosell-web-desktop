@@ -144,13 +144,60 @@ export interface PlatformUser {
   id: number;
   name: string;
   email: string;
+  phone?: string | null;
   is_active: boolean;
+  status?: UserAccountStatus;
+  status_changed_at?: string | null;
   business_id: number | null;
   business_name: string | null;
+  role_name?: string | null;
   is_platform_admin: boolean;
-  platform_roles: string[];
+  platform_roles?: string[];
   last_login_at: string | null;
+  days_since_login?: number | null;
   created_at: string | null;
+}
+
+export type UserAccountStatus = 'active' | 'warning' | 'notified' | 'restricted' | 'deactivated';
+
+export type UserNotificationIntention =
+  | 'announcement'
+  | 'warning_notice'
+  | 'policy_update'
+  | 'reactivation_nudge'
+  | 'account_notice'
+  | 'custom';
+
+export type UserLoginActivity = 'active' | 'dormant' | 'churned' | 'never_logged_in';
+
+export interface PlatformUserGrowthDay {
+  date: string;
+  signups: number;
+  cumulative: number;
+}
+
+export interface PlatformUserStats {
+  onboarding: {
+    today: number;
+    this_week: number;
+    this_month: number;
+    in_range: number;
+    range_from: string;
+    range_to: string;
+  };
+  totals: {
+    total: number;
+    active: number;
+    warning: number;
+    notified: number;
+    restricted: number;
+    deactivated: number;
+    with_business: number;
+    platform_admins: number;
+    logins_30d: number;
+  };
+  growth: PlatformUserGrowthDay[];
+  decisions: string[];
 }
 
 export interface PlatformRole {

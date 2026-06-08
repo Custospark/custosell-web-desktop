@@ -73,7 +73,7 @@ export function useUpdateBusinessStatus() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, status, reason }: { id: number; status: 'active' | 'suspended'; reason?: string }) => {
+    mutationFn: async ({ id, status, reason }: { id: number; status: 'active' | 'suspended'; reason: string }) => {
       const { data } = await axiosInstance.patch<{ message: string }>(PLATFORM.BUSINESS_STATUS(id), { status, reason });
       return data;
     },

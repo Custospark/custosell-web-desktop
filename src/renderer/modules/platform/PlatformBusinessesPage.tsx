@@ -9,8 +9,8 @@ import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
-import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { PlatformBusinessStatusModal } from './components/PlatformBusinessStatusModal';
 import {
   Building2, Ban, CheckCircle, TrendingUp, Calendar, Users, DollarSign, Receipt, AlertTriangle,
 } from 'lucide-react';
@@ -42,6 +42,11 @@ export default function PlatformBusinessesPage() {
   const [dateFrom, setDateFrom] = useState(defaultRange().from);
   const [dateTo, setDateTo] = useState(defaultRange().to);
 
+  const [statusModal, setStatusModal] = useState<{
+    business: PlatformBusiness;
+    nextStatus: 'active' | 'suspended';
+  } | null>(null);
+
   const statsParams = useMemo(() => ({ date_from: dateFrom, date_to: dateTo }), [dateFrom, dateTo]);
   const listParams = useMemo(() => ({
     sort: 'gross_sales_30d',
@@ -52,7 +57,6 @@ export default function PlatformBusinessesPage() {
   const { data: stats, isLoading: statsLoading } = usePlatformBusinessStats(statsParams);
   const { data, isLoading: listLoading } = usePlatformBusinesses(listParams);
   const updateStatus = useUpdateBusinessStatus();
-  const { confirm } = useConfirm();
 
   const rows = useMemo(() => {
     const list = data?.data ?? [];
@@ -69,28 +73,23 @@ export default function PlatformBusinessesPage() {
     });
   }, [data?.data, search, activityFilter]);
 
-  const handleStatus = async (business: PlatformBusiness) => {
-    const suspending = business.status === 'active';
-    const reason = suspending
-      ? window.prompt('Reason for suspension (optional):') ?? undefined
-      : undefined;
-
-    const ok = await confirm({
-      title: suspending ? 'Suspend Business' : 'Reactivate Business',
-      message: suspending
-        ? `Suspend "${business.name}"? The owner and all staff will be blocked from signing in until reactivated. An email notification will be sent.`
-        : `Reactivate "${business.name}"? The owner and staff can sign in again. An email notification will be sent.`,
-      confirmText: suspending ? 'Suspend' : 'Reactivate',
-      variant: suspending ? 'danger' : 'warning',
+  const openStatusModal = (business: PlatformBusiness) => {
+    setStatusModal({
+      business,
+      nextStatus: business.status === 'active' ? 'suspended' : 'active',
     });
+  };
 
-    if (!ok) return;
-
-    updateStatus.mutate({
-      id: business.id,
-      status: suspending ? 'suspended' : 'active',
-      reason,
-    });
+  const handleStatusConfirm = (reason: string) => {
+    if (!statusModal) return;
+    updateStatus.mutate(
+      {
+        id: statusModal.business.id,
+        status: statusModal.nextStatus,
+        reason,
+      },
+      { onSuccess: () => setStatusModal(null) },
+    );
   };
 
   if (statsLoading && listLoading) return <LoadingSkeleton variant="table" />;
@@ -110,6 +109,15 @@ export default function PlatformBusinessesPage() {
 
   return (
     <div className="space-y-6">
+      <PlatformBusinessStatusModal
+        open={statusModal !== null}
+        business={statusModal?.business ?? null}
+        nextStatus={statusModal?.nextStatus ?? null}
+        isPending={updateStatus.isPending}
+        onClose={() => setStatusModal(null)}
+        onConfirm={handleStatusConfirm}
+      />
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Businesses</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -250,7 +258,7 @@ export default function PlatformBusinessesPage() {
                 <Button
                   variant={b.status === 'active' ? 'danger' : 'secondary'}
                   size="sm"
-                  onClick={() => void handleStatus(b)}
+                  onClick={() => openStatusModal(b)}
                   disabled={updateStatus.isPending}
                 >
                   {b.status === 'active' ? (

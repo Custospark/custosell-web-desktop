@@ -194,7 +194,7 @@ async function findServerStaffByEmail(email: unknown): Promise<StaffUser | null>
   if (typeof email !== 'string' || !email.trim()) return null;
 
   const normalizedEmail = email.trim().toLowerCase();
-  const response = await axiosInstance.get<{ data: StaffUser[] }>('/users', { timeout: 10000 });
+  const response = await axiosInstance.get<{ data: StaffUser[] }>('/users', { timeout: 10000, skipAuthRedirect: true });
   return response.data.data
     .filter(Boolean)
     .find((staff) => staff.email.trim().toLowerCase() === normalizedEmail) ?? null;
@@ -255,7 +255,7 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       config.headers = { 'Content-Type': 'multipart/form-data' };
     }
 
-    const response = await axiosInstance(config);
+    const response = await axiosInstance({ ...config, skipAuthRedirect: true } as never);
 
     await mutationQueue.markCompleted(m.id);
 
@@ -431,7 +431,7 @@ async function processExpenseCategoryCreates(
   for (const m of categoryCreates) {
     try {
       await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/expense-categories', m.data);
+      const response = await axiosInstance.post('/expense-categories', m.data, { skipAuthRedirect: true });
       const serverCategory = extractExpenseCategory(response.data);
       await mutationQueue.markCompleted(m.id);
 
@@ -470,7 +470,7 @@ async function processRoleCreates(
   for (const m of roleCreates) {
     try {
       await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/roles', m.data);
+      const response = await axiosInstance.post('/roles', m.data, { skipAuthRedirect: true });
       const serverRole = extractRole(response.data);
       await mutationQueue.markCompleted(m.id);
 
@@ -509,7 +509,7 @@ async function processCategoryCreates(
   for (const m of categoryCreates) {
     try {
       await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/categories', m.data);
+      const response = await axiosInstance.post('/categories', m.data, { skipAuthRedirect: true });
       const serverCategory = extractCategory(response.data);
       await mutationQueue.markCompleted(m.id);
 
@@ -548,7 +548,7 @@ async function processShiftOpens(
   for (const m of shiftOpens) {
     try {
       await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/shifts', m.data);
+      const response = await axiosInstance.post('/shifts', m.data, { skipAuthRedirect: true });
       const serverShift = extractShift(response.data);
       await mutationQueue.markCompleted(m.id);
 
@@ -790,7 +790,7 @@ export async function processStockAdjustments(): Promise<number> {
         quantity_change: adj.delta,
         type: adj.reason === 'refund' ? 'return' : 'adjustment',
         notes: `Offline sync: ${adj.reason}`,
-      });
+      }, { skipAuthRedirect: true });
       await stockLedger.markAdjustmentSynced(adj.id);
       synced++;
     } catch {

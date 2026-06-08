@@ -3,7 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useResetPassword } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
-import { AuthLayout } from './AuthLayout';
+import { AuthLayout, AUTH_HERO_IMAGES } from './AuthLayout';
 import { Mail, Lock, CheckCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
       <AuthLayout
         title="Password Reset"
         subtitle="Your password has been reset successfully."
-        heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
+        heroImage={AUTH_HERO_IMAGES.resetPasswordSuccess}
         heroDescription="Your password has been updated. You can now sign in with your new password."
       >
         <div className="text-center space-y-6">
@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
     <AuthLayout
       title="Reset Password"
       subtitle="Enter your new password."
-      heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
+      heroImage={AUTH_HERO_IMAGES.resetPassword}
       heroDescription="Choose a new password for your account."
     >
       <form onSubmit={handleSubmit} className="space-y-4">

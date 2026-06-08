@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
@@ -63,6 +63,7 @@ export function useLogin() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   return useMutation<LoginMutationResult, Error, LoginRequest>({
     mutationFn: async (credentials) => {
@@ -109,6 +110,9 @@ export function useLogin() {
         isLocalSession: isLocal,
         pendingAuthSync: data.pendingAuthSync ?? isLocal,
       }));
+      if (!isLocal) {
+        queryClient.setQueryData(accountKeys.profile(), userData);
+      }
 
       if (isLocal) {
         showToast('success', isCompletelyOffline()
@@ -245,6 +249,8 @@ export function useProfile() {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const isLocalSession = useAppSelector((state) => state.auth.isLocalSession);
+  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
+  const cachedUser = useAppSelector((state) => state.auth.user);
 
   return useQuery({
     queryKey: accountKeys.profile(),
@@ -257,9 +263,10 @@ export function useProfile() {
       }
       return userData;
     },
-    staleTime: 0,
+    initialData: cachedUser ?? undefined,
+    staleTime: 5 * 60 * 1000,
     retry: false,
-    enabled: Boolean(token) && !isLocalSession,
+    enabled: isInitialized && Boolean(token) && !isLocalSession,
   });
 }
 

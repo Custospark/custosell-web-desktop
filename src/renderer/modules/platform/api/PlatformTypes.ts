@@ -14,13 +14,28 @@ export interface PlatformBusiness {
   subscription_status: string | null;
   trial_ends_at: string | null;
   staff_count: number;
-  revenue_today: string;
-  revenue_7d: string;
-  revenue_30d: string;
-  revenue_all_time: string;
+  gross_sales_today: string;
+  gross_sales_7d: string;
+  gross_sales_30d: string;
+  gross_sales_all_time: string;
   transactions_30d: number;
   last_activity_at: string | null;
   created_at: string | null;
+}
+
+export interface GrossIncomeTier {
+  tier: number;
+  label: string;
+  min_gross: string;
+  max_gross: string;
+  business_count: number;
+  total_gross_sales_30d: string;
+}
+
+export interface GrossIncomeDistribution {
+  currency: string;
+  tiers: GrossIncomeTier[];
+  decision_note: string;
 }
 
 export interface PlatformOverview {
@@ -30,6 +45,7 @@ export interface PlatformOverview {
     dormant: number;
     never_used: number;
     suspended: number;
+    with_gross_sales_30d: number;
   };
   users: {
     total: number;
@@ -42,11 +58,12 @@ export interface PlatformOverview {
     queue_pending: number;
     version: string;
   };
-  revenue_by_currency: Array<{
-    currency: string;
-    revenue_30d: string;
-    business_count: number;
-  }>;
+  pricing_insights: {
+    activity_window_days: number;
+    businesses_with_gross_sales_30d: number;
+    businesses_without_gross_sales_30d: number;
+    gross_income_distribution: GrossIncomeDistribution[];
+  };
   top_businesses_30d: PlatformBusiness[];
   recent_events: Array<{
     id: number;
@@ -64,19 +81,53 @@ export interface PlatformMetricDay {
   signups: number;
   transactions: number;
   active_businesses: number;
+  gross_sales: string;
+}
+
+export interface PlatformBusinessGrowthDay {
+  date: string;
+  signups: number;
+  cumulative: number;
+}
+
+export interface PlatformBusinessStats {
+  onboarding: {
+    today: number;
+    this_week: number;
+    this_month: number;
+    in_range: number;
+    range_from: string;
+    range_to: string;
+  };
+  totals: {
+    total: number;
+    active_status: number;
+    suspended: number;
+    with_gross_sales_30d: number;
+    transactions_30d: number;
+    gross_sales_30d: string;
+  };
+  growth: PlatformBusinessGrowthDay[];
+  decisions: string[];
+}
+
+export interface PaginatedPlatformResponse<T> {
+  current_page: number;
+  data: T[];
+  total: number;
+  per_page: number;
+  last_page: number;
 }
 
 export interface PlatformUser {
   id: number;
   name: string;
   email: string;
-  phone: string | null;
   is_active: boolean;
   business_id: number | null;
-  business_name?: string | null;
-  role_name?: string | null;
-  platform_roles?: string[];
+  business_name: string | null;
   is_platform_admin: boolean;
+  platform_roles: string[];
   last_login_at: string | null;
   created_at: string | null;
 }
@@ -85,14 +136,4 @@ export interface PlatformRole {
   id: number;
   name: string;
   permissions: string[];
-}
-
-export interface PaginatedPlatformResponse<T> {
-  data: T[];
-  meta: {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-  };
 }

@@ -3,6 +3,8 @@ import { useAppDispatch } from '../store/hooks/useApp';
 import { hydrateAuth, setInitialized } from '../store/slices/authSlice';
 import { loadAuthSession, migrateLegacyAuthStorage, clearAuthSession } from '../store/offline/secureStorage';
 import { consumeLogoutIntent } from '../store/auth/runAppLogout';
+import { queryClient } from '../api/axiosConfig';
+import { accountKeys } from '../../shared/api/account/AccountQueries';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 
 export function AuthBootstrap({ children }: { children: ReactNode }) {
@@ -27,6 +29,7 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
 
         if (session) {
           dispatch(hydrateAuth(session));
+          queryClient.setQueryData(accountKeys.profile(), session.user);
         } else {
           dispatch(setInitialized());
         }

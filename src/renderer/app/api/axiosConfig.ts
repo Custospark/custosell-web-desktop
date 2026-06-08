@@ -6,7 +6,8 @@ import type { RootState } from '../store/store';
 import { logout } from '../store/slices/authSlice';
 import { API_BASE_URL, API_TIMEOUT } from './apiConfig';
 import { clearServiceWorkerApiCache } from '../sw/registerServiceWorker';
-import { isLocalSessionToken } from '../store/offline/secureStorage';
+import { clearAuthSession, isLocalSessionToken } from '../store/offline/secureStorage';
+import { LOGOUT_INTENT_KEY } from '../store/auth/runAppLogout';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -21,7 +22,7 @@ function normalizeBearerToken(raw: string | null | undefined): string | null {
   return t.replace(/^Bearer\s+/i, '').trim() || null;
 }
 
-function resolveBearerToken(state: RootState): string | null {
+export function resolveBearerToken(state: RootState): string | null {
   const fromRedux = normalizeBearerToken(state.auth.token);
   if (fromRedux && !isLocalSessionToken(fromRedux)) return fromRedux;
 
@@ -29,6 +30,39 @@ function resolveBearerToken(state: RootState): string | null {
   if (legacy && !isLocalSessionToken(legacy)) return legacy;
 
   return null;
+}
+
+const LEGACY_TOKEN_KEY = 'token';
+const LEGACY_USER_KEY = 'auth_user';
+
+function clearLegacyLocalStorage(): void {
+  try {
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_USER_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function markLogoutIntent(): void {
+  try {
+    sessionStorage.setItem(LOGOUT_INTENT_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+}
+
+async function forceSessionLogout(): Promise<void> {
+  markLogoutIntent();
+  store.dispatch(logout());
+  clearLegacyLocalStorage();
+  queryClient.clear();
+  clearServiceWorkerApiCache();
+  try {
+    await clearAuthSession();
+  } catch {
+    /* ignore */
+  }
 }
 
 axiosInstance.interceptors.request.use(
@@ -87,8 +121,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const state = store.getState();
-    const token = state.auth.token || localStorage.getItem('token');
-    const hasAuthToken = Boolean(token && !isLocalSessionToken(token));
+    const hasAuthToken = Boolean(resolveBearerToken(state));
     const url = String(error.config?.url ?? '');
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/businesses/register');
 
@@ -96,23 +129,23 @@ axiosInstance.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
+      state.auth.isInitialized &&
       hasAuthToken &&
       !isAuthEndpoint &&
       !skipAuthRedirect &&
       !_isHandling401
     ) {
       _isHandling401 = true;
-      store.dispatch(logout());
-      queryClient.clear();
-      clearServiceWorkerApiCache();
-      const isElectron = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
-      if (isElectron) {
-        const base = window.location.href.split('#')[0];
-        window.location.replace(`${base}#/login`);
-      } else {
-        window.location.href = '/login';
-      }
-      setTimeout(() => { _isHandling401 = false; }, 3000);
+      void forceSessionLogout().finally(() => {
+        const isElectron = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
+        if (isElectron) {
+          const base = window.location.href.split('#')[0];
+          window.location.replace(`${base}#/login`);
+        } else {
+          window.location.href = '/login';
+        }
+        setTimeout(() => { _isHandling401 = false; }, 3000);
+      });
     }
 
     return Promise.reject(error);

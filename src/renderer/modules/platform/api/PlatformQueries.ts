@@ -5,6 +5,7 @@ import { useToast } from '../../../app/contexts/ToastContext';
 import type {
   PaginatedPlatformResponse,
   PlatformBusiness,
+  PlatformBusinessStats,
   PlatformMetricDay,
   PlatformOverview,
   PlatformRole,
@@ -16,6 +17,7 @@ export const platformKeys = {
   overview: () => [...platformKeys.all, 'overview'] as const,
   metrics: (days: number) => [...platformKeys.all, 'metrics', days] as const,
   businesses: (params: Record<string, string>) => [...platformKeys.all, 'businesses', params] as const,
+  businessStats: (params: Record<string, string>) => [...platformKeys.all, 'business-stats', params] as const,
   users: (params: Record<string, string>) => [...platformKeys.all, 'users', params] as const,
   team: () => [...platformKeys.all, 'team'] as const,
   roles: () => [...platformKeys.all, 'roles'] as const,
@@ -38,6 +40,17 @@ export function usePlatformMetrics(days = 7) {
     queryKey: platformKeys.metrics(days),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: PlatformMetricDay[] }>(PLATFORM.METRICS, { params: { days } });
+      return data.data;
+    },
+    networkMode: 'always',
+  });
+}
+
+export function usePlatformBusinessStats(params: Record<string, string> = {}) {
+  return useQuery({
+    queryKey: platformKeys.businessStats(params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: PlatformBusinessStats }>(PLATFORM.BUSINESS_STATS, { params });
       return data.data;
     },
     networkMode: 'always',

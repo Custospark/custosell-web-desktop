@@ -1,9 +1,9 @@
 import { usePlatformMetrics, usePlatformOverview } from './api/PlatformQueries';
-import { PlatformActivityPieChart, PlatformActivityTrendChart, RevenueByCurrencyPanel } from './PlatformCharts';
+import { GrossIncomeDistributionPanel, PlatformActivityPieChart, PlatformActivityTrendChart } from './PlatformCharts';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { Badge } from '../../shared/components/badges/Badge';
-import { Building2, Users, Activity, Ban, Clock, TrendingUp } from 'lucide-react';
+import { Building2, Users, Activity, Ban, TrendingUp, DollarSign } from 'lucide-react';
 import type { ActivityStatus } from './api/PlatformTypes';
 
 const cardStyles = {
@@ -29,9 +29,9 @@ export default function PlatformOverviewPage() {
 
   const cards = [
     { label: 'Total Businesses', value: String(overview.businesses.total), icon: Building2, color: 'blue' as const, badge: 'All' },
+    { label: 'Selling (30d)', value: String(overview.businesses.with_gross_sales_30d), icon: DollarSign, color: 'green' as const, badge: 'Gross sales' },
     { label: 'Active (30d)', value: String(overview.businesses.active), icon: Activity, color: 'green' as const, badge: 'Active' },
-    { label: 'Dormant / Never Used', value: String(overview.businesses.dormant + overview.businesses.never_used), icon: TrendingUp, color: 'amber' as const, badge: 'Idle' },
-    { label: 'Suspended', value: String(overview.businesses.suspended), icon: Ban, color: 'red' as const, badge: 'Suspended' },
+    { label: 'Idle / Never Used', value: String(overview.businesses.dormant + overview.businesses.never_used), icon: TrendingUp, color: 'amber' as const, badge: 'Idle' },
     { label: 'Total Users', value: String(overview.users.total), icon: Users, color: 'indigo' as const, badge: 'Users' },
   ];
 
@@ -39,7 +39,7 @@ export default function PlatformOverviewPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Platform Overview</h1>
-        <p className="text-sm text-gray-500 mt-1">Platform-wide performance · 30-day activity window</p>
+        <p className="text-sm text-gray-500 mt-1">Gross sales insights for subscription pricing · {overview.pricing_insights.activity_window_days}-day window</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -68,12 +68,13 @@ export default function PlatformOverviewPage() {
           <PlatformActivityTrendChart data={metrics ?? []} />
 
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-800 mb-1 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-500 shrink-0" />
-              Top Earners (30d)
+              Top Earners (30d gross sales)
             </h3>
+            <p className="text-xs text-gray-500 mb-4">Businesses generating the most gross sales — anchor premium tiers here</p>
             {overview.top_businesses_30d.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No revenue data yet</p>
+              <p className="text-sm text-gray-400 text-center py-8">No gross sales yet</p>
             ) : (
               <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                 {overview.top_businesses_30d.slice(0, 10).map((b) => (
@@ -82,7 +83,7 @@ export default function PlatformOverviewPage() {
                       <span className="text-sm font-medium text-gray-800 truncate block">{b.name}</span>
                       <Badge variant={activityBadge[b.activity_status]} className="mt-1">{b.activity_status.replace('_', ' ')}</Badge>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 shrink-0 ml-2">{formatCurrency(b.revenue_30d, b.currency)}</span>
+                    <span className="text-sm font-semibold text-gray-900 shrink-0 ml-2">{formatCurrency(b.gross_sales_30d, b.currency)}</span>
                   </div>
                 ))}
               </div>
@@ -93,7 +94,16 @@ export default function PlatformOverviewPage() {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <RevenueByCurrencyPanel items={overview.revenue_by_currency} />
+          <GrossIncomeDistributionPanel distributions={overview.pricing_insights.gross_income_distribution} />
+
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Pricing snapshot</h3>
+            <div className="space-y-2 text-sm text-gray-600">
+              <p>Businesses with gross sales (30d): <span className="font-semibold text-gray-900">{overview.pricing_insights.businesses_with_gross_sales_30d}</span></p>
+              <p>Businesses with zero sales (30d): <span className="font-semibold text-gray-900">{overview.pricing_insights.businesses_without_gross_sales_30d}</span></p>
+              <p>Suspended: <span className="font-semibold text-red-600">{overview.businesses.suspended}</span></p>
+            </div>
+          </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="text-sm font-semibold text-gray-800 mb-2">System Health</h3>
@@ -101,27 +111,7 @@ export default function PlatformOverviewPage() {
               <p>API: <span className="font-medium text-green-600">{overview.system.api_status}</span></p>
               <p>Database latency: <span className="font-medium">{overview.system.database_latency_ms}ms</span></p>
               <p>Queue pending: <span className="font-medium">{overview.system.queue_pending}</span></p>
-              <p>Version: <span className="font-medium">{overview.system.version}</span></p>
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-500 shrink-0" />
-              Recent Platform Events
-            </h3>
-            {overview.recent_events.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No recent events</p>
-            ) : (
-              <div className="space-y-3">
-                {overview.recent_events.map((event) => (
-                  <div key={event.id} className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium text-gray-800">{event.action.replace('.', ' · ')}</p>
-                    <p className="text-xs text-gray-500 mt-1">{event.actor_name ?? 'System'} · {event.target_type} #{event.target_id}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useForgotPassword } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
-import { AuthLayout } from './AuthLayout';
+import { AuthLayout, AUTH_HERO_IMAGES } from './AuthLayout';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
       <AuthLayout
         title="Check Your Email"
         subtitle="We've sent a password reset link if the account exists."
-        heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
+        heroImage={AUTH_HERO_IMAGES.forgotPasswordSent}
         heroDescription="A password reset link has been sent if the email address is associated with an account."
       >
         <div className="text-center space-y-6">
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
     <AuthLayout
       title="Forgot Password"
       subtitle="Enter your email and we'll send you a reset link."
-      heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
+      heroImage={AUTH_HERO_IMAGES.forgotPassword}
       heroDescription="Enter your email address and we'll send you a link to reset your password."
     >
       <form onSubmit={handleSubmit} className="space-y-6">

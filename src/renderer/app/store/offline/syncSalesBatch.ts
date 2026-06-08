@@ -62,6 +62,7 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
     await mutationQueue.markSyncing(m.id);
     const response = await axiosInstance.post<{ data?: Sale } | Sale>('/sales', payload, {
       timeout: SALES_BATCH_TIMEOUT_MS,
+      skipAuthRedirect: true,
     });
     const wrapped = response.data as { data?: Sale };
     const serverSale = extractBatchSales(response.data)[0] ?? wrapped?.data ?? (response.data as Sale);
@@ -86,6 +87,7 @@ async function syncSalesChunkBatch(
 
       const response = await axiosInstance.post('/sales/batch', { sales }, {
         timeout: SALES_BATCH_TIMEOUT_MS,
+        skipAuthRedirect: true,
       });
       const syncedSales = extractBatchSales(response.data);
 

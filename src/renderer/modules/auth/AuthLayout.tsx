@@ -11,10 +11,27 @@ interface AuthLayoutProps {
   heroDescription?: string;
 }
 
-export function AuthLayout({ title, subtitle, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
+export const AUTH_HERO_IMAGES = {
+  login: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80',
+  register: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
+  /** Laptop workspace — enter email for reset link */
+  forgotPassword: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&q=80',
+  /** Envelope / inbox — check your email */
+  forgotPasswordSent: 'https://images.unsplash.com/photo-1596526131083-e8c188c223ab?w=1200&q=80',
+  /** Lock on keyboard — choose a new password */
+  resetPassword: 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=1200&q=80',
+  /** Padlock — account secured after reset */
+  resetPasswordSuccess: 'https://images.unsplash.com/photo-1614064641938-3bbee51642ea?w=1200&q=80',
+} as const;
+
+export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
+  const image = heroImage || AUTH_HERO_IMAGES.login;
+
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-black/70" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <span className="text-white text-2xl font-bold tracking-tight">Custosell</span>
           <div className="max-w-md">

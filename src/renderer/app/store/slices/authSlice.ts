@@ -38,7 +38,6 @@ export interface AuthUser {
   role?: { id: number; name: string; slug: string; permissions: Record<string, boolean> } | null;
   is_platform_admin?: boolean;
   platform_roles?: string[];
-  platform_permissions?: string[];
   last_login_at?: string | null;
 }
 

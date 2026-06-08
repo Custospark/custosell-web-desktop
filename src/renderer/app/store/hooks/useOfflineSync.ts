@@ -14,15 +14,23 @@ import { useToast } from '../../contexts/ToastContext';
  */
 export function useOfflineSync(): void {
   const systemStatus = useAppSelector(selectSystemStatus);
+  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
+  const token = useAppSelector((state) => state.auth.token);
+  const isLocalSession = useAppSelector((state) => state.auth.isLocalSession);
   const { showToast } = useToast();
   const previousStatus = useRef(systemStatus);
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     const wasCompletelyOffline = previousStatus.current === 'offline';
     const isCompletelyOffline = systemStatus === 'offline';
     previousStatus.current = systemStatus;
 
     if (isCompletelyOffline) return;
+
+    // Avoid firing sync before auth is ready or when there is no session to sync.
+    if (!token && !isLocalSession) return;
 
     let cancelled = false;
 
@@ -61,5 +69,5 @@ export function useOfflineSync(): void {
     return () => {
       cancelled = true;
     };
-  }, [systemStatus, showToast]);
+  }, [systemStatus, showToast, isInitialized, token, isLocalSession]);
 }

@@ -17,6 +17,7 @@ export const PLATFORM = {
   OVERVIEW: '/platform/overview',
   METRICS: '/platform/metrics',
   BUSINESSES: '/platform/businesses',
+  BUSINESS_STATS: '/platform/businesses/stats',
   BUSINESS_STATUS: (id: number) => `/platform/businesses/${id}/status`,
   USERS: '/platform/users',
   USER_STATUS: (id: number) => `/platform/users/${id}/status`,

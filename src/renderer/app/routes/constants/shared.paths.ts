@@ -12,4 +12,11 @@ export const ROUTES = {
   CUSTOMERS: { INDEX: '/customers' },
   EXPENSES: { INDEX: '/expenses', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
   SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', PROFILE: '/settings/profile', STAFF: '/settings/staff', ROLES: '/settings/roles', SUBSCRIPTION: '/settings/subscription' },
+  PLATFORM: {
+    INDEX: '/platform',
+    OVERVIEW: '/platform/overview',
+    BUSINESSES: '/platform/businesses',
+    USERS: '/platform/users',
+    TEAM: '/platform/team',
+  },
 } as const;

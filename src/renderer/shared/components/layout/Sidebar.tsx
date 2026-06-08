@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { version } from '../../../../../package.json';
@@ -32,7 +32,7 @@ interface NavGroup {
   subItems: SubItem[];
 }
 
-const allSubRoutes = [
+const baseSubRoutes = [
   ROUTES.DASHBOARD,
   ROUTES.SALES.NEW, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
@@ -41,7 +41,25 @@ const allSubRoutes = [
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
 ];
 
-const navGroups: NavGroup[] = [
+const platformSubRoutes = [
+  ROUTES.PLATFORM.OVERVIEW,
+  ROUTES.PLATFORM.BUSINESSES,
+  ROUTES.PLATFORM.USERS,
+  ROUTES.PLATFORM.TEAM,
+];
+
+const platformNavGroup: NavGroup = {
+  icon: Shield,
+  label: 'Platform',
+  subItems: [
+    { to: ROUTES.PLATFORM.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
+    { to: ROUTES.PLATFORM.BUSINESSES, label: 'Businesses', icon: Building2 },
+    { to: ROUTES.PLATFORM.USERS, label: 'All Users', icon: Users },
+    { to: ROUTES.PLATFORM.TEAM, label: 'Platform Team', icon: UserCog },
+  ],
+};
+
+const baseNavGroups: NavGroup[] = [
   {
     icon: LayoutDashboard,
     label: 'Dashboard',
@@ -94,7 +112,7 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-function getGroupIndexForPath(pathname: string): number | null {
+function getGroupIndexForPath(pathname: string, navGroups: NavGroup[], allSubRoutes: string[]): number | null {
   for (const route of allSubRoutes) {
     if (route === pathname || pathname.startsWith(route + '/') || pathname.startsWith(route + '?')) {
       for (let i = 0; i < navGroups.length; i++) {
@@ -109,7 +127,16 @@ function getGroupIndexForPath(pathname: string): number | null {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const currentGroupIndex = getGroupIndexForPath(location.pathname);
+  const user = useAppSelector((s) => s.auth.user);
+  const navGroups = useMemo(
+    () => (user?.is_platform_admin ? [...baseNavGroups, platformNavGroup] : baseNavGroups),
+    [user?.is_platform_admin],
+  );
+  const allSubRoutes = useMemo(
+    () => (user?.is_platform_admin ? [...baseSubRoutes, ...platformSubRoutes] : baseSubRoutes),
+    [user?.is_platform_admin],
+  );
+  const currentGroupIndex = getGroupIndexForPath(location.pathname, navGroups, allSubRoutes);
   const [openGroup, setOpenGroup] = useState<number | null>(currentGroupIndex);
 
   useEffect(() => {
@@ -118,10 +145,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   }, [currentGroupIndex]);
 
-  return <SidebarInner isOpen={isOpen} onClose={onClose} openGroup={openGroup} setOpenGroup={setOpenGroup} />;
+  return <SidebarInner isOpen={isOpen} onClose={onClose} openGroup={openGroup} setOpenGroup={setOpenGroup} navGroups={navGroups} />;
 }
 
-function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void }) {
+function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void; navGroups: NavGroup[] }) {
   const { logout, isLoggingOut } = useLogoutAction();
   const { state, dispatch } = useAppContext();
   const user = useAppSelector((s) => s.auth.user);

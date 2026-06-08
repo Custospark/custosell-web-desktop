@@ -26,6 +26,11 @@ import BusinessSettingsPage from '../../modules/settings/BusinessSettingsPage';
 import ProfileSettingsPage from '../../modules/settings/ProfileSettingsPage';
 import StaffSettingsPage from '../../modules/settings/StaffSettingsPage';
 import RoleSettingsPage from '../../modules/settings/RoleSettingsPage';
+import PlatformOverviewPage from '../../modules/platform/PlatformOverviewPage';
+import PlatformBusinessesPage from '../../modules/platform/PlatformBusinessesPage';
+import PlatformUsersPage from '../../modules/platform/PlatformUsersPage';
+import PlatformTeamPage from '../../modules/platform/PlatformTeamPage';
+import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
 import LandingPage from '../../modules/landing/LandingPage';
@@ -79,6 +84,13 @@ export function AppRoutes() {
             <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
             <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
             {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
+          </Route>
+          <Route element={<PlatformAdminRoute />}>
+            <Route path={ROUTES.PLATFORM.INDEX} element={<Navigate to={ROUTES.PLATFORM.OVERVIEW} replace />} />
+            <Route path={ROUTES.PLATFORM.OVERVIEW} element={<SuspenseWrapper><PlatformOverviewPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.BUSINESSES} element={<SuspenseWrapper><PlatformBusinessesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.USERS} element={<SuspenseWrapper><PlatformUsersPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.TEAM} element={<SuspenseWrapper><PlatformTeamPage /></SuspenseWrapper>} />
           </Route>
         </Route>
       </Route>

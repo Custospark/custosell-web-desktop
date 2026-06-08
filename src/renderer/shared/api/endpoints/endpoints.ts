@@ -13,3 +13,16 @@ export const SUBSCRIPTIONS = { BASE: '/subscriptions', UPGRADE: '/subscriptions/
 export const EXPENSE_CATEGORIES = '/expense-categories';
 export const EXPENSES = '/expenses';
 export const SYNC = { PUSH: '/sync/push', PULL: '/sync/pull', FULL: '/sync/full' };
+export const PLATFORM = {
+  OVERVIEW: '/platform/overview',
+  METRICS: '/platform/metrics',
+  BUSINESSES: '/platform/businesses',
+  BUSINESS_STATUS: (id: number) => `/platform/businesses/${id}/status`,
+  USERS: '/platform/users',
+  USER_STATUS: (id: number) => `/platform/users/${id}/status`,
+  TEAM: '/platform/team',
+  ROLES: '/platform/roles',
+  PERMISSIONS: '/platform/permissions',
+  ASSIGN_ROLE: (userId: number) => `/platform/users/${userId}/roles`,
+  REVOKE_ROLE: (userId: number, role: string) => `/platform/users/${userId}/roles/${role}`,
+};

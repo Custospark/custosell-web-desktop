@@ -16,6 +16,7 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectShowOfflineBanner } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
 import { getUserFirstName } from '../../utils/userDisplayName';
+import { canAccessModule, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -161,10 +162,19 @@ function getGroupIndexForPath(pathname: string, navGroups: NavGroup[], allSubRou
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
-  const navGroups = useMemo(
-    () => (user?.is_platform_admin ? [...baseNavGroups, platformNavGroup, guideSettingsNavGroup] : baseNavGroups),
-    [user?.is_platform_admin],
-  );
+  const navGroups = useMemo(() => {
+    const businessGroups = baseNavGroups.filter((group) => {
+      const moduleSlug = NAV_GROUP_MODULE[group.label];
+      if (!moduleSlug) return true;
+      return canAccessModule(user, moduleSlug);
+    });
+
+    if (user?.is_platform_admin) {
+      return [...businessGroups, platformNavGroup, guideSettingsNavGroup];
+    }
+
+    return businessGroups;
+  }, [user]);
   const allSubRoutes = useMemo(
     () => (user?.is_platform_admin ? [...baseSubRoutes, ...platformSubRoutes] : baseSubRoutes),
     [user?.is_platform_admin],

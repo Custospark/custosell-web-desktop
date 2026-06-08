@@ -8,7 +8,8 @@ import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffSto
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import RoleFormDrawer from './RoleFormDrawer';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { User, Mail, Phone, Key, ShieldCheck, ToggleLeft, Plus } from 'lucide-react';
+import { User, Mail, Phone, Key, ShieldCheck, ToggleLeft, Plus, LayoutGrid } from 'lucide-react';
+import { BUSINESS_MODULE_SLUGS, MODULE_LABELS, type BusinessModuleSlug } from '../../../shared/utils/moduleAccess';
 
 interface StaffFormDrawerProps {
   open: boolean;
@@ -24,9 +25,19 @@ interface FormState {
   password_confirmation: string;
   role_id: number | null;
   is_active: boolean;
+  modules: BusinessModuleSlug[];
 }
 
-const emptyForm: FormState = { name: '', email: '', phone: '', password: '', password_confirmation: '', role_id: 0, is_active: true };
+const emptyForm: FormState = {
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  password_confirmation: '',
+  role_id: 0,
+  is_active: true,
+  modules: ['sales'],
+};
 
 export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawerProps) {
   const isEditing = !!staff;
@@ -54,6 +65,9 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           password_confirmation: '',
           role_id: staff.role_id ?? null,
           is_active: staff.is_active,
+          modules: (staff.modules ?? []).filter((m): m is BusinessModuleSlug =>
+            (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
+          ),
         });
       } else {
         setForm(emptyForm);
@@ -79,6 +93,18 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const roleDisplayName = currentRole?.name ?? (form.role_id ? `Role #${form.role_id}` : 'No role assigned');
   const roleHelperText = accountRules?.roleChangeBlockedReason
     ?? (currentRoleMissingFromOptions ? 'This role is not available in the editable business role list, so it cannot be changed here.' : null);
+  const modulesLocked = Boolean(accountRules?.isBusinessOwner);
+  const displayModules = modulesLocked ? [...BUSINESS_MODULE_SLUGS] : form.modules;
+
+  const toggleModule = useCallback((module: BusinessModuleSlug) => {
+    if (modulesLocked) return;
+    setForm((prev) => ({
+      ...prev,
+      modules: prev.modules.includes(module)
+        ? prev.modules.filter((m) => m !== module)
+        : [...prev.modules, module],
+    }));
+  }, [modulesLocked]);
 
   const passwordsMatch = form.password === form.password_confirmation;
   const passwordValid = passwordRequired
@@ -104,6 +130,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         phone: form.phone.trim() || null,
         role_id: canChangeRole ? form.role_id || staff.role_id || null : staff.role_id ?? null,
         is_active: accountRules?.canDeactivate === false ? staff.is_active : form.is_active,
+        modules: modulesLocked ? undefined : form.modules,
       };
       if (form.password.trim()) {
         payload.password = form.password.trim();
@@ -121,6 +148,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         password: form.password.trim(),
         password_confirmation: form.password_confirmation.trim(),
         role_id: form.role_id ?? 0,
+        modules: form.modules,
       };
       createMutation.mutate(payload, { onSuccess: onClose });
     }
@@ -273,6 +301,43 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
                 <span className="text-xs text-gray-500">{accountRules.deactivationBlockedReason}</span>
               )}
             </label>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+          <LayoutGrid className="w-4 h-4 text-gray-500" />
+          <h3 className="text-sm font-semibold text-gray-800">Module access</h3>
+        </div>
+        <div className="p-4">
+          <p className="text-xs text-gray-500 mb-3">
+            Choose which parts of the business app this staff member can open. Account and Custosell Guide remain available to everyone.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {BUSINESS_MODULE_SLUGS.map((module) => {
+              const checked = displayModules.includes(module);
+              return (
+                <label
+                  key={module}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                    checked ? 'border-blue-200 bg-blue-50 text-blue-800' : 'border-gray-200 text-gray-700'
+                  } ${modulesLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:border-blue-200'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleModule(module)}
+                    disabled={modulesLocked}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {MODULE_LABELS[module]}
+                </label>
+              );
+            })}
+          </div>
+          {!modulesLocked && form.modules.length === 0 && (
+            <p className="text-xs text-amber-700 mt-3">No business modules selected — they will only see Account and Guide.</p>
           )}
         </div>
       </div>

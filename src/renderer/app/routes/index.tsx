@@ -5,6 +5,8 @@ import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { ErrorBoundary } from '../../shared/components/Feedback/ErrorBoundary';
 import { PublicRoute } from './PublicRoute';
 import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
+import { ModuleAccessMiddleware } from './middleware/ModuleAccessMiddleware';
+import { ModuleLandingRedirect } from './middleware/ModuleLandingRedirect';
 import { Layout } from '../../shared/components/layout/Layout';
 import NewSalePage from '../../modules/sales/NewSale';
 import SalesHistoryPage from '../../modules/sales/SalesHistoryPage';
@@ -69,40 +71,57 @@ export function AppRoutes() {
       </Route>
       <Route element={<AuthMiddlewareRoute />}>
         <Route element={<Layout />}>
-          <Route path={ROUTES.DASHBOARD} element={<SuspenseWrapper><DashboardPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.SALES.INDEX} element={<Navigate to={ROUTES.SALES.NEW} replace />} />
-          <Route path={ROUTES.SALES.NEW} element={<SuspenseWrapper><NewSalePage /></SuspenseWrapper>} />
-          <Route path={ROUTES.SALES.HISTORY} element={<SuspenseWrapper><SalesHistoryPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.SALES.REFUNDS} element={<SuspenseWrapper><RefundsPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.SALES.MY_SHIFT} element={<SuspenseWrapper><MyShiftPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
-          <Route path={ROUTES.INVENTORY.PRODUCTS} element={<SuspenseWrapper><ProductsPage /></SuspenseWrapper>} />
-          <Route path="/inventory/products/new" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
-          <Route path="/inventory/products/:id/edit" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
-          <Route path={ROUTES.INVENTORY.CATEGORIES} element={<SuspenseWrapper><CategoriesPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.INVENTORY.STOCK} element={<SuspenseWrapper><StockLedgerPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.LIST} replace />} />
-          <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
-          <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
-            <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
-            <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
-            <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+          <Route path="/app" element={<ModuleLandingRedirect />} />
+          <Route element={<ModuleAccessMiddleware module="dashboard" />}>
+            <Route path={ROUTES.DASHBOARD} element={<SuspenseWrapper><DashboardPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="sales" />}>
+            <Route path={ROUTES.SALES.INDEX} element={<Navigate to={ROUTES.SALES.NEW} replace />} />
+            <Route path={ROUTES.SALES.NEW} element={<SuspenseWrapper><NewSalePage /></SuspenseWrapper>} />
+            <Route path={ROUTES.SALES.HISTORY} element={<SuspenseWrapper><SalesHistoryPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.SALES.REFUNDS} element={<SuspenseWrapper><RefundsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.SALES.MY_SHIFT} element={<SuspenseWrapper><MyShiftPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="inventory" />}>
+            <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
+            <Route path={ROUTES.INVENTORY.PRODUCTS} element={<SuspenseWrapper><ProductsPage /></SuspenseWrapper>} />
+            <Route path="/inventory/products/new" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
+            <Route path="/inventory/products/:id/edit" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
+            <Route path={ROUTES.INVENTORY.CATEGORIES} element={<SuspenseWrapper><CategoriesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVENTORY.STOCK} element={<SuspenseWrapper><StockLedgerPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="customers" />}>
+            <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="expenses" />}>
+            <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.LIST} replace />} />
+            <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="account" />}>
+            <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
+              <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+              <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
+              <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+            </Route>
           </Route>
           <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
           <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
           <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
-          <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />
-          <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
-            <Route index element={<Navigate to={ROUTES.SETTINGS.BUSINESS} replace />} />
-            <Route path="business" element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
-            <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
-            <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
-            {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
+          <Route element={<ModuleAccessMiddleware module="guide" />}>
+            <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />
+            <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="settings" />}>
+            <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
+              <Route index element={<Navigate to={ROUTES.SETTINGS.BUSINESS} replace />} />
+              <Route path="business" element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
+              <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
+              <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
+              {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
+            </Route>
           </Route>
           <Route element={<PlatformAdminRoute />}>
             <Route path={ROUTES.PLATFORM.INDEX} element={<Navigate to={ROUTES.PLATFORM.OVERVIEW} replace />} />

@@ -10,6 +10,7 @@ import {
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -122,7 +123,7 @@ export function useLogin() {
       } else {
         showToast('success', 'Welcome back!');
       }
-      navigate(ROUTES.DASHBOARD);
+      navigate(getDefaultRoute(userData));
     },
     onError: (error) => {
       const axiosErr = error as AxiosError<ApiError>;
@@ -199,7 +200,7 @@ export function useRegisterBusiness() {
       } else {
         showToast('success', 'Business registered successfully');
       }
-      navigate(ROUTES.DASHBOARD);
+      navigate(getDefaultRoute(result.user));
     },
     onError: (error) => {
       const axiosErr = error as AxiosError<ApiError>;
@@ -231,7 +232,7 @@ export function useRegister() {
       const userData = extractAuthUser(data);
       dispatch(registerSuccess({ user: userData, token: data.token }));
       showToast('success', 'Account created successfully');
-      navigate(ROUTES.DASHBOARD);
+      navigate(getDefaultRoute(userData));
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Registration failed';

@@ -1,0 +1,133 @@
+import type { AuthUser } from '../../app/store/slices/authSlice';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
+
+export const BUSINESS_MODULE_SLUGS = [
+  'dashboard',
+  'sales',
+  'inventory',
+  'customers',
+  'expenses',
+  'settings',
+] as const;
+
+export type BusinessModuleSlug = (typeof BUSINESS_MODULE_SLUGS)[number];
+
+export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
+  dashboard: 'Dashboard',
+  sales: 'Sales',
+  inventory: 'Inventory',
+  customers: 'Customers',
+  expenses: 'Expenses',
+  settings: 'Settings',
+};
+
+export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
+  dashboard: ROUTES.DASHBOARD,
+  sales: ROUTES.SALES.NEW,
+  inventory: ROUTES.INVENTORY.PRODUCTS,
+  customers: ROUTES.CUSTOMERS.INDEX,
+  expenses: ROUTES.EXPENSES.LIST,
+  settings: ROUTES.SETTINGS.BUSINESS,
+  account: ROUTES.ACCOUNT.NOTIFICATIONS,
+  guide: ROUTES.GUIDE.TUTORIALS,
+};
+
+const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
+  'dashboard', 'sales', 'inventory', 'customers', 'expenses', 'settings',
+];
+
+const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
+  'sales', 'dashboard', 'inventory', 'customers', 'expenses', 'settings',
+];
+
+/** Nav group label → module slug for business-scoped sidebar groups. */
+export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | 'guide' | 'platform' | 'guide_settings'> = {
+  Dashboard: 'dashboard',
+  Sales: 'sales',
+  Inventory: 'inventory',
+  Customers: 'customers',
+  Expenses: 'expenses',
+  Settings: 'settings',
+  Account: 'account',
+  'Custosell Guide': 'guide',
+  Platform: 'platform',
+  'Guide Settings': 'guide_settings',
+};
+
+export function isBusinessOwner(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  if (user.is_business_owner === true) return true;
+  if (user.business && 'owner_id' in user.business && user.business.owner_id === user.id) return true;
+  return false;
+}
+
+function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
+  if (Array.isArray(user.modules)) {
+    return user.modules.filter((m): m is BusinessModuleSlug =>
+      (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
+    );
+  }
+  return [...BUSINESS_MODULE_SLUGS];
+}
+
+export function getAccessibleModules(user: AuthUser | null | undefined): string[] {
+  if (!user) return [];
+
+  const modules = new Set<string>(['account', 'guide']);
+
+  if (user.is_platform_admin) {
+    modules.add('platform');
+    modules.add('guide_settings');
+  }
+
+  if (isBusinessOwner(user)) {
+    BUSINESS_MODULE_SLUGS.forEach((m) => modules.add(m));
+  } else if (user.business_id) {
+    storedBusinessModules(user).forEach((m) => modules.add(m));
+  }
+
+  return [...modules];
+}
+
+export function canAccessModule(user: AuthUser | null | undefined, module: string): boolean {
+  return getAccessibleModules(user).includes(module);
+}
+
+export function getDefaultRoute(user: AuthUser | null | undefined): string {
+  if (!user) return ROUTES.LOGIN;
+
+  const accessible = new Set(getAccessibleModules(user));
+  const priority = isBusinessOwner(user) ? OWNER_LANDING_PRIORITY : STAFF_LANDING_PRIORITY;
+
+  for (const mod of priority) {
+    if (accessible.has(mod)) {
+      return MODULE_DEFAULT_ROUTES[mod];
+    }
+  }
+
+  if (accessible.has('account')) return MODULE_DEFAULT_ROUTES.account;
+  if (accessible.has('guide')) return MODULE_DEFAULT_ROUTES.guide;
+
+  return ROUTES.ACCOUNT.NOTIFICATIONS;
+}
+
+/** Map a pathname to the module slug guarding it (for layout-level checks). */
+export function resolveModuleForPath(pathname: string): string | null {
+  if (pathname.startsWith('/platform/guide')) return 'guide_settings';
+  if (pathname.startsWith('/platform')) return 'platform';
+  if (pathname.startsWith('/guide')) return 'guide';
+  if (pathname.startsWith('/account') || pathname.startsWith('/notifications')) return 'account';
+  if (pathname.startsWith('/settings')) return 'settings';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/sales')) return 'sales';
+  if (pathname.startsWith('/inventory')) return 'inventory';
+  if (pathname.startsWith('/customers')) return 'customers';
+  if (pathname.startsWith('/expenses')) return 'expenses';
+  return null;
+}
+
+export function canAccessPath(user: AuthUser | null | undefined, pathname: string): boolean {
+  const module = resolveModuleForPath(pathname);
+  if (!module) return true;
+  return canAccessModule(user, module);
+}

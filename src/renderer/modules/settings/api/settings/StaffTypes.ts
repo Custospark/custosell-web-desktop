@@ -6,6 +6,7 @@ export interface StaffUser {
   email: string;
   phone: string | null;
   is_active: boolean;
+  modules?: string[];
   role?: { id: number; name: string; slug?: string | null } | null;
   created_at: string;
   updated_at: string;
@@ -19,6 +20,7 @@ export interface CreateStaffData {
   password: string;
   password_confirmation: string;
   role_id: number;
+  modules?: string[];
 }
 
 export interface UpdateStaffData {
@@ -29,4 +31,5 @@ export interface UpdateStaffData {
   password_confirmation?: string;
   role_id?: number | null;
   is_active?: boolean;
+  modules?: string[];
 }

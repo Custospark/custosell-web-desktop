@@ -1,6 +1,7 @@
 import { PERMISSIONS } from '../../../modules/settings/api/settings/RoleTypes';
 import type { AuthUser, BusinessInfo } from '../slices/authSlice';
 import type { BusinessRegisterRequest } from '../../../shared/api/account/AccountTypes';
+import { BUSINESS_MODULE_SLUGS } from '../../../shared/utils/moduleAccess';
 
 export function buildOwnerPermissions(): Record<string, boolean> {
   return PERMISSIONS.reduce<Record<string, boolean>>((acc, perm) => {
@@ -41,6 +42,7 @@ export function buildOfflineBusinessInfo(
     receipt_footer: null,
     logo_path: null,
     status: 'active',
+    owner_id: localUserId,
   };
 }
 
@@ -68,6 +70,9 @@ export function buildOfflineAuthUser(
       slug: 'owner',
       permissions: buildOwnerPermissions(),
     },
+    is_business_owner: true,
+    modules: [...BUSINESS_MODULE_SLUGS],
+    accessible_modules: [...BUSINESS_MODULE_SLUGS, 'account', 'guide'],
   };
 }
 

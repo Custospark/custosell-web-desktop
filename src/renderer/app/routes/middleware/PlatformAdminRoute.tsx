@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { ROUTES } from '../constants/shared.paths';
+import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { useAppSelector } from '../../store/hooks/useApp';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 
@@ -16,7 +16,7 @@ export function PlatformAdminRoute() {
   }
 
   if (!user?.is_platform_admin) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={getDefaultRoute(user)} replace />;
   }
 
   return <Outlet />;

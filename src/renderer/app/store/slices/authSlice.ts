@@ -21,6 +21,7 @@ export interface BusinessInfo {
   receipt_footer: string | null;
   logo_path: string | null;
   status: string;
+  owner_id?: number | null;
 }
 export interface AuthUser {
   id: number;
@@ -38,6 +39,9 @@ export interface AuthUser {
   role?: { id: number; name: string; slug: string; permissions: Record<string, boolean> } | null;
   is_platform_admin?: boolean;
   platform_roles?: string[];
+  is_business_owner?: boolean;
+  modules?: string[];
+  accessible_modules?: string[];
   last_login_at?: string | null;
 }
 

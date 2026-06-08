@@ -1,14 +1,11 @@
-import { useRef, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useActiveShift, useClockIn, useClockOut, useShiftExpenses, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
+import { useActiveShift, useClockIn, useShiftExpenses, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
+import { useEndShiftAction } from './useEndShiftAction';
 import type { ShiftWithSyncMeta } from '../../app/store/offline/localShiftsStore';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
-import { isCompletelyOffline } from '../../app/store/offline/offlineQueryUtils';
-import { useLogoutAction } from '../../app/contexts/LogoutContext';
 import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
-import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
@@ -39,9 +36,6 @@ import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shif
 import { grossSaleAmount, netSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import { useToast } from '../../app/contexts/useToast';
-import { getUserFirstName } from '../../shared/utils/userDisplayName';
-
-type ShiftLocationState = { openEndShift?: boolean };
 
 const cardStyles = {
   blue: { border: 'border-blue-500', shadow: 'hover:shadow-blue-500/20', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700', glow: 'bg-blue-500/10', hoverBg: 'group-hover:bg-blue-200' },
@@ -86,23 +80,13 @@ export default function MyShiftPage() {
   const { data: shift, isLoading, isRefetching } = useActiveShift();
   const { data: allShifts } = useShifts();
   const clockIn = useClockIn();
-  const clockOut = useClockOut();
-  const { confirm } = useConfirm();
-  const location = useLocation();
-  const { logout } = useLogoutAction();
+  const { requestEndShift, isEnding } = useEndShiftAction();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [search, setSearch] = useState('');
   const { showToast } = useToast();
-
-  useEffect(() => {
-    if ((location.state as ShiftLocationState | null)?.openEndShift) {
-      queueMicrotask(() => setShowReceiptPreview(true));
-      window.history.replaceState(null, '');
-    }
-  }, [location.state]);
 
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
@@ -243,37 +227,8 @@ export default function MyShiftPage() {
     }
   };
 
-  const handleEndShift = async () => {
-    if (!shiftId) return;
-    const firstName = getUserFirstName(authUser?.name);
-    const confirmed = await confirm({
-      title: 'End Shift',
-      message: `${firstName}, end your shift with ${shiftSales?.length || 0} transaction(s), ${formatCurrency(netShiftTotal)} net sales, and ${formatCurrency(handoverAmount)} cash at handover?`,
-      confirmText: 'End Shift',
-      cancelText: 'Cancel',
-      variant: 'warning',
-    });
-    if (!confirmed) return;
-    try {
-      await clockOut.mutateAsync({
-        id: shiftId,
-        totals: {
-          total_sales: netShiftTotal,
-          cash: cashTotal,
-          mobile_money: mobileTotal,
-          card: cardTotal,
-        },
-      });
-
-      if (isCompletelyOffline()) {
-        void logout();
-        return;
-      }
-
-      showToast('success', 'Shift ended. You can log out when ready.');
-    } catch (e) {
-      console.error('Failed to end shift:', e);
-    }
+  const handleEndShift = () => {
+    void requestEndShift();
   };
 
   const closeReceiptModal = () => {
@@ -331,7 +286,7 @@ export default function MyShiftPage() {
           <Button variant="outline" onClick={() => setShowExpenseForm(true)}>
             <ReceiptText className="w-4 h-4 mr-1.5" />Record Expense
           </Button>
-          <Button variant="outline" onClick={handleEndShift} loading={clockOut.isPending}>
+          <Button variant="outline" onClick={handleEndShift} loading={isEnding}>
             <LogOut className="w-4 h-4 mr-1.5" />End Shift
           </Button>
         </div>

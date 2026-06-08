@@ -218,6 +218,20 @@ async function reconcileDuplicateStaffCreate(m: QueuedMutation, message: string)
   return true;
 }
 
+async function reconcileDuplicateShiftClose(m: QueuedMutation, status?: number): Promise<boolean> {
+  if (!isShiftCloseMutation(m)) return false;
+  if (status !== 404) return false;
+
+  await mutationQueue.markCompleted(m.id);
+  await localShiftsStore.markSyncedByMutationId(m.id);
+  const closedShiftId = extractShiftIdFromCloseUrl(m.url);
+  if (closedShiftId) {
+    store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
+    void persistAuthSnapshot().catch(() => undefined);
+  }
+  return true;
+}
+
 function extractBusiness(responseData: unknown): Business | null {
   if (!responseData || typeof responseData !== 'object') return null;
   const wrapped = responseData as { data?: Business };
@@ -265,6 +279,11 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     if (isShiftCloseMutation(m)) {
       await localShiftsStore.markSyncedByMutationId(m.id);
+      const closedShiftId = extractShiftIdFromCloseUrl(m.url);
+      if (closedShiftId) {
+        store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
+        void persistAuthSnapshot().catch(() => undefined);
+      }
     }
 
     if (isProductMutation(m)) {
@@ -365,6 +384,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     const message = validationMessage || err?.response?.data?.message || err?.message || 'Request failed';
 
     if (await reconcileDuplicateStaffCreate(m, message)) {
+      return true;
+    }
+
+    if (await reconcileDuplicateShiftClose(m, err?.response?.status)) {
       return true;
     }
 

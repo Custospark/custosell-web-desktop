@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useRoles, useDeleteRole } from '../api/settings/RoleQueries';
 import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
+import { rolePermissionKeys } from '../api/settings/RoleTypes';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../shared/components/tables/Table';
@@ -38,6 +39,7 @@ export default function RoleList() {
   };
 
   const handleDelete = async (r: RoleWithSyncMeta) => {
+    if (r.is_system) return;
     const confirmed = await confirm({
       title: 'Delete Role',
       message: `Are you sure you want to delete "${r.name}"? This cannot be undone.`,
@@ -78,6 +80,11 @@ export default function RoleList() {
             { key: 'name', header: 'Name', render: (item) => (
                 <div className="flex items-center gap-2">
                   <span>{item.name}</span>
+                  {item.is_system && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                      System
+                    </span>
+                  )}
                   {item._syncFailed ? (
                     <span
                       className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
@@ -99,16 +106,18 @@ export default function RoleList() {
                 return desc.length > 50 ? desc.slice(0, 50) + '...' : desc || <span className="text-gray-400">—</span>;
               },
             },
-            { key: 'permissions', header: 'Permissions', render: (item) => (
+            { key: 'permissions', header: 'Permissions', render: (item) => {
+                const keys = rolePermissionKeys(item.permissions);
+                return (
                 <div className="flex flex-wrap gap-1 max-w-xs">
-                  {item.permissions.slice(0, 3).map((p) => (
+                  {keys.slice(0, 3).map((p) => (
                     <span key={p} className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">{p}</span>
                   ))}
-                  {item.permissions.length > 3 && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">+{item.permissions.length - 3}</span>
+                  {keys.length > 3 && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">+{keys.length - 3}</span>
                   )}
                 </div>
-              ),
+              ); },
             },
             { key: 'is_default', header: 'Default', render: (item) => item.is_default
               ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"><Star className="w-3 h-3" />Default</span>
@@ -116,8 +125,12 @@ export default function RoleList() {
             },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                  {!item.is_system && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete"><Trash className="w-4 h-4 text-red-500" /></Button>
+                    </>
+                  )}
                 </div>
               ),
             },

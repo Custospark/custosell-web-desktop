@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
 import { store } from '../../app/store/store';
+import { updateShiftContext } from '../../app/store/slices/authSlice';
+import { persistAuthSnapshot } from '../../app/store/offline/persistAuthSnapshot';
 import { useToast } from '../../app/contexts/useToast';
 import { localSalesStore, toSaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 import { localRefundsStore, mergePendingRefunds } from '../../app/store/offline/localRefundsStore';
@@ -14,6 +16,7 @@ import {
 import {
   completeOfflineClockIn,
   completeOfflineClockOutInstant,
+  finalizeShiftClose,
   shouldUseLocalShiftActions,
 } from '../../app/store/offline/completeOfflineShift';
 import { isOptimisticSale } from '../../app/store/offline/offlineCacheReconcile';
@@ -29,6 +32,33 @@ import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
 
 export interface Shift extends ShiftRecord {
   user?: { data: { id: number; name: string } };
+}
+
+function extractShiftPayload(body: unknown): Shift | null {
+  if (!body || typeof body !== 'object') return null;
+  const wrapped = body as { data?: Shift };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) {
+    return wrapped.data;
+  }
+  const direct = body as Shift;
+  if ('id' in direct && 'clock_in' in direct) return direct;
+  return null;
+}
+
+function extractShiftListPayload(body: unknown): Shift[] {
+  if (!body || typeof body !== 'object') return [];
+  const wrapped = body as { data?: Shift[] };
+  if (Array.isArray(wrapped.data)) return wrapped.data.filter(Boolean);
+  if (Array.isArray(body)) return (body as Shift[]).filter(Boolean);
+  return [];
+}
+
+async function persistActiveShiftContext(shift: Shift): Promise<ShiftWithSyncMeta> {
+  store.dispatch(
+    updateShiftContext({ shift_id: shift.id, shift_clock_in: shift.clock_in }),
+  );
+  await persistAuthSnapshot().catch(() => undefined);
+  return shift as ShiftWithSyncMeta;
 }
 
 function mergeShiftSales(server: Sale[], shiftId: number): Promise<SaleWithSyncMeta[]> {
@@ -108,8 +138,8 @@ export function useActiveShift() {
       return readWithOfflineStrategy({
         readFromClient: readActiveShiftFromClient,
         fetchFromServer: async () => {
-          const response = await axiosInstance.get<{ data: Shift }>('/shifts/active');
-          const server = response.data?.data ?? null;
+          const response = await axiosInstance.get('/shifts/active');
+          const server = extractShiftPayload(response.data);
           if (server?.status === 'active') return server;
 
           const local = await localShiftsStore.getActivePending();
@@ -132,7 +162,7 @@ async function mergeShiftList(server: Shift[]): Promise<Shift[]> {
   const pendingCompleted = await localShiftsStore.getPendingCompleted();
   const serverIds = new Set(server.map((s) => s.id));
   const localOnly = pendingCompleted.filter((s) => !serverIds.has(s.id));
-  const filteredServer = server.filter((s) => {
+  const filteredServer = server.filter((s): s is Shift => Boolean(s)).filter((s) => {
     const meta = s as ShiftWithSyncMeta;
     if (meta._pendingSync && !pendingIds.has(s.id)) return false;
     return true;
@@ -152,8 +182,8 @@ export function useShifts() {
           return mergeShiftList(cached);
         },
         fetchFromServer: async () => {
-          const { data } = await axiosInstance.get<{ data: Shift[] }>('/shifts');
-          return mergeShiftList(data.data);
+          const { data } = await axiosInstance.get('/shifts');
+          return mergeShiftList(extractShiftListPayload(data));
         },
       });
     },
@@ -250,12 +280,16 @@ export function useClockIn() {
       }
 
       try {
-        const { data } = await axiosInstance.post<{ data: Shift }>(
+        const { data } = await axiosInstance.post(
           '/shifts',
           { clock_in: new Date().toISOString(), status: 'active' },
           { timeout: 4000, skipAuthRedirect: true },
         );
-        return data.data as ShiftWithSyncMeta;
+        const shift = extractShiftPayload(data);
+        if (!shift) {
+          throw new Error('Invalid shift response from server');
+        }
+        return persistActiveShiftContext(shift);
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (!axiosErr.response) {
@@ -265,6 +299,7 @@ export function useClockIn() {
       }
     },
     onSuccess: (shift) => {
+      if (!shift) return;
       qc.setQueryData(shiftKeys.active(), shift);
       if (shift._pendingSync) {
         showToast('success', 'Shift started locally — will sync when online');
@@ -293,7 +328,7 @@ export function useClockOut() {
       }
 
       try {
-        const { data } = await axiosInstance.put<{ data: Shift }>(
+        const { data } = await axiosInstance.put(
           `/shifts/${id}`,
           {
             clock_out: new Date().toISOString(),
@@ -305,7 +340,12 @@ export function useClockOut() {
           },
           { timeout: 4000 },
         );
-        return data.data as ShiftWithSyncMeta;
+        await finalizeShiftClose(id);
+        const shift = extractShiftPayload(data);
+        if (!shift) {
+          throw new Error('Invalid shift response from server');
+        }
+        return shift as ShiftWithSyncMeta;
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (!axiosErr.response) {
@@ -315,6 +355,7 @@ export function useClockOut() {
       }
     },
     onSuccess: (shift) => {
+      if (!shift) return;
       qc.setQueryData(shiftKeys.active(), null);
       qc.setQueryData<Shift[]>(shiftKeys.list(), (old) => [shift as Shift, ...(old ?? [])]);
       if (shift._pendingSync) {

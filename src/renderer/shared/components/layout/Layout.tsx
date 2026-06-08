@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useConfirm } from '../Feedback/ConfirmContext';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { Sidebar } from './Sidebar';
 import { OfflineBanner } from '../Errors/OfflineBanner';
 import { AuthPendingBanner } from '../Errors/AuthPendingBanner';
@@ -18,9 +18,9 @@ import { getUserFirstName } from '../../utils/userDisplayName';
 export function Layout() {
   const { state, dispatch } = useAppContext();  const user = useAppSelector((s) => s.auth.user);
   const collapsed = state.sidebarCollapsed;
-  const navigate = useNavigate();
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
+  const { requestEndShift, isEnding } = useEndShiftAction();
   const { systemStatus, latency, retryConnection } = useNetworkStatus();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,6 +50,11 @@ export function Layout() {
     if (!confirmed) return;
     setDropdownOpen(false);
     void logout();
+  };
+
+  const handleEndShift = async () => {
+    setDropdownOpen(false);
+    await requestEndShift();
   };
 
   return (
@@ -141,10 +146,10 @@ export function Layout() {
                 {user?.shift_clock_in && (
                   <>
                     <hr className="border-gray-100" />
-                    <button type="button" onClick={() => { setDropdownOpen(false); navigate(ROUTES.SALES.MY_SHIFT, { state: { openEndShift: true } }); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <button type="button" onClick={handleEndShift} disabled={isEnding}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50">
                       <LogOut className="w-4 h-4" />
-                      End Shift
+                      {isEnding ? 'Ending shift…' : 'End Shift'}
                     </button>
                   </>
                 )}

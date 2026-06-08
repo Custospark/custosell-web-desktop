@@ -5,6 +5,7 @@ import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './lo
 import { shouldCompleteMutationLocally } from './offlineQueryUtils';
 import { persistAuthSnapshot } from './persistAuthSnapshot';
 import { isLocalSessionToken } from './secureStorage';
+import { getOfflineDb } from './offlineDb';
 
 export function shouldCompleteShiftLocally(): boolean {
   return shouldCompleteMutationLocally();
@@ -16,6 +17,51 @@ export function shouldUseLocalShiftActions(): boolean {
   const { auth } = store.getState();
   if (auth.isLocalSession || auth.pendingAuthSync) return true;
   return isLocalSessionToken(auth.token);
+}
+
+/** Drop queued shift open/close mutations once the shift is closed on the server. */
+export async function discardPendingShiftMutations(shiftId: number): Promise<void> {
+  const shiftIds = new Set<number>([shiftId]);
+
+  const pendingRecords = await localShiftsStore.getPending();
+  for (const record of pendingRecords) {
+    if (record.shiftId === shiftId || record.serverId === shiftId) {
+      shiftIds.add(record.shiftId);
+      if (record.serverId) shiftIds.add(record.serverId);
+    }
+  }
+
+  const pendingMutations = await mutationQueue.getPending();
+  for (const mutation of pendingMutations) {
+    const closeMatch = mutation.method === 'PUT'
+      && [...shiftIds].some((id) => mutation.url === `/shifts/${id}`);
+    if (closeMatch) {
+      await mutationQueue.removeById(mutation.id);
+    }
+  }
+
+  const db = await getOfflineDb();
+  const allRecords = await db.getAll('localShifts');
+  for (const record of allRecords) {
+    if (
+      record.shiftId === shiftId
+      || record.serverId === shiftId
+      || shiftIds.has(record.shiftId)
+    ) {
+      try {
+        await mutationQueue.removeById(record.mutationId);
+      } catch {
+        // Mutation may already be removed.
+      }
+      await db.delete('localShifts', record.localId);
+    }
+  }
+}
+
+export async function finalizeShiftClose(shiftId: number): Promise<void> {
+  store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
+  await persistAuthSnapshot().catch(() => undefined);
+  await discardPendingShiftMutations(shiftId);
 }
 
 function buildLocalShift(): ShiftRecord {

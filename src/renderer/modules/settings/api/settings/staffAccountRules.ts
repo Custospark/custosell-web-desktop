@@ -6,7 +6,6 @@ export const SELF_DEACTIVATE_STAFF_MESSAGE = 'You cannot deactivate your own acc
 export const OWNER_DEACTIVATE_STAFF_MESSAGE = 'The business owner account cannot be deactivated.';
 export const SELF_ROLE_CHANGE_STAFF_MESSAGE = 'You cannot change your own role.';
 export const OWNER_ROLE_CHANGE_STAFF_MESSAGE = 'The business owner account role cannot be changed.';
-export const SYSTEM_ROLE_CHANGE_STAFF_MESSAGE = 'Admin and system account roles cannot be changed here.';
 
 type StaffAccountRole = {
   id?: number;
@@ -44,11 +43,9 @@ export function isAdminRole(role: StaffAccountRole): boolean {
   return getRoleSlug(role) === 'admin' || role?.name?.trim().toLowerCase() === 'admin';
 }
 
-export function isSystemRole(role: StaffAccountRole): boolean {
-  const slug = getRoleSlug(role);
-  const name = role?.name?.trim().toLowerCase() || null;
-  return ['admin', 'owner', 'business-owner', 'business_owner', 'system', 'super-admin', 'super_admin']
-    .includes(slug ?? name ?? '');
+export function isSystemTemplateRole(role: StaffAccountRole & { is_system?: boolean; business_id?: number | null }): boolean {
+  if (role?.is_system === true || role?.business_id === null) return true;
+  return false;
 }
 
 export function getBusinessOwnerId(
@@ -86,7 +83,6 @@ export function getStaffAccountRules(
   const isCurrentUser = isCurrentStaffUser(staff.id, context.currentUserId);
   const isBusinessOwner = isBusinessOwnerStaff(staff.id, context.businessOwnerId);
   const isAdmin = isAdminRole(staff.role);
-  const isSystem = isSystemRole(staff.role);
   const labels = [
     isCurrentUser ? 'You' : null,
     isBusinessOwner ? 'Business Owner' : null,
@@ -107,9 +103,7 @@ export function getStaffAccountRules(
     ? SELF_ROLE_CHANGE_STAFF_MESSAGE
     : isBusinessOwner
       ? OWNER_ROLE_CHANGE_STAFF_MESSAGE
-      : isSystem
-        ? SYSTEM_ROLE_CHANGE_STAFF_MESSAGE
-        : null;
+      : null;
 
   return {
     isCurrentUser,

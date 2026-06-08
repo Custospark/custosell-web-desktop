@@ -70,10 +70,14 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           ),
         });
       } else {
-        setForm(emptyForm);
+        const defaultRole = roles?.find((r) => r.is_default) ?? roles?.find((r) => r.slug === 'staff');
+        setForm({
+          ...emptyForm,
+          role_id: defaultRole?.id ?? 0,
+        });
       }
     });
-  }, [staff, open]);
+  }, [staff, open, roles]);
 
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
   const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
@@ -236,7 +240,9 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
                 >
                   <option value={0}>Select a role</option>
                   {roles?.map((r) => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
+                    <option key={r.id} value={r.id}>
+                      {r.name}{r.is_system ? ' (System)' : ''}
+                    </option>
                   ))}
                 </select>
               </div>

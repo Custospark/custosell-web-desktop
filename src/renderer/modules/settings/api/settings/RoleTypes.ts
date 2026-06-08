@@ -1,11 +1,12 @@
 export interface Role {
   id: number;
-  business_id: number;
+  business_id: number | null;
   name: string;
   slug: string;
   description: string | null;
-  permissions: string[];
+  permissions: string[] | Record<string, boolean>;
   is_default: boolean;
+  is_system?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -42,3 +43,10 @@ export const PERMISSIONS = [
   'staff.update',
   'staff.delete',
 ] as const;
+
+export function rolePermissionKeys(permissions: Role['permissions']): string[] {
+  if (Array.isArray(permissions)) return permissions;
+  return Object.entries(permissions)
+    .filter(([, enabled]) => enabled)
+    .map(([key]) => key);
+}

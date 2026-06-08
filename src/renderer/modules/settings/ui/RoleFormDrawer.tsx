@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCreateRole, useUpdateRole } from '../api/settings/RoleQueries';
 import type { CreateRoleData } from '../api/settings/RoleTypes';
 import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
-import { PERMISSIONS } from '../api/settings/RoleTypes';
+import { PERMISSIONS, rolePermissionKeys } from '../api/settings/RoleTypes';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Shield, Hash, AlignLeft, ToggleLeft } from 'lucide-react';
 
@@ -41,7 +41,7 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
           name: role.name,
           slug: role.slug,
           description: role.description ?? '',
-          permissions: role.permissions,
+          permissions: rolePermissionKeys(role.permissions),
           is_default: role.is_default,
         });
       } else {

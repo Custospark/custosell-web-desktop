@@ -50,15 +50,10 @@ export function useOfflineSync(): void {
         showToast('error', 'Sync paused — please sign in again.');
       }
 
-      if (!result.skipped && totalSynced > result.authSynced) {
-        await invalidateAfterTransactionsTier();
-      }
-
-      if (
-        !result.skipped
-        && (wasCompletelyOffline || totalSynced > 0 || result.failed > 0)
-      ) {
+      if (!result.skipped && (wasCompletelyOffline || totalSynced > 0 || result.failed > 0)) {
         await invalidateAfterFullSync();
+      } else if (!result.skipped && totalSynced > result.authSynced) {
+        await invalidateAfterTransactionsTier();
       }
 
       if (!result.skipped && result.failed > 0) {

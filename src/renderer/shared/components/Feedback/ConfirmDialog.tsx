@@ -57,7 +57,7 @@ export function ConfirmDialog({ open, options, onConfirm, onCancel }: ConfirmDia
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900">{options.title}</h3>
-                <p className="mt-1 text-sm text-gray-500">{options.message}</p>
+                <p className="mt-1 text-sm text-gray-500 whitespace-pre-line">{options.message}</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">

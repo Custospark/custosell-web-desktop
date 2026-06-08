@@ -85,7 +85,7 @@ const navGroups: NavGroup[] = [
     label: 'Settings',
     subItems: [
       { to: ROUTES.SETTINGS.BUSINESS, label: 'Business', icon: Building2 },
-      { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
+      // { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
       { to: ROUTES.SETTINGS.PROFILE, label: 'My Profile', icon: UserCog },

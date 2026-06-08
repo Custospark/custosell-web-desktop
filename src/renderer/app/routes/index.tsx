@@ -26,7 +26,7 @@ import BusinessSettingsPage from '../../modules/settings/BusinessSettingsPage';
 import ProfileSettingsPage from '../../modules/settings/ProfileSettingsPage';
 import StaffSettingsPage from '../../modules/settings/StaffSettingsPage';
 import RoleSettingsPage from '../../modules/settings/RoleSettingsPage';
-import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
+// import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
 import LandingPage from '../../modules/landing/LandingPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
@@ -78,7 +78,7 @@ export function AppRoutes() {
             <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
             <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
             <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
-            <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
+            {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
           </Route>
         </Route>
       </Route>

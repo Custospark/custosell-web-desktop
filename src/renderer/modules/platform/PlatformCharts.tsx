@@ -62,6 +62,7 @@ export function PlatformActivityTrendChart({ data }: { data: PlatformMetricDay[]
   const chartData = data.map((d) => ({
     ...d,
     gross_sales_num: parseFloat(d.gross_sales) || 0,
+    gross_sales_millions: (parseFloat(d.gross_sales) || 0) / 1_000_000,
     label: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', ''),
   }));
 
@@ -73,17 +74,41 @@ export function PlatformActivityTrendChart({ data }: { data: PlatformMetricDay[]
       </div>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+          <ComposedChart data={chartData} margin={{ top: 5, right: 52, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 11 }} allowDecimals={false} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
-            <Tooltip />
+            <YAxis yAxisId="counts" tick={{ fontSize: 11 }} allowDecimals={false} />
+            <YAxis yAxisId="transactions" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} width={48} />
+            <YAxis
+              yAxisId="gross"
+              orientation="right"
+              tick={{ fontSize: 10 }}
+              width={48}
+              tickFormatter={(v: number) => `${v.toFixed(1)}M`}
+            />
+            <Tooltip
+              formatter={(value: number, name: string, item) => {
+                if (name === 'Gross sales') {
+                  const gross = (item?.payload as { gross_sales_num?: number })?.gross_sales_num ?? value * 1_000_000;
+                  return [formatCurrency(gross, 'UGX'), name];
+                }
+                return [value, name];
+              }}
+            />
             <Legend />
-            <Bar yAxisId="left" dataKey="signups" name="Signups" fill={TREND_COLORS.signups} radius={[4, 4, 0, 0]} />
-            <Bar yAxisId="left" dataKey="active_businesses" name="Businesses selling" fill={TREND_COLORS.activeBusinesses} radius={[4, 4, 0, 0]} />
-            <Line yAxisId="right" type="monotone" dataKey="transactions" name="Transactions" stroke={TREND_COLORS.transactions} strokeWidth={2} dot={{ r: 3 }} />
-            <Line yAxisId="right" type="monotone" dataKey="gross_sales_num" name="Gross sales" stroke={TREND_COLORS.grossSales} strokeWidth={2} strokeDasharray="4 4" dot={false} />
+            <Bar yAxisId="counts" dataKey="signups" name="Signups" fill={TREND_COLORS.signups} radius={[4, 4, 0, 0]} />
+            <Bar yAxisId="counts" dataKey="active_businesses" name="Businesses selling" fill={TREND_COLORS.activeBusinesses} radius={[4, 4, 0, 0]} />
+            <Line yAxisId="transactions" type="monotone" dataKey="transactions" name="Transactions" stroke={TREND_COLORS.transactions} strokeWidth={2} dot={{ r: 3 }} />
+            <Line
+              yAxisId="gross"
+              type="monotone"
+              dataKey="gross_sales_millions"
+              name="Gross sales"
+              stroke={TREND_COLORS.grossSales}
+              strokeWidth={2}
+              strokeDasharray="4 4"
+              dot={false}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

@@ -7,16 +7,29 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  bodyClassName?: string;
+  panelClassName?: string;
+  overflowVisible?: boolean;
 }
 
 const sizeClasses = {
   sm: 'max-w-sm',
   md: 'max-w-lg',
   lg: 'max-w-2xl',
+  xl: 'max-w-3xl',
 };
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+  bodyClassName,
+  panelClassName,
+  overflowVisible = false,
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -42,7 +55,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`relative w-full ${sizeClasses[size]} bg-white rounded-xl shadow-xl`}
+            className={`relative w-full ${sizeClasses[size]} bg-white rounded-xl shadow-xl ${overflowVisible ? 'overflow-visible' : ''} ${panelClassName ?? ''}`}
           >
             {title && (
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -57,7 +70,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
                 <X className="w-5 h-5" />
               </button>
             )}
-            <div className="px-6 py-4">{children}</div>
+            <div className={bodyClassName ?? `px-6 py-4${overflowVisible ? ' overflow-visible' : ''}`}>{children}</div>
           </motion.div>
         </div>
       )}

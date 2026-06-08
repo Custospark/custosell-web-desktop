@@ -9,6 +9,7 @@ import { ToastProvider } from './app/contexts/ToastContext';
 import { ConfirmProvider } from './shared/components/Feedback/ConfirmProvider';
 import NetworkOfflineOverlay from './shared/components/Errors/NetworkOfflineOverlay';
 import { AppRoutes } from './app/routes';
+import { AuthBootstrap } from './app/components/AuthBootstrap';
 import './App.css';
 
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
@@ -34,7 +35,9 @@ function App() {
             <ToastProvider>
               <NetworkOfflineOverlay />
               <ConfirmProvider>
-                <AppRoutes />
+                <AuthBootstrap>
+                  <AppRoutes />
+                </AuthBootstrap>
               </ConfirmProvider>
             </ToastProvider>
           </AppProvider>

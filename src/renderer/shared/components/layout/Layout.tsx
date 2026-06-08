@@ -8,6 +8,7 @@ import { useConfirm } from '../Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
 import { OfflineBanner } from '../Errors/OfflineBanner';
+import { AuthPendingBanner } from '../Errors/AuthPendingBanner';
 import { Menu, X, User, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff } from 'lucide-react';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 
@@ -50,6 +51,7 @@ export function Layout() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50/30">
+      <AuthPendingBanner />
       <OfflineBanner />
 
       <div className="flex flex-1 min-h-0">

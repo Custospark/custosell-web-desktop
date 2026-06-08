@@ -1,21 +1,15 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useLogin } from '../../shared/api/account/AccountQueries';
-import { axiosInstance } from '../../app/api/axiosConfig';
+import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
-import { useToast } from '../../app/contexts/ToastContext';
 import { AuthLayout } from './AuthLayout';
 import { countryCodes } from '../../shared/utils/countryCodes';
 import { Store, Mail, Lock, User, Phone, ChevronDown } from 'lucide-react';
-import { useRef, useEffect } from 'react';
 import type { CountryCode } from '../../shared/utils/countryCodes';
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
-  const { showToast } = useToast();
-  const loginMutation = useLogin();
-  const [loading, setLoading] = useState(false);
+  const registerMutation = useRegisterBusiness();
   const [form, setForm] = useState({ owner_name: '', name: '', email: '', phone: '', password: '', password_confirmation: '' });
   const [countryCode, setCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -41,44 +35,22 @@ export default function RegisterPage() {
 
   const passwordsMatch = form.password === form.password_confirmation;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
 
-    try {
-      await axiosInstance.post('/businesses/register', {
-        owner_name: form.owner_name,
-        name: form.name,
-        email: form.email,
-        phone: fullPhone,
-        password: form.password,
-        password_confirmation: form.password_confirmation,
-      });
-
-      loginMutation.mutate(
-        { email: form.email, password: form.password },
-        {
-          onSuccess: () => {
-            showToast('success', 'Business registered successfully');
-            navigate(ROUTES.DASHBOARD);
-          },
-          onError: () => {
-            showToast('success', 'Account created. Please sign in.');
-            navigate(ROUTES.LOGIN);
-          },
-        },
-      );
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.response?.data?.errors?.owner_name?.[0] || 'Registration failed';
-      showToast('error', msg);
-      setLoading(false);
-    }
+    registerMutation.mutate({
+      owner_name: form.owner_name,
+      name: form.name,
+      email: form.email,
+      phone: fullPhone,
+      password: form.password,
+      password_confirmation: form.password_confirmation,
+    });
   };
 
   const inputCls = "w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
-  const isSubmitting = loading || loginMutation.isPending;
 
   return (
     <AuthLayout
@@ -150,7 +122,7 @@ export default function RegisterPage() {
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
-        <Button type="submit" className="w-full py-3.5" loading={isSubmitting} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
+        <Button type="submit" className="w-full py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
           Register Business
         </Button>
         <p className="text-center text-sm text-gray-500 pt-1">

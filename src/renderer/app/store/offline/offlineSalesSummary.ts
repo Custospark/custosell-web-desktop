@@ -123,14 +123,16 @@ export async function applyDashboardPendingOverlay(
     const todayRefunds = (merged.today_refunds ?? 0) + pendingTodayRefunds;
     const todayExpenses = (merged.today_expenses ?? 0) + pendingTodayExpenses;
     const todayGross = merged.today_gross_sales ?? merged.today_revenue;
-    const todayNetSales = todayGross - todayRefunds;
+    const todayNetAfterRefunds = todayGross - todayRefunds;
+    const todayNetSales = todayNetAfterRefunds - todayExpenses;
 
     merged = {
       ...merged,
       today_refunds: todayRefunds,
       today_expenses: todayExpenses,
+      today_net_after_refunds: todayNetAfterRefunds,
       today_net_sales: todayNetSales,
-      today_net_after_expenses: todayNetSales - todayExpenses,
+      today_net_after_expenses: todayNetSales,
     };
   }
 
@@ -144,6 +146,7 @@ export async function applyDashboardPendingOverlay(
         ...day,
         refunds,
         expenses,
+        net_sales: day.revenue - refunds - expenses,
         net_revenue: day.revenue - refunds - expenses,
       };
     }),
@@ -165,6 +168,7 @@ function mergeTrendDay(
   return {
     ...day,
     revenue,
+    net_sales: revenue - refunds - expenses,
     net_revenue: revenue - refunds - expenses,
     transactions: day.transactions + offline.transactions,
   };
@@ -213,7 +217,10 @@ export function mergeDashboardWithOffline(
     today_revenue: summary.today_revenue + offline.today_revenue,
     today_gross_sales: (summary.today_gross_sales ?? summary.today_revenue) + offline.today_revenue,
     today_refunds: summary.today_refunds ?? 0,
-    today_net_sales: (summary.today_gross_sales ?? summary.today_revenue) + offline.today_revenue - (summary.today_refunds ?? 0),
+    today_net_after_refunds:
+      (summary.today_gross_sales ?? summary.today_revenue) + offline.today_revenue - (summary.today_refunds ?? 0),
+    today_net_sales:
+      (summary.today_gross_sales ?? summary.today_revenue) + offline.today_revenue - (summary.today_refunds ?? 0) - summary.today_expenses,
     today_transactions: summary.today_transactions + offline.today_transactions,
     today_products_sold: summary.today_products_sold + offline.today_products_sold,
     today_net_after_expenses:

@@ -1,0 +1,166 @@
+import type { AuthUser } from '../slices/authSlice';
+import { getOfflineDb } from './offlineDb';
+
+const AUTH_SESSION_KEY = 'auth_session';
+const CRYPTO_KEY_ID = 'master';
+const LEGACY_TOKEN_KEY = 'token';
+const LEGACY_USER_KEY = 'auth_user';
+
+export interface StoredAuthSession {
+  token: string;
+  user: AuthUser;
+  isLocalSession: boolean;
+  pendingAuthSync: boolean;
+}
+
+export function isLocalSessionToken(token: string | null | undefined): boolean {
+  return typeof token === 'string' && token.startsWith('local_');
+}
+
+function toBase64(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function fromBase64(value: string): Uint8Array {
+  return Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
+}
+
+async function getOrCreateMasterKey(): Promise<CryptoKey> {
+  const db = await getOfflineDb();
+  const existing = await db.get('secureKeys', CRYPTO_KEY_ID) as { id: string; key: CryptoKey } | undefined;
+  if (existing?.key) return existing.key;
+
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  await db.put('secureKeys', { id: CRYPTO_KEY_ID, key });
+  return key;
+}
+
+async function encryptString(plaintext: string): Promise<string> {
+  const key = await getOrCreateMasterKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: iv as BufferSource },
+    key,
+    new TextEncoder().encode(plaintext),
+  );
+  return `${toBase64(iv)}.${toBase64(new Uint8Array(encrypted))}`;
+}
+
+async function decryptString(ciphertext: string): Promise<string | null> {
+  try {
+    const [ivPart, dataPart] = ciphertext.split('.');
+    if (!ivPart || !dataPart) return null;
+    const key = await getOrCreateMasterKey();
+    const iv = fromBase64(ivPart);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv as BufferSource },
+      key,
+      fromBase64(dataPart) as BufferSource,
+    );
+    return new TextDecoder().decode(decrypted);
+  } catch {
+    return null;
+  }
+}
+
+async function readElectronSecure(key: string): Promise<string | null> {
+  const bridge = (window as Window & { secureStore?: { get: (k: string) => Promise<string | null> } }).secureStore;
+  if (!bridge?.get) return null;
+  try {
+    return await bridge.get(key);
+  } catch {
+    return null;
+  }
+}
+
+async function writeElectronSecure(key: string, value: string): Promise<boolean> {
+  const bridge = (window as Window & { secureStore?: { set: (k: string, v: string) => Promise<void> } }).secureStore;
+  if (!bridge?.set) return false;
+  try {
+    await bridge.set(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function deleteElectronSecure(key: string): Promise<void> {
+  const bridge = (window as Window & { secureStore?: { delete: (k: string) => Promise<void> } }).secureStore;
+  if (!bridge?.delete) return;
+  try {
+    await bridge.delete(key);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function saveAuthSession(session: StoredAuthSession): Promise<void> {
+  const payload = JSON.stringify(session);
+  const encrypted = await encryptString(payload);
+  const db = await getOfflineDb();
+  await db.put('secureSecrets', { key: AUTH_SESSION_KEY, value: encrypted, updatedAt: new Date().toISOString() });
+  await writeElectronSecure(AUTH_SESSION_KEY, encrypted);
+
+  try {
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_USER_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function loadAuthSession(): Promise<StoredAuthSession | null> {
+  const db = await getOfflineDb();
+  const fromElectron = await readElectronSecure(AUTH_SESSION_KEY);
+  const stored = fromElectron
+    ? { value: fromElectron }
+    : await db.get('secureSecrets', AUTH_SESSION_KEY) as { value?: string } | undefined;
+
+  if (stored?.value) {
+    const decrypted = await decryptString(stored.value);
+    if (decrypted) {
+      try {
+        return JSON.parse(decrypted) as StoredAuthSession;
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
+  return loadLegacyAuthSession();
+}
+
+function loadLegacyAuthSession(): StoredAuthSession | null {
+  try {
+    const token = localStorage.getItem(LEGACY_TOKEN_KEY);
+    const raw = localStorage.getItem(LEGACY_USER_KEY);
+    if (!token || !raw) return null;
+    const user = JSON.parse(raw) as AuthUser;
+    return {
+      token,
+      user,
+      isLocalSession: isLocalSessionToken(token),
+      pendingAuthSync: isLocalSessionToken(token),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function clearAuthSession(): Promise<void> {
+  const db = await getOfflineDb();
+  await db.delete('secureSecrets', AUTH_SESSION_KEY);
+  await deleteElectronSecure(AUTH_SESSION_KEY);
+  try {
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_USER_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function migrateLegacyAuthStorage(): Promise<void> {
+  const legacy = loadLegacyAuthSession();
+  if (!legacy) return;
+  await saveAuthSession(legacy);
+}

@@ -3,6 +3,7 @@ import { updateShiftContext } from '../slices/authSlice';
 import { mutationQueue } from './mutationQueue';
 import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './localShiftsStore';
 import { shouldCompleteMutationLocally } from './offlineQueryUtils';
+import { persistAuthSnapshot } from './persistAuthSnapshot';
 
 export function shouldCompleteShiftLocally(): boolean {
   return shouldCompleteMutationLocally();
@@ -52,6 +53,7 @@ export function completeOfflineClockInInstant(): ShiftWithSyncMeta {
   store.dispatch(
     updateShiftContext({ shift_id: shift.id, shift_clock_in: shift.clock_in }),
   );
+  void persistAuthSnapshot().catch(() => undefined);
 
   void persistOfflineClockInInBackground(shift).catch((err) => {
     console.error('[OfflineShift] Clock-in background persist failed:', err);
@@ -107,6 +109,7 @@ export function completeOfflineClockOutInstant(
   };
 
   store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
+  void persistAuthSnapshot().catch(() => undefined);
 
   void persistOfflineClockOutInBackground(shiftId, completed, totals).catch((err) => {
     console.error('[OfflineShift] Clock-out background persist failed:', err);

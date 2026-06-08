@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { version } from '../../../../../package.json';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Receipt, Settings,
   LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
-  UserCog, Shield, CreditCard, Building2, ListOrdered, Clock,
+  UserCog, Shield, Building2, ListOrdered, Clock,
 } from 'lucide-react';
 import { useLogout } from '../../../shared/api/account/AccountQueries';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -153,7 +154,12 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup }: SidebarProps
     >
       <div className={`border-b border-gray-200 flex items-center gap-2.5 ${collapsed ? 'justify-center py-4' : 'px-6 py-4'}`}>
         <LogoImage size="sm" />
-        {!collapsed && <span className="text-lg font-bold text-blue-600">Custosell</span>}
+        {!collapsed && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-bold text-blue-600">Custosell</span>
+            <span className="text-[11px] font-semibold text-black ml-1">Version {version}</span>
+          </div>
+        )}
       </div>
 
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">

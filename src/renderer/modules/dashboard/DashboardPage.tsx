@@ -20,7 +20,7 @@ const cardStyles = {
 };
 
 const cards = [
-  { label: 'Net Today', key: 'today_net_after_expenses' as const, format: true, icon: DollarSign, color: 'blue' as const, badge: 'Today' },
+  { label: 'Net Sales Today', key: 'today_net_sales' as const, format: true, icon: DollarSign, color: 'blue' as const, badge: 'Today' },
   { label: "Today's Sales", key: 'today_transactions' as const, format: false, icon: ShoppingCart, color: 'green' as const, badge: 'Sales' },
   { label: 'Products Sold', key: 'today_products_sold' as const, format: false, icon: Package, color: 'purple' as const, badge: 'Sold' },
   { label: "Today's Expenses", key: 'today_expenses' as const, format: true, icon: ReceiptText, color: 'amber' as const, badge: 'Expenses' },
@@ -56,7 +56,7 @@ export default function DashboardPage() {
           const s = cardStyles[card.color];
           const val = summary?.[card.key];
           const value = card.format ? formatCurrency(val ?? 0) : String(val ?? 0);
-          const showNetBreakdown = card.key === 'today_net_after_expenses' && summary
+          const showNetBreakdown = card.key === 'today_net_sales' && summary
             && ((summary.today_refunds ?? 0) > 0 || (summary.today_expenses ?? 0) > 0);
           const secondary = showNetBreakdown && summary ? (
             <>

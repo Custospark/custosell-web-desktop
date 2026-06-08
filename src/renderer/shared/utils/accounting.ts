@@ -1,21 +1,28 @@
 /**
  * Canonical net-sales formula used across Custosell.
  *
+ * net_sales = gross − refunds − expenses
+ * net_after_refunds = gross − refunds (per receipt / shift sales headline)
+ *
  * Scope determines which rows are included:
  * - Dashboard / daily trend: business + calendar date (sale_date, expense_date)
  * - My Shift: shift_id (all sales & shift-linked expenses for that shift)
  *
- * Shift headline net sales = gross − refunds only.
  * Shift expenses reduce cash handover, not mobile/card totals.
- * Dashboard net today = gross − refunds − expenses for the day.
  */
 
 export function netSalesAfterRefunds(gross: number, refunds: number): number {
   return Math.max(0, gross - refunds);
 }
 
-export function netSalesForDay(gross: number, refunds: number, expenses: number): number {
+/** Canonical period/day net sales = gross − refunds − expenses */
+export function netSales(gross: number, refunds: number, expenses: number): number {
   return Math.max(0, gross - refunds - expenses);
+}
+
+/** @alias netSales */
+export function netSalesForDay(gross: number, refunds: number, expenses: number): number {
+  return netSales(gross, refunds, expenses);
 }
 
 export function totalDeductions(refunds: number, expenses: number): number {

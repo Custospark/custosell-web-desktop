@@ -1,4 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { StoredAuthSession } from '../offline/secureStorage';
+import { isLocalSessionToken } from '../offline/secureStorage';
 
 export interface BusinessInfo {
   id: number;
@@ -43,48 +45,29 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
+  isLocalSession: boolean;
+  pendingAuthSync: boolean;
   error: string | null;
 }
 
-const STORAGE_KEY_TOKEN = 'token';
-const STORAGE_KEY_USER = 'auth_user';
-
-function loadFromStorage(): { token: string | null; user: AuthUser | null } {
-  try {
-    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
-    const raw = localStorage.getItem(STORAGE_KEY_USER);
-    const user = raw ? JSON.parse(raw) as AuthUser : null;
-    return { token, user };
-  } catch {
-    return { token: null, user: null };
-  }
-}
-
-function saveToStorage(token: string, user: AuthUser): void {
-  try {
-    localStorage.setItem(STORAGE_KEY_TOKEN, token);
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-  } catch { /* storage full or unavailable */ }
-}
-
-function clearStorage(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY_TOKEN);
-    localStorage.removeItem(STORAGE_KEY_USER);
-  } catch { /* ignore */ }
-}
-
-const { token, user } = loadFromStorage();
-
 const initialState: AuthState = {
-  user,
-  token,
-  businessId: user?.business_id ?? null,
-  isAuthenticated: !!token,
+  user: null,
+  token: null,
+  businessId: null,
+  isAuthenticated: false,
   isLoading: false,
   isInitialized: false,
+  isLocalSession: false,
+  pendingAuthSync: false,
   error: null,
 };
+
+function normalizeAuthUser(user: AuthUser): AuthUser {
+  if (user.business && 'data' in user.business) {
+    user.business = (user.business as { data: BusinessInfo }).data;
+  }
+  return user;
+}
 
 const authSlice = createSlice({
   name: 'auth',
@@ -94,17 +77,17 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string }>) {
-      const user = action.payload.user;
-      if (user.business && 'data' in user.business) user.business = (user.business as any).data;
+    loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
+      const user = normalizeAuthUser({ ...action.payload.user });
       state.user = user;
       state.token = action.payload.token;
-      state.businessId = action.payload.user.business_id;
+      state.businessId = user.business_id;
       state.isAuthenticated = true;
       state.isLoading = false;
       state.isInitialized = true;
+      state.isLocalSession = action.payload.isLocalSession ?? isLocalSessionToken(action.payload.token);
+      state.pendingAuthSync = action.payload.pendingAuthSync ?? state.isLocalSession;
       state.error = null;
-      saveToStorage(action.payload.token, action.payload.user);
     },
     loginFailure(state, action: PayloadAction<string>) {
       state.isLoading = false;
@@ -114,17 +97,17 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    registerSuccess(state, action: PayloadAction<{ user: AuthUser; token: string }>) {
-      const user = action.payload.user;
-      if (user.business && 'data' in user.business) user.business = (user.business as any).data;
+    registerSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
+      const user = normalizeAuthUser({ ...action.payload.user });
       state.user = user;
       state.token = action.payload.token;
-      state.businessId = action.payload.user.business_id;
+      state.businessId = user.business_id;
       state.isAuthenticated = true;
       state.isLoading = false;
       state.isInitialized = true;
+      state.isLocalSession = action.payload.isLocalSession ?? isLocalSessionToken(action.payload.token);
+      state.pendingAuthSync = action.payload.pendingAuthSync ?? state.isLocalSession;
       state.error = null;
-      saveToStorage(action.payload.token, action.payload.user);
     },
     registerFailure(state, action: PayloadAction<string>) {
       state.isLoading = false;
@@ -137,12 +120,24 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.isInitialized = true;
+      state.isLocalSession = false;
+      state.pendingAuthSync = false;
       state.error = null;
-      clearStorage();
+    },
+    hydrateAuth(state, action: PayloadAction<StoredAuthSession>) {
+      const user = normalizeAuthUser({ ...action.payload.user });
+      state.user = user;
+      state.token = action.payload.token;
+      state.businessId = user.business_id;
+      state.isAuthenticated = true;
+      state.isInitialized = true;
+      state.isLocalSession = action.payload.isLocalSession;
+      state.pendingAuthSync = action.payload.pendingAuthSync;
+      state.isLoading = false;
+      state.error = null;
     },
     setUser(state, action: PayloadAction<AuthUser>) {
-      const user = action.payload;
-      if (user.business && 'data' in user.business) user.business = (user.business as any).data;
+      const user = normalizeAuthUser({ ...action.payload });
       state.user = user;
       state.businessId = user.business_id;
       state.isAuthenticated = true;
@@ -155,13 +150,11 @@ const authSlice = createSlice({
       if (!state.user) return;
       state.user.shift_id = action.payload.shift_id;
       state.user.shift_clock_in = action.payload.shift_clock_in;
-      if (state.token) saveToStorage(state.token, state.user);
     },
     setBusiness(state, action: PayloadAction<BusinessInfo>) {
       if (state.user) {
         state.user.business = action.payload;
         state.user.business_name = action.payload.name;
-        saveToStorage(state.token!, state.user);
       }
     },
     setInitialized(state) {
@@ -176,11 +169,11 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, setUser, setBusiness, setInitialized, clearError, updateShiftContext,
+  logout, hydrateAuth, setUser, setBusiness, setInitialized, clearError, updateShiftContext,
 } = authSlice.actions;
 
 export default authSlice.reducer;
 
-export function buildAuthStateFromStorage() {
-  return loadFromStorage();
+export function buildAuthStateFromStorage(): { token: string | null; user: AuthUser | null } {
+  return { token: null, user: null };
 }

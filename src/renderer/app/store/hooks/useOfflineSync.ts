@@ -46,16 +46,28 @@ export function useOfflineSync(): void {
       const result = await syncPendingDataIfOnline();
       if (cancelled) return;
 
-      const totalSynced = result.synced + result.stockSynced;
+      const totalSynced = result.synced + result.stockSynced + result.authSynced;
 
-      if (totalSynced > 0) {
-        showToast('success', `Synced ${totalSynced} pending transaction(s).`);
+      if (result.authSynced > 0) {
+        showToast('success', 'Account synced successfully.');
+      }
+      if (result.authFailed > 0) {
+        showToast('error', 'Account sync failed. Check your connection or use a different email.');
+      }
+      if (totalSynced > result.authSynced) {
+        showToast('success', `Synced ${totalSynced - result.authSynced} pending transaction(s).`);
       }
       if (result.failed > 0) {
         showToast('error', `${result.failed} transaction(s) failed to sync.`);
       }
 
-      if (!result.skipped || wasCompletelyOffline || totalSynced > 0 || result.failed > 0) {
+      if (
+        !result.skipped
+        || wasCompletelyOffline
+        || totalSynced > 0
+        || result.failed > 0
+        || result.authFailed > 0
+      ) {
         await refreshAfterSync();
       }
     })();

@@ -50,7 +50,7 @@ export default function StaffList() {
 
   const handleDelete = async (s: StaffWithSyncMeta) => {
     const rules = getStaffAccountRules(
-      { ...s, role: s.role ?? rolesById.get(s.role_id) ?? null },
+      { ...s, role: s.role ?? (s.role_id != null ? rolesById.get(s.role_id) : null) ?? null },
       { currentUserId: authUser?.id ?? null, businessOwnerId },
     );
     if (!rules.canDelete) {
@@ -99,7 +99,7 @@ export default function StaffList() {
                 <div className="flex items-center gap-2">
                   <span>{item.name}</span>
                   {getStaffAccountRules(
-                    { ...item, role: item.role ?? rolesById.get(item.role_id) ?? null },
+                    { ...item, role: item.role ?? (item.role_id != null ? rolesById.get(item.role_id) : null) ?? null },
                     { currentUserId: authUser?.id ?? null, businessOwnerId },
                   ).labels.map((label) => (
                     <span
@@ -136,7 +136,7 @@ export default function StaffList() {
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
                   {(() => {
                     const rules = getStaffAccountRules(
-                      { ...item, role: item.role ?? rolesById.get(item.role_id) ?? null },
+                      { ...item, role: item.role ?? (item.role_id != null ? rolesById.get(item.role_id) : null) ?? null },
                       { currentUserId: authUser?.id ?? null, businessOwnerId },
                     );
                     return (

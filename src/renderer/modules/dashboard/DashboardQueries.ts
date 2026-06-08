@@ -17,6 +17,7 @@ const emptySummary = (): DashboardSummary => ({
   today_revenue: 0,
   today_gross_sales: 0,
   today_refunds: 0,
+  today_net_after_refunds: 0,
   today_net_sales: 0,
   today_transactions: 0,
   today_products_sold: 0,
@@ -58,20 +59,43 @@ export function useDashboardSummary() {
   });
 }
 
+function filenameFromDisposition(header: string | undefined, fallback: string): string {
+  if (!header) return fallback;
+  const match = header.match(/filename="?([^";\n]+)"?/i);
+  return match?.[1] ?? fallback;
+}
+
 export function useReportDownload() {
   const { showToast } = useToast();
-  return async (endpoint: string, params: URLSearchParams, filename: string) => {
+  return async (endpoint: string, params: URLSearchParams, fallbackFilename: string) => {
     if (isCompletelyOffline()) {
       showToast('error', 'Connect to the internet to download reports');
       return;
     }
     try {
       showToast('success', 'Downloading report...');
-      const { data, headers } = await axiosInstance.get(endpoint, {
+      const { data, headers, status } = await axiosInstance.get(endpoint, {
         params,
         responseType: 'blob',
+        validateStatus: (s) => s < 500,
       });
-      const contentType = (headers as Record<string, string>)['content-type'] || 'application/octet-stream';
+
+      const responseHeaders = headers as Record<string, string>;
+      const contentType = responseHeaders['content-type'] || 'application/octet-stream';
+
+      if (status >= 400 || contentType.includes('application/json')) {
+        const text = await (data as Blob).text();
+        try {
+          const json = JSON.parse(text) as { message?: string };
+          showToast('error', json.message || 'Failed to download report');
+        } catch {
+          showToast('error', 'Failed to download report');
+        }
+        return;
+      }
+
+      const disposition = responseHeaders['content-disposition'];
+      const filename = filenameFromDisposition(disposition, fallbackFilename);
       const blob = new Blob([data], { type: contentType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

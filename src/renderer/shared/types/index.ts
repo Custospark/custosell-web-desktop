@@ -17,3 +17,6 @@ export interface PaginatedResponse<T> { data: T[]; links: { first: string; last:
 export interface LoginCredentials { email: string; password: string; }
 export interface RegisterData { name: string; email: string; password: string; password_confirmation: string; phone?: string; }
 export interface AuthResponse { user: ApiResponse<User>; token: string; }
+
+declare const __APP_VERSION__: string;
+export { __APP_VERSION__ }

@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../api/axiosConfig';
 import { store } from '../store';
 import { setBusiness, updateShiftContext } from '../slices/authSlice';
+import { persistAuthSnapshot } from './persistAuthSnapshot';
 import { mutationQueue } from './mutationQueue';
 import { stockLedger } from './stockLedger';
 import { localSalesStore } from './localSalesStore';
@@ -16,6 +17,7 @@ import { localStaffStore } from './localStaffStore';
 import { localBusinessSettingsStore } from './localBusinessSettingsStore';
 import { buildExpenseFormData } from './completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
+import { isAuthMutation } from './syncAuthEngine';
 import type { CreateSalePayload, Sale } from '../../../modules/sales/api/salesTypes';
 import type { Expense, ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
 import type { Business } from '../../../modules/settings/api/settings/BusinessTypes';
@@ -525,6 +527,7 @@ async function processShiftOpens(
               shift_clock_in: serverShift.clock_in,
             }),
           );
+          void persistAuthSnapshot().catch(() => undefined);
         }
       }
 
@@ -568,6 +571,7 @@ export async function syncAllMutations(): Promise<{ synced: number; failed: numb
   const shiftCloses = pending.filter(isShiftCloseMutation);
   const otherMutations = pending.filter(
     (m) =>
+      !isAuthMutation(m) &&
       !isShiftOpenMutation(m) &&
       !isCategoryCreateMutation(m) &&
       !isExpenseCategoryCreateMutation(m) &&

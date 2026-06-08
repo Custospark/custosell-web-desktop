@@ -1,4 +1,5 @@
-import { app, BrowserWindow, Menu, ipcMain } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, safeStorage } from 'electron';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -8,6 +9,24 @@ const __dirname = path.dirname(__filename);
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
+
+function getSecureStorePath(): string {
+  return path.join(app.getPath('userData'), 'secure-store.json');
+}
+
+function readSecureStoreFile(): Record<string, string> {
+  const filePath = getSecureStorePath();
+  if (!fs.existsSync(filePath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+function writeSecureStoreFile(data: Record<string, string>): void {
+  fs.writeFileSync(getSecureStorePath(), JSON.stringify(data), 'utf8');
+}
 
 function getProdIndexPath(): string {
   return path.join(app.getAppPath(), 'dist', 'web', 'index.html');
@@ -32,6 +51,9 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      preload: isDev
+        ? path.join(__dirname, '..', 'preload', 'preload.js')
+        : path.join(app.getAppPath(), 'preload.js'),
       webSecurity: !isDev,
       devTools: isDev,
     },
@@ -104,6 +126,33 @@ ipcMain.on('close-devtools', () => {
 ipcMain.handle('is-devtools-open', () => {
   if (!isDev || !mainWindow) return false;
   return mainWindow.webContents.isDevToolsOpened();
+});
+
+ipcMain.handle('secure-store:set', (_event, key: string, value: string) => {
+  if (!safeStorage.isEncryptionAvailable()) return false;
+  const encrypted = safeStorage.encryptString(value).toString('base64');
+  const store = readSecureStoreFile();
+  store[key] = encrypted;
+  writeSecureStoreFile(store);
+  return true;
+});
+
+ipcMain.handle('secure-store:get', (_event, key: string) => {
+  if (!safeStorage.isEncryptionAvailable()) return null;
+  const store = readSecureStoreFile();
+  const encrypted = store[key];
+  if (!encrypted) return null;
+  try {
+    return safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle('secure-store:delete', (_event, key: string) => {
+  const store = readSecureStoreFile();
+  delete store[key];
+  writeSecureStoreFile(store);
 });
 
 app.whenReady().then(() => {

@@ -33,7 +33,7 @@ export function SalesTrendChart({ data }: { data: SalesTrendDay[] }) {
       ...d,
       gross_revenue: d.revenue,
       deductions,
-      net_revenue: d.net_revenue ?? d.revenue - deductions,
+      net_revenue: d.net_sales ?? d.net_revenue ?? d.revenue - deductions,
       label: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', ''),
     };
   });

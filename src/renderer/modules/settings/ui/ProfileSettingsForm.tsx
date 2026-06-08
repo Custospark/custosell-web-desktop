@@ -54,7 +54,7 @@ export default function ProfileSettingsForm() {
     },
     onSuccess: (data) => {
       const userData = 'data' in data && data.data ? data.data : data;
-      dispatch(setUser(userData));
+      dispatch(setUser(userData as import('../../../app/store/slices/authSlice').AuthUser));
       showToast('success', 'Profile updated successfully');
     },
     onError: (e) => {

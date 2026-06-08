@@ -3,6 +3,10 @@ export interface SalesTrendDay {
   revenue: number;
   refunds?: number;
   expenses?: number;
+  net_after_refunds?: number;
+  /** gross − refunds − expenses */
+  net_sales?: number;
+  /** @deprecated use net_sales */
   net_revenue?: number;
   transactions: number;
 }
@@ -29,10 +33,13 @@ export interface DashboardSummary {
   today_revenue: number;
   today_gross_sales: number;
   today_refunds: number;
+  today_net_after_refunds: number;
+  /** gross − refunds − expenses */
   today_net_sales: number;
   today_transactions: number;
   today_products_sold: number;
   today_expenses: number;
+  /** @deprecated alias of today_net_sales */
   today_net_after_expenses: number;
   active_products: number;
   total_customers: number;

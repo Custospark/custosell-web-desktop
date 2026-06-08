@@ -6,6 +6,7 @@ import type { RootState } from '../store/store';
 import { logout } from '../store/slices/authSlice';
 import { API_BASE_URL, API_TIMEOUT } from './apiConfig';
 import { clearServiceWorkerApiCache } from '../sw/registerServiceWorker';
+import { isLocalSessionToken } from '../store/offline/secureStorage';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -22,8 +23,12 @@ function normalizeBearerToken(raw: string | null | undefined): string | null {
 
 function resolveBearerToken(state: RootState): string | null {
   const fromRedux = normalizeBearerToken(state.auth.token);
-  if (fromRedux) return fromRedux;
-  return normalizeBearerToken(localStorage.getItem('token'));
+  if (fromRedux && !isLocalSessionToken(fromRedux)) return fromRedux;
+
+  const legacy = normalizeBearerToken(localStorage.getItem('token'));
+  if (legacy && !isLocalSessionToken(legacy)) return legacy;
+
+  return null;
 }
 
 axiosInstance.interceptors.request.use(
@@ -82,11 +87,12 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const state = store.getState();
-    const hasAuthToken = Boolean(state.auth.token || localStorage.getItem('token'));
+    const token = state.auth.token || localStorage.getItem('token');
+    const hasAuthToken = Boolean(token && !isLocalSessionToken(token));
     const url = String(error.config?.url ?? '');
-    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/businesses/register');
 
-    const skipAuthRedirect = Boolean(error.config?.skipAuthRedirect);
+    const skipAuthRedirect = Boolean(error.config?.skipAuthRedirect) || state.auth.isLocalSession;
 
     if (
       error.response?.status === 401 &&

@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import type { Sale } from './api/salesTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
@@ -20,6 +20,8 @@ import { Button } from '../../shared/components/buttons/Button';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
 const RELOAD_SUCCESS_MS = 10_000;
+
+type ReloadFeedback = 'idle' | 'updated' | 'upToDate';
 
 function inventorySnapshot(products: Product[] | undefined): string {
   if (!products?.length) return '';
@@ -46,12 +48,12 @@ function ProductSearchEmptyState({
   searchQuery,
   onReload,
   isReloading,
-  inventoryUpdated,
+  reloadFeedback,
 }: {
   searchQuery: string;
   onReload: () => void;
   isReloading: boolean;
-  inventoryUpdated: boolean;
+  reloadFeedback: ReloadFeedback;
 }) {
   return (
     <div className="p-4">
@@ -63,7 +65,7 @@ function ProductSearchEmptyState({
         </p>
       </div>
 
-      {inventoryUpdated ? (
+      {reloadFeedback === 'updated' ? (
         <Button
           variant="primary"
           size="sm"
@@ -72,6 +74,16 @@ function ProductSearchEmptyState({
         >
           <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden />
           Stock updated — search again
+        </Button>
+      ) : reloadFeedback === 'upToDate' ? (
+        <Button
+          variant="primary"
+          size="sm"
+          className="w-full gap-2 bg-green-600 hover:bg-green-600 active:bg-green-600 focus:ring-green-500 cursor-default"
+          disabled
+        >
+          <CircleCheck className="w-4 h-4 shrink-0" aria-hidden />
+          Products up to date — adjust your search
         </Button>
       ) : (
         <Button
@@ -374,15 +386,24 @@ export default function NewSale() {
   const [heldModalOpen, setHeldModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
   const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number } | null>(null);
-  const [reloadInventoryUpdated, setReloadInventoryUpdated] = useState(false);
-  const reloadSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [reloadFeedback, setReloadFeedback] = useState<ReloadFeedback>('idle');
+  const reloadFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearReloadSuccess = useCallback(() => {
-    if (reloadSuccessTimerRef.current) {
-      clearTimeout(reloadSuccessTimerRef.current);
-      reloadSuccessTimerRef.current = null;
+  const clearReloadFeedback = useCallback(() => {
+    if (reloadFeedbackTimerRef.current) {
+      clearTimeout(reloadFeedbackTimerRef.current);
+      reloadFeedbackTimerRef.current = null;
     }
-    setReloadInventoryUpdated(false);
+    setReloadFeedback('idle');
+  }, []);
+
+  const showReloadFeedback = useCallback((feedback: Exclude<ReloadFeedback, 'idle'>) => {
+    setReloadFeedback(feedback);
+    if (reloadFeedbackTimerRef.current) clearTimeout(reloadFeedbackTimerRef.current);
+    reloadFeedbackTimerRef.current = setTimeout(() => {
+      setReloadFeedback('idle');
+      reloadFeedbackTimerRef.current = null;
+    }, RELOAD_SUCCESS_MS);
   }, []);
 
   const handleReloadProducts = useCallback(async () => {
@@ -391,15 +412,8 @@ export default function NewSale() {
     if (result.isError) return;
 
     const snapshotAfter = inventorySnapshot(result.data);
-    if (snapshotBefore === snapshotAfter) return;
-
-    setReloadInventoryUpdated(true);
-    if (reloadSuccessTimerRef.current) clearTimeout(reloadSuccessTimerRef.current);
-    reloadSuccessTimerRef.current = setTimeout(() => {
-      setReloadInventoryUpdated(false);
-      reloadSuccessTimerRef.current = null;
-    }, RELOAD_SUCCESS_MS);
-  }, [products, refetchProducts]);
+    showReloadFeedback(snapshotBefore === snapshotAfter ? 'upToDate' : 'updated');
+  }, [products, refetchProducts, showReloadFeedback]);
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
 
@@ -440,12 +454,12 @@ export default function NewSale() {
   }, []);
 
   useEffect(() => () => {
-    if (reloadSuccessTimerRef.current) clearTimeout(reloadSuccessTimerRef.current);
+    if (reloadFeedbackTimerRef.current) clearTimeout(reloadFeedbackTimerRef.current);
   }, []);
 
   useEffect(() => {
-    clearReloadSuccess();
-  }, [search, clearReloadSuccess]);
+    clearReloadFeedback();
+  }, [search, clearReloadFeedback]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -563,7 +577,7 @@ export default function NewSale() {
                         <ProductSearchEmptyState
                           searchQuery={search.trim()}
                           isReloading={isProductsFetching}
-                          inventoryUpdated={reloadInventoryUpdated}
+                          reloadFeedback={reloadFeedback}
                           onReload={handleReloadProducts}
                         />
                       )}

@@ -4,6 +4,7 @@ import { useLogin } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
+import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
@@ -22,8 +23,8 @@ export default function LoginPage() {
     <AuthLayout
       title="Sign In"
       subtitle="Welcome back to Custosell"
-      heroImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
-      heroDescription="The faster way to run your business — sales, inventory, customers, and expenses, all in one place. No more juggling spreadsheets and paper receipts."
+      heroImage={AUTH_HERO_IMAGES.login}
+      heroDescription="The faster way to run your business — sales, inventory, customers, and expenses, all in one place."
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="relative">
@@ -48,7 +49,7 @@ export default function LoginPage() {
         <p className="text-center text-sm text-gray-500 pt-2">
           Don't have an account?{' '}
           <Link to={ROUTES.REGISTER} className="text-blue-600 hover:underline font-medium">
-            Register your business
+            Start for free
           </Link>
         </p>
       </form>

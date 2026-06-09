@@ -14,7 +14,7 @@ const stats = [
   { value: '99.9%', label: 'Uptime' },
   { value: '24/7', label: 'Offline Mode' },
   { value: '28', label: 'Business Types' },
-  { value: 'Free', label: '14-Day Trial' },
+  { value: 'Free', label: 'To Get Started' },
 ];
 
 const benefits = [
@@ -45,7 +45,7 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1">
-              Point of Sale System
+              Point of Sale (POS) System
             </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
               Sell More.{' '}
@@ -61,7 +61,7 @@ export default function LandingPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
               <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 text-base font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow cursor-pointer">
                 <UserPlus className="w-5 h-5 mr-2" />
-                Start Free Trial Today
+                Start for Free Today
               </button>
               <button type="button" onClick={() => handleAction('login')} className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 text-base font-medium rounded-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
                 <LogIn className="w-5 h-5 mr-2" />
@@ -71,7 +71,7 @@ export default function LandingPage() {
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex items-center gap-2 justify-center lg:justify-start text-sm text-gray-500">
               <Shield className="w-4 h-4 text-blue-500" />
-              <span className="text-gray-500">No credit card required · Free 14-day trial · Offline mode included</span>
+              <span className="text-gray-500">No credit card required · Free to use · Offline mode included</span>
             </motion.div>
           </div>
 
@@ -198,11 +198,11 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-blue-50/50 border-t border-b border-blue-100" />
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto px-4 text-center space-y-6 relative">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Start Growing Your Business Today</h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">Join thousands of businesses already using Custosell. Free trial, no credit card required.</p>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">Join thousands of businesses already using Custosell. Free to start, no credit card required.</p>
           <div className="flex items-center justify-center gap-3">
             <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center px-8 py-3.5 text-base font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow cursor-pointer">
               <UserPlus className="w-5 h-5 mr-2" />
-              Start Free Trial Today
+              Start for Free Today
             </button>
             <button type="button" onClick={() => handleAction('login')} className="inline-flex items-center justify-center px-8 py-3.5 text-base font-medium rounded-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
               <LogIn className="w-5 h-5 mr-2" />

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
-import { GUIDE } from '../../../shared/api/endpoints/endpoints';
+import { GUIDE } from '../../../shared/api/endpoints/guideEndpoints';
 import type {
   GuideFaqDto,
   GuideFeedbackCategory,

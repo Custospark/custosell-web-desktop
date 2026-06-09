@@ -4,9 +4,9 @@ import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
+import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { Store, Mail, Lock, User, Phone, ChevronDown } from 'lucide-react';
-import { buildFullName } from '../../shared/utils/userDisplayName';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -49,7 +49,10 @@ export default function RegisterPage() {
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
 
     registerMutation.mutate({
-      owner_name: buildFullName(form.owner_first_name, form.owner_last_name),
+      owner_name: [form.owner_first_name, form.owner_last_name]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(' '),
       name: form.name,
       email: form.email,
       phone: fullPhone,
@@ -62,10 +65,10 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create Account"
-      subtitle="Register your business to get started"
-      heroImage="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80"
-      heroDescription="Stop juggling spreadsheets, paper receipts, and separate systems. Start selling faster, tracking smarter, and growing with confidence."
+      title="Set Up Your Business"
+      subtitle="Free to use. No credit card needed. Works online and offline."
+      heroImage={AUTH_HERO_IMAGES.register}
+      heroDescription="Sales, inventory, and shifts in one place — online or offline."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -149,7 +152,7 @@ export default function RegisterPage() {
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
         <Button type="submit" className="w-full py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
-          Register Business
+          Start for Free
         </Button>
         <p className="text-center text-sm text-gray-500 pt-1">
           Already have an account?{' '}

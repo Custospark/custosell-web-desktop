@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
-import { PLATFORM } from '../../../shared/api/endpoints/endpoints';
+import { PLATFORM } from '../../../shared/api/endpoints/platformEndpoints';
 import type {
   GuideFaqAdminDto,
   GuideFaqPayload,

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useForgotPassword } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
-import { AuthLayout, AUTH_HERO_IMAGES } from './AuthLayout';
+import { AuthLayout } from './AuthLayout';
+import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { useForgotPasswordCooldown } from './useForgotPasswordCooldown';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 

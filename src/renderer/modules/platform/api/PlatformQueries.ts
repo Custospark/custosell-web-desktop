@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
-import { PLATFORM } from '../../../shared/api/endpoints/endpoints';
+import { PLATFORM } from '../../../shared/api/endpoints/platformEndpoints';
 import { useToast } from '../../../app/contexts/ToastContext';
 import type { NotificationChannel } from '../../notifications/api/NotificationTypes';
 import type {

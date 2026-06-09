@@ -1,11 +1,12 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { useProducts } from '../inventory/api/products/ProductQueries';
+import type { Product } from '../inventory/api/products/ProductTypes';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import type { Sale } from './api/salesTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2 } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
@@ -18,6 +19,15 @@ import { cn } from '../../shared/utils/cn';
 import { Button } from '../../shared/components/buttons/Button';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
+const RELOAD_SUCCESS_MS = 10_000;
+
+function inventorySnapshot(products: Product[] | undefined): string {
+  if (!products?.length) return '';
+  return [...products]
+    .sort((a, b) => a.id - b.id)
+    .map((p) => `${p.id}:${p.stock_quantity}:${p.is_active ? 1 : 0}`)
+    .join('|');
+}
 
 const PRODUCT_SEARCH_SUGGESTIONS = [
   {
@@ -36,10 +46,12 @@ function ProductSearchEmptyState({
   searchQuery,
   onReload,
   isReloading,
+  inventoryUpdated,
 }: {
   searchQuery: string;
   onReload: () => void;
   isReloading: boolean;
+  inventoryUpdated: boolean;
 }) {
   return (
     <div className="p-4">
@@ -51,17 +63,29 @@ function ProductSearchEmptyState({
         </p>
       </div>
 
-      <Button
-        variant="primary"
-        size="sm"
-        className="w-full"
-        disabled={isReloading}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => void onReload()}
-      >
-        <RefreshCw className={cn('w-4 h-4', isReloading && 'animate-spin')} aria-hidden />
-        {isReloading ? 'Reloading…' : 'Reload products'}
-      </Button>
+      {inventoryUpdated ? (
+        <Button
+          variant="primary"
+          size="sm"
+          className="w-full gap-2 bg-green-600 hover:bg-green-600 active:bg-green-600 focus:ring-green-500 cursor-default"
+          disabled
+        >
+          <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden />
+          Stock updated — search again
+        </Button>
+      ) : (
+        <Button
+          variant="primary"
+          size="sm"
+          className="w-full gap-2"
+          disabled={isReloading}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => void onReload()}
+        >
+          <RefreshCw className={cn('w-4 h-4 shrink-0', isReloading && 'animate-spin')} aria-hidden />
+          {isReloading ? 'Reloading…' : 'Reload products'}
+        </Button>
+      )}
 
       <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mt-4 mb-2 px-0.5">Suggestions</p>
       <ul className="space-y-1">
@@ -350,6 +374,32 @@ export default function NewSale() {
   const [heldModalOpen, setHeldModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
   const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number } | null>(null);
+  const [reloadInventoryUpdated, setReloadInventoryUpdated] = useState(false);
+  const reloadSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearReloadSuccess = useCallback(() => {
+    if (reloadSuccessTimerRef.current) {
+      clearTimeout(reloadSuccessTimerRef.current);
+      reloadSuccessTimerRef.current = null;
+    }
+    setReloadInventoryUpdated(false);
+  }, []);
+
+  const handleReloadProducts = useCallback(async () => {
+    const snapshotBefore = inventorySnapshot(products);
+    const result = await refetchProducts();
+    if (result.isError) return;
+
+    const snapshotAfter = inventorySnapshot(result.data);
+    if (snapshotBefore === snapshotAfter) return;
+
+    setReloadInventoryUpdated(true);
+    if (reloadSuccessTimerRef.current) clearTimeout(reloadSuccessTimerRef.current);
+    reloadSuccessTimerRef.current = setTimeout(() => {
+      setReloadInventoryUpdated(false);
+      reloadSuccessTimerRef.current = null;
+    }, RELOAD_SUCCESS_MS);
+  }, [products, refetchProducts]);
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
 
@@ -388,6 +438,14 @@ export default function NewSale() {
   useEffect(() => {
     searchRef.current?.focus();
   }, []);
+
+  useEffect(() => () => {
+    if (reloadSuccessTimerRef.current) clearTimeout(reloadSuccessTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    clearReloadSuccess();
+  }, [search, clearReloadSuccess]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -505,7 +563,8 @@ export default function NewSale() {
                         <ProductSearchEmptyState
                           searchQuery={search.trim()}
                           isReloading={isProductsFetching}
-                          onReload={() => void refetchProducts()}
+                          inventoryUpdated={reloadInventoryUpdated}
+                          onReload={handleReloadProducts}
                         />
                       )}
                     </div>

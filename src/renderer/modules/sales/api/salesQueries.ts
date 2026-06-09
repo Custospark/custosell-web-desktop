@@ -85,14 +85,19 @@ async function readSalesFromClient(): Promise<SaleWithSyncMeta[]> {
 }
 
 async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
-  return readWithOfflineStrategy({
-    readFromClient: readSalesFromClient,
-    fetchFromServer: async () => {
-      const local = await loadLocalPendingSales();
-      const { data } = await axiosInstance.get('/sales', { timeout: SALES_READ_TIMEOUT_MS });
-      return applyPendingRefundOverlay(mergeSalesLists(normalizeSalesList(data), local));
-    },
-  });
+  try {
+    return await readWithOfflineStrategy({
+      readFromClient: readSalesFromClient,
+      fetchFromServer: async () => {
+        const local = await loadLocalPendingSales();
+        const { data } = await axiosInstance.get('/sales', { timeout: SALES_READ_TIMEOUT_MS });
+        return applyPendingRefundOverlay(mergeSalesLists(normalizeSalesList(data), local));
+      },
+    });
+  } catch (err) {
+    console.warn('[Sales] Read failed — falling back to cached sales:', err);
+    return readSalesFromClient();
+  }
 }
 
 interface CustomerListItem {
@@ -101,18 +106,31 @@ interface CustomerListItem {
   phone: string;
 }
 
+function normalizeCustomersResponse(payload: unknown): CustomerListItem[] {
+  if (Array.isArray(payload)) return payload as CustomerListItem[];
+  if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: CustomerListItem[] }).data)) {
+    return (payload as { data: CustomerListItem[] }).data;
+  }
+  return [];
+}
+
+async function readCustomersFromCache(): Promise<CustomerListItem[]> {
+  return queryClient.getQueryData<CustomerListItem[]>(['customers']) ?? [];
+}
+
 async function fetchCustomers(): Promise<CustomerListItem[]> {
-  return readWithOfflineStrategy({
-    readFromClient: () => queryClient.getQueryData<CustomerListItem[]>(['customers']) ?? [],
-    fetchFromServer: async () => {
-      const { data } = await axiosInstance.get('/customers', { timeout: SALES_READ_TIMEOUT_MS });
-      if (Array.isArray(data)) return data as CustomerListItem[];
-      if (data && typeof data === 'object' && Array.isArray((data as { data?: CustomerListItem[] }).data)) {
-        return (data as { data: CustomerListItem[] }).data;
-      }
-      return [];
-    },
-  });
+  try {
+    return await readWithOfflineStrategy({
+      readFromClient: readCustomersFromCache,
+      fetchFromServer: async () => {
+        const { data } = await axiosInstance.get('/customers', { timeout: SALES_READ_TIMEOUT_MS });
+        return normalizeCustomersResponse(data);
+      },
+    });
+  } catch (err) {
+    console.warn('[Customers] Read failed — falling back to cached customers:', err);
+    return readCustomersFromCache();
+  }
 }
 
 const salesQueryDefaults = {
@@ -292,12 +310,11 @@ export function useCreateSale() {
     onSuccess: (sale, payload) => {
       const isLocal = sale.receipt_number.startsWith('OFF-') || sale._pendingSync;
 
-      if (isLocal) {
-        applySaleOptimisticUpdates(qc, sale, payload);
-      } else {
+      applySaleOptimisticUpdates(qc, sale, payload);
+
+      if (!isLocal) {
         qc.invalidateQueries({ queryKey: salesKeys.all });
         qc.invalidateQueries({ queryKey: salesKeys.list() });
-        qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
         qc.invalidateQueries({ queryKey: dashboardKeys.all });
         qc.invalidateQueries({ queryKey: shiftKeys.all });
       }

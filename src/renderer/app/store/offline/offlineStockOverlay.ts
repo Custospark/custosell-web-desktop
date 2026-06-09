@@ -1,17 +1,23 @@
 import { stockLedger } from './stockLedger';
 import type { Product } from '../../../modules/inventory/api/products/ProductTypes';
 
-export async function applyOfflineStockOverlay(products: Product[]): Promise<Product[]> {
-  if (products.length === 0) return products;
+export async function applyOfflineStockOverlay(products: Product[] | null | undefined): Promise<Product[]> {
+  const safeProducts = products ?? [];
+  if (safeProducts.length === 0) return safeProducts;
 
-  const overrides = await stockLedger.getAll();
-  if (overrides.size === 0) return products;
+  try {
+    const overrides = await stockLedger.getAll();
+    if (overrides.size === 0) return safeProducts;
 
-  return products.map((p) => {
-    const qty = overrides.get(p.id);
-    if (qty === undefined) return p;
-    return { ...p, stock_quantity: qty };
-  });
+    return safeProducts.map((p) => {
+      const qty = overrides.get(p.id);
+      if (qty === undefined) return p;
+      return { ...p, stock_quantity: qty };
+    });
+  } catch (err) {
+    console.warn('[OfflineStockOverlay] Using product cache without stock ledger overlay:', err);
+    return safeProducts;
+  }
 }
 
 export async function buildStockSeedMap(products: Product[]): Promise<Map<number, number>> {

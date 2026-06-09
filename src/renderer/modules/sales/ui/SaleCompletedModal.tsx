@@ -1,16 +1,15 @@
-import { CheckCircle, Printer, ShoppingCart, DollarSign, Percent, CreditCard, X, Plus } from 'lucide-react';
+import { CheckCircle, Printer, ShoppingCart, DollarSign, Percent, CreditCard, Plus } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import type { SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
 
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;
-  onClose: () => void;
   onPrint: () => void;
   onNewSale: () => void;
 }
 
-export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }: SaleCompletedModalProps) {
+export default function SaleCompletedModal({ sale, onPrint, onNewSale }: SaleCompletedModalProps) {
   if (!sale) return null;
 
   return (
@@ -44,19 +43,15 @@ export default function SaleCompletedModal({ sale, onClose, onPrint, onNewSale }
           )}
           <div className="flex items-center justify-between">
             <span className="text-gray-500 flex items-center gap-2"><CreditCard className="w-4 h-4 text-gray-400" /> Payment</span>
-            <span className="capitalize font-medium text-gray-900">{sale.payment_method.replace('_', ' ')}</span>
+            <span className="capitalize font-medium text-gray-900">{(sale.payment_method ?? 'cash').replace('_', ' ')}</span>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button className="flex-1 order-2 sm:order-1 py-3" variant="outline" onClick={onClose}>
-            <X className="w-4 h-4 mr-1" />
-            Cancel
-          </Button>
-          <Button className="flex-1 order-3 sm:order-2 py-3" variant="outline" onClick={onPrint}>
+          <Button className="flex-1 order-2 sm:order-1 py-3" variant="outline" onClick={onPrint}>
             <Printer className="w-4 h-4 mr-1" />
             Print Receipt
           </Button>
-          <Button className="flex-1 order-1 sm:order-3 py-3" onClick={onNewSale}>
+          <Button className="flex-1 order-1 sm:order-2 py-3" onClick={onNewSale}>
             <Plus className="w-4 h-4 mr-1" />
             New Sale
           </Button>

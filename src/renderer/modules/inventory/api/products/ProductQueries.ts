@@ -39,6 +39,46 @@ export const inventoryKeys = {
 
 /** ── Merge helpers ── */
 
+function normalizeProductsResponse(payload: unknown): Product[] {
+  if (Array.isArray(payload)) return payload as Product[];
+  if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: Product[] }).data)) {
+    return (payload as { data: Product[] }).data;
+  }
+  return [];
+}
+
+async function mergeProductsWithOfflineOverlay(base: Product[]): Promise<Product[]> {
+  const overlaid = await applyOfflineStockOverlay(base);
+  try {
+    const local = await loadLocalPendingProducts();
+    return mergeProductLists(overlaid, local);
+  } catch (err) {
+    console.warn('[Products] Pending local products skipped:', err);
+    return overlaid;
+  }
+}
+
+async function readProductsFromClientCache(): Promise<ProductWithSyncMeta[]> {
+  const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
+  return mergeProductsWithOfflineOverlay(cached);
+}
+
+async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
+  try {
+    return await readWithOfflineStrategy({
+      readFromClient: readProductsFromClientCache,
+      fetchFromServer: async () => {
+        const { data: response } = await axiosInstance.get('/products', { timeout: 10000 });
+        const serverProducts = normalizeProductsResponse(response);
+        return mergeProductsWithOfflineOverlay(serverProducts);
+      },
+    });
+  } catch (err) {
+    console.warn('[Products] Read failed — falling back to cached products:', err);
+    return readProductsFromClientCache();
+  }
+}
+
 async function loadLocalPendingProducts(): Promise<ProductWithSyncMeta[]> {
   const pending = await localProductsStore.getPending();
   return pending
@@ -242,25 +282,10 @@ export function useDeleteCategory() {
 export function useProducts() {
   return useQuery<ProductWithSyncMeta[]>({
     queryKey: inventoryKeys.products(),
-    queryFn: async () => readWithOfflineStrategy({
-      readFromClient: async () => {
-        const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
-        const local = await loadLocalPendingProducts();
-        const overlaid = await applyOfflineStockOverlay(cached);
-        return mergeProductLists(overlaid, local);
-      },
-      fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Product[] }>('/products', {
-          timeout: 10000,
-        });
-        const local = await loadLocalPendingProducts();
-        const overlaid = await applyOfflineStockOverlay(response.data);
-        return mergeProductLists(overlaid, local);
-      },
-    }),
+    queryFn: readProductsMerged,
     staleTime: 0,
     refetchOnMount: 'always',
-    placeholderData: (prev) => prev,
+    placeholderData: (prev) => prev ?? queryClient.getQueryData<ProductWithSyncMeta[]>(inventoryKeys.products()) ?? [],
     retry: (count, err) => !isNetworkFailure(err) && count < 1,
     networkMode: 'always',
   });

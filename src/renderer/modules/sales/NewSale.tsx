@@ -168,7 +168,11 @@ function BillingControls() {
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
     const q = customerSearch.toLowerCase();
-    return customers.filter((c: any) => c.name.toLowerCase().includes(q) || c.phone.includes(q));
+    return customers.filter((c) => {
+      const name = c.name?.toLowerCase() ?? '';
+      const phone = c.phone ?? '';
+      return name.includes(q) || phone.includes(q);
+    });
   }, [customers, customerSearch]);
 
   const handleCompleteSale = () => {
@@ -339,7 +343,7 @@ function BillingControls() {
         {isOffline && (
           <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
             <WifiOff className="w-4 h-4 shrink-0" />
-            Offline — sale will be saved and synced when connected
+            Offline. Sale saved. Auto-syncs when connected. No worries. Keep working.
           </div>
         )}
         {/* Complete Sale Button */}
@@ -356,7 +360,6 @@ function BillingControls() {
     </div>
     <SaleCompletedModal
       sale={completedSale}
-      onClose={() => { setCompletedSale(null); createSale.reset(); }}
       onPrint={handlePrint}
       onNewSale={() => { setCompletedSale(null); createSale.reset(); }}
     />
@@ -407,12 +410,16 @@ export default function NewSale() {
   }, []);
 
   const handleReloadProducts = useCallback(async () => {
-    const snapshotBefore = inventorySnapshot(products);
-    const result = await refetchProducts();
-    if (result.isError) return;
+    try {
+      const snapshotBefore = inventorySnapshot(products);
+      const result = await refetchProducts();
+      if (result.isError) return;
 
-    const snapshotAfter = inventorySnapshot(result.data);
-    showReloadFeedback(snapshotBefore === snapshotAfter ? 'upToDate' : 'updated');
+      const snapshotAfter = inventorySnapshot(result.data);
+      showReloadFeedback(snapshotBefore === snapshotAfter ? 'upToDate' : 'updated');
+    } catch (err) {
+      console.warn('[NewSale] Product reload failed:', err);
+    }
   }, [products, refetchProducts, showReloadFeedback]);
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);

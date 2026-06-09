@@ -4,6 +4,10 @@ import { Download, Home, CreditCard, Shield, LogIn } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
+import {
+  getWindowsInstallerDownloadUrl,
+  getWindowsInstallerFileName,
+} from '../../shared/config/desktopRelease';
 
 const navLinks = [
   { label: 'Home', path: ROUTES.HOME, icon: Home },
@@ -22,8 +26,8 @@ export default function LandingLayout() {
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    link.href = 'https://github.com/Custospark/custosell-web-desktop/releases/download/v1.0.0/Custosell-Setup-1.0.0.exe';
-    link.download = 'Custosell-Setup-1.0.0.exe';
+    link.href = getWindowsInstallerDownloadUrl();
+    link.download = getWindowsInstallerFileName();
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();

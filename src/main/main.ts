@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, ipcMain, safeStorage } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initAutoUpdater, installUpdateOnQuitIfReady } from './autoUpdater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,6 +94,10 @@ function createWindow(): BrowserWindow {
     mainWindow = null;
   });
 
+  if (!isDev) {
+    initAutoUpdater(mainWindow);
+  }
+
   return mainWindow;
 }
 
@@ -163,6 +168,15 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+app.on('before-quit', (event) => {
+  if (isDev) return;
+
+  const willInstall = installUpdateOnQuitIfReady();
+  if (willInstall) {
+    event.preventDefault();
+  }
 });
 
 app.on('window-all-closed', () => {

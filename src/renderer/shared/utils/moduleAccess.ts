@@ -131,3 +131,8 @@ export function canAccessPath(user: AuthUser | null | undefined, pathname: strin
   if (!module) return true;
   return canAccessModule(user, module);
 }
+
+/** Shift close PDF — sales staff (own shift) or dashboard users (any shift). */
+export function canUseShiftCloseReport(user: AuthUser | null | undefined): boolean {
+  return canAccessModule(user, 'sales') || canAccessModule(user, 'dashboard');
+}

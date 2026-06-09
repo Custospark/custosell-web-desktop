@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { store } from '../../app/store/store';
 import type { AuthUser } from '../../app/store/slices/authSlice';
+import { canUseShiftCloseReport } from '../../shared/utils/moduleAccess';
 
 function filenameFromDisposition(header: string | undefined, fallback: string): string {
   if (!header) return fallback;
@@ -9,9 +10,7 @@ function filenameFromDisposition(header: string | undefined, fallback: string): 
 }
 
 export function canDownloadShiftClosePdf(user: AuthUser | null | undefined): boolean {
-  if (!user) return false;
-  const perms = user.role?.permissions ?? {};
-  return Boolean(perms['reports.view'] || perms['shifts.close_report']);
+  return canUseShiftCloseReport(user);
 }
 
 export async function fetchShiftClosePdfBlob(shiftId: number | string): Promise<{ blob: Blob; filename: string }> {

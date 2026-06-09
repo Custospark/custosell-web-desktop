@@ -247,8 +247,10 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
                 </select>
               </div>
             )}
-            {roleHelperText && (
+            {roleHelperText ? (
               <p className="text-xs text-gray-500 mt-1">{roleHelperText}</p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">Job title only — what they can open is set under Module access below.</p>
             )}
             <button type="button" onClick={() => setRoleDrawerOpen(true)}
               className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
@@ -318,7 +320,8 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         </div>
         <div className="p-4">
           <p className="text-xs text-gray-500 mb-3">
-            Choose which parts of the business app this staff member can open. Account and Custosell Guide remain available to everyone.
+            Controls which sections appear in the app. Sales includes My Shift, where staff can record shift expenses.
+            Account and Custosell Guide remain available to everyone.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {BUSINESS_MODULE_SLUGS.map((module) => {

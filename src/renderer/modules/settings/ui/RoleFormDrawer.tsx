@@ -2,9 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCreateRole, useUpdateRole } from '../api/settings/RoleQueries';
 import type { CreateRoleData } from '../api/settings/RoleTypes';
 import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
-import { PERMISSIONS, rolePermissionKeys } from '../api/settings/RoleTypes';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
-import { Shield, Hash, AlignLeft, ToggleLeft } from 'lucide-react';
+import { Shield, Hash, AlignLeft, ToggleLeft, Info } from 'lucide-react';
 
 interface RoleFormDrawerProps {
   open: boolean;
@@ -16,11 +15,10 @@ interface FormState {
   name: string;
   slug: string;
   description: string;
-  permissions: string[];
   is_default: boolean;
 }
 
-const emptyForm: FormState = { name: '', slug: '', description: '', permissions: [], is_default: false };
+const emptyForm: FormState = { name: '', slug: '', description: '', is_default: false };
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -41,7 +39,6 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
           name: role.name,
           slug: role.slug,
           description: role.description ?? '',
-          permissions: rolePermissionKeys(role.permissions),
           is_default: role.is_default,
         });
       } else {
@@ -55,13 +52,6 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
     setForm((p) => ({ ...p, name, slug: isEditing ? p.slug : slugify(name) }));
   }, [isEditing]);
 
-  const togglePermission = useCallback((perm: string) => {
-    setForm((p) => ({
-      ...p,
-      permissions: p.permissions.includes(perm) ? p.permissions.filter((x) => x !== perm) : [...p.permissions, perm],
-    }));
-  }, []);
-
   const canSubmit = useMemo(() => form.name.trim().length > 0 && form.slug.trim().length > 0, [form]);
 
   const handleSubmit = () => {
@@ -69,7 +59,7 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
       name: form.name.trim(),
       slug: form.slug.trim(),
       description: form.description.trim() || null,
-      permissions: form.permissions,
+      permissions: [],
       is_default: form.is_default,
     };
     if (isEditing && role) {
@@ -88,7 +78,7 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
       open={open}
       onClose={onClose}
       title={isEditing ? 'Edit Role' : 'Add Role'}
-      subtitle={isEditing ? 'Update role and permissions' : 'Create a new role'}
+      subtitle="Roles are labels for staff — module access is set per person"
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       canSubmit={canSubmit}
@@ -100,6 +90,15 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
           <p className="mt-1">{role._lastError || 'Update the role details and save to retry sync.'}</p>
         </div>
       )}
+
+      <div className="mb-5 flex gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <Info className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+        <p>
+          Who can open Dashboard, Sales, Inventory, and other areas is controlled under{' '}
+          <strong>Settings → Staff → Module access</strong>, not by this role.
+        </p>
+      </div>
+
       <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-800">Role Details</h3>
@@ -109,7 +108,7 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
             <label className={labelClass}>Name <span className="text-red-500">*</span></label>
             <div className="relative">
               <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} value={form.name} onChange={(e) => updateName(e.target.value)} placeholder="Enter role name" required />
+              <input className={inputClass} value={form.name} onChange={(e) => updateName(e.target.value)} placeholder="e.g. Cashier, Supervisor" required />
             </div>
           </div>
           <div>
@@ -123,29 +122,8 @@ export default function RoleFormDrawer({ open, onClose, role }: RoleFormDrawerPr
             <label className={labelClass}>Description</label>
             <div className="relative">
               <AlignLeft className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-              <textarea className={textareaClass} rows={3} value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Optional description" />
+              <textarea className={textareaClass} rows={3} value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Optional description for your team" />
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-800">Permissions</h3>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-            {PERMISSIONS.map((perm) => (
-              <label key={perm} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.permissions.includes(perm)}
-                  onChange={() => togglePermission(perm)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">{perm}</span>
-              </label>
-            ))}
           </div>
         </div>
       </div>

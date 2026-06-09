@@ -119,13 +119,6 @@ async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
   }
 }
 
-async function loadLocalPendingProducts(): Promise<ProductWithSyncMeta[]> {
-  const pending = await localProductsStore.getPending();
-  return pending
-    .filter((r) => r.mutationType === 'create')
-    .map(toProductWithSyncMeta);
-}
-
 async function loadLocalPendingCategories(): Promise<CategoryWithSyncMeta[]> {
   const pending = await localCategoriesStore.getPending();
   return pending

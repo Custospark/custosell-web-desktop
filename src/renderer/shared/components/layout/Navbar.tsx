@@ -49,7 +49,7 @@ function NavbarNetworkStatus({
   onRetry,
 }: {
   systemStatus: 'online' | 'slow' | 'offline';
-  latency: number;
+  latency: number | null;
   onRetry: () => void;
 }) {
   if (systemStatus === 'online') {
@@ -57,8 +57,8 @@ function NavbarNetworkStatus({
       <button
         type="button"
         onClick={onRetry}
-        title={`Connected · ${latency}ms latency`}
-        aria-label={`Connected, ${latency} milliseconds latency`}
+        title={latency != null ? `Connected · ${latency}ms latency` : 'Connected'}
+        aria-label={latency != null ? `Connected, ${latency} milliseconds latency` : 'Connected'}
         className={cn(
           iconBtn,
           'gap-1 px-1.5 sm:px-2 h-8 sm:h-9 text-green-600 hover:text-green-700 hover:bg-green-50',
@@ -66,7 +66,9 @@ function NavbarNetworkStatus({
       >
         <Wifi className="w-3.5 h-3.5 shrink-0" aria-hidden />
         <span className="hidden sm:inline font-medium text-xs whitespace-nowrap">Connected</span>
-        <span className="hidden xl:inline text-green-400 text-xs tabular-nums">{latency}ms</span>
+        {latency != null ? (
+          <span className="hidden xl:inline text-green-400 text-xs tabular-nums">{latency}ms</span>
+        ) : null}
       </button>
     );
   }

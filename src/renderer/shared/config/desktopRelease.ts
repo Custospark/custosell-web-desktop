@@ -1,4 +1,5 @@
-import { __APP_VERSION__ } from '../types';
+/** Injected at build time by Vite `define` (see vite.config.ts). */
+declare const __APP_VERSION__: string;
 
 export const DESKTOP_RELEASE = {
   githubOwner: 'Custospark',

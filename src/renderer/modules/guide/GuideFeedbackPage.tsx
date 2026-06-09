@@ -181,9 +181,9 @@ function FeedbackMineCard({ item }: { item: GuideFeedbackWithSyncMeta }) {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold text-gray-900">{item.subject}</h3>
             {item._syncFailed ? (
-              <Badge variant="danger" title={item._lastError || 'Sync failed'}>
-                Sync failed
-              </Badge>
+              <span title={item._lastError || 'Sync failed'}>
+                <Badge variant="danger">Sync failed</Badge>
+              </span>
             ) : item._pendingSync ? (
               <Badge variant="warning">Pending sync</Badge>
             ) : null}

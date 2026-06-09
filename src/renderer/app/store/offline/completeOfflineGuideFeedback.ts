@@ -6,7 +6,8 @@ import {
 } from './localGuideFeedbackStore';
 import { shouldCompleteMutationLocally } from './offlineQueryUtils';
 import { GUIDE } from '../../../shared/api/endpoints/guideEndpoints';
-import type { GuideFeedbackCategory } from '../../../modules/guide/api/GuideTypes';
+
+export type { CreateGuideFeedbackPayload };
 
 export function shouldCompleteGuideFeedbackLocally(): boolean {
   return shouldCompleteMutationLocally();

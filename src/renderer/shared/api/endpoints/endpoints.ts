@@ -21,6 +21,7 @@ export const NOTIFICATIONS = {
   UNREAD_COUNT: '/notifications/unread-count',
   READ_ALL: '/notifications/read-all',
   DELETE_ALL: '/notifications/delete-all',
+  BULK_DELETE: '/notifications/bulk-delete',
   MARK_READ: (id: number) => `/notifications/${id}/read`,
   DELETE: (id: number) => `/notifications/${id}`,
 };

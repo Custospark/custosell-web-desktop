@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
@@ -10,8 +11,9 @@ import { GuideHeaderNav } from './GuideHeaderNav';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
-  Menu, X, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff,
+  Menu, X, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff, User,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -260,6 +262,15 @@ export function Navbar() {
                     </div>
                   )}
                 </div>
+                <Link
+                  to={ROUTES.ACCOUNT.PROFILE}
+                  role="menuitem"
+                  onClick={() => setDropdownOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <User className="w-4 h-4 shrink-0" aria-hidden />
+                  My Profile
+                </Link>
                 {user?.shift_clock_in && (
                   <>
                     <button

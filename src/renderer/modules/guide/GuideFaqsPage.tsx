@@ -1,30 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, HelpCircle, Loader2, Search } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { ChevronDown, HelpCircle, Loader2, WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAppSelector } from '../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { useGuideFaqs } from './api/GuideQueries';
+import type { GuideFaqDto } from './api/GuideTypes';
+import { GuideSearchBar } from './components/GuideSearchBar';
+import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { cn } from '../../shared/utils/cn';
-import { searchInputClass } from '../../shared/utils/inputStyles';
+
+function filterFaqs(items: GuideFaqDto[], search: string): GuideFaqDto[] {
+  const q = search.trim().toLowerCase();
+  if (!q) return items;
+  return items.filter(
+    (item) => item.question.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q),
+  );
+}
 
 export default function GuideFaqsPage() {
-  const [input, setInput] = useState('');
-  const [debounced, setDebounced] = useState('');
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(input.trim().toLowerCase()), 300);
-    return () => window.clearTimeout(t);
-  }, [input]);
-
-  const { data: allItems = [], isLoading, isError, refetch } = useGuideFaqs();
-
-  const items = useMemo(() => {
-    if (!debounced) return allItems;
-    return allItems.filter(
-      (item) =>
-        item.question.toLowerCase().includes(debounced) || item.answer.toLowerCase().includes(debounced),
-    );
-  }, [allItems, debounced]);
-
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
+  const [search, setSearch] = useState('');
   const [openUuid, setOpenUuid] = useState<string | null>(null);
+
+  const { data: allItems = [], isLoading, isError, refetch } = useGuideFaqs({
+    enabled: !isOffline,
+  });
+
+  const items = useMemo(() => filterFaqs(allItems, search), [allItems, search]);
+  const hasSearch = search.trim().length > 0;
 
   const toggleFaq = useCallback((uuid: string) => {
     setOpenUuid((prev) => (prev === uuid ? null : uuid));
@@ -45,26 +48,50 @@ export default function GuideFaqsPage() {
         </div>
       </div>
 
-      <div className="relative max-w-lg">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
-        <input
-          type="search"
-          className={searchInputClass}
-          placeholder="Search questions and answers…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          aria-label="Search FAQs"
-        />
-      </div>
+      {isOffline && (
+        <div
+          className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-800"
+          role="status"
+        >
+          <WifiOff className="h-4 w-4 shrink-0" aria-hidden />
+          FAQs require an internet connection.
+        </div>
+      )}
 
-      {isLoading && (
+      {!isOffline && (
+        <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
+          <GuideSearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search questions and answers…"
+            title="Search FAQs"
+            disabled={isLoading}
+          />
+          {!isLoading && !isError && allItems.length > 0 && (
+            <p className="text-xs text-gray-500">
+              {items.length} of {allItems.length} article{allItems.length === 1 ? '' : 's'}
+              {hasSearch ? ' matching your search' : ''}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isOffline && (
+        <EmptyState
+          icon={<WifiOff className="h-12 w-12" />}
+          title="FAQs unavailable offline"
+          description="Connect to the internet to browse frequently asked questions."
+        />
+      )}
+
+      {!isOffline && isLoading && (
         <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-12 text-sm text-gray-600">
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
           Loading answers…
         </div>
       )}
 
-      {isError && (
+      {!isOffline && isError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
           Could not load FAQs.{' '}
           <button type="button" className="font-semibold underline" onClick={() => void refetch()}>
@@ -73,19 +100,24 @@ export default function GuideFaqsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && items.length === 0 && (
-        <p className="text-sm text-gray-600">
-          {debounced
-            ? 'No published answers match that search. Try different keywords.'
-            : 'No published FAQs yet. Check back soon.'}
-        </p>
+      {!isOffline && !isLoading && !isError && allItems.length === 0 && (
+        <EmptyState
+          title="No published FAQs yet"
+          description="Check back soon — the Custosell team will add answers here."
+        />
       )}
 
-      {!isLoading && !isError && items.length > 0 && (
+      {!isOffline && !isLoading && !isError && allItems.length > 0 && items.length === 0 && (
+        <EmptyState
+          title="No answers match your search"
+          description="Try different keywords or clear the search box."
+          actionLabel="Clear search"
+          onAction={() => setSearch('')}
+        />
+      )}
+
+      {!isOffline && !isLoading && !isError && items.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            {items.length} article{items.length === 1 ? '' : 's'}
-          </p>
           {items.map((item) => {
             const isOpen = openUuid === item.uuid;
             return (
@@ -103,7 +135,10 @@ export default function GuideFaqsPage() {
                 >
                   <span className="flex-1">{item.question}</span>
                   <ChevronDown
-                    className={cn('mt-0.5 h-4 w-4 shrink-0 text-gray-400 transition-transform duration-300', isOpen && 'rotate-180')}
+                    className={cn(
+                      'mt-0.5 h-4 w-4 shrink-0 text-gray-400 transition-transform duration-300',
+                      isOpen && 'rotate-180',
+                    )}
                   />
                 </button>
                 <AnimatePresence initial={false}>

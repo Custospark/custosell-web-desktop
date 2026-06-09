@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MessageSquareHeart, RefreshCw, Search } from 'lucide-react';
+import { CheckSquare, Loader2, MessageSquareHeart, RefreshCw, Search, Square, Trash2 } from 'lucide-react';
 import { imperativeToast } from '../../app/contexts/imperativeToast';
 import { Button } from '../../shared/components/buttons/Button';
-import { Badge } from '../../shared/components/badges/Badge';
+import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import type { GuideFeedbackStatus } from '../guide/api/GuideTypes';
 import {
+  GUIDE_FEEDBACK_STATUS_LABELS,
+  GuideFeedbackStatusBadge,
+} from '../guide/components/GuideFeedbackStatusBadge';
+import {
+  useBulkDeletePlatformGuideFeedback,
+  useDeletePlatformGuideFeedback,
   usePlatformGuideFeedbackDetail,
   usePlatformGuideFeedbackList,
   useUpdatePlatformGuideFeedback,
@@ -15,11 +21,13 @@ import { inputClass, selectClass, textareaClass } from '../../shared/utils/input
 const STATUSES: GuideFeedbackStatus[] = ['submitted', 'acknowledged', 'in_progress', 'resolved', 'closed'];
 
 export default function PlatformGuideFeedbackPage() {
+  const { confirm } = useConfirm();
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [q, setQ] = useState('');
   const [appliedQ, setAppliedQ] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const filters = useMemo(
     () => ({
@@ -33,7 +41,57 @@ export default function PlatformGuideFeedbackPage() {
   const { data: rows = [], isLoading, isError, refetch, isFetching } = usePlatformGuideFeedbackList(filters);
   const detailQuery = usePlatformGuideFeedbackDetail(selectedId);
   const updateMut = useUpdatePlatformGuideFeedback();
+  const deleteMut = useDeletePlatformGuideFeedback();
+  const bulkDeleteMut = useBulkDeletePlatformGuideFeedback();
   const detail = detailQuery.data;
+
+  const rowIds = useMemo(() => rows.map((row) => row.id), [rows]);
+  const allSelected = rowIds.length > 0 && rowIds.every((id) => selectedIds.has(id));
+  const deletePending = deleteMut.isPending || bulkDeleteMut.isPending;
+
+  const toggleAll = useCallback(() => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(rowIds));
+  }, [allSelected, rowIds]);
+
+  const toggleOne = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleDeleteIds = useCallback(
+    async (ids: number[]) => {
+      if (ids.length === 0) return;
+      const ok = await confirm({
+        title: ids.length === 1 ? 'Delete submission' : 'Delete submissions',
+        message:
+          ids.length === 1
+            ? 'Remove this feedback submission? This cannot be undone.'
+            : `Delete ${ids.length} submission(s)? This cannot be undone.`,
+        confirmText: 'Delete',
+        variant: 'danger',
+      });
+      if (!ok) return;
+      try {
+        if (ids.length === 1) await deleteMut.mutateAsync(ids[0]);
+        else await bulkDeleteMut.mutateAsync(ids);
+        if (selectedId != null && ids.includes(selectedId)) setSelectedId(null);
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.delete(id));
+          return next;
+        });
+        imperativeToast.show('success', ids.length === 1 ? 'Submission deleted.' : 'Submissions deleted.');
+      } catch {
+        imperativeToast.show('error', 'Could not delete submission(s).');
+      }
+    },
+    [bulkDeleteMut, confirm, deleteMut, selectedId],
+  );
 
   const [statusDraft, setStatusDraft] = useState<GuideFeedbackStatus>('submitted');
   const [staffReply, setStaffReply] = useState('');
@@ -100,7 +158,7 @@ export default function PlatformGuideFeedbackPage() {
           <select className={selectClass} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All</option>
             {STATUSES.map((s) => (
-              <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+              <option key={s} value={s}>{GUIDE_FEEDBACK_STATUS_LABELS[s]}</option>
             ))}
           </select>
         </label>
@@ -125,6 +183,38 @@ export default function PlatformGuideFeedbackPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-200 bg-white">
+          {!isLoading && !isError && rows.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-4 py-2">
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+              >
+                {allSelected ? (
+                  <CheckSquare className="h-4 w-4 text-blue-600" aria-hidden />
+                ) : (
+                  <Square className="h-4 w-4" aria-hidden />
+                )}
+                {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
+              </button>
+              {selectedIds.size > 0 && (
+                <>
+                  <span className="text-gray-300" aria-hidden>
+                    |
+                  </span>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => void handleDeleteIds(Array.from(selectedIds))}
+                    disabled={deletePending}
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden />
+                    Delete ({selectedIds.size})
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
           {isLoading && (
             <div className="flex items-center gap-2 p-4 text-sm text-gray-500">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -135,23 +225,44 @@ export default function PlatformGuideFeedbackPage() {
           {!isLoading && !isError && (
             <ul className="max-h-[520px] divide-y divide-gray-100 overflow-y-auto">
               {rows.map((row) => (
-                <li key={row.id}>
+                <li key={row.id} className="flex items-stretch">
+                  <button
+                    type="button"
+                    onClick={() => toggleOne(row.id)}
+                    className="flex shrink-0 items-center px-3 text-gray-400 hover:text-gray-700"
+                    aria-label={selectedIds.has(row.id) ? 'Deselect submission' : 'Select submission'}
+                  >
+                    {selectedIds.has(row.id) ? (
+                      <CheckSquare className="h-4 w-4 text-blue-600" aria-hidden />
+                    ) : (
+                      <Square className="h-4 w-4" aria-hidden />
+                    )}
+                  </button>
                   <button
                     type="button"
                     onClick={() => selectRow(row.id)}
                     className={cn(
-                      'w-full px-4 py-3 text-left transition-colors hover:bg-gray-50',
+                      'min-w-0 flex-1 px-2 py-3 text-left transition-colors hover:bg-gray-50',
                       selectedId === row.id && 'bg-blue-50',
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium text-gray-900">{row.subject}</p>
-                      <Badge variant="neutral">{row.status.replace(/_/g, ' ')}</Badge>
+                      <GuideFeedbackStatusBadge status={row.status} />
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
                       {row.user_display}
                       {row.business_name ? ` · ${row.business_name}` : ''}
                     </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteIds([row.id])}
+                    disabled={deletePending}
+                    className="flex shrink-0 items-center px-3 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    title="Delete submission"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden />
                   </button>
                 </li>
               ))}
@@ -175,7 +286,10 @@ export default function PlatformGuideFeedbackPage() {
           {detail && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{detail.subject}</h2>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="text-lg font-semibold text-gray-900">{detail.subject}</h2>
+                  <GuideFeedbackStatusBadge status={detail.status} />
+                </div>
                 <p className="mt-1 text-xs text-gray-500">
                   {detail.user_display} ({detail.user_email}) · {detail.category.replace(/_/g, ' ')}
                   {detail.business_name ? ` · ${detail.business_name}` : ''}
@@ -187,7 +301,7 @@ export default function PlatformGuideFeedbackPage() {
                 <span className="mb-1 block font-medium text-gray-600">Status</span>
                 <select className={selectClass} value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as GuideFeedbackStatus)}>
                   {STATUSES.map((s) => (
-                    <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                    <option key={s} value={s}>{GUIDE_FEEDBACK_STATUS_LABELS[s]}</option>
                   ))}
                 </select>
               </label>
@@ -199,9 +313,19 @@ export default function PlatformGuideFeedbackPage() {
                 <span className="mb-1 block font-medium text-gray-600">Internal notes</span>
                 <textarea rows={3} className={textareaClass} value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} />
               </label>
-              <Button onClick={() => void onSave()} disabled={updateMut.isPending}>
-                {updateMut.isPending ? 'Saving…' : 'Save changes'}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => void onSave()} disabled={updateMut.isPending}>
+                  {updateMut.isPending ? 'Saving…' : 'Save changes'}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => void handleDeleteIds([selectedId!])}
+                  disabled={deletePending}
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden />
+                  Delete
+                </Button>
+              </div>
             </div>
           )}
         </div>

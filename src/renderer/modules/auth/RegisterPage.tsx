@@ -6,6 +6,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
+import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { Store, Mail, Lock, User, Phone, ChevronDown } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -131,7 +132,7 @@ export default function RegisterPage() {
             </div>
             <div className="relative flex-1">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input type="tel" placeholder="eg 734 123 456" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d\s\-()]/g, '') }))}
+              <input type="tel" placeholder={getPhonePlaceholder(countryCode)} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d\s\-()]/g, '') }))}
                 className="w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm" />
             </div>
           </div>

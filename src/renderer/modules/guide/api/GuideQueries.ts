@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { GUIDE } from '../../../shared/api/endpoints/guideEndpoints';
 import { isNetworkFailure } from '../../../app/store/offline/offlineQueryUtils';
+import { mutationQueue } from '../../../app/store/offline/mutationQueue';
 import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
 import {
   localGuideFeedbackStore,
@@ -28,6 +29,40 @@ export const guideKeys = {
 
 function isOptimisticFeedback(item: GuideFeedbackWithSyncMeta): boolean {
   return Boolean(item._pendingSync || item._localId || item.id < 0);
+}
+
+function isLocalOnlyFeedback(item: GuideFeedbackWithSyncMeta): boolean {
+  return Boolean(item._localId) || item.id < 0;
+}
+
+export function feedbackSelectionKey(item: GuideFeedbackWithSyncMeta): string {
+  if (item._localId) return `local:${item._localId}`;
+  return `id:${item.id}`;
+}
+
+async function deleteLocalGuideFeedback(item: GuideFeedbackWithSyncMeta): Promise<void> {
+  const localId = item._localId;
+  if (!localId) return;
+  const record = await localGuideFeedbackStore.getByLocalId(localId);
+  if (record?.mutationId) {
+    await mutationQueue.removeById(record.mutationId);
+  }
+  await localGuideFeedbackStore.removeByLocalId(localId);
+}
+
+async function deleteGuideFeedbackItems(items: GuideFeedbackWithSyncMeta[]): Promise<void> {
+  const localItems = items.filter(isLocalOnlyFeedback);
+  const serverIds = items
+    .filter((item) => !isLocalOnlyFeedback(item) && item.id > 0)
+    .map((item) => item.id);
+
+  await Promise.all(localItems.map((item) => deleteLocalGuideFeedback(item)));
+
+  if (serverIds.length === 1) {
+    await axiosInstance.delete(GUIDE.FEEDBACK_ITEM(serverIds[0]), { timeout: 10000 });
+  } else if (serverIds.length > 1) {
+    await axiosInstance.post(GUIDE.FEEDBACK_BULK_DELETE, { ids: serverIds }, { timeout: 10000 });
+  }
 }
 
 async function loadLocalPendingFeedback(): Promise<GuideFeedbackWithSyncMeta[]> {
@@ -91,7 +126,7 @@ const guideQueryDefaults = {
     !isNetworkFailure(error) && failureCount < 1,
 };
 
-export function useGuideTutorials() {
+export function useGuideTutorials(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: guideKeys.tutorials(),
     queryFn: async () => {
@@ -99,10 +134,11 @@ export function useGuideTutorials() {
       return data.data;
     },
     staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   });
 }
 
-export function useGuideFaqs() {
+export function useGuideFaqs(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: guideKeys.faqs(),
     queryFn: async () => {
@@ -110,6 +146,7 @@ export function useGuideFaqs() {
       return data.data;
     },
     staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -160,6 +197,26 @@ export function useCreateGuideFeedback() {
       } else {
         void queryClient.invalidateQueries({ queryKey: guideKeys.feedbackMine() });
       }
+    },
+  });
+}
+
+export function useDeleteMyGuideFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (item: GuideFeedbackWithSyncMeta) => deleteGuideFeedbackItems([item]),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: guideKeys.feedbackMine() });
+    },
+  });
+}
+
+export function useBulkDeleteMyGuideFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (items: GuideFeedbackWithSyncMeta[]) => deleteGuideFeedbackItems(items),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: guideKeys.feedbackMine() });
     },
   });
 }

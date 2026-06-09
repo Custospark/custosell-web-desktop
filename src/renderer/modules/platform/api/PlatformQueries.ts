@@ -28,6 +28,11 @@ function isAxiosNotFound(err: unknown): boolean {
   return (err as AxiosError).response?.status === 404;
 }
 
+function platformMutationError(err: unknown, fallback: string): string {
+  const axiosErr = err as AxiosError<{ message?: string }>;
+  return axiosErr.response?.data?.message ?? (err instanceof Error ? err.message : fallback);
+}
+
 async function patchPlatformUserStatus(
   id: number,
   status: UserAccountStatus,
@@ -241,7 +246,7 @@ export function useNotifyBusinesses() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to send notification'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to send notification')),
   });
 }
 
@@ -365,7 +370,7 @@ export function useNotifyPlatformUsers() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to send notification'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to send notification')),
   });
 }
 

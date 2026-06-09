@@ -6,9 +6,16 @@ import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffA
 import type { CreateStaffData, UpdateStaffData } from '../api/settings/StaffTypes';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffStore';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import RoleFormDrawer from './RoleFormDrawer';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { User, Mail, Phone, Key, ShieldCheck, ToggleLeft, Plus, LayoutGrid } from 'lucide-react';
+import { User, Mail, Key, ShieldCheck, ToggleLeft, Plus, LayoutGrid } from 'lucide-react';
+import type { CountryCode } from '../../../shared/utils/countryCodes';
+import {
+  buildInternationalPhone,
+  getDefaultCountryCode,
+  parseInternationalPhone,
+} from '../../../shared/utils/phoneNumber';
 import { BUSINESS_MODULE_SLUGS, MODULE_LABELS, type BusinessModuleSlug } from '../../../shared/utils/moduleAccess';
 
 interface StaffFormDrawerProps {
@@ -20,7 +27,7 @@ interface StaffFormDrawerProps {
 interface FormState {
   name: string;
   email: string;
-  phone: string;
+  localPhone: string;
   password: string;
   password_confirmation: string;
   role_id: number | null;
@@ -31,7 +38,7 @@ interface FormState {
 const emptyForm: FormState = {
   name: '',
   email: '',
-  phone: '',
+  localPhone: '',
   password: '',
   password_confirmation: '',
   role_id: 0,
@@ -52,15 +59,18 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const businessOwnerId = getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null });
 
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [roleDrawerOpen, setRoleDrawerOpen] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => {
       if (staff) {
+        const parsedPhone = parseInternationalPhone(staff.phone);
+        setCountryCode(parsedPhone.countryCode);
         setForm({
           name: staff.name,
           email: staff.email,
-          phone: staff.phone ?? '',
+          localPhone: parsedPhone.localNumber,
           password: '',
           password_confirmation: '',
           role_id: staff.role_id ?? null,
@@ -71,6 +81,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         });
       } else {
         const defaultRole = roles?.find((r) => r.is_default) ?? roles?.find((r) => r.slug === 'staff');
+        setCountryCode(getDefaultCountryCode());
         setForm({
           ...emptyForm,
           role_id: defaultRole?.id ?? 0,
@@ -126,12 +137,14 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     [form, hasRoleForSubmit, passwordValid],
   );
 
+  const fullPhone = buildInternationalPhone(countryCode, form.localPhone) ?? null;
+
   const handleSubmit = () => {
     if (isEditing && staff) {
       const payload: UpdateStaffData = {
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || null,
+        phone: fullPhone,
         role_id: canChangeRole ? form.role_id || staff.role_id || null : staff.role_id ?? null,
         is_active: accountRules?.canDeactivate === false ? staff.is_active : form.is_active,
         modules: modulesLocked ? undefined : form.modules,
@@ -148,7 +161,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         business_id: authUser?.business_id ?? null,
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || null,
+        phone: fullPhone,
         password: form.password.trim(),
         password_confirmation: form.password_confirmation.trim(),
         role_id: form.role_id ?? 0,
@@ -209,13 +222,13 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
               <input className={inputClass} type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Enter email address" required />
             </div>
           </div>
-          <div>
-            <label className={labelClass}>Phone</label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Enter phone number" />
-            </div>
-          </div>
+          <PhoneNumberField
+            label="Phone"
+            countryCode={countryCode}
+            onCountryCodeChange={setCountryCode}
+            value={form.localPhone}
+            onChange={(localPhone) => update('localPhone', localPhone)}
+          />
           <div>
             <label className={labelClass}>Role <span className="text-red-500">*</span></label>
             {roleSelectionLocked ? (

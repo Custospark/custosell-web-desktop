@@ -205,3 +205,27 @@ export function useUpdatePlatformGuideFeedback() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
   });
 }
+
+export function useDeletePlatformGuideFeedback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(PLATFORM.GUIDE.FEEDBACK_ITEM(id));
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
+  });
+}
+
+export function useBulkDeletePlatformGuideFeedback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      if (ids.length === 1) {
+        await axiosInstance.delete(PLATFORM.GUIDE.FEEDBACK_ITEM(ids[0]));
+        return;
+      }
+      await axiosInstance.post(PLATFORM.GUIDE.FEEDBACK_BULK_DELETE, { ids });
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
+  });
+}

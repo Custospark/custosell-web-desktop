@@ -95,3 +95,21 @@ export function useDeleteAllNotifications() {
     },
   });
 }
+
+export function useBulkDeleteNotifications() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      if (ids.length === 1) {
+        await axiosInstance.delete(NOTIFICATIONS.DELETE(ids[0]));
+        return { deleted: 1 };
+      }
+      const { data } = await axiosInstance.post<{ deleted: number }>(NOTIFICATIONS.BULK_DELETE, { ids });
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+}

@@ -80,7 +80,7 @@ export function CustomerFormDrawer({ open, onClose, customer }: CustomerFormDraw
             <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Enter phone number" required />
+              <input className={inputClass} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="e.g. 712 345 678" required />
             </div>
           </div>
           <div>

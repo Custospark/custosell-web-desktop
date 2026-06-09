@@ -84,6 +84,16 @@ export const localGuideFeedbackStore = {
     await db.put('localGuideFeedback', record);
   },
 
+  async getByLocalId(localId: string): Promise<LocalGuideFeedbackRecord | undefined> {
+    const db = await getOfflineDb();
+    return db.get('localGuideFeedback', localId);
+  },
+
+  async removeByLocalId(localId: string): Promise<void> {
+    const db = await getOfflineDb();
+    await db.delete('localGuideFeedback', localId);
+  },
+
   async removeByMutationId(mutationId: string): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localGuideFeedback');

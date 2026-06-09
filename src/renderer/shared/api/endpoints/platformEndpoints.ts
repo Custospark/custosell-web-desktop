@@ -29,5 +29,6 @@ export const PLATFORM = {
     FAQ: (id: number) => `/platform/guide/faqs/${id}`,
     FEEDBACK: '/platform/guide/feedback',
     FEEDBACK_ITEM: (id: number) => `/platform/guide/feedback/${id}`,
+    FEEDBACK_BULK_DELETE: '/platform/guide/feedback/bulk-delete',
   },
 } as const;

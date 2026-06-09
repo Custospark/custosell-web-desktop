@@ -1,48 +1,222 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
 import { useBusiness, useUpdateBusiness } from '../api/settings/BusinessQueries';
 import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
+import { Badge } from '../../../shared/components/badges/Badge';
 import { Button } from '../../../shared/components/buttons/Button';
+import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { CURRENCIES } from '../../../shared/utils/currencies';
-import { Building2, Save, Globe, MapPin, Receipt, Store, Mail, Phone, Globe2, MapPinned, Building, Hash, Tag, Clock, Coins, FileText, ChevronDown } from 'lucide-react';
-import { countryCodes } from '../../../shared/utils/countryCodes';
 import type { CountryCode } from '../../../shared/utils/countryCodes';
+import {
+  buildInternationalPhone,
+  formatPhoneDisplay,
+  getDefaultCountryCode,
+  parseInternationalPhone,
+} from '../../../shared/utils/phoneNumber';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
+import { cn } from '../../../shared/utils/cn';
+import {
+  Building2,
+  Globe,
+  MapPin,
+  Receipt,
+  Store,
+  Mail,
+  Phone,
+  Globe2,
+  MapPinned,
+  Building,
+  Hash,
+  Tag,
+  Clock,
+  Coins,
+  FileText,
+  ChevronDown,
+  Pencil,
+  WifiOff,
+} from 'lucide-react';
 
 const emptyForm: UpdateBusinessData = {
-  name: '', email: null, phone: null, website: null, address: null,
-  city: null, state: null, postal_code: null, country: null,
-  tax_id: null, timezone: null, business_type: null,
-  currency: null, receipt_footer: null,
+  name: '',
+  email: null,
+  phone: null,
+  website: null,
+  address: null,
+  city: null,
+  state: null,
+  postal_code: null,
+  country: null,
+  tax_id: null,
+  timezone: null,
+  business_type: null,
+  currency: null,
+  receipt_footer: null,
 };
 
-const inputCls = "w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
-const selectCls = "w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white";
-const labelCls = "block text-sm font-medium text-gray-700 mb-1";
-const iconCls = "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none";
+const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  retail: 'Retail',
+  wholesale: 'Wholesale',
+  restaurant: 'Restaurant',
+  cafe: 'Café',
+  service: 'Service',
+  salon: 'Salon',
+  pharmacy: 'Pharmacy',
+  grocery: 'Grocery',
+  other: 'Other',
+};
+
+const inputClass =
+  'w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors';
+const selectClass =
+  'w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors';
+const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
+const iconClass = 'absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none';
+
+interface BusinessFormSnapshot {
+  form: UpdateBusinessData;
+  localPhone: string;
+  countryCode: CountryCode;
+}
+
+function snapshotFromBusiness(business: NonNullable<ReturnType<typeof useBusiness>['data']>): BusinessFormSnapshot {
+  const parsedPhone = parseInternationalPhone(business.phone);
+  return {
+    countryCode: parsedPhone.countryCode,
+    localPhone: parsedPhone.localNumber,
+    form: {
+      name: business.name || '',
+      email: business.email ?? null,
+      phone: business.phone ?? null,
+      website: business.website ?? null,
+      address: business.address ?? null,
+      city: business.city ?? null,
+      state: business.state ?? null,
+      postal_code: business.postal_code ?? null,
+      country: business.country ?? null,
+      tax_id: business.tax_id ?? null,
+      timezone: business.timezone ?? null,
+      business_type: business.business_type ?? null,
+      currency: business.currency ?? null,
+      receipt_footer: business.receipt_footer ?? null,
+    },
+  };
+}
+
+function snapshotsEqual(a: BusinessFormSnapshot, b: BusinessFormSnapshot): boolean {
+  const fullPhoneA = buildInternationalPhone(a.countryCode, a.localPhone) ?? null;
+  const fullPhoneB = buildInternationalPhone(b.countryCode, b.localPhone) ?? null;
+  return (
+    fullPhoneA === fullPhoneB
+    && JSON.stringify(a.form) === JSON.stringify(b.form)
+  );
+}
+
+function formatCurrencyLabel(code: string | null | undefined): string {
+  if (!code) return '—';
+  const currency = CURRENCIES.find((c) => c.code === code);
+  if (!currency) return code;
+  return `${currency.code} (${currency.symbol}) — ${currency.name}`;
+}
+
+function formatBusinessType(value: string | null | undefined): string {
+  if (!value) return '—';
+  return BUSINESS_TYPE_LABELS[value] ?? value;
+}
+
+function formatLocationLine(form: UpdateBusinessData): string | null {
+  const parts = [form.city, form.state, form.country].filter((part) => part?.trim());
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
+function BusinessSectionCard({
+  icon: Icon,
+  title,
+  description,
+  children,
+  className,
+}: {
+  icon: typeof Store;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <article className={cn('rounded-xl border-2 border-gray-200 bg-white shadow-sm', className)}>
+      <div className="flex items-start gap-3 border-b border-gray-200 px-4 py-4 sm:px-5">
+        <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
+          <Icon className="h-5 w-5" aria-hidden />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+          {description ? <p className="mt-0.5 text-sm text-gray-500">{description}</p> : null}
+        </div>
+      </div>
+      <div className="p-4 sm:p-5">{children}</div>
+    </article>
+  );
+}
+
+function BusinessViewField({
+  label,
+  icon,
+  children,
+  className,
+}: {
+  label: string;
+  icon: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('rounded-lg border border-gray-200 bg-gray-50/80 px-4 py-3', className)}>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</dt>
+      <dd className="mt-2 flex items-start gap-2 text-sm font-medium text-gray-900">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white">
+          {icon}
+        </span>
+        <span className="min-w-0 break-words whitespace-pre-line">{children}</span>
+      </dd>
+    </div>
+  );
+}
 
 export default function BusinessSettingsForm() {
   const { data: business, isLoading, error } = useBusiness();
   const mutation = useUpdateBusiness();
+  const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [baseline, setBaseline] = useState<BusinessFormSnapshot>({
+    form: emptyForm,
+    localPhone: '',
+    countryCode: getDefaultCountryCode(),
+  });
   const [form, setForm] = useState<UpdateBusinessData>(emptyForm);
-  const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
-  const [phoneLocal, setPhoneLocal] = useState('');
-  const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
-  const [phoneSearch, setPhoneSearch] = useState('');
-  const phoneDropdownRef = useRef<HTMLDivElement>(null);
+  const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
+  const [localPhone, setLocalPhone] = useState('');
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySearch, setCurrencySearch] = useState('');
   const currencyRef = useRef<HTMLDivElement>(null);
 
-  const filteredCodes = countryCodes.filter((c) =>
-    c.name.toLowerCase().includes(phoneSearch.toLowerCase()) || c.dial_code.includes(phoneSearch) || c.code.toLowerCase().includes(phoneSearch)
-  );
+  const resetFromBusiness = useCallback((nextBusiness: NonNullable<typeof business>) => {
+    const snapshot = snapshotFromBusiness(nextBusiness);
+    setBaseline(snapshot);
+    setCountryCode(snapshot.countryCode);
+    setLocalPhone(snapshot.localPhone);
+    setForm(snapshot.form);
+  }, []);
+
+  useEffect(() => {
+    if (business) {
+      queueMicrotask(() => resetFromBusiness(business));
+    }
+  }, [business, resetFromBusiness]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (phoneDropdownRef.current && !phoneDropdownRef.current.contains(e.target as Node)) {
-        setPhoneDropdownOpen(false);
-      }
       if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) {
         setCurrencyOpen(false);
       }
@@ -51,286 +225,468 @@ export default function BusinessSettingsForm() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  useEffect(() => {
-    if (business) {
-      queueMicrotask(() => {
-        const rawPhone = business.phone ?? '';
-        const matched = countryCodes.find((c) => rawPhone.startsWith(c.dial_code));
-        if (matched) {
-          setPhoneCountryCode(matched);
-          setPhoneLocal(rawPhone.slice(matched.dial_code.length));
-        } else {
-          setPhoneLocal(rawPhone);
-        }
-        setForm({
-          name: business.name || '',
-          email: business.email ?? null,
-          phone: rawPhone,
-          website: business.website ?? null,
-          address: business.address ?? null,
-          city: business.city ?? null,
-          state: business.state ?? null,
-          postal_code: business.postal_code ?? null,
-          country: business.country ?? null,
-          tax_id: business.tax_id ?? null,
-          timezone: business.timezone ?? null,
-          business_type: business.business_type ?? null,
-          currency: business.currency ?? null,
-          receipt_footer: business.receipt_footer ?? null,
-        });
-      });
-    }
-  }, [business]);
+  const currentSnapshot = useMemo<BusinessFormSnapshot>(
+    () => ({ form, localPhone, countryCode }),
+    [countryCode, form, localPhone],
+  );
 
-  const updatePhone = (localDigits: string) => {
-    const sanitized = localDigits.replace(/[^\d\s\-()]/g, '');
-    setPhoneLocal(sanitized);
-    const full = sanitized ? `${phoneCountryCode.dial_code}${sanitized.replace(/\D/g, '')}` : '';
-    setForm((p) => ({ ...p, phone: full || null }));
+  const hasChanges = isEditing && !snapshotsEqual(currentSnapshot, baseline);
+  const canSave = hasChanges && (form.name?.trim().length ?? 0) > 0 && !isCompletelyOffline;
+
+  const update = <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) =>
+    setForm((prev) => ({ ...prev, [key]: val }));
+
+  const handleCancel = () => {
+    setCountryCode(baseline.countryCode);
+    setLocalPhone(baseline.localPhone);
+    setForm(baseline.form);
+    setIsEditing(false);
   };
-
-  const selectCountryCode = (cc: CountryCode) => {
-    setPhoneCountryCode(cc);
-    setPhoneDropdownOpen(false);
-    setPhoneSearch('');
-    if (phoneLocal) {
-      const full = `${cc.dial_code}${phoneLocal.replace(/\D/g, '')}`;
-      setForm((p) => ({ ...p, phone: full }));
-    }
-  };
-
-  const update = <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) => setForm((p) => ({ ...p, [key]: val }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(form);
+    if (!canSave) return;
+
+    const payload: UpdateBusinessData = {
+      ...form,
+      name: form.name?.trim() || '',
+      phone: buildInternationalPhone(countryCode, localPhone) ?? null,
+    };
+
+    mutation.mutate(payload, {
+      onSuccess: () => {
+        setIsEditing(false);
+      },
+    });
   };
 
   const hasPendingSync = Boolean(business?._pendingSync);
+  const locationLine = formatLocationLine(baseline.form);
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
 
   if (error) {
     return (
-      <EmptyState icon={<Building2 className="w-12 h-12" />} title="Failed to load business settings"
-        description={error?.message || 'An error occurred'} actionLabel="Retry" onAction={() => window.location.reload()} />
+      <EmptyState
+        icon={<Building2 className="w-12 h-12" />}
+        title="Failed to load business settings"
+        description={error?.message || 'An error occurred'}
+        actionLabel="Retry"
+        onAction={() => window.location.reload()}
+      />
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Business Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your business profile, currency, and receipt settings</p>
+    <form onSubmit={handleSubmit} className="relative w-full min-h-full space-y-6 pb-28">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
+            <Building2 className="h-7 w-7" aria-hidden />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Settings</p>
+            <h1 className="text-2xl font-bold text-gray-900">Business Profile</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage your business details, currency, and receipt settings
+            </p>
+          </div>
         </div>
-        <Button type="submit" loading={mutation.isPending}>
-          <Save className="w-4 h-4 mr-1.5" />Save Changes
-        </Button>
+        {!isEditing ? (
+          <Button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            disabled={isCompletelyOffline}
+            title={isCompletelyOffline ? 'Requires internet connection' : undefined}
+            className="shrink-0"
+          >
+            <Pencil className="mr-1.5 h-4 w-4" aria-hidden />
+            Edit business
+          </Button>
+        ) : (
+          <Badge variant="primary">Editing</Badge>
+        )}
       </div>
 
-      {hasPendingSync && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          These business settings are saved locally and will sync when the internet connection is restored.
+      {isCompletelyOffline && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <p>Business profile changes require an internet connection.</p>
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 overflow-visible">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
-          <Globe className="w-4 h-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-gray-800">Business Profile</h3>
+      {hasPendingSync && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          These business settings are saved locally and will sync when you are back online.
         </div>
-        <div className="p-4 space-y-4">
-          <div>
-            <label className={labelCls}>Business Name <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Store className={iconCls} />
-              <input className={inputCls} value={form.name || ''} onChange={(e) => update('name', e.target.value)} placeholder="Enter business name" required />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Email</label>
-              <div className="relative">
-                <Mail className={iconCls} />
-                <input className={inputCls} type="email" value={form.email || ''} onChange={(e) => update('email', e.target.value || null)} placeholder="business@example.com" />
+      )}
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="space-y-4 p-4 sm:p-6">
+          {!isEditing && (
+            <article className="rounded-xl border-2 border-blue-200 bg-blue-50/40 shadow-sm">
+              <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
+                <div className="mx-auto flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-white shadow-md sm:mx-0">
+                  <Store className="h-10 w-10 text-blue-600" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1 text-center sm:text-left">
+                  <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || 'Your business'}</h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {baseline.form.email || formatPhoneDisplay(baseline.form.phone) || 'No contact details yet'}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                    {baseline.form.business_type ? (
+                      <Badge variant="primary">{formatBusinessType(baseline.form.business_type)}</Badge>
+                    ) : null}
+                    {baseline.form.currency ? (
+                      <Badge variant="neutral">
+                        <Coins className="mr-1 inline h-3 w-3" aria-hidden />
+                        {baseline.form.currency}
+                      </Badge>
+                    ) : null}
+                    {locationLine ? (
+                      <Badge variant="neutral">
+                        <MapPin className="mr-1 inline h-3 w-3" aria-hidden />
+                        {locationLine}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className={labelCls}>Phone</label>
-              <div className="flex gap-2">
-                <div ref={phoneDropdownRef} className="relative shrink-0">
-                  <button type="button" onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)}
-                    className="flex items-center gap-1 h-9 px-2.5 border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors cursor-pointer">
-                    <span className="text-base">{phoneCountryCode.flag}</span>
-                    <span className="text-xs font-medium text-gray-700">{phoneCountryCode.dial_code}</span>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
-                  </button>
-                  {phoneDropdownOpen && (
-                    <div className="absolute top-full mt-1 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-52 overflow-y-auto">
-                      <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
-                        <input type="text" placeholder="Search..." value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
-                          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+            </article>
+          )}
+
+          <BusinessSectionCard
+            icon={Globe}
+            title="Business profile"
+            description="Public-facing business name and contact details."
+          >
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>
+                    Business name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Store className={iconClass} aria-hidden />
+                    <input
+                      className={inputClass}
+                      value={form.name || ''}
+                      onChange={(e) => update('name', e.target.value)}
+                      placeholder="Enter business name"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Email</label>
+                    <div className="relative">
+                      <Mail className={iconClass} aria-hidden />
+                      <input
+                        className={inputClass}
+                        type="email"
+                        value={form.email || ''}
+                        onChange={(e) => update('email', e.target.value || null)}
+                        placeholder="business@example.com"
+                      />
+                    </div>
+                  </div>
+                  <PhoneNumberField
+                    label="Phone"
+                    countryCode={countryCode}
+                    onCountryCodeChange={setCountryCode}
+                    value={localPhone}
+                    onChange={setLocalPhone}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Website</label>
+                  <div className="relative">
+                    <Globe2 className={iconClass} aria-hidden />
+                    <input
+                      className={inputClass}
+                      type="url"
+                      value={form.website || ''}
+                      onChange={(e) => update('website', e.target.value || null)}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <BusinessViewField label="Business name" icon={<Store className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.name || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.email || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
+                  {formatPhoneDisplay(baseline.form.phone)}
+                </BusinessViewField>
+                <BusinessViewField label="Website" icon={<Globe2 className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.website || '—'}
+                </BusinessViewField>
+              </div>
+            )}
+          </BusinessSectionCard>
+
+          <BusinessSectionCard
+            icon={MapPin}
+            title="Location & details"
+            description="Address, tax information, timezone, and currency."
+          >
+            {isEditing ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Address</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" aria-hidden />
+                      <textarea
+                        className={`${inputClass} resize-none pl-10`}
+                        rows={3}
+                        value={form.address || ''}
+                        onChange={(e) => update('address', e.target.value || null)}
+                        placeholder="Street address"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className={labelClass}>City</label>
+                      <div className="relative">
+                        <Building className={iconClass} aria-hidden />
+                        <input
+                          className={inputClass}
+                          value={form.city || ''}
+                          onChange={(e) => update('city', e.target.value || null)}
+                          placeholder="Kampala"
+                        />
                       </div>
-                      {filteredCodes.map((c) => (
-                        <button key={c.code} type="button" onClick={() => selectCountryCode(c)}
-                          className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-blue-50 transition-colors cursor-pointer ${c.code === phoneCountryCode.code ? 'bg-blue-50 font-medium' : ''}`}>
-                          <span className="text-base">{c.flag}</span>
-                          <span className="text-gray-800">{c.name}</span>
-                          <span className="ml-auto text-gray-400">{c.dial_code}</span>
-                        </button>
-                      ))}
                     </div>
-                  )}
-                </div>
-                <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                  <input type="tel" placeholder="eg 734 123 456" value={phoneLocal}
-                    onChange={(e) => updatePhone(e.target.value)}
-                    className={inputCls + ' pl-9'} />
-                </div>
-              </div>
-              {phoneLocal && (
-                <p className="text-xs text-gray-400 mt-1">Full number: {phoneCountryCode.dial_code} {phoneLocal}</p>
-              )}
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Website</label>
-            <div className="relative">
-              <Globe2 className={iconCls} />
-              <input className={inputCls} type="url" value={form.website || ''} onChange={(e) => update('website', e.target.value || null)} placeholder="https://example.com" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 overflow-visible">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-gray-800">Business Details</h3>
-        </div>
-        <div className="p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Address</label>
-              <div className="relative">
-                <MapPin className={iconCls} />
-                <textarea className={`${inputCls} resize-none pl-9`} rows={2} value={form.address || ''} onChange={(e) => update('address', e.target.value || null)} placeholder="Street address" />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>City</label>
-                <div className="relative">
-                  <Building className={iconCls} />
-                  <input className={inputCls} value={form.city || ''} onChange={(e) => update('city', e.target.value || null)} placeholder="Kampala" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>State</label>
-                  <div className="relative">
-                    <MapPinned className={iconCls} />
-                    <input className={inputCls} value={form.state || ''} onChange={(e) => update('state', e.target.value || null)} placeholder="Central" />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className={labelClass}>State / region</label>
+                        <div className="relative">
+                          <MapPinned className={iconClass} aria-hidden />
+                          <input
+                            className={inputClass}
+                            value={form.state || ''}
+                            onChange={(e) => update('state', e.target.value || null)}
+                            placeholder="Central"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={labelClass}>Postal code</label>
+                        <div className="relative">
+                          <Hash className={iconClass} aria-hidden />
+                          <input
+                            className={inputClass}
+                            value={form.postal_code || ''}
+                            onChange={(e) => update('postal_code', e.target.value || null)}
+                            placeholder="00100"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Country</label>
+                      <div className="relative">
+                        <Globe className={iconClass} aria-hidden />
+                        <input
+                          className={inputClass}
+                          value={form.country || ''}
+                          onChange={(e) => update('country', e.target.value || null)}
+                          placeholder="Uganda"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className={labelCls}>Postal Code</label>
-                  <div className="relative">
-                    <Hash className={iconCls} />
-                    <input className={inputCls} value={form.postal_code || ''} onChange={(e) => update('postal_code', e.target.value || null)} placeholder="+256" />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Tax / VAT ID</label>
+                    <div className="relative">
+                      <Tag className={iconClass} aria-hidden />
+                      <input
+                        className={inputClass}
+                        value={form.tax_id || ''}
+                        onChange={(e) => update('tax_id', e.target.value || null)}
+                        placeholder="Tax registration number"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Business type</label>
+                    <div className="relative">
+                      <Building2 className={iconClass} aria-hidden />
+                      <select
+                        className={selectClass}
+                        value={form.business_type || ''}
+                        onChange={(e) => update('business_type', e.target.value || null)}
+                        title="Business type"
+                      >
+                        <option value="">Select business type</option>
+                        {Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div>
-                <label className={labelCls}>Country</label>
-                <div className="relative">
-                  <Globe className={iconCls} />
-                  <input className={inputCls} value={form.country || ''} onChange={(e) => update('country', e.target.value || null)} placeholder="Uganda" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Tax / VAT ID</label>
-              <div className="relative">
-                <Tag className={iconCls} />
-                <input className={inputCls} value={form.tax_id || ''} onChange={(e) => update('tax_id', e.target.value || null)} placeholder="Tax registration number" />
-              </div>
-            </div>
-            <div>
-              <label className={labelCls}>Business Type</label>
-              <div className="relative">
-                <Building2 className={iconCls} />
-                <select className={selectCls} value={form.business_type || ''} onChange={(e) => update('business_type', e.target.value || null)} title="Business type">
-                  <option value="">Select business type</option>
-                  <option value="retail">Retail</option>
-                  <option value="wholesale">Wholesale</option>
-                  <option value="restaurant">Restaurant</option>
-                  <option value="cafe">Café</option>
-                  <option value="service">Service</option>
-                  <option value="salon">Salon</option>
-                  <option value="pharmacy">Pharmacy</option>
-                  <option value="grocery">Grocery</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Timezone</label>
-              <div className="relative">
-                <Clock className={iconCls} />
-                <input className={inputCls} value={form.timezone || ''} onChange={(e) => update('timezone', e.target.value || null)} placeholder="Africa/Kampala" />
-              </div>
-            </div>
-            <div ref={currencyRef}>
-              <label className={labelCls}>Currency</label>
-              <div className="relative">
-                <Coins className={iconCls} />
-                <button type="button" onClick={() => setCurrencyOpen(!currencyOpen)}
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm text-left bg-white hover:border-gray-400 transition-colors cursor-pointer flex items-center justify-between">
-                  <span className={form.currency ? 'text-gray-900' : 'text-gray-400'}>{form.currency ? `${CURRENCIES.find((c) => c.code === form.currency)?.code || form.currency} — ${CURRENCIES.find((c) => c.code === form.currency)?.symbol || ''} — ${CURRENCIES.find((c) => c.code === form.currency)?.name || form.currency}` : 'Select currency'}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                </button>
-                {currencyOpen && (
-                  <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-                    <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
-                      <input type="text" placeholder="Search currency..." value={currencySearch} onChange={(e) => setCurrencySearch(e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Timezone</label>
+                    <div className="relative">
+                      <Clock className={iconClass} aria-hidden />
+                      <input
+                        className={inputClass}
+                        value={form.timezone || ''}
+                        onChange={(e) => update('timezone', e.target.value || null)}
+                        placeholder="Africa/Kampala"
+                      />
                     </div>
-                    {CURRENCIES.filter((c) => c.code.toLowerCase().includes(currencySearch.toLowerCase()) || c.name.toLowerCase().includes(currencySearch.toLowerCase())).map((c) => (
-                      <button key={c.code} type="button" onClick={() => { update('currency', c.code); setCurrencyOpen(false); setCurrencySearch(''); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-blue-50 transition-colors cursor-pointer ${form.currency === c.code ? 'bg-blue-50 font-medium' : ''}`}>
-                        <span className="text-gray-800">{c.code}</span>
-                        <span className="text-gray-400">{c.symbol}</span>
-                        <span className="text-gray-500 ml-auto truncate">{c.name}</span>
+                  </div>
+                  <div ref={currencyRef}>
+                    <label className={labelClass}>Currency</label>
+                    <div className="relative">
+                      <Coins className={iconClass} aria-hidden />
+                      <button
+                        type="button"
+                        onClick={() => setCurrencyOpen((open) => !open)}
+                        className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-left text-sm transition-colors hover:border-gray-400"
+                      >
+                        <span className={form.currency ? 'text-gray-900' : 'text-gray-400'}>
+                          {form.currency ? formatCurrencyLabel(form.currency) : 'Select currency'}
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
                       </button>
-                    ))}
+                      {currencyOpen && (
+                        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                          <div className="sticky top-0 border-b border-gray-100 bg-white p-2">
+                            <input
+                              type="text"
+                              placeholder="Search currency..."
+                              value={currencySearch}
+                              onChange={(e) => setCurrencySearch(e.target.value)}
+                              className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              autoFocus
+                            />
+                          </div>
+                          {CURRENCIES.filter(
+                            (c) =>
+                              c.code.toLowerCase().includes(currencySearch.toLowerCase())
+                              || c.name.toLowerCase().includes(currencySearch.toLowerCase()),
+                          ).map((c) => (
+                            <button
+                              key={c.code}
+                              type="button"
+                              onClick={() => {
+                                update('currency', c.code);
+                                setCurrencyOpen(false);
+                                setCurrencySearch('');
+                              }}
+                              className={cn(
+                                'flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-blue-50',
+                                form.currency === c.code && 'bg-blue-50 font-medium',
+                              )}
+                            >
+                              <span className="text-gray-800">{c.code}</span>
+                              <span className="text-gray-400">{c.symbol}</span>
+                              <span className="ml-auto truncate text-gray-500">{c.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <BusinessViewField
+                  label="Address"
+                  icon={<MapPin className="h-4 w-4 text-blue-600" />}
+                  className="md:col-span-2"
+                >
+                  {baseline.form.address || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="City" icon={<Building className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.city || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="State / region" icon={<MapPinned className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.state || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Postal code" icon={<Hash className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.postal_code || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Country" icon={<Globe className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.country || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Tax / VAT ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.tax_id || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Business type" icon={<Building2 className="h-4 w-4 text-blue-600" />}>
+                  {formatBusinessType(baseline.form.business_type)}
+                </BusinessViewField>
+                <BusinessViewField label="Timezone" icon={<Clock className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.timezone || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Currency" icon={<Coins className="h-4 w-4 text-blue-600" />}>
+                  {formatCurrencyLabel(baseline.form.currency)}
+                </BusinessViewField>
+              </div>
+            )}
+          </BusinessSectionCard>
+
+          <BusinessSectionCard
+            icon={Receipt}
+            title="Receipt settings"
+            description="Footer text printed on customer receipts."
+          >
+            {isEditing ? (
+              <div>
+                <label className={labelClass}>Receipt footer</label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" aria-hidden />
+                  <textarea
+                    className={`${inputClass} resize-none pl-10`}
+                    rows={4}
+                    value={form.receipt_footer || ''}
+                    onChange={(e) => update('receipt_footer', e.target.value || null)}
+                    placeholder="Thank you for your business!"
+                  />
+                </div>
+              </div>
+            ) : (
+              <BusinessViewField label="Receipt footer" icon={<FileText className="h-4 w-4 text-blue-600" />}>
+                {baseline.form.receipt_footer || '—'}
+              </BusinessViewField>
+            )}
+          </BusinessSectionCard>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 overflow-visible">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
-          <Receipt className="w-4 h-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-gray-800">Receipt Settings</h3>
-        </div>
-        <div className="p-4">
-          <label className={labelCls}>Receipt Footer</label>
-          <div className="relative">
-            <FileText className="absolute left-3 top-3 text-gray-400 w-4 h-4 pointer-events-none" />
-            <textarea className={`${inputCls} resize-none pl-9`} rows={4} value={form.receipt_footer || ''} onChange={(e) => update('receipt_footer', e.target.value || null)} placeholder="Thank you for your business!" />
+      {isEditing && (
+        <div className="sticky bottom-0 z-20 -mx-4 border-t-2 border-gray-200 bg-white/95 px-4 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-gray-600">
+              {hasChanges ? 'You have unsaved changes' : 'Update your business details, then save'}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={mutation.isPending}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={mutation.isPending} disabled={!canSave}>
+                Save changes
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </form>
   );
 }

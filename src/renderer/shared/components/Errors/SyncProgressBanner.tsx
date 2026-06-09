@@ -241,7 +241,7 @@ function DismissButton({
   );
 }
 
-/** Matches header network status chip styling (Layout.tsx). */
+/** Compact sync indicator for Navbar — icon only on xs, percent from sm up. */
 export function SyncHeaderChip() {
   const sync = useAppSelector((state) => state.sync);
   const isActive = sync.status === 'running' || sync.status === 'paused';
@@ -255,17 +255,17 @@ export function SyncHeaderChip() {
   return (
     <span
       className={cn(
-        'flex items-center gap-1.5 text-xs font-medium shrink-0',
+        'inline-flex items-center justify-center gap-1 h-8 w-8 sm:w-auto sm:h-auto sm:gap-1.5 text-xs font-medium shrink-0',
         isPaused ? 'text-amber-600' : 'text-blue-600',
       )}
-      title={`Syncing ${processed} of ${total}`}
+      title={`Syncing ${processed} of ${total} — ${percent}%`}
     >
       {isPaused ? (
         <PauseCircle className="w-3.5 h-3.5" aria-hidden />
       ) : (
         <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden />
       )}
-      <span className="tabular-nums">{percent}%</span>
+      <span className="tabular-nums hidden sm:inline">{percent}%</span>
     </span>
   );
 }

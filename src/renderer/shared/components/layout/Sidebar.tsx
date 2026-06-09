@@ -17,6 +17,8 @@ import { selectShowOfflineBanner } from '../../../app/store/slices/networkSlice'
 import LogoImage from '../../assets/LogoImage';
 import { getUserFirstName } from '../../utils/userDisplayName';
 import { canAccessModule, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
+import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
+import { cn } from '../../utils/cn';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -222,7 +224,13 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0 flex flex-col`}
     >
-      <div className={`border-b border-gray-200 flex items-center gap-2.5 ${collapsed ? 'justify-center py-4' : 'px-6 py-4'}`}>
+      <div
+        className={cn(
+          'shrink-0 border-b border-gray-200 flex items-center gap-2.5',
+          SHELL_HEADER_HEIGHT_CLASS,
+          collapsed ? 'justify-center px-2' : 'px-6',
+        )}
+      >
         <LogoImage size="sm" />
         {!collapsed && (
           <div className="flex items-baseline gap-2">

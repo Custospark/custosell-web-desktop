@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import type { Sale } from './api/salesTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
@@ -14,9 +14,76 @@ import PrintableReceipt from './ui/PrintableReceipt';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { cn } from '../../shared/utils/cn';
 import { Button } from '../../shared/components/buttons/Button';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
+
+const PRODUCT_SEARCH_SUGGESTIONS = [
+  {
+    icon: SlidersHorizontal,
+    title: 'Adjust your search',
+    description: 'Try fewer characters or a different spelling',
+  },
+  {
+    icon: PackagePlus,
+    title: 'Consider adding the product to stock',
+    description: 'Ask someone with inventory access if the item should be stocked',
+  },
+] as const;
+
+function ProductSearchEmptyState({
+  searchQuery,
+  onReload,
+  isReloading,
+}: {
+  searchQuery: string;
+  onReload: () => void;
+  isReloading: boolean;
+}) {
+  return (
+    <div className="p-4">
+      <div className="text-center mb-4">
+        <Package className="w-8 h-8 mx-auto text-gray-300 mb-2" aria-hidden />
+        <p className="text-sm font-medium text-gray-700">No products found</p>
+        <p className="text-xs text-gray-400 mt-0.5 truncate px-2" title={searchQuery}>
+          Nothing matched &ldquo;{searchQuery}&rdquo;
+        </p>
+      </div>
+
+      <Button
+        variant="primary"
+        size="sm"
+        className="w-full"
+        disabled={isReloading}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => void onReload()}
+      >
+        <RefreshCw className={cn('w-4 h-4', isReloading && 'animate-spin')} aria-hidden />
+        {isReloading ? 'Reloading…' : 'Reload products'}
+      </Button>
+
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mt-4 mb-2 px-0.5">Suggestions</p>
+      <ul className="space-y-1">
+        {PRODUCT_SEARCH_SUGGESTIONS.map(({ icon: Icon, title, description }) => (
+          <li
+            key={title}
+            className="flex items-start gap-3 rounded-lg p-2.5 text-left bg-gray-50/80"
+          >
+            <span className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 shrink-0">
+              <Icon className="w-4 h-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm text-gray-700">{title}</span>
+              <span className="block text-xs text-gray-500">{description}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ============================================================
 // BILLING CONTROLS COMPONENT (Right Column)
 // ============================================================
@@ -269,7 +336,7 @@ export default function NewSale() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const heldOrders = useAppSelector((s) => s.sales.heldOrders);
-  const { data: products } = useProducts();
+  const { data: products, refetch: refetchProducts, isFetching: isProductsFetching } = useProducts();
   const { confirm } = useConfirm();
 
   // Search State
@@ -435,7 +502,11 @@ export default function NewSale() {
                           </tbody>
                         </table>
                       ) : (
-                        <div className="p-6 text-center text-sm text-gray-400">No products found</div>
+                        <ProductSearchEmptyState
+                          searchQuery={search.trim()}
+                          isReloading={isProductsFetching}
+                          onReload={() => void refetchProducts()}
+                        />
                       )}
                     </div>
                   </div>

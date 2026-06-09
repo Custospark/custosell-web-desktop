@@ -1,5 +1,4 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { ROUTES } from './constants/shared.paths';
 import { useAppSelector } from '../store/hooks/useApp';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';

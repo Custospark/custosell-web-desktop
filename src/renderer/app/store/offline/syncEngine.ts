@@ -21,9 +21,10 @@ import { isAuthMutation } from './syncAuthEngine';
 import { processSalesInChunks } from './syncSalesBatch';
 import type { SyncProgressReporter } from './syncProgressReporter';
 import { AuthSyncPauseError, extractErrorMessage, isAuthHttpError } from './syncErrorUtils';
-import type { Expense, ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
+import type { ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
 import type { Business } from '../../../modules/settings/api/settings/BusinessTypes';
 import type { Role } from '../../../modules/settings/api/settings/RoleTypes';
+import type { StaffUser } from '../../../modules/settings/api/settings/StaffTypes';
 import { commitMutationQueueEntry } from './syncMutationFinalize';
 
 function getRefundSaleId(m: QueuedMutation): number | null {
@@ -163,29 +164,11 @@ function extractExpenseCategory(responseData: unknown): ExpenseCategory | null {
   return null;
 }
 
-function extractExpense(responseData: unknown): Expense | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: Expense };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as Expense;
-  if ('id' in direct) return direct;
-  return null;
-}
-
 function extractRole(responseData: unknown): Role | null {
   if (!responseData || typeof responseData !== 'object') return null;
   const wrapped = responseData as { data?: Role };
   if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
   const direct = responseData as Role;
-  if ('id' in direct) return direct;
-  return null;
-}
-
-function extractStaff(responseData: unknown): StaffUser | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: StaffUser };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as StaffUser;
   if ('id' in direct) return direct;
   return null;
 }

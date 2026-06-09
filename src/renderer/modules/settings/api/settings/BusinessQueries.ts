@@ -24,14 +24,14 @@ export const businessKeys = {
 function businessFromAuth(): Business | null {
   const authUser = store.getState().auth.user;
   const business = authUser?.business;
-  if (!business) return null;
+  if (!authUser || !business) return null;
 
   return {
-    owner_id: authUser.id,
     created_at: '',
     updated_at: '',
     trial_ends_at: null,
     ...business,
+    owner_id: business.owner_id ?? authUser.id,
   };
 }
 

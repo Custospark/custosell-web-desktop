@@ -1,7 +1,6 @@
 import { Provider } from 'react-redux';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import type { PersistedClient } from '@tanstack/react-query-persist-client';
 import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { store } from './app/store/store';
 import { queryClient } from './app/api/axiosConfig';

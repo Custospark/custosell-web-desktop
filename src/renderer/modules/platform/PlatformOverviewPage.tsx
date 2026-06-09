@@ -3,7 +3,7 @@ import { GrossIncomeDistributionPanel, PlatformActivityPieChart, PlatformActivit
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { Badge } from '../../shared/components/badges/Badge';
-import { Building2, Users, Activity, Ban, TrendingUp, DollarSign } from 'lucide-react';
+import { Building2, Users, Activity, TrendingUp, DollarSign } from 'lucide-react';
 import type { ActivityStatus } from './api/PlatformTypes';
 
 const cardStyles = {

@@ -34,7 +34,7 @@ import { PlatformBusinessStatusModal } from './components/PlatformBusinessStatus
 import { PlatformBusinessNotificationModal } from './components/PlatformBusinessNotificationModal';
 import { PlatformBusinessDeleteModal } from './components/PlatformBusinessDeleteModal';
 import {
-  Building2, Ban, TrendingUp, Calendar, Users, DollarSign, Receipt, AlertTriangle,
+  Building2, Ban, TrendingUp, Calendar, DollarSign, Receipt, AlertTriangle,
   Mail, Shield, Trash2, CheckSquare, Square,
 } from 'lucide-react';
 
@@ -85,10 +85,10 @@ export default function PlatformBusinessesPage() {
     [dateFrom, dateTo],
   );
 
-  const statsParams = useMemo(
-    () => (dateValidation.valid ? { date_from: dateFrom, date_to: dateTo } : {}),
-    [dateFrom, dateTo, dateValidation.valid],
-  );
+  const statsParams = useMemo((): Record<string, string> => {
+    if (!dateValidation.valid) return {};
+    return { date_from: dateFrom, date_to: dateTo };
+  }, [dateFrom, dateTo, dateValidation.valid]);
 
   const listParams = useMemo(() => ({
     sort: 'gross_sales_30d',

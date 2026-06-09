@@ -22,6 +22,7 @@ function slugifyBusinessName(name: string): string {
 export function buildOfflineBusinessInfo(
   payload: BusinessRegisterRequest,
   localBusinessId: number,
+  localUserId: number,
 ): BusinessInfo {
   return {
     id: localBusinessId,
@@ -51,7 +52,7 @@ export function buildOfflineAuthUser(
   localBusinessId: number,
   localUserId: number,
 ): AuthUser {
-  const business = buildOfflineBusinessInfo(payload, localBusinessId);
+  const business = buildOfflineBusinessInfo(payload, localBusinessId, localUserId);
   return {
     id: localUserId,
     business_id: localBusinessId,

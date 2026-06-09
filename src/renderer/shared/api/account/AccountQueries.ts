@@ -9,7 +9,6 @@ import {
 } from '../../../app/store/slices/authSlice';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import type {
   LoginRequest,

@@ -23,14 +23,6 @@ function clearLegacyLocalStorage(): void {
   }
 }
 
-function markLogoutIntent(): void {
-  try {
-    sessionStorage.setItem(LOGOUT_INTENT_KEY, '1');
-  } catch {
-    /* ignore */
-  }
-}
-
 export function consumeLogoutIntent(): boolean {
   try {
     const pending = sessionStorage.getItem(LOGOUT_INTENT_KEY) === '1';

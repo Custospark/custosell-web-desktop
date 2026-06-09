@@ -10,6 +10,7 @@ import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from './
 import { localBusinessSettingsStore, type BusinessWithSyncMeta } from './localBusinessSettingsStore';
 import type { Business, UpdateBusinessData } from '../../../modules/settings/api/settings/BusinessTypes';
 import type { CreateRoleData, Role, UpdateRoleData } from '../../../modules/settings/api/settings/RoleTypes';
+import { rolePermissionKeys } from '../../../modules/settings/api/settings/RoleTypes';
 import type { CreateStaffData, StaffUser, UpdateStaffData } from '../../../modules/settings/api/settings/StaffTypes';
 import { USERS } from '../../../shared/api/endpoints/endpoints';
 
@@ -134,6 +135,7 @@ export async function completeOfflineUpdatePendingRoleInstant(
     is_default: payload.is_default ?? existing.is_default,
     updated_at: new Date().toISOString(),
   };
+  const permissionKeys = rolePermissionKeys(updated.permissions);
   const nextPayload: CreateRoleData | UpdateRoleData =
     record.mutationType === 'create'
       ? {
@@ -141,10 +143,10 @@ export async function completeOfflineUpdatePendingRoleInstant(
           name: updated.name,
           slug: updated.slug,
           description: updated.description,
-          permissions: updated.permissions,
+          permissions: permissionKeys,
           is_default: updated.is_default,
         }
-      : { ...(record.payload as UpdateRoleData), ...payload };
+      : { ...(record.payload as UpdateRoleData), ...payload, permissions: payload.permissions ? permissionKeys : undefined };
 
   await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
   const updatedRecord = await localRolesStore.updatePendingRecord(record.localId, updated, nextPayload);

@@ -1,3 +1,7 @@
+import type { NotificationChannel } from '../../notifications/api/NotificationTypes';
+
+export type { NotificationChannel };
+
 export type ActivityStatus = 'active' | 'dormant' | 'churned' | 'never_used' | 'suspended';
 
 export type BusinessAccountStatus = 'active' | 'warning' | 'restricted' | 'suspended' | 'notified';
@@ -205,3 +209,49 @@ export interface PlatformRole {
   name: string;
   permissions: string[];
 }
+
+export type PlatformDispatchType = 'message' | 'status_change';
+export type PlatformDispatchTargetKind = 'user' | 'business';
+
+export interface PlatformDispatchActor {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface PlatformDispatchRecipient {
+  type: PlatformDispatchTargetKind;
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  business_id?: number | null;
+  business_name?: string | null;
+  owner_name?: string | null;
+  owner_email?: string | null;
+  in_app_recipient_count?: number | null;
+}
+
+export interface PlatformNotificationDispatchListItem {
+  id: number;
+  dispatch_type: PlatformDispatchType;
+  target_kind: PlatformDispatchTargetKind;
+  intention: string | null;
+  subject: string | null;
+  message_preview: string;
+  channel: NotificationChannel;
+  status_from: string | null;
+  status_to: string | null;
+  mark_as_notified: boolean;
+  recipient_count: number;
+  recipient_summary: string;
+  actor: PlatformDispatchActor | null;
+  sent_at: string | null;
+  created_at: string | null;
+}
+
+export interface PlatformNotificationDispatchDetail extends PlatformNotificationDispatchListItem {
+  message: string;
+  recipients: PlatformDispatchRecipient[];
+  metadata: Record<string, unknown> | null;
+}
+

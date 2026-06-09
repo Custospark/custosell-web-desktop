@@ -11,17 +11,14 @@ import {
   useUpdatePlatformUserStatus,
 } from './api/PlatformQueries';
 import {
-  LOGIN_ACTIVITY_LABELS,
   STATUS_DURATION_DAYS,
   USER_ACCOUNT_STATUSES,
   USER_STATUS_LABELS,
   computePlatformUserStatsFromList,
   formatUserLoginRecency,
-  loginActivityBadge,
   matchesStatusDurationFilter,
   resolveUserLoginActivity,
   resolveUserStatus,
-  userAccountStatusBadge,
   validateUserStatsDateRange,
 } from './api/platformUserValidation';
 import type { PlatformUser, UserAccountStatus, UserLoginActivity } from './api/PlatformTypes';
@@ -37,6 +34,9 @@ import { PlatformUserStatusModal } from './components/PlatformUserStatusModal';
 import { PlatformUserNotificationModal } from './components/PlatformUserNotificationModal';
 import { PlatformUserDeleteModal } from './components/PlatformUserDeleteModal';
 import { PlatformUserRoleModal } from './components/PlatformUserRoleModal';
+import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
+import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
+import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 import {
   Users, UserX, TrendingUp, Calendar, Building2, Shield, Mail, AlertTriangle,
   LogIn, CheckSquare, Square, UserCog, Trash2,
@@ -453,28 +453,33 @@ export default function PlatformUsersPage() {
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
               {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
             </button>
-            {selectedIds.size > 0 && (
-              <>
-                <span className="text-gray-300">|</span>
-                <Button variant="secondary" size="sm" onClick={() => setNotifyTargets(selectedUsers)} disabled={actionPending}>
-                  <Mail className="w-3.5 h-3.5 mr-1" />Notify ({selectedIds.size})
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => setStatusTargets(selectedUsers)} disabled={actionPending}>
-                  <Shield className="w-3.5 h-3.5 mr-1" />Status ({selectedIds.size})
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => setRoleTargets(selectedUsers)} disabled={actionPending}>
-                  <UserCog className="w-3.5 h-3.5 mr-1" />Roles ({selectedIds.size})
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => setDeleteTargets(selectedUsers)} disabled={actionPending}>
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />Delete ({selectedIds.size})
-                </Button>
-              </>
-            )}
             <Button variant="secondary" size="sm" onClick={() => setRoleTargets([])} disabled={actionPending}>
               <UserCog className="w-3.5 h-3.5 mr-1" />Assign by email
             </Button>
           </div>
         </div>
+
+        <PlatformBulkActionBar
+          count={selectedIds.size}
+          onClearSelection={() => setSelectedIds(new Set())}
+        >
+          <Button variant="secondary" size="sm" onClick={() => setNotifyTargets(selectedUsers)} disabled={actionPending}>
+            <Mail className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Notify
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setStatusTargets(selectedUsers)} disabled={actionPending}>
+            <Shield className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Change status
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setRoleTargets(selectedUsers)} disabled={actionPending}>
+            <UserCog className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Assign roles
+          </Button>
+          <Button variant="danger" size="sm" onClick={() => setDeleteTargets(selectedUsers)} disabled={actionPending}>
+            <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Delete
+          </Button>
+        </PlatformBulkActionBar>
 
         {listLoading ? (
           <LoadingSkeleton variant="table" />
@@ -519,7 +524,7 @@ export default function PlatformUsersPage() {
                   const days = daysInStatus(u);
                   return (
                     <div>
-                      <Badge variant={userAccountStatusBadge(status)}>{USER_STATUS_LABELS[status]}</Badge>
+                      <PlatformAccountStatusBadge status={status} />
                       {days !== null && (
                         <p className="text-xs text-gray-400 mt-0.5">{days}d in status</p>
                       )}
@@ -530,7 +535,7 @@ export default function PlatformUsersPage() {
                   const activity = resolveUserLoginActivity(u);
                   return (
                     <div>
-                      <Badge variant={loginActivityBadge[activity]}>{LOGIN_ACTIVITY_LABELS[activity]}</Badge>
+                      <PlatformActivityStatusBadge status={activity} />
                       <p className="text-xs text-gray-400 mt-0.5">{formatUserLoginRecency(u)}</p>
                     </div>
                   );

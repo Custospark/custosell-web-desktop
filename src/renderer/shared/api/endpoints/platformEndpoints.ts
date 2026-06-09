@@ -1,6 +1,9 @@
 export const PLATFORM = {
   OVERVIEW: '/platform/overview',
   METRICS: '/platform/metrics',
+  NOTIFICATION_DISPATCHES: '/platform/notification-dispatches',
+  NOTIFICATION_DISPATCH: (id: number) => `/platform/notification-dispatches/${id}`,
+  NOTIFICATION_DISPATCHES_BULK_DELETE: '/platform/notification-dispatches/bulk-delete',
   BUSINESSES: '/platform/businesses',
   BUSINESS_STATS: '/platform/businesses/stats',
   BUSINESS_STATUS: (id: number) => `/platform/businesses/${id}/status`,

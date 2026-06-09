@@ -229,3 +229,17 @@ export function useBulkDeletePlatformGuideFeedback() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
   });
 }
+
+export function useBulkUpdatePlatformGuideFeedback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, status }: { ids: number[]; status: GuideFeedbackStatus }) => {
+      await Promise.all(
+        ids.map((id) =>
+          axiosInstance.patch(PLATFORM.GUIDE.FEEDBACK_ITEM(id), { status }),
+        ),
+      );
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
+  });
+}

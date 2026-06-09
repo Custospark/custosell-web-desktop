@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckSquare, Loader2, MessageSquareHeart, RefreshCw, Search, Square, Trash2 } from 'lucide-react';
+import { CheckSquare, Loader2, MessageSquareHeart, RefreshCw, Search, Square, Trash2, Tag } from 'lucide-react';
 import { imperativeToast } from '../../app/contexts/imperativeToast';
 import { Button } from '../../shared/components/buttons/Button';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
@@ -10,6 +10,7 @@ import {
 } from '../guide/components/GuideFeedbackStatusBadge';
 import {
   useBulkDeletePlatformGuideFeedback,
+  useBulkUpdatePlatformGuideFeedback,
   useDeletePlatformGuideFeedback,
   usePlatformGuideFeedbackDetail,
   usePlatformGuideFeedbackList,
@@ -17,6 +18,7 @@ import {
 } from './api/PlatformGuideQueries';
 import { cn } from '../../shared/utils/cn';
 import { inputClass, selectClass, textareaClass } from '../../shared/utils/inputStyles';
+import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 
 const STATUSES: GuideFeedbackStatus[] = ['submitted', 'acknowledged', 'in_progress', 'resolved', 'closed'];
 
@@ -28,6 +30,7 @@ export default function PlatformGuideFeedbackPage() {
   const [appliedQ, setAppliedQ] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<GuideFeedbackStatus>('acknowledged');
 
   const filters = useMemo(
     () => ({
@@ -43,11 +46,13 @@ export default function PlatformGuideFeedbackPage() {
   const updateMut = useUpdatePlatformGuideFeedback();
   const deleteMut = useDeletePlatformGuideFeedback();
   const bulkDeleteMut = useBulkDeletePlatformGuideFeedback();
+  const bulkUpdateMut = useBulkUpdatePlatformGuideFeedback();
   const detail = detailQuery.data;
 
   const rowIds = useMemo(() => rows.map((row) => row.id), [rows]);
   const allSelected = rowIds.length > 0 && rowIds.every((id) => selectedIds.has(id));
   const deletePending = deleteMut.isPending || bulkDeleteMut.isPending;
+  const bulkPending = deletePending || bulkUpdateMut.isPending;
 
   const toggleAll = useCallback(() => {
     if (allSelected) setSelectedIds(new Set());
@@ -92,6 +97,17 @@ export default function PlatformGuideFeedbackPage() {
     },
     [bulkDeleteMut, confirm, deleteMut, selectedId],
   );
+
+  const handleBulkStatusUpdate = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    try {
+      await bulkUpdateMut.mutateAsync({ ids, status: bulkStatus });
+      imperativeToast.show('success', `Updated status for ${ids.length} submission(s).`);
+    } catch {
+      imperativeToast.show('error', 'Could not update status.');
+    }
+  }, [bulkStatus, bulkUpdateMut, selectedIds]);
 
   const [statusDraft, setStatusDraft] = useState<GuideFeedbackStatus>('submitted');
   const [staffReply, setStaffReply] = useState('');
@@ -184,7 +200,7 @@ export default function PlatformGuideFeedbackPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-200 bg-white">
           {!isLoading && !isError && rows.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-4 py-2">
+            <div className="border-b border-gray-100 px-4 py-2">
               <button
                 type="button"
                 onClick={toggleAll}
@@ -197,24 +213,42 @@ export default function PlatformGuideFeedbackPage() {
                 )}
                 {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
               </button>
-              {selectedIds.size > 0 && (
-                <>
-                  <span className="text-gray-300" aria-hidden>
-                    |
-                  </span>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => void handleDeleteIds(Array.from(selectedIds))}
-                    disabled={deletePending}
-                  >
-                    <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden />
-                    Delete ({selectedIds.size})
-                  </Button>
-                </>
-              )}
             </div>
           )}
+          <PlatformBulkActionBar
+            count={selectedIds.size}
+            onClearSelection={() => setSelectedIds(new Set())}
+            className="mx-4 my-3 border-indigo-200"
+          >
+            <label className="flex items-center gap-2 text-sm text-indigo-950">
+              <span className="sr-only">Bulk status</span>
+              <select
+                className={cn(selectClass, 'h-8 min-w-[140px] border-indigo-200 bg-white py-1 text-sm')}
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value as GuideFeedbackStatus)}
+                disabled={bulkPending}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {GUIDE_FEEDBACK_STATUS_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button variant="secondary" size="sm" onClick={() => void handleBulkStatusUpdate()} disabled={bulkPending}>
+              <Tag className="mr-1 h-3.5 w-3.5" aria-hidden />
+              Update status
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => void handleDeleteIds(Array.from(selectedIds))}
+              disabled={bulkPending}
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden />
+              Delete
+            </Button>
+          </PlatformBulkActionBar>
           {isLoading && (
             <div className="flex items-center gap-2 p-4 text-sm text-gray-500">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

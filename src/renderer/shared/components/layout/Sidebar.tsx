@@ -7,7 +7,7 @@ import {
   LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
   UserCog, Shield, Building2, ListOrdered, Clock, Bell,
-  GraduationCap, HelpCircle, MessageSquareHeart, CircleUser,
+  GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
 } from 'lucide-react';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -43,7 +43,7 @@ const baseSubRoutes = [
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
-  ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK,
+  ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
 ];
@@ -53,6 +53,7 @@ const platformSubRoutes = [
   ROUTES.PLATFORM.BUSINESSES,
   ROUTES.PLATFORM.USERS,
   ROUTES.PLATFORM.ROLES,
+  ROUTES.PLATFORM.SENT_MESSAGES,
   ROUTES.PLATFORM.GUIDE.TUTORIALS,
   ROUTES.PLATFORM.GUIDE.FAQS,
   ROUTES.PLATFORM.GUIDE.FEEDBACK,
@@ -66,6 +67,7 @@ const platformNavGroup: NavGroup = {
     { to: ROUTES.PLATFORM.BUSINESSES, label: 'Businesses', icon: Building2 },
     { to: ROUTES.PLATFORM.USERS, label: 'All Users', icon: Users },
     { to: ROUTES.PLATFORM.ROLES, label: 'Platform Roles', icon: Shield },
+    { to: ROUTES.PLATFORM.SENT_MESSAGES, label: 'Sent messages', icon: BellRing },
   ],
 };
 
@@ -126,6 +128,7 @@ const baseNavGroups: NavGroup[] = [
       { to: ROUTES.GUIDE.TUTORIALS, label: 'Tutorials', icon: GraduationCap },
       { to: ROUTES.GUIDE.FAQS, label: 'FAQs', icon: HelpCircle },
       { to: ROUTES.GUIDE.FEEDBACK, label: 'Feedback', icon: MessageSquareHeart },
+      { to: ROUTES.GUIDE.CONTACT, label: 'Contact & Help', icon: Headset },
     ],
   },
   {

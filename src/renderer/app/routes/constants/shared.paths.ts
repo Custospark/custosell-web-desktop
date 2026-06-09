@@ -22,6 +22,7 @@ export const ROUTES = {
     TUTORIALS: '/guide/tutorials',
     FAQS: '/guide/faqs',
     FEEDBACK: '/guide/feedback',
+    CONTACT: '/guide/contact',
   },
   SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', STAFF: '/settings/staff', ROLES: '/settings/roles', SUBSCRIPTION: '/settings/subscription' },
   PLATFORM: {
@@ -30,6 +31,7 @@ export const ROUTES = {
     BUSINESSES: '/platform/businesses',
     USERS: '/platform/users',
     ROLES: '/platform/roles',
+    SENT_MESSAGES: '/platform/sent-messages',
     GUIDE: {
       INDEX: '/platform/guide',
       TUTORIALS: '/platform/guide/tutorials',

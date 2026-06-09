@@ -75,7 +75,7 @@ export default function GuideTutorialsPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Custosell Guide</p>
           <h1 className="text-2xl font-bold text-gray-900">Tutorials</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Short videos from the Custosell team to help you get the most from the app.
+            Short videos from the Custosell team to help you get the most from Custosell.
           </p>
         </div>
       </div>

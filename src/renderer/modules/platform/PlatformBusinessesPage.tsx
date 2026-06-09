@@ -13,14 +13,12 @@ import {
   BUSINESS_ACCOUNT_STATUSES,
   STATUS_DURATION_DAYS,
   STATUS_LABELS,
-  ACTIVITY_STATUS_LABELS,
   formatBusinessActivityRecency,
   resolveDisplayActivityStatus,
-  accountStatusBadge,
   matchesStatusDurationFilter,
   validateBusinessStatsDateRange,
 } from './api/platformBusinessValidation';
-import type { ActivityStatus, BusinessAccountStatus, PlatformBusiness } from './api/PlatformTypes';
+import type { BusinessAccountStatus, PlatformBusiness } from './api/PlatformTypes';
 import { PlatformBusinessOnboardingChart } from './PlatformCharts';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
@@ -33,18 +31,13 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { PlatformBusinessStatusModal } from './components/PlatformBusinessStatusModal';
 import { PlatformBusinessNotificationModal } from './components/PlatformBusinessNotificationModal';
 import { PlatformBusinessDeleteModal } from './components/PlatformBusinessDeleteModal';
+import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
+import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
+import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 import {
   Building2, Ban, TrendingUp, Calendar, DollarSign, Receipt, AlertTriangle,
   Mail, Shield, Trash2, CheckSquare, Square,
 } from 'lucide-react';
-
-const activityBadge: Record<ActivityStatus, 'success' | 'warning' | 'neutral' | 'danger' | 'primary'> = {
-  active: 'success',
-  dormant: 'warning',
-  churned: 'danger',
-  never_used: 'neutral',
-  suspended: 'danger',
-};
 
 const cardStyles = {
   blue: { border: 'border-blue-500', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
@@ -386,22 +379,26 @@ export default function PlatformBusinessesPage() {
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
               {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
             </button>
-            {selectedIds.size > 0 && (
-              <>
-                <span className="text-gray-300">|</span>
-                <Button variant="secondary" size="sm" onClick={() => setNotifyTargets(selectedBusinesses)} disabled={actionPending}>
-                  <Mail className="w-3.5 h-3.5 mr-1" />Notify ({selectedIds.size})
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => setStatusTargets(selectedBusinesses)} disabled={actionPending}>
-                  <Shield className="w-3.5 h-3.5 mr-1" />Status ({selectedIds.size})
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => setDeleteTargets(selectedBusinesses)} disabled={actionPending}>
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />Delete ({selectedIds.size})
-                </Button>
-              </>
-            )}
           </div>
         </div>
+
+        <PlatformBulkActionBar
+          count={selectedIds.size}
+          onClearSelection={() => setSelectedIds(new Set())}
+        >
+          <Button variant="secondary" size="sm" onClick={() => setNotifyTargets(selectedBusinesses)} disabled={actionPending}>
+            <Mail className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Notify
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setStatusTargets(selectedBusinesses)} disabled={actionPending}>
+            <Shield className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Change status
+          </Button>
+          <Button variant="danger" size="sm" onClick={() => setDeleteTargets(selectedBusinesses)} disabled={actionPending}>
+            <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Delete
+          </Button>
+        </PlatformBulkActionBar>
 
         {listLoading ? (
           <LoadingSkeleton variant="table" />
@@ -434,7 +431,7 @@ export default function PlatformBusinessesPage() {
                   const days = daysInStatus(b);
                   return (
                     <div>
-                      <Badge variant={accountStatusBadge(b.status)}>{STATUS_LABELS[b.status]}</Badge>
+                      <PlatformAccountStatusBadge status={b.status} />
                       {days !== null && (
                         <p className="text-xs text-gray-400 mt-0.5">{days}d in status</p>
                       )}
@@ -445,7 +442,7 @@ export default function PlatformBusinessesPage() {
                   const activityStatus = resolveDisplayActivityStatus(b);
                   return (
                     <div>
-                      <Badge variant={activityBadge[activityStatus]}>{ACTIVITY_STATUS_LABELS[activityStatus]}</Badge>
+                      <PlatformActivityStatusBadge status={activityStatus} />
                       <p
                         className="text-xs text-gray-400 mt-0.5"
                         title={`Sale/login window: ${b.activity_active_days ?? 30}d active · ${b.activity_dormant_days ?? 90}d dormant`}

@@ -35,11 +35,13 @@ import PlatformRolesPage from '../../modules/platform/PlatformRolesPage';
 import PlatformGuideTutorialsPage from '../../modules/platform/PlatformGuideTutorialsPage';
 import PlatformGuideFaqsPage from '../../modules/platform/PlatformGuideFaqsPage';
 import PlatformGuideFeedbackPage from '../../modules/platform/PlatformGuideFeedbackPage';
+import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessagesPage';
 import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
 import GuideTutorialsPage from '../../modules/guide/GuideTutorialsPage';
 import GuideFaqsPage from '../../modules/guide/GuideFaqsPage';
 import GuideFeedbackPage from '../../modules/guide/GuideFeedbackPage';
+import GuideContactPage from '../../modules/guide/GuideContactPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
@@ -113,6 +115,7 @@ export function AppRoutes() {
             <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.CONTACT} element={<SuspenseWrapper><GuideContactPage /></SuspenseWrapper>} />
           </Route>
           <Route element={<ModuleAccessMiddleware module="settings" />}>
             <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
@@ -129,6 +132,7 @@ export function AppRoutes() {
             <Route path={ROUTES.PLATFORM.BUSINESSES} element={<SuspenseWrapper><PlatformBusinessesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.USERS} element={<SuspenseWrapper><PlatformUsersPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.ROLES} element={<SuspenseWrapper><PlatformRolesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.SENT_MESSAGES} element={<SuspenseWrapper><PlatformSentMessagesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.INDEX} element={<Navigate to={ROUTES.PLATFORM.GUIDE.TUTORIALS} replace />} />
             <Route path={ROUTES.PLATFORM.GUIDE.TUTORIALS} element={<SuspenseWrapper><PlatformGuideTutorialsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.FAQS} element={<SuspenseWrapper><PlatformGuideFaqsPage /></SuspenseWrapper>} />

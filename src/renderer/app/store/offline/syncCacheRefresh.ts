@@ -5,6 +5,7 @@ import { dashboardKeys } from '../../../modules/dashboard/DashboardQueries';
 import { shiftKeys } from '../../../modules/shifts/ShiftQueries';
 import { inventoryKeys } from '../../../modules/inventory/api/products/ProductQueries';
 import { expenseKeys } from '../../../modules/expenses/api/ExpenseQueries';
+import { guideKeys } from '../../../modules/guide/api/GuideQueries';
 
 /** After each sales chunk — strip stale pending badges, then refresh lists. */
 export async function invalidateAfterSalesChunk(): Promise<void> {
@@ -31,4 +32,5 @@ export async function invalidateAfterFullSync(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ['roles'] });
   await queryClient.invalidateQueries({ queryKey: ['staff'] });
   await queryClient.invalidateQueries({ queryKey: ['business'] });
+  await queryClient.invalidateQueries({ queryKey: guideKeys.all });
 }

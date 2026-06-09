@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react';
-import { Loader2, MessageSquareHeart, Send } from 'lucide-react';
+import { Loader2, MessageSquareHeart, Send, WifiOff } from 'lucide-react';
 import { imperativeToast } from '../../app/contexts/imperativeToast';
+import { useAppSelector } from '../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
+import type { GuideFeedbackWithSyncMeta } from '../../app/store/offline/localGuideFeedbackStore';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { useCreateGuideFeedback, useMyGuideFeedback } from './api/GuideQueries';
-import type { GuideFeedbackCategory, GuideFeedbackMineDto } from './api/GuideTypes';
+import type { GuideFeedbackCategory } from './api/GuideTypes';
 import { cn } from '../../shared/utils/cn';
 import { inputClass, textareaClass } from '../../shared/utils/inputStyles';
 
@@ -22,6 +25,7 @@ function formatWhen(iso: string | null) {
 }
 
 export default function GuideFeedbackPage() {
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const [category, setCategory] = useState<GuideFeedbackCategory>('feedback');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -37,8 +41,12 @@ export default function GuideFeedbackPage() {
       return;
     }
     try {
-      await createMut.mutateAsync({ category, subject: s, body: b });
-      imperativeToast.show('success', 'Thanks — your message was sent to the Custosell team.');
+      const saved = await createMut.mutateAsync({ category, subject: s, body: b });
+      if (saved._pendingSync) {
+        imperativeToast.show('success', 'Message saved — it will send when you are back online.');
+      } else {
+        imperativeToast.show('success', 'Thanks — your message was sent to the Custosell team.');
+      }
       setSubject('');
       setBody('');
     } catch (e: unknown) {
@@ -49,6 +57,8 @@ export default function GuideFeedbackPage() {
       imperativeToast.show('error', msg ?? 'Could not send your submission. Please try again.');
     }
   }, [body, category, createMut, subject]);
+
+  const hasVisibleSubmissions = mine.length > 0;
 
   return (
     <div className="space-y-8">
@@ -61,9 +71,19 @@ export default function GuideFeedbackPage() {
           <h1 className="text-2xl font-bold text-gray-900">Feedback</h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-600">
             Share feedback or request a feature. The Custosell team reads every submission and may reply here.
+            {isOffline && ' You can still compose messages offline — they will send automatically when you reconnect.'}
           </p>
         </div>
       </div>
+
+      {isOffline && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <p>
+            You are offline. New messages are saved on this device and queued to send when connectivity returns.
+          </p>
+        </div>
+      )}
 
       <div className="rounded-xl border border-gray-200 bg-white p-5">
         <h2 className="text-lg font-semibold text-gray-900">Send a message</h2>
@@ -118,12 +138,12 @@ export default function GuideFeedbackPage() {
             {createMut.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Sending…
+                {isOffline ? 'Saving…' : 'Sending…'}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" aria-hidden />
-                Send message
+                {isOffline ? 'Save message' : 'Send message'}
               </>
             )}
           </Button>
@@ -138,8 +158,12 @@ export default function GuideFeedbackPage() {
             Loading…
           </div>
         )}
-        {!isLoading && mine.length === 0 && (
-          <p className="text-sm text-gray-600">You have not sent any feedback yet.</p>
+        {!isLoading && !hasVisibleSubmissions && (
+          <p className="text-sm text-gray-600">
+            {isOffline
+              ? 'You have not sent any feedback yet. Saved offline messages will appear here.'
+              : 'You have not sent any feedback yet.'}
+          </p>
         )}
         {mine.map((item) => (
           <FeedbackMineCard key={item.uuid} item={item} />
@@ -149,12 +173,21 @@ export default function GuideFeedbackPage() {
   );
 }
 
-function FeedbackMineCard({ item }: { item: GuideFeedbackMineDto }) {
+function FeedbackMineCard({ item }: { item: GuideFeedbackWithSyncMeta }) {
   return (
     <article className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="font-semibold text-gray-900">{item.subject}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-gray-900">{item.subject}</h3>
+            {item._syncFailed ? (
+              <Badge variant="danger" title={item._lastError || 'Sync failed'}>
+                Sync failed
+              </Badge>
+            ) : item._pendingSync ? (
+              <Badge variant="warning">Pending sync</Badge>
+            ) : null}
+          </div>
           <p className="mt-0.5 text-xs text-gray-500">
             {item.category === 'feature_request' ? 'Feature request' : 'Feedback'} · {formatWhen(item.created_at)}
           </p>

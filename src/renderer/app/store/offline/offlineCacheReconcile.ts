@@ -10,6 +10,7 @@ import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
 import { localRolesStore, type RoleWithSyncMeta } from './localRolesStore';
 import { localStaffStore, type StaffWithSyncMeta } from './localStaffStore';
 import { localBusinessSettingsStore, type BusinessWithSyncMeta } from './localBusinessSettingsStore';
+import { localGuideFeedbackStore, type GuideFeedbackWithSyncMeta } from './localGuideFeedbackStore';
 import type { SaleWithSyncMeta } from './localSalesStore';
 import type { ExpenseCategoryWithSyncMeta, ExpenseWithSyncMeta } from '../../../modules/expenses/api/ExpenseTypes';
 
@@ -23,6 +24,7 @@ const DASHBOARD_SERVER_KEY = ['dashboard', 'server'] as const;
 const ROLES_LIST_KEY = ['roles', 'list'] as const;
 const STAFF_LIST_KEY = ['staff', 'list'] as const;
 const BUSINESS_MINE_KEY = ['business', 'mine'] as const;
+const GUIDE_FEEDBACK_MINE_KEY = ['guide', 'feedback-mine'] as const;
 
 /** Local-only sale row — not yet confirmed on server. */
 export function isOptimisticSale(sale: SaleWithSyncMeta): boolean {
@@ -259,5 +261,35 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
       return cleaned;
     }
     return old;
+  });
+
+  /** ── Strip sync meta from guide feedback submissions ── */
+  const pendingFeedback = await localGuideFeedbackStore.getPending();
+  const pendingFeedbackIds = new Set(pendingFeedback.map((r) => r.feedback.id));
+  const pendingFeedbackUuids = new Set(pendingFeedback.map((r) => r.feedback.uuid));
+
+  qc.setQueryData<GuideFeedbackWithSyncMeta[]>(GUIDE_FEEDBACK_MINE_KEY, (old) => {
+    if (!old) return old;
+    return old
+      .filter((item) => {
+        if (pendingFeedbackIds.has(item.id) || pendingFeedbackUuids.has(item.uuid)) return true;
+        if (item._pendingSync || item._localId || item.id < 0) return false;
+        return true;
+      })
+      .map((item) => {
+        if (
+          (item._pendingSync || item._syncFailed)
+          && !pendingFeedbackIds.has(item.id)
+          && !pendingFeedbackUuids.has(item.uuid)
+        ) {
+          const cleaned = { ...item };
+          delete cleaned._pendingSync;
+          delete cleaned._syncFailed;
+          delete cleaned._lastError;
+          delete cleaned._localId;
+          return cleaned;
+        }
+        return item;
+      });
   });
 }

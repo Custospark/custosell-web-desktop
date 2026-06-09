@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
 export const OFFLINE_DB_NAME = 'CustosellOffline';
-export const OFFLINE_DB_VERSION = 10;
+export const OFFLINE_DB_VERSION = 11;
 
 const OPEN_TIMEOUT_MS = 8000;
 
@@ -85,6 +85,11 @@ function ensureObjectStores(db: IDBPDatabase): void {
     authStore.createIndex('normalizedEmail', 'normalizedEmail');
     authStore.createIndex('syncStatus', 'syncStatus');
     authStore.createIndex('mutationId', 'mutationId');
+  }
+  if (!db.objectStoreNames.contains('localGuideFeedback')) {
+    const feedbackStore = db.createObjectStore('localGuideFeedback', { keyPath: 'localId' });
+    feedbackStore.createIndex('syncStatus', 'syncStatus');
+    feedbackStore.createIndex('mutationId', 'mutationId');
   }
   if (!db.objectStoreNames.contains('secureSecrets')) {
     db.createObjectStore('secureSecrets', { keyPath: 'key' });

@@ -15,6 +15,7 @@ import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
 import { localRolesStore } from './localRolesStore';
 import { localStaffStore } from './localStaffStore';
 import { localBusinessSettingsStore } from './localBusinessSettingsStore';
+import { localGuideFeedbackStore } from './localGuideFeedbackStore';
 import { buildExpenseFormData } from './completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
 import { isAuthMutation } from './syncAuthEngine';
@@ -120,6 +121,10 @@ function isStaffMutation(m: QueuedMutation): boolean {
 
 function isBusinessSettingsMutation(m: QueuedMutation): boolean {
   return m.url === '/businesses/profile' || m.url === '/businesses/settings';
+}
+
+function isGuideFeedbackMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/guide/feedback';
 }
 
 function isCategoryCreateMutation(m: QueuedMutation): boolean {
@@ -310,6 +315,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       await localBusinessSettingsStore.removeByMutationId(m.id);
     }
 
+    if (isGuideFeedbackMutation(m)) {
+      await localGuideFeedbackStore.removeByMutationId(m.id);
+    }
+
     return true;
   } catch (error: unknown) {
     if (isAuthHttpError(error)) {
@@ -374,6 +383,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     if (isBusinessSettingsMutation(m)) {
       await localBusinessSettingsStore.markFailedByMutationId(m.id);
+    }
+
+    if (isGuideFeedbackMutation(m)) {
+      await localGuideFeedbackStore.markFailedByMutationId(m.id, message);
     }
 
     if (isServerError && m.retryCount >= m.maxRetries) {

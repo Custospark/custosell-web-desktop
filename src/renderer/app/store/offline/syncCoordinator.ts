@@ -16,6 +16,7 @@ import {
   syncTierChanged,
 } from '../slices/syncSlice';
 import { SYNC_TIER_LABELS } from './syncConstants';
+import { invalidateAfterFullSync } from './syncCacheRefresh';
 import type { PendingSyncResult } from './syncPendingIfOnline';
 
 let coordinatorRunning = false;
@@ -80,6 +81,7 @@ export async function runSyncCoordinator(): Promise<PendingSyncResult> {
 
   coordinatorRunning = true;
   const reporter = createSyncProgressReporter();
+  let shouldRefreshCache = false;
 
   let synced = 0;
   let failed = 0;
@@ -147,12 +149,16 @@ export async function runSyncCoordinator(): Promise<PendingSyncResult> {
 
     if (!authBlocked && !authPaused) {
       store.dispatch(syncRunCompleted());
+      shouldRefreshCache = synced + failed + stockSynced + authSynced > 0;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Sync failed';
     store.dispatch(syncRunFailed({ error: message }));
   } finally {
     coordinatorRunning = false;
+    if (shouldRefreshCache) {
+      await invalidateAfterFullSync();
+    }
   }
 
   return {

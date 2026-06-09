@@ -222,25 +222,39 @@ export function useSale(id: number) {
   });
 }
 
+function isLocalPendingSale(sale: Sale | SaleWithSyncMeta): boolean {
+  const meta = sale as SaleWithSyncMeta;
+  return Boolean(
+    meta._pendingSync
+    || meta._localId
+    || sale.id < 0
+    || sale.receipt_number.startsWith('OFF-'),
+  );
+}
+
 function applySaleOptimisticUpdates(
   qc: ReturnType<typeof useQueryClient>,
   sale: Sale,
   payload: CreateSalePayload,
 ): void {
+  const row: SaleWithSyncMeta = isLocalPendingSale(sale)
+    ? { ...sale, _pendingSync: true }
+    : { ...sale };
+
   qc.setQueryData<SaleWithSyncMeta[]>(salesKeys.list(), (old) => {
     const list = old ?? [];
     const exists = list.some(
       (s) => s.id === sale.id || s.receipt_number === sale.receipt_number,
     );
     if (exists) return list;
-    return [{ ...sale, _pendingSync: true }, ...list];
+    return [row, ...list];
   });
 
   if (payload.shift_id) {
     qc.setQueryData<SaleWithSyncMeta[]>([...shiftKeys.all, 'sales', payload.shift_id], (old) => {
       const list = old ?? [];
       if (list.some((s) => s.id === sale.id)) return list;
-      return [{ ...sale, _pendingSync: true }, ...list];
+      return [row, ...list];
     });
   }
 

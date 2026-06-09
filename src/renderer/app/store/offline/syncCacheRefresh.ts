@@ -6,8 +6,9 @@ import { shiftKeys } from '../../../modules/shifts/ShiftQueries';
 import { inventoryKeys } from '../../../modules/inventory/api/products/ProductQueries';
 import { expenseKeys } from '../../../modules/expenses/api/ExpenseQueries';
 
-/** After each sales chunk — light refresh so UI updates while user keeps working. */
+/** After each sales chunk — strip stale pending badges, then refresh lists. */
 export async function invalidateAfterSalesChunk(): Promise<void> {
+  await purgeSyncedOptimisticFromCache(queryClient);
   await queryClient.invalidateQueries({ queryKey: salesKeys.all });
   await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
 }

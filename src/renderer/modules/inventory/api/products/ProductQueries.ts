@@ -47,14 +47,54 @@ function normalizeProductsResponse(payload: unknown): Product[] {
   return [];
 }
 
-async function mergeProductsWithOfflineOverlay(base: Product[]): Promise<Product[]> {
+function stripStaleProductSyncMeta(
+  product: ProductWithSyncMeta,
+  pendingProductIds: Set<number>,
+): ProductWithSyncMeta {
+  if (pendingProductIds.has(product.id)) return product;
+  if (!product._pendingSync && !product._syncFailed && !product._localId) return product;
+
+  const cleaned = { ...product };
+  delete cleaned._pendingSync;
+  delete cleaned._syncFailed;
+  delete cleaned._lastError;
+  delete cleaned._mutationType;
+  delete cleaned._localId;
+  return cleaned;
+}
+
+async function mergeProductsWithOfflineOverlay(base: Product[]): Promise<ProductWithSyncMeta[]> {
   const overlaid = await applyOfflineStockOverlay(base);
   try {
-    const local = await loadLocalPendingProducts();
-    return mergeProductLists(overlaid, local);
+    const pending = await localProductsStore.getPending();
+    const pendingProductIds = new Set(pending.map((r) => r.product.id));
+
+    const stripped = (overlaid as ProductWithSyncMeta[])
+      .filter((p) => p.id >= 0 || pendingProductIds.has(p.id))
+      .map((p) => stripStaleProductSyncMeta(p, pendingProductIds));
+
+    const localCreates = pending
+      .filter((r) => r.mutationType === 'create')
+      .map(toProductWithSyncMeta);
+    const localUpdates = pending
+      .filter((r) => r.mutationType === 'update')
+      .map(toProductWithSyncMeta);
+    const pendingDeleteIds = new Set(
+      pending.filter((r) => r.mutationType === 'delete').map((r) => r.product.id),
+    );
+
+    let merged = mergeProductLists(stripped, localCreates);
+    if (localUpdates.length > 0) {
+      const updateById = new Map(localUpdates.map((p) => [p.id, p]));
+      merged = merged.map((p) => updateById.get(p.id) ?? p);
+    }
+    if (pendingDeleteIds.size > 0) {
+      merged = merged.filter((p) => !pendingDeleteIds.has(p.id));
+    }
+    return merged;
   } catch (err) {
     console.warn('[Products] Pending local products skipped:', err);
-    return overlaid;
+    return overlaid as ProductWithSyncMeta[];
   }
 }
 

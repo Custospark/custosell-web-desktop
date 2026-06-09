@@ -13,11 +13,33 @@ import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
-  Menu, X, LogOut, ChevronDown, Clock, Wifi, Signal, WifiOff, User,
+  Menu, X, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 const BUSINESS_NAME_DISPLAY_MAX = 25;
+
+const NETWORK_STATUS_THEME = {
+  online: {
+    button: 'text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 focus-visible:ring-emerald-200',
+    icon: 'text-emerald-500',
+    label: 'text-emerald-700',
+    meta: 'text-emerald-500',
+  },
+  slow: {
+    button: 'text-orange-700 hover:text-orange-800 hover:bg-orange-50 focus-visible:ring-orange-200',
+    icon: 'text-orange-500',
+    label: 'text-orange-700',
+  },
+  offline: {
+    button: 'text-red-700 hover:text-red-800 hover:bg-red-50 focus-visible:ring-red-200',
+    icon: 'text-red-500',
+    label: 'text-red-700',
+  },
+} as const;
+
+const networkStatusBtn =
+  'inline-flex items-center justify-center shrink-0 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2';
 
 function displayBusinessName(name: string): string {
   if (name.length <= BUSINESS_NAME_DISPLAY_MAX) return name;
@@ -55,58 +77,52 @@ function NavbarNetworkStatus({
   onRetry: () => void;
 }) {
   if (systemStatus === 'online') {
+    const theme = NETWORK_STATUS_THEME.online;
     return (
       <button
         type="button"
         onClick={onRetry}
         title={latency != null ? `Connected · ${latency}ms latency` : 'Connected'}
         aria-label={latency != null ? `Connected, ${latency} milliseconds latency` : 'Connected'}
-        className={cn(
-          iconBtn,
-          'gap-1 px-1.5 sm:px-2 h-8 sm:h-9 text-green-600 hover:text-green-700 hover:bg-green-50',
-        )}
+        className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
       >
-        <Wifi className="w-3.5 h-3.5 shrink-0" aria-hidden />
-        <span className="hidden sm:inline font-medium text-xs whitespace-nowrap">Connected</span>
+        <Wifi className={cn('w-3.5 h-3.5 shrink-0', theme.icon)} aria-hidden />
+        <span className={cn('hidden sm:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Connected</span>
         {latency != null ? (
-          <span className="hidden xl:inline text-green-400 text-xs tabular-nums">{latency}ms</span>
+          <span className={cn('hidden xl:inline text-xs tabular-nums font-medium', theme.meta)}>{latency}ms</span>
         ) : null}
       </button>
     );
   }
 
   if (systemStatus === 'slow') {
+    const theme = NETWORK_STATUS_THEME.slow;
     return (
       <button
         type="button"
         onClick={onRetry}
-        title="Slow connection"
+        title="Slow connection — tap to retry"
         aria-label="Slow internet connection"
-        className={cn(
-          iconBtn,
-          'gap-1 px-1.5 sm:px-2 h-8 sm:h-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50',
-        )}
+        className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
       >
-        <Signal className="w-3.5 h-3.5 shrink-0" aria-hidden />
-        <span className="hidden sm:inline font-medium text-xs whitespace-nowrap">Slow</span>
-        <span className="hidden lg:inline font-medium text-xs whitespace-nowrap">Internet</span>
+        <SignalMedium className={cn('w-3.5 h-3.5 shrink-0', theme.icon)} aria-hidden />
+        <span className={cn('hidden sm:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Slow</span>
+        <span className={cn('hidden lg:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Internet</span>
       </button>
     );
   }
 
+  const theme = NETWORK_STATUS_THEME.offline;
   return (
     <button
       type="button"
       onClick={onRetry}
-      title="No internet connection"
+      title="No internet connection — tap to retry"
       aria-label="No internet connection"
-      className={cn(
-        iconBtn,
-        'gap-1 px-1.5 sm:px-2 h-8 sm:h-9 text-red-600 hover:text-red-700 hover:bg-red-50',
-      )}
+      className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
     >
-      <WifiOff className="w-3.5 h-3.5 shrink-0" aria-hidden />
-      <span className="hidden sm:inline font-medium text-xs whitespace-nowrap">Offline</span>
+      <WifiOff className={cn('w-3.5 h-3.5 shrink-0', theme.icon)} aria-hidden />
+      <span className={cn('hidden sm:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Offline</span>
     </button>
   );
 }

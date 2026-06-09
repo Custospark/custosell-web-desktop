@@ -25,7 +25,6 @@ import { Table } from '../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
-import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { PlatformBusinessStatusModal } from './components/PlatformBusinessStatusModal';

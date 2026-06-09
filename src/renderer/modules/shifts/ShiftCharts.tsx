@@ -35,7 +35,7 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-800">Shift Progress</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Running net total as receipts are recorded</p>
+            <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">Running net total as receipts are recorded</p>
           </div>
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">No sales yet</span>
         </div>
@@ -53,7 +53,7 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <h3 className="text-sm font-semibold text-gray-800">Shift Progress</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">
             {receiptCount} receipt{receiptCount === 1 ? '' : 's'} · running net after refunds
           </p>
         </div>

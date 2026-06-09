@@ -61,7 +61,7 @@ export function SalesTrendChart({ data }: { data: SalesTrendDay[] }) {
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-800">7-Day Net Sales Trend</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Daily net sales · whole business</p>
+            <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">Daily net sales · whole business</p>
           </div>
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">No data yet</span>
         </div>
@@ -83,7 +83,7 @@ export function SalesTrendChart({ data }: { data: SalesTrendDay[] }) {
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <h3 className="text-sm font-semibold text-gray-800">7-Day Net Sales Trend</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">
             {totalTransactions} transaction{totalTransactions === 1 ? '' : 's'} · daily net after refunds
           </p>
         </div>

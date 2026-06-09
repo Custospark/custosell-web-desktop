@@ -13,7 +13,6 @@ import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { selectShowOfflineBanner } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
 import { getUserFirstName } from '../../utils/userDisplayName';
 import { canAccessModule, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
@@ -217,15 +216,15 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
     void logout();
   };
 
-  const showOfflineBanner = useAppSelector(selectShowOfflineBanner);
-
   return (
     <aside
-      className={`fixed left-0 z-30 bg-white border-r border-gray-200 transform transition-all duration-200 ${
-        showOfflineBanner ? 'top-10 h-[calc(100vh-2.5rem)]' : 'top-0 h-full'
-      } ${collapsed ? 'w-[64px]' : 'w-[247px]'} ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 flex flex-col`}
+      className={cn(
+        'absolute left-0 top-0 bottom-0 z-30 flex h-full flex-col',
+        'border-r border-gray-200 bg-white transition-all duration-200 transform',
+        collapsed ? 'w-[64px]' : 'w-[247px]',
+        isOpen ? 'translate-x-0' : '-translate-x-full',
+        'lg:translate-x-0',
+      )}
     >
       <div
         className={cn(

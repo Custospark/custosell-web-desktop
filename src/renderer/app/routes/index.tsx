@@ -7,6 +7,7 @@ import { PublicRoute } from './PublicRoute';
 import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
 import { ModuleAccessMiddleware } from './middleware/ModuleAccessMiddleware';
 import { ModuleLandingRedirect } from './middleware/ModuleLandingRedirect';
+import { AppChrome } from '../../shared/components/layout/AppChrome';
 import { Layout } from '../../shared/components/layout/Layout';
 import NewSalePage from '../../modules/sales/NewSale';
 import SalesHistoryPage from '../../modules/sales/SalesHistoryPage';
@@ -72,6 +73,7 @@ export function AppRoutes() {
         <Route path={ROUTES.RESET_PASSWORD} element={<SuspenseWrapper><ResetPasswordPage /></SuspenseWrapper>} />
       </Route>
       <Route element={<AuthMiddlewareRoute />}>
+        <Route element={<AppChrome />}>
         <Route element={<Layout />}>
           <Route path="/app" element={<ModuleLandingRedirect />} />
           <Route element={<ModuleAccessMiddleware module="dashboard" />}>
@@ -138,6 +140,7 @@ export function AppRoutes() {
             <Route path={ROUTES.PLATFORM.GUIDE.FAQS} element={<SuspenseWrapper><PlatformGuideFaqsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.FEEDBACK} element={<SuspenseWrapper><PlatformGuideFeedbackPage /></SuspenseWrapper>} />
           </Route>
+        </Route>
         </Route>
       </Route>
     </Routes>

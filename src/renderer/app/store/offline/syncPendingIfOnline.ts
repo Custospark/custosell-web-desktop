@@ -16,6 +16,22 @@ export interface PendingSyncResult {
   reason?: 'offline' | 'empty' | 'in_progress' | 'auth_blocked';
 }
 
+const SKIPPED_OFFLINE: PendingSyncResult = {
+  synced: 0,
+  failed: 0,
+  stockSynced: 0,
+  authSynced: 0,
+  authFailed: 0,
+  authBlocked: false,
+  skipped: true,
+  reason: 'offline',
+};
+
+/** Single in-flight coordinator — all callers join the same run (no parallel double-sync). */
+let activeSyncRun: Promise<PendingSyncResult> | null = null;
+
+let debouncedSyncHandle: ReturnType<typeof setTimeout> | null = null;
+
 export async function hasPendingSyncWork(): Promise<boolean> {
   const pending = await mutationQueue.getPending();
   const hasAuth = pending.some(isAuthMutation);
@@ -29,36 +45,32 @@ export async function hasPendingSyncWork(): Promise<boolean> {
 }
 
 /**
- * Entry point for offline sync — delegates to the tiered SyncCoordinator.
+ * Drain the offline queue once. Concurrent callers await the same coordinator run.
  */
 export async function syncPendingDataIfOnline(): Promise<PendingSyncResult> {
   if (isOfflineMode()) {
-    return {
-      synced: 0,
-      failed: 0,
-      stockSynced: 0,
-      authSynced: 0,
-      authFailed: 0,
-      authBlocked: false,
-      skipped: true,
-      reason: 'offline',
-    };
+    return SKIPPED_OFFLINE;
   }
 
-  if (isSyncCoordinatorRunning()) {
-    return {
-      synced: 0,
-      failed: 0,
-      stockSynced: 0,
-      authSynced: 0,
-      authFailed: 0,
-      authBlocked: false,
-      skipped: true,
-      reason: 'in_progress',
-    };
+  activeSyncRun ??= runSyncCoordinator().finally(() => {
+    activeSyncRun = null;
+  });
+
+  return activeSyncRun;
+}
+
+/** Debounced enqueue follow-up — use after persisting offline work while online. */
+export function requestSyncWhenOnline(): void {
+  if (isOfflineMode()) return;
+
+  if (debouncedSyncHandle) {
+    clearTimeout(debouncedSyncHandle);
   }
 
-  return runSyncCoordinator();
+  debouncedSyncHandle = setTimeout(() => {
+    debouncedSyncHandle = null;
+    void syncPendingDataIfOnline();
+  }, 400);
 }
 
 export { isSyncCoordinatorRunning };

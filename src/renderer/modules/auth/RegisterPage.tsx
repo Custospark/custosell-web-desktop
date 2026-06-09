@@ -4,13 +4,21 @@ import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
-import { countryCodes } from '../../shared/utils/countryCodes';
+import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { Store, Mail, Lock, User, Phone, ChevronDown } from 'lucide-react';
-import type { CountryCode } from '../../shared/utils/countryCodes';
+import { buildFullName } from '../../shared/utils/userDisplayName';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
-  const [form, setForm] = useState({ owner_name: '', name: '', email: '', phone: '', password: '', password_confirmation: '' });
+  const [form, setForm] = useState({
+    owner_first_name: '',
+    owner_last_name: '',
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    password_confirmation: '',
+  });
   const [countryCode, setCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -41,7 +49,7 @@ export default function RegisterPage() {
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
 
     registerMutation.mutate({
-      owner_name: form.owner_name,
+      owner_name: buildFullName(form.owner_first_name, form.owner_last_name),
       name: form.name,
       email: form.email,
       phone: fullPhone,
@@ -60,9 +68,27 @@ export default function RegisterPage() {
       heroDescription="Stop juggling spreadsheets, paper receipts, and separate systems. Start selling faster, tracking smarter, and growing with confidence."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
-          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input placeholder="Your name" value={form.owner_name} onChange={handleChange('owner_name')} required className={inputCls} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input
+              placeholder="First name"
+              value={form.owner_first_name}
+              onChange={handleChange('owner_first_name')}
+              required
+              className={inputCls}
+            />
+          </div>
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input
+              placeholder="Last name"
+              value={form.owner_last_name}
+              onChange={handleChange('owner_last_name')}
+              required
+              className={inputCls}
+            />
+          </div>
         </div>
         <div className="relative">
           <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />

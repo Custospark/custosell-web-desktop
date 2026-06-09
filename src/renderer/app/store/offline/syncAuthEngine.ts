@@ -87,7 +87,6 @@ async function processAuthRegister(m: QueuedMutation): Promise<boolean> {
       await applyServerAuth(user, token, payload.password);
     }
 
-    await mutationQueue.markCompleted(m.id);
     await mutationQueue.remove(m.id);
 
     if (authRecord) {
@@ -112,7 +111,6 @@ async function processAuthLogin(m: QueuedMutation): Promise<boolean> {
     const { data } = await axiosInstance.post<AuthResponse>('/auth/login', payload, { skipAuthRedirect: true } as never);
     const user = extractAuthUser(data);
     await applyServerAuth(user, data.token, payload.password);
-    await mutationQueue.markCompleted(m.id);
     await mutationQueue.remove(m.id);
 
     return true;

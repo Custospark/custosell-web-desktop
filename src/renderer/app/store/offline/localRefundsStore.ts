@@ -70,6 +70,16 @@ export const localRefundsStore = {
     await db.put('localRefunds', record);
   },
 
+  async removeByMutationId(mutationId: string): Promise<LocalRefundRecord | undefined> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localRefunds');
+    const record = all.find((r) => r.mutationId === mutationId);
+    if (record) {
+      await db.delete('localRefunds', record.localId);
+    }
+    return record;
+  },
+
   async removeSynced(): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localRefunds');

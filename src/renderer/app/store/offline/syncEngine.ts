@@ -24,7 +24,7 @@ import { AuthSyncPauseError, extractErrorMessage, isAuthHttpError } from './sync
 import type { Expense, ExpenseCategory, ExpenseFormPayload } from '../../../modules/expenses/api/ExpenseTypes';
 import type { Business } from '../../../modules/settings/api/settings/BusinessTypes';
 import type { Role } from '../../../modules/settings/api/settings/RoleTypes';
-import type { StaffUser } from '../../../modules/settings/api/settings/StaffTypes';
+import { commitMutationQueueEntry } from './syncMutationFinalize';
 
 function getRefundSaleId(m: QueuedMutation): number | null {
   const match = m.url.match(/^\/sales\/(-?\d+)\/refund$/);
@@ -213,8 +213,8 @@ async function reconcileDuplicateStaffCreate(m: QueuedMutation, message: string)
   }
   if (!serverStaff) return false;
 
-  await mutationQueue.markCompleted(m.id);
-  await localStaffStore.markSyncedByMutationId(m.id, serverStaff.id, serverStaff);
+  await commitMutationQueueEntry(m.id);
+  await localStaffStore.removeByMutationId(m.id);
   return true;
 }
 
@@ -222,8 +222,8 @@ async function reconcileDuplicateShiftClose(m: QueuedMutation, status?: number):
   if (!isShiftCloseMutation(m)) return false;
   if (status !== 404) return false;
 
-  await mutationQueue.markCompleted(m.id);
-  await localShiftsStore.markSyncedByMutationId(m.id);
+  await commitMutationQueueEntry(m.id);
+  await localShiftsStore.removeByMutationId(m.id);
   const closedShiftId = extractShiftIdFromCloseUrl(m.url);
   if (closedShiftId) {
     store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
@@ -249,6 +249,11 @@ function extractShift(responseData: unknown): ShiftRecord | null {
 }
 
 export async function processMutation(m: QueuedMutation): Promise<boolean> {
+  const queued = await mutationQueue.getById(m.id);
+  if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) {
+    return true;
+  }
+
   try {
     await mutationQueue.markSyncing(m.id);
 
@@ -271,14 +276,14 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     const response = await axiosInstance({ ...config, skipAuthRedirect: true } as never);
 
-    await mutationQueue.markCompleted(m.id);
+    await commitMutationQueueEntry(m.id);
 
     if (isRefundMutation(m)) {
-      await localRefundsStore.markSyncedByMutationId(m.id);
+      await localRefundsStore.removeByMutationId(m.id);
     }
 
     if (isShiftCloseMutation(m)) {
-      await localShiftsStore.markSyncedByMutationId(m.id);
+      await localShiftsStore.removeByMutationId(m.id);
       const closedShiftId = extractShiftIdFromCloseUrl(m.url);
       if (closedShiftId) {
         store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
@@ -287,84 +292,39 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     }
 
     if (isProductMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localProductsStore.removeByMutationId(m.id);
-      } else {
-        const responseData = response?.data as { data?: { id: number } } | undefined;
-        const serverId = responseData?.data?.id;
-        await localProductsStore.markSyncedByMutationId(m.id, serverId);
-      }
+      await localProductsStore.removeByMutationId(m.id);
     }
 
     if (isCategoryMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localCategoriesStore.removeByMutationId(m.id);
-      } else {
-        const responseData = response?.data as { data?: { id: number } } | undefined;
-        const serverId = responseData?.data?.id;
-        await localCategoriesStore.markSyncedByMutationId(m.id, serverId);
-      }
+      await localCategoriesStore.removeByMutationId(m.id);
     }
 
     if (isCustomerMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localCustomersStore.removeByMutationId(m.id);
-      } else {
-        const responseData = response?.data as { data?: { id: number } } | undefined;
-        const serverId = responseData?.data?.id;
-        await localCustomersStore.markSyncedByMutationId(m.id, serverId);
-      }
+      await localCustomersStore.removeByMutationId(m.id);
     }
 
     if (isExpenseMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localExpensesStore.removeByMutationId(m.id);
-      } else {
-        const serverExpense = extractExpense(response?.data);
-        await localExpensesStore.markSyncedByMutationId(m.id, serverExpense?.id, serverExpense ?? undefined);
-      }
+      await localExpensesStore.removeByMutationId(m.id);
     }
 
     if (isExpenseCategoryMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localExpenseCategoriesStore.removeByMutationId(m.id);
-      } else {
-        const serverCategory = extractExpenseCategory(response?.data);
-        await localExpenseCategoriesStore.markSyncedByMutationId(
-          m.id,
-          serverCategory?.id,
-          serverCategory ?? undefined,
-        );
-      }
+      await localExpenseCategoriesStore.removeByMutationId(m.id);
     }
 
     if (isRoleMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localRolesStore.removeByMutationId(m.id);
-      } else {
-        const serverRole = extractRole(response?.data);
-        await localRolesStore.markSyncedByMutationId(m.id, serverRole?.id, serverRole ?? undefined);
-      }
+      await localRolesStore.removeByMutationId(m.id);
     }
 
     if (isStaffMutation(m)) {
-      if (m.method === 'DELETE') {
-        await localStaffStore.removeByMutationId(m.id);
-      } else {
-        const serverStaff = extractStaff(response?.data);
-        await localStaffStore.markSyncedByMutationId(m.id, serverStaff?.id, serverStaff ?? undefined);
-      }
+      await localStaffStore.removeByMutationId(m.id);
     }
 
     if (isBusinessSettingsMutation(m)) {
       const serverBusiness = extractBusiness(response?.data);
-      const business = await localBusinessSettingsStore.markSyncedByMutationId(
-        m.id,
-        serverBusiness ?? undefined,
-      );
-      if (serverBusiness ?? business) {
-        store.dispatch(setBusiness((serverBusiness ?? business)!));
+      if (serverBusiness) {
+        store.dispatch(setBusiness(serverBusiness));
       }
+      await localBusinessSettingsStore.removeByMutationId(m.id);
     }
 
     return true;
@@ -452,17 +412,18 @@ async function processExpenseCategoryCreates(
   let failed = 0;
 
   for (const m of categoryCreates) {
+    const queued = await mutationQueue.getById(m.id);
+    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
+
+    const localRecord = (await localExpenseCategoriesStore.getAll()).find((r) => r.mutationId === m.id);
+    const oldCategoryId = localRecord?.category.id ?? null;
+
     try {
       await mutationQueue.markSyncing(m.id);
       const response = await axiosInstance.post('/expense-categories', m.data, { skipAuthRedirect: true });
       const serverCategory = extractExpenseCategory(response.data);
-      await mutationQueue.markCompleted(m.id);
-
-      const oldCategoryId = await localExpenseCategoriesStore.markSyncedByMutationId(
-        m.id,
-        serverCategory?.id,
-        serverCategory ?? undefined,
-      );
+      await commitMutationQueueEntry(m.id);
+      await localExpenseCategoriesStore.removeByMutationId(m.id);
 
       if (oldCategoryId && serverCategory?.id && oldCategoryId !== serverCategory.id) {
         idMap.set(oldCategoryId, serverCategory.id);
@@ -491,17 +452,18 @@ async function processRoleCreates(
   let failed = 0;
 
   for (const m of roleCreates) {
+    const queued = await mutationQueue.getById(m.id);
+    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
+
+    const localRecord = (await localRolesStore.getAll()).find((r) => r.mutationId === m.id);
+    const oldRoleId = localRecord?.role.id ?? null;
+
     try {
       await mutationQueue.markSyncing(m.id);
       const response = await axiosInstance.post('/roles', m.data, { skipAuthRedirect: true });
       const serverRole = extractRole(response.data);
-      await mutationQueue.markCompleted(m.id);
-
-      const oldRoleId = await localRolesStore.markSyncedByMutationId(
-        m.id,
-        serverRole?.id,
-        serverRole ?? undefined,
-      );
+      await commitMutationQueueEntry(m.id);
+      await localRolesStore.removeByMutationId(m.id);
 
       if (oldRoleId && serverRole?.id && oldRoleId !== serverRole.id) {
         idMap.set(oldRoleId, serverRole.id);
@@ -530,17 +492,18 @@ async function processCategoryCreates(
   let failed = 0;
 
   for (const m of categoryCreates) {
+    const queued = await mutationQueue.getById(m.id);
+    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
+
+    const localRecord = (await localCategoriesStore.getAll()).find((r) => r.mutationId === m.id);
+    const oldCategoryId = localRecord?.category.id ?? null;
+
     try {
       await mutationQueue.markSyncing(m.id);
       const response = await axiosInstance.post('/categories', m.data, { skipAuthRedirect: true });
       const serverCategory = extractCategory(response.data);
-      await mutationQueue.markCompleted(m.id);
-
-      const oldCategoryId = await localCategoriesStore.markSyncedByMutationId(
-        m.id,
-        serverCategory?.id,
-        serverCategory ?? undefined,
-      );
+      await commitMutationQueueEntry(m.id);
+      await localCategoriesStore.removeByMutationId(m.id);
 
       if (oldCategoryId && serverCategory?.id && oldCategoryId !== serverCategory.id) {
         idMap.set(oldCategoryId, serverCategory.id);
@@ -569,17 +532,18 @@ async function processShiftOpens(
   let failed = 0;
 
   for (const m of shiftOpens) {
+    const queued = await mutationQueue.getById(m.id);
+    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
+
+    const localRecord = await localShiftsStore.getByMutationId(m.id);
+    const oldShiftId = localRecord?.shiftId;
+
     try {
       await mutationQueue.markSyncing(m.id);
       const response = await axiosInstance.post('/shifts', m.data, { skipAuthRedirect: true });
       const serverShift = extractShift(response.data);
-      await mutationQueue.markCompleted(m.id);
-
-      const oldShiftId = await localShiftsStore.markSyncedByMutationId(
-        m.id,
-        serverShift?.id,
-        serverShift ?? undefined,
-      );
+      await commitMutationQueueEntry(m.id);
+      await localShiftsStore.removeByMutationId(m.id);
 
       if (oldShiftId && serverShift?.id && oldShiftId !== serverShift.id) {
         idMap.set(oldShiftId, serverShift.id);
@@ -771,18 +735,6 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
     else failed++;
   }
 
-  await mutationQueue.clearCompleted();
-  await localSalesStore.removeSynced();
-  await localRefundsStore.removeSynced();
-  await localShiftsStore.removeSynced();
-  await localProductsStore.removeSynced();
-  await localCategoriesStore.removeSynced();
-  await localCustomersStore.removeSynced();
-  await localExpensesStore.removeSynced();
-  await localExpenseCategoriesStore.removeSynced();
-  await localRolesStore.removeSynced();
-  await localStaffStore.removeSynced();
-  await localBusinessSettingsStore.removeSynced();
   return { synced, failed };
 }
 

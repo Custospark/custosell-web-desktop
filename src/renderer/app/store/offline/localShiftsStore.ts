@@ -133,6 +133,16 @@ export const localShiftsStore = {
     await db.put('localShifts', record);
   },
 
+  async removeByMutationId(mutationId: string): Promise<LocalShiftRecord | undefined> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localShifts');
+    const record = all.find((r) => r.mutationId === mutationId);
+    if (record) {
+      await db.delete('localShifts', record.localId);
+    }
+    return record;
+  },
+
   async removeSynced(): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localShifts');

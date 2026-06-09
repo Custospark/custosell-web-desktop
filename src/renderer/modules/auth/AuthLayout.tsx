@@ -16,12 +16,12 @@ export const AUTH_HERO_IMAGES = {
   register: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
   /** Laptop workspace — enter email for reset link */
   forgotPassword: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&q=80',
-  /** Envelope / inbox — check your email */
-  forgotPasswordSent: 'https://images.unsplash.com/photo-1596526131083-e8c188c223ab?w=1200&q=80',
+  /** Person at laptop — check your inbox for the reset link */
+  forgotPasswordSent: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&q=80',
   /** Lock on keyboard — choose a new password */
   resetPassword: 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=1200&q=80',
-  /** Padlock — account secured after reset */
-  resetPasswordSuccess: 'https://images.unsplash.com/photo-1614064641938-3bbee51642ea?w=1200&q=80',
+  /** Secure workspace — password updated successfully */
+  resetPasswordSuccess: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&q=80',
 } as const;
 
 export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
@@ -79,6 +79,10 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
         </header>
         <main className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-gray-50">
           <div className="w-full max-w-md">
+            <div className="lg:hidden relative h-40 sm:h-44 -mx-2 sm:-mx-4 mb-7 overflow-hidden rounded-2xl shadow-sm">
+              <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-blue-800/60 to-blue-900/40" />
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-1.5 text-center">{title}</h2>
             {subtitle && <p className="text-gray-500 mb-8 text-center">{subtitle}</p>}
             {children}

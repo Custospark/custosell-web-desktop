@@ -20,6 +20,7 @@ import {
 } from './syncErrorUtils';
 import { isOfflineMode } from './offlineQueryUtils';
 import { invalidateAfterSalesChunk } from './syncCacheRefresh';
+import { commitMutationQueueEntry, commitMutationQueueEntryIfPresent } from './syncMutationFinalize';
 
 function extractBatchSales(responseData: unknown): Sale[] {
   if (!responseData || typeof responseData !== 'object') return [];
@@ -46,9 +47,9 @@ export function sortSalesMutationsChronologically(mutations: QueuedMutation[]): 
   });
 }
 
-async function markSaleSynced(m: QueuedMutation, serverSale?: Sale): Promise<void> {
-  await mutationQueue.markCompleted(m.id);
-  await localSalesStore.markSyncedByMutationId(m.id, serverSale?.id, serverSale);
+async function commitSaleSync(m: QueuedMutation): Promise<void> {
+  await commitMutationQueueEntry(m.id);
+  await localSalesStore.removeByMutationId(m.id);
 }
 
 async function markSaleFailed(m: QueuedMutation, message: string): Promise<void> {
@@ -56,7 +57,22 @@ async function markSaleFailed(m: QueuedMutation, message: string): Promise<void>
   await localSalesStore.markFailedByMutationId(m.id);
 }
 
+async function reconcileDuplicateSale(m: QueuedMutation, message: string): Promise<boolean> {
+  if (!/duplicate|already|exists|unique/i.test(message)) return false;
+
+  const committed = await commitMutationQueueEntryIfPresent(m.id);
+  if (committed) {
+    await localSalesStore.removeByMutationId(m.id);
+  }
+  return committed;
+}
+
 async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Promise<boolean> {
+  const queued = await mutationQueue.getById(m.id);
+  if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) {
+    return true;
+  }
+
   const payload = remapSalePayload(m.data as CreateSalePayload, idMap);
   try {
     await mutationQueue.markSyncing(m.id);
@@ -66,11 +82,14 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
     });
     const wrapped = response.data as { data?: Sale };
     const serverSale = extractBatchSales(response.data)[0] ?? wrapped?.data ?? (response.data as Sale);
-    await markSaleSynced(m, serverSale?.id ? serverSale : undefined);
+    void serverSale;
+    await commitSaleSync(m);
     return true;
   } catch (error: unknown) {
     if (isAuthHttpError(error)) throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
-    await markSaleFailed(m, extractErrorMessage(error, 'Sale sync failed'));
+    const message = extractErrorMessage(error, 'Sale sync failed');
+    if (await reconcileDuplicateSale(m, message)) return true;
+    await markSaleFailed(m, message);
     return false;
   }
 }
@@ -79,23 +98,34 @@ async function syncSalesChunkBatch(
   chunk: QueuedMutation[],
   idMap: Map<number, number>,
 ): Promise<{ synced: number; failed: number }> {
-  const sales = chunk.map((m) => remapSalePayload(m.data as CreateSalePayload, idMap));
+  const activeChunk = (
+    await Promise.all(chunk.map(async (m) => ({ m, queued: await mutationQueue.getById(m.id) })))
+  )
+    .filter(({ queued }) => queued && (queued.status === 'queued' || queued.status === 'failed'))
+    .map(({ m }) => m);
+
+  if (activeChunk.length === 0) {
+    return { synced: 0, failed: 0 };
+  }
+
+  const sales = activeChunk.map((m) => remapSalePayload(m.data as CreateSalePayload, idMap));
 
   for (let attempt = 0; attempt < NETWORK_RETRY_MAX; attempt++) {
     try {
-      for (const m of chunk) await mutationQueue.markSyncing(m.id);
+      for (const m of activeChunk) await mutationQueue.markSyncing(m.id);
 
       const response = await axiosInstance.post('/sales/batch', { sales }, {
         timeout: SALES_BATCH_TIMEOUT_MS,
         skipAuthRedirect: true,
       });
       const syncedSales = extractBatchSales(response.data);
+      void syncedSales;
 
-      for (let i = 0; i < chunk.length; i++) {
-        await markSaleSynced(chunk[i], syncedSales[i]);
+      for (const m of activeChunk) {
+        await commitSaleSync(m);
       }
 
-      return { synced: chunk.length, failed: 0 };
+      return { synced: activeChunk.length, failed: 0 };
     } catch (error: unknown) {
       if (isAuthHttpError(error)) {
         throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
@@ -112,7 +142,7 @@ async function syncSalesChunkBatch(
 
   let synced = 0;
   let failed = 0;
-  for (const m of chunk) {
+  for (const m of activeChunk) {
     const ok = await syncSingleSale(m, idMap);
     if (ok) synced++;
     else failed++;

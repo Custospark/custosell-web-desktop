@@ -4,7 +4,7 @@ import { store } from '../store';
 import { setBusiness } from '../slices/authSlice';
 import { mutationQueue } from './mutationQueue';
 import { isNetworkFailure, isOfflineMode, shouldCompleteMutationLocally } from './offlineQueryUtils';
-import { syncPendingDataIfOnline } from './syncPendingIfOnline';
+import { requestSyncWhenOnline } from './syncPendingIfOnline';
 import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from './localRolesStore';
 import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from './localStaffStore';
 import { localBusinessSettingsStore, type BusinessWithSyncMeta } from './localBusinessSettingsStore';
@@ -17,10 +17,8 @@ function newLocalNumericId(): number {
   return -Math.floor(Date.now() + Math.random() * 1000);
 }
 
-function triggerSettingsSyncAfterPersist(entity: 'Role' | 'Staff' | 'Business'): void {
-  void syncPendingDataIfOnline().catch((err) => {
-    console.error(`[OfflineSettings] ${entity} sync trigger failed:`, err);
-  });
+function triggerSettingsSyncAfterPersist(_entity: 'Role' | 'Staff' | 'Business'): void {
+  requestSyncWhenOnline();
 }
 
 export function shouldCompleteSettingsLocally(): boolean {

@@ -88,6 +88,21 @@ export const localSalesStore = {
     await db.put('localSales', record);
   },
 
+  async getByMutationId(mutationId: string): Promise<LocalSaleRecord | undefined> {
+    const all = await this.getAll();
+    return all.find((r) => r.mutationId === mutationId);
+  },
+
+  async removeByMutationId(mutationId: string): Promise<LocalSaleRecord | undefined> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localSales');
+    const record = all.find((r) => r.mutationId === mutationId);
+    if (record) {
+      await db.delete('localSales', record.localId);
+    }
+    return record;
+  },
+
   async markFailedByMutationId(mutationId: string): Promise<void> {
     const db = await getOfflineDb();
     const all = await db.getAll('localSales');

@@ -1,3 +1,4 @@
+import { isSyncCoordinatorRunning } from './syncCoordinator';
 import { getOfflineDb } from './offlineDb';
 
 export interface QueuedMutation {
@@ -54,13 +55,20 @@ export const mutationQueue = {
     return all;
   },
 
+  async getById(id: string): Promise<QueuedMutation | undefined> {
+    const db = await getDb();
+    return db.get('mutations', id);
+  },
+
   async getPending(): Promise<QueuedMutation[]> {
     const db = await getDb();
     const all = await db.getAll('mutations');
     const now = Date.now();
+    const coordinatorActive = isSyncCoordinatorRunning();
 
     for (const mutation of all) {
       if (isStaleSyncingMutation(mutation, now)) {
+        if (coordinatorActive) continue;
         mutation.status = 'queued';
         mutation.lastError = 'Previous sync attempt timed out';
         await db.put('mutations', mutation);
@@ -68,7 +76,6 @@ export const mutationQueue = {
     }
 
     const pending = all.filter((m) => m.status === 'queued' || m.status === 'failed');
-    console.log('[MutationQueue] getPending — total:', all.length, 'pending:', pending.length, 'statuses:', all.map((m) => m.status));
     return pending;
   },
 

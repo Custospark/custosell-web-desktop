@@ -47,6 +47,19 @@ function normalizeProductsResponse(payload: unknown): Product[] {
   return [];
 }
 
+/** Full catalog for inventory; sales-only staff fall back to the POS active catalog. */
+async function fetchProductsFromApi(): Promise<Product[]> {
+  try {
+    const { data } = await axiosInstance.get('/products', { timeout: 10000 });
+    return normalizeProductsResponse(data);
+  } catch (err) {
+    const status = (err as AxiosError).response?.status;
+    if (status !== 403) throw err;
+    const { data } = await axiosInstance.get('/products/active', { timeout: 10000 });
+    return normalizeProductsResponse(data);
+  }
+}
+
 function stripStaleProductSyncMeta(
   product: ProductWithSyncMeta,
   pendingProductIds: Set<number>,
@@ -108,8 +121,7 @@ async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
     return await readWithOfflineStrategy({
       readFromClient: readProductsFromClientCache,
       fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get('/products', { timeout: 10000 });
-        const serverProducts = normalizeProductsResponse(response);
+        const serverProducts = await fetchProductsFromApi();
         return mergeProductsWithOfflineOverlay(serverProducts);
       },
     });

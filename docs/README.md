@@ -17,6 +17,12 @@ Technical documentation for the frontend application, with emphasis on **offline
 | [service-worker-strategy.md](./service-worker-strategy.md) | Web production caching (static + API GET) |
 | [app-shell.md](./app-shell.md) | Global UI: status banners, navbar, layout chrome |
 
+## Future work
+
+| Document | Contents |
+|----------|----------|
+| [future-work-offline-npm-library.ipynb](./future-work-offline-npm-library.ipynb) | Plan to extract offline engine as reusable npm package (`@opiyo/offline-core`) |
+
 ## Other docs
 
 | Document | Contents |

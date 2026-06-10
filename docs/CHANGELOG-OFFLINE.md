@@ -39,6 +39,10 @@ Summary of major offline-related work for documentation traceability.
 - **LoginPage error banner** — raw `IndexedDB open timed out` no longer exposed; routes through `sanitizeErrorMessage` / `isNetworkFailure` for user-friendly messages
 - **README.md** — subtitle updated from "boutiques" to "28 business types" matching landing page
 
+## 2026-06-10 — Offline npm library (future work doc)
+
+- **`docs/future-work-offline-npm-library.ipynb`** — Jupyter notebook planning `@opiyo/offline-core` extraction
+
 ## 2026-06-10 — Offline folder modularization
 
 - **`offline/` subfolders** — `core`, `auth`, `sales`, `inventory`, `customers`, `expenses`, `settings`, `catalogs`, `sync`, `guide`, `testing`

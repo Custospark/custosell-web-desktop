@@ -61,18 +61,34 @@ Implemented via `readWithOfflineStrategy()` in `offlineReadStrategy.ts` and `rea
 
 ## Reconnect pipeline
 
-Triggered by `useOfflineSync` on bootstrap (online) or when `systemStatus` leaves `offline`:
+Triggered when `systemStatus` leaves `offline` or on online bootstrap with a device local session.
+
+**Phase 1 — silent auth (must finish first)**
+
+All of these coordinate on the same `upgradeLocalSessionIfOnline()` promise:
+
+- Axios `ensureServerSession()` on every non-auth request
+- `useSyncQueryOnlineStatus` before React Query `refetchOnReconnect`
+- `useOfflineSync` before mutation queue drain
+- `AuthBootstrap` / offline login when already online
 
 ```
-1. upgradeLocalSessionIfOnline()     — device local session → server token (silent)
-2. syncPendingDataIfOnline()         — syncCoordinator
-   a. syncAuthMutations()            — registration / queued login
-   b. runSyncPipeline()              — tiered entity sync
-3. invalidateAfterFullSync()         — refresh RQ + catalog snapshots
-4. purgeSyncedOptimisticFromCache()  — strip OFF-* / pending badges
+upgradeLocalSessionIfOnline()
+  → applyServerAuth() — server token + auth slice + storage
+  → postSessionUpgradeRefresh() — profile, catalogs, shifts
 ```
 
-See [offline-auth.md](./offline-auth.md) for session upgrade detail and [offline-sales.md](./offline-sales.md) for mutation tier order.
+**Phase 2 — data sync (after Phase 1)**
+
+```
+syncPendingDataIfOnline() → syncCoordinator
+  a. syncAuthMutations()        — pending registration only if still queued
+  b. runSyncPipeline()          — tiered entity sync (shifts, sales, …)
+invalidateAfterFullSync()
+purgeSyncedOptimisticFromCache()
+```
+
+See [offline-auth.md](./offline-auth.md) for gating detail and [offline-sales.md](./offline-sales.md) for mutation tier order.
 
 ## Catalog snapshots (`serverCatalogs`)
 

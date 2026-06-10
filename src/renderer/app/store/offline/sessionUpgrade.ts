@@ -30,12 +30,16 @@ function extractAuthUser(data: AuthResponse): AuthUser {
   return userData;
 }
 
-function needsSessionUpgrade(): boolean {
+export function needsSessionUpgrade(): boolean {
   const { auth } = store.getState();
   if (!auth.isInitialized || !auth.isLocalSession || auth.pendingAuthSync) return false;
   if (!auth.user?.email) return false;
   if (auth.token && !isLocalSessionToken(auth.token)) return false;
   return true;
+}
+
+export function isSessionUpgradeActive(): boolean {
+  return activeUpgrade !== null;
 }
 
 async function runSessionUpgrade(): Promise<SessionUpgradeResult> {
@@ -79,7 +83,7 @@ async function runSessionUpgrade(): Promise<SessionUpgradeResult> {
     const { data } = await axiosInstance.post<AuthResponse>(
       '/auth/login',
       { email, password } satisfies LoginRequest,
-      { skipAuthRedirect: true } as never,
+      { skipAuthRedirect: true, skipSessionUpgrade: true } as never,
     );
     const user = extractAuthUser(data);
     await applyServerAuth(user, data.token, password);
@@ -92,6 +96,13 @@ async function runSessionUpgrade(): Promise<SessionUpgradeResult> {
 }
 
 let activeUpgrade: Promise<SessionUpgradeResult> | null = null;
+
+/** Block API traffic until a device local session is promoted to a server session. */
+export async function ensureServerSession(): Promise<void> {
+  if (isOfflineMode()) return;
+  if (!needsSessionUpgrade()) return;
+  await upgradeLocalSessionIfOnline();
+}
 
 /** Silently exchange a device local session for a server session when online. */
 export async function upgradeLocalSessionIfOnline(): Promise<SessionUpgradeResult> {

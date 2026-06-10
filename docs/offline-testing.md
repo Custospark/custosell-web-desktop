@@ -39,12 +39,14 @@ Consolidated manual tests for Custosell offline behavior. See also `src/renderer
 4. Shift sales from `sales:{businessId}:shift:{shiftId}` if that shift was loaded online.
 5. New offline sales merge from `localSalesStore` on top.
 
-## 4. Silent session upgrade
+## 4. Silent session upgrade (ordering / no 401 logout)
 
 1. Offline login (existing user) — **no** `AuthPendingBanner`.
 2. Restore internet while staying in app.
-3. User **not** redirected to login; navbar shows Connected.
-4. `isLocalSession` becomes false; profile query enabled; shift badge updates from `/shifts/active`.
+3. User **not** redirected to login; no `{"message":"Unauthenticated."}` logout.
+4. Silent auth completes **before** sales/products refetch or mutation sync.
+5. `isLocalSession` becomes false; profile query enabled; shift badge updates from `/shifts/active`.
+6. Pending sales then sync via mutation queue.
 
 ## 5. Pending registration
 

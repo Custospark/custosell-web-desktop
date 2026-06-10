@@ -51,19 +51,55 @@ Prerequisite: user must have signed in **online at least once** on this device (
 
 ## Silent session upgrade
 
-When internet returns, `upgradeLocalSessionIfOnline()` (`sessionUpgrade.ts`) runs **before** the general sync coordinator:
+When a user signs in offline (device credentials), the app holds a `local_*` token. That token is **not** sent as `Authorization` to the API. On reconnect, the app must promote the session to a **server Bearer token** and refresh the auth slice **before** any other server work runs.
+
+### Why ordering matters
+
+If sales/products queries or React Query `refetchOnReconnect` run first, they hit the API without a valid Bearer token, receive `401 Unauthenticated`, and the axios interceptor can force logout. Silent auth must win the race.
+
+### Execution order (reconnect or online boot with local session)
 
 ```
-1. Skip if offline, already server token, or pendingAuthSync (registration)
-2. If auth mutations queued → syncAuthMutations() → applyServerAuth()
-3. Else POST /auth/login with encrypted device password
-4. applyServerAuth() → real token, isLocalSession=false, pendingAuthSync=false
-5. postSessionUpgradeRefresh() → profile cache, catalog snapshots, shift/sales invalidation, GET /shifts/active
+Phase 1 — Silent session upgrade (blocks everything below)
+  ├─ upgradeLocalSessionIfOnline()  [single shared promise]
+  ├─ Queued POST /auth/login OR direct POST /auth/login (device password)
+  └─ applyServerAuth()
+       ├─ Redux: server token, isLocalSession=false, user/business/shift fields
+       ├─ Encrypted session + device credentials persisted
+       └─ postSessionUpgradeRefresh() (profile cache, catalogs, shifts/sales, /shifts/active)
+
+Phase 2 — Only after Phase 1 completes (or is not needed)
+  ├─ Authenticated API requests (products, sales, dashboard, …)
+  ├─ React Query refetchOnReconnect
+  └─ syncPendingDataIfOnline() — mutation queue, sales batch, etc.
 ```
+
+### Gating mechanisms
+
+| Layer | Mechanism | File |
+|-------|-----------|------|
+| **HTTP** | Request interceptor calls `ensureServerSession()` before non-auth requests | `axiosConfig.ts` |
+| **React Query** | `onlineManager.setOnline(true)` delayed until upgrade finishes | `useSyncQueryOnlineStatus.ts` |
+| **Sync hook** | `await upgradeLocalSessionIfOnline()` before `syncPendingDataIfOnline()` | `useOfflineSync.ts` |
+| **Early boot** | Hydrated local session + online → upgrade on load | `AuthBootstrap.tsx` |
+| **After offline login** | If network already back → upgrade immediately | `AccountQueries.ts` |
+| **401 safety** | No forced logout while upgrade active, session needs upgrade, or `localSessionRequest` tag | `axiosConfig.ts` |
+
+### Exemptions (do not wait on upgrade)
+
+- `POST /auth/login`, register endpoints
+- Connectivity probe (`GET /sales` with `skipSessionUpgrade: true`)
+- Any request with `skipSessionUpgrade: true` on config
+
+### Upgrade steps (inside `sessionUpgrade.ts`)
+
+1. Skip if offline, already server token, or `pendingAuthSync` (registration)
+2. If auth mutations queued → `syncAuthMutations()` → `applyServerAuth()`
+3. Else `POST /auth/login` with encrypted device password
+4. `applyServerAuth()` → `isLocalSession=false`, `pendingAuthSync=false`
+5. `postSessionUpgradeRefresh()` — profile, catalog snapshots, query invalidation, active shift
 
 No toast for routine device-login upgrade. Registration sync still shows success/error toasts.
-
-Wired from `useOfflineSync` on reconnect and online bootstrap.
 
 ## Auth sync engine
 

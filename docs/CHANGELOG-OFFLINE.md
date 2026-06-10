@@ -26,6 +26,14 @@ Summary of major offline-related work for documentation traceability.
 - **Navbar network colors** — emerald / orange / red for online / slow / offline
 - **Dashboard charts** — My Shift–style area chart; uppercase graph subtitles
 
+## 2026-06-10 — Silent auth ordering (401 logout fix)
+
+- **`ensureServerSession()`** — axios request interceptor blocks API calls until device session upgrades
+- **`useSyncQueryOnlineStatus`** — delays React Query `onlineManager` until upgrade completes
+- **401 guard** — no forced logout during upgrade, when upgrade needed, or for `localSessionRequest` tags
+- **Early upgrade triggers** — `AuthBootstrap` hydrate + offline login when network already back
+- **Connectivity probe** — `skipSessionUpgrade: true` on latency `GET /sales`
+
 ## 2026-06-10 — Error message sanitization
 
 - **LoginPage error banner** — raw `IndexedDB open timed out` no longer exposed; routes through `sanitizeErrorMessage` / `isNetworkFailure` for user-friendly messages

@@ -7,6 +7,11 @@ import { logout } from '../store/slices/authSlice';
 import { API_BASE_URL, API_TIMEOUT } from './apiConfig';
 import { clearServiceWorkerApiCache } from '../sw/registerServiceWorker';
 import { clearAuthSession, isLocalSessionToken } from '../store/offline/secureStorage';
+import {
+  ensureServerSession,
+  isSessionUpgradeActive,
+  needsSessionUpgrade,
+} from '../store/offline/sessionUpgrade';
 import { LOGOUT_INTENT_KEY } from '../store/auth/runAppLogout';
 
 const axiosInstance: AxiosInstance = axios.create({
@@ -30,6 +35,12 @@ export function resolveBearerToken(state: RootState): string | null {
   if (legacy && !isLocalSessionToken(legacy)) return legacy;
 
   return null;
+}
+
+function isAuthRequestUrl(url: string): boolean {
+  return url.includes('/auth/login')
+    || url.includes('/auth/register')
+    || url.includes('/businesses/register');
 }
 
 const LEGACY_TOKEN_KEY = 'token';
@@ -65,9 +76,27 @@ async function forceSessionLogout(): Promise<void> {
   }
 }
 
+function shouldSkip401Logout(config: InternalAxiosRequestConfig | undefined, state: RootState): boolean {
+  if (!config) return false;
+  if (config.skipAuthRedirect) return true;
+  if (config.localSessionRequest) return true;
+  if (state.auth.isLocalSession) return true;
+  if (needsSessionUpgrade()) return true;
+  if (isSessionUpgradeActive()) return true;
+  return false;
+}
+
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
+    const url = String(config.url ?? '');
+
+    if (!config.skipSessionUpgrade && !isAuthRequestUrl(url)) {
+      await ensureServerSession();
+    }
+
     const state = store.getState();
+    config.localSessionRequest = state.auth.isLocalSession;
+
     const token = resolveBearerToken(state);
     if (token) {
       const headers = config.headers
@@ -123,9 +152,9 @@ axiosInstance.interceptors.response.use(
     const state = store.getState();
     const hasAuthToken = Boolean(resolveBearerToken(state));
     const url = String(error.config?.url ?? '');
-    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/businesses/register');
+    const isAuthEndpoint = isAuthRequestUrl(url);
 
-    const skipAuthRedirect = Boolean(error.config?.skipAuthRedirect) || state.auth.isLocalSession;
+    const skipAuthRedirect = shouldSkip401Logout(error.config, state);
 
     if (
       error.response?.status === 401 &&

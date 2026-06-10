@@ -26,6 +26,7 @@ async function probeApiBackend(): Promise<{ ok: boolean; latency: number | null 
     await axiosInstance.get('/sales', {
       timeout: TIMEOUT_MS,
       skipAuthRedirect: true,
+      skipSessionUpgrade: true,
     });
     return {
       ok: true,

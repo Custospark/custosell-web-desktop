@@ -29,6 +29,7 @@ import { completeOfflineLogin } from '../../../app/store/offline/completeOffline
 import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/deviceCredentials';
 import { updateStoredAuthUser } from '../../../app/store/offline/secureStorage';
 import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/catalogSnapshotRefresh';
+import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/sessionUpgrade';
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
@@ -119,6 +120,9 @@ export function useLogin() {
       }
 
       if (isLocal) {
+        if (!isCompletelyOffline()) {
+          void upgradeLocalSessionIfOnline();
+        }
         showToast('success', isCompletelyOffline()
           ? 'Signed in offline. Changes will sync when reconnected.'
           : 'Signed in using offline credentials.');

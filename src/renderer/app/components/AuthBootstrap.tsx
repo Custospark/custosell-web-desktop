@@ -11,6 +11,8 @@ import { consumeLogoutIntent } from '../store/auth/runAppLogout';
 import { queryClient } from '../api/axiosConfig';
 import { accountKeys } from '../../shared/api/account/AccountQueries';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
+import { isOfflineMode } from '../store/offline/offlineQueryUtils';
+import { upgradeLocalSessionIfOnline } from '../store/offline/sessionUpgrade';
 
 export function AuthBootstrap({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -40,6 +42,10 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
           if (cancelled) return;
           dispatch(hydrateAuth(normalized));
           queryClient.setQueryData(accountKeys.profile(), normalized.user);
+
+          if (normalized.isLocalSession && !normalized.pendingAuthSync && !isOfflineMode()) {
+            void upgradeLocalSessionIfOnline();
+          }
         } else {
           dispatch(setInitialized());
         }

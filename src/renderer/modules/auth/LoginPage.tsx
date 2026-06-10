@@ -6,6 +6,10 @@ import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { Mail, Lock } from 'lucide-react';
+import {
+  isNetworkFailure,
+  sanitizeErrorMessage,
+} from '../../app/store/offline/offlineQueryUtils';
 
 export default function LoginPage() {
   const loginMutation = useLogin();
@@ -40,7 +44,9 @@ export default function LoginPage() {
         </div>
         {loginMutation.isError && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {(loginMutation.error as any)?.response?.data?.message || (loginMutation.error as any)?.message || 'Invalid credentials'}
+            {isNetworkFailure(loginMutation.error)
+              ? 'Could not reach the server. Check your internet connection and try again.'
+              : sanitizeErrorMessage(loginMutation.error, 'Invalid credentials')}
           </p>
         )}
         <Button type="submit" className="w-full py-3.5" loading={loginMutation.isPending}>

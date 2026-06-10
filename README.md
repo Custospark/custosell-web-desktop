@@ -1,6 +1,6 @@
 # Custosell Frontend
 
-Offline-capable retail POS for boutiques (React + TypeScript + Vite + Electron).
+Offline-first POS supporting 28 business types — retail, wholesale, restaurant, and more (React + TypeScript + Vite + Electron).
 
 ## Documentation
 

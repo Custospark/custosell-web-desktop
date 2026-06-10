@@ -26,6 +26,11 @@ Summary of major offline-related work for documentation traceability.
 - **Navbar network colors** — emerald / orange / red for online / slow / offline
 - **Dashboard charts** — My Shift–style area chart; uppercase graph subtitles
 
+## 2026-06-10 — Error message sanitization
+
+- **LoginPage error banner** — raw `IndexedDB open timed out` no longer exposed; routes through `sanitizeErrorMessage` / `isNetworkFailure` for user-friendly messages
+- **README.md** — subtitle updated from "boutiques" to "28 business types" matching landing page
+
 ## Documentation index
 
 See [README.md](./README.md) for full doc map.

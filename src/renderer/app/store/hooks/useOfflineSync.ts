@@ -6,18 +6,20 @@ import {
   syncPendingDataIfOnline,
 } from '../offline/syncPendingIfOnline';
 import { purgeSyncedOptimisticFromCache } from '../offline/offlineCacheReconcile';
+import { upgradeLocalSessionIfOnline } from '../offline/sessionUpgrade';
 import { queryClient } from '../../api/axiosConfig';
 import { useToast } from '../../contexts/ToastContext';
 
 /**
  * Sync queued IndexedDB work when connectivity returns.
- * Does NOT re-run on every online/slow flicker — only reconnect or startup with pending work.
+ * Silently upgrades device local sessions to server sessions before draining the queue.
  */
 export function useOfflineSync(): void {
   const systemStatus = useAppSelector(selectSystemStatus);
   const isInitialized = useAppSelector((state) => state.auth.isInitialized);
   const token = useAppSelector((state) => state.auth.token);
   const isLocalSession = useAppSelector((state) => state.auth.isLocalSession);
+  const pendingAuthSync = useAppSelector((state) => state.auth.pendingAuthSync);
   const { showToast } = useToast();
   const previousStatus = useRef(systemStatus);
   const hasBootstrapped = useRef(false);
@@ -41,19 +43,26 @@ export function useOfflineSync(): void {
 
       if (!reconnected && !isBootstrap) return;
 
+      const needsSessionUpgrade = isLocalSession && !pendingAuthSync;
+
       if (isBootstrap && !reconnected) {
         const pending = await hasPendingSyncWork();
-        if (!pending) {
-          // Prior session may have synced to the server before cache cleanup ran.
+        if (!pending && !needsSessionUpgrade) {
           await purgeSyncedOptimisticFromCache(queryClient);
           return;
         }
       }
 
+      if (needsSessionUpgrade) {
+        await upgradeLocalSessionIfOnline();
+        if (cancelled) return;
+      }
+
       const result = await syncPendingDataIfOnline();
       if (cancelled) return;
 
-      if (result.authSynced > 0) {
+      const showRegistrationAuthToast = pendingAuthSync;
+      if (showRegistrationAuthToast && result.authSynced > 0) {
         showToast('success', 'Account synced successfully.');
       }
       if (result.authFailed > 0 || result.authBlocked) {
@@ -71,5 +80,5 @@ export function useOfflineSync(): void {
     return () => {
       cancelled = true;
     };
-  }, [systemStatus, showToast, isInitialized, token, isLocalSession]);
+  }, [systemStatus, showToast, isInitialized, token, isLocalSession, pendingAuthSync]);
 }

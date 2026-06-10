@@ -1,13 +1,11 @@
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../api/axiosConfig';
 import { store } from '../store';
-import { loginSuccess } from '../slices/authSlice';
 import type { AuthUser } from '../slices/authSlice';
 import type { AuthResponse, BusinessRegisterRequest, LoginRequest } from '../../../shared/api/account/AccountTypes';
 import { mutationQueue, type QueuedMutation } from './mutationQueue';
 import { localAuthStore } from './localAuthStore';
-import { remapBusinessContext } from './remapBusinessContext';
-import { persistLoginCredentials } from './deviceCredentials';
+import { applyServerAuth } from './authSessionApply';
 
 export function isAuthRegisterMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/businesses/register';
@@ -27,33 +25,6 @@ function extractAuthUser(data: AuthResponse): AuthUser {
     userData.business = (userData.business as { data: AuthUser['business'] }).data;
   }
   return userData;
-}
-
-async function applyServerAuth(
-  user: AuthUser,
-  token: string,
-  password: string,
-  remap?: { oldBusinessId: number; newBusinessId: number; oldUserId: number; newUserId: number },
-): Promise<void> {
-  if (remap) {
-    await remapBusinessContext(remap.oldBusinessId, remap.newBusinessId, remap.oldUserId, remap.newUserId);
-  }
-
-  await persistLoginCredentials({
-    email: user.email,
-    password,
-    user,
-    token,
-    isLocalSession: false,
-    pendingAuthSync: false,
-  });
-
-  store.dispatch(loginSuccess({
-    user,
-    token,
-    isLocalSession: false,
-    pendingAuthSync: false,
-  }));
 }
 
 async function processAuthRegister(m: QueuedMutation): Promise<boolean> {

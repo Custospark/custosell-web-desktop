@@ -1,6 +1,7 @@
 import type { AuthUser } from '../slices/authSlice';
 import { localAuthStore } from './localAuthStore';
 import { hashPassword } from './passwordVerifier';
+import { saveDeviceLoginPassword } from './deviceLoginSecrets';
 import { saveAuthSession, type StoredAuthSession } from './secureStorage';
 
 export interface PersistLoginCredentialsInput {
@@ -24,6 +25,10 @@ export async function persistLoginCredentials(input: PersistLoginCredentialsInpu
     pendingAuthSync: input.pendingAuthSync,
   };
   await saveAuthSession(session);
+
+  if (input.isLocalSession && !input.pendingAuthSync) {
+    await saveDeviceLoginPassword(input.email, input.password);
+  }
 
   const passwordVerifier = await hashPassword(input.password);
   const pending = await localAuthStore.getPendingByEmail(input.email);

@@ -112,7 +112,7 @@ export function useLogin() {
         user: userData,
         token: data.token,
         isLocalSession: isLocal,
-        pendingAuthSync: data.pendingAuthSync ?? isLocal,
+        pendingAuthSync: data.pendingAuthSync ?? false,
       }));
       if (!isLocal) {
         queryClient.setQueryData(accountKeys.profile(), userData);

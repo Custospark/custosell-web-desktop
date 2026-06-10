@@ -1,7 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAppDispatch } from '../store/hooks/useApp';
 import { hydrateAuth, setInitialized } from '../store/slices/authSlice';
-import { loadAuthSession, migrateLegacyAuthStorage, clearAuthSession } from '../store/offline/secureStorage';
+import {
+  loadAuthSession,
+  migrateLegacyAuthStorage,
+  clearAuthSession,
+  normalizeStoredSession,
+} from '../store/offline/secureStorage';
 import { consumeLogoutIntent } from '../store/auth/runAppLogout';
 import { queryClient } from '../api/axiosConfig';
 import { accountKeys } from '../../shared/api/account/AccountQueries';
@@ -31,8 +36,10 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
         }
 
         if (session) {
-          dispatch(hydrateAuth(session));
-          queryClient.setQueryData(accountKeys.profile(), session.user);
+          const normalized = await normalizeStoredSession(session);
+          if (cancelled) return;
+          dispatch(hydrateAuth(normalized));
+          queryClient.setQueryData(accountKeys.profile(), normalized.user);
         } else {
           dispatch(setInitialized());
         }

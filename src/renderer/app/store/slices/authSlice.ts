@@ -93,7 +93,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isInitialized = true;
       state.isLocalSession = action.payload.isLocalSession ?? isLocalSessionToken(action.payload.token);
-      state.pendingAuthSync = action.payload.pendingAuthSync ?? state.isLocalSession;
+      state.pendingAuthSync = action.payload.pendingAuthSync ?? false;
       state.error = null;
     },
     loginFailure(state, action: PayloadAction<string>) {
@@ -113,7 +113,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isInitialized = true;
       state.isLocalSession = action.payload.isLocalSession ?? isLocalSessionToken(action.payload.token);
-      state.pendingAuthSync = action.payload.pendingAuthSync ?? state.isLocalSession;
+      state.pendingAuthSync = action.payload.pendingAuthSync ?? false;
       state.error = null;
     },
     registerFailure(state, action: PayloadAction<string>) {

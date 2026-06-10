@@ -1,0 +1,102 @@
+import type { AxiosError } from 'axios';
+import { axiosInstance } from '../../api/axiosConfig';
+import { store } from '../store';
+import type { AuthUser } from '../slices/authSlice';
+import type { AuthResponse, LoginRequest } from '../../../shared/api/account/AccountTypes';
+import { isOfflineMode } from './offlineQueryUtils';
+import { isLocalSessionToken } from './secureStorage';
+import { mutationQueue } from './mutationQueue';
+import { isAuthLoginMutation, isAuthMutation, syncAuthMutations } from './syncAuthEngine';
+import { applyServerAuth } from './authSessionApply';
+import { loadDeviceLoginPassword } from './deviceLoginSecrets';
+
+export interface SessionUpgradeResult {
+  upgraded: boolean;
+  reason?:
+    | 'offline'
+    | 'not_applicable'
+    | 'already_server'
+    | 'no_email'
+    | 'auth_sync_failed'
+    | 'no_password'
+    | 'login_failed';
+}
+
+function extractAuthUser(data: AuthResponse): AuthUser {
+  const userData = data.user?.data ?? data.user;
+  if (userData.business && typeof userData.business === 'object' && 'data' in userData.business) {
+    userData.business = (userData.business as { data: AuthUser['business'] }).data;
+  }
+  return userData;
+}
+
+function needsSessionUpgrade(): boolean {
+  const { auth } = store.getState();
+  if (!auth.isInitialized || !auth.isLocalSession || auth.pendingAuthSync) return false;
+  if (!auth.user?.email) return false;
+  if (auth.token && !isLocalSessionToken(auth.token)) return false;
+  return true;
+}
+
+async function runSessionUpgrade(): Promise<SessionUpgradeResult> {
+  if (isOfflineMode()) return { upgraded: false, reason: 'offline' };
+  if (!needsSessionUpgrade()) {
+    const { auth } = store.getState();
+    if (auth.token && !isLocalSessionToken(auth.token)) {
+      return { upgraded: false, reason: 'already_server' };
+    }
+    if (!auth.user?.email) return { upgraded: false, reason: 'no_email' };
+    return { upgraded: false, reason: 'not_applicable' };
+  }
+
+  const email = store.getState().auth.user!.email;
+
+  const pending = await mutationQueue.getPending();
+  const hasAuthWork = pending.some(isAuthMutation);
+  if (hasAuthWork) {
+    const authResult = await syncAuthMutations();
+    if (authResult.synced > 0 && !store.getState().auth.isLocalSession) {
+      return { upgraded: true };
+    }
+    if (authResult.failed > 0 || authResult.blocked) {
+      return { upgraded: false, reason: 'auth_sync_failed' };
+    }
+  }
+
+  if (!needsSessionUpgrade()) {
+    return { upgraded: false, reason: 'already_server' };
+  }
+
+  const stillPending = await mutationQueue.getPending();
+  if (stillPending.some(isAuthLoginMutation)) {
+    return { upgraded: false, reason: 'auth_sync_failed' };
+  }
+
+  const password = await loadDeviceLoginPassword(email);
+  if (!password) return { upgraded: false, reason: 'no_password' };
+
+  try {
+    const { data } = await axiosInstance.post<AuthResponse>(
+      '/auth/login',
+      { email, password } satisfies LoginRequest,
+      { skipAuthRedirect: true } as never,
+    );
+    const user = extractAuthUser(data);
+    await applyServerAuth(user, data.token, password);
+    return { upgraded: true };
+  } catch (err) {
+    const status = (err as AxiosError).response?.status;
+    console.warn('[Session] Silent login upgrade failed:', status ?? err);
+    return { upgraded: false, reason: 'login_failed' };
+  }
+}
+
+let activeUpgrade: Promise<SessionUpgradeResult> | null = null;
+
+/** Silently exchange a device local session for a server session when online. */
+export async function upgradeLocalSessionIfOnline(): Promise<SessionUpgradeResult> {
+  activeUpgrade ??= runSessionUpgrade().finally(() => {
+    activeUpgrade = null;
+  });
+  return activeUpgrade;
+}

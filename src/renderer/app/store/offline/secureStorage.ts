@@ -1,5 +1,6 @@
 import type { AuthUser } from '../slices/authSlice';
 import { getOfflineDb } from './offlineDb';
+import { localAuthStore } from './localAuthStore';
 
 const AUTH_SESSION_KEY = 'auth_session';
 const CRYPTO_KEY_ID = 'master';
@@ -33,6 +34,34 @@ async function getOrCreateMasterKey(): Promise<CryptoKey> {
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   await db.put('secureKeys', { id: CRYPTO_KEY_ID, key });
   return key;
+}
+
+export async function saveSecureSecret(key: string, plaintext: string): Promise<void> {
+  const encrypted = await encryptString(plaintext);
+  const db = await getOfflineDb();
+  await db.put('secureSecrets', { key, value: encrypted, updatedAt: new Date().toISOString() });
+  await writeElectronSecure(key, encrypted);
+}
+
+export async function loadSecureSecret(key: string): Promise<string | null> {
+  const db = await getOfflineDb();
+  const fromElectron = await readElectronSecure(key);
+  const stored = fromElectron
+    ? { value: fromElectron }
+    : (await db.get('secureSecrets', key) as { value?: string } | undefined);
+
+  if (!stored?.value) return null;
+  return decryptString(stored.value);
+}
+
+export async function deleteSecureSecret(key: string): Promise<void> {
+  try {
+    const db = await getOfflineDb();
+    await db.delete('secureSecrets', key);
+  } catch {
+    /* ignore */
+  }
+  await deleteElectronSecure(key);
 }
 
 async function encryptString(plaintext: string): Promise<string> {
@@ -146,11 +175,34 @@ function loadLegacyAuthSession(): StoredAuthSession | null {
       token,
       user,
       isLocalSession: isLocalSessionToken(token),
-      pendingAuthSync: isLocalSessionToken(token),
+      pendingAuthSync: false,
     };
   } catch {
     return null;
   }
+}
+
+/** Correct pendingAuthSync for hydrated sessions (device login ≠ pending registration). */
+export async function normalizeStoredSession(session: StoredAuthSession): Promise<StoredAuthSession> {
+  if (!session.isLocalSession) {
+    return { ...session, pendingAuthSync: false };
+  }
+
+  if (!session.pendingAuthSync) return session;
+
+  try {
+    const record = await localAuthStore.getByEmail(session.user.email);
+    if (record?.kind === 'device_login') {
+      return { ...session, pendingAuthSync: false };
+    }
+    if (record?.kind === 'pending_registration') {
+      return { ...session, pendingAuthSync: true };
+    }
+  } catch (err) {
+    console.warn('[SecureStorage] Failed to resolve pendingAuthSync:', err);
+  }
+
+  return session;
 }
 
 /** Keep encrypted + legacy mirrors in sync after profile refresh. */

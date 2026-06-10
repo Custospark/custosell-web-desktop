@@ -40,7 +40,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
   };
 
   const openEdit = (cat: ExpenseCategoryWithSyncMeta) => {
-    if (cat._pendingSync) return;
+    if (cat._pendingSync || cat.is_system) return;
     setEditingCategory(cat);
     setName(cat.name);
     setDescription(cat.description || '');
@@ -67,7 +67,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
   };
 
   const handleDelete = async (cat: ExpenseCategoryWithSyncMeta) => {
-    if (cat._pendingSync) return;
+    if (cat._pendingSync || cat.is_system) return;
     const ok = await confirm({
       title: 'Delete category?',
       message: `Delete "${cat.name}"? Existing expenses in this category will not be affected.`,
@@ -97,6 +97,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
           { key: 'name', header: 'Name', render: (c) => (
             <div className="flex items-center gap-2">
               <span>{c.name}</span>
+              {c.is_system && <Badge variant="neutral">System</Badge>}
               {c._pendingSync && <Badge variant="warning">Pending sync</Badge>}
             </div>
           ) },
@@ -105,12 +106,16 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
           { key: 'sort_order', header: 'Order' },
           { key: 'actions', header: 'Actions', render: (c) => (
             <div className="flex gap-1">
-              <button title={c._pendingSync ? 'Sync before editing' : 'Edit'} disabled={c._pendingSync} onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button title={c._pendingSync ? 'Sync before deleting' : 'Delete'} disabled={c._pendingSync} onClick={() => handleDelete(c)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {!c.is_system && (
+                <>
+                  <button title={c._pendingSync ? 'Sync before editing' : 'Edit'} disabled={c._pendingSync} onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button title={c._pendingSync ? 'Sync before deleting' : 'Delete'} disabled={c._pendingSync} onClick={() => handleDelete(c)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
           )},
         ]}

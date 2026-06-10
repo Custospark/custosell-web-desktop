@@ -108,7 +108,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               <div className="flex-1">
                 <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-                  <option value="">Select category (optional)</option>
+                  <option value="">Select category</option>
                   {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>

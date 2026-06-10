@@ -1,11 +1,13 @@
 export interface ExpenseCategory {
   id: number;
-  business_id: number;
+  business_id: number | null;
   name: string;
+  slug?: string;
   description: string | null;
   sort_order: number;
   budget_amount: string | null;
   budget_period: string | null;
+  is_system?: boolean;
   created_at: string;
   updated_at: string;
 }

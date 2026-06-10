@@ -31,6 +31,7 @@ import {
   backupExpensesListSnapshot,
   loadExpenseCategoriesBaseline,
   loadExpensesListBaseline,
+  refreshExpenseCategoriesSnapshot,
 } from '../../../app/store/offline/catalogs/expensesCatalogSnapshot';
 import { readCatalogBaseline, resolveAuthBusinessId } from '../../../app/store/offline/catalogs/catalogSnapshotUtils';
 import type {
@@ -565,6 +566,7 @@ export function useCreateExpenseCategory() {
         });
         showToast('success', 'Category saved — will sync when online');
       } else {
+        void refreshExpenseCategoriesSnapshot();
         invalidateAll(qc);
       }
     },
@@ -621,6 +623,7 @@ export function useUpdateExpenseCategory() {
         );
         showToast('success', 'Changes saved — will sync when online');
       } else {
+        void refreshExpenseCategoriesSnapshot();
         invalidateAll(qc);
       }
     },
@@ -674,6 +677,7 @@ export function useDeleteExpenseCategory() {
       qc.setQueryData<ExpenseCategoryWithSyncMeta[]>(expenseKeys.categories(), (old) =>
         sanitizeExpenseCategoryList(old ?? []).filter((category) => category.id !== id),
       );
+      void refreshExpenseCategoriesSnapshot();
     },
     onError: (e, _id, ctx) => {
       if (ctx?.previous) qc.setQueryData(expenseKeys.categories(), ctx.previous);

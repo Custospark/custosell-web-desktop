@@ -28,6 +28,7 @@ import type { Business } from '../../../../modules/settings/api/settings/Busines
 import type { Role } from '../../../../modules/settings/api/settings/RoleTypes';
 import type { StaffUser } from '../../../../modules/settings/api/settings/StaffTypes';
 import { commitMutationQueueEntry } from './syncMutationFinalize';
+import { refreshExpenseCategoriesSnapshot } from '../catalogs/expensesCatalogSnapshot';
 import { invalidateAfterItemCommitted } from './syncCacheRefresh';
 
 function getRefundSaleId(m: QueuedMutation): number | null {
@@ -301,6 +302,7 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     if (isExpenseCategoryMutation(m)) {
       await localExpenseCategoriesStore.removeByMutationId(m.id);
+      void refreshExpenseCategoriesSnapshot().catch(() => undefined);
     }
 
     if (isRoleMutation(m)) {
@@ -441,6 +443,10 @@ async function processExpenseCategoryCreates(
       await localExpenseCategoriesStore.markFailedByMutationId(m.id);
       failed++;
     }
+  }
+
+  if (synced > 0) {
+    void refreshExpenseCategoriesSnapshot().catch(() => undefined);
   }
 
   return { synced, failed, idMap };

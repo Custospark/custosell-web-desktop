@@ -6,6 +6,8 @@ import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { ROLES } from '../../../../shared/api/endpoints/endpoints';
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
+import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
+import { loadRoleCatalogBaseline, refreshRoleCatalogSnapshot } from '../../../../app/store/offline/catalogSnapshotRefresh';
 import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from '../../../../app/store/offline/localRolesStore';
 import {
@@ -50,21 +52,30 @@ function mergeRoleLists(
   return [...safeLocal, ...filtered] as RoleWithSyncMeta[];
 }
 
+async function readRolesBaseline(): Promise<Role[]> {
+  return readCatalogBaseline('roles', roleKeys.list(), loadRoleCatalogBaseline);
+}
+
 export function useRoles() {
   return useQuery<RoleWithSyncMeta[]>({
     queryKey: roleKeys.list(),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
-        const cached = queryClient.getQueryData<Role[]>(roleKeys.list()) ?? [];
+        const baseline = await readRolesBaseline();
         const local = await loadLocalPendingRoles();
-        return mergeRoleLists(cached, local.upserts, local.deletedIds);
+        return mergeRoleLists(baseline, local.upserts, local.deletedIds);
       },
       fetchFromServer: async () => {
         const { data: response } = await axiosInstance.get<{ data: Role[] }>(ROLES.BASE, {
           timeout: 10000,
         });
+        const list = Array.isArray(response.data) ? response.data : [];
+        const businessId = resolveAuthBusinessId();
+        if (businessId) {
+          backupCatalogSnapshot('roles', businessId, list);
+        }
         const local = await loadLocalPendingRoles();
-        return mergeRoleLists(response.data, local.upserts, local.deletedIds);
+        return mergeRoleLists(list, local.upserts, local.deletedIds);
       },
     }),
     staleTime: 0,
@@ -110,6 +121,7 @@ export function useCreateRole() {
         });
         showToast('success', 'Role saved — will sync when online');
       } else {
+        void refreshRoleCatalogSnapshot();
         qc.invalidateQueries({ queryKey: roleKeys.list() });
       }
     },
@@ -164,6 +176,7 @@ export function useUpdateRole() {
           role._mutationType ? 'Corrected changes saved — will retry sync' : 'Changes saved — will sync when online',
         );
       } else {
+        void refreshRoleCatalogSnapshot();
         qc.invalidateQueries({ queryKey: roleKeys.list() });
       }
     },
@@ -212,6 +225,7 @@ export function useDeleteRole() {
       qc.setQueryData<RoleWithSyncMeta[]>(roleKeys.list(), (old) =>
         (old ?? []).filter(Boolean).filter((r) => r.id !== id),
       );
+      void refreshRoleCatalogSnapshot();
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete role'));

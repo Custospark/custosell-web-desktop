@@ -6,6 +6,8 @@ import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { CUSTOMERS } from '../../../../shared/api/endpoints/endpoints';
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
+import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
+import { loadCustomerCatalogBaseline, refreshCustomerCatalogSnapshot } from '../../../../app/store/offline/catalogSnapshotRefresh';
 import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localCustomersStore, toCustomerWithSyncMeta, type CustomerWithSyncMeta } from '../../../../app/store/offline/localCustomersStore';
 import {
@@ -43,6 +45,10 @@ function mergeCustomerLists(base: Customer[], local: CustomerWithSyncMeta[]): Cu
   return [...safeLocal, ...filtered] as CustomerWithSyncMeta[];
 }
 
+async function readCustomersBaseline(): Promise<Customer[]> {
+  return readCatalogBaseline('customers', customerKeys.customers(), loadCustomerCatalogBaseline);
+}
+
 /** ── Queries ── */
 
 export function useCustomers() {
@@ -50,16 +56,21 @@ export function useCustomers() {
     queryKey: customerKeys.customers(),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
-        const cached = queryClient.getQueryData<Customer[]>(customerKeys.customers()) ?? [];
+        const baseline = await readCustomersBaseline();
         const local = await loadLocalPendingCustomers();
-        return mergeCustomerLists(cached, local);
+        return mergeCustomerLists(baseline, local);
       },
       fetchFromServer: async () => {
         const { data: response } = await axiosInstance.get<{ data: Customer[] }>(CUSTOMERS.BASE, {
           timeout: 10000,
         });
+        const list = Array.isArray(response.data) ? response.data : [];
+        const businessId = resolveAuthBusinessId();
+        if (businessId) {
+          backupCatalogSnapshot('customers', businessId, list);
+        }
         const local = await loadLocalPendingCustomers();
-        return mergeCustomerLists(response.data, local);
+        return mergeCustomerLists(list, local);
       },
     }),
     staleTime: 0,
@@ -81,8 +92,8 @@ export function useCustomer(id: number) {
       }
       return readWithOfflineStrategy({
         readFromClient: async () => {
-          const cached = queryClient.getQueryData<Customer[]>(customerKeys.customers());
-          const found = cached?.find((c) => c.id === id);
+          const baseline = await readCustomersBaseline();
+          const found = baseline.find((c) => c.id === id);
           if (!found) throw new Error('Customer not available offline');
           return found as CustomerWithSyncMeta;
         },
@@ -141,6 +152,7 @@ export function useCreateCustomer() {
         });
         showToast('success', 'Customer saved — will sync when online');
       } else {
+        void refreshCustomerCatalogSnapshot();
         qc.invalidateQueries({ queryKey: customerKeys.customers() });
       }
     },
@@ -187,6 +199,7 @@ export function useUpdateCustomer() {
         );
         showToast('success', 'Changes saved — will sync when online');
       } else {
+        void refreshCustomerCatalogSnapshot();
         qc.invalidateQueries({ queryKey: customerKeys.customers() });
       }
     },
@@ -237,6 +250,7 @@ export function useDeleteCustomer() {
       qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) =>
         (old ?? []).filter((c) => c.id !== id),
       );
+      void refreshCustomerCatalogSnapshot();
     },
     onError: (e, _id) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete customer'));

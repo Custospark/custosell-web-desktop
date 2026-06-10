@@ -6,6 +6,8 @@ import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { USERS } from '../../../../shared/api/endpoints/endpoints';
 import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
+import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
+import { loadStaffCatalogBaseline, refreshStaffCatalogSnapshot } from '../../../../app/store/offline/catalogSnapshotRefresh';
 import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from '../../../../app/store/offline/localStaffStore';
 import type { RoleWithSyncMeta } from '../../../../app/store/offline/localRolesStore';
@@ -84,21 +86,30 @@ function mergeStaffLists(
   return [...safeLocal, ...filtered] as StaffWithSyncMeta[];
 }
 
+async function readStaffBaseline(): Promise<StaffUser[]> {
+  return readCatalogBaseline('staff', staffKeys.list(), loadStaffCatalogBaseline);
+}
+
 export function useStaff() {
   return useQuery<StaffWithSyncMeta[]>({
     queryKey: staffKeys.list(),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
-        const cached = queryClient.getQueryData<StaffUser[]>(staffKeys.list()) ?? [];
+        const baseline = await readStaffBaseline();
         const local = await loadLocalPendingStaff();
-        return mergeStaffLists(cached, local.upserts, local.deletedIds);
+        return mergeStaffLists(baseline, local.upserts, local.deletedIds);
       },
       fetchFromServer: async () => {
         const { data: response } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE, {
           timeout: 10000,
         });
+        const list = Array.isArray(response.data) ? response.data : [];
+        const businessId = resolveAuthBusinessId();
+        if (businessId) {
+          backupCatalogSnapshot('staff', businessId, list);
+        }
         const local = await loadLocalPendingStaff();
-        return mergeStaffLists(response.data, local.upserts, local.deletedIds);
+        return mergeStaffLists(list, local.upserts, local.deletedIds);
       },
     }),
     staleTime: 0,
@@ -158,6 +169,7 @@ export function useCreateStaff() {
           return [staff, ...list];
         });
         showToast('success', 'Staff created');
+        void refreshStaffCatalogSnapshot();
         qc.invalidateQueries({ queryKey: staffKeys.list() });
       }
     },
@@ -217,6 +229,7 @@ export function useUpdateStaff() {
           (old ?? []).filter(Boolean).map((s) => s.id === id ? staff : s),
         );
         showToast('success', 'Staff updated');
+        void refreshStaffCatalogSnapshot();
         qc.invalidateQueries({ queryKey: staffKeys.list() });
       }
     },
@@ -294,6 +307,7 @@ export function useDeleteStaff() {
       qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) =>
         (old ?? []).filter(Boolean).filter((s) => s.id !== id),
       );
+      void refreshStaffCatalogSnapshot();
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete staff'));

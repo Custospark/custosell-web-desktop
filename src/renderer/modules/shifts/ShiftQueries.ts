@@ -20,6 +20,11 @@ import {
   shouldUseLocalShiftActions,
 } from '../../app/store/offline/completeOfflineShift';
 import { isOptimisticSale } from '../../app/store/offline/offlineCacheReconcile';
+import { resolveAuthBusinessId } from '../../app/store/offline/catalogSnapshotUtils';
+import {
+  backupShiftSalesSnapshot,
+  loadShiftSalesBaseline,
+} from '../../app/store/offline/salesCatalogSnapshot';
 import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
 import {
@@ -126,9 +131,24 @@ async function loadShiftExpensesFromClient(shiftId: number): Promise<ExpenseWith
   return [...local, ...cached.filter((e) => !localIds.has(e.id))];
 }
 
-async function readShiftSales(shiftId: number): Promise<SaleWithSyncMeta[]> {
+async function readShiftSalesBaseline(shiftId: number): Promise<Sale[]> {
   const cached = queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [];
-  return mergeShiftSales(cached, shiftId);
+  if (cached.length > 0) return cached;
+
+  const businessId = resolveAuthBusinessId();
+  if (!businessId) return [];
+
+  try {
+    return await loadShiftSalesBaseline(businessId, shiftId);
+  } catch (err) {
+    console.warn('[ShiftSales] Failed to read shift sales snapshot:', err);
+    return [];
+  }
+}
+
+async function readShiftSales(shiftId: number): Promise<SaleWithSyncMeta[]> {
+  const baseline = await readShiftSalesBaseline(shiftId);
+  return mergeShiftSales(baseline, shiftId);
 }
 
 export function useActiveShift() {
@@ -211,7 +231,10 @@ export function useShiftSales(shiftId: number | null) {
           const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`, {
             timeout: 10000,
           });
-          return mergeShiftSales(data.data, shiftId);
+          const serverSales = data.data ?? [];
+          const businessId = resolveAuthBusinessId();
+          if (businessId) backupShiftSalesSnapshot(businessId, shiftId, serverSales);
+          return mergeShiftSales(serverSales, shiftId);
         },
       });
     },

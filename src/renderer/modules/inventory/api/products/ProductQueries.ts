@@ -6,6 +6,15 @@ import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { applyOfflineStockOverlay } from '../../../../app/store/offline/offlineStockOverlay';
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
+import { readCatalogBaseline, backupCatalogSnapshot, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
+import {
+  backupProductCatalog,
+  fetchProductsFromApi,
+  loadCategoryCatalogBaseline,
+  loadProductCatalogBaseline,
+  refreshCategoryCatalogSnapshot,
+  refreshProductCatalogSnapshot,
+} from '../../../../app/store/offline/catalogSnapshotRefresh';
 import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
 import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
 import { localCategoriesStore, toCategoryWithSyncMeta, type CategoryWithSyncMeta } from '../../../../app/store/offline/localCategoriesStore';
@@ -39,25 +48,12 @@ export const inventoryKeys = {
 
 /** ── Merge helpers ── */
 
-function normalizeProductsResponse(payload: unknown): Product[] {
-  if (Array.isArray(payload)) return payload as Product[];
-  if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: Product[] }).data)) {
-    return (payload as { data: Product[] }).data;
-  }
-  return [];
+async function readProductsBaseline(): Promise<Product[]> {
+  return readCatalogBaseline('products', inventoryKeys.products(), loadProductCatalogBaseline);
 }
 
-/** Full catalog for inventory; sales-only staff fall back to the POS active catalog. */
-async function fetchProductsFromApi(): Promise<Product[]> {
-  try {
-    const { data } = await axiosInstance.get('/products', { timeout: 10000 });
-    return normalizeProductsResponse(data);
-  } catch (err) {
-    const status = (err as AxiosError).response?.status;
-    if (status !== 403) throw err;
-    const { data } = await axiosInstance.get('/products/active', { timeout: 10000 });
-    return normalizeProductsResponse(data);
-  }
+async function readCategoriesBaseline(): Promise<Category[]> {
+  return readCatalogBaseline('categories', inventoryKeys.categories(), loadCategoryCatalogBaseline);
 }
 
 function stripStaleProductSyncMeta(
@@ -112,8 +108,8 @@ async function mergeProductsWithOfflineOverlay(base: Product[]): Promise<Product
 }
 
 async function readProductsFromClientCache(): Promise<ProductWithSyncMeta[]> {
-  const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
-  return mergeProductsWithOfflineOverlay(cached);
+  const baseline = await readProductsBaseline();
+  return mergeProductsWithOfflineOverlay(baseline);
 }
 
 async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
@@ -121,7 +117,11 @@ async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
     return await readWithOfflineStrategy({
       readFromClient: readProductsFromClientCache,
       fetchFromServer: async () => {
-        const serverProducts = await fetchProductsFromApi();
+        const { products: serverProducts, catalogKind } = await fetchProductsFromApi();
+        const businessId = resolveAuthBusinessId();
+        if (businessId) {
+          backupProductCatalog(businessId, catalogKind, serverProducts);
+        }
         return mergeProductsWithOfflineOverlay(serverProducts);
       },
     });
@@ -172,16 +172,21 @@ export function useCategories() {
     queryKey: inventoryKeys.categories(),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
-        const cached = queryClient.getQueryData<Category[]>(inventoryKeys.categories()) ?? [];
+        const baseline = await readCategoriesBaseline();
         const local = await loadLocalPendingCategories();
-        return mergeCategoryLists(cached, local);
+        return mergeCategoryLists(baseline, local);
       },
       fetchFromServer: async () => {
         const { data: response } = await axiosInstance.get<{ data: Category[] }>('/categories', {
           timeout: 10000,
         });
+        const list = Array.isArray(response.data) ? response.data : [];
+        const businessId = resolveAuthBusinessId();
+        if (businessId) {
+          backupCatalogSnapshot('categories', businessId, list);
+        }
         const local = await loadLocalPendingCategories();
-        return mergeCategoryLists(response.data, local);
+        return mergeCategoryLists(list, local);
       },
     }),
     staleTime: 0,
@@ -222,6 +227,7 @@ export function useCreateCategory() {
         });
         showToast('success', 'Category saved — will sync when online');
       } else {
+        void refreshCategoryCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
       }
     },
@@ -268,6 +274,7 @@ export function useUpdateCategory() {
         );
         showToast('success', 'Changes saved — will sync when online');
       } else {
+        void refreshCategoryCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
       }
     },
@@ -315,6 +322,7 @@ export function useDeleteCategory() {
       qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) =>
         (old ?? []).filter((c) => c.id !== id),
       );
+      void refreshCategoryCatalogSnapshot();
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete category'));
@@ -347,8 +355,8 @@ export function useProduct(id: number) {
       }
       return readWithOfflineStrategy({
         readFromClient: async () => {
-          const cached = queryClient.getQueryData<Product[]>(inventoryKeys.products());
-          const found = cached?.find((p) => p.id === id);
+          const baseline = await readProductsBaseline();
+          const found = baseline.find((p) => p.id === id);
           if (!found) throw new Error('Product not available offline');
           return found as ProductWithSyncMeta;
         },
@@ -415,6 +423,7 @@ export function useCreateProduct() {
         });
         showToast('success', 'Product saved — will sync when online');
       } else {
+        void refreshProductCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.products() });
       }
     },
@@ -473,6 +482,7 @@ export function useUpdateProduct() {
           }
           return [product, ...withoutStale];
         });
+        void refreshProductCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.products() });
       }
     },
@@ -531,6 +541,7 @@ export function useDeleteProduct() {
       qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) =>
         (old ?? []).filter((p) => p.id !== id),
       );
+      void refreshProductCatalogSnapshot();
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete product'));

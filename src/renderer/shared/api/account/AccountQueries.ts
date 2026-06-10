@@ -28,6 +28,7 @@ import { completeOfflineRegistration } from '../../../app/store/offline/complete
 import { completeOfflineLogin } from '../../../app/store/offline/completeOfflineLogin';
 import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/deviceCredentials';
 import { updateStoredAuthUser } from '../../../app/store/offline/secureStorage';
+import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/catalogSnapshotRefresh';
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
@@ -123,6 +124,7 @@ export function useLogin() {
           : 'Signed in using offline credentials.');
       } else {
         showToast('success', 'Welcome back!');
+        void refreshAllServerCatalogSnapshots();
       }
       navigate(getDefaultRoute(userData));
     },
@@ -186,6 +188,7 @@ export function useRegisterBusiness() {
         showToast('success', 'Business registered offline. It will sync when you reconnect.');
       } else {
         showToast('success', 'Business registered successfully');
+        void refreshAllServerCatalogSnapshots();
       }
       navigate(getDefaultRoute(result.user));
     },

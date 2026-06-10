@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
 export const OFFLINE_DB_NAME = 'CustosellOffline';
-export const OFFLINE_DB_VERSION = 11;
+export const OFFLINE_DB_VERSION = 12;
 
 const OPEN_TIMEOUT_MS = 8000;
 
@@ -96,6 +96,11 @@ function ensureObjectStores(db: IDBPDatabase): void {
   }
   if (!db.objectStoreNames.contains('secureKeys')) {
     db.createObjectStore('secureKeys', { keyPath: 'id' });
+  }
+  if (!db.objectStoreNames.contains('serverCatalogs')) {
+    const catalogStore = db.createObjectStore('serverCatalogs', { keyPath: 'key' });
+    catalogStore.createIndex('businessId', 'businessId');
+    catalogStore.createIndex('entity', 'entity');
   }
 }
 

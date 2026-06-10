@@ -3,6 +3,13 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
 import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
+import { resolveAuthBusinessId } from '../../../app/store/offline/catalogSnapshotUtils';
+import {
+  backupDailySalesSnapshot,
+  backupSalesListSnapshot,
+  loadDailySalesBaseline,
+  loadSalesListBaseline,
+} from '../../../app/store/offline/salesCatalogSnapshot';
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
 import {
@@ -73,6 +80,21 @@ function getCachedSalesList(): Sale[] {
   return queryClient.getQueryData<Sale[]>(salesKeys.list()) ?? [];
 }
 
+async function readSalesListBaseline(): Promise<Sale[]> {
+  const cached = getCachedSalesList().filter((s) => !isOptimisticSale(s as SaleWithSyncMeta));
+  if (cached.length > 0) return cached;
+
+  const businessId = resolveAuthBusinessId();
+  if (!businessId) return [];
+
+  try {
+    return await loadSalesListBaseline(businessId);
+  } catch (err) {
+    console.warn('[Sales] Failed to read sales list snapshot:', err);
+    return [];
+  }
+}
+
 async function applyPendingRefundOverlay(sales: SaleWithSyncMeta[]): Promise<SaleWithSyncMeta[]> {
   const pendingRefunds = await localRefundsStore.getPending();
   return mergePendingRefunds(sales, pendingRefunds);
@@ -80,8 +102,8 @@ async function applyPendingRefundOverlay(sales: SaleWithSyncMeta[]): Promise<Sal
 
 async function readSalesFromClient(): Promise<SaleWithSyncMeta[]> {
   const local = await loadLocalPendingSales();
-  const cached = getCachedSalesList().filter((s) => !isOptimisticSale(s as SaleWithSyncMeta));
-  return applyPendingRefundOverlay(mergeSalesLists(cached, local));
+  const baseline = await readSalesListBaseline();
+  return applyPendingRefundOverlay(mergeSalesLists(baseline, local));
 }
 
 async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
@@ -91,7 +113,10 @@ async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
       fetchFromServer: async () => {
         const local = await loadLocalPendingSales();
         const { data } = await axiosInstance.get('/sales', { timeout: SALES_READ_TIMEOUT_MS });
-        return applyPendingRefundOverlay(mergeSalesLists(normalizeSalesList(data), local));
+        const serverSales = normalizeSalesList(data);
+        const businessId = resolveAuthBusinessId();
+        if (businessId) backupSalesListSnapshot(businessId, serverSales);
+        return applyPendingRefundOverlay(mergeSalesLists(serverSales, local));
       },
     });
   } catch (err) {
@@ -170,7 +195,11 @@ export function useDailySales(date?: string) {
           const local = await loadLocalPendingSales();
           const localForDay = local.filter((s) => s.sale_date.slice(0, 10) === targetDate);
           const cached = queryClient.getQueryData<Sale[]>(salesKeys.daily(date)) ?? [];
-          return mergeSalesLists(cached, localForDay);
+          if (cached.length > 0) return mergeSalesLists(cached, localForDay);
+
+          const businessId = resolveAuthBusinessId();
+          const baseline = businessId ? await loadDailySalesBaseline(businessId, targetDate) : [];
+          return mergeSalesLists(baseline, localForDay);
         },
         fetchFromServer: async () => {
           const local = await loadLocalPendingSales();
@@ -179,7 +208,10 @@ export function useDailySales(date?: string) {
           const { data } = await axiosInstance.get(`/sales/daily${params}`, {
             timeout: SALES_READ_TIMEOUT_MS,
           });
-          return mergeSalesLists(normalizeSalesList(data), localForDay);
+          const serverSales = normalizeSalesList(data);
+          const businessId = resolveAuthBusinessId();
+          if (businessId) backupDailySalesSnapshot(businessId, targetDate, serverSales);
+          return mergeSalesLists(serverSales, localForDay);
         },
       });
     },
@@ -201,10 +233,15 @@ export function useSale(id: number) {
       }
 
       return readWithOfflineStrategy({
-        readFromClient: () => {
+        readFromClient: async () => {
           const fromList = getCachedSalesList().find((s) => s.id === id);
-          if (!fromList) throw new Error('Sale not available offline');
-          return fromList;
+          if (fromList) return fromList;
+
+          const baseline = await readSalesListBaseline();
+          const fromBaseline = baseline.find((s) => s.id === id);
+          if (fromBaseline) return fromBaseline;
+
+          throw new Error('Sale not available offline');
         },
         fetchFromServer: async () => {
           const { data } = await axiosInstance.get(`/sales/${id}`, {

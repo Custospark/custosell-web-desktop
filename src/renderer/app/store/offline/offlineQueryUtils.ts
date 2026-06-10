@@ -41,7 +41,7 @@ export function shouldCompleteMutationLocally(): boolean {
 
 export function isNetworkFailure(err: unknown): boolean {
   const axiosErr = err as AxiosError;
-  return !axiosErr.response;
+  return axiosErr.isAxiosError === true && !axiosErr.response;
 }
 
 const INDEXED_DB_ERROR_PATTERNS = [

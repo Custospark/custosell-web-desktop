@@ -22,6 +22,7 @@ import type {
 import {
   isCompletelyOffline,
   isNetworkFailure,
+  sanitizeErrorMessage,
 } from '../../../app/store/offline/offlineQueryUtils';
 import { completeOfflineRegistration } from '../../../app/store/offline/completeOfflineRegistration';
 import { completeOfflineLogin } from '../../../app/store/offline/completeOfflineLogin';
@@ -43,16 +44,30 @@ function extractAuthUser(data: AuthResponse): AuthUser {
   return userData;
 }
 
-async function persistOnlineAuth(data: AuthResponse, password: string): Promise<void> {
+/** Best-effort offline backup after server auth — must not block or replace online login. */
+function backupOnlineAuthToOffline(data: AuthResponse, password: string): void {
   const user = extractAuthUser(data);
-  await persistLoginCredentials({
+  void persistLoginCredentials({
     email: user.email,
     password,
     user,
     token: data.token,
     isLocalSession: false,
     pendingAuthSync: false,
+  }).catch((err) => {
+    console.warn('[Auth] Offline credential backup failed:', err);
   });
+}
+
+function getAuthErrorMessage(err: unknown, fallback: string): string {
+  const axiosErr = err as AxiosError<ApiError>;
+  const serverMessage = axiosErr.response?.data?.message
+    || axiosErr.response?.data?.errors?.owner_name?.[0];
+  if (serverMessage) return serverMessage;
+  if (isNetworkFailure(err)) {
+    return 'Could not reach the server. Check your internet connection and try again.';
+  }
+  return sanitizeErrorMessage(err, fallback);
 }
 
 type LoginMutationResult = AuthResponse & {
@@ -78,26 +93,13 @@ export function useLogin() {
         };
       }
 
-      try {
-        const { data } = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
-        await persistOnlineAuth(data, credentials.password);
-        return {
-          ...data,
-          isLocalSession: false,
-          pendingAuthSync: false,
-        };
-      } catch (err) {
-        if (isNetworkFailure(err)) {
-          const offline = await completeOfflineLogin(credentials);
-          return {
-            token: offline.token,
-            user: { data: offline.user },
-            isLocalSession: true,
-            pendingAuthSync: offline.pendingAuthSync,
-          };
-        }
-        throw err;
-      }
+      const { data } = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
+      backupOnlineAuthToOffline(data, credentials.password);
+      return {
+        ...data,
+        isLocalSession: false,
+        pendingAuthSync: false,
+      };
     },
     onMutate: () => {
       dispatch(loginStart());
@@ -125,8 +127,7 @@ export function useLogin() {
       navigate(getDefaultRoute(userData));
     },
     onError: (error) => {
-      const axiosErr = error as AxiosError<ApiError>;
-      const message = axiosErr.response?.data?.message || error.message || 'Invalid credentials';
+      const message = getAuthErrorMessage(error, 'Invalid credentials');
       dispatch(loginFailure(message));
       showToast('error', message);
     },
@@ -157,31 +158,18 @@ export function useRegisterBusiness() {
         };
       }
 
-      try {
-        await axiosInstance.post('/businesses/register', payload);
-        const { data } = await axiosInstance.post<AuthResponse>('/auth/login', {
-          email: payload.email,
-          password: payload.password,
-        });
-        await persistOnlineAuth(data, payload.password);
-        return {
-          user: extractAuthUser(data),
-          token: data.token,
-          isLocalSession: false,
-          pendingAuthSync: false,
-        };
-      } catch (err) {
-        if (isNetworkFailure(err)) {
-          const offline = await completeOfflineRegistration(payload);
-          return {
-            user: offline.user,
-            token: offline.token,
-            isLocalSession: true,
-            pendingAuthSync: true,
-          };
-        }
-        throw err;
-      }
+      await axiosInstance.post('/businesses/register', payload);
+      const { data } = await axiosInstance.post<AuthResponse>('/auth/login', {
+        email: payload.email,
+        password: payload.password,
+      });
+      backupOnlineAuthToOffline(data, payload.password);
+      return {
+        user: extractAuthUser(data),
+        token: data.token,
+        isLocalSession: false,
+        pendingAuthSync: false,
+      };
     },
     onMutate: () => {
       dispatch(registerStart());
@@ -202,11 +190,7 @@ export function useRegisterBusiness() {
       navigate(getDefaultRoute(result.user));
     },
     onError: (error) => {
-      const axiosErr = error as AxiosError<ApiError>;
-      const message = axiosErr.response?.data?.message
-        || axiosErr.response?.data?.errors?.owner_name?.[0]
-        || error.message
-        || 'Registration failed';
+      const message = getAuthErrorMessage(error, 'Registration failed');
       dispatch(registerFailure(message));
       showToast('error', message);
     },
@@ -221,7 +205,7 @@ export function useRegister() {
   return useMutation<AuthResponse, AxiosError<ApiError>, RegisterRequest>({
     mutationFn: async (data) => {
       const { data: response } = await axiosInstance.post<AuthResponse>('/auth/register', data);
-      await persistOnlineAuth(response, data.password);
+      backupOnlineAuthToOffline(response, data.password);
       return response;
     },
     onMutate: () => {
@@ -234,7 +218,7 @@ export function useRegister() {
       navigate(getDefaultRoute(userData));
     },
     onError: (error) => {
-      const message = error.response?.data?.message || 'Registration failed';
+      const message = getAuthErrorMessage(error, 'Registration failed');
       dispatch(registerFailure(message));
       showToast('error', message);
     },
@@ -259,9 +243,13 @@ export function useProfile() {
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
       dispatch(setUser(userData));
-      await updateStoredAuthUser(userData);
-      if (userData?.email) {
-        await refreshStoredUserSnapshot(userData.email, userData);
+      try {
+        await updateStoredAuthUser(userData);
+        if (userData?.email) {
+          await refreshStoredUserSnapshot(userData.email, userData);
+        }
+      } catch (err) {
+        console.warn('[Auth] Profile offline backup failed:', err);
       }
       return userData;
     },

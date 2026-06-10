@@ -1,4 +1,4 @@
-import { axiosInstance } from '../../../api/axiosConfig';
+import { axiosInstance, queryClient } from '../../../api/axiosConfig';
 import { mutationQueue } from '../sync/mutationQueue';
 import { localSalesStore } from './localSalesStore';
 import type { QueuedMutation } from '../sync/mutationQueue';
@@ -19,7 +19,8 @@ import {
   sleep,
 } from '../sync/syncErrorUtils';
 import { isOfflineMode } from '../core/offlineQueryUtils';
-import { invalidateAfterItemCommitted } from '../sync/syncCacheRefresh';
+import { refreshSalesUiAfterCommit } from '../sync/syncCacheRefresh';
+import { applySyncedSaleToCache } from '../sync/offlineCacheReconcile';
 import { commitMutationQueueEntry, commitMutationQueueEntryIfPresent } from '../sync/syncMutationFinalize';
 
 function extractBatchSales(responseData: unknown): Sale[] {
@@ -47,10 +48,18 @@ export function sortSalesMutationsChronologically(mutations: QueuedMutation[]): 
   });
 }
 
-async function commitSaleSync(m: QueuedMutation): Promise<void> {
+async function commitSaleSync(m: QueuedMutation, serverSale?: Sale): Promise<void> {
+  const localRecord = await localSalesStore.getByMutationId(m.id);
   await commitMutationQueueEntry(m.id);
   await localSalesStore.removeByMutationId(m.id);
-  void invalidateAfterItemCommitted().catch(() => undefined);
+
+  if (serverSale && localRecord) {
+    applySyncedSaleToCache(queryClient, localRecord.sale, serverSale);
+  }
+}
+
+async function finalizeSalesSyncUi(): Promise<void> {
+  await refreshSalesUiAfterCommit();
 }
 
 async function markSaleFailed(m: QueuedMutation, message: string): Promise<void> {
@@ -63,7 +72,7 @@ async function reconcileDuplicateSale(m: QueuedMutation, message: string): Promi
 
   const committed = await commitMutationQueueEntryIfPresent(m.id);
   if (committed) {
-    await localSalesStore.removeByMutationId(m.id);
+    await commitSaleSync(m);
   }
   return committed;
 }
@@ -83,8 +92,7 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
     });
     const wrapped = response.data as { data?: Sale };
     const serverSale = extractBatchSales(response.data)[0] ?? wrapped?.data ?? (response.data as Sale);
-    void serverSale;
-    await commitSaleSync(m);
+    await commitSaleSync(m, serverSale);
     return true;
   } catch (error: unknown) {
     if (isAuthHttpError(error)) throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
@@ -120,11 +128,14 @@ async function syncSalesChunkBatch(
         skipAuthRedirect: true,
       });
       const syncedSales = extractBatchSales(response.data);
-      void syncedSales;
 
-      for (const m of activeChunk) {
-        await commitSaleSync(m);
+      for (let i = 0; i < activeChunk.length; i++) {
+        const m = activeChunk[i];
+        const serverSale = syncedSales[i];
+        await commitSaleSync(m, serverSale);
       }
+
+      await finalizeSalesSyncUi();
 
       return { synced: activeChunk.length, failed: 0 };
     } catch (error: unknown) {
@@ -147,6 +158,9 @@ async function syncSalesChunkBatch(
     const ok = await syncSingleSale(m, idMap);
     if (ok) synced++;
     else failed++;
+  }
+  if (synced > 0) {
+    await finalizeSalesSyncUi();
   }
   return { synced, failed };
 }

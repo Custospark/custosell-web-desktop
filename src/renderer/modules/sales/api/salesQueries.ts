@@ -10,7 +10,7 @@ import {
   loadDailySalesBaseline,
   loadSalesListBaseline,
 } from '../../../app/store/offline/catalogs/salesCatalogSnapshot';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import { isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../app/store/offline/core/offlineReadStrategy';
 import {
   completeOfflineSaleInstant,
@@ -81,16 +81,50 @@ function getCachedSalesList(): Sale[] {
 }
 
 async function readSalesListBaseline(): Promise<Sale[]> {
+  const businessId = resolveAuthBusinessId();
+
+  if (!shouldUseClientStorage() && businessId) {
+    try {
+      return await loadSalesListBaseline(businessId);
+    } catch (err) {
+      console.warn('[Sales] Failed to read sales list snapshot:', err);
+    }
+  }
+
   const cached = getCachedSalesList().filter((s) => !isOptimisticSale(s as SaleWithSyncMeta));
   if (cached.length > 0) return cached;
 
-  const businessId = resolveAuthBusinessId();
   if (!businessId) return [];
 
   try {
     return await loadSalesListBaseline(businessId);
   } catch (err) {
     console.warn('[Sales] Failed to read sales list snapshot:', err);
+    return [];
+  }
+}
+
+async function readDailySalesBaseline(targetDate: string): Promise<Sale[]> {
+  const businessId = resolveAuthBusinessId();
+
+  if (!shouldUseClientStorage() && businessId) {
+    try {
+      return await loadDailySalesBaseline(businessId, targetDate);
+    } catch (err) {
+      console.warn('[Sales] Failed to read daily sales snapshot:', err);
+    }
+  }
+
+  const cached = (queryClient.getQueryData<Sale[]>(salesKeys.daily(targetDate)) ?? [])
+    .filter((s) => !isOptimisticSale(s as SaleWithSyncMeta));
+  if (cached.length > 0) return cached;
+
+  if (!businessId) return [];
+
+  try {
+    return await loadDailySalesBaseline(businessId, targetDate);
+  } catch (err) {
+    console.warn('[Sales] Failed to read daily sales snapshot:', err);
     return [];
   }
 }
@@ -194,11 +228,7 @@ export function useDailySales(date?: string) {
         readFromClient: async () => {
           const local = await loadLocalPendingSales();
           const localForDay = local.filter((s) => s.sale_date.slice(0, 10) === targetDate);
-          const cached = queryClient.getQueryData<Sale[]>(salesKeys.daily(date)) ?? [];
-          if (cached.length > 0) return mergeSalesLists(cached, localForDay);
-
-          const businessId = resolveAuthBusinessId();
-          const baseline = businessId ? await loadDailySalesBaseline(businessId, targetDate) : [];
+          const baseline = await readDailySalesBaseline(targetDate);
           return mergeSalesLists(baseline, localForDay);
         },
         fetchFromServer: async () => {

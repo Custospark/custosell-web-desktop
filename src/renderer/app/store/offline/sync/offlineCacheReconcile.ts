@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
+import type { Sale } from '../../../../modules/sales/api/salesTypes';
 import { localSalesStore } from '../sales/localSalesStore';
 import { localRefundsStore } from '../sales/localRefundsStore';
 import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from '../sales/localShiftsStore';
@@ -15,6 +16,7 @@ import type { SaleWithSyncMeta } from '../sales/localSalesStore';
 import type { ExpenseCategoryWithSyncMeta, ExpenseWithSyncMeta } from '../../../../modules/expenses/api/ExpenseTypes';
 
 /** Query key literals — avoid importing from query modules (circular deps). */
+const SALES_ALL_PREFIX = ['sales'] as const;
 const SALES_LIST_KEY = ['sales', 'list'] as const;
 const SHIFTS_SALES_PREFIX = ['shifts', 'sales'] as const;
 const SHIFTS_EXPENSES_PREFIX = ['shifts', 'expenses'] as const;
@@ -44,6 +46,70 @@ export function stripSaleSyncMeta(sale: SaleWithSyncMeta): SaleWithSyncMeta {
   delete cleaned._pendingRefundSync;
   delete cleaned._localId;
   return cleaned;
+}
+
+function sortSalesByDateDesc(sales: SaleWithSyncMeta[]): SaleWithSyncMeta[] {
+  return [...sales].sort(
+    (a, b) => new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime(),
+  );
+}
+
+function replaceLocalSaleWithServerRow(
+  list: SaleWithSyncMeta[],
+  localSale: Sale,
+  serverSale: Sale,
+): SaleWithSyncMeta[] {
+  const localId = localSale.id;
+  const localReceipt = localSale.receipt_number;
+  const localLocalId = (localSale as SaleWithSyncMeta)._localId;
+
+  const withoutLocal = list.filter((s) => {
+    if (s.id === localId) return false;
+    if (localReceipt && s.receipt_number === localReceipt) return false;
+    if (localLocalId && s._localId === localLocalId) return false;
+    return true;
+  });
+
+  const serverRow = stripSaleSyncMeta({ ...serverSale } as SaleWithSyncMeta);
+  const existingIdx = withoutLocal.findIndex((s) => s.id === serverSale.id);
+  if (existingIdx >= 0) {
+    const next = [...withoutLocal];
+    next[existingIdx] = serverRow;
+    return sortSalesByDateDesc(next);
+  }
+
+  return sortSalesByDateDesc([serverRow, ...withoutLocal]);
+}
+
+/** Swap a synced local sale row for its server record across active sales queries. */
+export function applySyncedSaleToCache(
+  qc: QueryClient,
+  localSale: Sale,
+  serverSale: Sale,
+): void {
+  const patchList = (old: SaleWithSyncMeta[] | undefined) =>
+    replaceLocalSaleWithServerRow(old ?? [], localSale, serverSale);
+
+  qc.setQueryData<SaleWithSyncMeta[]>(SALES_LIST_KEY, patchList);
+
+  const shiftIds = new Set<number>();
+  if (localSale.shift_id) shiftIds.add(localSale.shift_id);
+  if (serverSale.shift_id) shiftIds.add(serverSale.shift_id);
+
+  for (const shiftId of shiftIds) {
+    qc.setQueryData<SaleWithSyncMeta[]>([...SHIFTS_SALES_PREFIX, shiftId], patchList);
+  }
+
+  const saleDate = serverSale.sale_date.slice(0, 10);
+  const dailyQueries = qc.getQueriesData<SaleWithSyncMeta[]>({
+    queryKey: [...SALES_ALL_PREFIX, 'daily'],
+  });
+  for (const [key, data] of dailyQueries) {
+    if (!Array.isArray(data)) continue;
+    const keyDate = key[2];
+    if (typeof keyDate === 'string' && keyDate !== saleDate) continue;
+    qc.setQueryData(key, patchList(data));
+  }
 }
 
 export function reconcileSaleList(

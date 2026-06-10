@@ -8,6 +8,17 @@ import { inventoryKeys } from '../../../../modules/inventory/api/products/Produc
 import { expenseKeys } from '../../../../modules/expenses/api/ExpenseQueries';
 import { guideKeys } from '../../../../modules/guide/api/GuideQueries';
 import { refreshAllServerCatalogSnapshots } from '../catalogs/catalogSnapshotRefresh';
+import { refreshSalesCatalogSnapshotsForSession } from '../catalogs/salesCatalogSnapshot';
+
+/** After a sale commits — drop local rows, refresh server snapshots, refetch sales UI. */
+export async function refreshSalesUiAfterCommit(): Promise<void> {
+  await notifyItemCommitted();
+  await refreshSalesCatalogSnapshotsForSession();
+  await queryClient.invalidateQueries({ queryKey: salesKeys.all });
+  await queryClient.refetchQueries({ queryKey: salesKeys.all, type: 'active' });
+  await queryClient.invalidateQueries({ queryKey: dashboardKeys.all, refetchType: 'active' });
+  await queryClient.invalidateQueries({ queryKey: shiftKeys.all, refetchType: 'active' });
+}
 
 /** After each committed item — purge stale badges and refresh active list queries. */
 export async function invalidateAfterItemCommitted(): Promise<void> {
@@ -28,7 +39,7 @@ export async function invalidateAfterItemCommitted(): Promise<void> {
 
 /** @deprecated Use invalidateAfterItemCommitted — kept for sales batch call sites. */
 export async function invalidateAfterSalesChunk(): Promise<void> {
-  await invalidateAfterItemCommitted();
+  await refreshSalesUiAfterCommit();
 }
 
 /** @deprecated Use invalidateAfterItemCommitted — kept for expense sync call sites. */

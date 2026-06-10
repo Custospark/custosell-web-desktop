@@ -167,10 +167,20 @@ async function loadPendingShiftExpenses(shiftId: number): Promise<ExpenseWithSyn
 }
 
 async function readShiftSalesBaseline(shiftId: number): Promise<Sale[]> {
-  const cached = queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [];
+  const businessId = resolveAuthBusinessId();
+
+  if (!shouldUseClientStorage() && businessId) {
+    try {
+      return await loadShiftSalesBaseline(businessId, shiftId);
+    } catch (err) {
+      console.warn('[ShiftSales] Failed to read shift sales snapshot:', err);
+    }
+  }
+
+  const cached = (queryClient.getQueryData<Sale[]>([...shiftKeys.all, 'sales', shiftId]) ?? [])
+    .filter((s) => !isOptimisticSale(s as SaleWithSyncMeta));
   if (cached.length > 0) return cached;
 
-  const businessId = resolveAuthBusinessId();
   if (!businessId) return [];
 
   try {

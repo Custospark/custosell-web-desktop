@@ -10,6 +10,7 @@ import { isOfflineMode } from '../core/offlineQueryUtils';
 import { backupCatalogSnapshot, resolveAuthBusinessId } from './catalogSnapshotUtils';
 import { serverCatalogStore, type ProductCatalogKind } from './serverCatalogStore';
 import { refreshSalesCatalogSnapshotsForSession } from './salesCatalogSnapshot';
+import { refreshExpensesCatalogSnapshotsForSession } from './expensesCatalogSnapshot';
 import { stockLedger } from '../inventory/stockLedger';
 
 function normalizeList<T>(payload: unknown): T[] {
@@ -116,6 +117,7 @@ export async function refreshAllServerCatalogSnapshots(): Promise<void> {
     refreshRoleCatalogSnapshot(),
     refreshStaffCatalogSnapshot(),
     refreshSalesCatalogSnapshotsForSession(),
+    refreshExpensesCatalogSnapshotsForSession(),
   ]);
 }
 

@@ -19,7 +19,7 @@ import {
   sleep,
 } from '../sync/syncErrorUtils';
 import { isOfflineMode } from '../core/offlineQueryUtils';
-import { invalidateAfterSalesChunk } from '../sync/syncCacheRefresh';
+import { invalidateAfterItemCommitted } from '../sync/syncCacheRefresh';
 import { commitMutationQueueEntry, commitMutationQueueEntryIfPresent } from '../sync/syncMutationFinalize';
 
 function extractBatchSales(responseData: unknown): Sale[] {
@@ -50,6 +50,7 @@ export function sortSalesMutationsChronologically(mutations: QueuedMutation[]): 
 async function commitSaleSync(m: QueuedMutation): Promise<void> {
   await commitMutationQueueEntry(m.id);
   await localSalesStore.removeByMutationId(m.id);
+  void invalidateAfterItemCommitted().catch(() => undefined);
 }
 
 async function markSaleFailed(m: QueuedMutation, message: string): Promise<void> {
@@ -171,7 +172,6 @@ export async function processSalesInChunks(
     synced += result.synced;
     failed += result.failed;
     reporter?.addProgress(result.synced, result.failed);
-    void invalidateAfterSalesChunk().catch(() => undefined);
 
     if (i + SALES_BATCH_SIZE < sorted.length) {
       await sleep(BATCH_PAUSE_MS);

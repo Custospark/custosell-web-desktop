@@ -15,8 +15,10 @@ export function splitFullName(name: string | null | undefined): { firstName: str
 }
 
 /**
- * Friendly name for greetings and confirmations.
- * Uses the second name when the user has two or more names (e.g. "Jane Wanjiku" → "Wanjiku").
+ * Friendly name for greetings, confirmations, and toasts.
+ * Registration stores `owner_first_name` + `owner_last_name` as a single `user.name`
+ * (see RegisterPage → `owner_name`). For one name, that value is used as-is.
+ * When there are two or more parts, the second part is used (e.g. "Jane Wanjiku" → "Wanjiku").
  */
 export function getUserFirstName(name: string | null | undefined, fallback = 'User'): string {
   const trimmed = name?.trim();

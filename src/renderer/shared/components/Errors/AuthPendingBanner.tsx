@@ -1,9 +1,11 @@
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { CloudUpload } from 'lucide-react';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 export function AuthPendingBanner() {
   const pendingAuthSync = useAppSelector((state) => state.auth.pendingAuthSync);
-  const userName = useAppSelector((state) => state.auth.user?.name);
+  const fullName = useAppSelector((state) => state.auth.user?.name);
+  const userName = getUserFirstName(fullName, '');
 
   if (!pendingAuthSync) return null;
 

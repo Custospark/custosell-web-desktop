@@ -20,6 +20,7 @@ import { buildExpenseFormData } from '../expenses/completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
 import { isAuthMutation } from '../auth/syncAuthEngine';
 import { processSalesInChunks } from '../sales/syncSalesBatch';
+import { processExpenseMutations } from '../expenses/syncExpenses';
 import type { SyncProgressReporter } from './syncProgressReporter';
 import { AuthSyncPauseError, extractErrorMessage, isAuthHttpError } from './syncErrorUtils';
 import type { ExpenseCategory, ExpenseFormPayload } from '../../../../modules/expenses/api/ExpenseTypes';
@@ -27,6 +28,7 @@ import type { Business } from '../../../../modules/settings/api/settings/Busines
 import type { Role } from '../../../../modules/settings/api/settings/RoleTypes';
 import type { StaffUser } from '../../../../modules/settings/api/settings/StaffTypes';
 import { commitMutationQueueEntry } from './syncMutationFinalize';
+import { invalidateAfterItemCommitted } from './syncCacheRefresh';
 
 function getRefundSaleId(m: QueuedMutation): number | null {
   const match = m.url.match(/^\/sales\/(-?\d+)\/refund$/);
@@ -203,6 +205,7 @@ async function reconcileDuplicateStaffCreate(m: QueuedMutation, message: string)
 
   await commitMutationQueueEntry(m.id);
   await localStaffStore.removeByMutationId(m.id);
+  void invalidateAfterItemCommitted().catch(() => undefined);
   return true;
 }
 
@@ -217,6 +220,7 @@ async function reconcileDuplicateShiftClose(m: QueuedMutation, status?: number):
     store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
     void persistAuthSnapshot().catch(() => undefined);
   }
+  void invalidateAfterItemCommitted().catch(() => undefined);
   return true;
 }
 
@@ -319,6 +323,7 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       await localGuideFeedbackStore.removeByMutationId(m.id);
     }
 
+    void invalidateAfterItemCommitted().catch(() => undefined);
     return true;
   } catch (error: unknown) {
     if (isAuthHttpError(error)) {
@@ -428,6 +433,7 @@ async function processExpenseCategoryCreates(
       }
 
       synced++;
+      void invalidateAfterItemCommitted().catch(() => undefined);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       const message = err?.response?.data?.message || err?.message || 'Expense category sync failed';
@@ -468,6 +474,7 @@ async function processRoleCreates(
       }
 
       synced++;
+      void invalidateAfterItemCommitted().catch(() => undefined);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       const message = err?.response?.data?.message || err?.message || 'Role sync failed';
@@ -508,6 +515,7 @@ async function processCategoryCreates(
       }
 
       synced++;
+      void invalidateAfterItemCommitted().catch(() => undefined);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       const message = err?.response?.data?.message || err?.message || 'Category sync failed';
@@ -560,6 +568,7 @@ async function processShiftOpens(
       }
 
       synced++;
+      void invalidateAfterItemCommitted().catch(() => undefined);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       const message = err?.response?.data?.message || err?.message || 'Shift open sync failed';
@@ -679,29 +688,10 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
     else failed++;
   }
 
-  for (const m of expenseMutations) {
-    let remapped = m;
-    if (m.method === 'POST' && isExpenseFormPayload(m.data)) {
-      const payload: ExpenseFormPayload = {
-        ...m.data,
-        fields: { ...m.data.fields },
-      };
-      const rawShiftId = payload.fields.shift_id;
-      const shiftId = rawShiftId ? Number(rawShiftId) : null;
-      if (shiftId && shiftId < 0 && idMap.has(shiftId)) {
-        payload.fields.shift_id = String(idMap.get(shiftId)!);
-      }
-      const rawCategoryId = payload.fields.expense_category_id;
-      const categoryId = rawCategoryId ? Number(rawCategoryId) : null;
-      if (categoryId && categoryId < 0 && expCatIdMap.has(categoryId)) {
-        payload.fields.expense_category_id = String(expCatIdMap.get(categoryId)!);
-      }
-      remapped = { ...m, data: payload };
-    }
-    const ok = await processMutation(remapped);
-    if (ok) synced++;
-    else failed++;
-  }
+  const expenseResult = await processExpenseMutations(expenseMutations, idMap, expCatIdMap);
+  synced += expenseResult.synced;
+  failed += expenseResult.failed;
+  reporter?.addProgress(expenseResult.synced, expenseResult.failed);
 
   for (const m of refundMutations) {
     if (await isRefundBlocked(m)) continue;
@@ -764,6 +754,7 @@ export async function processStockAdjustments(): Promise<number> {
       }, { skipAuthRedirect: true });
       await stockLedger.markAdjustmentSynced(adj.id);
       synced++;
+      void invalidateAfterItemCommitted().catch(() => undefined);
     } catch {
       break;
     }

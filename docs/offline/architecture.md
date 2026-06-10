@@ -99,6 +99,8 @@ Keyed as `{entity}:{businessId}:{catalogKind}` via `serverCatalogStore.ts`.
 | products | `full`, `active` | Login, sync, online CRUD |
 | categories, customers, roles, staff | `default` | Login, sync, online CRUD |
 | sales | `list`, `shift:{id}`, `daily:{date}` | Login, sync, successful GET |
+| expenses | `list`, `shift:{id}` | Login, sync, successful GET |
+| expenseCategories | `default` | Login, sync, successful GET |
 
 `refreshAllServerCatalogSnapshots()` in `offline/catalogs/catalogSnapshotRefresh.ts` runs on online login/register and after full sync.
 

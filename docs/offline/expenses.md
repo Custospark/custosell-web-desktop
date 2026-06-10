@@ -8,6 +8,18 @@ See also: [architecture.md](./architecture.md) · [sales.md](./sales.md) (shift-
 - `localExpenses` keeps pending expense create, update, and delete records. It indexes `syncStatus`, `mutationId`, and `expenseCategoryId` so pending rows can be merged into expense lists and remapped after category sync.
 - Expense queue payloads store structured fields plus optional receipt metadata. Raw `FormData` is not stored in IndexedDB.
 
+## Catalog snapshots (`serverCatalogs`)
+
+Synced expense data survives **logout** (React Query is cleared; IndexedDB snapshots remain).
+
+| Entity | Key pattern | Source API |
+|--------|-------------|------------|
+| Expenses | `expenses:{businessId}:list` | `GET /expenses` |
+| Shift expenses | `expenses:{businessId}:shift:{shiftId}` | `GET /expenses?shift_id=:id` |
+| Expense categories | `expenseCategories:{businessId}:default` | `GET /expense-categories` |
+
+Module: `offline/catalogs/expensesCatalogSnapshot.ts`. Refreshed on login/sync via `refreshExpensesCatalogSnapshotsForSession()`.
+
 ## Expense Payloads
 
 Expense mutations serialize multipart form data into:

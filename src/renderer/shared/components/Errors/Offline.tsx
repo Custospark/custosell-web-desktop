@@ -3,6 +3,7 @@ import { WifiOff, Wifi, Plane, Router, Signal, RefreshCw } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { checkNetworkConnectivity, selectSystemStatus } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 const CONNECTION_TIPS = [
   { icon: Wifi, text: 'Check your internet connection — Wi‑Fi or mobile data should be on.' },
@@ -34,7 +35,8 @@ export default function Offline() {
     }
   }, [dispatch]);
 
-  const headline = user?.name ? `${user.name}, you're offline` : "You're offline";
+  const firstName = getUserFirstName(user?.name, '');
+  const headline = firstName ? `${firstName}, you're offline` : "You're offline";
   const reassurance = "Your data in Custosell is safe — we'll reconnect when you're back.";
 
   return (

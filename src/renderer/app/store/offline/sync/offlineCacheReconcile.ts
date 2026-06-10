@@ -17,6 +17,8 @@ import type { ExpenseCategoryWithSyncMeta, ExpenseWithSyncMeta } from '../../../
 /** Query key literals — avoid importing from query modules (circular deps). */
 const SALES_LIST_KEY = ['sales', 'list'] as const;
 const SHIFTS_SALES_PREFIX = ['shifts', 'sales'] as const;
+const SHIFTS_EXPENSES_PREFIX = ['shifts', 'expenses'] as const;
+const EXPENSES_LIST_PREFIX = ['expenses', 'list'] as const;
 const SHIFTS_ACTIVE_KEY = ['shifts', 'active'] as const;
 const SHIFTS_LIST_KEY = ['shifts', 'list'] as const;
 const DASHBOARD_SUMMARY_KEY = ['dashboard', 'summary'] as const;
@@ -188,20 +190,39 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
   const pendingExpenses = await localExpensesStore.getPending();
   const pendingExpenseIds = new Set(pendingExpenses.map((r) => r.expense.id));
 
-  const expenseListQueries = qc.getQueriesData<ExpenseWithSyncMeta[]>({
-    queryKey: ['expenses', 'list'],
-  });
-  for (const [key, data] of expenseListQueries) {
-    if (!Array.isArray(data)) continue;
-    qc.setQueryData<ExpenseWithSyncMeta[]>(
-      key,
-      data.filter(Boolean).filter((expense) => {
+  const reconcileExpenseRows = (list: ExpenseWithSyncMeta[]) =>
+    list
+      .filter((expense) => {
         if (!pendingExpenseIds.has(expense.id) && (expense._pendingSync || expense._localId || expense.id < 0)) {
           return false;
         }
         return true;
-      }),
-    );
+      })
+      .map((expense) => {
+        if (!pendingExpenseIds.has(expense.id) && expense._pendingSync) {
+          const cleaned = { ...expense };
+          delete cleaned._pendingSync;
+          delete cleaned._localId;
+          delete cleaned._pendingReceipt;
+          return cleaned;
+        }
+        return expense;
+      });
+
+  const expenseListQueries = qc.getQueriesData<ExpenseWithSyncMeta[]>({
+    queryKey: EXPENSES_LIST_PREFIX,
+  });
+  for (const [key, data] of expenseListQueries) {
+    if (!Array.isArray(data)) continue;
+    qc.setQueryData<ExpenseWithSyncMeta[]>(key, reconcileExpenseRows(data.filter(Boolean)));
+  }
+
+  const shiftExpenseQueries = qc.getQueriesData<ExpenseWithSyncMeta[]>({
+    queryKey: SHIFTS_EXPENSES_PREFIX,
+  });
+  for (const [key, data] of shiftExpenseQueries) {
+    if (!Array.isArray(data)) continue;
+    qc.setQueryData(key, reconcileExpenseRows(data.filter(Boolean)));
   }
 
   const pendingExpenseCategories = await localExpenseCategoriesStore.getPending();

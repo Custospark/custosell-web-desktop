@@ -1,5 +1,6 @@
 import { queryClient } from '../../../api/axiosConfig';
 import { purgeSyncedOptimisticFromCache } from './offlineCacheReconcile';
+import { notifyItemCommitted } from './syncItemRefresh';
 import { salesKeys } from '../../../../modules/sales/api/salesQueries';
 import { dashboardKeys } from '../../../../modules/dashboard/DashboardQueries';
 import { shiftKeys } from '../../../../modules/shifts/ShiftQueries';
@@ -8,11 +9,31 @@ import { expenseKeys } from '../../../../modules/expenses/api/ExpenseQueries';
 import { guideKeys } from '../../../../modules/guide/api/GuideQueries';
 import { refreshAllServerCatalogSnapshots } from '../catalogs/catalogSnapshotRefresh';
 
-/** After each sales chunk — strip stale pending badges, then refresh lists. */
+/** After each committed item — purge stale badges and refresh active list queries. */
+export async function invalidateAfterItemCommitted(): Promise<void> {
+  await notifyItemCommitted();
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: salesKeys.all, refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: shiftKeys.all, refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: dashboardKeys.all, refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: inventoryKeys.all, refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: expenseKeys.all, refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: ['customers'], refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: ['roles'], refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: ['staff'], refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: ['business'], refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: guideKeys.all, refetchType: 'active' }),
+  ]);
+}
+
+/** @deprecated Use invalidateAfterItemCommitted — kept for sales batch call sites. */
 export async function invalidateAfterSalesChunk(): Promise<void> {
-  await purgeSyncedOptimisticFromCache(queryClient);
-  await queryClient.invalidateQueries({ queryKey: salesKeys.all });
-  await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
+  await invalidateAfterItemCommitted();
+}
+
+/** @deprecated Use invalidateAfterItemCommitted — kept for expense sync call sites. */
+export async function invalidateAfterExpenseChunk(): Promise<void> {
+  await invalidateAfterItemCommitted();
 }
 
 /** After tier 2 completes — dashboard + inventory. */

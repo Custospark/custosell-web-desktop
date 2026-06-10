@@ -4,12 +4,14 @@ import {
   selectShowOfflineBanner,
 } from '../../../app/store/slices/networkSlice';
 import { WifiOff, X } from 'lucide-react';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 /** Full-width offline notice — sits above the layout shell, never overlays the header. */
 export function OfflineBanner() {
   const dispatch = useAppDispatch();
   const showBanner = useAppSelector(selectShowOfflineBanner);
-  const userName = useAppSelector((s) => s.auth.user?.name);
+  const fullName = useAppSelector((s) => s.auth.user?.name);
+  const userName = getUserFirstName(fullName, '');
 
   if (!showBanner) return null;
 

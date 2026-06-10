@@ -25,6 +25,10 @@ import {
   backupShiftSalesSnapshot,
   loadShiftSalesBaseline,
 } from '../../app/store/offline/catalogs/salesCatalogSnapshot';
+import {
+  backupShiftExpensesSnapshot,
+  loadShiftExpensesBaseline,
+} from '../../app/store/offline/catalogs/expensesCatalogSnapshot';
 import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../app/store/offline/core/offlineReadStrategy';
 import {
@@ -120,15 +124,46 @@ export const shiftKeys = {
   expenses: (shiftId: number) => [...shiftKeys.all, 'expenses', shiftId] as const,
 };
 
-async function loadShiftExpensesFromClient(shiftId: number): Promise<ExpenseWithSyncMeta[]> {
-  const cachedLists = queryClient.getQueriesData<ExpenseWithSyncMeta[]>({ queryKey: [...shiftKeys.all, 'expenses'] });
-  const cached = cachedLists.flatMap(([, data]) => data ?? []).filter((e) => e.shift_id === shiftId);
+function mergeShiftExpenseLists(
+  base: ExpenseWithSyncMeta[] = [],
+  local: ExpenseWithSyncMeta[] = [],
+): ExpenseWithSyncMeta[] {
+  const localIds = new Set(local.map((expense) => expense.id));
+  const serverRows = base.filter((expense) => {
+    if (localIds.has(expense.id)) return false;
+    if (expense._pendingSync || expense._localId || expense.id < 0) return false;
+    return true;
+  });
+  return [...local, ...serverRows];
+}
+
+async function readShiftExpensesBaseline(shiftId: number): Promise<ExpenseWithSyncMeta[]> {
+  const cached = queryClient.getQueryData<ExpenseWithSyncMeta[]>(shiftKeys.expenses(shiftId)) ?? [];
+  const serverCached = cached.filter((e) => !e._pendingSync && !e._localId && e.id > 0);
+  if (serverCached.length > 0) return serverCached;
+
+  const businessId = resolveAuthBusinessId();
+  if (!businessId) return [];
+
+  try {
+    return (await loadShiftExpensesBaseline(businessId, shiftId)) as ExpenseWithSyncMeta[];
+  } catch (err) {
+    console.warn('[ShiftExpenses] Failed to read shift expenses snapshot:', err);
+    return [];
+  }
+}
+
+async function readShiftExpenses(shiftId: number): Promise<ExpenseWithSyncMeta[]> {
+  const baseline = await readShiftExpensesBaseline(shiftId);
+  const local = await loadPendingShiftExpenses(shiftId);
+  return mergeShiftExpenseLists(baseline, local);
+}
+
+async function loadPendingShiftExpenses(shiftId: number): Promise<ExpenseWithSyncMeta[]> {
   const localRecords = await localExpensesStore.getByShiftId(shiftId);
-  const local = localRecords
+  return localRecords
     .filter((r) => r.mutationType !== 'delete')
     .map(toExpenseWithSyncMeta);
-  const localIds = new Set(local.map((e) => e.id));
-  return [...local, ...cached.filter((e) => !localIds.has(e.id))];
 }
 
 async function readShiftSalesBaseline(shiftId: number): Promise<Sale[]> {
@@ -254,7 +289,7 @@ export function useShiftExpenses(shiftId: number | null) {
     queryFn: async () => {
       if (!shiftId) return [];
 
-      const readClient = () => loadShiftExpensesFromClient(shiftId);
+      const readClient = () => readShiftExpenses(shiftId);
 
       if (shouldUseClientStorage() || isCompletelyOffline() || shiftId < 0) {
         return readClient();
@@ -268,10 +303,13 @@ export function useShiftExpenses(shiftId: number | null) {
               `/expenses?shift_id=${shiftId}`,
               { timeout: 10000 },
             );
-            const local = await loadShiftExpensesFromClient(shiftId);
-            const localIds = new Set(local.map((e) => e.id));
             const fromServer = (data.data ?? []).filter((e) => e.shift_id === shiftId);
-            return [...local, ...fromServer.filter((e) => !localIds.has(e.id))];
+            const businessId = resolveAuthBusinessId();
+            if (businessId) {
+              backupShiftExpensesSnapshot(businessId, shiftId, fromServer);
+            }
+            const local = await loadPendingShiftExpenses(shiftId);
+            return mergeShiftExpenseLists(fromServer, local);
           } catch (err: unknown) {
             const status = (err as AxiosError).response?.status;
             if (isNetworkFailure(err) || status === 403 || status === 404) {

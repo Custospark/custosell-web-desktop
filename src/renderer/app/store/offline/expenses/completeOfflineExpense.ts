@@ -134,13 +134,17 @@ export async function persistOfflineExpenseInBackground(
     });
   } catch (err) {
     console.error('[OfflineExpense] Enqueue failed:', err);
+    return;
   }
+
+  if (!mutationId) return;
 
   try {
     const localId = await localExpensesStore.save(expense, payload, mutationId, mutationType);
     expense._localId = localId;
   } catch (err) {
     console.error('[OfflineExpense] Local store save failed:', err);
+    await mutationQueue.remove(mutationId).catch(() => undefined);
   }
 }
 

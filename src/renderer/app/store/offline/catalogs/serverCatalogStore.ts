@@ -1,6 +1,14 @@
 import { getOfflineDb } from '../core/offlineDb';
 
-export type CatalogEntity = 'products' | 'categories' | 'customers' | 'roles' | 'staff' | 'sales';
+export type CatalogEntity =
+  | 'products'
+  | 'categories'
+  | 'customers'
+  | 'roles'
+  | 'staff'
+  | 'sales'
+  | 'expenses'
+  | 'expenseCategories';
 
 export type ProductCatalogKind = 'full' | 'active';
 

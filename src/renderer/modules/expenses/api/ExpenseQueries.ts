@@ -26,6 +26,13 @@ import {
 } from '../../../app/store/offline/expenses/completeOfflineExpenseCategory';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';
+import {
+  backupExpenseCategoriesSnapshot,
+  backupExpensesListSnapshot,
+  loadExpenseCategoriesBaseline,
+  loadExpensesListBaseline,
+} from '../../../app/store/offline/catalogs/expensesCatalogSnapshot';
+import { readCatalogBaseline, resolveAuthBusinessId } from '../../../app/store/offline/catalogs/catalogSnapshotUtils';
 import type {
   Expense,
   ExpenseCategory,
@@ -238,23 +245,38 @@ function getExpenseErrorMessage(e: AxiosError, fallback: string): string {
   return sanitizeErrorMessage(e, fallback);
 }
 
+async function readExpensesListFromClient(filters?: Record<string, string>): Promise<ExpenseWithSyncMeta[]> {
+  const baseline = await readCatalogBaseline(
+    'expenses',
+    expenseKeys.list(filters),
+    loadExpensesListBaseline,
+  );
+  const filteredBaseline = baseline.filter((expense) =>
+    matchesExpenseFilters(expense as ExpenseWithSyncMeta, filters),
+  );
+  const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
+  return mergeExpenseLists(filteredBaseline, local);
+}
+
 export function useExpenses(filters?: Record<string, string>, options?: { enabled?: boolean }) {
   const params = filters ? new URLSearchParams(filters).toString() : '';
+  const hasFilters = Boolean(filters && Object.keys(filters).length > 0);
   return useQuery<ExpenseWithSyncMeta[]>({
     queryKey: expenseKeys.list(filters),
     enabled: options?.enabled ?? true,
     queryFn: async () => readWithOfflineStrategy({
-      readFromClient: async () => {
-        const cached = queryClient.getQueryData<Expense[]>(expenseKeys.list(filters)) ?? [];
-        const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
-        return mergeExpenseLists(cached, local);
-      },
+      readFromClient: () => readExpensesListFromClient(filters),
       fetchFromServer: async () => {
         const { data } = await axiosInstance.get<{ data: Expense[] }>(`/expenses${params ? `?${params}` : ''}`, {
           timeout: 10000,
         });
+        const serverList = data.data ?? [];
+        const businessId = resolveAuthBusinessId();
+        if (businessId && !hasFilters) {
+          backupExpensesListSnapshot(businessId, serverList);
+        }
         const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
-        return mergeExpenseLists(data.data, local);
+        return mergeExpenseLists(serverList, local);
       },
     }),
     staleTime: 0,
@@ -300,11 +322,8 @@ export function useExpenseSummary(filters?: Record<string, string>) {
     queryKey: expenseKeys.summary(filters),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
-        const cached = queryClient.getQueryData<ExpenseSummary>(expenseKeys.summary(filters));
-        if (cached) return cached;
-        const expenses = queryClient.getQueryData<ExpenseWithSyncMeta[]>(expenseKeys.list(filters)) ?? [];
-        const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
-        return summarizeExpenses(mergeExpenseLists(expenses, local));
+        const expenses = await readExpensesListFromClient(filters);
+        return summarizeExpenses(expenses);
       },
       fetchFromServer: async () => {
         const { data } = await axiosInstance.get<ExpenseSummary>(`/expenses/summary${params ? `?${params}` : ''}`, {
@@ -324,16 +343,25 @@ export function useExpenseCategories() {
     queryKey: expenseKeys.categories(),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
-        const cached = queryClient.getQueryData<ExpenseCategory[]>(expenseKeys.categories()) ?? [];
+        const baseline = await readCatalogBaseline(
+          'expenseCategories',
+          expenseKeys.categories(),
+          loadExpenseCategoriesBaseline,
+        );
         const local = await loadLocalPendingExpenseCategories();
-        return mergeExpenseCategoryLists(cached, local);
+        return mergeExpenseCategoryLists(baseline, local);
       },
       fetchFromServer: async () => {
         const { data } = await axiosInstance.get<{ data: ExpenseCategory[] }>('/expense-categories', {
           timeout: 10000,
         });
+        const serverList = data.data ?? [];
+        const businessId = resolveAuthBusinessId();
+        if (businessId) {
+          backupExpenseCategoriesSnapshot(businessId, serverList);
+        }
         const local = await loadLocalPendingExpenseCategories();
-        return mergeExpenseCategoryLists(data.data, local);
+        return mergeExpenseCategoryLists(serverList, local);
       },
     }),
     staleTime: 0,

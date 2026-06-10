@@ -41,7 +41,16 @@ Summary of major offline-related work for documentation traceability.
 
 ## 2026-06-10 — Offline npm library (future work doc)
 
-- **`docs/future-work-offline-npm-library.ipynb`** — Jupyter notebook planning `@opiyo/offline-core` extraction
+- **`docs/future-work/offline-npm-library.ipynb`** — Jupyter notebook planning `@opiyo/offline-core` extraction
+
+## 2026-06-10 — Documentation reorganized under `docs/`
+
+- **`docs/offline/`** — architecture, auth, domain modules, testing, changelog
+- **`docs/app/`** — shell, service worker
+- **`docs/platform/`** — desktop release
+- **`docs/product/`** — monetization, design system
+- **`docs/future-work/`** — planning notebooks
+- **`docs/team/`** — agents playbook notebook
 
 ## 2026-06-10 — Offline folder modularization
 
@@ -51,4 +60,4 @@ Summary of major offline-related work for documentation traceability.
 
 ## Documentation index
 
-See [README.md](./README.md) for full doc map.
+See [../README.md](../README.md) for full doc map.

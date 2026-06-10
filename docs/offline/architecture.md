@@ -7,8 +7,8 @@ Custosell is an **offline-capable** retail POS. Writes go to IndexedDB immediate
 1. **Write-local, read-merged** — Sales, inventory, expenses, and settings mutations persist locally first, then queue for the server.
 2. **Durable catalog snapshots** — Server list responses are backed up to IndexedDB so data survives **logout** and **offline re-login**.
 3. **Ordered sync** — Auth and dependency-sensitive entities (shifts, roles, categories) sync before dependents.
-4. **Single connectivity truth** — Redux `networkSlice.systemStatus` drives offline vs server-first reads (`offlineQueryUtils.ts`).
-5. **No logout on flaky reconnect** — Device local sessions upgrade silently to server sessions when online (`sessionUpgrade.ts`).
+4. **Single connectivity truth** — Redux `networkSlice.systemStatus` drives offline vs server-first reads (`offline/core/offlineQueryUtils.ts`).
+5. **No logout on flaky reconnect** — Device local sessions upgrade silently to server sessions when online (`offline/auth/sessionUpgrade.ts`).
 
 ## Connectivity states
 
@@ -57,7 +57,7 @@ React Query cache (localStorage persister `CUSTOSELL_QUERY_CACHE`) is **cleared 
 4. Domain overlays (e.g. stock ledger on products)
 ```
 
-Implemented via `readWithOfflineStrategy()` in `offlineReadStrategy.ts` and `readCatalogBaseline()` in `catalogSnapshotUtils.ts`.
+Implemented via `readWithOfflineStrategy()` in `offline/core/offlineReadStrategy.ts` and `readCatalogBaseline()` in `offline/catalogs/catalogSnapshotUtils.ts`.
 
 ## Reconnect pipeline
 
@@ -88,7 +88,7 @@ invalidateAfterFullSync()
 purgeSyncedOptimisticFromCache()
 ```
 
-See [offline-auth.md](./offline-auth.md) for gating detail and [offline-sales.md](./offline-sales.md) for mutation tier order.
+See [auth.md](./auth.md) for gating detail and [sales.md](./sales.md) for mutation tier order.
 
 ## Catalog snapshots (`serverCatalogs`)
 
@@ -100,11 +100,11 @@ Keyed as `{entity}:{businessId}:{catalogKind}` via `serverCatalogStore.ts`.
 | categories, customers, roles, staff | `default` | Login, sync, online CRUD |
 | sales | `list`, `shift:{id}`, `daily:{date}` | Login, sync, successful GET |
 
-`refreshAllServerCatalogSnapshots()` in `catalogSnapshotRefresh.ts` runs on online login/register and after full sync.
+`refreshAllServerCatalogSnapshots()` in `offline/catalogs/catalogSnapshotRefresh.ts` runs on online login/register and after full sync.
 
 ## Folder layout
 
-The `src/renderer/app/store/offline/` tree is grouped by domain (see `offline/README.md`):
+The `src/renderer/app/store/offline/` tree is grouped by domain (see [source README](../../src/renderer/app/store/offline/README.md) and [offline doc index](./README.md)):
 
 | Folder | Responsibility |
 |--------|----------------|
@@ -137,7 +137,7 @@ The `src/renderer/app/store/offline/` tree is grouped by domain (see `offline/RE
 
 ## UI shell
 
-Global status banners render **above** the layout shell so navbar/sidebar geometry stays stable. See [app-shell.md](./app-shell.md).
+Global status banners render **above** the layout shell so navbar/sidebar geometry stays stable. See [../app/shell.md](../app/shell.md).
 
 ## Residual platform limitations
 
@@ -148,4 +148,4 @@ Global status banners render **above** the layout shell so navbar/sidebar geomet
 - **Profile, password, avatar, PDF reports** — Online-only.
 - **Platform admin** — Never persisted to IDB or RQ persister.
 
-See [offline-readiness.md](./offline-readiness.md) for boutique operational guidance.
+See [readiness.md](./readiness.md) for boutique operational guidance.

@@ -12,7 +12,7 @@ Rendered in `AppStatusBanners.tsx` → `AppChrome.tsx` **above** `Layout` so the
 | Offline | `OfflineBanner` | `network.showOfflineBanner` (dismissible, persisted) |
 | Sync progress | `SyncProgressBanner` | Sync coordinator running / paused / failed / complete |
 
-Dismiss state for offline banner: `offlinePreferences.ts` + `networkSlice.dismissOfflineBanner`.
+Dismiss state for offline banner: `offline/core/offlinePreferences.ts` + `networkSlice.dismissOfflineBanner`.
 
 ## Navbar
 
@@ -43,4 +43,4 @@ Network button calls `checkNetworkConnectivity()` on click (retry probe).
 
 ## Routes
 
-Sales module routes are eagerly bundled for offline chunk loading (see [offline-sales.md](./offline-sales.md)).
+Sales module routes are eagerly bundled for offline chunk loading (see [../offline/sales.md](../offline/sales.md)).

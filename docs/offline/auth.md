@@ -140,9 +140,9 @@ Uses `authSessionApply.ts` → `persistLoginCredentials()` + `loginSuccess()` + 
 
 ## Key files
 
-| File | Role |
+| Path | Role |
 |------|------|
-| `AccountQueries.ts` | Login/register mutations |
+| `shared/api/account/AccountQueries.ts` | Login/register mutations |
 | `offline/auth/completeOfflineLogin.ts` | Offline login completion |
 | `offline/auth/completeOfflineRegistration.ts` | Offline registration |
 | `offline/auth/deviceCredentials.ts` | Persist session + device auth record |
@@ -152,5 +152,7 @@ Uses `authSessionApply.ts` → `persistLoginCredentials()` + `loginSuccess()` + 
 | `offline/auth/authSessionApply.ts` | `applyServerAuth` |
 | `offline/auth/sessionRefresh.ts` | Post-upgrade cache + active shift |
 | `offline/auth/syncAuthEngine.ts` | Queued auth mutation processing |
-| `AuthBootstrap.tsx` | Hydrate + normalize on boot |
-| `useOfflineSync.ts` | Reconnect upgrade trigger |
+| `app/components/AuthBootstrap.tsx` | Hydrate + normalize on boot |
+| `app/store/hooks/useOfflineSync.ts` | Reconnect upgrade trigger |
+
+Paths are relative to `src/renderer/app/store/` unless noted (`shared/`, `app/components/`).

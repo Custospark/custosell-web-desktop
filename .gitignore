@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 dev-dist/
-docs/*.ipynb
-!docs/future-work-offline-npm-library.ipynb
+docs/**/*.ipynb
+!docs/future-work/offline-npm-library.ipynb
+!docs/team/agents-playbook.ipynb
+!docs/offline/architecture-diagram.ipynb
+!docs/product/sales-conversation.ipynb

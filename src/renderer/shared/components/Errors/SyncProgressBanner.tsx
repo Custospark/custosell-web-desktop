@@ -11,7 +11,7 @@ import { formatEtaMinutes, getSyncHeadline, getSyncDetailLabel } from './syncBan
 
 const SUCCESS_AUTO_DISMISS_MS = 3500;
 
-/** Toast / banner tokens from DESIGN_SYSTEM.md */
+/** Toast / banner tokens from docs/product/design-system.md */
 const BANNER_STYLES = {
   info: {
     shell: 'bg-blue-50 border-blue-200 text-blue-800',

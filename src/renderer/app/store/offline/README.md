@@ -58,5 +58,7 @@ import { syncPendingDataIfOnline } from '../../../app/store/offline/sync/syncPen
 
 ## Docs
 
-- [docs/offline-architecture.md](../../../../../docs/offline-architecture.md)
-- [docs/offline-auth.md](../../../../../docs/offline-auth.md)
+- [docs/offline/README.md](../../../../../docs/offline/README.md) — offline doc index
+- [docs/offline/architecture.md](../../../../../docs/offline/architecture.md)
+- [docs/offline/auth.md](../../../../../docs/offline/auth.md)
+- [docs/README.md](../../../../../docs/README.md) — full project doc map

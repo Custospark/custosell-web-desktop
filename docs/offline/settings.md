@@ -2,7 +2,7 @@
 
 Settings offline support covers business settings, roles, and staff. Profile and password updates stay online-only because they can include multipart avatar uploads and credential changes.
 
-See also: [offline-architecture.md](./offline-architecture.md) · [offline-inventory.md](./offline-inventory.md) (roles/staff catalog snapshots)
+See also: [architecture.md](./architecture.md) · [inventory.md](./inventory.md) (roles/staff catalog snapshots)
 
 ## Stores
 

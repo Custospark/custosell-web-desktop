@@ -32,7 +32,7 @@ Assessment for shops in **unreliable internet** environments using Custosell as 
 | Products / categories CRUD | Yes | Queued sync |
 | Customers CRUD | Yes | Snapshot + queue |
 | Expenses + receipts | Yes | Receipt upload queued |
-| Roles / staff / business settings | Yes | See [offline-settings.md](./offline-settings.md) |
+| Roles / staff / business settings | Yes | See [settings.md](./settings.md) |
 | Profile / password | No | Online only |
 | Quick report PDF download | No | Online only |
 | Low-stock API alerts | No | Use product list + ledger locally |

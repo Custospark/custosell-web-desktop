@@ -1,6 +1,6 @@
 # Offline Expenses
 
-See also: [offline-architecture.md](./offline-architecture.md) · [offline-sales.md](./offline-sales.md) (shift-linked expenses)
+See also: [architecture.md](./architecture.md) · [sales.md](./sales.md) (shift-linked expenses)
 
 ## Stores
 

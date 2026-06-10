@@ -2,7 +2,7 @@
 
 Sales, shifts, and refunds use **write-local, read-merged** with durable **sales catalog snapshots** for history after logout.
 
-Related: [offline-architecture.md](./offline-architecture.md) · [offline-auth.md](./offline-auth.md)
+Related: [architecture.md](./architecture.md) · [auth.md](./auth.md)
 
 ## Overview
 
@@ -12,7 +12,7 @@ Related: [offline-architecture.md](./offline-architecture.md) · [offline-auth.m
 
 ## IndexedDB stores (sales-related)
 
-Part of `CustosellOffline` v12 — see [offline-architecture.md](./offline-architecture.md).
+Part of `CustosellOffline` v12 — see [architecture.md](./architecture.md).
 
 | Store | Purpose |
 |-------|---------|
@@ -26,7 +26,7 @@ Part of `CustosellOffline` v12 — see [offline-architecture.md](./offline-archi
 
 ## Sales catalog snapshots
 
-Module: `salesCatalogSnapshot.ts`
+Module: `offline/catalogs/salesCatalogSnapshot.ts`
 
 | Kind | Key pattern | Source API |
 |------|-------------|------------|
@@ -53,19 +53,19 @@ Wired in `salesQueries.ts` and `ShiftQueries.ts` (`readShiftSalesBaseline`).
 
 ## Key modules
 
-| File | Role |
+| Path | Role |
 |------|------|
-| `localSalesStore.ts` | CRUD for offline sale records |
-| `localRefundsStore.ts` | CRUD for offline refund records |
-| `localShiftsStore.ts` | CRUD for offline shift records |
-| `completeOfflineSale.ts` | Instant offline sale completion |
-| `completeOfflineRefund.ts` | Instant offline refund completion |
-| `completeOfflineShift.ts` | Instant offline clock-in/out |
-| `offlineSalesSummary.ts` | Dashboard/shift totals from pending sales |
-| `offlineStockOverlay.ts` | Merges ledger stock into product list |
-| `syncEngine.ts` / `syncSalesBatch.ts` | Ordered sync on reconnect |
-| `salesQueries.ts` | Hybrid fetch + optimistic updates + snapshots |
-| `ShiftQueries.ts` | Hybrid shift fetch + shift sales snapshots |
+| `offline/sales/localSalesStore.ts` | CRUD for offline sale records |
+| `offline/sales/localRefundsStore.ts` | CRUD for offline refund records |
+| `offline/sales/localShiftsStore.ts` | CRUD for offline shift records |
+| `offline/sales/completeOfflineSale.ts` | Instant offline sale completion |
+| `offline/sales/completeOfflineRefund.ts` | Instant offline refund completion |
+| `offline/sales/completeOfflineShift.ts` | Instant offline clock-in/out |
+| `offline/sales/offlineSalesSummary.ts` | Dashboard/shift totals from pending sales |
+| `offline/inventory/offlineStockOverlay.ts` | Merges ledger stock into product list |
+| `offline/sync/syncEngine.ts` / `offline/sales/syncSalesBatch.ts` | Ordered sync on reconnect |
+| `modules/sales/api/salesQueries.ts` | Hybrid fetch + optimistic updates + snapshots |
+| `modules/shifts/ShiftQueries.ts` | Hybrid shift fetch + shift sales snapshots |
 
 ## Sale completion flow (offline)
 
@@ -110,11 +110,11 @@ After session upgrade, `refreshActiveShiftFromServer()` aligns auth with `GET /s
 | `slow` | API reachable — **server-first** (not offline) |
 | `online` | Normal |
 
-See [offline-architecture.md](./offline-architecture.md).
+See [architecture.md](./architecture.md).
 
 ## Reconnect pipeline
 
-1. `upgradeLocalSessionIfOnline()` — silent auth upgrade ([offline-auth.md](./offline-auth.md))
+1. `upgradeLocalSessionIfOnline()` — silent auth upgrade ([auth.md](./auth.md))
 2. `syncPendingDataIfOnline()` → coordinator
 3. Auth tier → shift opens → sales batch → refunds → shift closes → stock adjustments
 4. `invalidateAfterFullSync()` + catalog snapshot refresh
@@ -155,7 +155,7 @@ See `shared/utils/accounting.ts` and dashboard field docs in prior sections.
 - **Shift pending sync** — local shift
 - Receipt prefix `OFF-YYMMDD-XXXXXX`
 
-Global banner placement: [app-shell.md](./app-shell.md).
+Global banner placement: [../app/shell.md](../app/shell.md).
 
 ## Offline-first sales screens
 
@@ -171,4 +171,4 @@ Sales and shift queries use `networkMode: 'always'` so mutations are not paused 
 4. My Shift shows `sales:{businessId}:shift:{shiftId}` when snapshotted online.
 5. New offline sales merge from `localSalesStore`.
 
-Full test matrix: [offline-testing.md](./offline-testing.md).
+Full test matrix: [testing.md](./testing.md).

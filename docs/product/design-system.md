@@ -1,5 +1,7 @@
 # Custosell Design System
 
+> Location: `docs/product/design-system.md` · Index: [docs/README.md](../README.md)
+
 ## Color Palette
 
 ### Primary Brand

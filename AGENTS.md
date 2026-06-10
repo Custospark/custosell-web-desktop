@@ -64,6 +64,8 @@ Keep our interaction **conversational**—just like two teammates working side b
 | 9 | **Gauge** | Male | **Observability / Diagnostics** | Error surfacing, logs, sync visibility, debug paths | Silent failures and unactionable messages |
 | 10 | **Quill** | Female | **Docs** | Project memory, ADRs, module docs, route/API notes | Undocumented behavior and tribal knowledge |
 
+**Documentation index:** [docs/README.md](./docs/README.md) · Offline: [docs/offline/README.md](./docs/offline/README.md) · Source: [src/renderer/app/store/offline/README.md](./src/renderer/app/store/offline/README.md)
+
 ---
 
 ## Stand-Up And Handoff Flow
@@ -115,7 +117,7 @@ Blue, Atlas, Iris, Gauge, and Nora are mandatory when the change touches offline
 ### Parallel Lane Rules
 
 - Split Rex work only when file ownership is clear.
-- Avoid parallel Rex edits to shared files like `syncEngine.ts`, `mutationQueue.ts`, `offlineDb.ts`, query modules, and route files unless Mike explicitly sequences reconciliation.
+- Avoid parallel Rex edits to shared files like `offline/sync/syncEngine.ts`, `offline/sync/mutationQueue.ts`, `offline/core/offlineDb.ts`, query modules, and route files unless Mike explicitly sequences reconciliation.
 - Mike must reconcile parallel findings into one plan before declaring the task complete.
 - Vera remains the final automated gate even if partial checks pass in parallel.
 - For cross-stack work, Mike must report frontend and backend verification separately, then give one integrated go/no-go.

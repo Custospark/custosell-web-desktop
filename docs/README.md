@@ -1,43 +1,69 @@
 # Custosell documentation
 
-Technical documentation for the frontend application, with emphasis on **offline-first retail** for businesses in unreliable connectivity environments.
+Technical documentation for the Custosell frontend (Electron + React + TypeScript), with emphasis on **offline-first retail** for businesses in unreliable connectivity environments.
 
-## Start here
+## Quick start
+
+| If you need… | Start here |
+|--------------|------------|
+| Offline system overview | [offline/architecture.md](./offline/architecture.md) |
+| Login, reconnect, 401 fix | [offline/auth.md](./offline/auth.md) |
+| Manual test plan | [offline/testing.md](./offline/testing.md) |
+| Source code folder map | [../src/renderer/app/store/offline/README.md](../src/renderer/app/store/offline/README.md) |
+
+---
+
+## Offline platform
+
+See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
-| [offline-architecture.md](./offline-architecture.md) | System overview, IndexedDB schema (v12), connectivity model, reconnect pipeline |
-| [offline-auth.md](./offline-auth.md) | Login, device credentials, `pendingAuthSync` vs `isLocalSession`, silent session upgrade |
-| [offline-sales.md](./offline-sales.md) | POS, shifts, refunds, sales catalog snapshots, sync order |
-| [offline-inventory.md](./offline-inventory.md) | Products, categories, customers, catalog snapshots, stock ledger |
-| [offline-expenses.md](./offline-expenses.md) | Expenses and expense categories offline |
-| [offline-settings.md](./offline-settings.md) | Business settings, roles, staff offline |
-| [offline-testing.md](./offline-testing.md) | Manual test plans and troubleshooting |
-| [offline-readiness.md](./offline-readiness.md) | Operational assessment for unreliable-internet boutiques |
-| [service-worker-strategy.md](./service-worker-strategy.md) | Web production caching (static + API GET) |
-| [app-shell.md](./app-shell.md) | Global UI: status banners, navbar, layout chrome |
+| [architecture.md](./offline/architecture.md) | IndexedDB schema (v12), connectivity, reconnect pipeline |
+| [architecture-diagram.ipynb](./offline/architecture-diagram.ipynb) | Supplementary mermaid diagrams (notebook) |
+| [auth.md](./offline/auth.md) | Device login, silent session upgrade, API gating |
+| [sales.md](./offline/sales.md) | POS, shifts, refunds, sales catalog snapshots |
+| [inventory.md](./offline/inventory.md) | Products, categories, customers, stock ledger |
+| [expenses.md](./offline/expenses.md) | Expenses and expense categories |
+| [settings.md](./offline/settings.md) | Roles, staff, business settings |
+| [guide.md](./offline/guide.md) | Guide feedback offline queue |
+| [testing.md](./offline/testing.md) | Manual tests and troubleshooting |
+| [readiness.md](./offline/readiness.md) | Boutique / unreliable-internet assessment |
+| [changelog.md](./offline/changelog.md) | Major offline platform changes |
+
+## Application
+
+| Document | Contents |
+|----------|----------|
+| [shell.md](./app/shell.md) | Status banners, navbar, layout chrome |
+| [service-worker.md](./app/service-worker.md) | Web production caching (static + API GET) |
+
+## Platform & product
+
+| Document | Contents |
+|----------|----------|
+| [desktop-release.md](./platform/desktop-release.md) | Electron desktop builds |
+| [monetization.md](./product/monetization.md) | Product monetization notes |
+| [design-system.md](./product/design-system.md) | Colors, typography, UI patterns |
+| [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
 
 ## Future work
 
 | Document | Contents |
 |----------|----------|
-| [future-work-offline-npm-library.ipynb](./future-work-offline-npm-library.ipynb) | Plan to extract offline engine as reusable npm package (`@opiyo/offline-core`) |
+| [offline-npm-library.ipynb](./future-work/offline-npm-library.ipynb) | Plan to extract `@opiyo/offline-core` npm package |
 
-## Other docs
+## Team
 
 | Document | Contents |
 |----------|----------|
-| [CHANGELOG-OFFLINE.md](./CHANGELOG-OFFLINE.md) | Summary of major offline platform changes |
-| [desktop-release.md](./desktop-release.md) | Electron desktop builds |
-| [monetization-strategy.md](./monetization-strategy.md) | Product monetization notes |
+| [agents-playbook.ipynb](./team/agents-playbook.ipynb) | Custospark team orchestration playbook (`AGENTS.md` companion) |
 
 ## Key source locations
 
-See **`src/renderer/app/store/offline/README.md`** for the full folder map.
-
 | Area | Path |
 |------|------|
-| Offline layout index | `src/renderer/app/store/offline/README.md` |
+| Offline code index | `src/renderer/app/store/offline/README.md` |
 | IndexedDB schema | `src/renderer/app/store/offline/core/offlineDb.ts` |
 | Mutation queue | `src/renderer/app/store/offline/sync/mutationQueue.ts` |
 | Sync engine | `src/renderer/app/store/offline/sync/syncEngine.ts` |

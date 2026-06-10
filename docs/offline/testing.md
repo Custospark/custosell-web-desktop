@@ -2,6 +2,8 @@
 
 Consolidated manual tests for Custosell offline behavior. See also `src/renderer/app/store/offline/testing/test_guide.txt` for dev-server vs production build notes.
 
+Related: [architecture.md](./architecture.md) · [auth.md](./auth.md) · [README.md](./README.md)
+
 ## Prerequisites
 
 - Backend running (e.g. `http://localhost:8000`)

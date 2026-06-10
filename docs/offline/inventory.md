@@ -2,7 +2,7 @@
 
 Inventory offline support covers product and category creates, updates, and deletes through the shared mutation queue, plus **durable server catalog snapshots** for offline reads after logout.
 
-Related: [offline-architecture.md](./offline-architecture.md) · Sales snapshots in [offline-sales.md](./offline-sales.md)
+Related: [architecture.md](./architecture.md) · Sales snapshots in [sales.md](./sales.md)
 
 ## Server catalog snapshots (`serverCatalogs`, DB v12)
 
@@ -16,7 +16,7 @@ When the app fetches lists from the server, it backs them up to IndexedDB keyed 
 | Roles | `roles:{businessId}:default` | Settings |
 | Staff | `staff:{businessId}:default` | Settings |
 
-Sales history snapshots (`sales` entity) are documented in [offline-sales.md](./offline-sales.md).
+Sales history snapshots (`sales` entity) are documented in [sales.md](./sales.md).
 
 ### Read order (offline client path)
 
@@ -36,19 +36,19 @@ Logout clears React Query but **keeps** IDB snapshots, so offline re-login still
 
 ### Key modules
 
-| File | Role |
+| Path | Role |
 |------|------|
-| `serverCatalogStore.ts` | IDB read/write for `serverCatalogs` |
-| `catalogSnapshotUtils.ts` | `readCatalogBaseline`, `backupCatalogSnapshot`, `resolveAuthBusinessId` |
-| `catalogSnapshotRefresh.ts` | API fetch + backup per entity |
-| `ProductQueries.ts` | Products + categories wired to snapshots |
-| `CustomerQueries.ts` | Customer snapshot paths |
-| `RoleQueries.ts` / `StaffQueries.ts` | Settings catalog snapshots |
-| `useSeedStockLedger.ts` | Seed stock ledger from IDB product catalog on offline boot |
+| `offline/catalogs/serverCatalogStore.ts` | IDB read/write for `serverCatalogs` |
+| `offline/catalogs/catalogSnapshotUtils.ts` | `readCatalogBaseline`, `backupCatalogSnapshot`, `resolveAuthBusinessId` |
+| `offline/catalogs/catalogSnapshotRefresh.ts` | API fetch + backup per entity |
+| `modules/inventory/api/products/ProductQueries.ts` | Products + categories wired to snapshots |
+| `modules/customers/api/customers/CustomerQueries.ts` | Customer snapshot paths |
+| `modules/settings/api/settings/RoleQueries.ts` / `StaffQueries.ts` | Settings catalog snapshots |
+| `app/store/hooks/useSeedStockLedger.ts` | Seed stock ledger from IDB product catalog on offline boot |
 
 ## Stock ledger
 
-- `stockLedger.ts` — local quantity overrides per product
+- `offline/inventory/stockLedger.ts` — local quantity overrides per product
 - Seeded from product catalog snapshot when RQ cache empty (`useSeedStockLedger`)
 - Sale deductions via `completeOfflineSale` batch adjust
 - Non-sale adjustments sync separately in sync pipeline

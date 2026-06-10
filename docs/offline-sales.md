@@ -1,10 +1,18 @@
-# Offline Sales Architecture
+# Offline sales architecture
+
+Sales, shifts, and refunds use **write-local, read-merged** with durable **sales catalog snapshots** for history after logout.
+
+Related: [offline-architecture.md](./offline-architecture.md) · [offline-auth.md](./offline-auth.md)
 
 ## Overview
 
-Offline sales use a **write-local, read-merged** pattern. Sales, refunds, and shift clock-in/out are persisted to IndexedDB immediately and merged into React Query caches for instant UI updates. Sync happens in the background when connectivity returns.
+- Writes persist to IndexedDB immediately and merge into React Query for instant UI.
+- Server list responses backup to `serverCatalogs` (sales entity).
+- Sync runs in background on reconnect via `syncCoordinator`.
 
-## IndexedDB (`CustosellOffline` v5)
+## IndexedDB stores (sales-related)
+
+Part of `CustosellOffline` v12 — see [offline-architecture.md](./offline-architecture.md).
 
 | Store | Purpose |
 |-------|---------|
@@ -14,118 +22,153 @@ Offline sales use a **write-local, read-merged** pattern. Sales, refunds, and sh
 | `mutations` | Outbound API mutation queue |
 | `stock` | Local stock quantity overrides |
 | `adjustments` | Pending stock movement sync (non-sale only) |
+| `serverCatalogs` | Sales list / shift / daily snapshots |
+
+## Sales catalog snapshots
+
+Module: `salesCatalogSnapshot.ts`
+
+| Kind | Key pattern | Source API |
+|------|-------------|------------|
+| Full history | `sales:{businessId}:list` | `GET /sales` |
+| Shift-scoped | `sales:{businessId}:shift:{shiftId}` | `GET /sales/by-shift/:id` |
+| Daily | `sales:{businessId}:daily:{YYYY-MM-DD}` | `GET /sales/daily` |
+
+Daily reads fall back to filtering the `:list` snapshot when no daily key exists.
+
+### Read order (sales list / shift / detail)
+
+1. React Query cache
+2. IDB sales snapshot (`loadSalesListBaseline`, `loadShiftSalesBaseline`, `loadDailySalesBaseline`)
+3. Pending `localSalesStore` rows
+4. Pending refund overlay (`localRefundsStore` + `mergePendingRefunds`)
+
+Wired in `salesQueries.ts` and `ShiftQueries.ts` (`readShiftSalesBaseline`).
+
+### Refresh
+
+- On successful server GET → `backupSalesListSnapshot` / `backupShiftSalesSnapshot` / `backupDailySalesSnapshot`
+- On login/sync → `refreshSalesCatalogSnapshotsForSession()` (list + active shift)
+- Included in `refreshAllServerCatalogSnapshots()`
 
 ## Key modules
 
 | File | Role |
 |------|------|
-| `offlineDb.ts` | Shared DB connection and schema upgrades |
 | `localSalesStore.ts` | CRUD for offline sale records |
 | `localRefundsStore.ts` | CRUD for offline refund records |
 | `localShiftsStore.ts` | CRUD for offline shift records |
 | `completeOfflineSale.ts` | Instant offline sale completion |
 | `completeOfflineRefund.ts` | Instant offline refund completion |
 | `completeOfflineShift.ts` | Instant offline clock-in/out |
-| `offlineSalesSummary.ts` | Derives dashboard/shift totals from pending sales |
+| `offlineSalesSummary.ts` | Dashboard/shift totals from pending sales |
 | `offlineStockOverlay.ts` | Merges ledger stock into product list |
-| `syncEngine.ts` | Ordered sync on reconnect |
-| `salesQueries.ts` | Hybrid fetch + optimistic updates |
-| `ShiftQueries.ts` | Hybrid shift fetch + offline mutations |
+| `syncEngine.ts` / `syncSalesBatch.ts` | Ordered sync on reconnect |
+| `salesQueries.ts` | Hybrid fetch + optimistic updates + snapshots |
+| `ShiftQueries.ts` | Hybrid shift fetch + shift sales snapshots |
 
 ## Sale completion flow (offline)
 
-1. `useCreateSale` → `completeOfflineSaleInstant()`
-2. Batch stock deduction via `stockLedger.batchAdjust()` (seeded from product cache)
+1. `useCreateSale` → `completeOfflineSaleInstant()` when completely offline (or network failure on POST)
+2. Stock deduction via `stockLedger.batchAdjust()` (seeded from product cache / IDB catalog)
 3. Enqueue mutation + save to `localSalesStore`
 4. Optimistic `setQueryData` on sales, products, dashboard, shift caches
-5. UI shows sale immediately with `OFF-*` receipt and "Pending sync" badge
+5. UI: `OFF-*` receipt + **Pending sync** badge
+
+Online/slow path: tries `POST /sales` (4s timeout) first; falls back to local on network failure only.
 
 ## Refund flow (offline)
 
 1. Only **synced** sales (positive server IDs) can be refunded offline
 2. `useRefund` → `completeOfflineRefundInstant()` when offline or network failure
 3. Restores stock locally (`reason: 'refund'`)
-4. Enqueues `POST /sales/:id/refund` + saves to `localRefundsStore`
-5. UI shows updated payment status with "Refund pending" badge
+4. Enqueues `POST /sales/:id/refund` + `localRefundsStore`
+5. **Refund pending** badge until sync
 
 Unsynced `OFF-*` sales must sync before refunding.
 
 ## Shift flow (offline)
 
-1. **Clock in** → `completeOfflineClockInInstant()` — local negative shift ID, auth `shift_id` updated, queued `POST /shifts`
-2. **Offline sales** attach `shift_id` from auth (existing flow)
-3. **Clock out** → `completeOfflineClockOutInstant()` — totals computed from merged shift sales, queued `PUT /shifts/:id`, auth cleared
-4. "Shift pending sync" badge when shift is local-only
+1. **Clock in** → `completeOfflineClockInInstant()` — negative shift ID, auth `shift_id` updated, `POST /shifts` queued
+2. Offline sales attach `shift_id` from auth slice
+3. **Clock out** → totals from merged shift sales, `PUT /shifts/:id` queued, auth cleared
+4. **Shift pending sync** badge when local-only
+
+After session upgrade, `refreshActiveShiftFromServer()` aligns auth with `GET /shifts/active`.
+
+### Shift limitations
+
+- Shift **list** is not catalog-snapshotted (RQ + `localShiftsStore` + auth fallback only)
+- Shift sales snapshot refreshed for **active shift** on login/sync; closed shifts depend on prior online visit or full list snapshot
+- Negative shift IDs: no server shift snapshot until sync remaps ID
 
 ## Connectivity standard
 
 | Status | Meaning |
 |--------|---------|
-| `offline` | **Completely offline** — local queue, client storage, offline UI |
-| `slow` | API reachable but high latency — **not offline**, server-first |
-| `online` | Normal connectivity |
+| `offline` | Completely offline — local queue, instant sale completion |
+| `slow` | API reachable — **server-first** (not offline) |
+| `online` | Normal |
 
-Only `systemStatus === 'offline'` (or `navigator.onLine === false`) counts as offline.
+See [offline-architecture.md](./offline-architecture.md).
 
-## Reconnect sync order
+## Reconnect pipeline
 
-1. Browser `online` event → optimistic `online` status + immediate queue drain
-2. While offline, connectivity is re-probed every **3s** (30s when reachable)
-3. `useOfflineSync` runs the moment status leaves `offline`
-4. `syncPendingDataIfOnline()` → ordered mutation sync
-3. `syncAllMutations()` in order:
-   - Shift opens (`POST /shifts`) — remaps local shift IDs on sales + auth
-   - Sales batch (`POST /sales/batch`)
-   - Refunds (`POST /sales/:id/refund`)
-   - Shift closes (`PUT /shifts/:id`)
-4. Stock adjustments (refunds, non-sale) via `processStockAdjustments()`
-5. Invalidate sales, dashboard, shift, and inventory queries
+1. `upgradeLocalSessionIfOnline()` — silent auth upgrade ([offline-auth.md](./offline-auth.md))
+2. `syncPendingDataIfOnline()` → coordinator
+3. Auth tier → shift opens → sales batch → refunds → shift closes → stock adjustments
+4. `invalidateAfterFullSync()` + catalog snapshot refresh
+5. `purgeSyncedOptimisticFromCache()` — remove `OFF-*` / pending badges
+
+### Sync order (mutations)
+
+1. Shift opens (`POST /shifts`) — remaps local shift IDs on sales, expenses, auth
+2. Sales batch (`POST /sales/batch`)
+3. Refunds (`POST /sales/:id/refund`)
+4. Shift closes (`PUT /shifts/:id`)
+5. Stock adjustments (non-sale)
 
 ## Post-sync cleanup
 
-After a successful queue drain:
+1. Synced rows deleted from `localSales`, `localRefunds`, `localShifts`, `mutations`
+2. Optimistic cache purge
+3. Server refetch — UI matches online state
 
-1. Synced rows are **deleted** from `localSales`, `localRefunds`, `localShifts`, and `mutations`
-2. `purgeSyncedOptimisticFromCache()` strips `OFF-*` / pending badges from React Query
-3. Server data is refetched — UI matches online experience with no stale pending rows
-
-Dashboard uses a **server baseline** (`dashboardKeys.server`) plus a fresh pending overlay on each read — never double-counts synced sales.
+Dashboard uses **server baseline** (`dashboardKeys.server`) + pending overlay — no double-counting.
 
 ## Net sales accounting
 
-Shared formula components (see `shared/utils/accounting.ts`):
+| Scope | Included | Net headline |
+|-------|----------|--------------|
+| Dashboard / trend | Business + calendar date | Gross − refunds − expenses |
+| My Shift | Matching `shift_id` | Gross − refunds |
+| Cash handover | Shift cash − shift expenses | Physical cash only |
 
-| Scope | What is included | Net sales headline |
-|-------|------------------|-------------------|
-| **Dashboard / trend** | Business + calendar date (`sale_date`, `expense_date`) | Gross − refunds − expenses |
-| **My Shift** | All rows with matching `shift_id` | Gross − refunds |
-| **Cash handover** | Shift cash collected − shift-linked expenses | Physical cash only |
-
-Dashboard money cards use explicit backend fields for:
-
-- `today_gross_sales`: original sale totals for today.
-- `today_refunds`: refunded amounts from today's sale items.
-- `today_net_sales`: gross minus refunds.
-- `today_expenses`: operating expenses recorded today (includes shift-linked expenses).
-- `today_net_after_expenses`: gross − refunds − expenses (**Net Today** card).
-
-The seven-day chart shows blue bars for net sales, a red line for refunds + expenses, and a green line for transaction count.
-
-My Shift shows **Net sales** (gross − refunds) and **Cash to hand over** (cash collected − shift expenses) as separate headline figures. Shift expenses reduce cash handover, not mobile/card totals. Payment buckets show net collected per method after refunds.
-
-Refund amounts use proportional discount logic on both frontend and backend. List views show net remaining (`total_amount − refunds`); sale receipts keep the original gross total plus refund lines.
+See `shared/utils/accounting.ts` and dashboard field docs in prior sections.
 
 ## UI indicators
 
-- Red offline banner above layout (dismissible — persisted in localStorage)
-- Amber offline hints on New Sale, Refunds, and My Shift
-- `Pending sync` badge — unsynced sales
-- `Refund pending` badge — unsynced refunds
-- `Shift pending sync` badge — local shift not yet on server
-- Receipt prefix `OFF-YYMMDD-XXXXXX` for local receipts
+- Red **offline** banner above layout (dismissible)
+- Amber hints on New Sale, Refunds, My Shift
+- **Pending sync** — unsynced sales/products/etc.
+- **Refund pending** — unsynced refunds
+- **Shift pending sync** — local shift
+- Receipt prefix `OFF-YYMMDD-XXXXXX`
+
+Global banner placement: [app-shell.md](./app-shell.md).
 
 ## Offline-first sales screens
 
-Sales routes (`New Sale`, `History`, `Refunds`, `My Shift`) are **eagerly bundled** so they load without fetching extra JS chunks offline.
+Sales routes (`New Sale`, `History`, `Refunds`, `My Shift`) are **eagerly bundled** for offline chunk loading.
 
 Sales and shift queries use `networkMode: 'always'` so mutations are not paused when offline.
+
+## Manual test: logout → offline login → sales history
+
+1. Sign in online; open Sales History (+ My Shift if clocked in).
+2. Log out → offline → sign in with device credentials.
+3. Sales History shows `sales:{businessId}:list` snapshot.
+4. My Shift shows `sales:{businessId}:shift:{shiftId}` when snapshotted online.
+5. New offline sales merge from `localSalesStore`.
+
+Full test matrix: [offline-testing.md](./offline-testing.md).

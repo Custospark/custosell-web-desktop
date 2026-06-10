@@ -2,9 +2,11 @@
 
 Settings offline support covers business settings, roles, and staff. Profile and password updates stay online-only because they can include multipart avatar uploads and credential changes.
 
+See also: [offline-architecture.md](./offline-architecture.md) · [offline-inventory.md](./offline-inventory.md) (roles/staff catalog snapshots)
+
 ## Stores
 
-IndexedDB version 9 adds these local stores:
+In `CustosellOffline` (currently v12), these local stores hold pending settings mutations:
 
 - `localRoles`: pending role create/update/delete records keyed by `localId`, indexed by `syncStatus`, `mutationId`, and `roleId`.
 - `localStaff`: pending staff create/update/delete records keyed by `localId`, indexed by `syncStatus`, `mutationId`, `staffId`, and `roleId`.

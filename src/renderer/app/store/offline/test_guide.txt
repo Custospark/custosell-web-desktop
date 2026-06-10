@@ -1,143 +1,31 @@
-CUSTOSELL — OFFLINE FUNCTIONALITY TEST GUIDE
+CUSTOSELL — OFFLINE TESTING (QUICK REFERENCE)
 ==============================================
+
+Full documentation: docs/offline-testing.md
+Architecture:       docs/offline-architecture.md
+Auth / reconnect:   docs/offline-auth.md
 
 PREREQUISITES
 -------------
-- Node.js and npm installed
-- Backend server running at http://localhost:8000
-- Frontend dependencies installed (npm install)
+- Backend at http://localhost:8000
+- User signed in ONLINE at least once on this device
+- npm install completed
 
+DEV VS PRODUCTION
+-----------------
+- Dev (npm run dev:react): IDB + RQ work; use production build for full SW test
+- Production: npm run react:build && serve dist/web -l 3000
+- Electron: npm run build:win — no SW, full IDB offline
 
-1. NORMAL DEVELOPMENT TESTING (Vite Dev Server)
-------------------------------------------------
-Offline is supported in dev via service worker + IndexedDB + React Query cache.
-Ensure the backend is running at http://localhost:8000 before testing.
-
-  Step 1: Start the backend
-  > cd backend
-  > php artisan serve
-
-  Step 2: Start the frontend dev server
-  > cd frontend
-  > npm run dev:react
-
-  Step 3: Open http://localhost:5173 in your browser
-
-  Step 4: Test online functionality first
-  - Log in with your credentials
-  - Navigate through the app (sales, history, products, etc.)
-  - Make a test sale
-
-  Step 5: Test offline in dev
-  - Use the app online first (loads SW + caches API GETs)
-  - DevTools → Application → Service Workers → confirm sw.js active
-  - DevTools → Network → check "Offline"
-  - Sales module should load from client cache + local IndexedDB sales
-  - Complete a sale offline → appears instantly in History
-
-
-2. PRODUCTION BUILD TESTING (Full Offline Support)
-----------------------------------------------------
-This method gives full offline functionality.
-
-  Step 1: Build the frontend for production
-  > cd frontend
-  > npm run react:build
-
-  Step 2: Install a static server (one time)
-  > npm install -g serve
-
-  Step 3: Serve the built files
-  > serve dist/web -l 3000
-
-  Step 4: Open http://localhost:3000 in your browser
-
-  Step 5: Wait for Service Worker to register
-  - Open DevTools → Application → Service Workers
-  - You should see sw.js "activated" status
-  - Caches: custosell-static-v1 (JS/CSS/images), custosell-api-v1 (GET /api/v1)
-  - If not, do a hard refresh (Ctrl+Shift+R)
-
-  Caching strategy (sw.js):
-  - Image/JS/CSS → cache-first (online & offline)
-  - API GET → network-first online, stale cache offline
-  - API mutations → network pass-through; app queues to IndexedDB when offline
-
-  Step 6: Go offline
-  - DevTools → Network tab → check "Offline"
-  - OR: disable your Wi-Fi / unplug ethernet
-
-  Step 7: Test offline features
-  ✓ The app should load without errors
-  ✓ Navigate between pages (dashboard, sales, history, etc.)
-  ✓ Make a sale — should show "Sale Completed" with receipt
-  ✓ Sale completes in under 200ms (no long spinner)
-  ✓ Sales History shows the new sale immediately with "Pending sync" badge
-  ✓ Dashboard today's revenue/transactions update instantly
-  ✓ My Shift totals include the offline sale
-  ✓ POS product stock decreases in search results after sale
-  ✓ The sale is queued locally (IndexedDB → localSales + mutations)
-  ✓ Stock is deducted locally (stock ledger)
-
-  Step 8: Come back online
-  - Uncheck "Offline" in DevTools (or reconnect)
-  - The sync engine fires automatically
-  - Queued sales are sent via POST /sales/batch
-  - Page reloads with fresh data from server
-
-
-3. ELECTRON APP TESTING (Production)
----------------------------------------
-  Step 1: Build the Windows app
-  > cd frontend
-  > npm run build:win
-
-  Step 2: Install the app from dist/releases/
-
-  Step 3: Launch Custosell Desktop
-
-  Step 4: Test offline
-  - Use the app normally while connected
-  - Disconnect from the internet
-  - The app continues to work with cached data
-  - Sales made offline are queued and synced when reconnected
-
-
-WHAT TO EXPECT WHEN OFFLINE
------------------------------
-  Navbar shows:    ● No Connection (red indicator)
-  Top banner:      "You're offline · Sales will be saved locally..."
-  Sale page:       Amber badge "Offline — sale will be saved and synced"
-  Making a sale:   Sale completes immediately with local receipt (OFF-...)
-  Data view:       Previously loaded data is still accessible
-  Page navigation: All routes work via cached app shell
-
-
-WHAT HAPPENS WHEN BACK ONLINE
--------------------------------
-  1. Network detection fires
-  2. Pending sales are batched to POST /sales/batch
-  3. Non-sale stock adjustments are synced (sale stock handled by server)
-  4. Success toast: "Synced X transaction(s)"
-  5. React Query caches refresh (no full page reload)
-  6. "Pending sync" badges disappear after successful sync
-
+QUICK SMOKE TEST
+----------------
+1. Online: login, load products + sales history
+2. Offline: complete sale → OFF-* receipt, Pending sync badge
+3. Reconnect: silent session upgrade, sync clears badges
+4. Logout → offline login → products/sales still visible (IDB snapshots)
 
 TROUBLESHOOTING
------------------
-  White screen on offline (dev mode):
-  → Use Method 2 (production build) instead
-
-  Stale/corrupted cache:
-  → DevTools → Application → Local Storage → delete "CUSTOSELL_QUERY_CACHE"
-  → DevTools → Application → IndexedDB → delete "CustosellOffline"
-  → Reload
-
-  Service Worker not activating:
-  → DevTools → Application → Service Workers → click "Update" then "Skip waiting"
-  → Hard refresh (Ctrl+Shift+R)
-
-  Sales not syncing after reconnection:
-  → Check the backend is running (http://localhost:8000)
-  → Check the network status indicator shows "Connected"
-  → Manual refresh: reload the page
+---------------
+- Clear localStorage CUSTOSELL_QUERY_CACHE
+- Delete IndexedDB CustosellOffline
+- See docs/offline-testing.md

@@ -1,4 +1,30 @@
-# React + TypeScript + Vite
+# Custosell Frontend
+
+Offline-capable retail POS for boutiques (React + TypeScript + Vite + Electron).
+
+## Documentation
+
+**Start here:** [docs/README.md](./docs/README.md)
+
+| Topic | Doc |
+|-------|-----|
+| Offline architecture | [docs/offline-architecture.md](./docs/offline-architecture.md) |
+| Auth & reconnect | [docs/offline-auth.md](./docs/offline-auth.md) |
+| Sales / shifts | [docs/offline-sales.md](./docs/offline-sales.md) |
+| Inventory / catalogs | [docs/offline-inventory.md](./docs/offline-inventory.md) |
+| Testing | [docs/offline-testing.md](./docs/offline-testing.md) |
+| Boutique readiness | [docs/offline-readiness.md](./docs/offline-readiness.md) |
+
+## Development
+
+```bash
+npm install
+npm run dev:react
+```
+
+---
+
+## React + TypeScript + Vite (template notes)
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

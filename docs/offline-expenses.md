@@ -1,5 +1,7 @@
 # Offline Expenses
 
+See also: [offline-architecture.md](./offline-architecture.md) · [offline-sales.md](./offline-sales.md) (shift-linked expenses)
+
 ## Stores
 
 - `localExpenseCategories` keeps pending expense category create, update, and delete records. It tracks `syncStatus` and `mutationId` so the sync engine can mark rows synced or failed.

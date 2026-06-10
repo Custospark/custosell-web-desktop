@@ -2,6 +2,8 @@
 
 Custosell uses a custom service worker (`public/sw.js`) registered in production web builds.
 
+For durable offline data (mutations, catalog snapshots, auth), see [offline-architecture.md](./offline-architecture.md). The service worker complements but does not replace IndexedDB.
+
 | Request type | Online | Offline |
 |--------------|--------|---------|
 | Image / JS / CSS | **Cache-first** — serve from CacheStorage when available | **Cache-first** — serve from CacheStorage |

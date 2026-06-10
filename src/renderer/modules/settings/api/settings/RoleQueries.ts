@@ -4,19 +4,19 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { ROLES } from '../../../../shared/api/endpoints/endpoints';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
-import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
-import { loadRoleCatalogBaseline, refreshRoleCatalogSnapshot } from '../../../../app/store/offline/catalogSnapshotRefresh';
-import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
-import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from '../../../../app/store/offline/localRolesStore';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
+import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
+import { loadRoleCatalogBaseline, refreshRoleCatalogSnapshot } from '../../../../app/store/offline/catalogs/catalogSnapshotRefresh';
+import { mutationQueue } from '../../../../app/store/offline/sync/mutationQueue';
+import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from '../../../../app/store/offline/settings/localRolesStore';
 import {
   completeOfflineCreateRoleInstant,
   completeOfflineDeleteRoleInstant,
   completeOfflineUpdatePendingRoleInstant,
   completeOfflineUpdateRoleInstant,
   shouldCompleteSettingsLocally,
-} from '../../../../app/store/offline/completeOfflineSettings';
+} from '../../../../app/store/offline/settings/completeOfflineSettings';
 import type { Role, CreateRoleData, UpdateRoleData } from './RoleTypes';
 
 export const roleKeys = {

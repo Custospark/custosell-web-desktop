@@ -9,7 +9,7 @@ import { Mail, Lock } from 'lucide-react';
 import {
   isNetworkFailure,
   sanitizeErrorMessage,
-} from '../../app/store/offline/offlineQueryUtils';
+} from '../../app/store/offline/core/offlineQueryUtils';
 
 export default function LoginPage() {
   const loginMutation = useLogin();

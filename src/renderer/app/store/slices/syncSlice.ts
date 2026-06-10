@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SyncTierIndex } from '../offline/syncConstants';
-import { SYNC_TIER_LABELS } from '../offline/syncConstants';
+import type { SyncTierIndex } from '../offline/sync/syncConstants';
+import { SYNC_TIER_LABELS } from '../offline/sync/syncConstants';
 
 export type SyncRunStatus = 'idle' | 'running' | 'paused' | 'complete' | 'failed';
 

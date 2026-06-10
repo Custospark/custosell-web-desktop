@@ -3,37 +3,37 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
 import { store } from '../../app/store/store';
 import { updateShiftContext } from '../../app/store/slices/authSlice';
-import { persistAuthSnapshot } from '../../app/store/offline/persistAuthSnapshot';
+import { persistAuthSnapshot } from '../../app/store/offline/auth/persistAuthSnapshot';
 import { useToast } from '../../app/contexts/useToast';
-import { localSalesStore, toSaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
-import { localRefundsStore, mergePendingRefunds } from '../../app/store/offline/localRefundsStore';
+import { localSalesStore, toSaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
+import { localRefundsStore, mergePendingRefunds } from '../../app/store/offline/sales/localRefundsStore';
 import {
   localShiftsStore,
   toShiftWithSyncMeta,
   type ShiftRecord,
   type ShiftWithSyncMeta,
-} from '../../app/store/offline/localShiftsStore';
+} from '../../app/store/offline/sales/localShiftsStore';
 import {
   completeOfflineClockIn,
   completeOfflineClockOutInstant,
   finalizeShiftClose,
   shouldUseLocalShiftActions,
-} from '../../app/store/offline/completeOfflineShift';
-import { isOptimisticSale } from '../../app/store/offline/offlineCacheReconcile';
-import { resolveAuthBusinessId } from '../../app/store/offline/catalogSnapshotUtils';
+} from '../../app/store/offline/sales/completeOfflineShift';
+import { isOptimisticSale } from '../../app/store/offline/sync/offlineCacheReconcile';
+import { resolveAuthBusinessId } from '../../app/store/offline/catalogs/catalogSnapshotUtils';
 import {
   backupShiftSalesSnapshot,
   loadShiftSalesBaseline,
-} from '../../app/store/offline/salesCatalogSnapshot';
-import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
+} from '../../app/store/offline/catalogs/salesCatalogSnapshot';
+import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../app/store/offline/core/offlineReadStrategy';
 import {
   localExpensesStore,
   toExpenseWithSyncMeta,
-} from '../../app/store/offline/localExpensesStore';
+} from '../../app/store/offline/expenses/localExpensesStore';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import type { Sale } from '../sales/api/salesTypes';
-import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 
 export interface Shift extends ShiftRecord {
   user?: { data: { id: number; name: string } };

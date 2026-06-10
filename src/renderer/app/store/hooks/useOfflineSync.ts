@@ -4,9 +4,9 @@ import { selectSystemStatus } from '../slices/networkSlice';
 import {
   hasPendingSyncWork,
   syncPendingDataIfOnline,
-} from '../offline/syncPendingIfOnline';
-import { purgeSyncedOptimisticFromCache } from '../offline/offlineCacheReconcile';
-import { upgradeLocalSessionIfOnline } from '../offline/sessionUpgrade';
+} from '../offline/sync/syncPendingIfOnline';
+import { purgeSyncedOptimisticFromCache } from '../offline/sync/offlineCacheReconcile';
+import { upgradeLocalSessionIfOnline } from '../offline/auth/sessionUpgrade';
 import { queryClient } from '../../api/axiosConfig';
 import { useToast } from '../../contexts/ToastContext';
 

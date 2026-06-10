@@ -3,7 +3,7 @@ import { useStaff, useDeleteStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
 import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffAccountRules';
-import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffStore';
+import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../shared/components/tables/Table';

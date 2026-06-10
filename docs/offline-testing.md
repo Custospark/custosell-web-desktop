@@ -1,6 +1,6 @@
 # Offline testing guide
 
-Consolidated manual tests for Custosell offline behavior. See also `src/renderer/app/store/offline/test_guide.txt` for dev-server vs production build notes.
+Consolidated manual tests for Custosell offline behavior. See also `src/renderer/app/store/offline/testing/test_guide.txt` for dev-server vs production build notes.
 
 ## Prerequisites
 

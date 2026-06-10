@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useProducts } from '../../../modules/inventory/api/products/ProductQueries';
-import { resolveAuthBusinessId } from '../offline/catalogSnapshotUtils';
-import { loadProductCatalogBaseline } from '../offline/catalogSnapshotRefresh';
-import { stockLedger } from '../offline/stockLedger';
+import { resolveAuthBusinessId } from '../offline/catalogs/catalogSnapshotUtils';
+import { loadProductCatalogBaseline } from '../offline/catalogs/catalogSnapshotRefresh';
+import { stockLedger } from '../offline/inventory/stockLedger';
 
 export function useSeedStockLedger(): void {
   const { data: products } = useProducts();

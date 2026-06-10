@@ -1,7 +1,7 @@
 import { CheckCircle, Printer, ShoppingCart, DollarSign, Percent, CreditCard, Plus } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import type { SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
 
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;

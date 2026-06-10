@@ -4,18 +4,18 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { CUSTOMERS } from '../../../../shared/api/endpoints/endpoints';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
-import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
-import { loadCustomerCatalogBaseline, refreshCustomerCatalogSnapshot } from '../../../../app/store/offline/catalogSnapshotRefresh';
-import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
-import { localCustomersStore, toCustomerWithSyncMeta, type CustomerWithSyncMeta } from '../../../../app/store/offline/localCustomersStore';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
+import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
+import { loadCustomerCatalogBaseline, refreshCustomerCatalogSnapshot } from '../../../../app/store/offline/catalogs/catalogSnapshotRefresh';
+import { mutationQueue } from '../../../../app/store/offline/sync/mutationQueue';
+import { localCustomersStore, toCustomerWithSyncMeta, type CustomerWithSyncMeta } from '../../../../app/store/offline/customers/localCustomersStore';
 import {
   shouldCompleteCustomerLocally,
   completeOfflineCreateCustomerInstant,
   completeOfflineUpdateCustomerInstant,
   completeOfflineDeleteCustomerInstant,
-} from '../../../../app/store/offline/completeOfflineCustomer';
+} from '../../../../app/store/offline/customers/completeOfflineCustomer';
 import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerPurchase } from './CustomerTypes';
 
 export const customerKeys = {

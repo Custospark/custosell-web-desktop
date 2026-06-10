@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCustomers, useDeleteCustomer } from '../../api/customers/CustomerQueries';
-import type { CustomerWithSyncMeta } from '../../../../app/store/offline/localCustomersStore';
+import type { CustomerWithSyncMeta } from '../../../../app/store/offline/customers/localCustomersStore';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';

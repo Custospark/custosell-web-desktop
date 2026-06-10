@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCreateRole, useUpdateRole } from '../api/settings/RoleQueries';
 import type { CreateRoleData } from '../api/settings/RoleTypes';
-import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
+import type { RoleWithSyncMeta } from '../../../app/store/offline/settings/localRolesStore';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Shield, Hash, AlignLeft, ToggleLeft, Info } from 'lucide-react';
 

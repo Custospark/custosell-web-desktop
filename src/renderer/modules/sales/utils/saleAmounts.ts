@@ -1,5 +1,5 @@
 import type { Sale } from '../api/salesTypes';
-import type { SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
 
 export function toAmount(value: string | number | null | undefined): number {
   const amount = typeof value === 'number' ? value : parseFloat(value ?? '0');

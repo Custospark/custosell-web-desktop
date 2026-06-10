@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useRoles, useDeleteRole } from '../api/settings/RoleQueries';
-import type { RoleWithSyncMeta } from '../../../app/store/offline/localRolesStore';
+import type { RoleWithSyncMeta } from '../../../app/store/offline/settings/localRolesStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
 import { Table } from '../../../shared/components/tables/Table';

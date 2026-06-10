@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '../../api/products/ProductQueries';
-import type { CategoryWithSyncMeta } from '../../../../app/store/offline/localCategoriesStore';
+import type { CategoryWithSyncMeta } from '../../../../app/store/offline/inventory/localCategoriesStore';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';

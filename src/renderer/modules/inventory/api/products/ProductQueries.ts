@@ -3,10 +3,10 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
-import { applyOfflineStockOverlay } from '../../../../app/store/offline/offlineStockOverlay';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
-import { readCatalogBaseline, backupCatalogSnapshot, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
+import { applyOfflineStockOverlay } from '../../../../app/store/offline/inventory/offlineStockOverlay';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
+import { readCatalogBaseline, backupCatalogSnapshot, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
 import {
   backupProductCatalog,
   fetchProductsFromApi,
@@ -14,23 +14,23 @@ import {
   loadProductCatalogBaseline,
   refreshCategoryCatalogSnapshot,
   refreshProductCatalogSnapshot,
-} from '../../../../app/store/offline/catalogSnapshotRefresh';
-import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
-import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
-import { localCategoriesStore, toCategoryWithSyncMeta, type CategoryWithSyncMeta } from '../../../../app/store/offline/localCategoriesStore';
+} from '../../../../app/store/offline/catalogs/catalogSnapshotRefresh';
+import { mutationQueue } from '../../../../app/store/offline/sync/mutationQueue';
+import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
+import { localCategoriesStore, toCategoryWithSyncMeta, type CategoryWithSyncMeta } from '../../../../app/store/offline/inventory/localCategoriesStore';
 import {
   shouldCompleteProductLocally,
   completeOfflineCreateProductInstant,
   completeOfflineUpdateProductInstant,
   completeOfflineDeleteProductInstant,
   completeOfflineUpdatePendingProduct,
-} from '../../../../app/store/offline/completeOfflineProduct';
+} from '../../../../app/store/offline/inventory/completeOfflineProduct';
 import {
   shouldCompleteCategoryLocally,
   completeOfflineCreateCategoryInstant,
   completeOfflineUpdateCategoryInstant,
   completeOfflineDeleteCategoryInstant,
-} from '../../../../app/store/offline/completeOfflineCategory';
+} from '../../../../app/store/offline/inventory/completeOfflineCategory';
 import type {
   Category, Product, StockMovement,
   CreateCategoryData, CreateProductData, UpdateProductData, CreateStockMovementData,

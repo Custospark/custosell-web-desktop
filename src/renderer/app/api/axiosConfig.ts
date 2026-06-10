@@ -6,12 +6,12 @@ import type { RootState } from '../store/store';
 import { logout } from '../store/slices/authSlice';
 import { API_BASE_URL, API_TIMEOUT } from './apiConfig';
 import { clearServiceWorkerApiCache } from '../sw/registerServiceWorker';
-import { clearAuthSession, isLocalSessionToken } from '../store/offline/secureStorage';
+import { clearAuthSession, isLocalSessionToken } from '../store/offline/auth/secureStorage';
 import {
   ensureServerSession,
   isSessionUpgradeActive,
   needsSessionUpgrade,
-} from '../store/offline/sessionUpgrade';
+} from '../store/offline/auth/sessionUpgrade';
 import { LOGOUT_INTENT_KEY } from '../store/auth/runAppLogout';
 
 const axiosInstance: AxiosInstance = axios.create({

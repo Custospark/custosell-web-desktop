@@ -17,7 +17,7 @@ import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkS
 import ReceiptPreviewModal from './ReceiptPreviewModal';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 import type { Sale } from '../../api/salesTypes';
-import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 
 export default function SalesHistory() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);

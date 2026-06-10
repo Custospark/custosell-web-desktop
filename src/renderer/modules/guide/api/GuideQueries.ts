@@ -2,19 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { GUIDE } from '../../../shared/api/endpoints/guideEndpoints';
-import { isNetworkFailure } from '../../../app/store/offline/offlineQueryUtils';
-import { mutationQueue } from '../../../app/store/offline/mutationQueue';
-import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
+import { isNetworkFailure } from '../../../app/store/offline/core/offlineQueryUtils';
+import { mutationQueue } from '../../../app/store/offline/sync/mutationQueue';
+import { readWithOfflineStrategy } from '../../../app/store/offline/core/offlineReadStrategy';
 import {
   localGuideFeedbackStore,
   toGuideFeedbackWithSyncMeta,
   type GuideFeedbackWithSyncMeta,
-} from '../../../app/store/offline/localGuideFeedbackStore';
+} from '../../../app/store/offline/guide/localGuideFeedbackStore';
 import {
   completeOfflineGuideFeedbackInstant,
   shouldCompleteGuideFeedbackLocally,
   type CreateGuideFeedbackPayload,
-} from '../../../app/store/offline/completeOfflineGuideFeedback';
+} from '../../../app/store/offline/guide/completeOfflineGuideFeedback';
 import type {
   GuideFaqDto,
   GuideFeedbackMineDto,

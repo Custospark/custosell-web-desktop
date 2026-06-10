@@ -2,14 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
-import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/offlineQueryUtils';
-import { mutationQueue } from '../../../app/store/offline/mutationQueue';
-import { localExpensesStore, toExpenseWithSyncMeta } from '../../../app/store/offline/localExpensesStore';
+import { readWithOfflineStrategy } from '../../../app/store/offline/core/offlineReadStrategy';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import { mutationQueue } from '../../../app/store/offline/sync/mutationQueue';
+import { localExpensesStore, toExpenseWithSyncMeta } from '../../../app/store/offline/expenses/localExpensesStore';
 import {
   localExpenseCategoriesStore,
   toExpenseCategoryWithSyncMeta,
-} from '../../../app/store/offline/localExpenseCategoriesStore';
+} from '../../../app/store/offline/expenses/localExpenseCategoriesStore';
 import {
   buildExpenseFormData,
   completeOfflineCreateExpenseInstant,
@@ -17,13 +17,13 @@ import {
   completeOfflineUpdateExpenseInstant,
   serializeExpenseFormData,
   shouldCompleteExpenseLocally,
-} from '../../../app/store/offline/completeOfflineExpense';
+} from '../../../app/store/offline/expenses/completeOfflineExpense';
 import {
   completeOfflineCreateExpenseCategoryInstant,
   completeOfflineDeleteExpenseCategoryInstant,
   completeOfflineUpdateExpenseCategoryInstant,
   shouldCompleteExpenseCategoryLocally,
-} from '../../../app/store/offline/completeOfflineExpenseCategory';
+} from '../../../app/store/offline/expenses/completeOfflineExpenseCategory';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';
 import type {

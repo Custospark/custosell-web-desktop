@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCategories, useCreateProduct, useUpdateProduct } from '../../api/products/ProductQueries';
 import type { CreateProductData } from '../../api/products/ProductTypes';
-import type { ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
+import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
 import { SlideDrawer } from '../../../../shared/components/modals/SlideDrawer';
 import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
 import { Package, DollarSign, Barcode, Tag, Archive, AlertTriangle, Percent, FileText, FolderTree } from 'lucide-react';

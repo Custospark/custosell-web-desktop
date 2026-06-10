@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
 import { useToast } from '../../app/contexts/useToast';
-import { applyDashboardPendingOverlay } from '../../app/store/offline/offlineSalesSummary';
-import { readWithOfflineStrategy } from '../../app/store/offline/offlineReadStrategy';
-import { isCompletelyOffline, isNetworkFailure } from '../../app/store/offline/offlineQueryUtils';
+import { applyDashboardPendingOverlay } from '../../app/store/offline/sales/offlineSalesSummary';
+import { readWithOfflineStrategy } from '../../app/store/offline/core/offlineReadStrategy';
+import { isCompletelyOffline, isNetworkFailure } from '../../app/store/offline/core/offlineQueryUtils';
 import type { DashboardSummary } from './DashboardTypes';
 
 export const dashboardKeys = {

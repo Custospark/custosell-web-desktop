@@ -27,13 +27,16 @@ Technical documentation for the frontend application, with emphasis on **offline
 
 ## Key source locations
 
+See **`src/renderer/app/store/offline/README.md`** for the full folder map.
+
 | Area | Path |
 |------|------|
-| IndexedDB schema | `src/renderer/app/store/offline/offlineDb.ts` |
-| Mutation sync engine | `src/renderer/app/store/offline/syncEngine.ts` |
-| Sync coordinator | `src/renderer/app/store/offline/syncCoordinator.ts` |
-| Catalog snapshots | `src/renderer/app/store/offline/serverCatalogStore.ts`, `catalogSnapshotRefresh.ts` |
-| Sales snapshots | `src/renderer/app/store/offline/salesCatalogSnapshot.ts` |
-| Session upgrade | `src/renderer/app/store/offline/sessionUpgrade.ts`, `authSessionApply.ts` |
+| Offline layout index | `src/renderer/app/store/offline/README.md` |
+| IndexedDB schema | `src/renderer/app/store/offline/core/offlineDb.ts` |
+| Mutation queue | `src/renderer/app/store/offline/sync/mutationQueue.ts` |
+| Sync engine | `src/renderer/app/store/offline/sync/syncEngine.ts` |
+| Sync coordinator | `src/renderer/app/store/offline/sync/syncCoordinator.ts` |
+| Catalog snapshots | `src/renderer/app/store/offline/catalogs/` |
+| Session upgrade | `src/renderer/app/store/offline/auth/sessionUpgrade.ts` |
 | Reconnect hook | `src/renderer/app/store/hooks/useOfflineSync.ts` |
 | Network probe | `src/renderer/app/store/network/connectivityCheck.ts` |

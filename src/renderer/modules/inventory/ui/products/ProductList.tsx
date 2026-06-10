@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useProducts, useDeleteProduct, inventoryKeys } from '../../api/products/ProductQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
-import type { ProductWithSyncMeta } from '../../../../app/store/offline/localProductsStore';
+import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { Button } from '../../../../shared/components/buttons/Button';

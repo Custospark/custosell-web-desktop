@@ -1,6 +1,6 @@
 import { formatShiftDateTime, formatShiftTime } from '../../shared/utils/formatDateTime';
 import { netSaleAmount } from '../sales/utils/saleAmounts';
-import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 
 export interface ShiftHistoryPoint {
   id: string;

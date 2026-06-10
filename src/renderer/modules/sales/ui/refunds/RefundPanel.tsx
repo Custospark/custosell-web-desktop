@@ -15,7 +15,7 @@ import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { useToast } from '../../../../app/contexts/useToast';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
-import type { SaleWithSyncMeta } from '../../../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 
 const statusLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {

@@ -102,22 +102,38 @@ Keyed as `{entity}:{businessId}:{catalogKind}` via `serverCatalogStore.ts`.
 
 `refreshAllServerCatalogSnapshots()` in `catalogSnapshotRefresh.ts` runs on online login/register and after full sync.
 
-## Module map
+## Folder layout
 
-| Concern | Primary files |
-|---------|---------------|
-| DB open / migrate | `offlineDb.ts` |
-| Queue | `mutationQueue.ts` |
-| Sync engine | `syncEngine.ts`, `syncSalesBatch.ts`, `syncAuthEngine.ts` |
-| Coordinator + UI progress | `syncCoordinator.ts`, `syncProgressReporter.ts` |
-| Cache invalidation | `syncCacheRefresh.ts` |
-| Catalog backup/load | `catalogSnapshotUtils.ts`, `catalogSnapshotRefresh.ts`, `salesCatalogSnapshot.ts` |
-| Auth session | `secureStorage.ts`, `deviceCredentials.ts`, `deviceLoginSecrets.ts`, `completeOfflineLogin.ts` |
-| Session upgrade | `sessionUpgrade.ts`, `authSessionApply.ts`, `sessionRefresh.ts` |
-| Sales offline | `completeOfflineSale.ts`, `salesQueries.ts` |
-| Shifts offline | `completeOfflineShift.ts`, `ShiftQueries.ts` |
-| Stock | `stockLedger.ts`, `offlineStockOverlay.ts`, `useSeedStockLedger.ts` |
-| Network | `networkSlice.ts`, `connectivityCheck.ts`, `useNetworkStatusMonitor.ts` |
+The `src/renderer/app/store/offline/` tree is grouped by domain (see `offline/README.md`):
+
+| Folder | Responsibility |
+|--------|----------------|
+| `core/` | `offlineDb`, `offlineQueryUtils`, `offlineReadStrategy`, `remapBusinessContext` |
+| `auth/` | Session, device login, silent upgrade, `syncAuthEngine` |
+| `sales/` | Sales, refunds, shifts, `syncSalesBatch` |
+| `inventory/` | Products, categories, `stockLedger` |
+| `customers/` | Customer offline CRUD |
+| `expenses/` | Expense + category offline |
+| `settings/` | Roles, staff, business settings |
+| `catalogs/` | `serverCatalogs` snapshots |
+| `sync/` | Queue, coordinator, engine, cache reconcile |
+| `guide/` | Guide feedback queue |
+
+## Module map (key entry points)
+
+| Concern | Path |
+|---------|------|
+| DB open / migrate | `offline/core/offlineDb.ts` |
+| Queue | `offline/sync/mutationQueue.ts` |
+| Sync engine | `offline/sync/syncEngine.ts`, `offline/sales/syncSalesBatch.ts` |
+| Auth sync | `offline/auth/syncAuthEngine.ts` |
+| Coordinator | `offline/sync/syncCoordinator.ts` |
+| Catalog snapshots | `offline/catalogs/catalogSnapshotRefresh.ts` |
+| Session upgrade | `offline/auth/sessionUpgrade.ts` |
+| Sales offline | `offline/sales/completeOfflineSale.ts` |
+| Shifts offline | `offline/sales/completeOfflineShift.ts` |
+| Stock | `offline/inventory/stockLedger.ts` |
+| Network (Redux) | `app/store/slices/networkSlice.ts`, `app/store/network/connectivityCheck.ts` |
 
 ## UI shell
 

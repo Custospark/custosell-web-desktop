@@ -2,30 +2,30 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
-import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../../../app/store/offline/localSalesStore';
-import { resolveAuthBusinessId } from '../../../app/store/offline/catalogSnapshotUtils';
+import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
+import { resolveAuthBusinessId } from '../../../app/store/offline/catalogs/catalogSnapshotUtils';
 import {
   backupDailySalesSnapshot,
   backupSalesListSnapshot,
   loadDailySalesBaseline,
   loadSalesListBaseline,
-} from '../../../app/store/offline/salesCatalogSnapshot';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../../app/store/offline/offlineReadStrategy';
+} from '../../../app/store/offline/catalogs/salesCatalogSnapshot';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../app/store/offline/core/offlineReadStrategy';
 import {
   completeOfflineSaleInstant,
   shouldCompleteSaleLocally,
-} from '../../../app/store/offline/completeOfflineSale';
+} from '../../../app/store/offline/sales/completeOfflineSale';
 import {
   canRefundSaleOffline,
   completeOfflineRefundInstant,
   shouldCompleteRefundLocally,
-} from '../../../app/store/offline/completeOfflineRefund';
-import { localRefundsStore, mergePendingRefunds } from '../../../app/store/offline/localRefundsStore';
+} from '../../../app/store/offline/sales/completeOfflineRefund';
+import { localRefundsStore, mergePendingRefunds } from '../../../app/store/offline/sales/localRefundsStore';
 import {
   isOptimisticSale,
   reconcileSaleList,
-} from '../../../app/store/offline/offlineCacheReconcile';
+} from '../../../app/store/offline/sync/offlineCacheReconcile';
 import { inventoryKeys } from '../../inventory/api/products/ProductQueries';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';

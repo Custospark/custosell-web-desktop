@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { onlineManager } from '@tanstack/react-query';
 import { useAppSelector } from './useApp';
 import { selectSystemStatus } from '../slices/networkSlice';
-import { upgradeLocalSessionIfOnline } from '../offline/sessionUpgrade';
+import { upgradeLocalSessionIfOnline } from '../offline/auth/sessionUpgrade';
 
 /**
  * Keeps React Query's online manager aligned with Redux systemStatus.

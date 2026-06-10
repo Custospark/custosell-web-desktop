@@ -3,7 +3,7 @@ import { CheckSquare, ChevronDown, ChevronUp, Loader2, MessageSquareHeart, Send,
 import { imperativeToast } from '../../app/contexts/imperativeToast';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
-import type { GuideFeedbackWithSyncMeta } from '../../app/store/offline/localGuideFeedbackStore';
+import type { GuideFeedbackWithSyncMeta } from '../../app/store/offline/guide/localGuideFeedbackStore';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { GuideFeedbackStatusBadge } from './components/GuideFeedbackStatusBadge';

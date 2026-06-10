@@ -8,13 +8,13 @@ import type { Business, UpdateBusinessData } from './BusinessTypes';
 import { setBusiness } from '../../../../app/store/slices/authSlice';
 import { useAppDispatch } from '../../../../app/store/hooks/useApp';
 import { store } from '../../../../app/store/store';
-import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
-import { localBusinessSettingsStore, toBusinessWithSyncMeta, type BusinessWithSyncMeta } from '../../../../app/store/offline/localBusinessSettingsStore';
+import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
+import { localBusinessSettingsStore, toBusinessWithSyncMeta, type BusinessWithSyncMeta } from '../../../../app/store/offline/settings/localBusinessSettingsStore';
 import {
   completeOfflineUpdateBusinessInstant,
   shouldCompleteSettingsLocally,
-} from '../../../../app/store/offline/completeOfflineSettings';
+} from '../../../../app/store/offline/settings/completeOfflineSettings';
 
 export const businessKeys = {
   all: ['business'] as const,

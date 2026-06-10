@@ -39,6 +39,12 @@ Summary of major offline-related work for documentation traceability.
 - **LoginPage error banner** — raw `IndexedDB open timed out` no longer exposed; routes through `sanitizeErrorMessage` / `isNetworkFailure` for user-friendly messages
 - **README.md** — subtitle updated from "boutiques" to "28 business types" matching landing page
 
+## 2026-06-10 — Offline folder modularization
+
+- **`offline/` subfolders** — `core`, `auth`, `sales`, `inventory`, `customers`, `expenses`, `settings`, `catalogs`, `sync`, `guide`, `testing`
+- **`offline/README.md`** — folder map and import conventions
+- Migration scripts: `scripts/refactor-offline-imports.mjs`, `scripts/fix-offline-parent-imports.mjs` (one-shot)
+
 ## Documentation index
 
 See [README.md](./README.md) for full doc map.

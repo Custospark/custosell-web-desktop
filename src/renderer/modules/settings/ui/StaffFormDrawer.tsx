@@ -4,7 +4,7 @@ import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
 import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffAccountRules';
 import type { CreateStaffData, UpdateStaffData } from '../api/settings/StaffTypes';
-import type { StaffWithSyncMeta } from '../../../app/store/offline/localStaffStore';
+import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import RoleFormDrawer from './RoleFormDrawer';

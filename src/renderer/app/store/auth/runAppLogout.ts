@@ -3,9 +3,9 @@ import { store } from '../store';
 import { logout } from '../slices/authSlice';
 import { queryClient } from '../../api/axiosConfig';
 import { clearServiceWorkerApiCache } from '../../sw/registerServiceWorker';
-import { clearAuthSession, isLocalSessionToken } from '../offline/secureStorage';
+import { clearAuthSession, isLocalSessionToken } from '../offline/auth/secureStorage';
 import { ROUTES } from '../../routes/constants/shared.paths';
-import { isCompletelyOffline } from '../offline/offlineQueryUtils';
+import { isCompletelyOffline } from '../offline/core/offlineQueryUtils';
 import { axiosInstance } from '../../api/axiosConfig';
 
 export const LOGOUT_INTENT_KEY = 'custosell_logout_intent';

@@ -143,14 +143,14 @@ Uses `authSessionApply.ts` → `persistLoginCredentials()` + `loginSuccess()` + 
 | File | Role |
 |------|------|
 | `AccountQueries.ts` | Login/register mutations |
-| `completeOfflineLogin.ts` | Offline login completion |
-| `completeOfflineRegistration.ts` | Offline registration |
-| `deviceCredentials.ts` | Persist session + device auth record |
-| `deviceLoginSecrets.ts` | Encrypted password for silent upgrade |
-| `secureStorage.ts` | Encrypted session + `normalizeStoredSession` |
-| `sessionUpgrade.ts` | `upgradeLocalSessionIfOnline` |
-| `authSessionApply.ts` | `applyServerAuth` |
-| `sessionRefresh.ts` | Post-upgrade cache + active shift |
-| `syncAuthEngine.ts` | Queued auth mutation processing |
+| `offline/auth/completeOfflineLogin.ts` | Offline login completion |
+| `offline/auth/completeOfflineRegistration.ts` | Offline registration |
+| `offline/auth/deviceCredentials.ts` | Persist session + device auth record |
+| `offline/auth/deviceLoginSecrets.ts` | Encrypted password for silent upgrade |
+| `offline/auth/secureStorage.ts` | Encrypted session + `normalizeStoredSession` |
+| `offline/auth/sessionUpgrade.ts` | `upgradeLocalSessionIfOnline` |
+| `offline/auth/authSessionApply.ts` | `applyServerAuth` |
+| `offline/auth/sessionRefresh.ts` | Post-upgrade cache + active shift |
+| `offline/auth/syncAuthEngine.ts` | Queued auth mutation processing |
 | `AuthBootstrap.tsx` | Hydrate + normalize on boot |
 | `useOfflineSync.ts` | Reconnect upgrade trigger |

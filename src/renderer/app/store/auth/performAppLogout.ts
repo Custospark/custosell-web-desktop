@@ -1,7 +1,7 @@
 import type { NavigateFunction } from 'react-router-dom';
 import type { AppDispatch } from '../store';
 import { logout } from '../slices/authSlice';
-import { clearAuthSession } from '../offline/secureStorage';
+import { clearAuthSession } from '../offline/auth/secureStorage';
 import { queryClient } from '../../api/axiosConfig';
 import { clearServiceWorkerApiCache } from '../../sw/registerServiceWorker';
 import { ROUTES } from '../../routes/constants/shared.paths';

@@ -2,7 +2,7 @@ import type { AuthUser, BusinessInfo } from '../../app/store/slices/authSlice';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../sales/utils/saleAmounts';
-import type { SaleWithSyncMeta } from '../../app/store/offline/localSalesStore';
+import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 import type { ShiftCloseReportData } from './shiftCloseReportTypes';
 
 function formatDuration(clockIn: string, clockOut: string): string | null {

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { StoredAuthSession } from '../offline/secureStorage';
-import { isLocalSessionToken } from '../offline/secureStorage';
+import type { StoredAuthSession } from '../offline/auth/secureStorage';
+import { isLocalSessionToken } from '../offline/auth/secureStorage';
 
 export interface BusinessInfo {
   id: number;

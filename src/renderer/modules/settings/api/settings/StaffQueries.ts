@@ -4,21 +4,21 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { USERS } from '../../../../shared/api/endpoints/endpoints';
-import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage } from '../../../../app/store/offline/offlineQueryUtils';
-import { readWithOfflineStrategy } from '../../../../app/store/offline/offlineReadStrategy';
-import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogSnapshotUtils';
-import { loadStaffCatalogBaseline, refreshStaffCatalogSnapshot } from '../../../../app/store/offline/catalogSnapshotRefresh';
-import { mutationQueue } from '../../../../app/store/offline/mutationQueue';
-import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from '../../../../app/store/offline/localStaffStore';
-import type { RoleWithSyncMeta } from '../../../../app/store/offline/localRolesStore';
-import type { BusinessWithSyncMeta } from '../../../../app/store/offline/localBusinessSettingsStore';
+import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
+import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
+import { loadStaffCatalogBaseline, refreshStaffCatalogSnapshot } from '../../../../app/store/offline/catalogs/catalogSnapshotRefresh';
+import { mutationQueue } from '../../../../app/store/offline/sync/mutationQueue';
+import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from '../../../../app/store/offline/settings/localStaffStore';
+import type { RoleWithSyncMeta } from '../../../../app/store/offline/settings/localRolesStore';
+import type { BusinessWithSyncMeta } from '../../../../app/store/offline/settings/localBusinessSettingsStore';
 import { store } from '../../../../app/store/store';
 import {
   completeOfflineCreateStaffInstant,
   completeOfflineDeleteStaffInstant,
   completeOfflineUpdatePendingStaffInstant,
   completeOfflineUpdateStaffInstant,
-} from '../../../../app/store/offline/completeOfflineSettings';
+} from '../../../../app/store/offline/settings/completeOfflineSettings';
 import { roleKeys } from './RoleQueries';
 import { businessKeys } from './BusinessQueries';
 import type { StaffUser, CreateStaffData, UpdateStaffData } from './StaffTypes';

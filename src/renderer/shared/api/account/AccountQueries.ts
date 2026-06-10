@@ -23,13 +23,13 @@ import {
   isCompletelyOffline,
   isNetworkFailure,
   sanitizeErrorMessage,
-} from '../../../app/store/offline/offlineQueryUtils';
-import { completeOfflineRegistration } from '../../../app/store/offline/completeOfflineRegistration';
-import { completeOfflineLogin } from '../../../app/store/offline/completeOfflineLogin';
-import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/deviceCredentials';
-import { updateStoredAuthUser } from '../../../app/store/offline/secureStorage';
-import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/catalogSnapshotRefresh';
-import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/sessionUpgrade';
+} from '../../../app/store/offline/core/offlineQueryUtils';
+import { completeOfflineRegistration } from '../../../app/store/offline/auth/completeOfflineRegistration';
+import { completeOfflineLogin } from '../../../app/store/offline/auth/completeOfflineLogin';
+import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app/store/offline/auth/deviceCredentials';
+import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
+import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/catalogs/catalogSnapshotRefresh';
+import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/auth/sessionUpgrade';
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 

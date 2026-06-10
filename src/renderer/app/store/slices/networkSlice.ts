@@ -3,7 +3,7 @@ import { probeNetworkConnectivity } from '../network/connectivityCheck';
 import {
   isOfflineBannerDismissed,
   persistOfflineBannerDismissed,
-} from '../offline/offlinePreferences';
+} from '../offline/core/offlinePreferences';
 import type { RootState } from '../store';
 
 export type SystemStatus = 'online' | 'slow' | 'offline';

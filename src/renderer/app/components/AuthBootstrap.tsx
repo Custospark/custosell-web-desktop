@@ -6,13 +6,13 @@ import {
   migrateLegacyAuthStorage,
   clearAuthSession,
   normalizeStoredSession,
-} from '../store/offline/secureStorage';
+} from '../store/offline/auth/secureStorage';
 import { consumeLogoutIntent } from '../store/auth/runAppLogout';
 import { queryClient } from '../api/axiosConfig';
 import { accountKeys } from '../../shared/api/account/AccountQueries';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
-import { isOfflineMode } from '../store/offline/offlineQueryUtils';
-import { upgradeLocalSessionIfOnline } from '../store/offline/sessionUpgrade';
+import { isOfflineMode } from '../store/offline/core/offlineQueryUtils';
+import { upgradeLocalSessionIfOnline } from '../store/offline/auth/sessionUpgrade';
 
 export function AuthBootstrap({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();

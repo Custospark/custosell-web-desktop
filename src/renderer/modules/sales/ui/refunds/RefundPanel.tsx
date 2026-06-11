@@ -25,7 +25,7 @@ const statusLabel: Record<string, { label: string; variant: 'success' | 'warning
 };
 
 export default function RefundPanel() {
-  const { data: sales, isLoading, error, refetch } = useSales();
+  const { data: sales, isLoading, error, refetch, isFetching } = useSales();
   const refundMutation = useRefund();
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
@@ -146,8 +146,8 @@ export default function RefundPanel() {
       }, 0) * 100
   ) / 100;
 
-  if (isLoading) return <LoadingSkeleton variant="table" />;
-  if (error) return <EmptyState icon={<Receipt className="w-12 h-12" />} title="Failed to load sales" description="An error occurred" actionLabel="Retry" onAction={() => refetch()} />;
+  if (!sales?.length && (isLoading || isFetching)) return <LoadingSkeleton variant="table" />;
+  if (error && !sales?.length) return <EmptyState icon={<Receipt className="w-12 h-12" />} title="Failed to load sales" description="An error occurred" actionLabel="Retry" onAction={() => refetch()} />;
 
   return (
     <div className="space-y-6">

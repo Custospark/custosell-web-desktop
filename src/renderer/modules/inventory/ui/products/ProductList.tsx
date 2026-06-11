@@ -27,7 +27,7 @@ import LedgerHistoryModal from './LedgerHistoryModal';
 
 export default function ProductList() {
   const queryClient = useQueryClient();
-  const { data: products, isLoading, error } = useProducts();
+  const { data: products, isLoading, error, isFetching } = useProducts();
   const deleteMutation = useDeleteProduct();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
@@ -99,9 +99,9 @@ export default function ProductList() {
     if (ok) bulkDeleteMutation.mutate(Array.from(selectedIds));
   };
 
-  if (isLoading) return <LoadingSkeleton variant="table" />;
+  if (!products?.length && (isLoading || isFetching)) return <LoadingSkeleton variant="table" />;
 
-  if (error) {
+  if (error && !products?.length) {
     return (
       <EmptyState icon={<Package className="w-12 h-12" />} title="Failed to load products"
         description={error?.message || 'An error occurred'} actionLabel="Retry" onAction={() => window.location.reload()} />

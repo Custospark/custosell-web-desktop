@@ -91,7 +91,7 @@ export default function SalesHistory() {
   const netRevenue = filtered.reduce((s, sale) => s + netSaleAmount(sale), 0);
   const totalRefunds = filtered.reduce((s, sale) => s + refundedAmount(sale), 0);
 
-  if (isLoading && !sales?.length) return <LoadingSkeleton variant="table" />;
+  if (!sales?.length && (isLoading || isFetching)) return <LoadingSkeleton variant="table" />;
 
   if (error && !sales?.length) {
     return (

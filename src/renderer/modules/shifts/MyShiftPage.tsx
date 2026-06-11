@@ -338,6 +338,12 @@ export default function MyShiftPage() {
                 <span className="text-gray-500">Gross sales</span>
                 <span className="font-semibold tabular-nums">{formatCurrency(shiftGrossTotal)}</span>
               </div>
+              {shiftExpenseTotal > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Shift expenses</span>
+                  <span className="font-semibold tabular-nums">-{formatCurrency(shiftExpenseTotal)}</span>
+                </div>
+              )}
               {shiftRefundsTotal > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Refunds</span>

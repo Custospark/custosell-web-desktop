@@ -8,13 +8,20 @@ interface StockEntry {
 
 export type SyncStatus = 'pending' | 'synced';
 
-interface PendingAdjustment {
+export interface PendingAdjustment {
   id: string;
   productId: number;
   delta: number;
+  stock_before?: number;
+  stock_after?: number;
   reason: string;
   createdAt: string;
   syncStatus: SyncStatus;
+}
+
+/** Server already records stock for sale/refund mutations — ledger rows are local-only. */
+export function isServerOwnedStockReason(reason: string): boolean {
+  return reason === 'sale' || reason === 'refund';
 }
 
 function newId(): string {
@@ -71,6 +78,8 @@ export const stockLedger = {
       id: newId(),
       productId,
       delta,
+      stock_before: baseQty,
+      stock_after: newQty,
       reason,
       createdAt: new Date().toISOString(),
       syncStatus: 'pending' as SyncStatus,
@@ -99,6 +108,8 @@ export const stockLedger = {
         id: newId(),
         productId,
         delta,
+        stock_before: baseQty,
+        stock_after: newQty,
         reason,
         createdAt: now,
         syncStatus: 'pending' as SyncStatus,

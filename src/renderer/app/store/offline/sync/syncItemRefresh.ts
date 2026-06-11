@@ -3,7 +3,7 @@ import { store } from '../../store';
 import { syncProgressUpdated } from '../../slices/syncSlice';
 import { purgeSyncedOptimisticFromCache } from './offlineCacheReconcile';
 import { mutationQueue } from './mutationQueue';
-import { stockLedger } from '../inventory/stockLedger';
+import { isServerOwnedStockReason, stockLedger } from '../inventory/stockLedger';
 import { isAuthMutation } from '../auth/syncAuthEngine';
 
 /** Pending mutation queue rows + non-sale stock adjustments (matches sync coordinator). */
@@ -11,7 +11,7 @@ export async function countPendingWorkItems(): Promise<number> {
   const pending = await mutationQueue.getPending();
   const nonAuth = pending.filter((m) => !isAuthMutation(m));
   const adjustments = await stockLedger.getPendingAdjustments();
-  const stockCount = adjustments.filter((adj) => adj.reason !== 'sale').length;
+  const stockCount = adjustments.filter((adj) => !isServerOwnedStockReason(adj.reason)).length;
   return nonAuth.length + stockCount;
 }
 

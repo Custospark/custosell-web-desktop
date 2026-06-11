@@ -22,6 +22,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,6 +33,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
+    setUploadProgress(0);
     setResult(null);
 
     try {
@@ -39,16 +41,27 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
       formData.append('file', file);
       const { data } = await axiosInstance.post<ImportResult>('/products/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 600_000,
+        onUploadProgress: (event) => {
+          if (!event.total) return;
+          setUploadProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+        },
       });
+      setUploadProgress(100);
       setResult(data);
       if (data.imported > 0) {
         showToast('success', `${data.imported} products imported successfully`);
         onImported();
       }
-    } catch (err: any) {
-      showToast('error', err?.response?.data?.message || 'Import failed');
+    } catch (err: unknown) {
+      const axiosErr = err as { code?: string; response?: { data?: { message?: string } } };
+      const message = axiosErr.code === 'ECONNABORTED'
+        ? 'Import timed out — try a smaller file or split into multiple uploads'
+        : axiosErr.response?.data?.message || 'Import failed';
+      showToast('error', message);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -70,7 +83,12 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
     }
   };
 
-  const reset = () => { setFile(null); setResult(null); if (fileRef.current) fileRef.current.value = ''; };
+  const reset = () => {
+    setFile(null);
+    setResult(null);
+    setUploadProgress(0);
+    if (fileRef.current) fileRef.current.value = '';
+  };
 
   return (
     <Modal isOpen={open} onClose={() => { reset(); onClose(); }} title="Import Products" size="md">
@@ -78,7 +96,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
         <div className="space-y-5">
           <p className="text-sm text-gray-500">
             Upload an Excel file (.xlsx, .xls, or .csv) with your product data.
-            <br />Max 5MB, up to 2000 rows.
+            <br />Max 20MB. Large imports (1,000+ rows) may take a few minutes — keep this window open.
           </p>
           <p className="text-xs text-gray-400">
             Optional tax columns: <strong>Tax %</strong> (blank uses your business default rate) and{' '}
@@ -103,9 +121,27 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
             </label>
           </div>
 
+          {uploading && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{uploadProgress < 100 ? 'Uploading file…' : 'Processing on server…'}</span>
+                {uploadProgress > 0 && uploadProgress < 100 && <span>{uploadProgress}%</span>}
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 transition-all duration-300"
+                  style={{ width: uploadProgress < 100 ? `${uploadProgress}%` : '100%' }}
+                />
+              </div>
+              {uploadProgress >= 100 && (
+                <p className="text-xs text-gray-500">Importing products — this can take a few minutes for large files.</p>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={() => { reset(); onClose(); }}>Cancel</Button>
-            <Button onClick={handleUpload} loading={uploading} disabled={!file}>
+            <Button variant="secondary" onClick={() => { reset(); onClose(); }} disabled={uploading}>Cancel</Button>
+            <Button onClick={handleUpload} loading={uploading} disabled={!file || uploading}>
               <Upload className="w-4 h-4 mr-1.5" />Upload & Import
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import { isOfflineMode } from '../core/offlineQueryUtils';
 import { mutationQueue } from './mutationQueue';
-import { stockLedger } from '../inventory/stockLedger';
+import { isServerOwnedStockReason, stockLedger } from '../inventory/stockLedger';
 import { runSyncCoordinator, isSyncCoordinatorRunning } from './syncCoordinator';
 import { isAuthMutation } from '../auth/syncAuthEngine';
 
@@ -41,7 +41,7 @@ export async function hasPendingSyncWork(): Promise<boolean> {
   if (mutationCount > 0) return true;
 
   const adjustments = await stockLedger.getPendingAdjustments();
-  return adjustments.some((adj) => adj.reason !== 'sale');
+  return adjustments.some((adj) => !isServerOwnedStockReason(adj.reason));
 }
 
 /**

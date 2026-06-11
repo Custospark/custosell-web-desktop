@@ -122,6 +122,9 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
         </thead>
         <tbody>
           <Row label="Gross sales" value={formatCurrency(data.grossSales)} />
+          {data.shiftExpenses > 0 && (
+            <Row label="Shift expenses" value={`-${formatCurrency(data.shiftExpenses)}`} negative />
+          )}
           {data.refunds > 0 && (
             <Row label="Refunds" value={`-${formatCurrency(data.refunds)}`} negative />
           )}
@@ -132,9 +135,6 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
                 <Row label="VAT refunded" value={`-${formatCurrency(data.vatRefunded ?? 0)}`} negative sub />
               )}
             </>
-          )}
-          {data.shiftExpenses > 0 && (
-            <Row label="Shift expenses" value={`-${formatCurrency(data.shiftExpenses)}`} negative />
           )}
           <Row label="Net sales" value={formatCurrency(data.netSales)} bold />
           <Row label="Cash collected" value={formatCurrency(data.cash)} sub />

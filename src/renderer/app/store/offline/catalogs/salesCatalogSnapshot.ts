@@ -53,7 +53,7 @@ export async function refreshSalesListSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId || isOfflineMode()) return;
   try {
-    const { data } = await axiosInstance.get('/sales', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/sales');
     backupSalesListSnapshot(businessId, normalizeSalesList(data));
   } catch (err) {
     console.warn('[SalesCatalog] List snapshot refresh failed:', err);
@@ -64,9 +64,7 @@ export async function refreshShiftSalesSnapshot(shiftId: number): Promise<void> 
   const businessId = resolveAuthBusinessId();
   if (!businessId || !shiftId || shiftId < 0 || isOfflineMode()) return;
   try {
-    const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`, {
-      timeout: 10000,
-    });
+    const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`);
     backupShiftSalesSnapshot(businessId, shiftId, data.data ?? []);
   } catch (err) {
     console.warn('[SalesCatalog] Shift snapshot refresh failed:', err);
@@ -78,7 +76,7 @@ export async function refreshDailySalesSnapshot(date: string): Promise<void> {
   if (!businessId || isOfflineMode()) return;
   try {
     const params = `?date=${date}`;
-    const { data } = await axiosInstance.get(`/sales/daily${params}`, { timeout: 10000 });
+    const { data } = await axiosInstance.get(`/sales/daily${params}`);
     backupDailySalesSnapshot(businessId, date, normalizeSalesList(data));
   } catch (err) {
     console.warn('[SalesCatalog] Daily snapshot refresh failed:', err);

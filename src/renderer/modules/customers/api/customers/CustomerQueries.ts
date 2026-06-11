@@ -61,9 +61,7 @@ export function useCustomers() {
         return mergeCustomerLists(baseline, local);
       },
       fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Customer[] }>(CUSTOMERS.BASE, {
-          timeout: 10000,
-        });
+        const { data: response } = await axiosInstance.get<{ data: Customer[] }>(CUSTOMERS.BASE);
         const list = Array.isArray(response.data) ? response.data : [];
         const businessId = resolveAuthBusinessId();
         if (businessId) {
@@ -98,9 +96,7 @@ export function useCustomer(id: number) {
           return found as CustomerWithSyncMeta;
         },
         fetchFromServer: async () => {
-          const { data: response } = await axiosInstance.get<{ data: Customer }>(`${CUSTOMERS.BASE}/${id}`, {
-            timeout: 10000,
-          });
+        const { data: response } = await axiosInstance.get<{ data: Customer }>(`${CUSTOMERS.BASE}/${id}`);
           return response.data as CustomerWithSyncMeta;
         },
       });
@@ -133,17 +129,16 @@ export function useCreateCustomer() {
         return completeOfflineCreateCustomerInstant(p);
       }
       try {
-        const { data: r } = await axiosInstance.post<{ data: Customer }>(CUSTOMERS.BASE, p, { timeout: 10000 });
+        const { data: r } = await axiosInstance.post<{ data: Customer }>(CUSTOMERS.BASE, p);
         return r.data as CustomerWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteCustomerLocally()) {
           return completeOfflineCreateCustomerInstant(p);
         }
         throw err;
       }
     },
-    onSuccess: (customer, _p) => {
+    onSuccess: (customer) => {
       if (customer._pendingSync) {
         qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) => {
           const list = old ?? [];
@@ -182,11 +177,10 @@ export function useUpdateCustomer() {
         return completeOfflineUpdateCustomerInstant(existing, data);
       }
       try {
-        const { data: r } = await axiosInstance.put<{ data: Customer }>(`${CUSTOMERS.BASE}/${id}`, data, { timeout: 10000 });
+        const { data: r } = await axiosInstance.put<{ data: Customer }>(`${CUSTOMERS.BASE}/${id}`, data);
         return r.data as CustomerWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteCustomerLocally()) {
           return completeOfflineUpdateCustomerInstant(existing, data);
         }
         throw err;
@@ -233,13 +227,13 @@ export function useDeleteCustomer() {
         return;
       }
       try {
-        await axiosInstance.delete(`${CUSTOMERS.BASE}/${id}`, { timeout: 10000 });
+        await axiosInstance.delete(`${CUSTOMERS.BASE}/${id}`);
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (axiosErr.response?.status === 404) {
           return;
         }
-        if (!axiosErr.response) {
+        if (shouldCompleteCustomerLocally()) {
           completeOfflineDeleteCustomerInstant(id);
           return;
         }
@@ -252,7 +246,7 @@ export function useDeleteCustomer() {
       );
       void refreshCustomerCatalogSnapshot();
     },
-    onError: (e, _id) => {
+    onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete customer'));
     },
   });

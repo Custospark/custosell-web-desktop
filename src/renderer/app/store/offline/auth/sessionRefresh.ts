@@ -29,7 +29,7 @@ function extractActiveShift(body: unknown): ShiftPayload | null {
 /** Pull active shift from server and align auth slice (post session upgrade). */
 export async function refreshActiveShiftFromServer(): Promise<void> {
   try {
-    const { data } = await axiosInstance.get('/shifts/active', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/shifts/active');
     const shift = extractActiveShift(data);
     if (shift?.status === 'active') {
       store.dispatch(

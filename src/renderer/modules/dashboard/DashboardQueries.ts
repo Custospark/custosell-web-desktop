@@ -56,9 +56,7 @@ async function fetchDashboardSummary(): Promise<DashboardSummary> {
       return applyDashboardPendingOverlay(server);
     },
     fetchFromServer: async () => {
-      const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary', {
-        timeout: 10000,
-      });
+      const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary');
       queryClient.setQueryData(dashboardKeys.server(), data);
       const businessId = resolveAuthBusinessId();
       if (businessId) {

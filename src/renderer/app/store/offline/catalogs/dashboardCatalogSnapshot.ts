@@ -24,9 +24,7 @@ export async function refreshDashboardSummarySnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId) return;
   try {
-    const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary', {
-      timeout: 10000,
-    });
+    const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary');
     backupDashboardSummarySnapshot(businessId, data);
   } catch (err) {
     console.warn('[DashboardCatalog] Summary snapshot refresh failed:', err);

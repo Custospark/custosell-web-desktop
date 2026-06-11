@@ -4,7 +4,7 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { USERS } from '../../../../shared/api/endpoints/endpoints';
-import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage, shouldCompleteMutationLocally } from '../../../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
 import { backupCatalogSnapshot, readCatalogBaseline, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
 import { loadStaffCatalogBaseline, refreshStaffCatalogSnapshot } from '../../../../app/store/offline/catalogs/catalogSnapshotRefresh';
@@ -48,9 +48,7 @@ async function findServerStaffByEmail(email: string): Promise<StaffWithSyncMeta 
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return null;
 
-  const { data: response } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE, {
-    timeout: 10000,
-  });
+  const { data: response } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE);
   const staff = response.data
     .filter(Boolean)
     .find((item) => item.email.trim().toLowerCase() === normalizedEmail);
@@ -100,9 +98,7 @@ export function useStaff() {
         return mergeStaffLists(baseline, local.upserts, local.deletedIds);
       },
       fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE, {
-          timeout: 10000,
-        });
+        const { data: response } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE);
         const list = Array.isArray(response.data) ? response.data : [];
         const businessId = resolveAuthBusinessId();
         if (businessId) {
@@ -132,7 +128,7 @@ export function useCreateStaff() {
         return completeOfflineCreateStaffInstant(p, role);
       }
       try {
-        const { data: r } = await axiosInstance.post<{ data: StaffUser }>(USERS.BASE, p, { timeout: 10000 });
+        const { data: r } = await axiosInstance.post<{ data: StaffUser }>(USERS.BASE, p);
         return withResolvedRole(r.data) as StaffWithSyncMeta;
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
@@ -200,11 +196,10 @@ export function useUpdateStaff() {
         return completeOfflineUpdateStaffInstant(existing, data, role);
       }
       try {
-        const { data: r } = await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(id), data, { timeout: 10000 });
+        const { data: r } = await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(id), data);
         return withResolvedRole(r.data) as StaffWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response && isOfflineMode()) {
+        if (shouldCompleteMutationLocally()) {
           return completeOfflineUpdateStaffInstant(existing, data, role);
         }
         throw err;
@@ -259,7 +254,7 @@ export function useDeleteStaff() {
       if (isPendingOnly) {
         if (id > 0 && staff?._mutationType !== 'create' && !isOfflineMode()) {
           try {
-            await axiosInstance.delete(USERS.BY_ID(id), { timeout: 10000 });
+            await axiosInstance.delete(USERS.BY_ID(id));
             const mutationId = await localStaffStore.removeByStaffId(id);
             if (mutationId) {
               await mutationQueue.removeById(mutationId);
@@ -292,11 +287,11 @@ export function useDeleteStaff() {
         return;
       }
       try {
-        await axiosInstance.delete(USERS.BY_ID(id), { timeout: 10000 });
+        await axiosInstance.delete(USERS.BY_ID(id));
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (axiosErr.response?.status === 404) return;
-        if (!axiosErr.response && isOfflineMode()) {
+        if (shouldCompleteMutationLocally()) {
           completeOfflineDeleteStaffInstant(id);
           return;
         }

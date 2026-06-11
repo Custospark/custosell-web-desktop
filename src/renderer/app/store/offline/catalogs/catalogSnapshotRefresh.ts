@@ -24,12 +24,12 @@ function normalizeList<T>(payload: unknown): T[] {
 
 export async function fetchProductsFromApi(): Promise<{ products: Product[]; catalogKind: ProductCatalogKind }> {
   try {
-    const { data } = await axiosInstance.get('/products', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/products');
     return { products: normalizeList<Product>(data), catalogKind: 'full' };
   } catch (err) {
     const status = (err as AxiosError).response?.status;
     if (status !== 403) throw err;
-    const { data } = await axiosInstance.get('/products/active', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/products/active');
     return { products: normalizeList<Product>(data), catalogKind: 'active' };
   }
 }
@@ -67,7 +67,7 @@ export async function refreshCategoryCatalogSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId) return;
   try {
-    const { data } = await axiosInstance.get('/categories', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/categories');
     backupCatalogSnapshot('categories', businessId, normalizeList<Category>(data));
   } catch (err) {
     console.warn('[Catalog] Category snapshot refresh failed:', err);
@@ -79,7 +79,7 @@ export async function refreshCustomerCatalogSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId) return;
   try {
-    const { data } = await axiosInstance.get(CUSTOMERS.BASE, { timeout: 10000 });
+    const { data } = await axiosInstance.get(CUSTOMERS.BASE);
     backupCatalogSnapshot('customers', businessId, normalizeList<Customer>(data));
   } catch (err) {
     console.warn('[Catalog] Customer snapshot refresh failed:', err);
@@ -91,7 +91,7 @@ export async function refreshRoleCatalogSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId) return;
   try {
-    const { data } = await axiosInstance.get<{ data: Role[] }>(ROLES.BASE, { timeout: 10000 });
+    const { data } = await axiosInstance.get<{ data: Role[] }>(ROLES.BASE);
     backupCatalogSnapshot('roles', businessId, normalizeList<Role>(data.data ?? data));
   } catch (err) {
     console.warn('[Catalog] Role snapshot refresh failed:', err);
@@ -103,7 +103,7 @@ export async function refreshStaffCatalogSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId) return;
   try {
-    const { data } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE, { timeout: 10000 });
+    const { data } = await axiosInstance.get<{ data: StaffUser[] }>(USERS.BASE);
     backupCatalogSnapshot('staff', businessId, normalizeList<StaffUser>(data.data ?? data));
   } catch (err) {
     console.warn('[Catalog] Staff snapshot refresh failed:', err);

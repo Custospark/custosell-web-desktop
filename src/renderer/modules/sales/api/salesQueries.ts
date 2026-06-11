@@ -39,8 +39,6 @@ export const salesKeys = {
   detail: (id: number) => [...salesKeys.all, 'detail', id] as const,
 };
 
-const SALES_READ_TIMEOUT_MS = 10000;
-
 function normalizeSalesList(payload: unknown): Sale[] {
   if (Array.isArray(payload)) return payload as Sale[];
   if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: Sale[] }).data)) {
@@ -146,7 +144,7 @@ async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
       readFromClient: readSalesFromClient,
       fetchFromServer: async () => {
         const local = await loadLocalPendingSales();
-        const { data } = await axiosInstance.get('/sales', { timeout: SALES_READ_TIMEOUT_MS });
+        const { data } = await axiosInstance.get('/sales');
         const serverSales = normalizeSalesList(data);
         const businessId = resolveAuthBusinessId();
         if (businessId) backupSalesListSnapshot(businessId, serverSales);
@@ -182,7 +180,7 @@ async function fetchCustomers(): Promise<CustomerListItem[]> {
     return await readWithOfflineStrategy({
       readFromClient: readCustomersFromCache,
       fetchFromServer: async () => {
-        const { data } = await axiosInstance.get('/customers', { timeout: SALES_READ_TIMEOUT_MS });
+        const { data } = await axiosInstance.get('/customers');
         return normalizeCustomersResponse(data);
       },
     });
@@ -235,9 +233,7 @@ export function useDailySales(date?: string) {
           const local = await loadLocalPendingSales();
           const localForDay = local.filter((s) => s.sale_date.slice(0, 10) === targetDate);
           const params = date ? `?date=${date}` : '';
-          const { data } = await axiosInstance.get(`/sales/daily${params}`, {
-            timeout: SALES_READ_TIMEOUT_MS,
-          });
+          const { data } = await axiosInstance.get(`/sales/daily${params}`);
           const serverSales = normalizeSalesList(data);
           const businessId = resolveAuthBusinessId();
           if (businessId) backupDailySalesSnapshot(businessId, targetDate, serverSales);
@@ -274,9 +270,7 @@ export function useSale(id: number) {
           throw new Error('Sale not available offline');
         },
         fetchFromServer: async () => {
-          const { data } = await axiosInstance.get(`/sales/${id}`, {
-            timeout: SALES_READ_TIMEOUT_MS,
-          });
+          const { data } = await axiosInstance.get(`/sales/${id}`);
           if (data && typeof data === 'object' && 'data' in (data as object)) {
             return (data as { data: Sale }).data;
           }
@@ -377,11 +371,10 @@ export function useCreateSale() {
       }
 
       try {
-        const res = await axiosInstance.post('/sales', payload, { timeout: 4000 });
+        const res = await axiosInstance.post('/sales', payload);
         return res.data as SaleWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteSaleLocally()) {
           return completeOfflineSaleInstant(payload);
         }
         throw err;
@@ -431,12 +424,10 @@ export function useRefund() {
         const { data: res } = await axiosInstance.post<{ data: Sale }>(
           `/sales/${id}/refund`,
           data,
-          { timeout: 4000 },
         );
         return res.data as SaleWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteRefundLocally()) {
           return completeOfflineRefundInstant(sale, data);
         }
         throw err;

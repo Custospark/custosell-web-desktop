@@ -19,7 +19,7 @@ function newLocalNumericId(): number {
   return -Math.floor(Date.now() + Math.random() * 1000);
 }
 
-function triggerSettingsSyncAfterPersist(_entity: 'Role' | 'Staff' | 'Business'): void {
+function triggerSettingsSyncAfterPersist(): void {
   requestSyncWhenOnline();
 }
 
@@ -86,7 +86,7 @@ export async function persistOfflineRoleInBackground(
   try {
     const localId = await localRolesStore.save(role, payload, mutationId, mutationType);
     role._localId = localId;
-    triggerSettingsSyncAfterPersist('Role');
+    triggerSettingsSyncAfterPersist();
   } catch (err) {
     console.error('[OfflineSettings] Role local save failed:', err);
   }
@@ -152,7 +152,7 @@ export async function completeOfflineUpdatePendingRoleInstant(
   await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
   const updatedRecord = await localRolesStore.updatePendingRecord(record.localId, updated, nextPayload);
   await mutationQueue.requeue(record.mutationId);
-  triggerSettingsSyncAfterPersist('Role');
+  triggerSettingsSyncAfterPersist();
 
   return toRoleWithSyncMeta(updatedRecord);
 }
@@ -227,7 +227,7 @@ export async function persistOfflineStaffInBackground(
   try {
     const localId = await localStaffStore.save(staff, payload, mutationId, mutationType);
     staff._localId = localId;
-    triggerSettingsSyncAfterPersist('Staff');
+    triggerSettingsSyncAfterPersist();
   } catch (err) {
     console.error('[OfflineSettings] Staff local save failed:', err);
   }
@@ -303,8 +303,8 @@ export async function completeOfflineUpdatePendingStaffInstant(
   if (!isOfflineMode()) {
     try {
       const { data } = record.mutationType === 'create'
-        ? await axiosInstance.post<{ data: StaffUser }>(USERS.BASE, nextPayload, { timeout: 10000 })
-        : await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(existing.id), nextPayload, { timeout: 10000 });
+        ? await axiosInstance.post<{ data: StaffUser }>(USERS.BASE, nextPayload)
+        : await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(existing.id), nextPayload);
 
       await localStaffStore.removeByMutationId(record.mutationId);
       await mutationQueue.removeById(record.mutationId);
@@ -320,7 +320,7 @@ export async function completeOfflineUpdatePendingStaffInstant(
   await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
   const updatedRecord = await localStaffStore.updatePendingRecord(record.localId, updated, nextPayload);
   await mutationQueue.requeue(record.mutationId);
-  triggerSettingsSyncAfterPersist('Staff');
+  triggerSettingsSyncAfterPersist();
 
   return toStaffWithSyncMeta(updatedRecord);
 }
@@ -365,7 +365,7 @@ export async function persistOfflineBusinessInBackground(
   try {
     const localId = await localBusinessSettingsStore.save(business, payload, mutationId, 'update');
     business._localId = localId;
-    triggerSettingsSyncAfterPersist('Business');
+    triggerSettingsSyncAfterPersist();
   } catch (err) {
     console.error('[OfflineSettings] Business local save failed:', err);
   }

@@ -203,9 +203,7 @@ export function useCategories() {
         return mergeCategoryLists(baseline, local);
       },
       fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Category[] }>('/categories', {
-          timeout: 10000,
-        });
+        const { data: response } = await axiosInstance.get<{ data: Category[] }>('/categories');
         const list = Array.isArray(response.data) ? response.data : [];
         const businessId = resolveAuthBusinessId();
         if (businessId) {
@@ -241,7 +239,7 @@ export function useCreateCategory() {
         }
         return category as CategoryWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteCategoryLocally()) {
           return completeOfflineCreateCategoryInstant(p);
         }
         throw err;
@@ -302,7 +300,7 @@ export function useUpdateCategory() {
         }
         return category as CategoryWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteCategoryLocally()) {
           return completeOfflineUpdateCategoryInstant(existing, data);
         }
         throw err;
@@ -356,8 +354,7 @@ export function useDeleteCategory() {
       try {
         await axiosInstance.delete(`/categories/${id}`);
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteCategoryLocally()) {
           completeOfflineDeleteCategoryInstant(id);
           return;
         }
@@ -407,9 +404,7 @@ export function useProduct(id: number) {
           return found as ProductWithSyncMeta;
         },
         fetchFromServer: async () => {
-          const { data: response } = await axiosInstance.get<{ data: Product }>(`/products/${id}`, {
-            timeout: 10000,
-          });
+        const { data: response } = await axiosInstance.get<{ data: Product }>(`/products/${id}`);
           return response.data as ProductWithSyncMeta;
         },
       });
@@ -450,14 +445,14 @@ export function useCreateProduct() {
         return completeOfflineCreateProductInstant(p);
       }
       try {
-        const { data } = await axiosInstance.post<{ data: Product }>('/products', p, { timeout: 10000 });
+        const { data } = await axiosInstance.post<{ data: Product }>('/products', p);
         const product = extractProductFromResponse(data);
         if (!product) {
           throw new Error('Invalid product response from server');
         }
         return product as ProductWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteProductLocally()) {
           return completeOfflineCreateProductInstant(p);
         }
         throw err;
@@ -511,14 +506,14 @@ export function useUpdateProduct() {
         return completeOfflineUpdateProductInstant(existing, data);
       }
       try {
-        const { data: res } = await axiosInstance.put<{ data: Product }>(`/products/${id}`, data, { timeout: 10000 });
+        const { data: res } = await axiosInstance.put<{ data: Product }>(`/products/${id}`, data);
         const product = extractProductFromResponse(res);
         if (!product) {
           throw new Error('Invalid product response from server');
         }
         return product as ProductWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteProductLocally()) {
           return completeOfflineUpdateProductInstant(existing, data);
         }
         throw err;
@@ -590,13 +585,13 @@ export function useDeleteProduct() {
         return;
       }
       try {
-        await axiosInstance.delete(`/products/${id}`, { timeout: 10000 });
+        await axiosInstance.delete(`/products/${id}`);
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (axiosErr.response?.status === 404) {
           return;
         }
-        if (!axiosErr.response) {
+        if (shouldCompleteProductLocally()) {
           completeOfflineDeleteProductInstant(id);
           return;
         }

@@ -176,7 +176,7 @@ export async function completeOfflineUpdatePendingProduct(
 
   if (record.mutationType === 'create' && !isCompletelyOffline()) {
     try {
-      const { data } = await axiosInstance.post<{ data: Product }>('/products', nextPayload, { timeout: 10000 });
+      const { data } = await axiosInstance.post<{ data: Product }>('/products', nextPayload);
       const serverProduct = extractProduct(data);
       await localProductsStore.removeByMutationId(record.mutationId);
       await mutationQueue.removeById(record.mutationId);

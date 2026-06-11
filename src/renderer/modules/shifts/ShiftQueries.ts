@@ -29,7 +29,7 @@ import {
   backupShiftExpensesSnapshot,
   loadShiftExpensesBaseline,
 } from '../../app/store/offline/catalogs/expensesCatalogSnapshot';
-import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldUseClientStorage } from '../../app/store/offline/core/offlineQueryUtils';
+import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldCompleteMutationLocally, shouldUseClientStorage } from '../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../app/store/offline/core/offlineReadStrategy';
 import {
   localExpensesStore,
@@ -273,9 +273,7 @@ export function useShiftSales(shiftId: number | null) {
       return readWithOfflineStrategy({
         readFromClient: readClient,
         fetchFromServer: async () => {
-          const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`, {
-            timeout: 10000,
-          });
+          const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`);
           const serverSales = data.data ?? [];
           const businessId = resolveAuthBusinessId();
           if (businessId) backupShiftSalesSnapshot(businessId, shiftId, serverSales);
@@ -311,7 +309,6 @@ export function useShiftExpenses(shiftId: number | null) {
           try {
             const { data } = await axiosInstance.get<{ data: ExpenseWithSyncMeta[] }>(
               `/expenses?shift_id=${shiftId}`,
-              { timeout: 10000 },
             );
             const fromServer = (data.data ?? []).filter((e) => e.shift_id === shiftId);
             const businessId = resolveAuthBusinessId();
@@ -354,7 +351,7 @@ export function useClockIn() {
         const { data } = await axiosInstance.post(
           '/shifts',
           { clock_in: new Date().toISOString(), status: 'active' },
-          { timeout: 4000, skipAuthRedirect: true },
+          { skipAuthRedirect: true },
         );
         const shift = extractShiftPayload(data);
         if (!shift) {
@@ -362,8 +359,7 @@ export function useClockIn() {
         }
         return persistActiveShiftContext(shift);
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteMutationLocally()) {
           return completeOfflineClockIn();
         }
         throw err;
@@ -409,7 +405,7 @@ export function useClockOut() {
             total_mobile_money: totals.mobile_money,
             total_card: totals.card,
           },
-          { timeout: 4000 },
+
         );
         await finalizeShiftClose(id);
         const shift = extractShiftPayload(data);
@@ -418,8 +414,7 @@ export function useClockOut() {
         }
         return shift as ShiftWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteMutationLocally()) {
           return completeOfflineClockOutInstant(id, totals, currentShift as ShiftRecord | null);
         }
         throw err;

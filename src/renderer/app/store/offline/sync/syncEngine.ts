@@ -187,7 +187,7 @@ async function findServerStaffByEmail(email: unknown): Promise<StaffUser | null>
   if (typeof email !== 'string' || !email.trim()) return null;
 
   const normalizedEmail = email.trim().toLowerCase();
-  const response = await axiosInstance.get<{ data: StaffUser[] }>('/users', { timeout: 10000, skipAuthRedirect: true });
+  const response = await axiosInstance.get<{ data: StaffUser[] }>('/users', { skipAuthRedirect: true });
   return response.data.data
     .filter(Boolean)
     .find((staff) => staff.email.trim().toLowerCase() === normalizedEmail) ?? null;

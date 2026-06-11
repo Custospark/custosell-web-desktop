@@ -59,9 +59,9 @@ async function deleteGuideFeedbackItems(items: GuideFeedbackWithSyncMeta[]): Pro
   await Promise.all(localItems.map((item) => deleteLocalGuideFeedback(item)));
 
   if (serverIds.length === 1) {
-    await axiosInstance.delete(GUIDE.FEEDBACK_ITEM(serverIds[0]), { timeout: 10000 });
+    await axiosInstance.delete(GUIDE.FEEDBACK_ITEM(serverIds[0]));
   } else if (serverIds.length > 1) {
-    await axiosInstance.post(GUIDE.FEEDBACK_BULK_DELETE, { ids: serverIds }, { timeout: 10000 });
+    await axiosInstance.post(GUIDE.FEEDBACK_BULK_DELETE, { ids: serverIds });
   }
 }
 
@@ -108,9 +108,7 @@ async function fetchMyGuideFeedbackMerged(): Promise<GuideFeedbackWithSyncMeta[]
       readFromClient: readMyFeedbackFromClient,
       fetchFromServer: async () => {
         const local = await loadLocalPendingFeedback();
-        const { data } = await axiosInstance.get<{ data: GuideFeedbackMineDto[] }>(GUIDE.FEEDBACK_MINE, {
-          timeout: 10000,
-        });
+        const { data } = await axiosInstance.get<{ data: GuideFeedbackMineDto[] }>(GUIDE.FEEDBACK_MINE);
         return mergeFeedbackLists(data.data ?? [], local);
       },
     });
@@ -176,12 +174,10 @@ export function useCreateGuideFeedback() {
         const { data } = await axiosInstance.post<{ data: GuideFeedbackMineDto; message?: string }>(
           GUIDE.FEEDBACK,
           payload,
-          { timeout: 10000 },
         );
         return data.data as GuideFeedbackWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteGuideFeedbackLocally()) {
           return completeOfflineGuideFeedbackInstant(payload);
         }
         throw err;

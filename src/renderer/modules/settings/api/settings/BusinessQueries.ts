@@ -62,9 +62,7 @@ export function useBusiness() {
         return applyPendingBusiness(cached);
       },
       fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Business }>(BUSINESSES.MINE, {
-          timeout: 10000,
-        });
+        const { data: response } = await axiosInstance.get<{ data: Business }>(BUSINESSES.MINE);
         return applyPendingBusiness(response.data);
       },
     }),
@@ -98,13 +96,10 @@ export function useUpdateBusiness() {
         return completeOfflineUpdateBusinessInstant(existing, data);
       }
       try {
-        const { data: response } = await axiosInstance.put<{ data: Business }>(BUSINESSES.PROFILE, data, {
-          timeout: 10000,
-        });
+        const { data: response } = await axiosInstance.put<{ data: Business }>(BUSINESSES.PROFILE, data);
         return response.data as BusinessWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteSettingsLocally()) {
           return completeOfflineUpdateBusinessInstant(existing, data);
         }
         throw err;

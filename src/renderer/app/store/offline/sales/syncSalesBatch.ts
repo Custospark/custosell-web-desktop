@@ -1,3 +1,4 @@
+import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../api/axiosConfig';
 import { mutationQueue } from '../sync/mutationQueue';
 import { localSalesStore } from './localSalesStore';
@@ -77,6 +78,64 @@ async function reconcileDuplicateSale(m: QueuedMutation, message: string): Promi
   return committed;
 }
 
+function salePayloadMatchesServer(payload: CreateSalePayload, sale: Sale): boolean {
+  if (payload.shift_id != null && sale.shift_id !== payload.shift_id) return false;
+  if (sale.payment_method !== payload.payment_method) return false;
+
+  const payloadLine = payload.items
+    .map((item) => `${item.product_id}:${item.quantity}:${item.unit_price}`)
+    .sort()
+    .join('|');
+  const serverLine = (sale.sale_items ?? [])
+    .map((item) => `${item.product_id}:${item.quantity}:${parseFloat(item.unit_price)}`)
+    .sort()
+    .join('|');
+  if (payloadLine !== serverLine) return false;
+
+  const serverTotal = parseFloat(sale.total_amount);
+  return Math.abs(serverTotal - payload.total_amount) < 0.02;
+}
+
+/** When sync POST fails without a response, the server may still have created the sale. */
+async function reconcileAmbiguousSaleFailure(
+  m: QueuedMutation,
+  payload: CreateSalePayload,
+): Promise<Sale | undefined> {
+  if (!payload.shift_id) return undefined;
+
+  try {
+    const response = await axiosInstance.get<{ data?: Sale[] } | Sale[]>(
+      `/sales/by-shift/${payload.shift_id}`,
+      { timeout: SALES_BATCH_TIMEOUT_MS, skipAuthRedirect: true },
+    );
+    const sales = extractBatchSales(response.data);
+    const mutationTime = Date.parse(m.createdAt);
+    const windowMs = 30 * 60 * 1000;
+
+    const candidates = sales.filter((sale) => {
+      if (sale.receipt_number?.startsWith('OFF-')) return false;
+      if (!salePayloadMatchesServer(payload, sale)) return false;
+      const saleTime = Date.parse(sale.created_at ?? sale.sale_date);
+      if (!Number.isNaN(mutationTime) && !Number.isNaN(saleTime)) {
+        return Math.abs(saleTime - mutationTime) <= windowMs;
+      }
+      return true;
+    });
+
+    if (candidates.length === 1) return candidates[0];
+    if (candidates.length > 1 && !Number.isNaN(mutationTime)) {
+      return [...candidates].sort(
+        (a, b) =>
+          Math.abs(Date.parse(a.created_at ?? a.sale_date) - mutationTime) -
+          Math.abs(Date.parse(b.created_at ?? b.sale_date) - mutationTime),
+      )[0];
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Promise<boolean> {
   const queued = await mutationQueue.getById(m.id);
   if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) {
@@ -96,6 +155,14 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
     return true;
   } catch (error: unknown) {
     if (isAuthHttpError(error)) throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
+    const axiosErr = error as AxiosError;
+    if (!axiosErr.response) {
+      const reconciled = await reconcileAmbiguousSaleFailure(m, payload);
+      if (reconciled) {
+        await commitSaleSync(m, reconciled);
+        return true;
+      }
+    }
     const message = extractErrorMessage(error, 'Sale sync failed');
     if (await reconcileDuplicateSale(m, message)) return true;
     await markSaleFailed(m, message);

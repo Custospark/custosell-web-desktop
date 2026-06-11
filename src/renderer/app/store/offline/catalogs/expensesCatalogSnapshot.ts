@@ -59,7 +59,7 @@ export async function refreshExpensesListSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId || isOfflineMode()) return;
   try {
-    const { data } = await axiosInstance.get('/expenses', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/expenses');
     backupExpensesListSnapshot(businessId, normalizeExpenseList(data));
   } catch (err) {
     console.warn('[ExpensesCatalog] List snapshot refresh failed:', err);
@@ -70,9 +70,7 @@ export async function refreshShiftExpensesSnapshot(shiftId: number): Promise<voi
   const businessId = resolveAuthBusinessId();
   if (!businessId || !shiftId || shiftId < 0 || isOfflineMode()) return;
   try {
-    const { data } = await axiosInstance.get<{ data?: Expense[] }>(`/expenses?shift_id=${shiftId}`, {
-      timeout: 10000,
-    });
+    const { data } = await axiosInstance.get<{ data?: Expense[] }>(`/expenses?shift_id=${shiftId}`);
     backupShiftExpensesSnapshot(businessId, shiftId, normalizeExpenseList(data));
   } catch (err) {
     console.warn('[ExpensesCatalog] Shift snapshot refresh failed:', err);
@@ -83,7 +81,7 @@ export async function refreshExpenseCategoriesSnapshot(): Promise<void> {
   const businessId = resolveAuthBusinessId();
   if (!businessId || isOfflineMode()) return;
   try {
-    const { data } = await axiosInstance.get('/expense-categories', { timeout: 10000 });
+    const { data } = await axiosInstance.get('/expense-categories');
     backupExpenseCategoriesSnapshot(businessId, normalizeCategoryList(data));
   } catch (err) {
     console.warn('[ExpensesCatalog] Category snapshot refresh failed:', err);

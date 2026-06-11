@@ -268,9 +268,7 @@ export function useExpenses(filters?: Record<string, string>, options?: { enable
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: () => readExpensesListFromClient(filters),
       fetchFromServer: async () => {
-        const { data } = await axiosInstance.get<{ data: Expense[] }>(`/expenses${params ? `?${params}` : ''}`, {
-          timeout: 10000,
-        });
+        const { data } = await axiosInstance.get<{ data: Expense[] }>(`/expenses${params ? `?${params}` : ''}`);
         const serverList = data.data ?? [];
         const businessId = resolveAuthBusinessId();
         if (businessId && !hasFilters) {
@@ -304,9 +302,7 @@ export function useExpense(id: number) {
           return found;
         },
         fetchFromServer: async () => {
-          const { data } = await axiosInstance.get<{ data: Expense }>(`/expenses/${id}`, {
-            timeout: 10000,
-          });
+          const { data } = await axiosInstance.get<{ data: Expense }>(`/expenses/${id}`);
           return data.data as ExpenseWithSyncMeta;
         },
       });
@@ -327,9 +323,7 @@ export function useExpenseSummary(filters?: Record<string, string>) {
         return summarizeExpenses(expenses);
       },
       fetchFromServer: async () => {
-        const { data } = await axiosInstance.get<ExpenseSummary>(`/expenses/summary${params ? `?${params}` : ''}`, {
-          timeout: 10000,
-        });
+        const { data } = await axiosInstance.get<ExpenseSummary>(`/expenses/summary${params ? `?${params}` : ''}`);
         const local = (await loadLocalPendingExpenses()).filter((expense) => matchesExpenseFilters(expense, filters));
         return mergeLocalExpensesIntoSummary(data, local);
       },
@@ -353,9 +347,7 @@ export function useExpenseCategories() {
         return mergeExpenseCategoryLists(baseline, local);
       },
       fetchFromServer: async () => {
-        const { data } = await axiosInstance.get<{ data: ExpenseCategory[] }>('/expense-categories', {
-          timeout: 10000,
-        });
+        const { data } = await axiosInstance.get<{ data: ExpenseCategory[] }>('/expense-categories');
         const serverList = data.data ?? [];
         const businessId = resolveAuthBusinessId();
         if (businessId) {
@@ -393,11 +385,10 @@ export function useCreateExpense() {
       try {
         const { data: res } = await axiosInstance.post<{ data: Expense }>('/expenses', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 10000,
         });
         return res.data as ExpenseWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteExpenseLocally()) {
           return completeOfflineCreateExpenseInstant(formData);
         }
         throw err;
@@ -444,11 +435,10 @@ export function useUpdateExpense() {
         const formData = buildExpenseFormData(payload, { methodOverride: 'PUT' });
         const { data: res } = await axiosInstance.post<{ data: Expense }>(`/expenses/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 10000,
         });
         return res.data as ExpenseWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteExpenseLocally()) {
           return completeOfflineUpdateExpenseInstant(existing, data);
         }
         throw err;
@@ -499,9 +489,9 @@ export function useDeleteExpense() {
         return;
       }
       try {
-        await axiosInstance.delete(`/expenses/${id}`, { timeout: 10000 });
+        await axiosInstance.delete(`/expenses/${id}`);
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteExpenseLocally()) {
           completeOfflineDeleteExpenseInstant(id);
           return;
         }
@@ -539,12 +529,10 @@ export function useCreateExpenseCategory() {
         return completeOfflineCreateExpenseCategoryInstant(payload);
       }
       try {
-        const { data } = await axiosInstance.post<{ data: ExpenseCategory }>('/expense-categories', payload, {
-          timeout: 10000,
-        });
+        const { data } = await axiosInstance.post<{ data: ExpenseCategory }>('/expense-categories', payload);
         return data.data as ExpenseCategoryWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteExpenseCategoryLocally()) {
           return completeOfflineCreateExpenseCategoryInstant(payload);
         }
         throw err;
@@ -594,12 +582,10 @@ export function useUpdateExpenseCategory() {
         return completeOfflineUpdateExpenseCategoryInstant(existing, data);
       }
       try {
-        const { data: res } = await axiosInstance.put<{ data: ExpenseCategory }>(`/expense-categories/${id}`, data, {
-          timeout: 10000,
-        });
+        const { data: res } = await axiosInstance.put<{ data: ExpenseCategory }>(`/expense-categories/${id}`, data);
         return res.data as ExpenseCategoryWithSyncMeta;
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteExpenseCategoryLocally()) {
           return completeOfflineUpdateExpenseCategoryInstant(existing, data);
         }
         throw err;
@@ -656,9 +642,9 @@ export function useDeleteExpenseCategory() {
         return;
       }
       try {
-        await axiosInstance.delete(`/expense-categories/${id}`, { timeout: 10000 });
+        await axiosInstance.delete(`/expense-categories/${id}`);
       } catch (err: unknown) {
-        if (isNetworkFailure(err)) {
+        if (shouldCompleteExpenseCategoryLocally()) {
           completeOfflineDeleteExpenseCategoryInstant(id);
           return;
         }

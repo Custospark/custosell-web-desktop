@@ -72,9 +72,7 @@ export function useVatSummary(
         date_to: dateTo,
         format: 'json',
       });
-      const { data } = await axiosInstance.get<{ data: VatSummary }>(`/reports/vat-summary?${params}`, {
-        timeout: 15000,
-      });
+      const { data } = await axiosInstance.get<{ data: VatSummary }>(`/reports/vat-summary?${params}`);
       const summary = extractVatSummary(data);
       if (!summary) {
         throw new Error('Invalid VAT summary response from server');

@@ -66,9 +66,7 @@ export function useRoles() {
         return mergeRoleLists(baseline, local.upserts, local.deletedIds);
       },
       fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Role[] }>(ROLES.BASE, {
-          timeout: 10000,
-        });
+        const { data: response } = await axiosInstance.get<{ data: Role[] }>(ROLES.BASE);
         const list = Array.isArray(response.data) ? response.data : [];
         const businessId = resolveAuthBusinessId();
         if (businessId) {
@@ -97,11 +95,10 @@ export function useCreateRole() {
         return completeOfflineCreateRoleInstant(p);
       }
       try {
-        const { data: r } = await axiosInstance.post<{ data: Role }>(ROLES.BASE, p, { timeout: 10000 });
+        const { data: r } = await axiosInstance.post<{ data: Role }>(ROLES.BASE, p);
         return r.data as RoleWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteSettingsLocally()) {
           return completeOfflineCreateRoleInstant(p);
         }
         throw err;
@@ -151,11 +148,10 @@ export function useUpdateRole() {
         return completeOfflineUpdateRoleInstant(existing, data);
       }
       try {
-        const { data: r } = await axiosInstance.put<{ data: Role }>(ROLES.BY_ID(id), data, { timeout: 10000 });
+        const { data: r } = await axiosInstance.put<{ data: Role }>(ROLES.BY_ID(id), data);
         return r.data as RoleWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (shouldCompleteSettingsLocally()) {
           return completeOfflineUpdateRoleInstant(existing, data);
         }
         throw err;
@@ -210,11 +206,11 @@ export function useDeleteRole() {
         return;
       }
       try {
-        await axiosInstance.delete(ROLES.BY_ID(id), { timeout: 10000 });
+        await axiosInstance.delete(ROLES.BY_ID(id));
       } catch (err: unknown) {
         const axiosErr = err as AxiosError;
         if (axiosErr.response?.status === 404) return;
-        if (!axiosErr.response) {
+        if (shouldCompleteSettingsLocally()) {
           completeOfflineDeleteRoleInstant(id);
           return;
         }

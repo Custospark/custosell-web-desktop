@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { setBusiness, updateShiftContext } from '../../slices/authSlice';
+import { businessToAuthInfo } from '../../../../modules/settings/api/settings/businessAuthSync';
 import { persistAuthSnapshot } from '../auth/persistAuthSnapshot';
 import { mutationQueue } from './mutationQueue';
 import { stockLedger } from '../inventory/stockLedger';
@@ -316,7 +317,7 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
     if (isBusinessSettingsMutation(m)) {
       const serverBusiness = extractBusiness(response?.data);
       if (serverBusiness) {
-        store.dispatch(setBusiness(serverBusiness));
+        store.dispatch(setBusiness(businessToAuthInfo(serverBusiness)));
       }
       await localBusinessSettingsStore.removeByMutationId(m.id);
     }

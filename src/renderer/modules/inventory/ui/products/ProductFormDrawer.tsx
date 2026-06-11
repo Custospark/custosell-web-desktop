@@ -4,6 +4,7 @@ import type { CreateProductData } from '../../api/products/ProductTypes';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
 import { SlideDrawer } from '../../../../shared/components/modals/SlideDrawer';
 import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
+import { TAX_CLASS_LABELS, type TaxClass } from '../../../../shared/utils/taxEngine';
 import { Package, DollarSign, Barcode, Tag, Archive, AlertTriangle, Percent, FileText, FolderTree } from 'lucide-react';
 
 interface ProductFormDrawerProps {
@@ -23,14 +24,14 @@ interface FormState {
   name: string; unit: string; category_id: number | null; description: string | null;
   sku: string | null; barcode: string | null; is_active: boolean;
   unit_price: string; wholesale_price: string; cost_price: string; stock_quantity: string;
-  low_stock_threshold: string; tax_percentage: string;
+  low_stock_threshold: string; tax_percentage: string; tax_class: TaxClass;
 }
 
 const emptyForm: FormState = {
   name: '', unit: '', category_id: null, description: null,
   sku: null, barcode: null, is_active: true,
   unit_price: '', wholesale_price: '', cost_price: '', stock_quantity: '0',
-  low_stock_threshold: '5', tax_percentage: '0',
+  low_stock_threshold: '5', tax_percentage: '0', tax_class: 'standard',
 };
 
 function toNumber(val: string): number {
@@ -48,6 +49,7 @@ function toCreatePayload(f: FormState): CreateProductData {
     stock_quantity: toNumber(f.stock_quantity),
     low_stock_threshold: toNumber(f.low_stock_threshold),
     tax_percentage: toNumber(f.tax_percentage),
+    tax_class: f.tax_class,
   };
 }
 
@@ -69,6 +71,7 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
           unit_price: product.unit_price, wholesale_price: product.wholesale_price ?? '', cost_price: product.cost_price ?? '',
           stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
           tax_percentage: product.tax_percentage,
+          tax_class: (product.tax_class as TaxClass) || 'standard',
         });
       } else {
         setForm(emptyForm);
@@ -179,10 +182,25 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
             </div>
           </div>
           <div>
-            <label className={labelClass}>Tax %</label>
+            <label className={labelClass}>Tax class</label>
             <div className="relative">
               <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} type="number" step="0.01" min={0} max={100} value={form.tax_percentage} onChange={(e) => update('tax_percentage', e.target.value)} placeholder="0" />
+              <select
+                className={inputClass}
+                value={form.tax_class}
+                onChange={(e) => update('tax_class', e.target.value as TaxClass)}
+              >
+                {(Object.entries(TAX_CLASS_LABELS) as [TaxClass, string][]).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Tax % (standard only)</label>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input className={inputClass} type="number" step="0.01" min={0} max={100} value={form.tax_percentage} onChange={(e) => update('tax_percentage', e.target.value)} placeholder="0 = use business default" />
             </div>
           </div>
         </div>

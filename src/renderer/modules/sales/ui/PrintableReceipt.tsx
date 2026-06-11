@@ -104,6 +104,12 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, PrintableReceiptProps>
               <span className="text-green-600">-{formatCurrency(discount)}</span>
             </div>
           )}
+          {parseFloat(sale.tax_total || '0') > 0 && (
+            <div className="flex justify-between">
+              <span className="text-gray-500">VAT</span>
+              <span className="text-gray-700">{formatCurrency(parseFloat(sale.tax_total))}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm font-bold pt-1 border-t border-gray-200">
             <span className="text-gray-900">TOTAL</span>
             <span className="text-gray-900">{formatCurrency(paidAmount)}</span>

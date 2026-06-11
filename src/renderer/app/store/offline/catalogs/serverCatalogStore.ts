@@ -8,7 +8,8 @@ export type CatalogEntity =
   | 'staff'
   | 'sales'
   | 'expenses'
-  | 'expenseCategories';
+  | 'expenseCategories'
+  | 'dashboard';
 
 export type ProductCatalogKind = 'full' | 'active';
 

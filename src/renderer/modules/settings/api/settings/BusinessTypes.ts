@@ -12,6 +12,10 @@ export interface Business {
   postal_code: string | null;
   country: string | null;
   tax_id: string | null;
+  tax_regime?: 'none' | 'vat_registered' | null;
+  jurisdiction?: string | null;
+  default_vat_rate?: number | null;
+  prices_include_tax?: boolean | null;
   timezone: string | null;
   business_type: string | null;
   currency: string | null;
@@ -34,6 +38,10 @@ export interface UpdateBusinessData {
   postal_code?: string | null;
   country?: string | null;
   tax_id?: string | null;
+  tax_regime?: 'none' | 'vat_registered' | null;
+  jurisdiction?: string | null;
+  default_vat_rate?: number | null;
+  prices_include_tax?: boolean | null;
   timezone?: string | null;
   business_type?: string | null;
   currency?: string | null;

@@ -15,7 +15,7 @@ import {
 } from '../../shared/utils/reportDatePresets';
 import {
   Download, FileText, TrendingUp, Receipt, Package, CreditCard, FileSpreadsheet,
-  File, FileDown, WifiOff, BarChart3, Users, ShoppingBag,
+  File, FileDown, WifiOff, BarChart3, Users, ShoppingBag, Scale,
 } from 'lucide-react';
 
 interface ReportConfig {
@@ -100,6 +100,17 @@ const reports: ReportConfig[] = [
       { value: 'csv', label: 'CSV', icon: File },
     ],
     defaultFormat: 'pdf', hasDateRange: true, supportsShiftFilter: true,
+  },
+  {
+    key: 'vat-summary', label: 'VAT Summary', description: 'Output VAT, input VAT, and estimated VAT payable for your jurisdiction',
+    purpose: 'What VAT is due this period?',
+    icon: Scale, color: 'violet', bg: 'bg-violet-50', textColor: 'text-violet-600',
+    formats: [
+      { value: 'pdf', label: 'PDF', icon: FileText, recommended: true },
+      { value: 'xlsx', label: 'Excel', icon: FileSpreadsheet },
+      { value: 'csv', label: 'CSV', icon: File },
+    ],
+    defaultFormat: 'pdf', hasDateRange: true,
   },
   {
     key: 'inventory', label: 'Inventory', description: 'Stock levels, values, and low-stock alerts',
@@ -229,7 +240,7 @@ export default function QuickReports() {
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h3 className="text-sm font-semibold text-gray-800 mb-1 flex items-center gap-2">
           <Download className="w-4 h-4 text-blue-500" />
-          Download Business Reports.
+          Download Business Reports ({reports.length})
         </h3>
         {isOffline && (
           <div className="flex items-center gap-2 px-3 py-2 mb-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">

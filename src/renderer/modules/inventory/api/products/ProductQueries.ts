@@ -165,6 +165,32 @@ function extractApiErrorMessage(err: unknown, fallback: string): string {
   return validationMessage || sanitizeErrorMessage(err, fallback);
 }
 
+function extractProductFromResponse(responseData: unknown): Product | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: Product };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as Product;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function extractCategoryFromResponse(responseData: unknown): Category | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: Category };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as Category;
+  if ('id' in direct) return direct;
+  return null;
+}
+
+function sanitizeProductList(list: ProductWithSyncMeta[] = []): ProductWithSyncMeta[] {
+  return list.filter(Boolean) as ProductWithSyncMeta[];
+}
+
+function sanitizeCategoryList(list: CategoryWithSyncMeta[] = []): CategoryWithSyncMeta[] {
+  return list.filter(Boolean) as CategoryWithSyncMeta[];
+}
+
 /** ── Categories ── */
 
 export function useCategories() {
@@ -208,21 +234,32 @@ export function useCreateCategory() {
         return completeOfflineCreateCategoryInstant(p);
       }
       try {
-        const { data: r } = await axiosInstance.post<{ data: Category }>('/categories', p);
-        return r.data as CategoryWithSyncMeta;
+        const { data } = await axiosInstance.post<{ data: Category }>('/categories', p);
+        const category = extractCategoryFromResponse(data);
+        if (!category) {
+          throw new Error('Invalid category response from server');
+        }
+        return category as CategoryWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (isNetworkFailure(err)) {
           return completeOfflineCreateCategoryInstant(p);
         }
         throw err;
       }
     },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: inventoryKeys.categories() });
+    },
     onSuccess: (category) => {
+      if (!category) {
+        void refreshCategoryCatalogSnapshot();
+        qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
+        return;
+      }
       if (category._pendingSync) {
         qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) => {
-          const list = old ?? [];
-          if (list.some((c) => c.id === category.id)) return list;
+          const list = sanitizeCategoryList(old ?? []);
+          if (list.some((c) => c.id === category.id || c.name === category.name)) return list;
           return [category, ...list];
         });
         showToast('success', 'Category saved — will sync when online');
@@ -244,11 +281,12 @@ export function useUpdateCategory() {
     networkMode: 'always',
     retry: false,
     mutationFn: async ({ id, data }) => {
-      const cached = queryClient.getQueryData<Category[]>(inventoryKeys.categories());
-      const existing = cached?.find((c) => c.id === id);
+      const existing = sanitizeCategoryList(
+        queryClient.getQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories()) ?? [],
+      ).find((c) => c.id === id);
       if (!existing) throw new Error('Category not found');
 
-      const isPendingOnly = (existing as CategoryWithSyncMeta)._pendingSync || id < 0;
+      const isPendingOnly = existing._pendingSync || id < 0;
       if (isPendingOnly) {
         return { ...existing, ...data, _pendingSync: true } as CategoryWithSyncMeta;
       }
@@ -257,20 +295,28 @@ export function useUpdateCategory() {
         return completeOfflineUpdateCategoryInstant(existing, data);
       }
       try {
-        const { data: r } = await axiosInstance.put<{ data: Category }>(`/categories/${id}`, data);
-        return r.data as CategoryWithSyncMeta;
+        const { data: res } = await axiosInstance.put<{ data: Category }>(`/categories/${id}`, data);
+        const category = extractCategoryFromResponse(res);
+        if (!category) {
+          throw new Error('Invalid category response from server');
+        }
+        return category as CategoryWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (isNetworkFailure(err)) {
           return completeOfflineUpdateCategoryInstant(existing, data);
         }
         throw err;
       }
     },
     onSuccess: (category, { id }) => {
+      if (!category) {
+        void refreshCategoryCatalogSnapshot();
+        qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
+        return;
+      }
       if (category._pendingSync) {
         qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) =>
-          (old ?? []).map((c) => c.id === id ? category : c),
+          sanitizeCategoryList(old ?? []).map((c) => c.id === id ? category : c),
         );
         showToast('success', 'Changes saved — will sync when online');
       } else {
@@ -404,21 +450,32 @@ export function useCreateProduct() {
         return completeOfflineCreateProductInstant(p);
       }
       try {
-        const { data: r } = await axiosInstance.post<{ data: Product }>('/products', p, { timeout: 10000 });
-        return r.data as ProductWithSyncMeta;
+        const { data } = await axiosInstance.post<{ data: Product }>('/products', p, { timeout: 10000 });
+        const product = extractProductFromResponse(data);
+        if (!product) {
+          throw new Error('Invalid product response from server');
+        }
+        return product as ProductWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (isNetworkFailure(err)) {
           return completeOfflineCreateProductInstant(p);
         }
         throw err;
       }
     },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: inventoryKeys.products() });
+    },
     onSuccess: (product) => {
+      if (!product) {
+        void refreshProductCatalogSnapshot();
+        qc.invalidateQueries({ queryKey: inventoryKeys.products() });
+        return;
+      }
       if (product._pendingSync) {
         qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) => {
-          const list = old ?? [];
-          if (list.some((p) => p.id === product.id || p.name === product.name)) return list;
+          const list = sanitizeProductList(old ?? []);
+          if (list.some((item) => item.id === product.id || item.name === product.name)) return list;
           return [product, ...list];
         });
         showToast('success', 'Product saved — will sync when online');
@@ -440,8 +497,9 @@ export function useUpdateProduct() {
     networkMode: 'always',
     retry: false,
     mutationFn: async ({ id, data }) => {
-      const cached = queryClient.getQueryData<ProductWithSyncMeta[]>(inventoryKeys.products());
-      const existing = cached?.find((p) => p.id === id);
+      const existing = sanitizeProductList(
+        queryClient.getQueryData<ProductWithSyncMeta[]>(inventoryKeys.products()) ?? [],
+      ).find((p) => p.id === id);
       if (!existing) throw new Error('Product not found');
 
       const isPendingOnly = existing._pendingSync || id < 0;
@@ -453,20 +511,28 @@ export function useUpdateProduct() {
         return completeOfflineUpdateProductInstant(existing, data);
       }
       try {
-        const { data: r } = await axiosInstance.put<{ data: Product }>(`/products/${id}`, data, { timeout: 10000 });
-        return r.data as ProductWithSyncMeta;
+        const { data: res } = await axiosInstance.put<{ data: Product }>(`/products/${id}`, data, { timeout: 10000 });
+        const product = extractProductFromResponse(res);
+        if (!product) {
+          throw new Error('Invalid product response from server');
+        }
+        return product as ProductWithSyncMeta;
       } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (!axiosErr.response) {
+        if (isNetworkFailure(err)) {
           return completeOfflineUpdateProductInstant(existing, data);
         }
         throw err;
       }
     },
     onSuccess: (product, { id }) => {
+      if (!product) {
+        void refreshProductCatalogSnapshot();
+        qc.invalidateQueries({ queryKey: inventoryKeys.products() });
+        return;
+      }
       if (product._pendingSync) {
         qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) =>
-          (old ?? []).map((p) => p.id === id ? product : p),
+          sanitizeProductList(old ?? []).map((p) => p.id === id ? product : p),
         );
         showToast(
           'success',

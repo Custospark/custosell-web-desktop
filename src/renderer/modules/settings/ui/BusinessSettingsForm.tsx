@@ -7,7 +7,18 @@ import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberF
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { CURRENCIES } from '../../../shared/utils/currencies';
-import type { CountryCode } from '../../../shared/utils/countryCodes';
+import {
+  getDefaultVatRateForJurisdiction,
+  getJurisdictionLabel,
+  hasTaxMetadata,
+} from '../../../shared/utils/taxJurisdictions';
+import {
+  countryCodesByName,
+  findCountryByCode,
+  getCountryLabel,
+  resolveCountryCode,
+  type CountryCode,
+} from '../../../shared/utils/countryCodes';
 import {
   buildInternationalPhone,
   formatPhoneDisplay,
@@ -36,6 +47,7 @@ import {
   ChevronDown,
   Pencil,
   WifiOff,
+  Scale,
 } from 'lucide-react';
 
 const emptyForm: UpdateBusinessData = {
@@ -49,6 +61,10 @@ const emptyForm: UpdateBusinessData = {
   postal_code: null,
   country: null,
   tax_id: null,
+  tax_regime: 'none',
+  jurisdiction: 'UG',
+  default_vat_rate: 18,
+  prices_include_tax: true,
   timezone: null,
   business_type: null,
   currency: null,
@@ -96,6 +112,10 @@ function snapshotFromBusiness(business: NonNullable<ReturnType<typeof useBusines
       postal_code: business.postal_code ?? null,
       country: business.country ?? null,
       tax_id: business.tax_id ?? null,
+      tax_regime: (business.tax_regime as 'none' | 'vat_registered') ?? 'none',
+      jurisdiction: business.jurisdiction ?? 'UG',
+      default_vat_rate: business.default_vat_rate != null ? Number(business.default_vat_rate) : 18,
+      prices_include_tax: business.prices_include_tax !== false,
       timezone: business.timezone ?? null,
       business_type: business.business_type ?? null,
       currency: business.currency ?? null,
@@ -235,6 +255,39 @@ export default function BusinessSettingsForm() {
 
   const update = <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
+
+  const handlePhoneCountryChange = (next: CountryCode) => {
+    const prevCode = countryCode.code;
+    setCountryCode(next);
+    if (form.jurisdiction === prevCode || !form.jurisdiction) {
+      update('jurisdiction', next.code);
+      if (form.tax_regime === 'vat_registered' && hasTaxMetadata(next.code)) {
+        update('default_vat_rate', getDefaultVatRateForJurisdiction(next.code));
+      }
+    }
+    const addressCountry = resolveCountryCode(form.country);
+    if (!form.country || addressCountry?.code === prevCode) {
+      update('country', next.name);
+    }
+  };
+
+  const handleCountryChange = (isoCode: string) => {
+    const country = findCountryByCode(isoCode);
+    if (!country) return;
+    update('country', country.name);
+  };
+
+  const handleJurisdictionChange = (isoCode: string) => {
+    update('jurisdiction', isoCode);
+    if (form.tax_regime === 'vat_registered' && hasTaxMetadata(isoCode)) {
+      update('default_vat_rate', getDefaultVatRateForJurisdiction(isoCode));
+    }
+  };
+
+  const selectedCountryCode =
+    resolveCountryCode(form.country)?.code
+    ?? findCountryByCode(form.jurisdiction)?.code
+    ?? countryCode.code;
 
   const handleCancel = () => {
     setCountryCode(baseline.countryCode);
@@ -395,7 +448,7 @@ export default function BusinessSettingsForm() {
                   <PhoneNumberField
                     label="Phone"
                     countryCode={countryCode}
-                    onCountryCodeChange={setCountryCode}
+                    onCountryCodeChange={handlePhoneCountryChange}
                     value={localPhone}
                     onChange={setLocalPhone}
                   />
@@ -496,12 +549,19 @@ export default function BusinessSettingsForm() {
                       <label className={labelClass}>Country</label>
                       <div className="relative">
                         <Globe className={iconClass} aria-hidden />
-                        <input
-                          className={inputClass}
-                          value={form.country || ''}
-                          onChange={(e) => update('country', e.target.value || null)}
-                          placeholder="Uganda"
-                        />
+                        <select
+                          className={selectClass}
+                          value={selectedCountryCode}
+                          onChange={(e) => handleCountryChange(e.target.value)}
+                          title="Country"
+                        >
+                          <option value="">Select country</option>
+                          {countryCodesByName.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.flag} {c.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -519,6 +579,73 @@ export default function BusinessSettingsForm() {
                       />
                     </div>
                   </div>
+                  <div>
+                    <label className={labelClass}>Tax regime</label>
+                    <div className="relative">
+                      <Scale className={iconClass} aria-hidden />
+                      <select
+                        className={selectClass}
+                        value={form.tax_regime || 'none'}
+                        onChange={(e) => update('tax_regime', e.target.value as 'none' | 'vat_registered')}
+                        title="Tax regime"
+                      >
+                        <option value="none">Not VAT registered</option>
+                        <option value="vat_registered">VAT registered</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Tax jurisdiction</label>
+                    <div className="relative">
+                      <Globe className={iconClass} aria-hidden />
+                      <select
+                        className={selectClass}
+                        value={form.jurisdiction || selectedCountryCode || 'UG'}
+                        onChange={(e) => handleJurisdictionChange(e.target.value || 'UG')}
+                        title="Tax jurisdiction"
+                      >
+                        {form.jurisdiction === 'OTHER' && !findCountryByCode('OTHER') ? (
+                          <option value="OTHER">Other / custom</option>
+                        ) : null}
+                        {countryCodesByName.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {form.tax_regime === 'vat_registered' && (
+                    <>
+                      <div>
+                        <label className={labelClass}>Default VAT rate (%)</label>
+                        <div className="relative">
+                          <Hash className={iconClass} aria-hidden />
+                          <input
+                            className={inputClass}
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="0.01"
+                            value={form.default_vat_rate ?? 18}
+                            onChange={(e) => update('default_vat_rate', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-6">
+                        <input
+                          id="prices_include_tax"
+                          type="checkbox"
+                          checked={form.prices_include_tax !== false}
+                          onChange={(e) => update('prices_include_tax', e.target.checked)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor="prices_include_tax" className="text-sm text-gray-700">
+                          Shelf prices include VAT (tax-inclusive pricing)
+                        </label>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <label className={labelClass}>Business type</label>
                     <div className="relative">
@@ -624,10 +751,18 @@ export default function BusinessSettingsForm() {
                   {baseline.form.postal_code || '—'}
                 </BusinessViewField>
                 <BusinessViewField label="Country" icon={<Globe className="h-4 w-4 text-blue-600" />}>
-                  {baseline.form.country || '—'}
+                  {getCountryLabel(baseline.form.country) === 'Not set' ? '—' : getCountryLabel(baseline.form.country)}
                 </BusinessViewField>
                 <BusinessViewField label="Tax / VAT ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
                   {baseline.form.tax_id || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Tax regime" icon={<Scale className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.tax_regime === 'vat_registered' ? 'VAT registered' : 'Not VAT registered'}
+                </BusinessViewField>
+                <BusinessViewField label="Tax jurisdiction" icon={<Globe className="h-4 w-4 text-blue-600" />}>
+                  {getJurisdictionLabel(baseline.form.jurisdiction) === 'Not set'
+                    ? '—'
+                    : getJurisdictionLabel(baseline.form.jurisdiction)}
                 </BusinessViewField>
                 <BusinessViewField label="Business type" icon={<Building2 className="h-4 w-4 text-blue-600" />}>
                   {formatBusinessType(baseline.form.business_type)}

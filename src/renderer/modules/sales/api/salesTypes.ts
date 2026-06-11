@@ -5,6 +5,8 @@ export interface CartItem {
   quantity: number;
   discount_amount: number;
   unit?: string | null;
+  tax_percentage?: number | string | null;
+  tax_class?: 'standard' | 'exempt' | 'zero_rated' | string | null;
 }
 
 export interface SaleItem {
@@ -20,6 +22,7 @@ export interface SaleItem {
   discount_amount: string;
   refunded_quantity: number;
   refunded_amount: string;
+  tax_refunded_amount?: string;
 }
 
 export interface BusinessInfo {
@@ -35,6 +38,10 @@ export interface BusinessInfo {
   postal_code: string | null;
   country: string | null;
   tax_id: string | null;
+  tax_regime?: string | null;
+  jurisdiction?: string | null;
+  default_vat_rate?: number | string | null;
+  prices_include_tax?: boolean | null;
   timezone: string | null;
   business_type: string | null;
   currency: string;

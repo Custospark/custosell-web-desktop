@@ -6,6 +6,8 @@ import { localSalesStore, type SaleWithSyncMeta } from './localSalesStore';
 import { buildStockSeedMap } from '../inventory/offlineStockOverlay';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { generateLocalReceiptNumber } from './receiptGenerator';
+import { computeSaleTax } from '../../../../shared/utils/taxEngine';
+import { resolveBusinessForTax } from '../../../../modules/settings/api/settings/businessAuthSync';
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
 import type { CreateSalePayload, Sale } from '../../../../modules/sales/api/salesTypes';
 import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
@@ -20,15 +22,26 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
   const now = new Date().toISOString();
   const localIdNum = -Date.now();
   const authUser = store.getState().auth.user;
+  const products = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
+  const cartLines = payload.items.map((item) => {
+    const product = products.find((p) => p.id === item.product_id);
+    return {
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      tax_percentage: product?.tax_percentage ?? null,
+      tax_class: product?.tax_class ?? 'standard',
+    };
+  });
+  const taxBreakdown = computeSaleTax(resolveBusinessForTax(), cartLines, payload.discount_amount ?? 0);
 
   const sale: Sale = {
     id: localIdNum,
     receipt_number: receiptNumber,
-    total_amount: payload.total_amount.toString(),
+    total_amount: taxBreakdown.total.toString(),
     payment_method: payload.payment_method,
     payment_status: 'paid',
-    subtotal: payload.subtotal.toString(),
-    tax_total: (payload.tax_total ?? 0).toString(),
+    subtotal: taxBreakdown.subtotalNet.toString(),
+    tax_total: taxBreakdown.taxTotal.toString(),
     discount_amount: (payload.discount_amount || 0).toString(),
     created_at: now,
     updated_at: now,
@@ -44,12 +57,12 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
       id: localIdNum - i,
       sale_id: localIdNum,
       product_id: item.product_id,
-      product_name: '',
+      product_name: products.find((p) => p.id === item.product_id)?.name ?? '',
       product_price: item.unit_price.toString(),
       quantity: item.quantity,
       unit_price: item.unit_price.toString(),
       subtotal: (item.quantity * item.unit_price).toString(),
-      tax_amount: '0',
+      tax_amount: (taxBreakdown.lineTaxAmounts[i] ?? 0).toString(),
       discount_amount: '0',
       refunded_quantity: 0,
       refunded_amount: '0',

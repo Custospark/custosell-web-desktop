@@ -1,7 +1,13 @@
 import type { AuthUser, BusinessInfo } from '../../app/store/slices/authSlice';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
-import { grossSaleAmount, netSaleAmount, refundedAmount } from '../sales/utils/saleAmounts';
+import {
+  grossSaleAmount,
+  netSaleAmount,
+  netSaleTaxAmount,
+  refundedAmount,
+  saleTaxRefundedAmount,
+} from '../sales/utils/saleAmounts';
 import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 import type { ShiftCloseReportData } from './shiftCloseReportTypes';
 
@@ -29,6 +35,7 @@ export function buildShiftCloseReportData(params: {
   shiftSales: SaleWithSyncMeta[];
   shiftExpenses: ExpenseWithSyncMeta[];
   isOfflineCopy?: boolean;
+  taxEnabled?: boolean;
 }): ShiftCloseReportData {
   const {
     business,
@@ -38,10 +45,13 @@ export function buildShiftCloseReportData(params: {
     shiftSales,
     shiftExpenses,
     isOfflineCopy = false,
+    taxEnabled = false,
   } = params;
 
   const grossSales = shiftSales.reduce((sum, sale) => sum + grossSaleAmount(sale), 0);
   const refunds = shiftSales.reduce((sum, sale) => sum + refundedAmount(sale), 0);
+  const outputVat = shiftSales.reduce((sum, sale) => sum + netSaleTaxAmount(sale), 0);
+  const vatRefunded = shiftSales.reduce((sum, sale) => sum + saleTaxRefundedAmount(sale), 0);
   const shiftExpenseTotal = shiftExpenses.reduce(
     (sum, expense) => sum + Number.parseFloat(String(expense.amount)) || 0,
     0,
@@ -81,5 +91,8 @@ export function buildShiftCloseReportData(params: {
     shiftExpenses: shiftExpenseTotal,
     cashHandover: cashHandover(cash, shiftExpenseTotal),
     generatedAt: new Date().toISOString(),
+    taxEnabled,
+    outputVat,
+    vatRefunded,
   };
 }

@@ -11,6 +11,7 @@ import { backupCatalogSnapshot, resolveAuthBusinessId } from './catalogSnapshotU
 import { serverCatalogStore, type ProductCatalogKind } from './serverCatalogStore';
 import { refreshSalesCatalogSnapshotsForSession } from './salesCatalogSnapshot';
 import { refreshExpensesCatalogSnapshotsForSession } from './expensesCatalogSnapshot';
+import { refreshDashboardSummarySnapshot } from './dashboardCatalogSnapshot';
 import { stockLedger } from '../inventory/stockLedger';
 
 function normalizeList<T>(payload: unknown): T[] {
@@ -118,6 +119,7 @@ export async function refreshAllServerCatalogSnapshots(): Promise<void> {
     refreshStaffCatalogSnapshot(),
     refreshSalesCatalogSnapshotsForSession(),
     refreshExpensesCatalogSnapshotsForSession(),
+    refreshDashboardSummarySnapshot(),
   ]);
 }
 

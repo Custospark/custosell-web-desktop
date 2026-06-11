@@ -19,6 +19,10 @@ export interface ShiftCloseReportData {
   shiftExpenses: number;
   cashHandover: number;
   generatedAt: string;
+  /** When true, output VAT lines are shown (separate from net sales). */
+  taxEnabled?: boolean;
+  outputVat?: number;
+  vatRefunded?: number;
 }
 
 /** Matches Custosell app primary / business-summary report accent */

@@ -2,6 +2,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { setBusiness } from '../../slices/authSlice';
+import { businessToAuthInfo } from '../../../../modules/settings/api/settings/businessAuthSync';
 import { mutationQueue } from '../sync/mutationQueue';
 import { isNetworkFailure, isOfflineMode, shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { requestSyncWhenOnline } from '../sync/syncPendingIfOnline';
@@ -381,7 +382,7 @@ export function completeOfflineUpdateBusinessInstant(
     _pendingSync: true,
   };
 
-  store.dispatch(setBusiness(updated));
+  store.dispatch(setBusiness(businessToAuthInfo(updated)));
   queryClient.setQueryData(['business', 'mine'], updated);
   void persistOfflineBusinessInBackground(updated, payload).catch((err) => {
     console.error('[OfflineSettings] Business persist failed:', err);

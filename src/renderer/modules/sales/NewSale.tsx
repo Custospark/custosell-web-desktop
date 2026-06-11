@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import type { Product } from '../inventory/api/products/ProductTypes';
+import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
@@ -15,6 +16,7 @@ import PrintableReceipt from './ui/PrintableReceipt';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { computeSaleTax } from '../../shared/utils/taxEngine';
 import { cn } from '../../shared/utils/cn';
 import { Button } from '../../shared/components/buttons/Button';
 
@@ -135,7 +137,8 @@ function BillingControls() {
   const createSale = useCreateSale();
   const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
   const authUser = useAppSelector((s) => s.auth.user);
-  const currency = authUser?.business?.currency || 'UGX';
+  const { taxSettings, business: taxBusinessRecord } = useBusinessTaxSettings();
+  const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -161,7 +164,11 @@ function BillingControls() {
   const discountValue = discountType === 'percentage'
     ? Math.min(subtotal * (discountAmount / 100), subtotal)
     : Math.min(discountAmount, subtotal);
-  const total = Math.max(0, subtotal - discountValue);
+  const taxBreakdown = useMemo(
+    () => computeSaleTax(taxSettings, cartItems, discountValue),
+    [taxSettings, cartItems, discountValue],
+  );
+  const total = taxBreakdown.total;
   const changeDue = paymentMethod === 'cash' ? Math.max(0, amountTendered - total) : 0;
   const selectedCustomer = customerId ? (customers || []).find((c: any) => c.id === customerId) : null;
 
@@ -183,11 +190,12 @@ function BillingControls() {
         items: cartItems.map((c) => ({
           product_id: c.product_id,
           quantity: c.quantity,
-          unit_price: c.unit_price
+          unit_price: c.unit_price,
         })),
-        subtotal,
-        discount_amount: discountValue,
-        total_amount: total,
+        subtotal: taxBreakdown.subtotalNet,
+        tax_total: taxBreakdown.taxTotal,
+        discount_amount: taxBreakdown.discountAmount,
+        total_amount: taxBreakdown.total,
         payment_method: paymentMethod,
         customer_id: customerId,
         amount_tendered: amountTendered > 0 ? amountTendered : null,
@@ -321,10 +329,22 @@ function BillingControls() {
         {/* Total */}
         <div className="pt-2">
           <div className="bg-gray-50 rounded-xl p-4">
-            {discountValue > 0 && (
+            {(discountValue > 0 || taxBreakdown.taxEnabled) && (
               <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                <span>Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
+                <span>{taxBreakdown.taxEnabled ? 'Subtotal (excl. VAT)' : 'Subtotal'}</span>
+                <span>{formatCurrency(taxBreakdown.taxEnabled ? taxBreakdown.subtotalNet + taxBreakdown.discountAmount : subtotal)}</span>
+              </div>
+            )}
+            {discountValue > 0 && (
+              <div className="flex justify-between items-center text-sm text-green-600 mb-2">
+                <span>Discount</span>
+                <span>-{formatCurrency(discountValue)}</span>
+              </div>
+            )}
+            {taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0 && (
+              <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                <span>VAT</span>
+                <span>{formatCurrency(taxBreakdown.taxTotal)}</span>
               </div>
             )}
             <div className="flex justify-between items-center">
@@ -448,8 +468,22 @@ export default function NewSale() {
     }
   };
 
-  const addItem = (id: number, name: string, price: number, unit?: string | null) => {
-    dispatch(addToCart({ product_id: id, name, unit_price: price, unit }));
+  const addItem = (
+    id: number,
+    name: string,
+    price: number,
+    unit?: string | null,
+    taxPercentage?: string | null,
+    taxClass?: string | null,
+  ) => {
+    dispatch(addToCart({
+      product_id: id,
+      name,
+      unit_price: price,
+      unit,
+      tax_percentage: taxPercentage,
+      tax_class: taxClass,
+    }));
     setSearch('');
     setShowResults(false);
     searchRef.current?.focus();
@@ -516,9 +550,9 @@ export default function NewSale() {
                           (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q) || (p.barcode && p.barcode === q))
                         );
                         if (exact) {
-                          addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit);
+                          addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class);
                         } else if (results.length > 0 && results[0].stock_quantity > 0) {
-                          addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit);
+                          addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit, results[0].tax_percentage, results[0].tax_class);
                         }
                       }
                     }}
@@ -556,7 +590,7 @@ export default function NewSale() {
                           <tbody className="divide-y divide-gray-100">
                             {results.map((p) => (
                               <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors"
-                                onMouseDown={() => p.stock_quantity > 0 && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit)}>
+                                onMouseDown={() => p.stock_quantity > 0 && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class)}>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                                   <div className="flex items-center gap-2 sm:gap-3">
                                     <div className="p-1 sm:p-1.5 rounded-lg bg-gray-100 text-gray-500 shrink-0"><Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></div>

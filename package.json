@@ -12,6 +12,7 @@
     "clean": "rimraf dist",
     "dev:electron": "npm run transpile:electron && cross-env NODE_ENV=development electron .",
     "react:build": "tsc -b && vite build",
+    "build:react": "npm run react:build",
     "lint": "eslint .",
     "vera:fast": "node scripts/vera-fast.mjs",
     "vera:extended": "node scripts/vera-extended.mjs",

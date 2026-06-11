@@ -34,6 +34,10 @@ export interface Expense {
   amount: string;
   description: string;
   reference: string | null;
+  supplier_tin: string | null;
+  supplier_invoice_no: string | null;
+  vat_amount: string | null;
+  vat_claimable: boolean;
   receipt_url: string | null;
   is_recurring: boolean;
   recurrence_interval: string | null;
@@ -68,6 +72,10 @@ export interface CreateExpenseData {
   amount: number;
   description: string;
   reference?: string | null;
+  supplier_tin?: string | null;
+  supplier_invoice_no?: string | null;
+  vat_amount?: number | null;
+  vat_claimable?: boolean;
   receipt?: File | null;
   is_recurring?: boolean;
   recurrence_interval?: string | null;

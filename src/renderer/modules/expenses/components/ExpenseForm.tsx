@@ -4,6 +4,7 @@ import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api
 import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
 import type { Expense } from '../api/ExpenseTypes';
 
 interface ExpenseFormProps {
@@ -18,12 +19,17 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
+  const { taxEnabled: vatEnabled } = useBusinessTaxSettings();
   const activeShiftId = shiftId ?? authShiftId;
 
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [reference, setReference] = useState('');
+  const [supplierTin, setSupplierTin] = useState('');
+  const [supplierInvoiceNo, setSupplierInvoiceNo] = useState('');
+  const [vatAmount, setVatAmount] = useState('');
+  const [vatClaimable, setVatClaimable] = useState(false);
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
   const [receipt, setReceipt] = useState<File | null>(null);
   const [isRecurring, setIsRecurring] = useState(false);
@@ -39,6 +45,10 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setAmount(parseFloat(expense.amount).toString());
         setDescription(expense.description);
         setReference(expense.reference || '');
+        setSupplierTin(expense.supplier_tin || '');
+        setSupplierInvoiceNo(expense.supplier_invoice_no || '');
+        setVatAmount(expense.vat_amount ? parseFloat(expense.vat_amount).toString() : '');
+        setVatClaimable(expense.vat_claimable ?? false);
         setExpenseDate(expense.expense_date.split(' ')[0] || expense.expense_date);
         setIsRecurring(expense.is_recurring);
         setRecurrenceInterval(expense.recurrence_interval || 'monthly');
@@ -49,6 +59,10 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setAmount('');
         setDescription('');
         setReference('');
+        setSupplierTin('');
+        setSupplierInvoiceNo('');
+        setVatAmount('');
+        setVatClaimable(false);
         setExpenseDate(new Date().toISOString().split('T')[0]);
         setIsRecurring(false);
         setRecurrenceInterval('monthly');
@@ -66,6 +80,12 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     formData.append('amount', amount);
     formData.append('description', description);
     if (reference) formData.append('reference', reference);
+    if (vatEnabled) {
+      if (supplierTin) formData.append('supplier_tin', supplierTin);
+      if (supplierInvoiceNo) formData.append('supplier_invoice_no', supplierInvoiceNo);
+      if (vatAmount) formData.append('vat_amount', vatAmount);
+      formData.append('vat_claimable', vatClaimable ? '1' : '0');
+    }
     formData.append('expense_date', expenseDate);
     if (!isEditing && activeShiftId) formData.append('shift_id', String(activeShiftId));
     if (isEditing && expense?.shift_id) formData.append('shift_id', String(expense.shift_id));
@@ -180,6 +200,41 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             </div>
           </div>
         </div>
+
+        {vatEnabled && (
+          <div className="rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4 text-gray-400" /> Input VAT (purchases)</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier TIN</label>
+                  <input type="text" value={supplierTin} onChange={(e) => setSupplierTin(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Supplier tax ID" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier invoice no.</label>
+                  <input type="text" value={supplierInvoiceNo} onChange={(e) => setSupplierInvoiceNo(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Invoice reference" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">VAT amount on invoice</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{getBusinessCurrency()}</span>
+                  <input type="number" min={0} step="0.01" value={vatAmount} onChange={(e) => setVatAmount(e.target.value)}
+                    className="w-full pl-11 pr-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.00" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={vatClaimable} onChange={(e) => setVatClaimable(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span className="text-sm text-gray-700">Include in VAT return as claimable input VAT</span>
+              </label>
+            </div>
+          </div>
+        )}
 
         {/* Recurrence */}
         <div className="rounded-xl border border-gray-200 overflow-hidden">

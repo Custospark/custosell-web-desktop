@@ -8,6 +8,7 @@ import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
 import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
 import type { RefundData, Sale } from '../../../../modules/sales/api/salesTypes';
+import { computeLineTaxRefund } from '../../../../shared/utils/taxEngine';
 
 export function shouldCompleteRefundLocally(): boolean {
   return shouldCompleteMutationLocally();
@@ -29,11 +30,15 @@ export function applyRefundToSale(sale: Sale, refundData: RefundData): Sale {
       parseFloat(item.unit_price) * refundItem.quantity;
     const newRefundedQty = item.refunded_quantity + refundItem.quantity;
     const newRefundedAmount = parseFloat(item.refunded_amount || '0') + refundAmount;
+    const lineTax = parseFloat(item.tax_amount || '0');
+    const taxRefundDelta = computeLineTaxRefund(lineTax, item.quantity, refundItem.quantity);
+    const newTaxRefunded = parseFloat(item.tax_refunded_amount || '0') + taxRefundDelta;
 
     return {
       ...item,
       refunded_quantity: newRefundedQty,
       refunded_amount: newRefundedAmount.toFixed(2),
+      tax_refunded_amount: newTaxRefunded.toFixed(2),
     };
   });
 

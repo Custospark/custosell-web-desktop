@@ -33,7 +33,8 @@ import {
 } from './useShiftClosePdf';
 import { CurrentShiftProgressChart, ShiftHistoryTrendChart } from './ShiftCharts';
 import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shiftChartSeries';
-import { grossSaleAmount, netSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
+import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
+import { grossSaleAmount, netSaleAmount, netSaleTaxAmount, refundedAmount, saleTaxRefundedAmount, toAmount } from '../sales/utils/saleAmounts';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import { useToast } from '../../app/contexts/useToast';
 
@@ -76,7 +77,7 @@ export default function MyShiftPage() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
   const isOffline = useAppSelector(selectIsCompletelyOffline);
-  const business = authUser?.business;
+  const { business, taxEnabled } = useBusinessTaxSettings();
   const { data: shift, isLoading, isRefetching } = useActiveShift();
   const { data: allShifts } = useShifts();
   const clockIn = useClockIn();
@@ -104,6 +105,8 @@ export default function MyShiftPage() {
 
   const shiftGrossTotal = shiftSales?.reduce((s, sale) => s + grossSaleAmount(sale), 0) || 0;
   const shiftRefundsTotal = shiftSales?.reduce((s, sale) => s + refundedAmount(sale), 0) || 0;
+  const shiftOutputVat = shiftSales?.reduce((s, sale) => s + netSaleTaxAmount(sale), 0) || 0;
+  const shiftVatRefunded = shiftSales?.reduce((s, sale) => s + saleTaxRefundedAmount(sale), 0) || 0;
   const shiftExpenseTotal = shiftExpenses.reduce((sum, expense) => sum + toAmount(expense.amount), 0);
   const netShiftTotal = netSales(shiftGrossTotal, shiftRefundsTotal, shiftExpenseTotal);
   const cashTotal = shiftSales?.filter((s) => s.payment_method === 'cash').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
@@ -123,6 +126,7 @@ export default function MyShiftPage() {
         shiftSales: shiftSales ?? [],
         shiftExpenses,
         isOfflineCopy: isOffline,
+        taxEnabled,
       }),
     [
       business,
@@ -132,6 +136,7 @@ export default function MyShiftPage() {
       shiftSales,
       shiftExpenses,
       isOffline,
+      taxEnabled,
     ],
   );
 
@@ -320,6 +325,7 @@ export default function MyShiftPage() {
             search={search}
             setSearch={setSearch}
             onSelectSale={setSelectedSale}
+            showVat={taxEnabled}
           />
         </div>
 
@@ -338,10 +344,25 @@ export default function MyShiftPage() {
                   <span className="font-semibold tabular-nums">-{formatCurrency(shiftRefundsTotal)}</span>
                 </div>
               )}
+              {taxEnabled && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Output VAT (net)</span>
+                    <span className="font-semibold tabular-nums">{formatCurrency(shiftOutputVat)}</span>
+                  </div>
+                  {shiftVatRefunded > 0 && (
+                    <div className="flex justify-between text-red-600">
+                      <span>VAT refunded</span>
+                      <span className="font-semibold tabular-nums">-{formatCurrency(shiftVatRefunded)}</span>
+                    </div>
+                  )}
+                </>
+              )}
               <div className="flex justify-between border-t border-gray-100 pt-2">
-                <span className="font-medium text-gray-800">Net sales (gross - refunds - expenses)</span>
+                <span className="font-medium text-gray-800">Net sales (cash collected)</span>
                 <span className="font-bold tabular-nums">{formatCurrency(netShiftTotal)}</span>
               </div>
+              <p className="text-xs text-gray-400">Gross − refunds − shift expenses. VAT shown separately above.</p>
               <div className="flex justify-between">
                 <span className="text-gray-500">Cash at handover</span>
                 <span className="font-bold text-green-700 tabular-nums">{formatCurrency(handoverAmount)}</span>
@@ -403,6 +424,7 @@ function ShiftTransactionsTable({
   search,
   setSearch,
   onSelectSale,
+  showVat = false,
 }: {
   shiftSales: SaleWithSyncMeta[] | undefined;
   filteredSales: SaleWithSyncMeta[];
@@ -410,6 +432,7 @@ function ShiftTransactionsTable({
   search: string;
   setSearch: (v: string) => void;
   onSelectSale: (sale: SaleWithSyncMeta) => void;
+  showVat?: boolean;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -447,6 +470,14 @@ function ShiftTransactionsTable({
                   </Badge>
                 );
               }},
+              ...(showVat ? [{
+                key: 'vat',
+                header: 'VAT',
+                align: 'right' as const,
+                render: (sale: SaleWithSyncMeta) => (
+                  <span className="tabular-nums text-gray-700">{formatCurrency(netSaleTaxAmount(sale))}</span>
+                ),
+              }] : []),
               { key: 'total_amount', header: 'Net Total', align: 'right', render: (sale) => (
                 <div className="text-right">
                   <span className="font-semibold">{formatCurrency(netSaleAmount(sale))}</span>

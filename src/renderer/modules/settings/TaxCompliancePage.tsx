@@ -3,11 +3,12 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { Button } from '../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
-import { useReportDownload } from '../../dashboard/DashboardQueries';
-import { useVatSummary } from '../api/settings/TaxQueries';
+import { useReportDownload } from '../dashboard/DashboardQueries';
+import { useBusinessTaxSettings } from './hooks/useBusinessTaxSettings';
+import { useVatSummary, type VatInputExpenseRow } from './api/settings/TaxQueries';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { isTaxEnabled, TAX_REGIME_LABELS } from '../../shared/utils/taxEngine';
-import { TAX_JURISDICTIONS } from '../../shared/utils/taxJurisdictions';
+import { TAX_REGIME_LABELS } from '../../shared/utils/taxEngine';
+import { getFilingAuthorityLabel, getJurisdictionLabel } from '../../shared/utils/taxJurisdictions';
 import {
   REPORT_DATE_PRESETS,
   isValidDateRange,
@@ -54,18 +55,19 @@ function TaxProfileField({
 
 export default function TaxCompliancePage() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
-  const business = useAppSelector((s) => s.auth.user?.business);
+  const { business, taxEnabled, isLoading: businessLoading } = useBusinessTaxSettings();
   const currency = business?.currency || 'UGX';
-  const [preset, setPreset] = useState<ReportDatePreset>('this_month');
+  const [preset, setPreset] = useState<ReportDatePreset>('month');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const range = resolveReportDateRange(preset, customFrom, customTo);
-  const { data, isLoading, isError } = useVatSummary(preset, customFrom, customTo);
-  const download = useReportDownload();
+  const { data, isLoading, isError } = useVatSummary(preset, customFrom, customTo, taxEnabled);
+  const downloadReport = useReportDownload();
 
-  const taxEnabled = isTaxEnabled(business);
-  const jurisdiction = TAX_JURISDICTIONS.find((j) => j.code === (business?.jurisdiction ?? 'UG'));
-  const filingAuthority = jurisdiction?.filingAuthority;
+  const jurisdictionCode = business?.jurisdiction ?? 'UG';
+  const jurisdictionLabel = getJurisdictionLabel(jurisdictionCode);
+  const filingAuthority = getFilingAuthorityLabel(jurisdictionCode);
+  const hasNamedFilingAuthority = filingAuthority !== 'your tax authority';
   const taxRegime = (business?.tax_regime as 'none' | 'vat_registered') ?? 'none';
   const vatRate = business?.default_vat_rate != null ? Number(business.default_vat_rate) : 18;
 
@@ -80,13 +82,14 @@ export default function TaxCompliancePage() {
   }, [data]);
 
   const handleDownload = (format: 'pdf' | 'csv' | 'xlsx') => {
-    if (!isValidDateRange(range.from, range.to)) return;
-    download.mutate({
-      reportKey: 'vat-summary',
+    if (!isValidDateRange(range.dateFrom, range.dateTo) || isOffline) return;
+    const params = new URLSearchParams({
       format,
-      dateFrom: range.from,
-      dateTo: range.to,
+      date_from: range.dateFrom,
+      date_to: range.dateTo,
     });
+    const ext = format === 'pdf' ? 'pdf' : format === 'xlsx' ? 'xlsx' : 'csv';
+    downloadReport('/reports/vat-summary', params, `vat-summary-report.${ext}`);
   };
 
   return (
@@ -121,14 +124,16 @@ export default function TaxCompliancePage() {
           </div>
         </div>
         <div className="p-5 space-y-4">
-          {!taxEnabled ? (
+          {businessLoading ? (
+            <LoadingSkeleton variant="minimal" message="Loading tax profile…" />
+          ) : !taxEnabled ? (
             <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
               Enable VAT registration under Settings → Business to calculate output VAT on sales.
             </p>
           ) : (
             <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <TaxProfileField label="Jurisdiction" icon={<Globe className="h-4 w-4 text-blue-600" />}>
-                {jurisdiction?.name ?? '—'}
+                {jurisdictionLabel === 'Not set' ? '—' : jurisdictionLabel}
               </TaxProfileField>
               <TaxProfileField label="TIN / Tax ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
                 {business?.tax_id || '—'}
@@ -137,7 +142,7 @@ export default function TaxCompliancePage() {
                 {TAX_REGIME_LABELS[taxRegime]}
               </TaxProfileField>
               <TaxProfileField label="Filing authority" icon={<Landmark className="h-4 w-4 text-blue-600" />}>
-                {filingAuthority ?? '—'}
+                {hasNamedFilingAuthority ? filingAuthority : '—'}
               </TaxProfileField>
               <TaxProfileField label="Default VAT rate" icon={<Hash className="h-4 w-4 text-blue-600" />}>
                 {vatRate.toFixed(2)}%
@@ -169,7 +174,7 @@ export default function TaxCompliancePage() {
                 onChange={(e) => setPreset(e.target.value as ReportDatePreset)}
               >
                 {REPORT_DATE_PRESETS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                  <option key={p.id} value={p.id}>{p.label}</option>
                 ))}
               </select>
             </div>
@@ -186,19 +191,24 @@ export default function TaxCompliancePage() {
               </>
             )}
             <div className="flex gap-2 ml-auto">
-              <Button variant="outline" size="sm" disabled={isOffline || download.isPending} onClick={() => handleDownload('pdf')}>
+              <Button variant="outline" size="sm" disabled={isOffline} onClick={() => handleDownload('pdf')}>
                 <FileText className="h-4 w-4 mr-1" /> PDF
               </Button>
-              <Button variant="outline" size="sm" disabled={isOffline || download.isPending} onClick={() => handleDownload('csv')}>
+              <Button variant="outline" size="sm" disabled={isOffline} onClick={() => handleDownload('csv')}>
                 <Download className="h-4 w-4 mr-1" /> CSV
               </Button>
             </div>
           </div>
 
-          {isLoading && <LoadingSkeleton rows={4} />}
+          {isLoading && <LoadingSkeleton variant="card" />}
           {isError && <p className="text-sm text-red-600">Could not load VAT summary for this period.</p>}
+          {!taxEnabled && !isLoading && (
+            <p className="text-sm text-gray-500">
+              VAT summary figures require VAT registration. Enable it above to track output VAT from sales and claimable purchase VAT.
+            </p>
+          )}
 
-          {data && !isLoading && (
+          {data && !isLoading && taxEnabled && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {cards.map((card) => (
@@ -233,7 +243,7 @@ export default function TaxCompliancePage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {data.input_vat_expenses.map((row, i) => (
+                        {data.input_vat_expenses.map((row: VatInputExpenseRow, i: number) => (
                           <tr key={i}>
                             <td className="px-3 py-2 whitespace-nowrap">{row.date}</td>
                             <td className="px-3 py-2">{row.description}</td>
@@ -248,7 +258,9 @@ export default function TaxCompliancePage() {
               )}
 
               <p className="text-xs text-gray-400 border-t border-gray-100 pt-3">
-                This is a filing workbook only — submit your return through the {filingAuthority ?? 'relevant'} web portal.
+                {hasNamedFilingAuthority
+                  ? `This is a filing workbook only — submit your return through the ${filingAuthority} web portal.`
+                  : 'This is a filing workbook only — submit your return through your tax authority\'s web portal.'}
               </p>
             </>
           )}

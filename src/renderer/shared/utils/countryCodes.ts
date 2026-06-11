@@ -206,3 +206,27 @@ export const countryCodes: CountryCode[] = [
   { name: 'Zambia', code: 'ZM', dial_code: '+260', flag: '🇿🇲' },
   { name: 'Zimbabwe', code: 'ZW', dial_code: '+263', flag: '🇿🇼' },
 ];
+
+/** Alphabetically sorted copy for dropdowns (phone picker keeps original order). */
+export const countryCodesByName = [...countryCodes].sort((a, b) => a.name.localeCompare(b.name));
+
+export function findCountryByCode(code?: string | null): CountryCode | undefined {
+  if (!code?.trim()) return undefined;
+  return countryCodes.find((c) => c.code === code.trim().toUpperCase());
+}
+
+export function findCountryByName(name?: string | null): CountryCode | undefined {
+  if (!name?.trim()) return undefined;
+  const normalized = name.trim().toLowerCase();
+  return countryCodes.find((c) => c.name.toLowerCase() === normalized);
+}
+
+/** Resolve ISO code or country name to a country entry. */
+export function resolveCountryCode(countryOrCode?: string | null): CountryCode | undefined {
+  return findCountryByCode(countryOrCode) ?? findCountryByName(countryOrCode);
+}
+
+export function getCountryLabel(countryOrCode?: string | null): string {
+  if (!countryOrCode?.trim()) return 'Not set';
+  return resolveCountryCode(countryOrCode)?.name ?? countryOrCode.trim();
+}

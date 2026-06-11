@@ -24,6 +24,7 @@ export interface Product {
   stock_quantity: number;
   low_stock_threshold: number;
   tax_percentage: string;
+  tax_class?: 'standard' | 'exempt' | 'zero_rated' | string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -60,6 +61,7 @@ export interface CreateProductData {
   stock_quantity?: number;
   low_stock_threshold?: number;
   tax_percentage?: number;
+  tax_class?: 'standard' | 'exempt' | 'zero_rated';
   is_active?: boolean;
 }
 

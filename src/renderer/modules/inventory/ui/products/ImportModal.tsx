@@ -80,6 +80,11 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
             Upload an Excel file (.xlsx, .xls, or .csv) with your product data.
             <br />Max 5MB, up to 2000 rows.
           </p>
+          <p className="text-xs text-gray-400">
+            Optional tax columns: <strong>Tax %</strong> (blank uses your business default rate) and{' '}
+            <strong>Tax Class</strong> (<code className="text-gray-500">standard</code>,{' '}
+            <code className="text-gray-500">exempt</code>, or <code className="text-gray-500">zero_rated</code>).
+          </p>
 
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>

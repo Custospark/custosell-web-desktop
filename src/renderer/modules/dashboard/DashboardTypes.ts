@@ -29,6 +29,16 @@ export interface RecentSale {
   items_count: number;
 }
 
+/** Today-only VAT metrics — included in dashboard summary when business is VAT-registered. */
+export interface DashboardTodayVat {
+  output_vat: number;
+  output_vat_refunded: number;
+  net_output_vat: number;
+  input_vat: number;
+  vat_payable: number;
+  transaction_count: number;
+}
+
 export interface DashboardSummary {
   today_revenue: number;
   today_gross_sales: number;
@@ -46,4 +56,5 @@ export interface DashboardSummary {
   sales_trend: SalesTrendDay[];
   low_stock: LowStockProduct[];
   recent_sales: RecentSale[];
+  today_vat?: DashboardTodayVat | null;
 }

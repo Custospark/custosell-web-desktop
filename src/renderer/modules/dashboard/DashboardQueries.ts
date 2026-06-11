@@ -4,6 +4,11 @@ import { useToast } from '../../app/contexts/useToast';
 import { applyDashboardPendingOverlay } from '../../app/store/offline/sales/offlineSalesSummary';
 import { readWithOfflineStrategy } from '../../app/store/offline/core/offlineReadStrategy';
 import { isCompletelyOffline, isNetworkFailure } from '../../app/store/offline/core/offlineQueryUtils';
+import {
+  backupDashboardSummarySnapshot,
+  loadDashboardSummaryBaseline,
+} from '../../app/store/offline/catalogs/dashboardCatalogSnapshot';
+import { resolveAuthBusinessId } from '../../app/store/offline/catalogs/catalogSnapshotUtils';
 import type { DashboardSummary } from './DashboardTypes';
 
 export const dashboardKeys = {
@@ -28,13 +33,26 @@ const emptySummary = (): DashboardSummary => ({
   sales_trend: [],
   low_stock: [],
   recent_sales: [],
+  today_vat: null,
 });
+
+async function resolveDashboardServerBaseline(): Promise<DashboardSummary> {
+  const cached = queryClient.getQueryData<DashboardSummary>(dashboardKeys.server());
+  if (cached) return cached;
+
+  const businessId = resolveAuthBusinessId();
+  if (businessId) {
+    const fromIdb = await loadDashboardSummaryBaseline(businessId);
+    if (fromIdb) return fromIdb;
+  }
+
+  return emptySummary();
+}
 
 async function fetchDashboardSummary(): Promise<DashboardSummary> {
   return readWithOfflineStrategy({
     readFromClient: async () => {
-      const server =
-        queryClient.getQueryData<DashboardSummary>(dashboardKeys.server()) ?? emptySummary();
+      const server = await resolveDashboardServerBaseline();
       return applyDashboardPendingOverlay(server);
     },
     fetchFromServer: async () => {
@@ -42,6 +60,10 @@ async function fetchDashboardSummary(): Promise<DashboardSummary> {
         timeout: 10000,
       });
       queryClient.setQueryData(dashboardKeys.server(), data);
+      const businessId = resolveAuthBusinessId();
+      if (businessId) {
+        backupDashboardSummarySnapshot(businessId, data);
+      }
       return applyDashboardPendingOverlay(data);
     },
   });

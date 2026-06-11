@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
@@ -15,6 +16,9 @@ import {
   completeOfflineUpdateBusinessInstant,
   shouldCompleteSettingsLocally,
 } from '../../../../app/store/offline/settings/completeOfflineSettings';
+import { businessToAuthInfo } from './businessAuthSync';
+
+export { businessToAuthInfo, businessToTaxSettings, resolveBusinessForTax, resolveBusinessRecordForTax } from './businessAuthSync';
 
 export const businessKeys = {
   all: ['business'] as const,
@@ -32,6 +36,10 @@ function businessFromAuth(): Business | null {
     trial_ends_at: null,
     ...business,
     owner_id: business.owner_id ?? authUser.id,
+    tax_regime: (business.tax_regime === 'vat_registered' ? 'vat_registered' : 'none') as Business['tax_regime'],
+    default_vat_rate: business.default_vat_rate != null ? Number(business.default_vat_rate) : 18,
+    jurisdiction: business.jurisdiction ?? 'UG',
+    prices_include_tax: business.prices_include_tax !== false,
   };
 }
 
@@ -45,7 +53,8 @@ async function applyPendingBusiness(base: Business | null): Promise<BusinessWith
 }
 
 export function useBusiness() {
-  return useQuery<BusinessWithSyncMeta>({
+  const dispatch = useAppDispatch();
+  const query = useQuery<BusinessWithSyncMeta>({
     queryKey: businessKeys.mine(),
     queryFn: async () => readWithOfflineStrategy({
       readFromClient: async () => {
@@ -65,6 +74,13 @@ export function useBusiness() {
     retry: (count, err) => !isNetworkFailure(err) && count < 1,
     networkMode: 'always',
   });
+
+  useEffect(() => {
+    if (!query.data) return;
+    dispatch(setBusiness(businessToAuthInfo(query.data)));
+  }, [query.data, dispatch]);
+
+  return query;
 }
 
 export function useUpdateBusiness() {
@@ -100,7 +116,7 @@ export function useUpdateBusiness() {
         return;
       }
 
-      dispatch(setBusiness(business));
+      dispatch(setBusiness(businessToAuthInfo(business)));
       qc.setQueryData(businessKeys.mine(), business);
       showToast('success', business._pendingSync ? 'Business settings saved — will sync when online' : 'Business settings updated');
     },

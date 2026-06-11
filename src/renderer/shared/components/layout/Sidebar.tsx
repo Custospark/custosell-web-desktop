@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Receipt, Settings,
   LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
-  UserCog, Shield, Building2, ListOrdered, Clock, Bell,
+  UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
 } from 'lucide-react';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
@@ -44,7 +44,7 @@ const baseSubRoutes = [
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
-  ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
+  ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
 ];
 
 const platformSubRoutes = [
@@ -143,6 +143,7 @@ const baseNavGroups: NavGroup[] = [
     label: 'Settings',
     subItems: [
       { to: ROUTES.SETTINGS.BUSINESS, label: 'Business', icon: Building2 },
+      { to: ROUTES.SETTINGS.TAX, label: 'Tax & VAT', icon: Scale },
       // { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },

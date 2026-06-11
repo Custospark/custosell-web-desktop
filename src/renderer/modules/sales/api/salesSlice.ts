@@ -32,7 +32,14 @@ const salesSlice = createSlice({
   name: 'sales',
   initialState,
   reducers: {
-    addToCart(state, action: PayloadAction<{ product_id: number; name: string; unit_price: number; unit?: string | null }>) {
+    addToCart(state, action: PayloadAction<{
+      product_id: number;
+      name: string;
+      unit_price: number;
+      unit?: string | null;
+      tax_percentage?: number | string | null;
+      tax_class?: string | null;
+    }>) {
       const existing = state.cartItems.find((c) => c.product_id === action.payload.product_id);
       if (existing) {
         existing.quantity += 1;
@@ -42,6 +49,8 @@ const salesSlice = createSlice({
           name: action.payload.name,
           unit_price: action.payload.unit_price,
           unit: action.payload.unit,
+          tax_percentage: action.payload.tax_percentage ?? null,
+          tax_class: action.payload.tax_class ?? 'standard',
           quantity: 1,
           discount_amount: 0,
         });

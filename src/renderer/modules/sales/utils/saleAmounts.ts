@@ -19,3 +19,17 @@ export function netSaleAmount(sale: Pick<Sale | SaleWithSyncMeta, 'net_amount' |
   if (sale.net_amount !== undefined && sale.net_amount !== null) return Math.max(0, toAmount(sale.net_amount));
   return Math.max(0, grossSaleAmount(sale) - refundedAmount(sale));
 }
+
+export function saleTaxAmount(sale: Pick<Sale | SaleWithSyncMeta, 'tax_total' | 'sale_items'>): number {
+  const headerTax = toAmount(sale.tax_total);
+  if (headerTax > 0) return headerTax;
+  return (sale.sale_items ?? []).reduce((sum, item) => sum + toAmount(item.tax_amount), 0);
+}
+
+export function saleTaxRefundedAmount(sale: Pick<Sale | SaleWithSyncMeta, 'sale_items'>): number {
+  return (sale.sale_items ?? []).reduce((sum, item) => sum + toAmount(item.tax_refunded_amount), 0);
+}
+
+export function netSaleTaxAmount(sale: Pick<Sale | SaleWithSyncMeta, 'tax_total' | 'sale_items'>): number {
+  return Math.max(0, saleTaxAmount(sale) - saleTaxRefundedAmount(sale));
+}

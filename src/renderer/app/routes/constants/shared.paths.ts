@@ -24,7 +24,7 @@ export const ROUTES = {
     FEEDBACK: '/guide/feedback',
     CONTACT: '/guide/contact',
   },
-  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', STAFF: '/settings/staff', ROLES: '/settings/roles', SUBSCRIPTION: '/settings/subscription' },
+  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', TAX: '/settings/tax', STAFF: '/settings/staff', ROLES: '/settings/roles', SUBSCRIPTION: '/settings/subscription' },
   PLATFORM: {
     INDEX: '/platform',
     OVERVIEW: '/platform/overview',

@@ -1,8 +1,9 @@
 import { localSalesStore } from './localSalesStore';
 import { localRefundsStore } from './localRefundsStore';
 import { localExpensesStore } from '../expenses/localExpensesStore';
-import type { DashboardSummary, SalesTrendDay } from '../../../../modules/dashboard/DashboardTypes';
+import type { DashboardSummary, DashboardTodayVat, SalesTrendDay } from '../../../../modules/dashboard/DashboardTypes';
 import type { Sale } from '../../../../modules/sales/api/salesTypes';
+import { saleTaxAmount, saleTaxRefundedAmount } from '../../../../modules/sales/utils/saleAmounts';
 
 export interface OfflineSalesSummary {
   today_revenue: number;
@@ -85,6 +86,84 @@ export async function computeOfflineExpenseAdjustments(): Promise<Map<string, nu
   return expensesByDate;
 }
 
+/** Pending offline sales/refunds/expenses adjust today's VAT until synced. */
+export async function computeOfflineVatAdjustments(): Promise<DashboardTodayVat> {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const [todaySales, pendingRefunds, pendingExpenses] = await Promise.all([
+    localSalesStore.getTodayPendingSales(),
+    localRefundsStore.getPending(),
+    localExpensesStore.getPending(),
+  ]);
+
+  let output_vat = 0;
+  for (const record of todaySales) {
+    output_vat += saleTaxAmount(record.sale);
+  }
+
+  let output_vat_refunded = 0;
+  for (const record of pendingRefunds) {
+    if (record.updatedSale.sale_date.slice(0, 10) !== todayKey) continue;
+    output_vat_refunded += saleTaxRefundedAmount(record.updatedSale);
+  }
+
+  let input_vat = 0;
+  for (const record of pendingExpenses) {
+    if (record.mutationType === 'delete') continue;
+    if (record.expense.expense_date.slice(0, 10) !== todayKey) continue;
+    if (!record.expense.vat_claimable) continue;
+    input_vat += parseFloat(record.expense.vat_amount || '0') || 0;
+  }
+
+  const net_output_vat = Math.max(0, output_vat - output_vat_refunded);
+  const vat_payable = net_output_vat - input_vat;
+
+  return {
+    output_vat,
+    output_vat_refunded,
+    net_output_vat,
+    input_vat,
+    vat_payable,
+    transaction_count: todaySales.length,
+  };
+}
+
+function mergeTodayVat(
+  serverVat: DashboardTodayVat | null | undefined,
+  offlineVat: DashboardTodayVat,
+): DashboardTodayVat | null {
+  const hasOffline =
+    offlineVat.output_vat !== 0
+    || offlineVat.output_vat_refunded !== 0
+    || offlineVat.input_vat !== 0
+    || offlineVat.transaction_count !== 0;
+
+  if (!serverVat && !hasOffline) return null;
+
+  const base = serverVat ?? {
+    output_vat: 0,
+    output_vat_refunded: 0,
+    net_output_vat: 0,
+    input_vat: 0,
+    vat_payable: 0,
+    transaction_count: 0,
+  };
+
+  const output_vat = base.output_vat + offlineVat.output_vat;
+  const output_vat_refunded = base.output_vat_refunded + offlineVat.output_vat_refunded;
+  const input_vat = base.input_vat + offlineVat.input_vat;
+  const net_output_vat = Math.max(0, output_vat - output_vat_refunded);
+  const vat_payable = net_output_vat - input_vat;
+
+  return {
+    output_vat,
+    output_vat_refunded,
+    net_output_vat,
+    input_vat,
+    vat_payable,
+    transaction_count: base.transaction_count + offlineVat.transaction_count,
+  };
+}
+
 /** All pending sales grouped by date for trend overlay. */
 export async function computeOfflineSalesTrend(): Promise<Map<string, { revenue: number; transactions: number }>> {
   const allPending = await localSalesStore.getPending();
@@ -106,11 +185,12 @@ export async function computeOfflineSalesTrend(): Promise<Map<string, { revenue:
 export async function applyDashboardPendingOverlay(
   server: DashboardSummary,
 ): Promise<DashboardSummary> {
-  const [offline, refundAdj, expenseAdj, offlineTrend] = await Promise.all([
+  const [offline, refundAdj, expenseAdj, offlineTrend, offlineVat] = await Promise.all([
     computeOfflineSalesSummary(),
     computeOfflineRefundAdjustments(),
     computeOfflineExpenseAdjustments(),
     computeOfflineSalesTrend(),
+    computeOfflineVatAdjustments(),
   ]);
 
   let merged = mergeDashboardWithOffline(server, offline, offlineTrend);
@@ -134,6 +214,11 @@ export async function applyDashboardPendingOverlay(
       today_net_sales: todayNetSales,
       today_net_after_expenses: todayNetSales,
     };
+  }
+
+  const todayVat = mergeTodayVat(merged.today_vat, offlineVat);
+  if (todayVat) {
+    merged = { ...merged, today_vat: todayVat };
   }
 
   merged = {

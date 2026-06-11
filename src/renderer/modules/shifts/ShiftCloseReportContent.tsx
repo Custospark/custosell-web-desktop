@@ -93,7 +93,10 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
         )}
       </div>
 
-      <p className="text-[10px] text-center text-gray-500 mb-3">{SHIFT_NET_SALES_FORMULA}</p>
+      <p className="text-[10px] text-center text-gray-500 mb-3">
+        {SHIFT_NET_SALES_FORMULA}
+        {data.taxEnabled && '. VAT shown separately for tax reporting.'}
+      </p>
 
       <div className="grid grid-cols-2 gap-3 mb-5">
         <SummaryCard label="Cash at handover" value={formatCurrency(data.cashHandover)} highlight />
@@ -121,6 +124,14 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
           <Row label="Gross sales" value={formatCurrency(data.grossSales)} />
           {data.refunds > 0 && (
             <Row label="Refunds" value={`-${formatCurrency(data.refunds)}`} negative />
+          )}
+          {data.taxEnabled && (
+            <>
+              <Row label="Output VAT (net)" value={formatCurrency(data.outputVat ?? 0)} sub />
+              {(data.vatRefunded ?? 0) > 0 && (
+                <Row label="VAT refunded" value={`-${formatCurrency(data.vatRefunded ?? 0)}`} negative sub />
+              )}
+            </>
           )}
           {data.shiftExpenses > 0 && (
             <Row label="Shift expenses" value={`-${formatCurrency(data.shiftExpenses)}`} negative />

@@ -23,6 +23,7 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
   const tendered = sale.amount_tendered ? parseFloat(sale.amount_tendered) : null;
   const change = sale.change_given ? parseFloat(sale.change_given) : null;
   const discount = parseFloat(sale.discount_amount);
+  const taxTotal = parseFloat(sale.tax_total || '0');
   const totalRefunded = (sale.sale_items ?? []).reduce((sum, i) => sum + parseFloat(i.refunded_amount || '0'), 0);
   const netAmount = Math.max(0, Math.round((parseFloat(sale.total_amount) - totalRefunded) * 100) / 100);
 
@@ -125,6 +126,12 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
             <div className="flex justify-between">
               <span className="text-gray-500">Discount</span>
               <span className="text-green-600">-{formatCurrency(discount)}</span>
+            </div>
+          )}
+          {taxTotal > 0 && (
+            <div className="flex justify-between">
+              <span className="text-gray-500">VAT</span>
+              <span className="text-gray-700">{formatCurrency(taxTotal)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm font-bold pt-1 border-t border-gray-200">

@@ -2,6 +2,7 @@ import { useDashboardSummary } from './DashboardQueries';
 import { useExpenseSummary } from '../expenses/api/ExpenseQueries';
 import { SalesTrendChart, ExpensePieChart } from './DashboardCharts';
 import QuickReports from './QuickReports';
+import DashboardVatSection from './DashboardVatSection';
 import { Badge } from '../../shared/components/badges/Badge';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -79,6 +80,9 @@ export default function DashboardPage() {
               </div>
               <p className="text-3xl font-bold text-gray-900 mb-0.5 relative">{value}</p>
               <p className="text-sm font-medium text-gray-500 relative">{card.label}</p>
+              {card.key === 'today_net_sales' && (
+                <p className="text-xs text-gray-400 mt-0.5 relative">Cash collected − refunds − expenses</p>
+              )}
               {secondary && <p className="text-xs text-gray-500 mt-1 relative">{secondary}</p>}
             </div>
           );
@@ -87,7 +91,7 @@ export default function DashboardPage() {
 
       {/* Main Content: Left Column + Right Column */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left Column — Sales Trend + Low Stock + Expense Chart */}
+        {/* Left Column — Sales Trend + Low Stock + Recent Activity */}
         <div className="lg:col-span-3 space-y-6">
           <SalesTrendChart data={summary?.sales_trend ?? []} />
 
@@ -114,13 +118,6 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-
-          <ExpensePieChart data={expenseCategories} title="Today's Expenses by Category" />
-        </div>
-
-        {/* Right Column — Reports + Recent Activity */}
-        <div className="lg:col-span-2 space-y-6">
-          <QuickReports />
 
           {/* Recent Activity */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -149,6 +146,15 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Right Column — Reports + VAT + Expenses */}
+        <div className="lg:col-span-2 space-y-6">
+          <QuickReports />
+
+          <DashboardVatSection summary={summary} isLoading={isLoading} />
+
+          <ExpensePieChart data={expenseCategories} title="Today's Expenses by Category" />
         </div>
       </div>
     </div>

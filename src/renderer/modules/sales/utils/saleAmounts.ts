@@ -6,9 +6,19 @@ export function toAmount(value: string | number | null | undefined): number {
   return Number.isFinite(amount) ? amount : 0;
 }
 
-export function refundedAmount(sale: Pick<Sale | SaleWithSyncMeta, 'refunds' | 'sale_items' | 'total_amount'>): number {
-  if (sale.refunds !== undefined && sale.refunds !== null) return toAmount(sale.refunds);
+function refundedAmountFromItems(
+  sale: Pick<Sale | SaleWithSyncMeta, 'sale_items'>,
+): number {
   return (sale.sale_items ?? []).reduce((sum, item) => sum + toAmount(item.refunded_amount), 0);
+}
+
+/** Line items are authoritative when present — header refunds can be stale after offline refund. */
+export function refundedAmount(sale: Pick<Sale | SaleWithSyncMeta, 'refunds' | 'sale_items' | 'total_amount'>): number {
+  if (sale.sale_items && sale.sale_items.length > 0) {
+    return refundedAmountFromItems(sale);
+  }
+  if (sale.refunds !== undefined && sale.refunds !== null) return toAmount(sale.refunds);
+  return 0;
 }
 
 export function grossSaleAmount(sale: Pick<Sale | SaleWithSyncMeta, 'total_amount'>): number {
@@ -16,7 +26,6 @@ export function grossSaleAmount(sale: Pick<Sale | SaleWithSyncMeta, 'total_amoun
 }
 
 export function netSaleAmount(sale: Pick<Sale | SaleWithSyncMeta, 'net_amount' | 'refunds' | 'sale_items' | 'total_amount'>): number {
-  if (sale.net_amount !== undefined && sale.net_amount !== null) return Math.max(0, toAmount(sale.net_amount));
   return Math.max(0, grossSaleAmount(sale) - refundedAmount(sale));
 }
 

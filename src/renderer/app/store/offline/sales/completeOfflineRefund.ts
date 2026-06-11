@@ -48,9 +48,18 @@ export function applyRefundToSale(sale: Sale, refundData: RefundData): Sale {
   if (allRefunded) payment_status = 'refunded';
   else if (anyRefunded) payment_status = 'partially_refunded';
 
+  const totalRefunded = items.reduce(
+    (sum, item) => sum + (parseFloat(item.refunded_amount || '0') || 0),
+    0,
+  );
+  const gross = parseFloat(sale.total_amount) || 0;
+  const netAfterRefunds = Math.max(0, gross - totalRefunded);
+
   return {
     ...sale,
     sale_items: items,
+    refunds: totalRefunded,
+    net_amount: netAfterRefunds.toFixed(2),
     payment_status,
     updated_at: new Date().toISOString(),
   };

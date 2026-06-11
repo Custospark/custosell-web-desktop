@@ -104,6 +104,7 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       canSubmit={canSubmit}
+      fullContentWidth
     >
       {product?._syncFailed && (
         <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

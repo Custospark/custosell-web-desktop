@@ -1,5 +1,10 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useAppContext } from '../../../app/contexts/AppContext';
+import {
+  SIDEBAR_WIDTH_COLLAPSED_CLASS,
+  SIDEBAR_WIDTH_EXPANDED_CLASS,
+} from '../layout/layoutConstants';
 
 interface SlideDrawerProps {
   open: boolean;
@@ -11,11 +16,32 @@ interface SlideDrawerProps {
   isSubmitting?: boolean;
   canSubmit?: boolean;
   width?: string;
+  /** Span main content area only — leave the sidebar visible on large screens. */
+  fullContentWidth?: boolean;
 }
 
 export function SlideDrawer({
-  open, onClose, title, subtitle, children, onSubmit, isSubmitting, canSubmit, width = 'sm:w-[560px]',
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  onSubmit,
+  isSubmitting,
+  canSubmit,
+  width = 'sm:w-[560px]',
+  fullContentWidth = false,
 }: SlideDrawerProps) {
+  const { state } = useAppContext();
+  const sidebarOffsetClass = state.sidebarCollapsed
+    ? SIDEBAR_WIDTH_COLLAPSED_CLASS
+    : SIDEBAR_WIDTH_EXPANDED_CLASS;
+  const insetClass = fullContentWidth
+    ? `inset-0 ${sidebarOffsetClass}`
+    : 'inset-0';
+  const panelWidthClass = fullContentWidth
+    ? `left-0 right-0 ${sidebarOffsetClass}`
+    : `w-full ${width}`;
   const nameRef = useRef<HTMLInputElement>(null);
   const didAutoFocus = useRef(false);
 
@@ -45,12 +71,12 @@ export function SlideDrawer({
     <div className="fixed inset-0 z-50" onKeyDown={handleKeyDown}>
       <button
         type="button"
-        className="fixed inset-0 bg-black/50 cursor-default"
+        className={`fixed ${insetClass} bg-black/50 cursor-default`}
         onClick={onClose}
         aria-label="Close"
       />
       <div
-        className={`absolute right-0 top-0 h-full w-full ${width} bg-white shadow-xl flex flex-col`}
+        className={`absolute right-0 top-0 h-full ${panelWidthClass} bg-white shadow-xl flex flex-col`}
         role="dialog"
         aria-modal="true"
       >

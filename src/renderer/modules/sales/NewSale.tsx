@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { computeSaleTax } from '../../shared/utils/taxEngine';
 import { cn } from '../../shared/utils/cn';
+import { findProductByBarcode, matchesProductSearch } from '../../shared/utils/productSearch';
 import { Button } from '../../shared/components/buttons/Button';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
@@ -447,9 +448,8 @@ export default function NewSale() {
   // Filter products
   const results = useMemo(() => {
     if (!products || !search.trim()) return [];
-    const q = search.toLowerCase();
     return products
-      .filter((p) => p.name.toLowerCase().includes(q) && p.is_active)
+      .filter((p) => p.is_active && matchesProductSearch(p, search))
       .slice(0, 8);
   }, [products, search]);
 
@@ -468,7 +468,7 @@ export default function NewSale() {
     }
   };
 
-  const addItem = (
+  const addItem = useCallback((
     id: number,
     name: string,
     price: number,
@@ -487,7 +487,22 @@ export default function NewSale() {
     setSearch('');
     setShowResults(false);
     searchRef.current?.focus();
-  };
+  }, [dispatch]);
+
+  /** Scanner / typed barcode — add as soon as the code fully matches a product. */
+  useEffect(() => {
+    if (!products || !search.trim()) return;
+    const match = findProductByBarcode(products, search);
+    if (!match || !match.is_active || match.stock_quantity <= 0) return;
+    addItem(
+      match.id,
+      match.name,
+      parseFloat(match.unit_price),
+      match.unit,
+      match.tax_percentage,
+      match.tax_class,
+    );
+  }, [search, products, addItem]);
 
   // Click outside handlers
   useEffect(() => {
@@ -545,10 +560,12 @@ export default function NewSale() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && products) {
                         const q = search.trim().toLowerCase();
-                        const exact = products.find((p) =>
-                          p.is_active && p.stock_quantity > 0 &&
-                          (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q) || (p.barcode && p.barcode === q))
-                        );
+                        const barcodeMatch = findProductByBarcode(products, search);
+                        const exact = barcodeMatch
+                          ?? products.find((p) =>
+                            p.is_active && p.stock_quantity > 0
+                            && (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q)),
+                          );
                         if (exact) {
                           addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class);
                         } else if (results.length > 0 && results[0].stock_quantity > 0) {

@@ -15,6 +15,7 @@ import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
+import { matchesProductSearch } from '../../../../shared/utils/productSearch';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
 import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square } from 'lucide-react';
@@ -54,8 +55,7 @@ export default function ProductList() {
     if (!products) return [];
     const safe = products.filter(Boolean) as ProductWithSyncMeta[];
     if (!search.trim()) return safe;
-    const q = search.toLowerCase();
-    return safe.filter((p) => p.name.toLowerCase().includes(q));
+    return safe.filter((p) => matchesProductSearch(p, search));
   }, [products, search]);
 
   const paginated = usePagination(filtered, 10);
@@ -132,7 +132,7 @@ export default function ProductList() {
       <Card>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1">
-            <SearchInput placeholder="Search products by name..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+            <SearchInput placeholder="Search by name, SKU, or barcode..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
           <div className="flex items-center gap-2">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
@@ -170,6 +170,7 @@ export default function ProductList() {
                 ) : item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
               </div>
             ) },
+            { key: 'barcode', header: 'Barcode', render: (item) => item.barcode || <span className="text-gray-400">—</span> },
             { key: 'category', header: 'Category', render: (item) => item.category?.name || <span className="text-gray-400">—</span> },
             { key: 'unit', header: 'Unit', render: (item) => item.unit || <span className="text-gray-400">—</span> },
             { key: 'unit_price', header: 'Unit Price', render: (item) => formatCurrency(item.unit_price) },

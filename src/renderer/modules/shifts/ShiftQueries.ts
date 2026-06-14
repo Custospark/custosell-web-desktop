@@ -128,17 +128,19 @@ function mergeShiftExpenseLists(
   base: ExpenseWithSyncMeta[] = [],
   local: ExpenseWithSyncMeta[] = [],
 ): ExpenseWithSyncMeta[] {
-  const localIds = new Set(local.map((expense) => expense.id));
-  const serverRows = base.filter((expense) => {
+  const safeBase = base.filter(Boolean) as ExpenseWithSyncMeta[];
+  const safeLocal = local.filter(Boolean) as ExpenseWithSyncMeta[];
+  const localIds = new Set(safeLocal.map((expense) => expense.id));
+  const serverRows = safeBase.filter((expense) => {
     if (localIds.has(expense.id)) return false;
     if (expense._pendingSync || expense._localId || expense.id < 0) return false;
     return true;
   });
-  return [...local, ...serverRows];
+  return [...safeLocal, ...serverRows];
 }
 
 async function readShiftExpensesBaseline(shiftId: number): Promise<ExpenseWithSyncMeta[]> {
-  const cached = queryClient.getQueryData<ExpenseWithSyncMeta[]>(shiftKeys.expenses(shiftId)) ?? [];
+  const cached = (queryClient.getQueryData<ExpenseWithSyncMeta[]>(shiftKeys.expenses(shiftId)) ?? []).filter(Boolean);
   const serverCached = cached.filter((e) => !e._pendingSync && !e._localId && e.id > 0);
   if (serverCached.length > 0) return serverCached;
 

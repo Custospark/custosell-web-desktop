@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { ExternalLink, GraduationCap, Loader2, PlayCircle, WifiOff } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { ExternalLink, GraduationCap, Loader2, PlayCircle, WifiOff, Rocket, ShoppingCart, Package, Info } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { useGuideTutorials } from './api/GuideQueries';
@@ -16,14 +16,27 @@ import { cn } from '../../shared/utils/cn';
 
 type CategoryFilter = GuideTutorialCategory | 'all';
 
+const CATEGORY_CONFIG: Record<GuideTutorialCategory, { variant: 'success' | 'warning' | 'danger' | 'primary' | 'neutral'; icon: ReactNode; label: string }> = {
+  'getting-started': { variant: 'primary', icon: <Rocket className="h-3 w-3" />, label: 'Getting started' },
+  sales: { variant: 'success', icon: <ShoppingCart className="h-3 w-3" />, label: 'Sales' },
+  inventory: { variant: 'warning', icon: <Package className="h-3 w-3" />, label: 'Inventory' },
+  general: { variant: 'neutral', icon: <Info className="h-3 w-3" />, label: 'General' },
+};
+
 function excerpt(text: string | null, max = 160) {
   if (!text?.trim()) return '';
   const t = text.trim();
   return t.length <= max ? t : `${t.slice(0, max).trim()}…`;
 }
 
-function categoryLabel(category: GuideTutorialCategory): string {
-  return GUIDE_TUTORIAL_CATEGORIES.find((c) => c.value === category)?.label ?? category;
+function categoryBadge(category: GuideTutorialCategory): ReactNode {
+  const cfg = CATEGORY_CONFIG[category] ?? CATEGORY_CONFIG.general;
+  return (
+    <Badge variant={cfg.variant} className="inline-flex items-center gap-1">
+      {cfg.icon}
+      {cfg.label}
+    </Badge>
+  );
 }
 
 function filterTutorials(
@@ -113,6 +126,7 @@ export default function GuideTutorialsPage() {
               active={categoryFilter === cat.value}
               onClick={() => setCategoryFilter(cat.value)}
               disabled={isLoading}
+              category={cat.value}
             />
           ))}
         </div>
@@ -232,7 +246,7 @@ function TutorialCard({ tutorial: m, isOffline }: { tutorial: GuideTutorialDto; 
         <div className="flex flex-1 flex-col p-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <h3 className="text-base font-semibold leading-snug text-gray-900">{m.title}</h3>
-            <Badge variant="neutral">{categoryLabel(m.category)}</Badge>
+            {categoryBadge(m.category)}
           </div>
           {m.description ? (
             <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-600">{excerpt(m.description)}</p>
@@ -269,24 +283,45 @@ function CategoryChip({
   active,
   onClick,
   disabled,
+  category,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
   disabled?: boolean;
+  category?: GuideTutorialCategory;
 }) {
+  const activeStyles: Record<string, string> = {
+    'getting-started': 'border-blue-600 bg-blue-50 text-blue-700',
+    sales: 'border-green-600 bg-green-50 text-green-700',
+    inventory: 'border-amber-600 bg-amber-50 text-amber-700',
+    general: 'border-purple-600 bg-purple-50 text-purple-700',
+    all: 'border-blue-600 bg-blue-50 text-blue-700',
+  };
+
+  const iconMap: Record<string, ReactNode> = {
+    all: null,
+    'getting-started': <Rocket className="h-3.5 w-3.5" />,
+    sales: <ShoppingCart className="h-3.5 w-3.5" />,
+    inventory: <Package className="h-3.5 w-3.5" />,
+    general: <Info className="h-3.5 w-3.5" />,
+  };
+
+  const key = category ?? 'all';
+
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
         active
-          ? 'border-blue-600 bg-blue-50 text-blue-700'
+          ? activeStyles[key]
           : 'border-gray-300 text-gray-700 hover:bg-gray-50',
       )}
     >
+      {iconMap[key]}
       {label}
     </button>
   );

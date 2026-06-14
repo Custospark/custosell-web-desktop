@@ -42,7 +42,9 @@ export default function SaleCompletedModal({ sale, onNewSale }: SaleCompletedMod
           </p>
         )}
 
-        <ReceiptContent ref={receiptRef} sale={sale} />
+        <div className="flex justify-center">
+          <ReceiptContent ref={receiptRef} sale={sale} />
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <Button className="flex-1 order-2 sm:order-1 py-3" variant="outline" onClick={handlePrint}>

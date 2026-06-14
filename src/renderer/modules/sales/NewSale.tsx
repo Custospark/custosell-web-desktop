@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useReactToPrint } from 'react-to-print';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import type { Product } from '../inventory/api/products/ProductTypes';
 import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
@@ -12,7 +11,6 @@ import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
 import SaleCompletedModal from './ui/SaleCompletedModal';
-import PrintableReceipt from './ui/PrintableReceipt';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -142,21 +140,7 @@ function BillingControls() {
   const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
-  const receiptRef = useRef<HTMLDivElement>(null);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const handlePrint = useReactToPrint({
-    contentRef: receiptRef,
-    documentTitle: completedSale?.receipt_number ?? 'receipt',
-    pageStyle: `
-      @page { margin: 8mm; }
-      @media print {
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
-        .no-print { display: none !important; }
-      }
-    `,
-    onBeforePrint: async () => setIsPrinting(true),
-    onAfterPrint: async () => setIsPrinting(false),
-  });
+
 
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -381,10 +365,8 @@ function BillingControls() {
     </div>
     <SaleCompletedModal
       sale={completedSale}
-      onPrint={handlePrint}
       onNewSale={() => { setCompletedSale(null); createSale.reset(); }}
     />
-    {completedSale && <PrintableReceipt ref={receiptRef} sale={completedSale} isPrinting={isPrinting} />}
     </>
   );
 }

@@ -17,9 +17,10 @@ export default function SaleCompletedModal({ sale, onNewSale }: SaleCompletedMod
     contentRef: receiptRef,
     documentTitle: sale?.receipt_number ?? 'receipt',
     pageStyle: `
-      @page { margin: 8mm; }
+      @page { margin: 0; }
       @media print {
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 12px; }
+        html, body { margin: 0; padding: 0; width: auto; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 10px; }
         .no-print { display: none !important; }
       }
     `,

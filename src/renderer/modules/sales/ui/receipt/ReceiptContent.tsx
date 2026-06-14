@@ -22,8 +22,13 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
   const location = [business?.address, business?.city, business?.state, business?.country].filter(Boolean).join(', ');
 
   return (
-    <div ref={ref} className="receipt-print bg-white border border-gray-200 rounded-xl text-xs">
-      <div className="max-h-[60vh] overflow-y-auto print:overflow-visible p-4">
+    <div ref={ref} className="receipt-print bg-white border border-gray-200 rounded-xl print:border-0 print:rounded-none text-xs" style={{ maxWidth: '320px' }}>
+      <style>{`
+        @media print {
+          .receipt-print { max-width: 100% !important; width: 100%; }
+        }
+      `}</style>
+      <div className="max-h-[60vh] overflow-y-auto print:overflow-visible p-4 print:px-2 print:py-3">
         <div className="text-center mb-3">
           <h2 className="text-base font-bold text-gray-900 uppercase">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
           {location && <p className="text-xs text-gray-500">{location}</p>}

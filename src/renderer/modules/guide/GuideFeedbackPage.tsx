@@ -290,7 +290,7 @@ export default function GuideFeedbackPage() {
               : 'You have not sent any feedback yet.'}
           </p>
         )}
-        {mine.map((item) => {
+        {(mine ?? []).filter(Boolean).map((item) => {
           const key = feedbackSelectionKey(item);
           return (
             <FeedbackMineCard

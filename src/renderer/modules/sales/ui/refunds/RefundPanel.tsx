@@ -48,7 +48,7 @@ export default function RefundPanel() {
     },
   });
 
-  const paidSales = (sales || []).filter((s) => s.payment_status === 'paid' || s.payment_status === 'partially_refunded')
+  const paidSales = (sales ?? []).filter(Boolean).filter((s) => s.payment_status === 'paid' || s.payment_status === 'partially_refunded')
     .filter((s) => !receiptSearch || s.receipt_number.toLowerCase().includes(receiptSearch.toLowerCase()));
 
   const saleSubtotal = selectedSale ? parseFloat(selectedSale.subtotal) : 0;

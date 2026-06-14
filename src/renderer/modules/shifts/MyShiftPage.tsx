@@ -96,9 +96,10 @@ export default function MyShiftPage() {
 
   const filteredSales = useMemo(() => {
     if (!shiftSales) return [];
-    if (!search.trim()) return shiftSales;
+    const safe = shiftSales.filter(Boolean) as SaleWithSyncMeta[];
+    if (!search.trim()) return safe;
     const q = search.toLowerCase();
-    return shiftSales.filter((sale) => sale.receipt_number.toLowerCase().includes(q));
+    return safe.filter((sale) => sale.receipt_number.toLowerCase().includes(q));
   }, [shiftSales, search]);
 
   const paginated = usePagination(filteredSales || [], 10);
@@ -146,6 +147,7 @@ export default function MyShiftPage() {
   const completedShifts = useMemo(() => {
     if (!allShifts || !authUser?.id) return [];
     return allShifts
+      .filter(Boolean)
       .filter((s) => s.status === 'completed' && s.user_id === authUser.id)
       .sort((a, b) => new Date(b.clock_in).getTime() - new Date(a.clock_in).getTime());
   }, [allShifts, authUser]);
@@ -527,7 +529,7 @@ function ShiftExpensesPanel({ expenses, total }: { expenses: ExpenseWithSyncMeta
         <p className="text-sm text-gray-400 text-center py-6">No shift expenses recorded yet</p>
       ) : (
         <div className="space-y-2">
-          {expenses.map((expense) => (
+          {expenses.filter(Boolean).map((expense) => (
             <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm">
               <div className="min-w-0">
                 <p className="font-medium text-gray-800 truncate">{expense.description}</p>

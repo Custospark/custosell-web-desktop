@@ -36,6 +36,10 @@ async function loadLocalPendingCustomers(): Promise<CustomerWithSyncMeta[]> {
     .map(toCustomerWithSyncMeta);
 }
 
+function sanitizeCustomerList(list: CustomerWithSyncMeta[] = []): CustomerWithSyncMeta[] {
+  return list.filter(Boolean) as CustomerWithSyncMeta[];
+}
+
 function mergeCustomerLists(base: Customer[], local: CustomerWithSyncMeta[]): CustomerWithSyncMeta[] {
   const safeBase = base.filter(Boolean) as Customer[];
   const safeLocal = local.filter(Boolean) as CustomerWithSyncMeta[];
@@ -43,6 +47,15 @@ function mergeCustomerLists(base: Customer[], local: CustomerWithSyncMeta[]): Cu
   const localPhones = new Set(safeLocal.map((c) => c.phone));
   const filtered = safeBase.filter((c) => !localIds.has(c.id) && !localPhones.has(c.phone));
   return [...safeLocal, ...filtered] as CustomerWithSyncMeta[];
+}
+
+function patchCustomerCache(
+  qc: ReturnType<typeof useQueryClient>,
+  patch: (old: CustomerWithSyncMeta[]) => CustomerWithSyncMeta[],
+): void {
+  qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) =>
+    sanitizeCustomerList(patch(sanitizeCustomerList(old ?? []))),
+  );
 }
 
 async function readCustomersBaseline(): Promise<Customer[]> {
@@ -140,10 +153,9 @@ export function useCreateCustomer() {
     },
     onSuccess: (customer) => {
       if (customer._pendingSync) {
-        qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) => {
-          const list = old ?? [];
-          if (list.some((c) => c.id === customer.id || c.phone === customer.phone)) return list;
-          return [customer, ...list];
+        patchCustomerCache(qc, (old) => {
+          if (old.some((c) => c.id === customer.id || c.phone === customer.phone)) return old;
+          return [customer, ...old];
         });
         showToast('success', 'Customer saved — will sync when online');
       } else {
@@ -164,8 +176,8 @@ export function useUpdateCustomer() {
     networkMode: 'always',
     retry: false,
     mutationFn: async ({ id, data }) => {
-      const cached = queryClient.getQueryData<Customer[]>(customerKeys.customers());
-      const existing = cached?.find((c) => c.id === id);
+      const cached = sanitizeCustomerList(queryClient.getQueryData<CustomerWithSyncMeta[]>(customerKeys.customers()));
+      const existing = cached.find((c) => c.id === id);
       if (!existing) throw new Error('Customer not found');
 
       const isPendingOnly = (existing as CustomerWithSyncMeta)._pendingSync || id < 0;
@@ -188,8 +200,8 @@ export function useUpdateCustomer() {
     },
     onSuccess: (customer, { id }) => {
       if (customer._pendingSync) {
-        qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) =>
-          (old ?? []).map((c) => c.id === id ? customer : c),
+        patchCustomerCache(qc, (old) =>
+          old.map((c) => c.id === id ? customer : c),
         );
         showToast('success', 'Changes saved — will sync when online');
       } else {
@@ -210,8 +222,8 @@ export function useDeleteCustomer() {
     networkMode: 'always',
     retry: false,
     mutationFn: async (id) => {
-      const cached = qc.getQueryData<CustomerWithSyncMeta[]>(customerKeys.customers());
-      const customer = cached?.find((c) => c.id === id);
+      const cached = sanitizeCustomerList(qc.getQueryData<CustomerWithSyncMeta[]>(customerKeys.customers()));
+      const customer = cached.find((c) => c.id === id);
       const isPendingOnly = customer?._pendingSync || id < 0;
 
       if (isPendingOnly) {
@@ -241,8 +253,8 @@ export function useDeleteCustomer() {
       }
     },
     onSuccess: (_data, id) => {
-      qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) =>
-        (old ?? []).filter((c) => c.id !== id),
+      patchCustomerCache(qc, (old) =>
+        old.filter((c) => c.id !== id),
       );
       void refreshCustomerCatalogSnapshot();
     },

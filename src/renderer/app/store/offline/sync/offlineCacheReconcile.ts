@@ -196,7 +196,7 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
 
   qc.setQueryData<ProductWithSyncMeta[]>(['inventory', 'products'], (old) => {
     if (!old) return old;
-    return old.filter((p) => {
+    return old.filter(Boolean).filter((p) => {
       if (!pendingProductIds.has(p.id) && (p._pendingSync || p._localId || p.id < 0)) return false;
       return true;
     }).map((p) => {
@@ -215,7 +215,7 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
 
   qc.setQueryData<CategoryWithSyncMeta[]>(['inventory', 'categories'], (old) => {
     if (!old) return old;
-    return old.filter((c) => {
+    return old.filter(Boolean).filter((c) => {
       if (!pendingCategoryIds.has(c.id) && (c._pendingSync || c._localId || c.id < 0)) return false;
       return true;
     }).map((c) => {
@@ -235,7 +235,7 @@ export async function purgeSyncedOptimisticFromCache(qc: QueryClient): Promise<v
 
   qc.setQueryData<CustomerWithSyncMeta[]>(['customers', 'customers'], (old) => {
     if (!old) return old;
-    return old.filter((c) => {
+    return old.filter(Boolean).filter((c) => {
       if (!pendingCustomerIds.has(c.id) && (c._pendingSync || c._localId || c.id < 0)) return false;
       return true;
     }).map((c) => {

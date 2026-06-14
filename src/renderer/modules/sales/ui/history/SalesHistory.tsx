@@ -48,9 +48,10 @@ export default function SalesHistory() {
 
   const filtered = useMemo(() => {
     if (!sales) return [];
-    if (!search.trim()) return sales;
+    const safe = sales.filter(Boolean) as SaleWithSyncMeta[];
+    if (!search.trim()) return safe;
     const q = search.toLowerCase();
-    return sales.filter((s) => s.receipt_number.toLowerCase().includes(q));
+    return safe.filter((s) => s.receipt_number.toLowerCase().includes(q));
   }, [sales, search]);
 
   const paginated = usePagination(filtered, 15);

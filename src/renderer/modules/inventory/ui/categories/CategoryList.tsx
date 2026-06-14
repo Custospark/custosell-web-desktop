@@ -34,7 +34,7 @@ export default function CategoryList() {
     if (confirmed) deleteMutation.mutate(cat.id);
   };
 
-  const paginated = usePagination(categories || [], 5);
+  const paginated = usePagination((categories ?? []).filter(Boolean) as CategoryWithSyncMeta[], 5);
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
   if (error) {

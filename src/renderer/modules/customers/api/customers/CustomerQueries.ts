@@ -152,6 +152,11 @@ export function useCreateCustomer() {
       }
     },
     onSuccess: (customer) => {
+      if (!customer) {
+        void refreshCustomerCatalogSnapshot();
+        qc.invalidateQueries({ queryKey: customerKeys.customers() });
+        return;
+      }
       if (customer._pendingSync) {
         patchCustomerCache(qc, (old) => {
           if (old.some((c) => c.id === customer.id || c.phone === customer.phone)) return old;
@@ -199,6 +204,11 @@ export function useUpdateCustomer() {
       }
     },
     onSuccess: (customer, { id }) => {
+      if (!customer) {
+        void refreshCustomerCatalogSnapshot();
+        qc.invalidateQueries({ queryKey: customerKeys.customers() });
+        return;
+      }
       if (customer._pendingSync) {
         patchCustomerCache(qc, (old) =>
           old.map((c) => c.id === id ? customer : c),

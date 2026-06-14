@@ -56,16 +56,18 @@ export default function SaleCompletedModal({ sale, onNewSale }: SaleCompletedMod
         )}
 
         <div ref={receiptRef} className="receipt-print bg-white border border-gray-200 rounded-xl text-xs">
-          <div className="max-h-[60vh] overflow-y-auto print:overflow-visible p-4">
-            <h2 className="text-base font-bold text-gray-900 uppercase">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
-            {location && <p className="text-xs text-gray-500">{location}</p>}
-            <div className="text-xs text-gray-400 space-x-2 mt-0.5">
-              {business?.phone && <span>Tel: {business.phone}</span>}
-              {business?.email && <span>| {business.email}</span>}
+           <div className="max-h-[60vh] overflow-y-auto print:overflow-visible p-4">
+            <div className="text-center mb-3">
+              <h2 className="text-base font-bold text-gray-900 uppercase">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
+              {location && <p className="text-xs text-gray-500">{location}</p>}
+              <div className="text-xs text-gray-400 space-x-2 mt-0.5">
+                {business?.phone && <span>Tel: {business.phone}</span>}
+                {business?.email && <span>| {business.email}</span>}
+              </div>
+              {business?.website && <p className="text-xs text-gray-400">{business.website}</p>}
+              {business?.tax_id && <p className="text-xs text-gray-400">Tax ID: {business.tax_id}</p>}
+              <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Point of Sale Receipt</p>
             </div>
-            {business?.website && <p className="text-xs text-gray-400">{business.website}</p>}
-            {business?.tax_id && <p className="text-xs text-gray-400">Tax ID: {business.tax_id}</p>}
-            <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Point of Sale Receipt</p>
 
           <div className="border-t border-dashed border-gray-400 border-b py-2 mb-3 text-xs text-gray-600 space-y-0.5">
             <div className="flex justify-between">

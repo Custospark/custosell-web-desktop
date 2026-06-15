@@ -26,7 +26,7 @@ export function useNetworkStatusToasts(): void {
     const cameBackOnline = prev === 'offline' && systemStatus !== 'offline';
 
     if (wentOffline) {
-      showToast('info', buildOfflineToastMessage(user?.name), 10000);
+      showToast('info', buildOfflineToastMessage(user?.name), 5000);
     }
 
     if (cameBackOnline) {

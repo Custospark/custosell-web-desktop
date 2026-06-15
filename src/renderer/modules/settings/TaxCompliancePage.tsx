@@ -127,7 +127,10 @@ export default function TaxCompliancePage() {
           {businessLoading ? (
             <LoadingSkeleton variant="minimal" message="Loading tax profile…" />
           ) : !taxEnabled ? (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            <p
+              className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2"
+              title={isOffline ? 'Unavailable offline' : undefined}
+            >
               Enable VAT registration under Settings → Business to calculate output VAT on sales.
             </p>
           ) : (
@@ -203,7 +206,10 @@ export default function TaxCompliancePage() {
           {isLoading && <LoadingSkeleton variant="card" />}
           {isError && <p className="text-sm text-red-600">Could not load VAT summary for this period.</p>}
           {!taxEnabled && !isLoading && (
-            <p className="text-sm text-gray-500">
+            <p
+              className="text-sm text-gray-500"
+              title={isOffline ? 'Unavailable offline' : undefined}
+            >
               VAT summary figures require VAT registration. Enable it above to track output VAT from sales and claimable purchase VAT.
             </p>
           )}

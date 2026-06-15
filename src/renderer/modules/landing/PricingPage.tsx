@@ -12,7 +12,7 @@ export default function PricingPage() {
         <span className="text-sm font-semibold text-white">Coming Soon</span>
       </div>
       <h1 className="text-4xl font-bold text-gray-900">Pricing</h1>
-      <p className="text-lg text-gray-500 max-w-xl mx-auto"><strong>You're in.</strong> Custosell Early Access is completely free — full system, no limits, no cost. This is your plan, and it won't change. When paid plans launch, you keep everything you have, plus you're first in line for new features. Invitation only, and it's yours.</p>
+      <p className="text-lg text-gray-500 max-w-xl mx-auto"><strong>You're in.</strong> Early Access is completely free — full system, no limits. This is your plan, and it stays yours. Invitation only.</p>
       <Button size="lg" onClick={() => navigate(ROUTES.REGISTER)}>
         Get Early Access
       </Button>

@@ -80,9 +80,7 @@ export default function DashboardPage() {
               </div>
               <p className="text-3xl font-bold text-gray-900 mb-0.5 relative">{value}</p>
               <p className="text-sm font-medium text-gray-500 relative">{card.label}</p>
-              {card.key === 'today_net_sales' && (
-                <p className="text-xs text-gray-400 mt-0.5 relative">Cash collected − refunds − expenses</p>
-              )}
+    
               {secondary && <p className="text-xs text-gray-500 mt-1 relative">{secondary}</p>}
             </div>
           );

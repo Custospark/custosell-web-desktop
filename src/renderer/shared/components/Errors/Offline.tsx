@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { WifiOff, Wifi, Plane, Router, Signal, RefreshCw } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
-import { checkNetworkConnectivity, selectSystemStatus } from '../../../app/store/slices/networkSlice';
+import { checkNetworkConnectivity } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
 import { getUserFirstName } from '../../utils/userDisplayName';
 
@@ -16,20 +16,12 @@ export default function Offline() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const [retryStatus, setRetryStatus] = useState<'idle' | 'checking'>('idle');
-  const prevStatusRef = useRef(retryStatus);
-
-  useEffect(() => {
-    const status = useAppSelector(selectSystemStatus);
-    if (prevStatusRef.current === 'checking' && status === 'online') {
-      setRetryStatus('idle');
-    }
-    prevStatusRef.current = retryStatus;
-  });
 
   const handleRetry = useCallback(async () => {
     setRetryStatus('checking');
     try {
       await dispatch(checkNetworkConnectivity()).unwrap();
+      setRetryStatus('idle');
     } catch {
       setTimeout(() => setRetryStatus('idle'), 2000);
     }
@@ -89,7 +81,7 @@ export default function Offline() {
 
       <p className="mt-8 text-xs tracking-wide text-gray-400">
         Need help?{' '}
-        <a href="mailto:support@custospark.com" className="font-medium text-blue-600 hover:underline">
+        <a href="mailto:support@custosell.com" className="font-medium text-blue-600 hover:underline">
           Contact support
         </a>
       </p>

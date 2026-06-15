@@ -13,7 +13,7 @@ import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
-  Menu, X, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User,
+  Menu, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -137,6 +137,18 @@ export function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const handleToggleSidebar = () => {
+    if (window.innerWidth >= 1024) {
+      dispatch({ type: 'TOGGLE_SIDEBAR_COLLAPSED' });
+    } else {
+      dispatch({ type: 'TOGGLE_SIDEBAR' });
+    }
+  };
+
+  const isLargeScreen = window.innerWidth >= 1024;
+  const sidebarShowing = isLargeScreen ? !state.sidebarCollapsed : state.sidebarOpen;
+  const sidebarLabel = sidebarShowing ? 'Hide sidebar' : 'Show sidebar';
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -183,15 +195,16 @@ export function Navbar() {
           'grid-cols-[auto_minmax(0,1fr)_auto]',
         )}
       >
-        {/* Left — menu + shift (md+) */}
+        {/* Left — menu toggle + shift */}
         <div className="flex items-center gap-1 sm:gap-2 min-w-0">
           <button
             type="button"
-            className={cn(iconBtn, 'lg:hidden w-8 h-8 sm:w-9 sm:h-9')}
-            onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-            aria-label={state.sidebarOpen ? 'Close menu' : 'Open menu'}
+            onClick={handleToggleSidebar}
+            className={cn(iconBtn, 'w-8 h-8 sm:w-9 sm:h-9')}
+            title={sidebarLabel}
+            aria-label={sidebarLabel}
           >
-            {state.sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
 
           {user?.shift_clock_in && (

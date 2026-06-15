@@ -4,7 +4,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { version } from '../../../../../package.json';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Receipt, Settings,
-  LogOut, PanelLeftClose, PanelLeft, ChevronDown, ChevronRight,
+  LogOut, ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
@@ -189,8 +189,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   useEffect(() => {
     if (currentGroupIndex !== null && openGroup !== currentGroupIndex) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenGroup(currentGroupIndex);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGroupIndex]);
 
   return <SidebarInner isOpen={isOpen} onClose={onClose} openGroup={openGroup} setOpenGroup={setOpenGroup} navGroups={navGroups} />;
@@ -198,7 +200,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
 function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void; navGroups: NavGroup[] }) {
   const { logout, isLoggingOut } = useLogoutAction();
-  const { state, dispatch } = useAppContext();
+  const { state } = useAppContext();
   const user = useAppSelector((s) => s.auth.user);
   const { confirm } = useConfirm();
   const collapsed = state.sidebarCollapsed;
@@ -334,14 +336,6 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
             </div>
           </div>
         )}
-        <button
-          onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR_COLLAPSED' })}
-          className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors`}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
-          {!collapsed && <span>Collapse</span>}
-        </button>
         <button
           onClick={handleLogout}
           disabled={isLoggingOut}

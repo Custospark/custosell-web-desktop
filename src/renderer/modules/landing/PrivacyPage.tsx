@@ -197,7 +197,7 @@ export default function PrivacyPage() {
         <p>Last updated: June 2026</p>
         <p>
           Questions about data privacy? Contact{' '}
-          <a href="mailto:support@custospark.com" className="text-blue-600 hover:underline font-medium">support@custospark.com</a>
+          <a href="mailto:support@custosell.com" className="text-blue-600 hover:underline font-medium">support@custosell.com</a>
         </p>
       </motion.div>
     </div>

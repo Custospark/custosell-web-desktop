@@ -4,6 +4,8 @@ import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
+import { useAppSelector } from '../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import type { DashboardSummary } from './DashboardTypes';
 
 interface DashboardVatSectionProps {
@@ -13,6 +15,7 @@ interface DashboardVatSectionProps {
 
 export default function DashboardVatSection({ summary, isLoading }: DashboardVatSectionProps) {
   const { taxEnabled, business, isLoading: businessLoading } = useBusinessTaxSettings();
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
   const currency = business?.currency || 'UGX';
   const vat = summary?.today_vat;
 
@@ -42,12 +45,21 @@ export default function DashboardVatSection({ summary, isLoading }: DashboardVat
       {businessLoading ? (
         <LoadingSkeleton variant="minimal" message="Loading tax settings…" />
       ) : !taxEnabled ? (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-          Enable VAT registration under{' '}
-          <Link to={ROUTES.SETTINGS.BUSINESS} className="font-medium underline">
-            Business settings
-          </Link>{' '}
-          to track output VAT on sales.
+        <p
+          className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2"
+          title={isOffline ? 'Unavailable offline' : undefined}
+        >
+          {isOffline ? (
+            'Enable VAT registration under Business settings to track output VAT on sales.'
+          ) : (
+            <>
+              Enable VAT registration under{' '}
+              <Link to={ROUTES.SETTINGS.BUSINESS} className="font-medium underline">
+                Business settings
+              </Link>{' '}
+              to track output VAT on sales.
+            </>
+          )}
         </p>
       ) : isLoading ? (
         <LoadingSkeleton variant="minimal" />

@@ -4,17 +4,16 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { version } from '../../../../../package.json';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Receipt, Settings,
-  LogOut, ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight,
   Plus, History, RotateCcw, FolderTree, ClipboardList,
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
+  Mail, Phone,
 } from 'lucide-react';
-import { useLogoutAction } from '../../../app/contexts/LogoutContext';
 import { useAppContext } from '../../../app/contexts/AppContext';
-import { useConfirm } from '../Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import LogoImage from '../../assets/LogoImage';
-import { getUserFirstName } from '../../utils/userDisplayName';
+import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { canAccessModule, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
@@ -199,25 +198,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 }
 
 function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void; navGroups: NavGroup[] }) {
-  const { logout, isLoggingOut } = useLogoutAction();
   const { state } = useAppContext();
   const user = useAppSelector((s) => s.auth.user);
-  const { confirm } = useConfirm();
   const collapsed = state.sidebarCollapsed;
   const location = useLocation();
-
-  const handleLogout = async () => {
-    const confirmed = await confirm({
-      title: 'Logout',
-      message: `${getUserFirstName(user?.name)}, are you sure you want to logout?`,
-      confirmText: 'Logout',
-      cancelText: 'Cancel',
-      variant: 'warning',
-    });
-    if (!confirmed) return;
-    onClose();
-    void logout();
-  };
 
   return (
     <aside
@@ -320,31 +304,80 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         })}
       </nav>
 
-      <div className="p-2 border-t border-gray-200 space-y-1">
-        {!collapsed && user && (
-          <div className="flex items-center gap-3 px-3 py-2">
-            {user.avatar ? (
-              <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
-                {(user.name || 'U').charAt(0).toUpperCase()}
+      <div className="shrink-0 p-4 border-t border-gray-200/50 space-y-3">
+        {!collapsed && (
+          <>
+            {/* User profile */}
+            {user && (
+              <div className="flex items-center gap-3">
+                {user.avatar ? (
+                  <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
+                    {(user.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                </div>
               </div>
             )}
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+
+            <hr className="border-gray-100" />
+
+            {/* Quick Support card */}
+            <div className="p-3 rounded-xl border bg-linear-to-br from-gray-50 to-gray-100/50 border-gray-200/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg shrink-0 bg-cyan-100">
+                  <Headset className="w-4 h-4 text-cyan-600" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900">Quick Support</p>
+
+                  <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-3 mt-0.5">
+                    <a
+                      href={`mailto:${CUSTOSELL_SUPPORT.email}`}
+                      className="text-xs truncate hover:underline inline-flex items-center gap-1 text-cyan-600 hover:text-cyan-700"
+                    >
+                      {CUSTOSELL_SUPPORT.email}
+                    </a>
+
+                    {CUSTOSELL_SUPPORT.phones.map((phone) => (
+                      <a
+                        key={phone.tel}
+                        href={`tel:${phone.tel}`}
+                        className="text-xs truncate hover:underline inline-flex items-center gap-1 text-gray-600 hover:text-gray-700"
+                      >
+                        {phone.display}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
+          </>
+        )}
+
+        {collapsed && (
+          <div className="flex flex-col items-center gap-2">
+            <a
+              href={`mailto:${CUSTOSELL_SUPPORT.email}`}
+              className="text-gray-400 hover:text-cyan-600 transition-colors"
+              title={`Email: ${CUSTOSELL_SUPPORT.email}`}
+            >
+              <Mail className="w-4 h-4" />
+            </a>
+            <a
+              href={`tel:${CUSTOSELL_SUPPORT.phones[0].tel}`}
+              className="text-gray-400 hover:text-cyan-600 transition-colors"
+              title={`Call: ${CUSTOSELL_SUPPORT.phones[0].display}`}
+            >
+              <Phone className="w-4 h-4" />
+            </a>
           </div>
         )}
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className={`flex w-full items-center ${collapsed ? 'justify-center' : 'gap-3 px-4'} py-2.5 rounded-lg text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors`}
-          title="Logout"
-        >
-          <LogOut className="w-5 h-5 shrink-0" />
-          {!collapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
-        </button>
       </div>
     </aside>
   );

@@ -7,6 +7,7 @@ import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod,
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import type { Sale } from './api/salesTypes';
 import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck } from 'lucide-react';
+import { HiCheckCircle } from 'react-icons/hi2';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
@@ -199,8 +200,6 @@ function BillingControls() {
     );
   };
 
-  const PayIcon = PAY_ICONS[paymentMethod];
-
   return (
     <>
     <div className="bg-white rounded-xl border border-gray-200 p-5 h-fit sticky top-0">
@@ -358,7 +357,7 @@ function BillingControls() {
           loading={createSale.isPending}
           disabled={cartItems.length === 0 || (paymentMethod === 'cash' && amountTendered < total)}
         >
-          <PayIcon className="w-5 h-5 mr-2" />
+          <HiCheckCircle className="w-5 h-5 mr-2" />
           Complete Sale
         </Button>
       </div>

@@ -178,7 +178,7 @@ export default function SalesHistory() {
           { key: 'payment_status', header: 'Status', render: (s) => s.payment_status === 'refunded' ? <Badge variant="danger">Full Refund</Badge> : s.payment_status === 'partially_refunded' ? <Badge variant="warning">Partially Refunded</Badge> : <Badge variant="success">Paid</Badge> },
           { key: 'actions', header: 'Receipt', render: (s) => (
             <div className="flex gap-1">
-              <button title="Preview receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+              <button title="Preview receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                 <Eye className="w-4 h-4" />
               </button>
             </div>

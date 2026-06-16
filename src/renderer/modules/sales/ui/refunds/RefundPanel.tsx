@@ -11,6 +11,7 @@ import { Badge } from '../../../../shared/components/badges/Badge';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
+import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { useToast } from '../../../../app/contexts/useToast';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
@@ -91,6 +92,7 @@ export default function RefundPanel() {
 
   const paidIds = useMemo(() => paidSales.map((s) => s.id), [paidSales]);
   const allSelected = paidIds.length > 0 && paidIds.every((id) => selectedIds.has(id));
+  const paginated = usePagination(paidSales, 15);
 
   const toggleAll = () => {
     if (allSelected) {
@@ -223,14 +225,17 @@ export default function RefundPanel() {
                 title={s._pendingSync ? 'Sync sale before refunding' : 'Select for refund'}
                 onClick={() => openRefund(s)}
                 disabled={s._pendingSync}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <RotateCcw className="w-4 h-4" /> Refund
               </button>
             )},
           ]}
-          data={paidSales.slice(0, 20)}
+          data={paginated.data}
         />
+        <div className="flex items-center justify-between mt-4">
+          <Pagination currentPage={paginated.page} totalPages={paginated.totalPages} totalItems={paginated.totalItems} pageSize={paginated.pageSize} onPageChange={paginated.setPage} onPageSizeChange={paginated.setPageSize} />
+        </div>
       </Card>
 
       <Modal isOpen={!!selectedSale} onClose={() => { setSelectedSale(null); setRefundQtys({}); }} size="lg">

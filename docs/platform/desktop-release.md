@@ -54,17 +54,17 @@ Open [GitHub Releases](https://github.com/Custospark/custosell-web-desktop/relea
 Production desktop app only (not dev):
 
 1. Checks for updates ~9s after launch, then every 12 hours
-2. Downloads in background when a newer release exists
-3. Shows progress toast/card in the app
-4. Applies update on **app exit** (`quitAndInstall`)
+2. Downloads silently in the background when a newer release exists — no UI, no toasts, no progress indicators
+3. Applies update on **app exit** (`quitAndInstall`)
+4. Next launch runs the new version — user sees new features without any prior notification
 
-Logs: `%APPDATA%/CUSTOSELL/logs/main.log` (Windows)
+**Philosophy:** Silent background updates keep users on the latest version without interruptions, following the pattern used by Postman, Chrome, Slack, and VS Code.
 
 ## Test auto-update
 
 1. Install build at version **N** on a test machine
 2. Publish version **N+1** to GitHub Releases
-3. Launch installed app, wait for download notification
+3. Launch installed app — update downloads silently in the background
 4. Quit app — installer runs silently
 5. Relaunch — version should be **N+1**
 

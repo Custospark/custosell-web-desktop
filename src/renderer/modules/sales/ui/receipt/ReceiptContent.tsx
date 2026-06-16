@@ -65,10 +65,10 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
         <table className="w-full text-xs mb-3">
           <thead>
             <tr className="border-b border-gray-700">
-              <th className="text-left pb-1 font-semibold text-gray-700">Item</th>
-              <th className="text-center pb-1 font-semibold text-gray-700">Qty</th>
-              <th className="text-right pb-1 font-semibold text-gray-700">Price ({currency})</th>
-              <th className="text-right pb-1 font-semibold text-gray-700">Total ({currency})</th>
+              <th className="text-left pb-1 font-semibold text-gray-700 pr-2">Item</th>
+              <th className="text-center pb-1 font-semibold text-gray-700 px-2">Qty</th>
+              <th className="text-right pb-1 font-semibold text-gray-700 px-2">Price ({currency})</th>
+              <th className="text-right pb-1 font-semibold text-gray-700 pl-2">Total ({currency})</th>
             </tr>
           </thead>
           <tbody>
@@ -76,13 +76,13 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
               const refunded = item.refunded_quantity > 0;
               return (
                 <tr key={item.id} className={i < (sale.sale_items?.length ?? 0) - 1 ? 'border-b border-dashed border-gray-300' : ''}>
-                  <td className="py-1 text-gray-800">
+                  <td className="py-1 text-gray-800 pr-2 break-words">
                     <span>{item.product_name}</span>
                     {refunded && <span className="ml-1.5 text-xs text-red-500">({item.refunded_quantity} refunded)</span>}
                   </td>
-                  <td className="py-1 text-center text-gray-800">{item.quantity}</td>
-                  <td className="py-1 text-right text-gray-800">{parseFloat(item.unit_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                  <td className="py-1 text-right text-gray-800">{parseFloat(item.subtotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td className="py-1 text-center text-gray-800 px-2 whitespace-nowrap">{item.quantity}</td>
+                  <td className="py-1 text-right text-gray-800 px-2 whitespace-nowrap">{parseFloat(item.unit_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td className="py-1 text-right text-gray-800 pl-2 whitespace-nowrap">{parseFloat(item.subtotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                 </tr>
               );
             })}

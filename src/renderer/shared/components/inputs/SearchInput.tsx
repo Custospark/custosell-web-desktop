@@ -19,7 +19,7 @@ export function SearchInput({ className, value, onChange, onClear, placeholder =
         placeholder={placeholder}
         className={`w-full h-10 pl-10 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm
           placeholder:text-gray-400
-          focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white
+          focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white
           transition-all duration-200
           ${className ?? ''}`}
         {...props}

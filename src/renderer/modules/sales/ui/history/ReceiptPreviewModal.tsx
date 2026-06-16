@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
-import { Printer, Eye } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
 import ReceiptContent from '../receipt/ReceiptContent';
@@ -38,11 +38,6 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
       </div>
 
       <ReceiptContent ref={receiptRef} sale={sale} />
-
-      <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-gray-100 no-print">
-        <Eye className="w-4 h-4 text-gray-400" />
-        <p className="text-xs text-gray-400">This receipt matches the printed version</p>
-      </div>
     </Modal>
   );
 }

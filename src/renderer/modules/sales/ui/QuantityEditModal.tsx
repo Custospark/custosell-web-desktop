@@ -11,9 +11,10 @@ interface Props {
   productId: number;
   productName: string;
   currentQty: number;
+  maxQty: number;
 }
 
-export default function QuantityEditModal({ open, onClose, productId, productName, currentQty }: Props) {
+export default function QuantityEditModal({ open, onClose, productId, productName, currentQty, maxQty }: Props) {
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(String(currentQty));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +25,7 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
 
   const handleSave = () => {
     const n = parseInt(qty);
-    if (n > 0) dispatch(updateQuantity({ product_id: productId, quantity: n }));
+    if (n > 0 && n <= maxQty) dispatch(updateQuantity({ product_id: productId, quantity: n }));
     onClose();
   };
 
@@ -41,14 +42,20 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1.5">New Quantity</label>
+          {maxQty > 0 && (
+            <p className="text-xs text-gray-400 mb-1.5">In stock: {maxQty}</p>
+          )}
           <div className="relative">
             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input ref={inputRef} type="number" min={1} value={qty}
+            <input ref={inputRef} type="number" min={1} max={maxQty || undefined} value={qty}
               onChange={(e) => setQty(e.target.value)}
               onFocus={(e) => e.target.select()}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
               className="w-full pl-9 pr-3 py-3 border border-gray-300 rounded-lg text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums" />
           </div>
+          {parseInt(qty) > maxQty && maxQty > 0 && (
+            <p className="text-xs text-red-500 mt-1">Only {maxQty} in stock</p>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-1">

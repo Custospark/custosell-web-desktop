@@ -391,7 +391,7 @@ export default function NewSale() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [heldModalOpen, setHeldModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
-  const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number } | null>(null);
+  const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number; maxQty: number } | null>(null);
   const [reloadFeedback, setReloadFeedback] = useState<ReloadFeedback>('idle');
   const reloadFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -683,17 +683,31 @@ export default function NewSale() {
                             
                             {/* QUANTITY DISPLAY */}
                             <span title="Click to edit quantity" className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-0.5"
-                              onClick={() => setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity })}>
+                              onClick={() => {
+                                const p = products?.find(p => p.id === item.product_id);
+                                setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity, maxQty: p?.stock_quantity ?? 0 });
+                              }}>
                               {item.quantity}<Pencil className="w-3 h-3 text-blue-400" />
                             </span>
                             
                             {/* PLUS BUTTON - Circular with bright green ring + shadow */}
-                            <button title="Increase quantity"
-                              onClick={() => dispatch(updateQuantity({ product_id: item.product_id, quantity: item.quantity + 1 }))}
-                              className="w-8 h-8 rounded-full border-2 border-green-400 hover:border-green-500 hover:bg-green-50 text-green-600 hover:text-green-700 transition-all flex items-center justify-center shadow-sm"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
+                            {(() => {
+                              const product = products?.find(p => p.id === item.product_id);
+                              const maxStock = product?.stock_quantity ?? 0;
+                              const atMax = item.quantity >= maxStock;
+                              return (
+                                <button title={atMax ? `Only ${maxStock} in stock` : 'Increase quantity'}
+                                  onClick={() => !atMax && dispatch(updateQuantity({ product_id: item.product_id, quantity: item.quantity + 1 }))}
+                                  className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center shadow-sm ${
+                                    atMax
+                                      ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                                      : 'border-green-400 hover:border-green-500 hover:bg-green-50 text-green-600 hover:text-green-700'
+                                  }`}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              );
+                            })()}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -760,6 +774,7 @@ export default function NewSale() {
           productId={qtyEdit.productId}
           productName={qtyEdit.productName}
           currentQty={qtyEdit.currentQty}
+          maxQty={qtyEdit.maxQty}
         />
     )}
     </>

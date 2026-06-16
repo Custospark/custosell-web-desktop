@@ -391,6 +391,7 @@ export function useCreateSale() {
         qc.invalidateQueries({ queryKey: salesKeys.list() });
         qc.invalidateQueries({ queryKey: dashboardKeys.all });
         qc.invalidateQueries({ queryKey: shiftKeys.all });
+        qc.invalidateQueries({ queryKey: inventoryKeys.products() });
       }
     },
     onError: (e) => {

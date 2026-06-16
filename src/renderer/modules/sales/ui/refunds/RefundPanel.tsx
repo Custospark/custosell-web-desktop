@@ -172,9 +172,9 @@ export default function RefundPanel() {
         )}
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="relative max-w-xs flex-1">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-            <input className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Search receipt..."
+            <input className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Search receipt/sale by receipt number"
               value={receiptSearch} onChange={(e) => setReceiptSearch(e.target.value)} />
           </div>
           <div className="flex items-center gap-2">

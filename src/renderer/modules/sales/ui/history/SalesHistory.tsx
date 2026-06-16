@@ -129,8 +129,8 @@ export default function SalesHistory() {
       </div>
 
       <div className="flex items-center gap-4 mb-4">
-        <div className="max-w-xs flex-1">
-          <SearchInput placeholder="Search receipt #..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+        <div className="flex-1">
+          <SearchInput placeholder="Search receipt/sale by receipt number" value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">

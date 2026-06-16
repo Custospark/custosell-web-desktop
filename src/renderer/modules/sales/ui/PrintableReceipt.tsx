@@ -42,7 +42,7 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, PrintableReceiptProps>
           </div>
           {business?.website && <p className="text-xs text-gray-400">{business.website}</p>}
           {business?.tax_id && <p className="text-xs text-gray-400">Tax ID: {business.tax_id}</p>}
-          <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Point of Sale Receipt</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Sales Receipt</p>
         </div>
 
         <div className="border-t border-dashed border-gray-400 border-b py-2 mb-3 text-xs text-gray-600 space-y-0.5">
@@ -142,7 +142,7 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, PrintableReceiptProps>
           )}
           {change !== null && change > 0 && (
             <div className="flex justify-between">
-              <span className="text-gray-500">Change</span>
+              <span className="text-gray-500">Change Given</span>
               <span className="text-green-600 font-medium">{formatCurrency(change)}</span>
             </div>
           )}

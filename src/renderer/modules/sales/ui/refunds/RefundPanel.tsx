@@ -15,6 +15,7 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { useToast } from '../../../../app/contexts/useToast';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
+import { motion } from 'framer-motion';
 import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
@@ -32,6 +33,7 @@ export default function RefundPanel() {
   const user = useAppSelector((s) => s.auth.user);
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const [receiptSearch, setReceiptSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [refundQtys, setRefundQtys] = useState<Record<number, number>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -173,9 +175,23 @@ export default function RefundPanel() {
 
         <div className="flex items-center gap-4 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-            <input className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Search receipt/sale by receipt number"
-              value={receiptSearch} onChange={(e) => setReceiptSearch(e.target.value)} />
+            <div className="relative rounded-lg p-[2px]">
+              <motion.div
+                className="absolute inset-0 z-0 rounded-lg"
+                style={{
+                  background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)',
+                  backgroundSize: '300% 100%',
+                }}
+                animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                transition={{ duration: searchFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
+              />
+              <div className="relative z-10 overflow-hidden rounded-[6px] bg-white">
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors pointer-events-none ${searchFocused ? 'text-blue-500' : 'text-gray-400'}`} />
+                <input className="w-full rounded-[6px] border-transparent bg-white py-2.5 pl-9 pr-10 text-sm text-gray-900 focus:outline-none" placeholder="Search receipt/sale by receipt number"
+                  value={receiptSearch} onChange={(e) => setReceiptSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">

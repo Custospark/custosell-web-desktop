@@ -95,7 +95,7 @@ function createWindow(): BrowserWindow {
   });
 
   if (!isDev) {
-    initAutoUpdater(mainWindow);
+    initAutoUpdater();
   }
 
   return mainWindow;

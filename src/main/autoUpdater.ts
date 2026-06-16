@@ -1,4 +1,4 @@
-import { BrowserWindow, app, Notification } from 'electron';
+import { app } from 'electron';
 import log from 'electron-log';
 import autoUpdaterPkg from 'electron-updater';
 
@@ -13,76 +13,17 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 let updateReadyToInstall = false;
 let installingNow = false;
-let mainWindowRef: BrowserWindow | null = null;
 
-export function initAutoUpdater(mainWindow: BrowserWindow): void {
+export function initAutoUpdater(): void {
   if (isDev) {
     log.info('[Auto-Updater] Disabled in development mode');
     return;
   }
 
-  mainWindowRef = mainWindow;
-
-  autoUpdater.on('checking-for-update', () => {
-    log.info('[Auto-Updater] Checking for updates...');
-    sendStatus('checking-for-update', { message: 'Checking for updates...' });
-  });
-
-  autoUpdater.on('update-available', (info) => {
-    log.info('[Auto-Updater] Update available:', { version: info.version });
-    sendStatus('update-available', {
-      message: `Downloading v${info.version} in background...`,
-      version: info.version,
-    });
-  });
-
-  autoUpdater.on('update-not-available', (info) => {
-    log.info('[Auto-Updater] No update available:', { version: info.version });
-    sendStatus('update-not-available', {
-      message: 'You are on the latest version.',
-      version: info.version,
-    });
-  });
-
-  autoUpdater.on('download-progress', (progressObj) => {
-    const percent = Math.round(progressObj.percent);
-    const downloadedMB = Number((progressObj.transferred / 1024 / 1024).toFixed(2));
-    const totalMB = Number((progressObj.total / 1024 / 1024).toFixed(2));
-    const speedMBps = Number((progressObj.bytesPerSecond / 1024 / 1024).toFixed(2));
-
-    sendStatus('download-progress', {
-      percent,
-      speedMBps,
-      downloadedMB,
-      totalMB,
-    });
-  });
-
   autoUpdater.on('update-downloaded', (info) => {
     updateReadyToInstall = true;
-
     log.info('[Auto-Updater] Update downloaded; will install on quit:', {
       version: info.version,
-    });
-
-    sendStatus('update-downloaded', {
-      message: `Update v${info.version} is ready and will be applied when you exit the app.`,
-      version: info.version,
-    });
-
-    showNativeNotification(
-      'Update Ready',
-      `Version ${info.version} will be installed when you exit Custosell.`,
-    );
-  });
-
-  autoUpdater.on('error', (error) => {
-    log.error('[Auto-Updater] Error:', { message: error.message, stack: error.stack });
-    updateReadyToInstall = false;
-
-    sendStatus('update-error', {
-      message: 'Update failed. Will retry later.',
-      error: error.message,
     });
   });
 
@@ -120,20 +61,5 @@ export function installUpdateOnQuitIfReady(): boolean {
     installingNow = false;
     updateReadyToInstall = false;
     return false;
-  }
-}
-
-function sendStatus(event: string, data: Record<string, unknown>): void {
-  const win = mainWindowRef;
-  if (!win || win.isDestroyed()) return;
-  win.webContents.send('updater-message', { event, data });
-}
-
-function showNativeNotification(title: string, body: string): void {
-  if (!Notification.isSupported()) return;
-  try {
-    new Notification({ title, body, silent: false }).show();
-  } catch (e) {
-    log.warn('[Auto-Updater] Notification failed:', e);
   }
 }

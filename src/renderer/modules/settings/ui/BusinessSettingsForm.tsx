@@ -4,6 +4,7 @@ import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
 import { Badge } from '../../../shared/components/badges/Badge';
 import { Button } from '../../../shared/components/buttons/Button';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
+import { SearchableSelect } from '../../../shared/components/inputs/SearchableSelect';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { CURRENCIES } from '../../../shared/utils/currencies';
@@ -615,25 +616,18 @@ export default function BusinessSettingsForm() {
                         </div>
                       </div>
                     </div>
-                    <div>
-                      <label className={labelClass}>Country</label>
-                      <div className="relative">
-                        <Globe className={iconClass} aria-hidden />
-                        <select
-                          className={selectClass}
-                          value={selectedCountryCode}
-                          onChange={(e) => handleCountryChange(e.target.value)}
-                          title="Country"
-                        >
-                          <option value="">Select country</option>
-                          {countryCodesByName.map((c) => (
-                            <option key={c.code} value={c.code}>
-                              {c.flag} {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                    <SearchableSelect
+                      label="Country"
+                      placeholder="Select country"
+                      searchPlaceholder="Search countries..."
+                      value={selectedCountryCode}
+                      onChange={handleCountryChange}
+                      options={countryCodesByName.map((c) => ({
+                        value: c.code,
+                        label: `${c.flag} ${c.name}`,
+                      }))}
+                      emptyOption={{ value: '', label: 'No country selected' }}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

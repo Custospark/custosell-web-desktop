@@ -200,11 +200,11 @@ export function Navbar() {
           <button
             type="button"
             onClick={handleToggleSidebar}
-            className={cn(iconBtn, 'w-8 h-8 sm:w-9 sm:h-9')}
+            className={cn(iconBtn, 'w-10 h-10 sm:w-9 sm:h-9')}
             title={sidebarLabel}
             aria-label={sidebarLabel}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-6 h-6 sm:w-5 sm:h-5" />
           </button>
 
           {user?.shift_clock_in && (
@@ -215,8 +215,8 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Center — business name (hidden on lg when sidebar expanded) */}
-        <div className={cn('flex justify-center min-w-0 px-0.5 sm:px-1', sidebarShowing && 'lg:hidden')}>
+        {/* Center — business name (hidden on mobile, hidden on lg when sidebar expanded) */}
+        <div className={cn('hidden sm:flex justify-center min-w-0 px-0.5 sm:px-1', sidebarShowing && 'lg:hidden')}>
           {user?.business_name && (
             <span
               className={cn(
@@ -278,12 +278,15 @@ export function Navbar() {
             {dropdownOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-full mt-1.5 w-[min(100vw-1rem,15rem)] sm:w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1"
+                className="absolute right-0 top-full mt-1.5 w-[min(100vw-1rem,15rem)] sm:w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] py-1"
               >
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
                   {user?.email && (
                     <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
+                  )}
+                  {user?.business_name && (
+                    <p className="text-xs text-gray-400 mt-0.5 break-words">{user.business_name}</p>
                   )}
                   {user?.shift_clock_in && (
                     <div className="md:hidden mt-2 pt-2 border-t border-gray-100">

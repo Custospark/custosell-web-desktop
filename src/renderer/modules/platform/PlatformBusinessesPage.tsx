@@ -455,6 +455,9 @@ export default function PlatformBusinessesPage() {
                   <span className="font-medium" title="Owner + users linked to this business">{b.staff_count.toLocaleString()}</span>
                 )},
                 { key: 'currency', header: 'Currency' },
+                { key: 'total_stock', header: 'Total Stock', render: (b) => (
+                  <span title="Sum of stock quantity across all products">{b.total_stock.toLocaleString()}</span>
+                )},
                 { key: 'gross_today', header: 'Gross today', render: (b) => formatCurrency(b.gross_sales_today, b.currency) },
                 { key: 'gross_7d', header: 'Gross 7d', render: (b) => formatCurrency(b.gross_sales_7d, b.currency) },
                 { key: 'gross_30d', header: 'Gross 30d', render: (b) => (

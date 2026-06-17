@@ -40,6 +40,7 @@ export interface PlatformBusiness {
   gross_sales_30d: string;
   gross_sales_all_time: string;
   transactions_30d: number;
+  total_stock: number;
   last_activity_at: string | null;
   created_at: string | null;
 }

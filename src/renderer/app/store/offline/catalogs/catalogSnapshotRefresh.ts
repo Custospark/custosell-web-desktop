@@ -47,7 +47,6 @@ export function backupProductCatalog(
   products: Product[],
 ): void {
   backupCatalogSnapshot('products', businessId, products, catalogKind);
-  seedStockLedgerFromProducts(products);
 }
 
 export async function refreshProductCatalogSnapshot(): Promise<void> {

@@ -4,7 +4,7 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { applyOfflineStockOverlay } from '../../../../app/store/offline/inventory/offlineStockOverlay';
-import { stockLedger } from '../../../../app/store/offline/inventory/stockLedger';
+
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
 import { readCatalogBaseline, backupCatalogSnapshot, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
@@ -640,13 +640,18 @@ export function useCreateStockMovement() {
       );
       return { previousProducts };
     },
-    onSuccess: async (_data, payload) => {
-      // Sync the offline stock ledger so the overlay doesn't override the correct API value
-      await stockLedger.set(payload.product_id, payload.stock_after);
-    },
-    onError: (error, _vars, ctx) => {
-      if (ctx?.previousProducts) queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
-      showToast('error', error.response?.data?.message || 'Failed to record stock movement');
+
+    onError: (error, payload, ctx) => {
+      if (ctx?.previousProducts) {
+        queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
+      }
+      const data = error.response?.data as ApiError | undefined;
+      const serverMsg = data?.message;
+      const validationMsg = data?.errors ? Object.values(data.errors).flat().join('. ') : '';
+      const networkMsg = (!error.response) ? 'Could not reach the server. Check your connection.' : '';
+      const msg = serverMsg || validationMsg || networkMsg || 'Failed to record stock movement';
+      console.error('[StockMovement] Failed:', error.message, error.code, error.response?.status, data);
+      showToast('error', msg);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });

@@ -16,6 +16,9 @@ export interface Business {
   jurisdiction?: string | null;
   default_vat_rate?: number | null;
   prices_include_tax?: boolean | null;
+  description: string | null;
+  business_email: string | null;
+  business_phone: string | null;
   timezone: string | null;
   business_type: string | null;
   currency: string | null;
@@ -42,6 +45,9 @@ export interface UpdateBusinessData {
   jurisdiction?: string | null;
   default_vat_rate?: number | null;
   prices_include_tax?: boolean | null;
+  description?: string | null;
+  business_email?: string | null;
+  business_phone?: string | null;
   timezone?: string | null;
   business_type?: string | null;
   currency?: string | null;

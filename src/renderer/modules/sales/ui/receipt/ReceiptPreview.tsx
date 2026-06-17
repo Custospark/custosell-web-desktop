@@ -17,23 +17,23 @@ interface ReceiptPreviewProps {
 
 export default function ReceiptPreview({ receiptNumber, items, total, paymentMethod, onNewSale }: ReceiptPreviewProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
-  const business = useAppSelector((s) => s.auth.user?.business);
+  const authUser = useAppSelector((s) => s.auth.user);
+  const business = authUser?.business;
   const handlePrint = useReactToPrint({ contentRef: receiptRef });
-  const location = [business?.address, business?.city, business?.state, business?.country].filter(Boolean).join(', ');
+  const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
 
   return (
     <div className="max-w-md mx-auto space-y-4">
       <div ref={receiptRef} className="bg-white p-6 border border-gray-200 rounded-xl">
           <div className="text-center border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-lg font-bold text-gray-900">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
-            {location && <p className="text-xs text-gray-500">{location}</p>}
-            <div className="text-xs text-gray-400 space-x-2 mt-0.5">
-              {business?.phone && <span>Tel: {business.phone}</span>}
-              {business?.email && <span>| {business.email}</span>}
-            </div>
-            {business?.website && <p className="text-xs text-gray-400">{business.website}</p>}
-            {business?.tax_id && <p className="text-xs text-gray-400">Tax ID: {business.tax_id}</p>}
-            <p className="text-xs text-gray-400 mt-1">Receipt: {receiptNumber}</p>
+            {business?.description && <p className="text-xs text-gray-500 mt-0.5">{business.description}</p>}
+            {(business?.business_phone || business?.phone || authUser?.phone) && (
+              <p className="text-xs text-gray-500 mt-0.5">Call/WhatsApp: {business?.business_phone || business?.phone || authUser?.phone}</p>
+            )}
+            {business?.business_email && <p className="text-xs text-gray-500">{business.business_email}</p>}
+            {location && <p className="text-xs text-gray-400 mt-0.5">{location}</p>}
+            <p className="text-xs text-gray-400 mt-1.5">Receipt: {receiptNumber}</p>
           </div>
 
         <div className="space-y-2 text-sm">

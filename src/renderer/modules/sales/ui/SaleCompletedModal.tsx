@@ -30,7 +30,7 @@ export default function SaleCompletedModal({ sale, onNewSale }: SaleCompletedMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 no-print">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col" style={{ maxWidth: '480px' }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full p-4 sm:p-6 lg:p-8 flex flex-col" style={{ maxWidth: '480px' }}>
         <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-100 flex items-center justify-center mb-3 sm:mb-4">
           <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
         </div>

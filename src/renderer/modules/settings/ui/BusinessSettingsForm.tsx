@@ -55,6 +55,9 @@ const emptyForm: UpdateBusinessData = {
   email: null,
   phone: null,
   website: null,
+  description: null,
+  business_email: null,
+  business_phone: null,
   address: null,
   city: null,
   state: null,
@@ -94,18 +97,26 @@ interface BusinessFormSnapshot {
   form: UpdateBusinessData;
   localPhone: string;
   countryCode: CountryCode;
+  localBusinessPhone: string;
+  businessPhoneCountryCode: CountryCode;
 }
 
 function snapshotFromBusiness(business: NonNullable<ReturnType<typeof useBusiness>['data']>): BusinessFormSnapshot {
   const parsedPhone = parseInternationalPhone(business.phone);
+  const parsedBusinessPhone = parseInternationalPhone(business.business_phone);
   return {
     countryCode: parsedPhone.countryCode,
     localPhone: parsedPhone.localNumber,
+    businessPhoneCountryCode: parsedBusinessPhone.countryCode,
+    localBusinessPhone: parsedBusinessPhone.localNumber,
     form: {
       name: business.name || '',
       email: business.email ?? null,
       phone: business.phone ?? null,
       website: business.website ?? null,
+      description: business.description ?? null,
+      business_email: business.business_email ?? null,
+      business_phone: business.business_phone ?? null,
       address: business.address ?? null,
       city: business.city ?? null,
       state: business.state ?? null,
@@ -127,8 +138,11 @@ function snapshotFromBusiness(business: NonNullable<ReturnType<typeof useBusines
 function snapshotsEqual(a: BusinessFormSnapshot, b: BusinessFormSnapshot): boolean {
   const fullPhoneA = buildInternationalPhone(a.countryCode, a.localPhone) ?? null;
   const fullPhoneB = buildInternationalPhone(b.countryCode, b.localPhone) ?? null;
+  const fullBizPhoneA = buildInternationalPhone(a.businessPhoneCountryCode, a.localBusinessPhone) ?? null;
+  const fullBizPhoneB = buildInternationalPhone(b.businessPhoneCountryCode, b.localBusinessPhone) ?? null;
   return (
     fullPhoneA === fullPhoneB
+    && fullBizPhoneA === fullBizPhoneB
     && JSON.stringify(a.form) === JSON.stringify(b.form)
   );
 }
@@ -213,10 +227,14 @@ export default function BusinessSettingsForm() {
     form: emptyForm,
     localPhone: '',
     countryCode: getDefaultCountryCode(),
+    localBusinessPhone: '',
+    businessPhoneCountryCode: getDefaultCountryCode(),
   });
   const [form, setForm] = useState<UpdateBusinessData>(emptyForm);
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [localPhone, setLocalPhone] = useState('');
+  const [businessPhoneCountryCode, setBusinessPhoneCountryCode] = useState<CountryCode>(getDefaultCountryCode);
+  const [localBusinessPhone, setLocalBusinessPhone] = useState('');
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySearch, setCurrencySearch] = useState('');
   const currencyRef = useRef<HTMLDivElement>(null);
@@ -226,6 +244,8 @@ export default function BusinessSettingsForm() {
     setBaseline(snapshot);
     setCountryCode(snapshot.countryCode);
     setLocalPhone(snapshot.localPhone);
+    setBusinessPhoneCountryCode(snapshot.businessPhoneCountryCode);
+    setLocalBusinessPhone(snapshot.localBusinessPhone);
     setForm(snapshot.form);
   }, []);
 
@@ -246,8 +266,8 @@ export default function BusinessSettingsForm() {
   }, []);
 
   const currentSnapshot = useMemo<BusinessFormSnapshot>(
-    () => ({ form, localPhone, countryCode }),
-    [countryCode, form, localPhone],
+    () => ({ form, localPhone, countryCode, localBusinessPhone, businessPhoneCountryCode }),
+    [countryCode, form, localPhone, localBusinessPhone, businessPhoneCountryCode],
   );
 
   const hasChanges = isEditing && !snapshotsEqual(currentSnapshot, baseline);
@@ -257,17 +277,20 @@ export default function BusinessSettingsForm() {
     setForm((prev) => ({ ...prev, [key]: val }));
 
   const handlePhoneCountryChange = (next: CountryCode) => {
-    const prevCode = countryCode.code;
+    const old = countryCode;
     setCountryCode(next);
-    if (form.jurisdiction === prevCode || !form.jurisdiction) {
-      update('jurisdiction', next.code);
-      if (form.tax_regime === 'vat_registered' && hasTaxMetadata(next.code)) {
-        update('default_vat_rate', getDefaultVatRateForJurisdiction(next.code));
-      }
+    if (old.dial_code !== next.dial_code && localPhone) {
+      const stripped = localPhone.replace(old.dial_code, '');
+      setLocalPhone(stripped);
     }
-    const addressCountry = resolveCountryCode(form.country);
-    if (!form.country || addressCountry?.code === prevCode) {
-      update('country', next.name);
+  };
+
+  const handleBusinessPhoneCountryChange = (next: CountryCode) => {
+    const old = businessPhoneCountryCode;
+    setBusinessPhoneCountryCode(next);
+    if (old.dial_code !== next.dial_code && localBusinessPhone) {
+      const stripped = localBusinessPhone.replace(old.dial_code, '');
+      setLocalBusinessPhone(stripped);
     }
   };
 
@@ -292,6 +315,8 @@ export default function BusinessSettingsForm() {
   const handleCancel = () => {
     setCountryCode(baseline.countryCode);
     setLocalPhone(baseline.localPhone);
+    setBusinessPhoneCountryCode(baseline.businessPhoneCountryCode);
+    setLocalBusinessPhone(baseline.localBusinessPhone);
     setForm(baseline.form);
     setIsEditing(false);
   };
@@ -304,6 +329,7 @@ export default function BusinessSettingsForm() {
       ...form,
       name: form.name?.trim() || '',
       phone: buildInternationalPhone(countryCode, localPhone) ?? null,
+      business_phone: buildInternationalPhone(businessPhoneCountryCode, localBusinessPhone) ?? null,
     };
 
     mutation.mutate(payload, {
@@ -433,20 +459,20 @@ export default function BusinessSettingsForm() {
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className={labelClass}>Email</label>
+                    <label className={labelClass}>Owner Email</label>
                     <div className="relative">
                       <Mail className={iconClass} aria-hidden />
                       <input
-                        className={inputClass}
+                        className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
                         type="email"
                         value={form.email || ''}
-                        onChange={(e) => update('email', e.target.value || null)}
-                        placeholder="business@example.com"
+                        readOnly
+                        tabIndex={-1}
                       />
                     </div>
                   </div>
                   <PhoneNumberField
-                    label="Phone"
+                    label="Owner Phone"
                     countryCode={countryCode}
                     onCountryCodeChange={handlePhoneCountryChange}
                     value={localPhone}
@@ -466,20 +492,64 @@ export default function BusinessSettingsForm() {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className={labelClass}>Business Description</label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" aria-hidden />
+                    <textarea
+                      className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
+                      rows={3}
+                      value={form.description || ''}
+                      onChange={(e) => update('description', e.target.value || null)}
+                      placeholder="Brief description of your business..."
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Business Email</label>
+                    <div className="relative">
+                      <Mail className={iconClass} aria-hidden />
+                      <input
+                        className={inputClass}
+                        type="email"
+                        value={form.business_email || ''}
+                        onChange={(e) => update('business_email', e.target.value || null)}
+                        placeholder="contact@business.com"
+                      />
+                    </div>
+                  </div>
+                  <PhoneNumberField
+                    label="Business Phone / WhatsApp Number"
+                    countryCode={businessPhoneCountryCode}
+                    onCountryCodeChange={handleBusinessPhoneCountryChange}
+                    value={localBusinessPhone}
+                    onChange={setLocalBusinessPhone}
+                  />
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <BusinessViewField label="Business name" icon={<Store className="h-4 w-4 text-blue-600" />}>
+                <BusinessViewField label="Business Name" icon={<Store className="h-4 w-4 text-blue-600" />}>
                   {baseline.form.name || '—'}
                 </BusinessViewField>
-                <BusinessViewField label="Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
+                <BusinessViewField label="Owner Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
                   {baseline.form.email || '—'}
                 </BusinessViewField>
-                <BusinessViewField label="Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
+                <BusinessViewField label="Owner Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
                   {formatPhoneDisplay(baseline.form.phone)}
                 </BusinessViewField>
                 <BusinessViewField label="Website" icon={<Globe2 className="h-4 w-4 text-blue-600" />}>
                   {baseline.form.website || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Business Description" icon={<FileText className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.description || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Business Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.business_email || '—'}
+                </BusinessViewField>
+                <BusinessViewField label="Business Phone / WhatsApp Number" icon={<Phone className="h-4 w-4 text-blue-600" />}>
+                  {formatPhoneDisplay(baseline.form.business_phone)}
                 </BusinessViewField>
               </div>
             )}

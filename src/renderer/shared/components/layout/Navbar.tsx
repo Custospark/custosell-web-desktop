@@ -215,8 +215,8 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Center — business name */}
-        <div className="flex justify-center min-w-0 px-0.5 sm:px-1">
+        {/* Center — business name (hidden on lg when sidebar expanded) */}
+        <div className={cn('flex justify-center min-w-0 px-0.5 sm:px-1', sidebarShowing && 'lg:hidden')}>
           {user?.business_name && (
             <span
               className={cn(

@@ -4,6 +4,7 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { applyOfflineStockOverlay } from '../../../../app/store/offline/inventory/offlineStockOverlay';
+import { stockLedger } from '../../../../app/store/offline/inventory/stockLedger';
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
 import { readCatalogBaseline, backupCatalogSnapshot, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
@@ -639,6 +640,10 @@ export function useCreateStockMovement() {
       );
       return { previousProducts };
     },
+    onSuccess: async (_data, payload) => {
+      // Sync the offline stock ledger so the overlay doesn't override the correct API value
+      await stockLedger.set(payload.product_id, payload.stock_after);
+    },
     onError: (error, _vars, ctx) => {
       if (ctx?.previousProducts) queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
       showToast('error', error.response?.data?.message || 'Failed to record stock movement');
@@ -646,7 +651,6 @@ export function useCreateStockMovement() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
-      // Invalidate product-specific stock movement history
       queryClient.invalidateQueries({ queryKey: ['inventory', 'products'] });
     },
   });

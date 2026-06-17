@@ -5,7 +5,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import {
   isNetworkFailure,
   sanitizeErrorMessage,
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const loginMutation = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +38,10 @@ export default function LoginPage() {
         </div>
         <div className="relative">
           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" className={inputCls} />
+          <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" className={`${inputCls} pr-12`} />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
         </div>
         <div className="text-right -mt-3">
           <Link to={ROUTES.FORGOT_PASSWORD} className="text-xs text-blue-600 hover:underline font-medium">Forgot password?</Link>

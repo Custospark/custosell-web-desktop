@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
-import { Printer, Plus, CheckCircle } from 'lucide-react';
+import { Printer, Plus, CheckCircle, X } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import ReceiptContent from './receipt/ReceiptContent';
 import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
@@ -8,9 +8,10 @@ import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSal
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;
   onNewSale: () => void;
+  onClose?: () => void;
 }
 
-export default function SaleCompletedModal({ sale, onNewSale }: SaleCompletedModalProps) {
+export default function SaleCompletedModal({ sale, onNewSale, onClose }: SaleCompletedModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
@@ -30,7 +31,15 @@ export default function SaleCompletedModal({ sale, onNewSale }: SaleCompletedMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 no-print">
-      <div className="bg-white rounded-2xl shadow-2xl w-full p-4 sm:p-6 lg:p-8 flex flex-col" style={{ maxWidth: '480px' }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full p-4 sm:p-6 lg:p-8 flex flex-col relative" style={{ maxWidth: '480px' }}>
+        <button
+          type="button"
+          onClick={onClose ?? onNewSale}
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
         <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-100 flex items-center justify-center mb-3 sm:mb-4">
           <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
         </div>

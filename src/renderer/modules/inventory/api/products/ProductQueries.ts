@@ -641,7 +641,7 @@ export function useCreateStockMovement() {
       return { previousProducts };
     },
 
-    onError: (error, payload, ctx) => {
+    onError: (error, _payload, ctx) => {
       if (ctx?.previousProducts) {
         queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
       }

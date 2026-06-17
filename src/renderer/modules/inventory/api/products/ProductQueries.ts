@@ -32,6 +32,11 @@ import {
   completeOfflineUpdateCategoryInstant,
   completeOfflineDeleteCategoryInstant,
 } from '../../../../app/store/offline/inventory/completeOfflineCategory';
+import {
+  shouldCompleteStockAdjustmentLocally,
+  completeOfflineStockAdjustmentInstant,
+} from '../../../../app/store/offline/inventory/completeOfflineStockAdjustment';
+import { stockLedger } from '../../../../app/store/offline/inventory/stockLedger';
 import type {
   Category, Product, StockMovement,
   CreateCategoryData, CreateProductData, UpdateProductData, CreateStockMovementData,
@@ -611,6 +616,15 @@ export function useDeleteProduct() {
   });
 }
 
+function extractStockMovementFromResponse(responseData: unknown): StockMovement | null {
+  if (!responseData || typeof responseData !== 'object') return null;
+  const wrapped = responseData as { data?: StockMovement };
+  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
+  const direct = responseData as StockMovement;
+  if ('id' in direct && 'stock_after' in direct) return direct;
+  return null;
+}
+
 /** ── Stock Movements ── */
 
 export function useStockMovements() {
@@ -627,36 +641,66 @@ export function useCreateStockMovement() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<StockMovement, AxiosError<ApiError>, CreateStockMovementData, { previousProducts: Product[] | undefined }>({
+  return useMutation<
+    StockMovement,
+    AxiosError<ApiError>,
+    CreateStockMovementData,
+    { previousProducts: Product[] | undefined }
+  >({
+    networkMode: 'always',
+    retry: false,
     mutationFn: async (payload) => {
-      const { data: response } = await axiosInstance.post<{ data: StockMovement }>('/stock-movements', payload);
-      return response.data;
+      if (shouldCompleteStockAdjustmentLocally()) {
+        return completeOfflineStockAdjustmentInstant(payload);
+      }
+      try {
+        const { data } = await axiosInstance.post('/stock-movements', payload);
+        const movement = extractStockMovementFromResponse(data);
+        if (!movement) {
+          throw new Error('Invalid stock movement response from server');
+        }
+        return movement;
+      } catch (err: unknown) {
+        if (shouldCompleteStockAdjustmentLocally()) {
+          return completeOfflineStockAdjustmentInstant(payload);
+        }
+        throw err;
+      }
     },
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: inventoryKeys.products() });
       const previousProducts = queryClient.getQueryData<Product[]>(inventoryKeys.products());
       queryClient.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
-        (old ?? []).map((p) => p.id === payload.product_id ? { ...p, stock_quantity: payload.stock_after } : p),
+        (old ?? []).map((p) =>
+          p.id === payload.product_id ? { ...p, stock_quantity: payload.stock_after } : p,
+        ),
       );
       return { previousProducts };
     },
+    onSuccess: (movement, payload) => {
+      const stockAfter = movement?.stock_after ?? payload.stock_after;
+      queryClient.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
+        (old ?? []).map((p) =>
+          p.id === payload.product_id ? { ...p, stock_quantity: stockAfter } : p,
+        ),
+      );
+      void stockLedger.set(payload.product_id, stockAfter).catch(() => undefined);
+      void refreshProductCatalogSnapshot();
 
+      if ((movement?.id ?? 0) < 0) {
+        showToast('success', 'Stock adjusted — will sync when online');
+      }
+    },
     onError: (error, _payload, ctx) => {
       if (ctx?.previousProducts) {
         queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
       }
-      const data = error.response?.data as ApiError | undefined;
-      const serverMsg = data?.message;
-      const validationMsg = data?.errors ? Object.values(data.errors).flat().join('. ') : '';
-      const networkMsg = (!error.response) ? 'Could not reach the server. Check your connection.' : '';
-      const msg = serverMsg || validationMsg || networkMsg || 'Failed to record stock movement';
-      console.error('[StockMovement] Failed:', error.message, error.code, error.response?.status, data);
-      showToast('error', msg);
+      const message = extractApiErrorMessage(error, 'Failed to record stock movement');
+      console.error('[StockMovement] Failed:', error);
+      showToast('error', message);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
-      queryClient.invalidateQueries({ queryKey: ['inventory', 'products'] });
     },
   });
 }

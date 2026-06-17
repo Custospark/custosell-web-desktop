@@ -51,7 +51,17 @@ Logout clears React Query but **keeps** IDB snapshots, so offline re-login still
 - `offline/inventory/stockLedger.ts` — local quantity overrides per product
 - Seeded from product catalog snapshot when RQ cache empty (`useSeedStockLedger`)
 - Sale deductions via `completeOfflineSale` batch adjust
-- Non-sale adjustments sync separately in sync pipeline
+- Manual adjustments offline via `completeOfflineStockAdjustment` → pending row in sync pipeline tier 4
+- **Online overlay rule:** ledger quantities apply on top of server products only when offline, or when that product has a **pending** unsynced adjustment. Stale seeded ledger rows must not override fresh server stock after an online adjust.
+
+### Stock adjustment (manual)
+
+| Mode | Path |
+|------|------|
+| Online | `POST /stock-movements` → cache + IDB ledger updated → catalog snapshot refresh |
+| Offline | `stockLedger.adjust()` + pending adjustment → `processStockAdjustments()` on sync |
+
+Key modules: `completeOfflineStockAdjustment.ts`, `useCreateStockMovement()` in `ProductQueries.ts`, `offlineStockOverlay.ts`.
 
 ## Product validation failures
 

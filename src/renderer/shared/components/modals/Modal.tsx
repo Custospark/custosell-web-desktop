@@ -55,7 +55,7 @@ export function Modal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`relative w-full ${sizeClasses[size]} bg-white rounded-xl shadow-xl ${overflowVisible ? 'overflow-visible' : ''} ${panelClassName ?? ''}`}
+            className={`relative w-full ${sizeClasses[size]} bg-white rounded-xl shadow-xl max-h-[90vh] ${overflowVisible ? 'overflow-y-auto md:overflow-visible' : 'overflow-y-auto'} ${panelClassName ?? ''}`}
           >
             {title && (
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">

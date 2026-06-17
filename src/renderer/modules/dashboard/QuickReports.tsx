@@ -193,6 +193,7 @@ export default function QuickReports() {
   useEffect(() => {
     if (!shiftId) return;
     const stillValid = shiftOptions.some((option) => option.value === shiftId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!stillValid) setShiftId('');
   }, [shiftId, shiftOptions]);
 
@@ -281,11 +282,11 @@ export default function QuickReports() {
         title={`Download ${selectedReport?.label || 'Report'}`}
         size="xl"
         overflowVisible
-        bodyClassName="px-6 py-5 min-h-[26rem] overflow-visible"
+        bodyClassName="px-4 sm:px-6 py-4 sm:py-5 min-h-0 sm:min-h-[26rem]"
       >
         {selectedReport && (
-          <div className="flex flex-col min-h-[24rem] overflow-visible">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-visible">
+          <div className="flex flex-col min-h-0 sm:min-h-[24rem]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 flex-1">
               {/* Left — scope & filters */}
               <div className="space-y-4 overflow-visible">
                 <div className="rounded-lg bg-gray-50 border border-gray-100 px-4 py-3">
@@ -422,15 +423,15 @@ export default function QuickReports() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between gap-3 mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-400 hidden sm:block">Downloads use your business name in the filename.</p>
-              <div className="flex gap-3 ml-auto">
-                <Button variant="outline" onClick={() => setSelectedReport(null)}>Cancel</Button>
-                <Button
-                  onClick={handleDownload}
-                  disabled={isOffline || !dateRangeValid}
-                  title={isOffline ? 'Unavailable offline' : undefined}
-                >
+              <div className="flex gap-2 sm:gap-3 ml-auto">
+                <Button variant="outline" size="sm" className="sm:hidden" onClick={() => setSelectedReport(null)}>Cancel</Button>
+                <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={() => setSelectedReport(null)}>Cancel</Button>
+                <Button size="sm" className="sm:hidden" onClick={handleDownload} disabled={isOffline || !dateRangeValid}>
+                  <FileDown className="w-4 h-4" />
+                </Button>
+                <Button size="sm" className="hidden sm:inline-flex" onClick={handleDownload} disabled={isOffline || !dateRangeValid} title={isOffline ? 'Unavailable offline' : undefined}>
                   <FileDown className="w-4 h-4 mr-1.5" />Download
                 </Button>
               </div>

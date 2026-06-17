@@ -21,10 +21,10 @@ export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
 
   return (
-    <div className="flex gap-6 h-full">
+    <div className="flex flex-col lg:flex-row gap-6 h-full overflow-y-auto">
       {/* Left: Receipt */}
-      <div className="flex-1 flex items-start justify-center pt-8">
-        <div ref={receiptRef} className="bg-white p-6 border border-gray-200 rounded-xl w-full max-w-sm">
+      <div className="flex-1 flex items-start justify-center pt-4 lg:pt-8">
+        <div ref={receiptRef} className="bg-white p-4 sm:p-6 border border-gray-200 rounded-xl w-full max-w-sm">
           <div className="text-center border-b border-gray-200 pb-4 mb-4">
             <h2 className="text-lg font-bold text-gray-900">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
             {location && <p className="text-xs text-gray-500">{location}</p>}
@@ -68,11 +68,11 @@ export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
       </div>
 
       {/* Right: Actions */}
-      <div className="w-72 flex flex-col items-center justify-center gap-4">
-        <Button className="w-full" onClick={handlePrint}>
+      <div className="w-full lg:w-72 flex flex-row lg:flex-col items-center justify-center gap-3 lg:gap-4 px-4 lg:px-0 pb-4 lg:pb-0">
+        <Button size="sm" className="lg:w-full flex-1 lg:flex-none" onClick={handlePrint}>
           <Printer className="w-4 h-4 mr-1.5" />Print Receipt
         </Button>
-        <Button variant="outline" className="w-full" onClick={onNewSale}>
+        <Button variant="outline" size="sm" className="lg:w-full flex-1 lg:flex-none" onClick={onNewSale}>
           <Plus className="w-4 h-4 mr-1.5" />New Sale
         </Button>
       </div>

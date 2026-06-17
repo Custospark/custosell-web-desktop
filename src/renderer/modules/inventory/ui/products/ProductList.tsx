@@ -110,19 +110,24 @@ export default function ProductList() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Products</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your product inventory{isOffline && ' · Offline mode'}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} disabled={isOffline} title={isOffline ? 'Unavailable offline' : ''}>
-            <Download className="w-4 h-4 mr-1.5" />Download
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1.5">Download</span>
           </Button>
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} disabled={isOffline} title={isOffline ? 'Unavailable offline' : ''}>
-            <Upload className="w-4 h-4 mr-1.5" />Upload
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1.5">Upload</span>
           </Button>
-          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Product</Button>
+          <Button onClick={openCreate} size="sm">
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1.5">Add Product</span>
+          </Button>
         </div>
       </div>
 

@@ -30,10 +30,10 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
 
   return (
     <Modal isOpen={open} onClose={onClose} title="Receipt Preview" size="sm">
-      <div className="no-print flex justify-end mb-4">
-        <Button variant="outline" onClick={handlePrint}>
-          <Printer className="w-4 h-4 mr-1" />
-          Print Receipt
+      <div className="no-print flex justify-end mb-3 sm:mb-4">
+        <Button variant="outline" size="sm" onClick={handlePrint}>
+          <Printer className="w-4 h-4 sm:mr-1" />
+          <span className="hidden sm:inline">Print Receipt</span>
         </Button>
       </div>
 

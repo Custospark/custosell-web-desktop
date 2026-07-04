@@ -8,7 +8,7 @@ import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
-import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight, Edit3, RotateCcw } from 'lucide-react';
+import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight, Edit3, RotateCcw, Eye } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
@@ -20,6 +20,7 @@ export default function JournalEntriesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionId, setActionId] = useState<number | null>(null);
+  const [descPopupId, setDescPopupId] = useState<number | null>(null);
 
   // All filtering client-side — always fetch all entries
   const { data: entries, isLoading } = useJournalEntries();
@@ -76,7 +77,33 @@ export default function JournalEntriesPage() {
       render: (item: JournalEntry) => {
         const isReversal = item.description.startsWith('Reversing entry');
         const text = isReversal ? item.description.replace(/^Reversing entry for [^:]+:\s*/, '↩ ') : item.description;
-        return <span className="truncate block max-w-[200px]" title={item.description}>{text}</span>;
+        return (
+          <div className="relative">
+            <span className="truncate block max-w-[160px] text-sm">{text}</span>
+            <button
+              onClick={() => setDescPopupId(descPopupId === item.id ? null : item.id)}
+              className="absolute top-0 right-0 p-0.5 text-gray-300 hover:text-blue-600 transition-colors"
+              title="View full description"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+            {descPopupId === item.id && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setDescPopupId(null)} />
+                <div
+                  className="absolute z-50 top-6 left-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-3 text-sm text-gray-700 leading-relaxed"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Full Description</span>
+                    <button onClick={() => setDescPopupId(null)} className="text-gray-300 hover:text-gray-600"><X className="w-3 h-3" /></button>
+                  </div>
+                  <p>{item.description}</p>
+                  <p className="text-xs text-gray-400 mt-2">Entry: {item.entry_number}</p>
+                </div>
+              </>
+            )}
+          </div>
+        );
       },
     },
     { key: 'reference_type', header: 'Reference' },

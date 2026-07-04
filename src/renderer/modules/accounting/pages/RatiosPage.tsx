@@ -10,7 +10,7 @@ import { ChartContainer } from '../../../shared/components/charts/ChartContainer
 import {
   CHART_THEME, ChartTooltipRow, ChartTooltipShell, chartAverage,
 } from '../../../shared/components/charts/chartPrimitives';
-import { useRatios, useAccountingPeriods, useRatioTrends } from '../api/AccountingQueries';
+import { useAccountingPeriods, useRatioTrends } from '../api/AccountingQueries';
 import type { RatioSet } from '../api/AccountingTypes';
 import {
   Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, Image,
@@ -276,11 +276,18 @@ export default function RatiosPage() {
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
 
   const interval = periodTab === 'custom' ? 'monthly' : periodTab;
-  const count = periodTab === 'yearly' ? 5 : periodTab === 'quarterly' ? 8 : 12;
+  const count = periodTab === 'yearly' ? 5 : periodTab === 'quarterly' ? 8 : 25;
 
   const { data: periods } = useAccountingPeriods();
-  const { data: ratios, isLoading } = useRatios(periodId ? Number(periodId) : undefined);
-  const { data: trends } = useRatioTrends(interval, count);
+  const { data: trends, isLoading } = useRatioTrends(interval, count);
+
+  // Derive current ratios from the selected period in trends data
+  const ratios = useMemo(() => {
+    if (!trends?.length) return undefined;
+    const id = periodId ? Number(periodId) : undefined;
+    const match = id ? trends.find((t: any) => t.period_id === id) : trends[trends.length - 1];
+    return match?.ratios as RatioSet | undefined;
+  }, [trends, periodId]);
 
   const selectedDef = selectedRatioKey
     ? RATIO_DEFS.find((d) => d.key === selectedRatioKey)

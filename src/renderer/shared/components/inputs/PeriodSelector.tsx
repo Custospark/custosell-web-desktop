@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Select } from './Select';
 import { cn } from '../../utils/cn';
 
@@ -25,6 +25,32 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>('');
+  const [initialized, setInitialized] = useState(false);
+
+  const years = useMemo(() => {
+    if (!periods?.length) return [];
+    const y = new Set<number>();
+    periods.forEach((p) => {
+      const year = new Date(p.start_date).getFullYear();
+      y.add(year);
+    });
+    return Array.from(y).sort((a, b) => b - a);
+  }, [periods]);
+
+  // Auto-select current month/year on initial load
+  useEffect(() => {
+    if (initialized || !periods?.length) return;
+    const now = new Date();
+    const curMonth = now.getMonth();
+    const curYear = String(now.getFullYear());
+    if (years.includes(now.getFullYear())) {
+      setSelectedMonth(curMonth);
+      setSelectedYear(curYear);
+      setInitialized(true);
+      const pid = getPeriodId(curMonth, curYear);
+      if (pid) onChange(pid);
+    }
+  }, [periods, years]);
 
   const years = useMemo(() => {
     if (!periods?.length) return [];

@@ -270,6 +270,10 @@ export default function RatiosPage() {
   const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
   const [modalPeriodId, setModalPeriodId] = useState<string>('');
 
+  const { data: periods } = useAccountingPeriods();
+  const { data: trends, isLoading } = useRatioTrends('monthly', 12);
+  const downloadReport = useReportDownload();
+
   function openDownload() {
     setModalPeriodId(periodId); // Pre-fill with current selection
     setDownloadFormat('pdf');

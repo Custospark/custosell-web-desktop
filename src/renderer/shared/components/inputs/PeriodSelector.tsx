@@ -52,16 +52,6 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
     }
   }, [periods, years]);
 
-  const years = useMemo(() => {
-    if (!periods?.length) return [];
-    const y = new Set<number>();
-    periods.forEach((p) => {
-      const year = new Date(p.start_date).getFullYear();
-      y.add(year);
-    });
-    return Array.from(y).sort((a, b) => b - a);
-  }, [periods]);
-
   function getPeriodId(month: number, year: string): string {
     if (!periods || !year) return '';
     const y = parseInt(year);

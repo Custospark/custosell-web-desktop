@@ -110,7 +110,7 @@ function TrialBalanceSection({ periodId, business, periodName: propName, periodD
           </tr>
         </thead>
         <tbody>
-          {tb.accounts?.map((acc) => (
+          {tb.accounts?.filter((acc: any) => acc.debit_balance !== 0 || acc.credit_balance !== 0).map((acc: any) => (
             <tr key={acc.account_id} className="border-b border-gray-200">
               <td className="py-2 pr-2 text-gray-800">{acc.name}</td>
               <td className="py-2 px-2 text-gray-500 font-mono">{acc.code}</td>
@@ -161,9 +161,9 @@ function IncomeStatementSection({ periodId, business, periodName: propName, peri
       <div className="space-y-4">
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Revenue</h4>
-          {stmt.sections?.revenue?.map((r) => (
-            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-              <span className="text-gray-700">{r.name}</span>
+          {stmt.sections?.revenue?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
           ))}
@@ -175,9 +175,23 @@ function IncomeStatementSection({ periodId, business, periodName: propName, peri
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Cost of Goods Sold</h4>
-          {stmt.sections?.cost_of_goods_sold?.map((r) => (
-            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-              <span className="text-gray-700">{r.name}</span>
+          {stmt.sections?.cost_of_goods_sold?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-semibold border-b-2 border-gray-300">
+            <span>Total Revenue</span>
+            <span className="font-mono tabular-nums">{fmt(stmt.total_revenue)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Cost of Goods Sold</h4>
+          {stmt.sections?.cost_of_goods_sold?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
           ))}
@@ -194,9 +208,9 @@ function IncomeStatementSection({ periodId, business, periodName: propName, peri
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Operating Expenses</h4>
-          {stmt.sections?.operating_expenses?.map((r) => (
-            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-              <span className="text-gray-700">{r.name}</span>
+          {stmt.sections?.operating_expenses?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
           ))}
@@ -239,9 +253,9 @@ function BalanceSheetSection({ periodId, business, periodName: propName, periodD
       <div className="space-y-6">
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">ASSETS</h4>
-          {bs.sections?.assets?.map((r) => (
-            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-              <span className="text-gray-700">{r.name}</span>
+          {bs.sections?.assets?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
           ))}
@@ -253,9 +267,9 @@ function BalanceSheetSection({ periodId, business, periodName: propName, periodD
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">LIABILITIES</h4>
-          {bs.sections?.liabilities?.map((r) => (
-            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-              <span className="text-gray-700">{r.name}</span>
+          {bs.sections?.liabilities?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
           ))}
@@ -267,9 +281,37 @@ function BalanceSheetSection({ periodId, business, periodName: propName, periodD
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">EQUITY</h4>
-          {bs.sections?.equity?.map((r) => (
-            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-              <span className="text-gray-700">{r.name}</span>
+          {bs.sections?.equity?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Assets</span>
+            <span className="font-mono tabular-nums">{fmt(bs.total_assets)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">LIABILITIES</h4>
+          {bs.sections?.liabilities?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Liabilities</span>
+            <span className="font-mono tabular-nums">{fmt(bs.total_liabilities)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">EQUITY</h4>
+          {bs.sections?.equity?.filter((r: any) => r.balance !== 0).map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.account_name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
           ))}
@@ -391,7 +433,7 @@ function EquitySection({ periodId, business, periodName: propName, periodDates: 
               </tr>
             </thead>
             <tbody>
-              {eq.equity_components?.map((comp, i) => (
+              {eq.equity_components?.filter((c: any) => c.balance !== 0).map((comp: any, i: number) => (
                 <tr key={i} className="border-b border-gray-100">
                   <td className="py-2 pr-2 text-gray-800">{comp.account_name}</td>
                   <td className="py-2 px-2 text-gray-500 font-mono">{comp.account_code}</td>

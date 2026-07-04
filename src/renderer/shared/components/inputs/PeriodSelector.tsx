@@ -75,6 +75,7 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
         const d = new Date(p.start_date);
         return d.getFullYear() === y && months.includes(d.getMonth());
       })
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
       .map((p) => String(p.id));
   }
 

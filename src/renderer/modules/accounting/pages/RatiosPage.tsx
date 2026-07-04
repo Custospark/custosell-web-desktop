@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useRef, useState, useMemo } from 'react';
 import {
   Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts';
@@ -187,19 +187,29 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
   const info = RATIO_INFO[def.key];
   const [hovered, setHovered] = useState(false);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
-
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
   const iconColor = health === 'healthy' ? 'text-green-400' : health === 'warning' ? 'text-amber-400' : 'text-red-400';
 
+  const show = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setHovered(true);
+  }, []);
+
+  const hide = useCallback(() => {
+    closeTimer.current = setTimeout(() => setHovered(false), 200);
+  }, []);
+
   return (
-    <div className="relative">
+    <div className="relative"
+      onMouseEnter={show}
+      onMouseLeave={hide}
+    >
       <button
         onClick={onClick}
         onMouseEnter={(e) => {
-          setHovered(true);
           const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          setTipPos({ top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 360) });
+          setTipPos({ top: rect.bottom + 10, left: Math.min(rect.left, window.innerWidth - 360) });
         }}
-        onMouseLeave={() => setHovered(false)}
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
           selected
@@ -218,9 +228,13 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
         <div
           className="fixed z-[9999] w-84 bg-white rounded-xl shadow-xl border border-gray-200 p-4 text-sm leading-relaxed space-y-2.5"
           style={{ top: tipPos.top, left: tipPos.left }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          onMouseEnter={show}
+          onMouseLeave={hide}
         >
+          {/* Arrow tip pointing up */}
+          <div className="absolute -top-2 left-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-200" />
+          <div className="absolute -top-[7px] left-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white" />
+
           <p className="text-sm font-bold text-gray-900">{info.fullName}</p>
           <p className="text-xs text-gray-600 leading-relaxed">{info.meaning}</p>
           <div className="bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs text-gray-700 border border-gray-100">{info.formula}</div>

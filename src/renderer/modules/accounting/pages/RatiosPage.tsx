@@ -5,6 +5,7 @@ import {
 import { Card } from '../../../shared/components/cards/Card';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { Button } from '../../../shared/components/buttons/Button';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
 import {
@@ -15,7 +16,7 @@ import { useReportDownload } from '../../dashboard/DashboardQueries';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import type { RatioSet } from '../api/AccountingTypes';
 import {
-  Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, Image, RefreshCw,
+  Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, RefreshCw,
   Lightbulb, AlertTriangle, AlertCircle, CheckCircle, Info,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -265,16 +266,28 @@ const CATEGORY_META: Record<string, { title: string; icon: React.ElementType; ac
 export default function RatiosPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
 
   const { data: periods } = useAccountingPeriods();
   const { data: trends, isLoading } = useRatioTrends('monthly', 12);
   const downloadReport = useReportDownload();
 
-  function downloadRatios(format: string) {
+  const selectedPeriodName = periods?.find((p: any) => String(p.id) === periodId)?.name
+    ?? (periodId ? `Period #${periodId}` : 'Latest period');
+
+  function openDownload(format: 'pdf' | 'xlsx') {
+    setDownloadFormat(format);
+    setDownloadOpen(true);
+  }
+
+  function handleDownload() {
     const params = new URLSearchParams();
-    if (periodId) params.set('period_id', periodId.split(',')[0]);
-    params.set('format', format);
-    downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${format}`);
+    const pid = periodId ? periodId.split(',')[0] : '';
+    if (pid) params.set('period_id', pid);
+    params.set('format', downloadFormat);
+    downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
+    setDownloadOpen(false);
   }
 
   // Derive current ratios from the selected period in trends data
@@ -370,14 +383,11 @@ export default function RatiosPage() {
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="w-4 h-4 mr-1.5" />Reload
             </Button>
-            <Button variant="outline" size="sm" onClick={() => downloadRatios('pdf')}>
+            <Button variant="outline" size="sm" onClick={() => openDownload('pdf')}>
               <Download className="w-4 h-4 mr-1.5" />PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={() => downloadRatios('xlsx')}>
+            <Button variant="outline" size="sm" onClick={() => openDownload('xlsx')}>
               <FileSpreadsheet className="w-4 h-4 mr-1.5" />Excel
-            </Button>
-            <Button variant="outline" size="sm">
-              <Image className="w-4 h-4 mr-1.5" />Image
             </Button>
           </div>
         </div>
@@ -577,6 +587,39 @@ export default function RatiosPage() {
           </div>
         </Card>
       )}
+
+      <Modal isOpen={downloadOpen} onClose={() => setDownloadOpen(false)} title="Download Ratios Report" size="sm">
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-3 text-sm">
+            <span className="text-gray-500">Period: </span>
+            <span className="font-semibold text-gray-800">{selectedPeriodName}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDownloadFormat('pdf')}
+              className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+                downloadFormat === 'pdf' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50')}
+            >
+              <Download className="w-4 h-4 mx-auto mb-1" />
+              PDF
+            </button>
+            <button
+              onClick={() => setDownloadFormat('xlsx')}
+              className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+                downloadFormat === 'xlsx' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50')}
+            >
+              <FileSpreadsheet className="w-4 h-4 mx-auto mb-1" />
+              Excel
+            </button>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" type="button" onClick={() => setDownloadOpen(false)}>Cancel</Button>
+            <Button type="button" onClick={handleDownload}>Download</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

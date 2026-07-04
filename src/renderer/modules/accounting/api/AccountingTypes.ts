@@ -55,6 +55,7 @@ export interface JournalEntry {
   locked: boolean;
   posted_at: string | null;
   lines: JournalEntryLine[];
+  attachment_url?: string | null;
   created_at: string;
 }
 

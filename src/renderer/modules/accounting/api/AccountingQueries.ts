@@ -174,10 +174,27 @@ export function useCreateChartOfAccount() {
 export function useCreateJournalEntry() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<JournalEntry, AxiosError, { date: string; description: string; lines: JournalEntryLine[] }>({
+  return useMutation<JournalEntry, AxiosError, { date: string; description: string; lines: JournalEntryLine[]; attachment?: File | null }>({
     mutationFn: async (payload) => {
-      const { data } = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.JOURNAL_ENTRIES, payload);
-      return data.data;
+      let response;
+      if (payload.attachment) {
+        const fd = new FormData();
+        fd.append('date', payload.date);
+        fd.append('description', payload.description);
+        fd.append('attachment', payload.attachment);
+        payload.lines.forEach((line, i) => {
+          fd.append(`lines[${i}][account_id]`, String(line.account_id));
+          fd.append(`lines[${i}][debit_amount]`, String(line.debit_amount));
+          fd.append(`lines[${i}][credit_amount]`, String(line.credit_amount));
+          if (line.description) fd.append(`lines[${i}][description]`, line.description);
+        });
+        response = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.JOURNAL_ENTRIES, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        response = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.JOURNAL_ENTRIES, payload);
+      }
+      return response.data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: accountingKeys.journalEntries() });

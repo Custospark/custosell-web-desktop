@@ -96,6 +96,15 @@ export default function JournalEntriesPage() {
     },
     { key: 'reference_type', header: 'Reference' },
     {
+      key: 'attachment_url',
+      header: '',
+      render: (item: JournalEntry) => item.attachment_url ? (
+        <a href={item.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800" title="View attachment">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+        </a>
+      ) : null,
+    },
+    {
       key: 'total_debits',
       header: 'Total Debits',
       align: 'right' as const,
@@ -239,6 +248,7 @@ export default function JournalEntriesPage() {
 function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [lines, setLines] = useState<JournalEntryLine[]>([
     { account_id: 0, debit_amount: 0, credit_amount: 0, description: '' },
     { account_id: 0, debit_amount: 0, credit_amount: 0, description: '' },
@@ -269,7 +279,7 @@ function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!balanced) return;
-    createEntry.mutate({ date, description, lines }, { onSuccess: () => onClose() });
+    createEntry.mutate({ date, description, lines, attachment: attachment || undefined }, { onSuccess: () => onClose() });
   }
 
   return (
@@ -336,6 +346,13 @@ function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
                 {balanced ? 'Balanced' : 'Not Balanced'}
               </span>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Attachment (optional)</label>
+            <input type="file" accept="image/*,.pdf,.doc,.docx,.xlsx" onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100" />
+            {attachment && <p className="text-xs text-gray-400 mt-1">{attachment.name} ({(attachment.size / 1024).toFixed(1)} KB)</p>}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

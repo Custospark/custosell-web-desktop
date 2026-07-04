@@ -268,42 +268,25 @@ export default function RatiosPage() {
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
+  const [modalPeriodId, setModalPeriodId] = useState<string>('');
 
-  const { data: periods } = useAccountingPeriods();
-  const { data: trends, isLoading } = useRatioTrends('monthly', 12);
-  const downloadReport = useReportDownload();
-
-  const selectedPeriodName = useMemo(() => {
-    if (!periodId || !periods) return 'Latest period';
-    const ids = periodId.split(',').map(Number).filter(Boolean);
-    if (ids.length === 0) return 'No period selected';
-    const matched = periods.filter((p: any) => ids.includes(p.id)).sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
-    if (matched.length === 0) return 'No period selected';
-    if (matched.length === 1) return matched[0].name;
-    return `${matched[0].name} – ${matched[matched.length - 1].name}`;
-  }, [periodId, periods]);
-
-  function openDownload(format: 'pdf' | 'xlsx') {
-    setDownloadFormat(format);
+  function openDownload() {
+    setModalPeriodId(periodId); // Pre-fill with current selection
+    setDownloadFormat('pdf');
     setDownloadOpen(true);
   }
 
-  function handleDownload() {
+  function doDownload() {
+    const ids = modalPeriodId ? modalPeriodId.split(',').map(Number).filter(Boolean) : (trends?.length ? [trends[trends.length - 1].period_id] : []);
+    if (ids.length === 0) return;
+
     const params = new URLSearchParams();
-    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-    if (ids.length > 0) {
-      params.set('period_id', String(ids[ids.length - 1]));
-      const firstMatch = ids.length > 1 && periods?.find((p: any) => p.id === ids[0]);
-      const lastMatch = periods?.find((p: any) => p.id === ids[ids.length - 1]);
-      if (firstMatch?.start_date && lastMatch?.end_date) {
-        params.set('date_from', firstMatch.start_date);
-        params.set('date_to', lastMatch.end_date);
-      }
-    } else if (trends?.length) {
-      // No period selected — use latest period from trends
-      params.set('period_id', String(trends[trends.length - 1].period_id));
-    } else {
-      return; // No data, nothing to download
+    params.set('period_id', String(ids[ids.length - 1]));
+    const firstMatch = ids.length > 1 && periods?.find((p: any) => p.id === ids[0]);
+    const lastMatch = periods?.find((p: any) => p.id === ids[ids.length - 1]);
+    if (firstMatch?.start_date && lastMatch?.end_date) {
+      params.set('date_from', firstMatch.start_date);
+      params.set('date_to', lastMatch.end_date);
     }
     params.set('format', downloadFormat);
     downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
@@ -403,11 +386,8 @@ export default function RatiosPage() {
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="w-4 h-4 mr-1.5" />Reload
             </Button>
-            <Button variant="outline" size="sm" onClick={() => openDownload('pdf')}>
-              <Download className="w-4 h-4 mr-1.5" />PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => openDownload('xlsx')}>
-              <FileSpreadsheet className="w-4 h-4 mr-1.5" />Excel
+            <Button variant="outline" size="sm" onClick={openDownload}>
+              <Download className="w-4 h-4 mr-1.5" />Download
             </Button>
           </div>
         </div>
@@ -608,21 +588,24 @@ export default function RatiosPage() {
         </Card>
       )}
 
-      <Modal isOpen={downloadOpen} onClose={() => setDownloadOpen(false)} title="Download Ratios Report" size="sm">
+      <Modal isOpen={downloadOpen} onClose={() => setDownloadOpen(false)} title="Download Ratios Report" size="md">
         <div className="space-y-4">
-          <div className="bg-gray-50 rounded-lg p-3 text-sm">
-            <span className="text-gray-500">Period: </span>
-            <span className="font-semibold text-gray-800">{selectedPeriodName}</span>
-          </div>
+          <p className="text-sm text-gray-500">Select the period and format for your report.</p>
 
-          <div className="flex gap-2">
+          <PeriodSelector
+            periods={periods}
+            value={modalPeriodId}
+            onChange={setModalPeriodId}
+          />
+
+          <div className="flex gap-2 pt-2">
             <button
               onClick={() => setDownloadFormat('pdf')}
               className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
                 downloadFormat === 'pdf' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50')}
             >
               <Download className="w-4 h-4 mx-auto mb-1" />
-              PDF
+              PDF Document
             </button>
             <button
               onClick={() => setDownloadFormat('xlsx')}
@@ -630,13 +613,13 @@ export default function RatiosPage() {
                 downloadFormat === 'xlsx' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50')}
             >
               <FileSpreadsheet className="w-4 h-4 mx-auto mb-1" />
-              Excel
+              Excel Spreadsheet
             </button>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
             <Button variant="outline" type="button" onClick={() => setDownloadOpen(false)}>Cancel</Button>
-            <Button type="button" onClick={handleDownload}>Download</Button>
+            <Button type="button" onClick={doDownload}>Download</Button>
           </div>
         </div>
       </Modal>

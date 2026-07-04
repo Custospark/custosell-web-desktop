@@ -48,71 +48,84 @@ const RATIO_DEFS: RatioDef[] = [
   { category: 'efficiency', key: 'accounts_receivable_turnover', label: 'AR T/O', format: 'times', healthyThreshold: 8, warningThreshold: 4, higherIsBetter: true },
 ];
 
-const RATIO_INFO: Record<string, { meaning: string; formula: string; importance: string }> = {
+const RATIO_INFO: Record<string, { meaning: string; formula: string; importance: string; fullName: string }> = {
   current_ratio: {
+    fullName: 'Current Ratio',
     meaning: 'Measures your ability to pay short-term obligations with short-term assets.',
     formula: 'Current Assets ÷ Current Liabilities',
     importance: 'A ratio below 1.0 means liabilities exceed assets — risk of insolvency. Above 2.0 is healthy.',
   },
   quick_ratio: {
+    fullName: 'Quick Ratio (Acid Test)',
     meaning: 'Like the current ratio but excludes inventory. Tests immediate liquidity.',
     formula: '(Current Assets − Inventory) ÷ Current Liabilities',
-    importance: 'Also called the "acid test". Above 1.0 means you can pay debts without selling inventory.',
+    importance: 'Above 1.0 means you can pay debts without selling inventory.',
   },
   cash_ratio: {
+    fullName: 'Cash Ratio',
     meaning: 'The most conservative liquidity measure — only cash and equivalents.',
     formula: '(Cash + Bank) ÷ Current Liabilities',
-    importance: 'Above 0.5 means you have emergency cash reserves. Below 0.3 signals potential cash crunch.',
+    importance: 'Above 0.5 means you have emergency cash reserves.',
   },
   gross_profit_margin: {
+    fullName: 'Gross Profit Margin',
     meaning: 'Percentage of revenue retained after paying for products/services sold.',
     formula: '(Revenue − COGS) ÷ Revenue × 100',
     importance: 'Shows pricing power and cost efficiency. Below 20% means costs consume most of your revenue.',
   },
   net_profit_margin: {
+    fullName: 'Net Profit Margin',
     meaning: 'Percentage of revenue that becomes profit after ALL expenses.',
     formula: 'Net Income ÷ Revenue × 100',
-    importance: 'The bottom line. Below 5% means every cost matters. Above 15% is excellent.',
+    importance: 'The bottom line. Above 15% is excellent.',
   },
   return_on_assets: {
+    fullName: 'Return on Assets (ROA)',
     meaning: 'How efficiently your assets generate profit.',
     formula: 'Net Income ÷ Total Assets × 100',
     importance: 'Measures management effectiveness. Below 5% suggests assets are underperforming.',
   },
   return_on_equity: {
+    fullName: 'Return on Equity (ROE)',
     meaning: 'Return generated on shareholders\' invested capital.',
     formula: 'Net Income ÷ Shareholders\' Equity × 100',
-    importance: 'Key metric for investors. Below 10% may not justify the risk of owning the business.',
+    importance: 'Above 15% is excellent. Below 10% may not justify the risk of owning the business.',
   },
   debt_to_equity: {
+    fullName: 'Debt-to-Equity Ratio (D/E)',
     meaning: 'How much debt vs equity the business uses to finance operations.',
     formula: 'Total Liabilities ÷ Shareholders\' Equity',
     importance: 'Above 2.0 means heavy debt reliance — higher risk in downturns. Below 1.0 is conservative.',
   },
   debt_ratio: {
+    fullName: 'Debt Ratio (D/A)',
     meaning: 'Proportion of assets financed by debt.',
     formula: 'Total Liabilities ÷ Total Assets',
-    importance: 'Above 0.5 means creditors own more than half the assets. Below 0.3 is very safe.',
+    importance: 'Above 0.5 means creditors own more than half the assets.',
   },
   interest_coverage_ratio: {
+    fullName: 'Interest Coverage Ratio (ICR)',
     meaning: 'How many times operating profit can cover interest payments.',
     formula: 'Operating Income ÷ Interest Expense',
-    importance: 'Below 1.5 means you risk defaulting on debt. Above 3.0 comfortably covers interest.',
+    importance: 'Below 1.5 means you risk defaulting on debt. Above 3.0 is comfortable.',
   },
   asset_turnover: {
+    fullName: 'Asset Turnover Ratio',
     meaning: 'How efficiently assets generate sales revenue.',
     formula: 'Sales ÷ Total Assets',
-    importance: 'Below 0.8 means assets are underutilized. Above 1.5 indicates strong operational efficiency.',
+    importance: 'Below 0.8 means assets are underutilized. Above 1.5 indicates strong efficiency.',
   },
   inventory_turnover: {
+    fullName: 'Inventory Turnover Ratio',
     meaning: 'How many times inventory is sold and replaced in a period.',
     formula: 'COGS ÷ Average Inventory',
-    importance: 'Low turnover means cash tied up in slow stock. Below 3x signals excess inventory.',
+    importance: 'Below 3x signals excess inventory tying up cash. Above 6x is healthy.',
   },
   accounts_receivable_turnover: {
+    fullName: 'Accounts Receivable Turnover (AR T/O)',
     meaning: 'How quickly customers pay their debts.',
     formula: 'Net Sales ÷ Average Accounts Receivable',
-    importance: 'Below 4x means slow collections — customers take too long to pay, straining cash flow.',
+    importance: 'Below 4x means slow collections straining cash flow.',
   },
 };
 
@@ -168,12 +181,14 @@ function HealthDot({ status }: { status: HealthStatus }) {
   );
 }
 
-function RatioLine({ def, value, selected, onClick }: { def: RatioDef; value: number | null; selected: boolean; onClick: () => void }) {
+function RatioLine({ def, value, selected, onClick, recommendation }: { def: RatioDef; value: number | null; selected: boolean; onClick: () => void; recommendation?: { message: string; action: string; priority: string } | null }) {
   const health = getHealth(value, def);
   const formatted = value !== null ? formatRatioValue(value, def.format) : 'N/A';
   const info = RATIO_INFO[def.key];
   const [hovered, setHovered] = useState(false);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
+
+  const iconColor = health === 'healthy' ? 'text-green-400' : health === 'warning' ? 'text-amber-400' : 'text-red-400';
 
   return (
     <div className="relative">
@@ -182,7 +197,7 @@ function RatioLine({ def, value, selected, onClick }: { def: RatioDef; value: nu
         onMouseEnter={(e) => {
           setHovered(true);
           const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          setTipPos({ top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 340) });
+          setTipPos({ top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 360) });
         }}
         onMouseLeave={() => setHovered(false)}
         className={cn(
@@ -195,21 +210,36 @@ function RatioLine({ def, value, selected, onClick }: { def: RatioDef; value: nu
         <div className="flex items-center gap-2 min-w-0">
           <HealthDot status={health} />
           <span className="truncate">{def.label}</span>
-          <Info className="w-3 h-3 text-gray-300 shrink-0" />
+          <Info className={cn('w-3 h-3 shrink-0', iconColor)} />
         </div>
         <span className="font-semibold tabular-nums shrink-0">{formatted}</span>
       </button>
       {hovered && info && (
         <div
-          className="fixed z-[9999] w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-3.5 text-sm leading-relaxed"
+          className="fixed z-[9999] w-84 bg-white rounded-xl shadow-xl border border-gray-200 p-4 text-sm leading-relaxed space-y-2.5"
           style={{ top: tipPos.top, left: tipPos.left }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          <p className="text-sm font-semibold text-gray-800 mb-1.5">{def.label}</p>
-          <p className="text-xs text-gray-600 mb-1.5">{info.meaning}</p>
-          <div className="bg-gray-50 rounded px-2 py-1.5 mb-1.5 font-mono text-xs text-gray-700">{info.formula}</div>
+          <p className="text-sm font-bold text-gray-900">{info.fullName}</p>
+          <p className="text-xs text-gray-600 leading-relaxed">{info.meaning}</p>
+          <div className="bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs text-gray-700 border border-gray-100">{info.formula}</div>
           <p className="text-xs text-gray-500">{info.importance}</p>
+          {value === null && (
+            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">Insufficient data — this ratio cannot be calculated until relevant accounts have transactions.</p>
+          )}
+          {recommendation && (
+            <div className={cn(
+              'rounded-lg px-3 py-2 text-xs border',
+              recommendation.priority === 'high' ? 'bg-red-50 border-red-100 text-red-700' :
+              recommendation.priority === 'medium' ? 'bg-amber-50 border-amber-100 text-amber-700' :
+              'bg-green-50 border-green-100 text-green-700',
+            )}>
+              <p className="font-semibold mb-0.5">Recommendation</p>
+              <p>{recommendation.message}</p>
+              <p className="mt-1 italic">{recommendation.action}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -340,6 +370,7 @@ export default function RatiosPage() {
                   {defs.map((def) => {
                     const value = getRatioValue(ratios, def.category, def.key);
                     const selected = selectedRatioKey === def.key;
+                    const rec = ratios?.recommendations?.find((r: any) => r.ratio_key === def.key);
                     return (
                       <RatioLine
                         key={def.key}
@@ -347,6 +378,7 @@ export default function RatiosPage() {
                         value={value}
                         selected={selected}
                         onClick={() => handleRatioClick(def.key)}
+                        recommendation={rec ?? null}
                       />
                     );
                   })}

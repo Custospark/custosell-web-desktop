@@ -9,6 +9,9 @@ import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import { Printer, Scale, BarChart3, ClipboardList, ChevronDown, ChevronRight, CheckCircle, XCircle, Download, FileSpreadsheet, TrendingUp, PieChart } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import type { BusinessInfo } from '../../../app/store/slices/authSlice';
+import type { AccountingPeriod } from '../api/AccountingTypes';
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
@@ -43,23 +46,56 @@ function TabButton({ active, tab, onClick }: { active: boolean; tab: typeof TABS
   );
 }
 
-function TrialBalanceSection({ periodId, periods }: { periodId: string; periods: any }) {
+interface SectionProps {
+  periodId: string;
+  periods: AccountingPeriod[] | undefined;
+  business: BusinessInfo | null | undefined;
+}
+
+function ReportHeader({ business }: { business: BusinessInfo | null | undefined }) {
+  if (!business?.name) return null;
+  const fullLocation = [business.city, business.state, business.country].filter(Boolean).join(', ');
+
+  return (
+    <div className="text-center border-b-2 border-blue-700 pb-4 mb-4">
+      <h1 className="text-xl font-bold uppercase tracking-wide text-blue-800">{business.name}</h1>
+      {business.address && <p className="text-[11px] text-gray-500 mt-1">{business.address}</p>}
+      {fullLocation && <p className="text-[11px] text-gray-500">{fullLocation}</p>}
+      {(business.phone || business.email) && (
+        <p className="text-[11px] text-gray-500">
+          {[business.phone && `Tel: ${business.phone}`, business.email].filter(Boolean).join(' · ')}
+        </p>
+      )}
+      {business.tax_id && <p className="text-[11px] text-gray-500">Tax ID: {business.tax_id}</p>}
+    </div>
+  );
+}
+
+function ReportTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="text-center mb-4">
+      <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+      {subtitle && <p className="text-[11px] text-gray-500 mt-1">{subtitle}</p>}
+    </div>
+  );
+}
+
+function TrialBalanceSection({ periodId, business }: SectionProps) {
   const { data: tb, isLoading, isError } = useTrialBalance(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load trial balance.</p></Card>;
   if (!tb) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
+  const periodName = tb.period?.name ?? `Period #${periodId}`;
+  const periodDates = tb.period?.start_date
+    ? `From ${formatShiftDate(tb.period.start_date)} to ${formatShiftDate(tb.period.end_date)}`
+    : '';
+
   return (
     <Card className="print:shadow-none">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
-        <h3 className="text-xl font-semibold text-gray-800 mt-1">Trial Balance</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          {tb.period?.name ?? `Period #${periodId}`}
-          {tb.period?.start_date ? ` — ${formatShiftDate(tb.period.start_date)} to ${formatShiftDate(tb.period.end_date)}` : ''}
-        </p>
-      </div>
+      <ReportHeader business={business} />
+      <ReportTitle title="Trial Balance" subtitle={[periodName, periodDates].filter(Boolean).join(' — ')} />
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b-2 border-gray-800">
@@ -105,26 +141,27 @@ function TrialBalanceSection({ periodId, periods }: { periodId: string; periods:
   );
 }
 
-function IncomeStatementSection({ periodId, periods }: { periodId: string; periods: any }) {
+function IncomeStatementSection({ periodId, periods, business }: SectionProps) {
   const { data: stmt, isLoading, isError } = useIncomeStatement(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load income statement.</p></Card>;
   if (!stmt) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
+  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
+    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
+    : '';
+
   return (
     <Card className="print:shadow-none">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
-        <h3 className="text-xl font-semibold text-gray-800 mt-1">Income Statement</h3>
-        <p className="text-sm text-gray-500 mt-1">For the period ended {periodId && periods?.find(p => String(p.id) === periodId) ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date) : ''}</p>
-      </div>
+      <ReportHeader business={business} />
+      <ReportTitle title="Income Statement" subtitle={periodEnd ? `For the period ended ${periodEnd}` : undefined} />
 
       <div className="space-y-4">
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Revenue</h4>
-          {stmt.sections?.revenue?.map((r: any) => (
-            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+          {stmt.sections?.revenue?.map((r) => (
+            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
               <span className="text-gray-700">{r.name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
@@ -137,8 +174,8 @@ function IncomeStatementSection({ periodId, periods }: { periodId: string; perio
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Cost of Goods Sold</h4>
-          {stmt.sections?.cost_of_goods_sold?.map((r: any) => (
-            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+          {stmt.sections?.cost_of_goods_sold?.map((r) => (
+            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
               <span className="text-gray-700">{r.name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
@@ -156,8 +193,8 @@ function IncomeStatementSection({ periodId, periods }: { periodId: string; perio
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Operating Expenses</h4>
-          {stmt.sections?.operating_expenses?.map((r: any) => (
-            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+          {stmt.sections?.operating_expenses?.map((r) => (
+            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
               <span className="text-gray-700">{r.name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
@@ -184,26 +221,27 @@ function IncomeStatementSection({ periodId, periods }: { periodId: string; perio
   );
 }
 
-function BalanceSheetSection({ periodId, periods }: { periodId: string; periods: any }) {
+function BalanceSheetSection({ periodId, periods, business }: SectionProps) {
   const { data: bs, isLoading, isError } = useBalanceSheet(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load balance sheet.</p></Card>;
   if (!bs) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
+  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
+    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
+    : '';
+
   return (
     <Card className="print:shadow-none">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
-        <h3 className="text-xl font-semibold text-gray-800 mt-1">Balance Sheet</h3>
-        <p className="text-sm text-gray-500 mt-1">As of {periodId && periods?.find(p => String(p.id) === periodId) ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date) : ''}</p>
-      </div>
+      <ReportHeader business={business} />
+      <ReportTitle title="Balance Sheet" subtitle={periodEnd ? `As of ${periodEnd}` : undefined} />
 
       <div className="space-y-6">
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">ASSETS</h4>
-          {bs.sections?.assets?.map((r: any) => (
-            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+          {bs.sections?.assets?.map((r) => (
+            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
               <span className="text-gray-700">{r.name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
@@ -216,8 +254,8 @@ function BalanceSheetSection({ periodId, periods }: { periodId: string; periods:
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">LIABILITIES</h4>
-          {bs.sections?.liabilities?.map((r: any) => (
-            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+          {bs.sections?.liabilities?.map((r) => (
+            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
               <span className="text-gray-700">{r.name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
@@ -230,8 +268,8 @@ function BalanceSheetSection({ periodId, periods }: { periodId: string; periods:
 
         <div>
           <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">EQUITY</h4>
-          {bs.sections?.equity?.map((r: any) => (
-            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+          {bs.sections?.equity?.map((r) => (
+            <div key={r.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
               <span className="text-gray-700">{r.name}</span>
               <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
             </div>
@@ -254,43 +292,70 @@ function BalanceSheetSection({ periodId, periods }: { periodId: string; periods:
   );
 }
 
-function CashFlowSection({ periodId, periods }: { periodId: string; periods: any }) {
+function CashFlowSection({ periodId, periods, business }: SectionProps) {
   const { data: cf, isLoading, isError } = useCashFlow(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load cash flow statement.</p></Card>;
   if (!cf) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
-  function renderSection(title: string, section: { items: { label: string; amount: number }[]; total: number }, color: string) {
-    return (
-      <div>
-        <h4 className={`text-sm font-semibold uppercase tracking-wider mb-2 border-b-2 pb-2 ${color}`}>{title}</h4>
-        {section.items?.map((item, i) => (
-          <div key={i} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
-            <span className="text-gray-700">{item.label}</span>
-            <span className="font-mono tabular-nums">{fmt(item.amount)}</span>
-          </div>
-        ))}
-        <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
-          <span>Total {title}</span>
-          <span className="font-mono tabular-nums">{fmt(section.total)}</span>
-        </div>
-      </div>
-    );
-  }
+  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
+    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
+    : '';
 
   return (
     <Card className="print:shadow-none">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
-        <h3 className="text-xl font-semibold text-gray-800 mt-1">Cash Flow Statement</h3>
-        <p className="text-sm text-gray-500 mt-1">For the period ended {periodId && periods?.find(p => String(p.id) === periodId) ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date) : ''}</p>
-      </div>
+      <ReportHeader business={business} />
+      <ReportTitle title="Cash Flow Statement" subtitle={periodEnd ? `For the period ended ${periodEnd}` : undefined} />
 
       <div className="space-y-6">
-        {renderSection('Operating Activities', cf.operating, 'text-green-700 border-green-800')}
-        {renderSection('Investing Activities', cf.investing, 'text-blue-700 border-blue-800')}
-        {renderSection('Financing Activities', cf.financing, 'text-purple-700 border-purple-800')}
+        <div>
+          <h4 className="text-sm font-semibold uppercase tracking-wider mb-2 border-b-2 pb-2 text-green-700 border-green-800">
+            Operating Activities
+          </h4>
+          {cf.operating.items?.map((item, i) => (
+            <div key={i} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{item.label}</span>
+              <span className="font-mono tabular-nums">{fmt(item.amount)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Operating Activities</span>
+            <span className="font-mono tabular-nums">{fmt(cf.operating.total)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold uppercase tracking-wider mb-2 border-b-2 pb-2 text-blue-700 border-blue-800">
+            Investing Activities
+          </h4>
+          {cf.investing.items?.map((item, i) => (
+            <div key={i} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{item.label}</span>
+              <span className="font-mono tabular-nums">{fmt(item.amount)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Investing Activities</span>
+            <span className="font-mono tabular-nums">{fmt(cf.investing.total)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold uppercase tracking-wider mb-2 border-b-2 pb-2 text-purple-700 border-purple-800">
+            Financing Activities
+          </h4>
+          {cf.financing.items?.map((item, i) => (
+            <div key={i} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{item.label}</span>
+              <span className="font-mono tabular-nums">{fmt(item.amount)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Financing Activities</span>
+            <span className="font-mono tabular-nums">{fmt(cf.financing.total)}</span>
+          </div>
+        </div>
 
         <div className="flex justify-between py-3 text-base font-bold border-t-2 border-gray-800">
           <span>Net Change in Cash</span>
@@ -303,20 +368,21 @@ function CashFlowSection({ periodId, periods }: { periodId: string; periods: any
   );
 }
 
-function EquitySection({ periodId, periods }: { periodId: string; periods: any }) {
+function EquitySection({ periodId, periods, business }: SectionProps) {
   const { data: eq, isLoading, isError } = useEquity(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load equity statement.</p></Card>;
   if (!eq) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
+  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
+    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
+    : '';
+
   return (
     <Card className="print:shadow-none">
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
-        <h3 className="text-xl font-semibold text-gray-800 mt-1">Statement of Changes in Equity</h3>
-        <p className="text-sm text-gray-500 mt-1">For the period ended {periodId && periods?.find(p => String(p.id) === periodId) ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date) : ''}</p>
-      </div>
+      <ReportHeader business={business} />
+      <ReportTitle title="Statement of Changes in Equity" subtitle={periodEnd ? `For the period ended ${periodEnd}` : undefined} />
 
       <div className="space-y-6">
         <div>
@@ -376,7 +442,14 @@ export default function FinancialStatementsPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabKey | null>(null);
   const { data: periods } = useAccountingPeriods();
+  const business = useAppSelector((s) => s.auth.user?.business);
   const downloadReport = useReportDownload();
+
+  // Resolve period_id: use last ID for quarter selection
+  const effectivePeriodId = useMemo(() => {
+    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
+    return ids.length > 0 ? ids[ids.length - 1] : undefined;
+  }, [periodId]);
 
   function toggleTab(tab: TabKey) {
     setActiveTab((prev) => prev === tab ? null : tab);
@@ -384,7 +457,7 @@ export default function FinancialStatementsPage() {
 
   function downloadPdf(type: string) {
     const params = new URLSearchParams();
-    if (periodId) params.set('period_id', periodId.split(',')[0]);
+    if (effectivePeriodId) params.set('period_id', String(effectivePeriodId));
     params.set('format', 'pdf');
     downloadReport(ACCOUNTING.EXPORT(type), params, `${type}.pdf`);
   }
@@ -411,7 +484,7 @@ export default function FinancialStatementsPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => {
               const params = new URLSearchParams();
-              if (periodId) params.set('period_id', periodId.split(',')[0]);
+              if (effectivePeriodId) params.set('period_id', String(effectivePeriodId));
               params.set('format', 'xlsx');
               downloadReport(ACCOUNTING.EXPORT('trial-balance'), params, 'trial-balance.xlsx');
             }}>
@@ -441,11 +514,11 @@ export default function FinancialStatementsPage() {
         ))}
       </div>
 
-      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={periodId} periods={periods} />}
-      {activeTab === 'income-statement' && <IncomeStatementSection periodId={periodId} periods={periods} />}
-      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={periodId} periods={periods} />}
-      {activeTab === 'cash-flow' && <CashFlowSection periodId={periodId} periods={periods} />}
-      {activeTab === 'equity' && <EquitySection periodId={periodId} periods={periods} />}
+      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
+      {activeTab === 'income-statement' && <IncomeStatementSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
+      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
+      {activeTab === 'cash-flow' && <CashFlowSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
+      {activeTab === 'equity' && <EquitySection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
 
       {!activeTab && (
         <Card>

@@ -4,6 +4,8 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { useTrialBalance, useIncomeStatement, useBalanceSheet, useAccountingPeriods } from '../api/AccountingQueries';
+import { useReportDownload } from '../../dashboard/DashboardQueries';
+import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import { Printer, Scale, BarChart3, ClipboardList, ChevronDown, ChevronRight, CheckCircle, XCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -254,9 +256,17 @@ export default function FinancialStatementsPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabKey | null>(null);
   const { data: periods } = useAccountingPeriods();
+  const downloadReport = useReportDownload();
 
   function toggleTab(tab: TabKey) {
     setActiveTab((prev) => prev === tab ? null : tab);
+  }
+
+  function downloadPdf(type: string) {
+    const params = new URLSearchParams();
+    if (periodId) params.set('period_id', periodId.split(',')[0]);
+    params.set('format', 'pdf');
+    downloadReport(ACCOUNTING.EXPORT(type), params, `${type}.pdf`);
   }
 
   return (
@@ -276,10 +286,15 @@ export default function FinancialStatementsPage() {
             <Button variant="outline" size="sm" onClick={() => window.print()}>
               <Printer className="w-4 h-4 mr-1.5" />Print
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => downloadPdf('trial-balance')}>
               <Download className="w-4 h-4 mr-1.5" />PDF
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => {
+              const params = new URLSearchParams();
+              if (periodId) params.set('period_id', periodId.split(',')[0]);
+              params.set('format', 'xlsx');
+              downloadReport(ACCOUNTING.EXPORT('trial-balance'), params, 'trial-balance.xlsx');
+            }}>
               <FileSpreadsheet className="w-4 h-4 mr-1.5" />Excel
             </Button>
           </div>

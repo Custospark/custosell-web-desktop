@@ -47,6 +47,5 @@ export const ACCOUNTING = {
   RATIO_TRENDS: '/ratios/trends',
   FIXED_ASSETS: '/fixed-assets',
   FIXED_ASSET: (id: number) => `/fixed-assets/${id}`,
-  RUN_DEPRECIATION: '/fixed-assets/run-depreciation',
-  ASSET_SCHEDULE: (id: number) => `/fixed-assets/${id}/schedule`,
+  EXPORT: (type: string) => `/accounting/export/${type}`,
 };

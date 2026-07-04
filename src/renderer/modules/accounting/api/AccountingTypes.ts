@@ -14,6 +14,7 @@ export interface ChartOfAccount {
   account_type?: AccountType;
   normal_balance: 'debit' | 'credit';
   is_active: boolean;
+  is_system?: boolean;
   children?: ChartOfAccount[];
   created_at: string;
   updated_at: string;

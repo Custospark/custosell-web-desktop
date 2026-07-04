@@ -112,6 +112,8 @@ export default function ChartOfAccountsPage() {
               <button onClick={() => saveEdit(item.id)} className="p-1 text-green-600 hover:text-green-800"><Check className="w-3.5 h-3.5" /></button>
               <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
             </>
+          ) : item.is_system ? (
+            <span className="text-xs text-gray-300 italic">System</span>
           ) : (
             <>
               <button onClick={() => startEdit(item)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit name"><Edit3 className="w-3.5 h-3.5" /></button>

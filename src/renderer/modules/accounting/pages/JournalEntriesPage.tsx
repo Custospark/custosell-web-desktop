@@ -5,7 +5,7 @@ import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
-import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useChartOfAccounts } from '../api/AccountingQueries';
+import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
 import { FileText, Plus, Send, X, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -15,6 +15,7 @@ export default function JournalEntriesPage() {
   const [periodFilter, setPeriodFilter] = useState('');
   const filters = periodFilter ? { period_id: periodFilter } : undefined;
   const { data: entries, isLoading } = useJournalEntries(filters);
+  const { data: periods } = useAccountingPeriods();
   const postEntry = usePostJournalEntry();
 
   const columns = [
@@ -82,7 +83,14 @@ export default function JournalEntriesPage() {
       </Card>
 
       <div className="flex gap-4 items-center">
-        <Input label="Period ID" value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)} placeholder="Filter by period" className="w-48" />
+        <Select
+          label="Period"
+          placeholder="All periods"
+          options={(periods ?? []).map((p) => ({ value: String(p.id), label: p.name }))}
+          value={periodFilter}
+          onChange={(e) => setPeriodFilter(e.target.value)}
+          className="w-52"
+        />
       </div>
 
       <Table columns={columns} data={entries ?? []} loading={isLoading} rowKey={(item) => item.id} />

@@ -41,7 +41,7 @@ function TabButton({ active, tab, onClick }: { active: boolean; tab: typeof TABS
   );
 }
 
-function TrialBalanceSection({ periodId }: { periodId: string }) {
+function TrialBalanceSection({ periodId, periods }: { periodId: string; periods: any }) {
   const { data: tb, isLoading, isError } = useTrialBalance(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
@@ -103,7 +103,7 @@ function TrialBalanceSection({ periodId }: { periodId: string }) {
   );
 }
 
-function IncomeStatementSection({ periodId }: { periodId: string }) {
+function IncomeStatementSection({ periodId, periods }: { periodId: string; periods: any }) {
   const { data: stmt, isLoading, isError } = useIncomeStatement(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
@@ -182,7 +182,7 @@ function IncomeStatementSection({ periodId }: { periodId: string }) {
   );
 }
 
-function BalanceSheetSection({ periodId }: { periodId: string }) {
+function BalanceSheetSection({ periodId, periods }: { periodId: string; periods: any }) {
   const { data: bs, isLoading, isError } = useBalanceSheet(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
@@ -321,9 +321,9 @@ export default function FinancialStatementsPage() {
         ))}
       </div>
 
-      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={periodId} />}
-      {activeTab === 'income-statement' && <IncomeStatementSection periodId={periodId} />}
-      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={periodId} />}
+      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={periodId} periods={periods} />}
+      {activeTab === 'income-statement' && <IncomeStatementSection periodId={periodId} periods={periods} />}
+      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={periodId} periods={periods} />}
 
       {!activeTab && (
         <Card>

@@ -271,7 +271,7 @@ export default function RatiosPage() {
   const [modalPeriodId, setModalPeriodId] = useState<string>('');
 
   const { data: periods } = useAccountingPeriods();
-  const { data: trends, isLoading } = useRatioTrends('monthly', 12);
+  const { data: trends, isLoading, isError } = useRatioTrends('monthly', 6);
   const downloadReport = useReportDownload();
 
   function openDownload() {
@@ -427,6 +427,8 @@ export default function RatiosPage() {
 
       {isLoading ? (
         <LoadingSpinner />
+      ) : isError ? (
+        <Card><p className="text-sm text-red-500 text-center py-8">Failed to load ratios. Check your connection and try again.</p></Card>
       ) : ratios ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Object.entries(CATEGORY_META).map(([catKey, meta]) => {

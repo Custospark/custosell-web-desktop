@@ -128,17 +128,19 @@ export function useRatios(periodId?: number) {
   });
 }
 
-export function useRatioTrends(interval = 'monthly', count = 12) {
+export function useRatioTrends(interval = 'monthly', count = 6) {
   return useQuery<RatioTrendItem[]>({
     queryKey: [...accountingKeys.ratios(), 'trends', interval, count],
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: RatioTrendItem[] }>(
-        `${ACCOUNTING.RATIO_TRENDS}?interval=${interval}&count=${count}`
+        `${ACCOUNTING.RATIO_TRENDS}?interval=${interval}&count=${count}`,
+        { timeout: 120000 },
       );
       return data.data ?? [];
     },
     staleTime: 0,
     refetchOnMount: 'always',
+    retry: 1,
   });
 }
 

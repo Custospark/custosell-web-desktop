@@ -3,7 +3,7 @@ import {
   Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts';
 import { Card } from '../../../shared/components/cards/Card';
-import { Select } from '../../../shared/components/inputs/Select';
+import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
@@ -364,30 +364,16 @@ export default function RatiosPage() {
         </div>
         {periodTab === 'custom' && (
           <>
-            <input
-              type="date"
-              value={customFrom}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-            />
+            <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
             <span className="text-sm text-gray-400">to</span>
-            <input
-              type="date"
-              value={customTo}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-            />
+            <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
           </>
         )}
-        <Select
-          label="Period"
-          options={[
-            { value: '', label: 'Current Period' },
-            ...(periods ?? []).map((p) => ({ value: String(p.id), label: p.name })),
-          ]}
+        <PeriodSelector
+          periods={periods}
           value={periodId}
-          onChange={(e) => setPeriodId(e.target.value)}
-          className="w-52"
+          onChange={setPeriodId}
+          className="flex-1"
         />
       </div>
 

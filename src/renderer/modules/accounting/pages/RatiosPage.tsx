@@ -505,22 +505,6 @@ export default function RatiosPage() {
         </Card>
         );
       })()}
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={CHART_THEME.line}
-                    strokeWidth={2.5}
-                    fill="url(#ratioTrendFill)"
-                    dot={{ r: 3, fill: CHART_THEME.line, strokeWidth: 0 }}
-                    activeDot={{ r: 5, fill: CHART_THEME.line, stroke: '#fff', strokeWidth: 2 }}
-                    isAnimationActive
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </ChartContainer>
-        </Card>
-      )}
 
       {!selectedDef && ratios && (
         <Card>

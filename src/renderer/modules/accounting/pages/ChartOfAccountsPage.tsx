@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
@@ -7,8 +7,10 @@ import { Select } from '../../../shared/components/inputs/Select';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount } from '../api/AccountingQueries';
 import type { ChartOfAccount } from '../api/AccountingTypes';
-import { BookOpen, Plus, List, TreePine } from 'lucide-react';
+import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+
+const PAGE_SIZE = 15;
 
 const accountTypeOptions = [
   { value: '', label: 'All Types' },
@@ -23,11 +25,27 @@ export default function ChartOfAccountsPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [treeView, setTreeView] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
 
   const filters = typeFilter ? { account_type: typeFilter } : undefined;
   const { data: accounts, isLoading } = useChartOfAccounts(treeView ? undefined : filters);
   const { data: treeData, isLoading: treeLoading } = useChartOfAccountsTree();
   const createAccount = useCreateChartOfAccount();
+
+  const filtered = useMemo(() => {
+    if (!accounts) return [];
+    const q = search.toLowerCase();
+    return accounts.filter((a) => {
+      if (q && !a.code.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
+      if (typeFilter && a.account_type?.name !== typeFilter) return false;
+      return true;
+    });
+  }, [accounts, search, typeFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
   const columns = [
     { key: 'code', header: 'Code', sortable: true },
@@ -100,13 +118,24 @@ export default function ChartOfAccountsPage() {
       </Card>
 
       {!treeView && (
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by code or name..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <Select
             options={accountTypeOptions}
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-48"
+            className="w-40"
           />
+          <span className="text-xs text-gray-400">{filtered.length} account{filtered.length !== 1 ? 's' : ''}</span>
         </div>
       )}
 
@@ -119,7 +148,21 @@ export default function ChartOfAccountsPage() {
           )}
         </Card>
       ) : (
-        <Table columns={columns} data={accounts ?? []} loading={isLoading} rowKey={(item) => item.id} />
+        <>
+          <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
+          {pageCount > 1 && (
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage(safePage - 1)} disabled={safePage === 0} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+                {Array.from({ length: pageCount }, (_, i) => (
+                  <button key={i} onClick={() => setPage(i)} className={cn('px-2.5 py-1 rounded text-sm', i === safePage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100')}>{i + 1}</button>
+                ))}
+                <button onClick={() => setPage(safePage + 1)} disabled={safePage >= pageCount - 1} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {formOpen && (

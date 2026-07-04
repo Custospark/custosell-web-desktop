@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
@@ -8,17 +8,34 @@ import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
-import { FileText, Plus, Send, X, PlusCircle, Trash2 } from 'lucide-react';
+import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
+
+const PAGE_SIZE = 20;
 
 export default function JournalEntriesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [periodFilter, setPeriodFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
   const filters = periodFilter ? { period_id: periodFilter } : undefined;
   const { data: entries, isLoading } = useJournalEntries(filters);
   const { data: periods } = useAccountingPeriods();
   const postEntry = usePostJournalEntry();
+
+  const filtered = useMemo(() => {
+    if (!entries) return [];
+    const q = search.toLowerCase();
+    return entries.filter((e) => {
+      if (!q) return true;
+      return e.entry_number.toLowerCase().includes(q) || e.description.toLowerCase().includes(q);
+    });
+  }, [entries, search]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
   const columns = [
     { key: 'entry_number', header: 'Entry #', sortable: true },
@@ -89,16 +106,40 @@ export default function JournalEntriesPage() {
         </div>
       </Card>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by entry # or description..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         <PeriodSelector
           periods={periods}
           value={periodFilter}
           onChange={setPeriodFilter}
-          className="w-full"
+          className="flex-1"
         />
+        <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} entry{filtered.length !== 1 ? 'ies' : 'y'}</span>
       </div>
 
-      <Table columns={columns} data={entries ?? []} loading={isLoading} rowKey={(item) => item.id} />
+      <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
+
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(safePage - 1)} disabled={safePage === 0} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+            {Array.from({ length: pageCount }, (_, i) => (
+              <button key={i} onClick={() => setPage(i)} className={cn('px-2.5 py-1 rounded text-sm', i === safePage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100')}>{i + 1}</button>
+            ))}
+            <button onClick={() => setPage(safePage + 1)} disabled={safePage >= pageCount - 1} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+        </div>
+      )}
 
       {formOpen && (
         <NewJournalEntryForm

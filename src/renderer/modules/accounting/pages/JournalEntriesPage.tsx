@@ -36,6 +36,17 @@ export default function JournalEntriesPage() {
     });
   }, [entries, search]);
 
+  // Build a set of entry numbers that have been reversed (by finding reversal descriptions)
+  const reversedEntryNumbers = useMemo(() => {
+    const set = new Set<string>();
+    if (!entries) return set;
+    for (const e of entries) {
+      const match = e.description.match(/^Reversing entry for (JE-\d+-\d+):/);
+      if (match) set.add(match[1]);
+    }
+    return set;
+  }, [entries]);
+
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
@@ -48,7 +59,15 @@ export default function JournalEntriesPage() {
       sortable: true,
       render: (item: JournalEntry) => formatShiftDate(item.date),
     },
-    { key: 'description', header: 'Description' },
+    {
+      key: 'description',
+      header: 'Description',
+      render: (item: JournalEntry) => {
+        const isReversal = item.description.startsWith('Reversing entry');
+        const text = isReversal ? item.description.replace(/^Reversing entry for [^:]+:\s*/, '↩ ') : item.description;
+        return <span className="truncate block max-w-[200px]" title={item.description}>{text}</span>;
+      },
+    },
     { key: 'reference_type', header: 'Reference' },
     {
       key: 'total_debits',
@@ -71,12 +90,16 @@ export default function JournalEntriesPage() {
     {
       key: 'posted',
       header: 'Status',
-      render: (item: JournalEntry) => (
-        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-          item.posted_at ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
-          {item.posted_at ? 'Posted' : 'Draft'}
-        </span>
-      ),
+      render: (item: JournalEntry) => {
+        const isReversed = reversedEntryNumbers.has(item.entry_number);
+        return (
+          <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+            isReversed ? 'bg-purple-100 text-purple-700' :
+            item.posted_at ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
+            {isReversed ? 'Reversed' : item.posted_at ? 'Posted' : 'Draft'}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
@@ -92,6 +115,8 @@ export default function JournalEntriesPage() {
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </>
+          ) : reversedEntryNumbers.has(item.entry_number) ? (
+            <span className="text-xs text-gray-300 italic">Done</span>
           ) : (
             <Button size="sm" variant="ghost" onClick={() => { setActionId(item.id); reverseEntry.mutate(item.id, { onSettled: () => setActionId(null) }); }} loading={actionId === item.id && reverseEntry.isPending} disabled={actionId !== null} title="Reverse" className="text-amber-600 hover:text-amber-800">
               <RotateCcw className="w-3.5 h-3.5" />

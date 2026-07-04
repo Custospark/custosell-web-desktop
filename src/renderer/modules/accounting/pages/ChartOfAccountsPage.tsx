@@ -149,9 +149,11 @@ function AddAccountForm({
   const [typeName, setTypeName] = useState('Asset');
   const [normalBalance, setNormalBalance] = useState<'debit' | 'credit'>('debit');
 
+  const typeIdMap: Record<string, number> = { Asset: 1, Liability: 2, Equity: 3, Revenue: 4, Expense: 5 };
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit({ code, name, account_type: { id: 0, name: typeName as ChartOfAccount['account_type']['name'], normal_balance: normalBalance }, normal_balance: normalBalance, is_active: true });
+    onSubmit({ code, name, type_id: typeIdMap[typeName] ?? 1, normal_balance: normalBalance, is_active: true });
   }
 
   return (

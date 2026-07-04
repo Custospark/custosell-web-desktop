@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { useTrialBalance, useIncomeStatement, useBalanceSheet, useAccountingPeriods, useCashFlow, useEquity } from '../api/AccountingQueries';
@@ -441,9 +442,19 @@ function EquitySection({ periodId, periods, business }: SectionProps) {
 export default function FinancialStatementsPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabKey | null>(null);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
   const { data: periods } = useAccountingPeriods();
   const business = useAppSelector((s) => s.auth.user?.business);
   const downloadReport = useReportDownload();
+
+  const STATEMENT_TYPE: Record<TabKey, string> = {
+    'trial-balance': 'trial-balance',
+    'income-statement': 'income-statement',
+    'balance-sheet': 'balance-sheet',
+    'cash-flow': 'cash-flow',
+    'equity': 'equity',
+  };
 
   // Resolve period_id: use last ID for quarter selection
   const effectivePeriodId = useMemo(() => {
@@ -455,11 +466,20 @@ export default function FinancialStatementsPage() {
     setActiveTab((prev) => prev === tab ? null : tab);
   }
 
-  function downloadPdf(type: string) {
+  function openDownload() {
+    if (!activeTab) return;
+    setDownloadFormat('pdf');
+    setDownloadOpen(true);
+  }
+
+  function doDownload() {
+    if (!activeTab) return;
+    const type = STATEMENT_TYPE[activeTab];
     const params = new URLSearchParams();
     if (effectivePeriodId) params.set('period_id', String(effectivePeriodId));
-    params.set('format', 'pdf');
-    downloadReport(ACCOUNTING.EXPORT(type), params, `${type}.pdf`);
+    params.set('format', downloadFormat);
+    downloadReport(ACCOUNTING.EXPORT(type), params, `${type}.${downloadFormat}`);
+    setDownloadOpen(false);
   }
 
   return (
@@ -479,16 +499,8 @@ export default function FinancialStatementsPage() {
             <Button variant="outline" size="sm" onClick={() => window.print()}>
               <Printer className="w-4 h-4 mr-1.5" />Print
             </Button>
-            <Button variant="outline" size="sm" onClick={() => downloadPdf('trial-balance')}>
-              <Download className="w-4 h-4 mr-1.5" />PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => {
-              const params = new URLSearchParams();
-              if (effectivePeriodId) params.set('period_id', String(effectivePeriodId));
-              params.set('format', 'xlsx');
-              downloadReport(ACCOUNTING.EXPORT('trial-balance'), params, 'trial-balance.xlsx');
-            }}>
-              <FileSpreadsheet className="w-4 h-4 mr-1.5" />Excel
+            <Button variant="outline" size="sm" onClick={openDownload} disabled={!activeTab}>
+              <Download className="w-4 h-4 mr-1.5" />Download
             </Button>
           </div>
         </div>
@@ -527,6 +539,38 @@ export default function FinancialStatementsPage() {
           </div>
         </Card>
       )}
+
+      <Modal isOpen={downloadOpen} onClose={() => setDownloadOpen(false)} title="Download Report" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Download <strong>{activeTab ? activeTab.replace('-', ' ') : ''}</strong> in the selected format.
+          </p>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDownloadFormat('pdf')}
+              className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+                downloadFormat === 'pdf' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50')}
+            >
+              <Download className="w-4 h-4 mx-auto mb-1" />
+              PDF Document
+            </button>
+            <button
+              onClick={() => setDownloadFormat('xlsx')}
+              className={cn('flex-1 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer',
+                downloadFormat === 'xlsx' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50')}
+            >
+              <FileSpreadsheet className="w-4 h-4 mx-auto mb-1" />
+              Excel Spreadsheet
+            </button>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <Button variant="outline" type="button" onClick={() => setDownloadOpen(false)}>Cancel</Button>
+            <Button type="button" onClick={doDownload}>Download</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { ChartContainer } from '../../../shared/components/charts/ChartContainer
 import {
   CHART_THEME, ChartTooltipRow, ChartTooltipShell, chartAverage,
 } from '../../../shared/components/charts/chartPrimitives';
-import { useAccountingPeriods, useRatioTrends } from '../api/AccountingQueries';
+import { useAccountingPeriods, useRatioTrends, useRatios } from '../api/AccountingQueries';
 import { useReportDownload } from '../../dashboard/DashboardQueries';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import type { RatioSet } from '../api/AccountingTypes';
@@ -271,97 +271,62 @@ export default function RatiosPage() {
   const [modalPeriodId, setModalPeriodId] = useState<string>('');
 
   const { data: periods } = useAccountingPeriods();
-  const { data: trends, isLoading, isError } = useRatioTrends('monthly', 12);
+  const { data: trends, isLoading: trendsLoading } = useRatioTrends('monthly', 12);
   const downloadReport = useReportDownload();
 
-  function openDownload() {
-    setModalPeriodId(periodId); // Pre-fill with current selection
-    setDownloadFormat('pdf');
-    setDownloadOpen(true);
-  }
+  // Resolve the effective period ID (last ID for quarters, single for months)
+  const effectivePeriodId = useMemo(() => {
+    if (!periodId) return undefined;
+    const ids = periodId.split(',').map(Number).filter(Boolean);
+    return ids.length > 0 ? ids[ids.length - 1] : undefined;
+  }, [periodId]);
 
-  function doDownload() {
-    const ids = modalPeriodId ? modalPeriodId.split(',').map(Number).filter(Boolean) : [];
+  // Fetch ratios directly from backend for the selected period
+  const { data: fetchedRatios, isLoading: ratiosLoading, isError: ratiosError } = useRatios(effectivePeriodId);
 
-    if (ids.length > 0) {
-      const lastPid = ids[ids.length - 1];
-      const params = new URLSearchParams();
-
-      if (ids.length > 1) {
-        // Quarter / multi-period: send date range instead of a single period_id
-        const first = periods?.find((p: any) => p.id === ids[0]);
-        const last = periods?.find((p: any) => p.id === lastPid);
-        if (first?.start_date && last?.end_date) {
-          params.set('date_from', first.start_date.slice(0, 10));
-          params.set('date_to', last.end_date.slice(0, 10));
-        }
-      } else {
-        // Single period
-        params.set('period_id', String(lastPid));
-      }
-
-      params.set('format', downloadFormat);
-      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
-      setDownloadOpen(false);
-      return;
-    }
-
-    // Fallback: use latest trend period
-    if (trends?.length) {
-      const params = new URLSearchParams();
-      params.set('period_id', String(trends[trends.length - 1].period_id));
-      params.set('format', downloadFormat);
-      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
-      setDownloadOpen(false);
-    }
-  }
-
-  // Derive current ratios from the selected period in trends data
+  // For quarter mode, average the ratios from trends data instead of using a single period
   const ratios = useMemo(() => {
-    if (!trends?.length) return undefined;
-    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-    
-    if (ids.length > 1) {
-      // Quarter mode: average the ratios across all months in the quarter
-      const quarterRatios = ids
-        .map((id) => trends.find((t: any) => t.period_id === id)?.ratios)
-        .filter(Boolean);
-      if (quarterRatios.length === 0) return undefined;
-      
-      const avgField = (cat: string, field: string) => {
-        const vals = quarterRatios.map((r: any) => r[cat]?.[field]).filter((v: any) => v !== null && v !== undefined);
-        return vals.length > 0 ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
-      };
-      
-      return {
-        liquidity: {
-          current_ratio: avgField('liquidity', 'current_ratio'),
-          quick_ratio: avgField('liquidity', 'quick_ratio'),
-          cash_ratio: avgField('liquidity', 'cash_ratio'),
-        },
-        profitability: {
-          gross_profit_margin: avgField('profitability', 'gross_profit_margin'),
-          net_profit_margin: avgField('profitability', 'net_profit_margin'),
-          return_on_assets: avgField('profitability', 'return_on_assets'),
-          return_on_equity: avgField('profitability', 'return_on_equity'),
-        },
-        solvency: {
-          debt_to_equity: avgField('solvency', 'debt_to_equity'),
-          debt_ratio: avgField('solvency', 'debt_ratio'),
-          interest_coverage_ratio: avgField('solvency', 'interest_coverage_ratio'),
-        },
-        efficiency: {
-          asset_turnover: avgField('efficiency', 'asset_turnover'),
-          inventory_turnover: avgField('efficiency', 'inventory_turnover'),
-          accounts_receivable_turnover: avgField('efficiency', 'accounts_receivable_turnover'),
-        },
-      } as RatioSet;
-    }
-    
-    const id = ids.length === 1 ? ids[0] : undefined;
-    const match = id ? trends.find((t: any) => t.period_id === id) : trends[trends.length - 1];
-    return match?.ratios as RatioSet | undefined;
-  }, [trends, periodId]);
+    if (!periodId) return fetchedRatios;
+    const ids = periodId.split(',').map(Number).filter(Boolean);
+    if (ids.length <= 1 || !trends) return fetchedRatios;
+
+    // Quarter mode: average across the months in trends
+    const quarterRatios = ids.map((id) => trends.find((t: any) => t.period_id === id)?.ratios).filter(Boolean);
+    if (quarterRatios.length === 0) return fetchedRatios;
+
+    const avgField = (cat: string, field: string) => {
+      const vals = quarterRatios.map((r: any) => r[cat]?.[field]).filter((v: any) => v !== null && v !== undefined);
+      return vals.length > 0 ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
+    };
+
+    return {
+      liquidity: {
+        current_ratio: avgField('liquidity', 'current_ratio'),
+        quick_ratio: avgField('liquidity', 'quick_ratio'),
+        cash_ratio: avgField('liquidity', 'cash_ratio'),
+      },
+      profitability: {
+        gross_profit_margin: avgField('profitability', 'gross_profit_margin'),
+        net_profit_margin: avgField('profitability', 'net_profit_margin'),
+        return_on_assets: avgField('profitability', 'return_on_assets'),
+        return_on_equity: avgField('profitability', 'return_on_equity'),
+      },
+      solvency: {
+        debt_to_equity: avgField('solvency', 'debt_to_equity'),
+        debt_ratio: avgField('solvency', 'debt_ratio'),
+        interest_coverage_ratio: avgField('solvency', 'interest_coverage_ratio'),
+      },
+      efficiency: {
+        asset_turnover: avgField('efficiency', 'asset_turnover'),
+        inventory_turnover: avgField('efficiency', 'inventory_turnover'),
+        accounts_receivable_turnover: avgField('efficiency', 'accounts_receivable_turnover'),
+      },
+      recommendations: fetchedRatios?.recommendations ?? [],
+    } as RatioSet;
+  }, [periodId, fetchedRatios, trends]);
+
+  const isLoading = trendsLoading && ratiosLoading;
+  const isError = ratiosError && !ratios;
 
   const selectedDef = selectedRatioKey
     ? RATIO_DEFS.find((d) => d.key === selectedRatioKey)

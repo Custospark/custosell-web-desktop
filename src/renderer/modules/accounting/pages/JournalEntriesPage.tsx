@@ -104,8 +104,10 @@ function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
     { account_id: 0, debit_amount: 0, credit_amount: 0, description: '' },
   ]);
 
-  const { data: accounts } = useChartOfAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useChartOfAccounts({ is_active: '1' });
   const createEntry = useCreateJournalEntry();
+  const accountOptions = (accounts ?? []).map((a) => ({ value: String(a.id), label: `${a.code} - ${a.name}` }));
+  const accountPlaceholder = accountsLoading ? 'Loading accounts...' : accountOptions.length === 0 ? 'No accounts found' : 'Select account';
 
   const totalDebits = lines.reduce((s, l) => s + Number(l.debit_amount), 0);
   const totalCredits = lines.reduce((s, l) => s + Number(l.credit_amount), 0);
@@ -157,8 +159,9 @@ function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
                 <div key={idx} className="p-3 grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-4">
                     <Select
-                      options={(accounts ?? []).map((a) => ({ value: String(a.id), label: `${a.code} - ${a.name}` }))}
-                      value={String(line.account_id)}
+                      placeholder={accountPlaceholder}
+                      options={accountOptions}
+                      value={line.account_id ? String(line.account_id) : ''}
                       onChange={(e) => updateLine(idx, 'account_id', Number(e.target.value))}
                     />
                   </div>

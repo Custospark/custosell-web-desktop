@@ -416,13 +416,14 @@ export default function RatiosPage() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <PeriodSelector
-          periods={periods}
-          value={periodId}
-          onChange={setPeriodId}
-          className="flex-1"
-        />
+      <div className="flex flex-col xs:flex-row items-stretch xs:items-end gap-3">
+        <div className="flex-1 min-w-0">
+          <PeriodSelector
+            periods={periods}
+            value={periodId}
+            onChange={setPeriodId}
+          />
+        </div>
       </div>
 
       {isLoading ? (

@@ -181,8 +181,8 @@ export default function JournalEntriesPage() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -192,13 +192,15 @@ export default function JournalEntriesPage() {
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <PeriodSelector
-          periods={periods}
-          value={periodFilter}
-          onChange={setPeriodFilter}
-          className="flex-1"
-        />
-        <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
+        <div className="flex items-center gap-2 flex-1">
+          <PeriodSelector
+            periods={periods}
+            value={periodFilter}
+            onChange={setPeriodFilter}
+            className="flex-1 min-w-0"
+          />
+          <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
+        </div>
       </div>
 
       <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />

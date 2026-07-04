@@ -20,7 +20,6 @@ import { cn } from '../../../shared/utils/cn';
 
 type RatioFormat = 'decimal' | 'percent' | 'times';
 type HealthStatus = 'healthy' | 'warning' | 'danger';
-type PeriodTab = 'monthly' | 'quarterly' | 'yearly' | 'custom';
 
 interface RatioDef {
   category: keyof RatioSet;
@@ -46,101 +45,6 @@ const RATIO_DEFS: RatioDef[] = [
   { category: 'efficiency', key: 'asset_turnover', label: 'Asset T/O', format: 'times', healthyThreshold: 1.5, warningThreshold: 0.8, higherIsBetter: true },
   { category: 'efficiency', key: 'inventory_turnover', label: 'Inv T/O', format: 'times', healthyThreshold: 6, warningThreshold: 3, higherIsBetter: true },
   { category: 'efficiency', key: 'accounts_receivable_turnover', label: 'AR T/O', format: 'times', healthyThreshold: 8, warningThreshold: 4, higherIsBetter: true },
-];
-
-const RATIO_INFO: Record<string, { meaning: string; formula: string; importance: string; fullName: string }> = {
-  current_ratio: {
-    fullName: 'Current Ratio',
-    meaning: 'Measures your ability to pay short-term obligations with short-term assets.',
-    formula: 'Current Assets ÷ Current Liabilities',
-    importance: 'A ratio below 1.0 means liabilities exceed assets — risk of insolvency. Above 2.0 is healthy.',
-  },
-  quick_ratio: {
-    fullName: 'Quick Ratio (Acid Test)',
-    meaning: 'Like the current ratio but excludes inventory. Tests immediate liquidity.',
-    formula: '(Current Assets − Inventory) ÷ Current Liabilities',
-    importance: 'Above 1.0 means you can pay debts without selling inventory.',
-  },
-  cash_ratio: {
-    fullName: 'Cash Ratio',
-    meaning: 'The most conservative liquidity measure — only cash and equivalents.',
-    formula: '(Cash + Bank) ÷ Current Liabilities',
-    importance: 'Above 0.5 means you have emergency cash reserves.',
-  },
-  gross_profit_margin: {
-    fullName: 'Gross Profit Margin',
-    meaning: 'Percentage of revenue retained after paying for products/services sold.',
-    formula: '(Revenue − COGS) ÷ Revenue × 100',
-    importance: 'Shows pricing power and cost efficiency. Below 20% means costs consume most of your revenue.',
-  },
-  net_profit_margin: {
-    fullName: 'Net Profit Margin',
-    meaning: 'Percentage of revenue that becomes profit after ALL expenses.',
-    formula: 'Net Income ÷ Revenue × 100',
-    importance: 'The bottom line. Above 15% is excellent.',
-  },
-  return_on_assets: {
-    fullName: 'Return on Assets (ROA)',
-    meaning: 'How efficiently your assets generate profit.',
-    formula: 'Net Income ÷ Total Assets × 100',
-    importance: 'Measures management effectiveness. Below 5% suggests assets are underperforming.',
-  },
-  return_on_equity: {
-    fullName: 'Return on Equity (ROE)',
-    meaning: 'Return generated on shareholders\' invested capital.',
-    formula: 'Net Income ÷ Shareholders\' Equity × 100',
-    importance: 'Above 15% is excellent. Below 10% may not justify the risk of owning the business.',
-  },
-  debt_to_equity: {
-    fullName: 'Debt-to-Equity Ratio (D/E)',
-    meaning: 'How much debt vs equity the business uses to finance operations.',
-    formula: 'Total Liabilities ÷ Shareholders\' Equity',
-    importance: 'Above 2.0 means heavy debt reliance — higher risk in downturns. Below 1.0 is conservative.',
-  },
-  debt_ratio: {
-    fullName: 'Debt Ratio (D/A)',
-    meaning: 'Proportion of assets financed by debt.',
-    formula: 'Total Liabilities ÷ Total Assets',
-    importance: 'Above 0.5 means creditors own more than half the assets.',
-  },
-  interest_coverage_ratio: {
-    fullName: 'Interest Coverage Ratio (ICR)',
-    meaning: 'How many times operating profit can cover interest payments.',
-    formula: 'Operating Income ÷ Interest Expense',
-    importance: 'Below 1.5 means you risk defaulting on debt. Above 3.0 is comfortable.',
-  },
-  asset_turnover: {
-    fullName: 'Asset Turnover Ratio',
-    meaning: 'How efficiently assets generate sales revenue.',
-    formula: 'Sales ÷ Total Assets',
-    importance: 'Below 0.8 means assets are underutilized. Above 1.5 indicates strong efficiency.',
-  },
-  inventory_turnover: {
-    fullName: 'Inventory Turnover Ratio',
-    meaning: 'How many times inventory is sold and replaced in a period.',
-    formula: 'COGS ÷ Average Inventory',
-    importance: 'Below 3x signals excess inventory tying up cash. Above 6x is healthy.',
-  },
-  accounts_receivable_turnover: {
-    fullName: 'Accounts Receivable Turnover (AR T/O)',
-    meaning: 'How quickly customers pay their debts.',
-    formula: 'Net Sales ÷ Average Accounts Receivable',
-    importance: 'Below 4x means slow collections straining cash flow.',
-  },
-};
-
-const CATEGORY_META: Record<string, { title: string; icon: React.ElementType; accent: 'blue' | 'green' | 'purple' | 'amber' }> = {
-  liquidity: { title: 'Liquidity', icon: Droplets, accent: 'blue' },
-  profitability: { title: 'Profitability', icon: TrendingUp, accent: 'green' },
-  solvency: { title: 'Solvency', icon: Shield, accent: 'purple' },
-  efficiency: { title: 'Efficiency', icon: Zap, accent: 'amber' },
-};
-
-const PERIOD_TABS: { value: PeriodTab; label: string }[] = [
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'yearly', label: 'Yearly' },
-  { value: 'custom', label: 'Custom' },
 ];
 
 function getHealth(value: number | null, def: RatioDef): HealthStatus {
@@ -270,16 +174,10 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
 
 export default function RatiosPage() {
   const [periodId, setPeriodId] = useState<string>('');
-  const [periodTab, setPeriodTab] = useState<PeriodTab>('monthly');
-  const [customFrom, setCustomFrom] = useState('');
-  const [customTo, setCustomTo] = useState('');
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
 
-  const interval = periodTab === 'custom' ? 'monthly' : periodTab;
-  const count = periodTab === 'yearly' ? 5 : periodTab === 'quarterly' ? 8 : 25;
-
   const { data: periods } = useAccountingPeriods();
-  const { data: trends, isLoading } = useRatioTrends(interval, count);
+  const { data: trends, isLoading } = useRatioTrends('monthly', 25);
 
   // Derive current ratios from the selected period in trends data
   const ratios = useMemo(() => {
@@ -346,29 +244,6 @@ export default function RatiosPage() {
       </Card>
 
       <div className="flex flex-wrap items-end gap-4">
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          {PERIOD_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setPeriodTab(tab.value)}
-              className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                periodTab === tab.value
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        {periodTab === 'custom' && (
-          <>
-            <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
-            <span className="text-sm text-gray-400">to</span>
-            <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
-          </>
-        )}
         <PeriodSelector
           periods={periods}
           value={periodId}
@@ -440,7 +315,7 @@ export default function RatiosPage() {
                   'bg-red-100 text-red-700')}>{latestHealth}</span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">
-                {interval} · {trendData.length} periods
+                {trendData.length} periods · monthly
               </p>
             </div>
             <div className="text-right">

@@ -271,7 +271,7 @@ export default function RatiosPage() {
   const [modalPeriodId, setModalPeriodId] = useState<string>('');
 
   const { data: periods } = useAccountingPeriods();
-  const { data: trends, isLoading, isError } = useRatioTrends('monthly', 6);
+  const { data: trends, isLoading, isError } = useRatioTrends('monthly', 12);
   const downloadReport = useReportDownload();
 
   function openDownload() {

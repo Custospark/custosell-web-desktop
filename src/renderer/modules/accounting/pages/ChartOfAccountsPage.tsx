@@ -7,7 +7,7 @@ import { Select } from '../../../shared/components/inputs/Select';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount, useUpdateChartOfAccount, useDeleteChartOfAccount } from '../api/AccountingQueries';
 import type { ChartOfAccount } from '../api/AccountingTypes';
-import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight, Edit3, Trash2, X, Check } from 'lucide-react';
+import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight, Edit3, Trash2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 const PAGE_SIZE = 15;
@@ -52,6 +52,12 @@ export default function ChartOfAccountsPage() {
   const safePage = Math.min(page, pageCount - 1);
   const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
+  function toggleStatus(account: ChartOfAccount) {
+    if (!account.is_system) {
+      updateAccount.mutate({ id: account.id, data: { is_active: !account.is_active } });
+    }
+  }
+
   function startEdit(account: ChartOfAccount) {
     setEditingId(account.id);
     setEditName(account.name);
@@ -89,10 +95,17 @@ export default function ChartOfAccountsPage() {
       key: 'is_active',
       header: 'Status',
       render: (item: ChartOfAccount) => (
-        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-          item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
+        <button
+          onClick={() => toggleStatus(item)}
+          disabled={item.is_system}
+          className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors',
+            item.is_system ? 'cursor-default' : 'cursor-pointer hover:ring-2 hover:ring-gray-300',
+            item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}
+          title={item.is_system ? 'System account' : 'Click to toggle status'}
+        >
+          {item.is_system ? '' : item.is_active ? <ToggleRight className="w-3 h-3" /> : <ToggleLeft className="w-3 h-3" />}
           {item.is_active ? 'Active' : 'Inactive'}
-        </span>
+        </button>
       ),
     },
     {
@@ -119,12 +132,12 @@ export default function ChartOfAccountsPage() {
               <button onClick={() => startEdit(item)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit name"><Edit3 className="w-3.5 h-3.5" /></button>
               {deletingId === item.id ? (
                 <>
-                  <span className="text-xs text-red-500">Confirm?</span>
+                  <span className="text-xs text-red-500">Delete?</span>
                   <button onClick={() => { deleteAccount.mutate(item.id); setDeletingId(null); }} className="p-1 text-red-600 hover:text-red-800"><Check className="w-3.5 h-3.5" /></button>
                   <button onClick={() => setDeletingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
                 </>
               ) : (
-                <button onClick={() => confirmDelete(item.id)} className="p-1 text-gray-400 hover:text-red-600" title="Deactivate"><Trash2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => confirmDelete(item.id)} className="p-1 text-gray-400 hover:text-red-600" title="Delete account"><Trash2 className="w-3.5 h-3.5" /></button>
               )}
             </>
           )}

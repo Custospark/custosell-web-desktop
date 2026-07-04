@@ -199,6 +199,68 @@ export function usePostJournalEntry() {
   });
 }
 
+export function useUpdateChartOfAccount() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<ChartOfAccount, AxiosError, { id: number; data: Partial<ChartOfAccount> }>({
+    mutationFn: async ({ id, data }) => {
+      const res = await axiosInstance.put<{ data: ChartOfAccount }>(ACCOUNTING.COA_ITEM(id), data);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: accountingKeys.coa() });
+      showToast('success', 'Account updated');
+    },
+    onError: () => showToast('error', 'Failed to update account'),
+  });
+}
+
+export function useDeleteChartOfAccount() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<void, AxiosError, number>({
+    mutationFn: async (id) => {
+      await axiosInstance.delete(ACCOUNTING.COA_ITEM(id));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: accountingKeys.coa() });
+      showToast('success', 'Account deactivated');
+    },
+    onError: () => showToast('error', 'Failed to delete account'),
+  });
+}
+
+export function useDeleteJournalEntry() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<void, AxiosError, number>({
+    mutationFn: async (id) => {
+      await axiosInstance.delete(ACCOUNTING.journalEntry(id));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: accountingKeys.journalEntries() });
+      showToast('success', 'Journal entry deleted');
+    },
+    onError: () => showToast('error', 'Failed to delete journal entry'),
+  });
+}
+
+export function useReverseJournalEntry() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<JournalEntry, AxiosError, number>({
+    mutationFn: async (id) => {
+      const { data } = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.reverseJournalEntry(id));
+      return data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: accountingKeys.all });
+      showToast('success', 'Journal entry reversed');
+    },
+    onError: () => showToast('error', 'Failed to reverse journal entry'),
+  });
+}
+
 export function useCreateFixedAsset() {
   const qc = useQueryClient();
   const { showToast } = useToast();

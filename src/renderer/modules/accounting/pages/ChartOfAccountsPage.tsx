@@ -5,9 +5,9 @@ import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
-import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount } from '../api/AccountingQueries';
+import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount, useUpdateChartOfAccount, useDeleteChartOfAccount } from '../api/AccountingQueries';
 import type { ChartOfAccount } from '../api/AccountingTypes';
-import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight, Edit3, Trash2, X, Check } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 const PAGE_SIZE = 15;
@@ -25,6 +25,9 @@ export default function ChartOfAccountsPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [treeView, setTreeView] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
 
@@ -32,6 +35,8 @@ export default function ChartOfAccountsPage() {
   const { data: accounts, isLoading } = useChartOfAccounts(treeView ? undefined : filters);
   const { data: treeData, isLoading: treeLoading } = useChartOfAccountsTree();
   const createAccount = useCreateChartOfAccount();
+  const updateAccount = useUpdateChartOfAccount();
+  const deleteAccount = useDeleteChartOfAccount();
 
   const filtered = useMemo(() => {
     if (!accounts) return [];
@@ -46,6 +51,22 @@ export default function ChartOfAccountsPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+
+  function startEdit(account: ChartOfAccount) {
+    setEditingId(account.id);
+    setEditName(account.name);
+  }
+
+  function saveEdit(id: number) {
+    if (editName.trim()) {
+      updateAccount.mutate({ id, data: { name: editName } });
+    }
+    setEditingId(null);
+  }
+
+  function confirmDelete(id: number) {
+    setDeletingId(id);
+  }
 
   const columns = [
     { key: 'code', header: 'Code', sortable: true },
@@ -72,6 +93,40 @@ export default function ChartOfAccountsPage() {
           item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
           {item.is_active ? 'Active' : 'Inactive'}
         </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (item: ChartOfAccount) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {editingId === item.id ? (
+            <>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-32 px-2 py-1 text-sm border border-gray-300 rounded"
+                autoFocus
+              />
+              <button onClick={() => saveEdit(item.id)} className="p-1 text-green-600 hover:text-green-800"><Check className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => startEdit(item)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit name"><Edit3 className="w-3.5 h-3.5" /></button>
+              {deletingId === item.id ? (
+                <>
+                  <span className="text-xs text-red-500">Confirm?</span>
+                  <button onClick={() => { deleteAccount.mutate(item.id); setDeletingId(null); }} className="p-1 text-red-600 hover:text-red-800"><Check className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setDeletingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                </>
+              ) : (
+                <button onClick={() => confirmDelete(item.id)} className="p-1 text-gray-400 hover:text-red-600" title="Deactivate"><Trash2 className="w-3.5 h-3.5" /></button>
+              )}
+            </>
+          )}
+        </div>
       ),
     },
   ];

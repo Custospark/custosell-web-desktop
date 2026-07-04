@@ -6,9 +6,9 @@ import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
-import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
+import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
-import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight, Edit3, RotateCcw } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
@@ -23,6 +23,8 @@ export default function JournalEntriesPage() {
   const { data: entries, isLoading } = useJournalEntries(filters);
   const { data: periods } = useAccountingPeriods();
   const postEntry = usePostJournalEntry();
+  const deleteEntry = useDeleteJournalEntry();
+  const reverseEntry = useReverseJournalEntry();
 
   const filtered = useMemo(() => {
     if (!entries) return [];
@@ -78,12 +80,24 @@ export default function JournalEntriesPage() {
     {
       key: 'actions',
       header: '',
-      render: (item: JournalEntry) =>
-        !item.posted_at && (
-          <Button size="sm" variant="ghost" onClick={() => postEntry.mutate(item.id)} loading={postEntry.isPending}>
-            <Send className="w-3 h-3 mr-1" />Post
-          </Button>
-        ),
+      render: (item: JournalEntry) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {!item.posted_at ? (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => postEntry.mutate(item.id)} loading={postEntry.isPending} title="Post">
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => deleteEntry.mutate(item.id)} loading={deleteEntry.isPending} title="Delete" className="text-red-500 hover:text-red-700">
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" variant="ghost" onClick={() => reverseEntry.mutate(item.id)} loading={reverseEntry.isPending} title="Reverse" className="text-amber-600 hover:text-amber-800">
+              <RotateCcw className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
 
@@ -123,7 +137,7 @@ export default function JournalEntriesPage() {
           onChange={setPeriodFilter}
           className="flex-1"
         />
-        <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} entry{filtered.length !== 1 ? 'ies' : 'y'}</span>
+        <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
       </div>
 
       <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />

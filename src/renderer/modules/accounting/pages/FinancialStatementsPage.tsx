@@ -49,8 +49,10 @@ function TabButton({ active, tab, onClick }: { active: boolean; tab: typeof TABS
 
 interface SectionProps {
   periodId: string;
-  periods: AccountingPeriod[] | undefined;
-  business: BusinessInfo | null | undefined;
+  periods: any;
+  business: any;
+  periodName?: string;
+  periodDates?: string;
 }
 
 function ReportHeader({ business }: { business: BusinessInfo | null | undefined }) {
@@ -81,17 +83,17 @@ function ReportTitle({ title, subtitle }: { title: string; subtitle?: string }) 
   );
 }
 
-function TrialBalanceSection({ periodId, business }: SectionProps) {
+function TrialBalanceSection({ periodId, business, periodName: propName, periodDates: propDates }: SectionProps) {
   const { data: tb, isLoading, isError } = useTrialBalance(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load trial balance.</p></Card>;
   if (!tb) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
-  const periodName = tb.period?.name ?? `Period #${periodId}`;
+  const periodName = tb.period?.name ?? propName ?? `Period #${periodId}`;
   const periodDates = tb.period?.start_date
     ? `From ${formatShiftDate(tb.period.start_date)} to ${formatShiftDate(tb.period.end_date)}`
-    : '';
+    : (propDates ?? '');
 
   return (
     <Card className="print:shadow-none">
@@ -142,21 +144,19 @@ function TrialBalanceSection({ periodId, business }: SectionProps) {
   );
 }
 
-function IncomeStatementSection({ periodId, periods, business }: SectionProps) {
+function IncomeStatementSection({ periodId, business, periodName: propName, periodDates: propDates }: SectionProps) {
   const { data: stmt, isLoading, isError } = useIncomeStatement(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load income statement.</p></Card>;
   if (!stmt) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
-  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
-    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
-    : '';
+  const subtitle = propName ? `${propName} — ${propDates ?? ''}` : (propDates ? `For the period ended ${propDates}` : undefined);
 
   return (
     <Card className="print:shadow-none">
       <ReportHeader business={business} />
-      <ReportTitle title="Income Statement" subtitle={periodEnd ? `For the period ended ${periodEnd}` : undefined} />
+      <ReportTitle title="Income Statement" subtitle={subtitle} />
 
       <div className="space-y-4">
         <div>
@@ -222,21 +222,19 @@ function IncomeStatementSection({ periodId, periods, business }: SectionProps) {
   );
 }
 
-function BalanceSheetSection({ periodId, periods, business }: SectionProps) {
+function BalanceSheetSection({ periodId, business, periodName: propName, periodDates: propDates }: SectionProps) {
   const { data: bs, isLoading, isError } = useBalanceSheet(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load balance sheet.</p></Card>;
   if (!bs) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
-  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
-    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
-    : '';
+  const subtitle = propName ? `${propName} — ${propDates ?? ''}` : (propDates ? `As of ${propDates}` : undefined);
 
   return (
     <Card className="print:shadow-none">
       <ReportHeader business={business} />
-      <ReportTitle title="Balance Sheet" subtitle={periodEnd ? `As of ${periodEnd}` : undefined} />
+      <ReportTitle title="Balance Sheet" subtitle={subtitle} />
 
       <div className="space-y-6">
         <div>
@@ -293,21 +291,19 @@ function BalanceSheetSection({ periodId, periods, business }: SectionProps) {
   );
 }
 
-function CashFlowSection({ periodId, periods, business }: SectionProps) {
+function CashFlowSection({ periodId, business, periodName: propName, periodDates: propDates }: SectionProps) {
   const { data: cf, isLoading, isError } = useCashFlow(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load cash flow statement.</p></Card>;
   if (!cf) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
-  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
-    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
-    : '';
+  const subtitle = propName ? `${propName} — ${propDates ?? ''}` : (propDates ? `For the period ended ${propDates}` : undefined);
 
   return (
     <Card className="print:shadow-none">
       <ReportHeader business={business} />
-      <ReportTitle title="Cash Flow Statement" subtitle={periodEnd ? `For the period ended ${periodEnd}` : undefined} />
+      <ReportTitle title="Cash Flow Statement" subtitle={subtitle} />
 
       <div className="space-y-6">
         <div>
@@ -369,21 +365,19 @@ function CashFlowSection({ periodId, periods, business }: SectionProps) {
   );
 }
 
-function EquitySection({ periodId, periods, business }: SectionProps) {
+function EquitySection({ periodId, business, periodName: propName, periodDates: propDates }: SectionProps) {
   const { data: eq, isLoading, isError } = useEquity(periodId ? Number(periodId) : undefined);
 
   if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
   if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load equity statement.</p></Card>;
   if (!eq) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
 
-  const periodEnd = periodId && periods?.find(p => String(p.id) === periodId)
-    ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date)
-    : '';
+  const subtitle = propName ? `${propName} — ${propDates ?? ''}` : (propDates ? `For the period ended ${propDates}` : undefined);
 
   return (
     <Card className="print:shadow-none">
       <ReportHeader business={business} />
-      <ReportTitle title="Statement of Changes in Equity" subtitle={periodEnd ? `For the period ended ${periodEnd}` : undefined} />
+      <ReportTitle title="Statement of Changes in Equity" subtitle={subtitle} />
 
       <div className="space-y-6">
         <div>
@@ -462,6 +456,18 @@ export default function FinancialStatementsPage() {
     return ids.length > 0 ? ids[ids.length - 1] : undefined;
   }, [periodId]);
 
+  // Derive period name and dates for the subtitle
+  const periodInfo = useMemo(() => {
+    const id = effectivePeriodId;
+    if (!id || !periods) return { name: '', dates: '' };
+    const p = periods.find((p: any) => p.id === id);
+    if (!p) return { name: '', dates: '' };
+    return {
+      name: p.name,
+      dates: p.start_date ? `${formatShiftDate(p.start_date)} to ${formatShiftDate(p.end_date)}` : '',
+    };
+  }, [effectivePeriodId, periods]);
+
   function toggleTab(tab: TabKey) {
     setActiveTab((prev) => prev === tab ? null : tab);
   }
@@ -526,11 +532,11 @@ export default function FinancialStatementsPage() {
         ))}
       </div>
 
-      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
-      {activeTab === 'income-statement' && <IncomeStatementSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
-      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
-      {activeTab === 'cash-flow' && <CashFlowSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
-      {activeTab === 'equity' && <EquitySection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} />}
+      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} periodName={periodInfo.name} periodDates={periodInfo.dates} />}
+      {activeTab === 'income-statement' && <IncomeStatementSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} periodName={periodInfo.name} periodDates={periodInfo.dates} />}
+      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} periodName={periodInfo.name} periodDates={periodInfo.dates} />}
+      {activeTab === 'cash-flow' && <CashFlowSection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} periodName={periodInfo.name} periodDates={periodInfo.dates} />}
+      {activeTab === 'equity' && <EquitySection periodId={effectivePeriodId ? String(effectivePeriodId) : ''} periods={periods} business={business} periodName={periodInfo.name} periodDates={periodInfo.dates} />}
 
       {!activeTab && (
         <Card>

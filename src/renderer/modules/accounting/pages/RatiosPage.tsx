@@ -11,6 +11,8 @@ import {
   CHART_THEME, ChartTooltipRow, ChartTooltipShell, chartAverage,
 } from '../../../shared/components/charts/chartPrimitives';
 import { useAccountingPeriods, useRatioTrends } from '../api/AccountingQueries';
+import { useReportDownload } from '../../dashboard/DashboardQueries';
+import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import type { RatioSet } from '../api/AccountingTypes';
 import {
   Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, Image, RefreshCw,
@@ -266,6 +268,14 @@ export default function RatiosPage() {
 
   const { data: periods } = useAccountingPeriods();
   const { data: trends, isLoading } = useRatioTrends('monthly', 12);
+  const downloadReport = useReportDownload();
+
+  function downloadRatios(format: string) {
+    const params = new URLSearchParams();
+    if (periodId) params.set('period_id', periodId.split(',')[0]);
+    params.set('format', format);
+    downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${format}`);
+  }
 
   // Derive current ratios from the selected period in trends data
   const ratios = useMemo(() => {
@@ -360,10 +370,10 @@ export default function RatiosPage() {
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="w-4 h-4 mr-1.5" />Reload
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => downloadRatios('pdf')}>
               <Download className="w-4 h-4 mr-1.5" />PDF
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => downloadRatios('xlsx')}>
               <FileSpreadsheet className="w-4 h-4 mr-1.5" />Excel
             </Button>
             <Button variant="outline" size="sm">

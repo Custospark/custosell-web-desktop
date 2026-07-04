@@ -276,15 +276,11 @@ export default function RatiosPage() {
   const selectedPeriodName = useMemo(() => {
     if (!periodId || !periods) return 'Latest period';
     const ids = periodId.split(',').map(Number).filter(Boolean);
-    if (ids.length === 1) {
-      return periods.find((p: any) => String(p.id) === periodId)?.name ?? `Period #${periodId}`;
-    }
-    if (ids.length > 1) {
-      const first = periods.find((p: any) => p.id === ids[0]);
-      const last = periods.find((p: any) => p.id === ids[ids.length - 1]);
-      if (first && last) return `${first.name} – ${last.name}`;
-    }
-    return 'Selected period';
+    if (ids.length === 0) return 'No period selected';
+    const matched = periods.filter((p: any) => ids.includes(p.id)).sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+    if (matched.length === 0) return 'No period selected';
+    if (matched.length === 1) return matched[0].name;
+    return `${matched[0].name} – ${matched[matched.length - 1].name}`;
   }, [periodId, periods]);
 
   function openDownload(format: 'pdf' | 'xlsx') {
@@ -295,19 +291,19 @@ export default function RatiosPage() {
   function handleDownload() {
     const params = new URLSearchParams();
     const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-    const pid = ids.length > 0 ? String(ids[ids.length - 1]) : '';
-    if (!pid && trends?.length) {
-      const lastPid = String(trends[trends.length - 1].period_id);
-      params.set('period_id', lastPid);
+    if (ids.length > 0) {
+      params.set('period_id', String(ids[ids.length - 1]));
+      const firstMatch = ids.length > 1 && periods?.find((p: any) => p.id === ids[0]);
+      const lastMatch = periods?.find((p: any) => p.id === ids[ids.length - 1]);
+      if (firstMatch?.start_date && lastMatch?.end_date) {
+        params.set('date_from', firstMatch.start_date);
+        params.set('date_to', lastMatch.end_date);
+      }
+    } else if (trends?.length) {
+      // No period selected — use latest period from trends
+      params.set('period_id', String(trends[trends.length - 1].period_id));
     } else {
-      params.set('period_id', pid);
-    }
-    // For quarter range, add date range hint for the report subtitle
-    if (ids.length > 1 && periods) {
-      const first = periods.find((p: any) => p.id === ids[0]);
-      const last = periods.find((p: any) => p.id === ids[ids.length - 1]);
-      if (first?.start_date) params.set('date_from', first.start_date);
-      if (last?.end_date) params.set('date_to', last.end_date);
+      return; // No data, nothing to download
     }
     params.set('format', downloadFormat);
     downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);

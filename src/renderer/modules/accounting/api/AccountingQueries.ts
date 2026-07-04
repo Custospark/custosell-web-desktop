@@ -137,6 +137,10 @@ export function useRatioTrends(interval = 'monthly', count = 12) {
       );
       return data.data ?? [];
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    retryDelay: 2000,
   });
 }
 

@@ -177,7 +177,7 @@ export default function RatiosPage() {
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
 
   const { data: periods } = useAccountingPeriods();
-  const { data: trends, isLoading } = useRatioTrends('monthly', 25);
+  const { data: trends, isLoading } = useRatioTrends('monthly', 12);
 
   // Derive current ratios from the selected period in trends data
   const ratios = useMemo(() => {

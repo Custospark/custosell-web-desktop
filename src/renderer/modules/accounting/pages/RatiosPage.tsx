@@ -281,20 +281,39 @@ export default function RatiosPage() {
   }
 
   function doDownload() {
-    const ids = modalPeriodId ? modalPeriodId.split(',').map(Number).filter(Boolean) : (trends?.length ? [trends[trends.length - 1].period_id] : []);
-    if (ids.length === 0) return;
+    const ids = modalPeriodId ? modalPeriodId.split(',').map(Number).filter(Boolean) : [];
 
-    const params = new URLSearchParams();
-    params.set('period_id', String(ids[ids.length - 1]));
-    const firstMatch = ids.length > 1 && periods?.find((p: any) => p.id === ids[0]);
-    const lastMatch = periods?.find((p: any) => p.id === ids[ids.length - 1]);
-    if (firstMatch?.start_date && lastMatch?.end_date) {
-      params.set('date_from', firstMatch.start_date);
-      params.set('date_to', lastMatch.end_date);
+    if (ids.length > 0) {
+      const lastPid = ids[ids.length - 1];
+      const params = new URLSearchParams();
+
+      if (ids.length > 1) {
+        // Quarter / multi-period: send date range instead of a single period_id
+        const first = periods?.find((p: any) => p.id === ids[0]);
+        const last = periods?.find((p: any) => p.id === lastPid);
+        if (first?.start_date && last?.end_date) {
+          params.set('date_from', first.start_date.slice(0, 10));
+          params.set('date_to', last.end_date.slice(0, 10));
+        }
+      } else {
+        // Single period
+        params.set('period_id', String(lastPid));
+      }
+
+      params.set('format', downloadFormat);
+      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
+      setDownloadOpen(false);
+      return;
     }
-    params.set('format', downloadFormat);
-    downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
-    setDownloadOpen(false);
+
+    // Fallback: use latest trend period
+    if (trends?.length) {
+      const params = new URLSearchParams();
+      params.set('period_id', String(trends[trends.length - 1].period_id));
+      params.set('format', downloadFormat);
+      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
+      setDownloadOpen(false);
+    }
   }
 
   // Derive current ratios from the selected period in trends data

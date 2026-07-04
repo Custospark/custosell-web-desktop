@@ -40,13 +40,15 @@ export default function JournalEntriesPage() {
   const filtered = useMemo(() => {
     if (!entries) return [];
     const q = search.toLowerCase();
-    return entries.filter((e) => {
-      // Period filter
-      if (activePeriodIds && !activePeriodIds.has(e.period_id)) return false;
-      // Search filter
-      if (q && !e.entry_number.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q)) return false;
-      return true;
-    });
+    return entries
+      .filter((e) => {
+        // Period filter
+        if (activePeriodIds && !activePeriodIds.has(e.period_id)) return false;
+        // Search filter
+        if (q && !e.entry_number.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q)) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [entries, search, activePeriodIds]);
 
   // Build a set of entry numbers that have been reversed (by finding reversal descriptions)

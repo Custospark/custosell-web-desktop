@@ -224,15 +224,10 @@ export function usePostJournalEntry() {
       const { data } = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.postJournalEntry(id));
       return data.data;
     },
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: accountingKeys.journalEntries() });
-      // Optimistically mark as posted
+    onSuccess: (entry, id) => {
       qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) =>
-        old?.map((e) => e.id === id ? { ...e, locked: true, posted_at: new Date().toISOString() } : e),
+        old?.map((e) => e.id === id ? { ...e, ...entry, locked: true, posted_at: entry.posted_at } : e),
       );
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: accountingKeys.all });
       showToast('success', 'Journal entry posted');
     },
     onError: () => showToast('error', 'Failed to post journal entry'),

@@ -283,8 +283,11 @@ export default function RatiosPage() {
 
   function handleDownload() {
     const params = new URLSearchParams();
-    const pid = periodId ? periodId.split(',')[0] : '';
-    if (pid) params.set('period_id', pid);
+    let pid = periodId ? periodId.split(',')[0] : '';
+    if (!pid && trends?.length) {
+      pid = String(trends[trends.length - 1].period_id);
+    }
+    params.set('period_id', pid);
     params.set('format', downloadFormat);
     downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
     setDownloadOpen(false);

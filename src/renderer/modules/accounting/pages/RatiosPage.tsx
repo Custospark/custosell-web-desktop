@@ -270,7 +270,8 @@ export default function RatiosPage() {
   // Derive current ratios from the selected period in trends data
   const ratios = useMemo(() => {
     if (!trends?.length) return undefined;
-    const id = periodId ? Number(periodId) : undefined;
+    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
+    const id = ids.length > 0 ? ids[ids.length - 1] : undefined;
     const match = id ? trends.find((t: any) => t.period_id === id) : trends[trends.length - 1];
     return match?.ratios as RatioSet | undefined;
   }, [trends, periodId]);

@@ -328,6 +328,12 @@ export default function RatiosPage() {
   const isLoading = trendsLoading && ratiosLoading;
   const isError = ratiosError && !ratios;
 
+  function openDownload() {
+    setModalPeriodId(periodId);
+    setDownloadFormat('pdf');
+    setDownloadOpen(true);
+  }
+
   const selectedDef = selectedRatioKey
     ? RATIO_DEFS.find((d) => d.key === selectedRatioKey)
     : null;

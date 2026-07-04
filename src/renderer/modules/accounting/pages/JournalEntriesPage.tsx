@@ -20,7 +20,8 @@ export default function JournalEntriesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionId, setActionId] = useState<number | null>(null);
-  const [descPopupId, setDescPopupId] = useState<number | null>(null);
+  const [hoveredDescId, setHoveredDescId] = useState<number | null>(null);
+  const [descPos, setDescPos] = useState({ top: 0, left: 0 });
 
   // All filtering client-side — always fetch all entries
   const { data: entries, isLoading } = useJournalEntries();
@@ -78,30 +79,17 @@ export default function JournalEntriesPage() {
         const isReversal = item.description.startsWith('Reversing entry');
         const text = isReversal ? item.description.replace(/^Reversing entry for [^:]+:\s*/, '↩ ') : item.description;
         return (
-          <div className="relative">
-            <span className="truncate block max-w-[160px] text-sm">{text}</span>
-            <button
-              onClick={() => setDescPopupId(descPopupId === item.id ? null : item.id)}
-              className="absolute top-0 right-0 p-0.5 text-gray-300 hover:text-blue-600 transition-colors"
-              title="View full description"
-            >
-              <Eye className="w-3.5 h-3.5" />
-            </button>
-            {descPopupId === item.id && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setDescPopupId(null)} />
-                <div
-                  className="absolute z-50 top-6 left-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-3 text-sm text-gray-700 leading-relaxed"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Full Description</span>
-                    <button onClick={() => setDescPopupId(null)} className="text-gray-300 hover:text-gray-600"><X className="w-3 h-3" /></button>
-                  </div>
-                  <p>{item.description}</p>
-                  <p className="text-xs text-gray-400 mt-2">Entry: {item.entry_number}</p>
-                </div>
-              </>
-            )}
+          <div
+            className="flex items-center gap-1.5 cursor-default"
+            onMouseEnter={(e) => {
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              setDescPos({ top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 330) });
+              setHoveredDescId(item.id);
+            }}
+            onMouseLeave={() => setHoveredDescId(null)}
+          >
+            <span className="truncate max-w-[140px] text-sm">{text}</span>
+            <Eye className="w-3.5 h-3.5 text-blue-400 shrink-0" />
           </div>
         );
       },
@@ -218,6 +206,26 @@ export default function JournalEntriesPage() {
           </div>
         </div>
       )}
+
+      {/* Floating description card */}
+      {hoveredDescId !== null && (() => {
+        const entry = filtered.find((e) => e.id === hoveredDescId);
+        if (!entry) return null;
+        return (
+          <div
+            className="fixed z-[9999] w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-3.5 text-sm text-gray-700 leading-relaxed"
+            style={{ top: descPos.top, left: descPos.left }}
+            onMouseEnter={() => setHoveredDescId(hoveredDescId)}
+            onMouseLeave={() => setHoveredDescId(null)}
+          >
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Description</span>
+            </div>
+            <p>{entry.description}</p>
+            <p className="text-[11px] text-gray-400 mt-2 border-t border-gray-100 pt-2">Entry: {entry.entry_number}</p>
+          </div>
+        );
+      })()}
 
       {formOpen && (
         <NewJournalEntryForm

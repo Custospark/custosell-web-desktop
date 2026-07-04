@@ -12,7 +12,7 @@ export function formatShiftTime(iso: string | null | undefined): string {
 export function formatShiftDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function formatShiftDateTime(iso: string | null | undefined): string {

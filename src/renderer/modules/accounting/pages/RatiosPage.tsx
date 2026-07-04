@@ -334,6 +334,39 @@ export default function RatiosPage() {
     setDownloadOpen(true);
   }
 
+  function doDownload() {
+    const ids = modalPeriodId ? modalPeriodId.split(',').map(Number).filter(Boolean) : [];
+
+    if (ids.length > 0) {
+      const lastPid = ids[ids.length - 1];
+      const params = new URLSearchParams();
+
+      if (ids.length > 1) {
+        const first = periods?.find((p: any) => p.id === ids[0]);
+        const last = periods?.find((p: any) => p.id === lastPid);
+        if (first?.start_date && last?.end_date) {
+          params.set('date_from', first.start_date.slice(0, 10));
+          params.set('date_to', last.end_date.slice(0, 10));
+        }
+      } else {
+        params.set('period_id', String(lastPid));
+      }
+
+      params.set('format', downloadFormat);
+      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
+      setDownloadOpen(false);
+      return;
+    }
+
+    if (trends?.length) {
+      const params = new URLSearchParams();
+      params.set('period_id', String(trends[trends.length - 1].period_id));
+      params.set('format', downloadFormat);
+      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
+      setDownloadOpen(false);
+    }
+  }
+
   const selectedDef = selectedRatioKey
     ? RATIO_DEFS.find((d) => d.key === selectedRatioKey)
     : null;

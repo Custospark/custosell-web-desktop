@@ -271,7 +271,45 @@ export default function RatiosPage() {
   const ratios = useMemo(() => {
     if (!trends?.length) return undefined;
     const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-    const id = ids.length > 0 ? ids[ids.length - 1] : undefined;
+    
+    if (ids.length > 1) {
+      // Quarter mode: average the ratios across all months in the quarter
+      const quarterRatios = ids
+        .map((id) => trends.find((t: any) => t.period_id === id)?.ratios)
+        .filter(Boolean);
+      if (quarterRatios.length === 0) return undefined;
+      
+      const avgField = (cat: string, field: string) => {
+        const vals = quarterRatios.map((r: any) => r[cat]?.[field]).filter((v: any) => v !== null && v !== undefined);
+        return vals.length > 0 ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
+      };
+      
+      return {
+        liquidity: {
+          current_ratio: avgField('liquidity', 'current_ratio'),
+          quick_ratio: avgField('liquidity', 'quick_ratio'),
+          cash_ratio: avgField('liquidity', 'cash_ratio'),
+        },
+        profitability: {
+          gross_profit_margin: avgField('profitability', 'gross_profit_margin'),
+          net_profit_margin: avgField('profitability', 'net_profit_margin'),
+          return_on_assets: avgField('profitability', 'return_on_assets'),
+          return_on_equity: avgField('profitability', 'return_on_equity'),
+        },
+        solvency: {
+          debt_to_equity: avgField('solvency', 'debt_to_equity'),
+          debt_ratio: avgField('solvency', 'debt_ratio'),
+          interest_coverage_ratio: avgField('solvency', 'interest_coverage_ratio'),
+        },
+        efficiency: {
+          asset_turnover: avgField('efficiency', 'asset_turnover'),
+          inventory_turnover: avgField('efficiency', 'inventory_turnover'),
+          accounts_receivable_turnover: avgField('efficiency', 'accounts_receivable_turnover'),
+        },
+      } as RatioSet;
+    }
+    
+    const id = ids.length === 1 ? ids[0] : undefined;
     const match = id ? trends.find((t: any) => t.period_id === id) : trends[trends.length - 1];
     return match?.ratios as RatioSet | undefined;
   }, [trends, periodId]);

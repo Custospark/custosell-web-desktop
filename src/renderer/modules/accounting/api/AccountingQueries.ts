@@ -196,8 +196,20 @@ export function useCreateJournalEntry() {
       }
       return response.data.data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: accountingKeys.journalEntries() });
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: accountingKeys.journalEntries() });
+    },
+    onSuccess: (entry) => {
+      if (!entry) {
+        qc.invalidateQueries({ queryKey: accountingKeys.journalEntries() });
+        return;
+      }
+      // Optimistically prepend to the default list cache
+      qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) => {
+        if (!old) return [entry];
+        if (old.some((e) => e.id === entry.id)) return old;
+        return [entry, ...old];
+      });
       showToast('success', 'Journal entry created');
     },
     onError: () => showToast('error', 'Failed to create journal entry'),
@@ -211,6 +223,13 @@ export function usePostJournalEntry() {
     mutationFn: async (id) => {
       const { data } = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.postJournalEntry(id));
       return data.data;
+    },
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: accountingKeys.journalEntries() });
+      // Optimistically mark as posted
+      qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) =>
+        old?.map((e) => e.id === id ? { ...e, locked: true, posted_at: new Date().toISOString() } : e),
+      );
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: accountingKeys.all });
@@ -258,8 +277,13 @@ export function useDeleteJournalEntry() {
     mutationFn: async (id) => {
       await axiosInstance.delete(ACCOUNTING.journalEntry(id));
     },
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: accountingKeys.journalEntries() });
+      qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) =>
+        old?.filter((e) => e.id !== id),
+      );
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: accountingKeys.journalEntries() });
       showToast('success', 'Journal entry deleted');
     },
     onError: () => showToast('error', 'Failed to delete journal entry'),
@@ -274,8 +298,16 @@ export function useReverseJournalEntry() {
       const { data } = await axiosInstance.post<{ data: JournalEntry }>(ACCOUNTING.reverseJournalEntry(id));
       return data.data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: accountingKeys.all });
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: accountingKeys.journalEntries() });
+    },
+    onSuccess: (reversal) => {
+      // Optimistically add the reversal entry to the list
+      qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) => {
+        if (!old) return [reversal];
+        if (old.some((e) => e.id === reversal.id)) return old;
+        return [reversal, ...old];
+      });
       showToast('success', 'Journal entry reversed');
     },
     onError: () => showToast('error', 'Failed to reverse journal entry'),

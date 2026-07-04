@@ -20,21 +20,32 @@ export default function JournalEntriesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionId, setActionId] = useState<number | null>(null);
-  const filters = periodFilter ? { period_id: periodFilter } : undefined;
-  const { data: entries, isLoading } = useJournalEntries(filters);
+
+  // All filtering client-side — always fetch all entries
+  const { data: entries, isLoading } = useJournalEntries();
   const { data: periods } = useAccountingPeriods();
   const postEntry = usePostJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
   const reverseEntry = useReverseJournalEntry();
 
+  // Resolve periodFilter into a Set of matching period_ids
+  const activePeriodIds = useMemo(() => {
+    if (!periodFilter) return null;
+    const ids = periodFilter.split(',').map(Number).filter(Boolean);
+    return new Set(ids);
+  }, [periodFilter]);
+
   const filtered = useMemo(() => {
     if (!entries) return [];
     const q = search.toLowerCase();
     return entries.filter((e) => {
-      if (!q) return true;
-      return e.entry_number.toLowerCase().includes(q) || e.description.toLowerCase().includes(q);
+      // Period filter
+      if (activePeriodIds && !activePeriodIds.has(e.period_id)) return false;
+      // Search filter
+      if (q && !e.entry_number.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q)) return false;
+      return true;
     });
-  }, [entries, search]);
+  }, [entries, search, activePeriodIds]);
 
   // Build a set of entry numbers that have been reversed (by finding reversal descriptions)
   const reversedEntryNumbers = useMemo(() => {

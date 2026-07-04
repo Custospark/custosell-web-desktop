@@ -4,11 +4,13 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
+import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
 import { FileText, Plus, Send, X, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
 export default function JournalEntriesPage() {
   const [formOpen, setFormOpen] = useState(false);
@@ -20,7 +22,12 @@ export default function JournalEntriesPage() {
 
   const columns = [
     { key: 'entry_number', header: 'Entry #', sortable: true },
-    { key: 'date', header: 'Date', sortable: true },
+    {
+      key: 'date',
+      header: 'Date',
+      sortable: true,
+      render: (item: JournalEntry) => formatShiftDate(item.date),
+    },
     { key: 'description', header: 'Description' },
     { key: 'reference_type', header: 'Reference' },
     {
@@ -83,13 +90,11 @@ export default function JournalEntriesPage() {
       </Card>
 
       <div className="flex gap-4 items-center">
-        <Select
-          label="Period"
-          placeholder="All periods"
-          options={(periods ?? []).map((p) => ({ value: String(p.id), label: p.name }))}
+        <PeriodSelector
+          periods={periods}
           value={periodFilter}
-          onChange={(e) => setPeriodFilter(e.target.value)}
-          className="w-52"
+          onChange={setPeriodFilter}
+          className="w-full"
         />
       </div>
 

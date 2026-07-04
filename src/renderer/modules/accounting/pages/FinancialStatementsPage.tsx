@@ -1,41 +1,250 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
-import { Select } from '../../../shared/components/inputs/Select';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useAccountingPeriods } from '../api/AccountingQueries';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { BarChart3, ClipboardList, Scale, Download, FileSpreadsheet, ArrowRight } from 'lucide-react';
+import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
+import { useTrialBalance, useIncomeStatement, useBalanceSheet, useAccountingPeriods } from '../api/AccountingQueries';
+import { Printer, Scale, BarChart3, ClipboardList, ChevronDown, ChevronRight, CheckCircle, XCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
-interface StatementCardProps {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  route: string;
-  accent: 'blue' | 'green' | 'purple';
+function fmt(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
 }
 
-function StatementCard({ title, description, icon: Icon, route, accent }: StatementCardProps) {
-  const navigate = useNavigate();
+type TabKey = 'trial-balance' | 'income-statement' | 'balance-sheet';
+
+const TABS: { key: TabKey; label: string; icon: React.ElementType; accent: string }[] = [
+  { key: 'trial-balance', label: 'Trial Balance', icon: Scale, accent: 'border-blue-500 bg-blue-50' },
+  { key: 'income-statement', label: 'Income Statement', icon: BarChart3, accent: 'border-green-500 bg-green-50' },
+  { key: 'balance-sheet', label: 'Balance Sheet', icon: ClipboardList, accent: 'border-purple-500 bg-purple-50' },
+];
+
+function TabButton({ active, tab, onClick }: { active: boolean; tab: typeof TABS[number]; onClick: () => void }) {
+  const Icon = tab.icon;
   return (
-    <Card accent={accent} hover padding={false}>
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className={cn(
-            'p-2.5 rounded-lg',
-            accent === 'blue' && 'bg-blue-50 text-blue-600',
-            accent === 'green' && 'bg-green-50 text-green-600',
-            accent === 'purple' && 'bg-purple-50 text-purple-600',
-          )}>
-            <Icon className="w-6 h-6" />
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2.5 px-5 py-3 rounded-lg text-sm font-medium transition-all',
+        active
+          ? 'bg-white text-gray-900 shadow-sm border border-gray-200 ring-1 ring-gray-100'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
+      )}
+    >
+      <Icon className="w-5 h-5" />
+      <span>{tab.label}</span>
+      {active ? <ChevronDown className="w-4 h-4 ml-1" /> : <ChevronRight className="w-4 h-4 ml-1" />}
+    </button>
+  );
+}
+
+function TrialBalanceSection({ periodId }: { periodId: string }) {
+  const { data: tb, isLoading, isError } = useTrialBalance(periodId ? Number(periodId) : undefined);
+
+  if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
+  if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load trial balance.</p></Card>;
+  if (!tb) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
+
+  return (
+    <Card className="print:shadow-none">
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
+        <h3 className="text-xl font-semibold text-gray-800 mt-1">Trial Balance</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          {tb.period?.name ?? `Period #${periodId}`}
+          {tb.period?.start_date ? ` — ${formatShiftDate(tb.period.start_date)} to ${formatShiftDate(tb.period.end_date)}` : ''}
+        </p>
+      </div>
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="border-b-2 border-gray-800">
+            <th className="text-left py-2 pr-2 font-semibold text-gray-700">Account</th>
+            <th className="text-left py-2 px-2 font-semibold text-gray-700">Code</th>
+            <th className="text-left py-2 px-2 font-semibold text-gray-700">Type</th>
+            <th className="text-right py-2 px-2 font-semibold text-gray-700">Debit</th>
+            <th className="text-right py-2 pl-2 font-semibold text-gray-700">Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tb.accounts?.map((acc) => (
+            <tr key={acc.account_id} className="border-b border-gray-200">
+              <td className="py-2 pr-2 text-gray-800">{acc.name}</td>
+              <td className="py-2 px-2 text-gray-500 font-mono">{acc.code}</td>
+              <td className="py-2 px-2 text-gray-500">{acc.type}</td>
+              <td className="py-2 px-2 text-right font-mono tabular-nums">
+                {acc.debit_balance > 0 ? fmt(acc.debit_balance) : '-'}
+              </td>
+              <td className="py-2 pl-2 text-right font-mono tabular-nums">
+                {acc.credit_balance > 0 ? fmt(acc.credit_balance) : '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-gray-800 font-semibold">
+            <td colSpan={3} className="py-3 pr-2 text-gray-900 text-right">Totals</td>
+            <td className="py-3 px-2 text-right font-mono tabular-nums text-gray-900">{fmt(tb.total_debits)}</td>
+            <td className="py-3 pl-2 text-right font-mono tabular-nums text-gray-900">{fmt(tb.total_credits)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div className="mt-4 flex items-center justify-between text-sm border-t border-gray-200 pt-4">
+        <span className="text-gray-500">
+          Difference: <strong className="text-gray-900">{fmt(Math.abs(tb.total_debits - tb.total_credits))}</strong>
+        </span>
+        <span className={cn('inline-flex items-center gap-1.5 font-medium', tb.is_balanced ? 'text-green-600' : 'text-red-500')}>
+          {tb.is_balanced ? <><CheckCircle className="w-4 h-4" /> Balanced</> : <><XCircle className="w-4 h-4" /> Not Balanced</>}
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+function IncomeStatementSection({ periodId }: { periodId: string }) {
+  const { data: stmt, isLoading, isError } = useIncomeStatement(periodId ? Number(periodId) : undefined);
+
+  if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
+  if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load income statement.</p></Card>;
+  if (!stmt) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
+
+  return (
+    <Card className="print:shadow-none">
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
+        <h3 className="text-xl font-semibold text-gray-800 mt-1">Income Statement</h3>
+        <p className="text-sm text-gray-500 mt-1">For the period ended {periodId && periods?.find(p => String(p.id) === periodId) ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date) : ''}</p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Revenue</h4>
+          {stmt.sections?.revenue?.map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-semibold border-b-2 border-gray-300">
+            <span>Total Revenue</span>
+            <span className="font-mono tabular-nums">{fmt(stmt.total_revenue)}</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
         </div>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed">{description}</p>
-        <Button variant="outline" onClick={() => navigate(route)} className="w-full">
-          View Report <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Cost of Goods Sold</h4>
+          {stmt.sections?.cost_of_goods_sold?.map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-semibold border-b-2 border-gray-300">
+            <span>Total COGS</span>
+            <span className="font-mono tabular-nums">{fmt(stmt.total_cost_of_goods_sold)}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-between py-3 text-base font-bold border-b-2 border-gray-800">
+          <span>Gross Profit</span>
+          <span className="font-mono tabular-nums">{fmt(stmt.gross_profit)}</span>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Operating Expenses</h4>
+          {stmt.sections?.operating_expenses?.map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-semibold border-b-2 border-gray-300">
+            <span>Total Operating Expenses</span>
+            <span className="font-mono tabular-nums">{fmt(stmt.total_operating_expenses)}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-between py-3 text-base font-bold border-b-2 border-gray-800">
+          <span>Operating Income (EBIT)</span>
+          <span className="font-mono tabular-nums">{fmt(stmt.operating_income)}</span>
+        </div>
+
+        <div className="flex justify-between py-3 text-lg font-bold text-gray-900">
+          <span>Net Income</span>
+          <span className={cn('font-mono tabular-nums', stmt.net_income >= 0 ? 'text-green-600' : 'text-red-600')}>
+            {fmt(stmt.net_income)}
+          </span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function BalanceSheetSection({ periodId }: { periodId: string }) {
+  const { data: bs, isLoading, isError } = useBalanceSheet(periodId ? Number(periodId) : undefined);
+
+  if (isLoading) return <div className="py-12"><LoadingSpinner /></div>;
+  if (isError) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load balance sheet.</p></Card>;
+  if (!bs) return <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>;
+
+  return (
+    <Card className="print:shadow-none">
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
+        <h3 className="text-xl font-semibold text-gray-800 mt-1">Balance Sheet</h3>
+        <p className="text-sm text-gray-500 mt-1">As of {periodId && periods?.find(p => String(p.id) === periodId) ? formatShiftDate(periods.find(p => String(p.id) === periodId)!.end_date) : ''}</p>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">ASSETS</h4>
+          {bs.sections?.assets?.map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Assets</span>
+            <span className="font-mono tabular-nums">{fmt(bs.total_assets)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">LIABILITIES</h4>
+          {bs.sections?.liabilities?.map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Liabilities</span>
+            <span className="font-mono tabular-nums">{fmt(bs.total_liabilities)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 border-b-2 border-gray-800 pb-2">EQUITY</h4>
+          {bs.sections?.equity?.map((r: any) => (
+            <div key={r.account_code} className="flex justify-between py-1.5 text-sm border-b border-gray-100">
+              <span className="text-gray-700">{r.name}</span>
+              <span className="font-mono tabular-nums">{fmt(r.balance)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between py-2 text-sm font-bold border-b-2 border-gray-300">
+            <span>Total Equity</span>
+            <span className="font-mono tabular-nums">{fmt(bs.total_equity)}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-between py-3 text-base font-bold border-t-2 border-gray-800">
+          <span>A = L + E</span>
+          <span className={cn('inline-flex items-center gap-2', bs.is_balanced ? 'text-green-600' : 'text-red-500')}>
+            {fmt(bs.total_assets)} = {fmt(bs.total_liabilities + bs.total_equity)}
+            {bs.is_balanced ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+          </span>
+        </div>
       </div>
     </Card>
   );
@@ -43,7 +252,12 @@ function StatementCard({ title, description, icon: Icon, route, accent }: Statem
 
 export default function FinancialStatementsPage() {
   const [periodId, setPeriodId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<TabKey | null>(null);
   const { data: periods } = useAccountingPeriods();
+
+  function toggleTab(tab: TabKey) {
+    setActiveTab((prev) => prev === tab ? null : tab);
+  }
 
   return (
     <div className="space-y-6">
@@ -58,7 +272,10 @@ export default function FinancialStatementsPage() {
               <p className="text-sm text-gray-500">View and export your financial reports</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 print:hidden">
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="w-4 h-4 mr-1.5" />Print
+            </Button>
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-1.5" />PDF
             </Button>
@@ -69,61 +286,37 @@ export default function FinancialStatementsPage() {
         </div>
       </Card>
 
-      <div className="flex gap-4 items-center">
-        <Select
-          label="Period"
-          options={[
-            { value: '', label: 'Current Period' },
-            ...(periods ?? []).map((p) => ({ value: String(p.id), label: p.name })),
-          ]}
+      <div className="flex flex-wrap items-center gap-4 print:hidden">
+        <PeriodSelector
+          periods={periods}
           value={periodId}
-          onChange={(e) => setPeriodId(e.target.value)}
-          className="w-64"
+          onChange={setPeriodId}
+          className="w-full"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatementCard
-          title="Trial Balance"
-          description="Verify that total debits equal total credits. Check if your accounts are in balance before generating reports."
-          icon={Scale}
-          route={ROUTES.ACCOUNTING.TRIAL_BALANCE}
-          accent="blue"
-        />
-        <StatementCard
-          title="Income Statement"
-          description="View revenue, cost of goods sold, operating expenses, and net profit for the selected period."
-          icon={BarChart3}
-          route={ROUTES.ACCOUNTING.INCOME_STATEMENT}
-          accent="green"
-        />
-        <StatementCard
-          title="Balance Sheet"
-          description="Review your assets, liabilities, and equity. Confirm the accounting equation: Assets = Liabilities + Equity."
-          icon={ClipboardList}
-          route={ROUTES.ACCOUNTING.BALANCE_SHEET}
-          accent="purple"
-        />
+      <div className="flex flex-wrap gap-2 print:hidden">
+        {TABS.map((tab) => (
+          <TabButton
+            key={tab.key}
+            tab={tab}
+            active={activeTab === tab.key}
+            onClick={() => toggleTab(tab.key)}
+          />
+        ))}
       </div>
 
-      <Card>
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-800">Need more detail?</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Access the full Chart of Accounts, Journal Entries, or run a detailed Fixed Assets report.
-            </p>
+      {activeTab === 'trial-balance' && <TrialBalanceSection periodId={periodId} />}
+      {activeTab === 'income-statement' && <IncomeStatementSection periodId={periodId} />}
+      {activeTab === 'balance-sheet' && <BalanceSheetSection periodId={periodId} />}
+
+      {!activeTab && (
+        <Card>
+          <div className="h-32 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
+            Click a report above to view it here
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => window.location.href = ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS}>
-              Chart of Accounts
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => window.location.href = ROUTES.ACCOUNTING.JOURNAL_ENTRIES}>
-              Journal Entries
-            </Button>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

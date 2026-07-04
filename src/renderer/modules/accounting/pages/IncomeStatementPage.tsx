@@ -1,37 +1,35 @@
 import { useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Select } from '../../../shared/components/inputs/Select';
+import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useIncomeStatement, useAccountingPeriods } from '../api/AccountingQueries';
-import { BarChart3 } from 'lucide-react';
+import { Printer, BarChart3 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
-function AmountRow({ label, amount, bold, indent, positive }: { label: string; amount: number; bold?: boolean; indent?: boolean; positive?: boolean }) {
+function fmt(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+}
+
+function Row({ label, amount, bold, indent, positive, topBorder }: { label: string; amount: number; bold?: boolean; indent?: boolean; positive?: boolean; topBorder?: boolean }) {
   return (
-    <div className={cn(
-      'flex items-center justify-between py-2',
-      bold ? 'border-t border-gray-200 font-semibold' : 'text-gray-600',
-      indent && 'pl-6',
-    )}>
-      <span className={cn(bold && 'text-gray-900')}>{label}</span>
-      <span className={cn(
-        'font-mono',
-        positive ? 'text-green-600' : amount < 0 ? 'text-red-600' : 'text-gray-900',
-      )}>
-        {amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-      </span>
-    </div>
+    <tr className={cn(topBorder && 'border-t-2 border-gray-800')}>
+      <td className={cn('py-1.5 pr-4', bold ? 'font-semibold text-gray-900' : 'text-gray-600', indent && 'pl-8')}>{label}</td>
+      <td className={cn('py-1.5 pl-4 text-right font-mono tabular-nums w-36', positive ? 'text-green-600 font-semibold' : amount < 0 ? 'text-red-600' : 'text-gray-900', bold && 'font-semibold')}>
+        {fmt(Math.abs(amount))}
+      </td>
+    </tr>
   );
 }
 
 export default function IncomeStatementPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const { data: periods } = useAccountingPeriods();
-  const { data: statement, isLoading } = useIncomeStatement(periodId ? Number(periodId) : undefined);
+  const { data: stmt, isLoading, isError } = useIncomeStatement(periodId ? Number(periodId) : undefined);
 
   return (
     <div className="space-y-6">
-      <Card>
+      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
             <BarChart3 className="w-5 h-5" />
@@ -41,13 +39,16 @@ export default function IncomeStatementPage() {
             <p className="text-sm text-gray-500">Profit & loss overview</p>
           </div>
         </div>
-      </Card>
+        <Button variant="outline" onClick={() => window.print()}>
+          <Printer className="w-4 h-4 mr-1.5" />Print
+        </Button>
+      </div>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center print:hidden">
         <Select
           label="Period"
           options={[
-            { value: '', label: 'All Periods' },
+            { value: '', label: 'Current Period' },
             ...(periods ?? []).map((p) => ({ value: String(p.id), label: p.name })),
           ]}
           value={periodId}
@@ -56,48 +57,65 @@ export default function IncomeStatementPage() {
         />
       </div>
 
-      {isLoading ? <LoadingSpinner /> : statement && (
-        <>
-          <Card>
-            <div className="text-sm text-gray-500 mb-4">
-              Period: <span className="font-medium text-gray-900">{statement.period.name}</span>
-              &nbsp;({statement.period.start_date} — {statement.period.end_date})
-            </div>
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : isError ? (
+        <Card><p className="text-sm text-red-500">Failed to load income statement.</p></Card>
+      ) : stmt ? (
+        <Card className="print:shadow-none print:border-none print:rounded-none print:p-0">
+          <div className="text-center mb-8">
+            <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Custosell</h2>
+            <h3 className="text-xl font-semibold text-gray-800 mt-1">Income Statement</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              For the period {stmt.period.name} &mdash; {stmt.period.start_date} to {stmt.period.end_date}
+            </p>
+          </div>
 
-            {statement.sections && Object.entries(statement.sections).map(([sectionName, accounts]) => (
-              <div key={sectionName} className="mb-4">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">{sectionName}</h3>
-                {accounts.map((acc) => (
-                  <div key={acc.account_id} className="flex items-center justify-between py-1.5 text-sm pl-4 text-gray-600">
-                    <span>{acc.code} - {acc.name}</span>
-                    <span className="font-mono">{acc.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </Card>
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              {stmt.sections && Object.entries(stmt.sections).map(([sectionName, accounts]) => (
+                <tr key={sectionName}>
+                  <td colSpan={2} className="p-0">
+                    <table className="w-full border-collapse">
+                      <tbody>
+                        <tr>
+                          <td colSpan={2} className="text-xs font-semibold text-gray-500 uppercase tracking-wider pb-1 pt-3">{sectionName}</td>
+                        </tr>
+                        {accounts.map((acc) => (
+                          <Row key={acc.account_id} label={`${acc.code} - ${acc.name}`} amount={acc.balance} indent />
+                        ))}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              ))}
 
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Summary</h3>
-            <div className="space-y-1">
-              <AmountRow label="Total Revenue" amount={statement.total_revenue} bold positive />
-              <AmountRow label="Cost of Goods Sold" amount={statement.total_cost_of_goods_sold} indent />
-              <AmountRow label="Gross Profit" amount={statement.gross_profit} bold positive />
-              <AmountRow label="Total Operating Expenses" amount={statement.total_operating_expenses} indent />
-              <AmountRow label="Operating Income" amount={statement.operating_income} bold />
-              <AmountRow label="Other Income" amount={statement.other_income} indent positive />
-              <AmountRow label="Other Expenses" amount={statement.other_expenses} indent />
-              <AmountRow label="Income Before Tax" amount={statement.net_income_before_tax} bold />
-              <AmountRow label="Tax Expense" amount={statement.tax_expense} indent />
-              <AmountRow
-                label="Net Income"
-                amount={statement.net_income}
-                bold
-                positive={statement.net_income >= 0}
-              />
-            </div>
-          </Card>
-        </>
+              <tr><td colSpan={2} className="h-3" /></tr>
+
+              <Row label="Total Revenue" amount={stmt.total_revenue} bold positive />
+              <Row label="Total Cost of Goods Sold" amount={stmt.total_cost_of_goods_sold} indent />
+              <Row label="Gross Profit" amount={stmt.gross_profit} bold positive topBorder />
+
+              <tr><td colSpan={2} className="h-3" /></tr>
+
+              <Row label="Total Operating Expenses" amount={stmt.total_operating_expenses} indent />
+              <Row label="Operating Income (EBIT)" amount={stmt.operating_income} bold topBorder />
+
+              <tr><td colSpan={2} className="h-3" /></tr>
+
+              <Row label="Other Income" amount={stmt.other_income} indent positive />
+              <Row label="Other Expenses" amount={stmt.other_expenses} indent />
+              <Row label="Income Before Tax" amount={stmt.net_income_before_tax} bold topBorder />
+
+              <tr><td colSpan={2} className="h-3" /></tr>
+
+              <Row label="Tax Expense" amount={stmt.tax_expense} indent />
+              <Row label="Net Income" amount={stmt.net_income} bold positive={stmt.net_income >= 0} topBorder />
+            </tbody>
+          </table>
+        </Card>
+      ) : (
+        <Card><p className="text-sm text-gray-400 text-center py-8">No data for this period.</p></Card>
       )}
     </div>
   );

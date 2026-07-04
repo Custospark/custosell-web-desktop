@@ -273,8 +273,19 @@ export default function RatiosPage() {
   const { data: trends, isLoading } = useRatioTrends('monthly', 12);
   const downloadReport = useReportDownload();
 
-  const selectedPeriodName = periods?.find((p: any) => String(p.id) === periodId)?.name
-    ?? (periodId ? `Period #${periodId}` : 'Latest period');
+  const selectedPeriodName = useMemo(() => {
+    if (!periodId || !periods) return 'Latest period';
+    const ids = periodId.split(',').map(Number).filter(Boolean);
+    if (ids.length === 1) {
+      return periods.find((p: any) => String(p.id) === periodId)?.name ?? `Period #${periodId}`;
+    }
+    if (ids.length > 1) {
+      const first = periods.find((p: any) => p.id === ids[0]);
+      const last = periods.find((p: any) => p.id === ids[ids.length - 1]);
+      if (first && last) return `${first.name} – ${last.name}`;
+    }
+    return 'Selected period';
+  }, [periodId, periods]);
 
   function openDownload(format: 'pdf' | 'xlsx') {
     setDownloadFormat(format);
@@ -283,11 +294,21 @@ export default function RatiosPage() {
 
   function handleDownload() {
     const params = new URLSearchParams();
-    let pid = periodId ? periodId.split(',')[0] : '';
+    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
+    const pid = ids.length > 0 ? String(ids[ids.length - 1]) : '';
     if (!pid && trends?.length) {
-      pid = String(trends[trends.length - 1].period_id);
+      const lastPid = String(trends[trends.length - 1].period_id);
+      params.set('period_id', lastPid);
+    } else {
+      params.set('period_id', pid);
     }
-    params.set('period_id', pid);
+    // For quarter range, add date range hint for the report subtitle
+    if (ids.length > 1 && periods) {
+      const first = periods.find((p: any) => p.id === ids[0]);
+      const last = periods.find((p: any) => p.id === ids[ids.length - 1]);
+      if (first?.start_date) params.set('date_from', first.start_date);
+      if (last?.end_date) params.set('date_to', last.end_date);
+    }
     params.set('format', downloadFormat);
     downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
     setDownloadOpen(false);

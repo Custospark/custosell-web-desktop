@@ -138,7 +138,6 @@ export function useRatioTrends(interval = 'monthly', count = 12) {
       return data.data ?? [];
     },
     staleTime: 0,
-    gcTime: 0,
     refetchOnMount: 'always',
   });
 }
@@ -203,12 +202,12 @@ export function useCreateJournalEntry() {
         qc.invalidateQueries({ queryKey: accountingKeys.journalEntries() });
         return;
       }
-      // Optimistically prepend to the default list cache
       qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) => {
         if (!old) return [entry];
         if (old.some((e) => e.id === entry.id)) return old;
         return [entry, ...old];
       });
+      qc.invalidateQueries({ queryKey: accountingKeys.all });
       showToast('success', 'Journal entry created');
     },
     onError: () => showToast('error', 'Failed to create journal entry'),
@@ -227,6 +226,7 @@ export function usePostJournalEntry() {
       qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) =>
         old?.map((e) => e.id === id ? { ...e, ...entry, locked: true, posted_at: entry.posted_at } : e),
       );
+      qc.invalidateQueries({ queryKey: accountingKeys.all });
       showToast('success', 'Journal entry posted');
     },
     onError: () => showToast('error', 'Failed to post journal entry'),
@@ -278,6 +278,7 @@ export function useDeleteJournalEntry() {
       );
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: accountingKeys.all });
       showToast('success', 'Journal entry deleted');
     },
     onError: () => showToast('error', 'Failed to delete journal entry'),
@@ -302,6 +303,7 @@ export function useReverseJournalEntry() {
         if (old.some((e) => e.id === reversal.id)) return old;
         return [reversal, ...old];
       });
+      qc.invalidateQueries({ queryKey: accountingKeys.all });
       showToast('success', 'Journal entry reversed');
     },
     onError: () => showToast('error', 'Failed to reverse journal entry'),

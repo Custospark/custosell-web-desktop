@@ -288,13 +288,24 @@ export default function RatiosPage() {
 
   const trendData = useMemo(() => {
     if (!trends || !selectedDef) return [];
-    return trends.map((item) => ({
-      label: item.period_name,
-      value: getRatioValue(item.ratios, selectedDef.category, selectedDef.key) ?? 0,
-    }));
+    return trends.map((item, i) => {
+      const val = getRatioValue(item.ratios, selectedDef.category, selectedDef.key) ?? 0;
+      const prev = i > 0 ? getRatioValue(trends[i - 1].ratios, selectedDef.category, selectedDef.key) ?? 0 : val;
+      return { label: item.period_name, value: val, change: val - prev };
+    });
   }, [trends, selectedDef]);
 
   const trendAvg = useMemo(() => chartAverage(trendData.map((d) => d.value)), [trendData]);
+
+  function trendInsight(def: RatioDef, value: number, change: number): string {
+    const info = RATIO_INFO[def.key];
+    const direction = change > 0 ? '↑ improved by' : change < 0 ? '↓ declined by' : '→ stable';
+    const changeStr = change !== 0 ? ` ${direction} ${Math.abs(change).toFixed(1)}` : ' → no change';
+    const health = getHealth(value, def);
+    if (health === 'healthy') return `${info.fullName} is healthy.${changeStr}. ${def.higherIsBetter ? 'Good trend maintained.' : 'Low leverage is safe.'}`;
+    if (health === 'warning') return `${info.fullName} needs attention.${changeStr}. ${def.higherIsBetter ? 'Below the ideal threshold — consider corrective action.' : 'Leverage is increasing — monitor closely.'}`;
+    return `${info.fullName} is in the danger zone.${changeStr}. ${def.higherIsBetter ? 'Immediate action recommended to improve this metric.' : 'High leverage — consider reducing debt urgently.'}`;
+  }
 
   const handleRatioClick = (key: string) => {
     setSelectedRatioKey((prev) => (prev === key ? null : key));
@@ -417,20 +428,35 @@ export default function RatiosPage() {
         </Card>
       )}
 
-      {selectedDef && (
+      {selectedDef && (() => {
+        const info = RATIO_INFO[selectedDef.key];
+        const latestVal = trendData.length > 0 ? trendData[trendData.length - 1].value : 0;
+        const latestChange = trendData.length > 1 ? trendData[trendData.length - 1].change : 0;
+        const latestHealth = getHealth(latestVal, selectedDef);
+        const changeColor = latestChange > 0 ? 'text-green-600' : latestChange < 0 ? 'text-red-500' : 'text-gray-400';
+        const changeArrow = latestChange > 0 ? '↑' : latestChange < 0 ? '↓' : '→';
+        return (
         <Card>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-semibold text-gray-800">{selectedDef.label} Trend</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-800">{info?.fullName ?? selectedDef.label} Trend</h3>
+                <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                  latestHealth === 'healthy' ? 'bg-green-100 text-green-700' :
+                  latestHealth === 'warning' ? 'bg-amber-100 text-amber-700' :
+                  'bg-red-100 text-red-700')}>{latestHealth}</span>
+              </div>
               <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">
                 {interval} · {trendData.length} periods
               </p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-blue-700 tabular-nums">
-                {trendData.length > 0 ? formatRatioValue(trendData[trendData.length - 1].value, selectedDef.format) : 'N/A'}
+              <p className={cn('text-lg font-bold tabular-nums', changeColor)}>
+                {formatRatioValue(latestVal, selectedDef.format)}
               </p>
-              <p className="text-[11px] text-gray-400 uppercase tracking-wide">Latest</p>
+              <p className={cn('text-xs font-medium', changeColor)}>
+                {changeArrow} {Math.abs(latestChange).toFixed(1)} vs prev
+              </p>
             </div>
           </div>
 
@@ -445,40 +471,40 @@ export default function RatiosPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} vertical={false} />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    axisLine={false}
-                    tickLine={false}
-                    interval="preserveStartEnd"
-                    minTickGap={24}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={['auto', 'auto']}
-                  />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
+                  <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
                   <Tooltip
                     cursor={{ stroke: CHART_THEME.lineLight, strokeWidth: 1, strokeDasharray: '4 4' }}
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
-                      const row = payload[0]?.payload as { label: string; value: number };
+                      const row = payload[0]?.payload as { label: string; value: number; change: number };
+                      const health = getHealth(row.value, selectedDef);
+                      const arrow = row.change > 0 ? '↑' : row.change < 0 ? '↓' : '→';
                       return (
                         <ChartTooltipShell title={row.label}>
                           <ChartTooltipRow label={selectedDef.label} value={formatRatioValue(row.value, selectedDef.format)} accent />
+                          <ChartTooltipRow label="Change" value={`${arrow} ${Math.abs(row.change).toFixed(1)}`} muted />
+                          <div className="border-t border-gray-100 pt-1.5 mt-1.5 text-[11px] text-gray-500 italic leading-relaxed max-w-[200px]">
+                            {trendInsight(selectedDef, row.value, row.change)}
+                          </div>
                         </ChartTooltipShell>
                       );
                     }}
                   />
                   {trendAvg > 0 && (
-                    <ReferenceLine
-                      y={trendAvg}
-                      stroke={CHART_THEME.reference}
-                      strokeDasharray="6 4"
-                      label={{ value: 'Avg', position: 'insideTopRight', fill: CHART_THEME.reference, fontSize: 10 }}
-                    />
+                    <ReferenceLine y={trendAvg} stroke={CHART_THEME.reference} strokeDasharray="6 4"
+                      label={{ value: 'Avg', position: 'insideTopRight', fill: CHART_THEME.reference, fontSize: 10 }} />
                   )}
+                  <Area type="monotone" dataKey="value" stroke={CHART_THEME.line} strokeWidth={2.5}
+                    fill="url(#ratioTrendFill)" dot={{ r: 3, fill: CHART_THEME.line, strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: CHART_THEME.line, stroke: '#fff', strokeWidth: 2 }} isAnimationActive />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </ChartContainer>
+        </Card>
+        );
+      })()}
                   <Area
                     type="monotone"
                     dataKey="value"

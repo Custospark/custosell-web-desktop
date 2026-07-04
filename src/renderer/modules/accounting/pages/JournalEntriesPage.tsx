@@ -19,6 +19,7 @@ export default function JournalEntriesPage() {
   const [periodFilter, setPeriodFilter] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [actionId, setActionId] = useState<number | null>(null);
   const filters = periodFilter ? { period_id: periodFilter } : undefined;
   const { data: entries, isLoading } = useJournalEntries(filters);
   const { data: periods } = useAccountingPeriods();
@@ -84,15 +85,15 @@ export default function JournalEntriesPage() {
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {!item.posted_at ? (
             <>
-              <Button size="sm" variant="ghost" onClick={() => postEntry.mutate(item.id)} loading={postEntry.isPending} title="Post">
+              <Button size="sm" variant="ghost" onClick={() => { setActionId(item.id); postEntry.mutate(item.id, { onSettled: () => setActionId(null) }); }} loading={actionId === item.id && postEntry.isPending} disabled={actionId !== null} title="Post">
                 <Send className="w-3.5 h-3.5" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => deleteEntry.mutate(item.id)} loading={deleteEntry.isPending} title="Delete" className="text-red-500 hover:text-red-700">
+              <Button size="sm" variant="ghost" onClick={() => { setActionId(item.id); deleteEntry.mutate(item.id, { onSettled: () => setActionId(null) }); }} loading={actionId === item.id && deleteEntry.isPending} disabled={actionId !== null} title="Delete" className="text-red-500 hover:text-red-700">
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </>
           ) : (
-            <Button size="sm" variant="ghost" onClick={() => reverseEntry.mutate(item.id)} loading={reverseEntry.isPending} title="Reverse" className="text-amber-600 hover:text-amber-800">
+            <Button size="sm" variant="ghost" onClick={() => { setActionId(item.id); reverseEntry.mutate(item.id, { onSettled: () => setActionId(null) }); }} loading={actionId === item.id && reverseEntry.isPending} disabled={actionId !== null} title="Reverse" className="text-amber-600 hover:text-amber-800">
               <RotateCcw className="w-3.5 h-3.5" />
             </Button>
           )}

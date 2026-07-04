@@ -25,3 +25,28 @@ export const NOTIFICATIONS = {
   MARK_READ: (id: number) => `/notifications/${id}/read`,
   DELETE: (id: number) => `/notifications/${id}`,
 };
+
+export const ACCOUNTING = {
+  COA: '/chart-of-accounts',
+  COA_TREE: '/chart-of-accounts/tree',
+  COA_ITEM: (id: number) => `/chart-of-accounts/${id}`,
+  PERIODS: '/accounting-periods',
+  CURRENT_PERIOD: '/accounting-periods/current',
+  PERIOD: (id: number) => `/accounting-periods/${id}`,
+  closePeriod: (id: number) => `/accounting-periods/${id}/close`,
+  reopenPeriod: (id: number) => `/accounting-periods/${id}/reopen`,
+  JOURNAL_ENTRIES: '/journal-entries',
+  journalEntry: (id: number) => `/journal-entries/${id}`,
+  journalEntryLines: (id: number) => `/journal-entries/${id}/lines`,
+  postJournalEntry: (id: number) => `/journal-entries/${id}/post`,
+  reverseJournalEntry: (id: number) => `/journal-entries/${id}/reverse`,
+  TRIAL_BALANCE: '/general-ledger/trial-balance',
+  INCOME_STATEMENT: '/general-ledger/profit-loss',
+  BALANCE_SHEET: '/general-ledger/balance-sheet',
+  RATIOS: '/ratios',
+  RATIO_TRENDS: '/ratios/trends',
+  FIXED_ASSETS: '/fixed-assets',
+  FIXED_ASSET: (id: number) => `/fixed-assets/${id}`,
+  RUN_DEPRECIATION: '/fixed-assets/run-depreciation',
+  ASSET_SCHEDULE: (id: number) => `/fixed-assets/${id}/schedule`,
+};

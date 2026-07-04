@@ -7,6 +7,7 @@ export const BUSINESS_MODULE_SLUGS = [
   'inventory',
   'customers',
   'expenses',
+  'accounting',
   'settings',
 ] as const;
 
@@ -18,6 +19,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   inventory: 'Inventory',
   customers: 'Customers',
   expenses: 'Expenses',
+  accounting: 'Accounting',
   settings: 'Settings',
 };
 
@@ -27,17 +29,18 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   inventory: ROUTES.INVENTORY.PRODUCTS,
   customers: ROUTES.CUSTOMERS.INDEX,
   expenses: ROUTES.EXPENSES.LIST,
+  accounting: ROUTES.ACCOUNTING.RATIOS,
   settings: ROUTES.SETTINGS.BUSINESS,
   account: ROUTES.ACCOUNT.NOTIFICATIONS,
   guide: ROUTES.GUIDE.TUTORIALS,
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'dashboard', 'sales', 'inventory', 'customers', 'expenses', 'settings',
+  'dashboard', 'sales', 'inventory', 'customers', 'expenses', 'accounting', 'settings',
 ];
 
 const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'sales', 'dashboard', 'inventory', 'customers', 'expenses', 'settings',
+  'sales', 'dashboard', 'inventory', 'customers', 'expenses', 'accounting', 'settings',
 ];
 
 /** Nav group label → module slug for business-scoped sidebar groups. */
@@ -47,6 +50,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Inventory: 'inventory',
   Customers: 'customers',
   Expenses: 'expenses',
+  Accounting: 'accounting',
   Settings: 'settings',
   Account: 'account',
   'Custosell Guide': 'guide',
@@ -123,6 +127,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/inventory')) return 'inventory';
   if (pathname.startsWith('/customers')) return 'customers';
   if (pathname.startsWith('/expenses')) return 'expenses';
+  if (pathname.startsWith('/accounting')) return 'accounting';
   return null;
 }
 

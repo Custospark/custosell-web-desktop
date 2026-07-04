@@ -40,6 +40,16 @@ import PlatformGuideFeedbackPage from '../../modules/platform/PlatformGuideFeedb
 import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessagesPage';
 import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
+import ChartOfAccountsPage from '../../modules/accounting/pages/ChartOfAccountsPage';
+import JournalEntriesPage from '../../modules/accounting/pages/JournalEntriesPage';
+import TrialBalancePage from '../../modules/accounting/pages/TrialBalancePage';
+import IncomeStatementPage from '../../modules/accounting/pages/IncomeStatementPage';
+import BalanceSheetPage from '../../modules/accounting/pages/BalanceSheetPage';
+import RatiosPage from '../../modules/accounting/pages/RatiosPage';
+import FinancialStatementsPage from '../../modules/accounting/pages/FinancialStatementsPage';
+import AccountingPeriodsPage from '../../modules/accounting/pages/AccountingPeriodsPage';
+import FixedAssetsPage from '../../modules/accounting/pages/FixedAssetsPage';
+import AccountingSettingsPage from '../../modules/accounting/pages/AccountingSettingsPage';
 import GuideTutorialsPage from '../../modules/guide/GuideTutorialsPage';
 import GuideFaqsPage from '../../modules/guide/GuideFaqsPage';
 import GuideFeedbackPage from '../../modules/guide/GuideFeedbackPage';
@@ -113,6 +123,19 @@ export function AppRoutes() {
           <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
           <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
           <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+          <Route element={<ModuleAccessMiddleware module="accounting" />}>
+            <Route path={ROUTES.ACCOUNTING.INDEX} element={<Navigate to={ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS} replace />} />
+            <Route path={ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS} element={<SuspenseWrapper><ChartOfAccountsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.JOURNAL_ENTRIES} element={<SuspenseWrapper><JournalEntriesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.TRIAL_BALANCE} element={<SuspenseWrapper><TrialBalancePage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.INCOME_STATEMENT} element={<SuspenseWrapper><IncomeStatementPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.BALANCE_SHEET} element={<SuspenseWrapper><BalanceSheetPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.RATIOS} element={<SuspenseWrapper><RatiosPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.STATEMENTS} element={<SuspenseWrapper><FinancialStatementsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.PERIODS} element={<SuspenseWrapper><AccountingPeriodsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.FIXED_ASSETS} element={<SuspenseWrapper><FixedAssetsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.ACCOUNTING.SETTINGS} element={<SuspenseWrapper><AccountingSettingsPage /></SuspenseWrapper>} />
+          </Route>
           <Route element={<ModuleAccessMiddleware module="guide" />}>
             <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />
             <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />

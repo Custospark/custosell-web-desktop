@@ -8,7 +8,7 @@ import {
   Plus, History, RotateCcw, FolderTree, ClipboardList,
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
-  Mail, Phone,
+  Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -41,6 +41,8 @@ const baseSubRoutes = [
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
+  ROUTES.ACCOUNTING.RATIOS, ROUTES.ACCOUNTING.STATEMENTS,
+  ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, ROUTES.ACCOUNTING.JOURNAL_ENTRIES,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
@@ -117,6 +119,16 @@ const baseNavGroups: NavGroup[] = [
     subItems: [
       { to: ROUTES.EXPENSES.CATEGORIES, label: 'Expense Categories', icon: Receipt },
       { to: ROUTES.EXPENSES.LIST, label: 'Expense List', icon: ListOrdered },
+    ],
+  },
+  {
+    icon: BookOpen,
+    label: 'Accounting',
+    subItems: [
+      { to: ROUTES.ACCOUNTING.RATIOS, label: 'Financial Ratios', icon: Percent },
+      { to: ROUTES.ACCOUNTING.STATEMENTS, label: 'Financial Statements', icon: BarChart3 },
+      { to: ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, label: 'Chart of Accounts', icon: BookType },
+      { to: ROUTES.ACCOUNTING.JOURNAL_ENTRIES, label: 'Journal Entries', icon: FileText },
     ],
   },
   {

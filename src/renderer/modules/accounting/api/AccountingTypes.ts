@@ -165,3 +165,31 @@ export interface DepreciationEntry {
   accumulated_depreciation: number;
   book_value_after: number;
 }
+
+export interface CashFlowItem {
+  label: string;
+  amount: number;
+}
+
+export interface CashFlowSection {
+  items: CashFlowItem[];
+  total: number;
+}
+
+export interface CashFlowStatement {
+  operating: CashFlowSection;
+  investing: CashFlowSection;
+  financing: CashFlowSection;
+  net_change: number;
+  period_id: number;
+}
+
+export interface EquityStatement {
+  opening_retained_earnings: number;
+  net_income: number;
+  dividends: number;
+  closing_retained_earnings: number;
+  equity_components: { account_code: string; account_name: string; balance: number }[];
+  total_equity: number;
+  period_id: number;
+}

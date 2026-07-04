@@ -43,6 +43,8 @@ export const ACCOUNTING = {
   TRIAL_BALANCE: '/general-ledger/trial-balance',
   INCOME_STATEMENT: '/general-ledger/profit-loss',
   BALANCE_SHEET: '/general-ledger/balance-sheet',
+  CASH_FLOW: '/general-ledger/cash-flow',
+  EQUITY: '/general-ledger/equity',
   RATIOS: '/ratios',
   RATIO_TRENDS: '/ratios/trends',
   FIXED_ASSETS: '/fixed-assets',

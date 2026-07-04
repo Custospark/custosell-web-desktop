@@ -6,6 +6,7 @@ import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import type {
   ChartOfAccount, AccountingPeriod, JournalEntry, JournalEntryLine,
   TrialBalance, IncomeStatement, BalanceSheet, RatioSet, RatioTrendItem, FixedAsset,
+  CashFlowStatement, EquityStatement,
 } from './AccountingTypes';
 
 export const accountingKeys = {
@@ -19,6 +20,8 @@ export const accountingKeys = {
   balanceSheet: (periodId?: number) => [...accountingKeys.all, 'balance-sheet', periodId] as const,
   ratios: (periodId?: number) => [...accountingKeys.all, 'ratios', periodId] as const,
   fixedAssets: (filters?: Record<string, string>) => [...accountingKeys.all, 'fixed-assets', filters] as const,
+  cashFlow: (periodId?: number) => [...accountingKeys.all, 'cash-flow', periodId] as const,
+  equity: (periodId?: number) => [...accountingKeys.all, 'equity', periodId] as const,
 };
 
 export function useChartOfAccounts(filters?: Record<string, string>) {
@@ -324,6 +327,28 @@ export function useCreateFixedAsset() {
       showToast('success', 'Fixed asset created');
     },
     onError: () => showToast('error', 'Failed to create fixed asset'),
+  });
+}
+
+export function useCashFlow(periodId?: number) {
+  return useQuery<CashFlowStatement>({
+    queryKey: accountingKeys.cashFlow(periodId),
+    queryFn: async () => {
+      const params = periodId ? `?period_id=${periodId}` : '';
+      const { data } = await axiosInstance.get<{ data: CashFlowStatement }>(`${ACCOUNTING.CASH_FLOW}${params}`);
+      return data.data;
+    },
+  });
+}
+
+export function useEquity(periodId?: number) {
+  return useQuery<EquityStatement>({
+    queryKey: accountingKeys.equity(periodId),
+    queryFn: async () => {
+      const params = periodId ? `?period_id=${periodId}` : '';
+      const { data } = await axiosInstance.get<{ data: EquityStatement }>(`${ACCOUNTING.EQUITY}${params}`);
+      return data.data;
+    },
   });
 }
 

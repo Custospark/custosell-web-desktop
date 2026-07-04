@@ -49,6 +49,10 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
       setInitialized(true);
       const pid = getPeriodId(curMonth, curYear);
       if (pid) onChange(pid);
+    } else if (years.length > 0) {
+      // Current year not in periods — default to most recent
+      setSelectedYear(String(years[0]));
+      setInitialized(true);
     }
   }, [periods, years]);
 
@@ -144,6 +148,7 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
         <div className="flex flex-wrap gap-1">
           {MONTHS.map((m, i) => {
             const active = selectedMonth === i;
+            const yr = selectedYear || String(years[0] || '');
             return (
               <button
                 key={m}
@@ -152,7 +157,7 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
                   active ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
                 )}
               >
-                {m}
+                {m} {active && yr ? yr.slice(2,4) : ''}
               </button>
             );
           })}
@@ -163,6 +168,7 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
         <div className="flex gap-1">
           {QUARTERS.map((q) => {
             const active = selectedQuarter === q;
+            const yr = selectedYear || String(years[0] || '');
             return (
               <button
                 key={q}
@@ -171,7 +177,7 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
                   active ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
                 )}
               >
-                {q}
+                {q} {yr ? yr.slice(2,4) : ''}
               </button>
             );
           })}

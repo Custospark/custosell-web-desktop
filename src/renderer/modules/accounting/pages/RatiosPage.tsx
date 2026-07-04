@@ -187,6 +187,7 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
   const info = RATIO_INFO[def.key];
   const [hovered, setHovered] = useState(false);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
+  const [tipSide, setTipSide] = useState<'left' | 'right'>('left');
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
   const iconColor = health === 'healthy' ? 'text-green-400' : health === 'warning' ? 'text-amber-400' : 'text-red-400';
 
@@ -208,7 +209,14 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
         onClick={onClick}
         onMouseEnter={(e) => {
           const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          setTipPos({ top: rect.bottom + 10, left: Math.min(rect.left, window.innerWidth - 360) });
+          const tooltipW = 360;
+          const spaceRight = window.innerWidth - rect.left;
+          const onRight = spaceRight >= tooltipW;
+          setTipSide(onRight ? 'left' : 'right');
+          setTipPos({
+            top: rect.bottom + 10,
+            left: onRight ? rect.left : rect.right - tooltipW,
+          });
         }}
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
@@ -226,14 +234,14 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
       </button>
       {hovered && info && (
         <div
-          className="fixed z-[9999] w-84 bg-white rounded-xl shadow-xl border border-gray-200 p-4 text-sm leading-relaxed space-y-2.5"
+          className="fixed z-[9999] w-[360px] bg-white rounded-xl shadow-xl border border-blue-200 p-4 text-sm leading-relaxed space-y-2.5"
           style={{ top: tipPos.top, left: tipPos.left }}
           onMouseEnter={show}
           onMouseLeave={hide}
         >
-          {/* Arrow tip pointing up */}
-          <div className="absolute -top-2 left-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-200" />
-          <div className="absolute -top-[7px] left-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white" />
+          {/* Arrow tip */}
+          <div className={cn('absolute -top-2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-blue-200', tipSide === 'left' ? 'left-4' : 'right-4')} />
+          <div className={cn('absolute -top-[7px] w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white', tipSide === 'left' ? 'left-4' : 'right-4')} />
 
           <p className="text-sm font-bold text-gray-900">{info.fullName}</p>
           <p className="text-xs text-gray-600 leading-relaxed">{info.meaning}</p>

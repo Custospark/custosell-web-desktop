@@ -14,7 +14,7 @@ import { useRatios, useAccountingPeriods, useRatioTrends } from '../api/Accounti
 import type { RatioSet } from '../api/AccountingTypes';
 import {
   Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, Image,
-  Lightbulb, AlertTriangle, AlertCircle, CheckCircle,
+  Lightbulb, AlertTriangle, AlertCircle, CheckCircle, Info,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
@@ -47,6 +47,74 @@ const RATIO_DEFS: RatioDef[] = [
   { category: 'efficiency', key: 'inventory_turnover', label: 'Inv T/O', format: 'times', healthyThreshold: 6, warningThreshold: 3, higherIsBetter: true },
   { category: 'efficiency', key: 'accounts_receivable_turnover', label: 'AR T/O', format: 'times', healthyThreshold: 8, warningThreshold: 4, higherIsBetter: true },
 ];
+
+const RATIO_INFO: Record<string, { meaning: string; formula: string; importance: string }> = {
+  current_ratio: {
+    meaning: 'Measures your ability to pay short-term obligations with short-term assets.',
+    formula: 'Current Assets ÷ Current Liabilities',
+    importance: 'A ratio below 1.0 means liabilities exceed assets — risk of insolvency. Above 2.0 is healthy.',
+  },
+  quick_ratio: {
+    meaning: 'Like the current ratio but excludes inventory. Tests immediate liquidity.',
+    formula: '(Current Assets − Inventory) ÷ Current Liabilities',
+    importance: 'Also called the "acid test". Above 1.0 means you can pay debts without selling inventory.',
+  },
+  cash_ratio: {
+    meaning: 'The most conservative liquidity measure — only cash and equivalents.',
+    formula: '(Cash + Bank) ÷ Current Liabilities',
+    importance: 'Above 0.5 means you have emergency cash reserves. Below 0.3 signals potential cash crunch.',
+  },
+  gross_profit_margin: {
+    meaning: 'Percentage of revenue retained after paying for products/services sold.',
+    formula: '(Revenue − COGS) ÷ Revenue × 100',
+    importance: 'Shows pricing power and cost efficiency. Below 20% means costs consume most of your revenue.',
+  },
+  net_profit_margin: {
+    meaning: 'Percentage of revenue that becomes profit after ALL expenses.',
+    formula: 'Net Income ÷ Revenue × 100',
+    importance: 'The bottom line. Below 5% means every cost matters. Above 15% is excellent.',
+  },
+  return_on_assets: {
+    meaning: 'How efficiently your assets generate profit.',
+    formula: 'Net Income ÷ Total Assets × 100',
+    importance: 'Measures management effectiveness. Below 5% suggests assets are underperforming.',
+  },
+  return_on_equity: {
+    meaning: 'Return generated on shareholders\' invested capital.',
+    formula: 'Net Income ÷ Shareholders\' Equity × 100',
+    importance: 'Key metric for investors. Below 10% may not justify the risk of owning the business.',
+  },
+  debt_to_equity: {
+    meaning: 'How much debt vs equity the business uses to finance operations.',
+    formula: 'Total Liabilities ÷ Shareholders\' Equity',
+    importance: 'Above 2.0 means heavy debt reliance — higher risk in downturns. Below 1.0 is conservative.',
+  },
+  debt_ratio: {
+    meaning: 'Proportion of assets financed by debt.',
+    formula: 'Total Liabilities ÷ Total Assets',
+    importance: 'Above 0.5 means creditors own more than half the assets. Below 0.3 is very safe.',
+  },
+  interest_coverage_ratio: {
+    meaning: 'How many times operating profit can cover interest payments.',
+    formula: 'Operating Income ÷ Interest Expense',
+    importance: 'Below 1.5 means you risk defaulting on debt. Above 3.0 comfortably covers interest.',
+  },
+  asset_turnover: {
+    meaning: 'How efficiently assets generate sales revenue.',
+    formula: 'Sales ÷ Total Assets',
+    importance: 'Below 0.8 means assets are underutilized. Above 1.5 indicates strong operational efficiency.',
+  },
+  inventory_turnover: {
+    meaning: 'How many times inventory is sold and replaced in a period.',
+    formula: 'COGS ÷ Average Inventory',
+    importance: 'Low turnover means cash tied up in slow stock. Below 3x signals excess inventory.',
+  },
+  accounts_receivable_turnover: {
+    meaning: 'How quickly customers pay their debts.',
+    formula: 'Net Sales ÷ Average Accounts Receivable',
+    importance: 'Below 4x means slow collections — customers take too long to pay, straining cash flow.',
+  },
+};
 
 const CATEGORY_META: Record<string, { title: string; icon: React.ElementType; accent: 'blue' | 'green' | 'purple' | 'amber' }> = {
   liquidity: { title: 'Liquidity', icon: Droplets, accent: 'blue' },
@@ -103,22 +171,48 @@ function HealthDot({ status }: { status: HealthStatus }) {
 function RatioLine({ def, value, selected, onClick }: { def: RatioDef; value: number | null; selected: boolean; onClick: () => void }) {
   const health = getHealth(value, def);
   const formatted = value !== null ? formatRatioValue(value, def.format) : 'N/A';
+  const info = RATIO_INFO[def.key];
+  const [hovered, setHovered] = useState(false);
+  const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
-        selected
-          ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+    <div className="relative">
+      <button
+        onClick={onClick}
+        onMouseEnter={(e) => {
+          setHovered(true);
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          setTipPos({ top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 340) });
+        }}
+        onMouseLeave={() => setHovered(false)}
+        className={cn(
+          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
+          selected
+            ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <HealthDot status={health} />
+          <span className="truncate">{def.label}</span>
+          <Info className="w-3 h-3 text-gray-300 shrink-0" />
+        </div>
+        <span className="font-semibold tabular-nums shrink-0">{formatted}</span>
+      </button>
+      {hovered && info && (
+        <div
+          className="fixed z-[9999] w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-3.5 text-sm leading-relaxed"
+          style={{ top: tipPos.top, left: tipPos.left }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <p className="text-sm font-semibold text-gray-800 mb-1.5">{def.label}</p>
+          <p className="text-xs text-gray-600 mb-1.5">{info.meaning}</p>
+          <div className="bg-gray-50 rounded px-2 py-1.5 mb-1.5 font-mono text-xs text-gray-700">{info.formula}</div>
+          <p className="text-xs text-gray-500">{info.importance}</p>
+        </div>
       )}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <HealthDot status={health} />
-        <span className="truncate">{def.label}</span>
-      </div>
-      <span className="font-semibold tabular-nums shrink-0">{formatted}</span>
-    </button>
+    </div>
   );
 }
 

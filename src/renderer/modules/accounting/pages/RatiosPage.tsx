@@ -13,7 +13,7 @@ import {
 import { useAccountingPeriods, useRatioTrends } from '../api/AccountingQueries';
 import type { RatioSet } from '../api/AccountingTypes';
 import {
-  Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, Image,
+  Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, Image, RefreshCw,
   Lightbulb, AlertTriangle, AlertCircle, CheckCircle, Info,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -230,6 +230,9 @@ export default function RatiosPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-1.5" />Reload
+            </Button>
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-1.5" />PDF
             </Button>

@@ -35,33 +35,47 @@ function TabButton({ active, tab, onClick }: { active: boolean; tab: typeof TABS
   );
 }
 
-function PdfReportView({ type, periodId, onLoad }: { type: string; periodId?: number; onLoad?: () => void }) {
+function PdfReportView({ type, periodId, rawPeriodId, periods, onLoad }: { type: string; periodId?: number; rawPeriodId?: string; periods: any; onLoad?: () => void }) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
-    const pid = periodId;
-    if (!pid) return;
+    if (!periodId) return;
 
     setPdfUrl(null);
     setError(false);
 
-    axiosInstance.get(ACCOUNTING.EXPORT(type), {
-      params: { period_id: pid, format: 'pdf' },
-      responseType: 'blob',
-    }).then((res) => {
-      if (!mountedRef.current) return;
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      setPdfUrl(url);
-      onLoad?.();
-    }).catch(() => {
-      if (mountedRef.current) setError(true);
-    });
+    const params: Record<string, string | number> = { format: 'pdf' };
+    params.period_id = periodId;
+
+    // For quarter selection (comma-separated IDs), send date range instead
+    if (rawPeriodId?.includes(',')) {
+      const ids = rawPeriodId.split(',').map(Number).filter(Boolean);
+      if (ids.length > 1) {
+        const first = periods?.find((p: any) => p.id === ids[0]);
+        const last = periods?.find((p: any) => p.id === ids[ids.length - 1]);
+        if (first?.start_date && last?.end_date) {
+          delete params.period_id;
+          params.date_from = first.start_date.slice(0, 10);
+          params.date_to = last.end_date.slice(0, 10);
+        }
+      }
+    }
+
+    axiosInstance.get(ACCOUNTING.EXPORT(type), { params, responseType: 'blob' })
+      .then((res) => {
+        if (!mountedRef.current) return;
+        const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+        setPdfUrl(url);
+        onLoad?.();
+      }).catch(() => {
+        if (mountedRef.current) setError(true);
+      });
 
     return () => { mountedRef.current = false; };
-  }, [type, periodId]);
+  }, [type, periodId, rawPeriodId]);
 
   if (!periodId) return <div className="h-64 flex items-center justify-center text-sm text-gray-400">Select a period first</div>;
   if (error) return <Card><p className="text-sm text-red-500 text-center py-8">Failed to load report.</p></Card>;
@@ -154,9 +168,11 @@ export default function FinancialStatementsPage() {
 
       {activeTab && (
         <PdfReportView
-          key={`${activeTab}-${effectivePeriodId ?? 'none'}`}
+          key={`${activeTab}-${periodId || effectivePeriodId ?? 'none'}`}
           type={STATEMENT_TYPE[activeTab]}
           periodId={effectivePeriodId}
+          rawPeriodId={periodId}
+          periods={periods}
           onLoad={() => setPdfReady(true)}
         />
       )}

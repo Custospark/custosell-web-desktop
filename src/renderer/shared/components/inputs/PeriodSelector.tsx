@@ -116,8 +116,8 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-2">
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 self-start">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
           <button
             onClick={() => { setViewMode('month'); setSelectedQuarter(null); }}
             className={cn('px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
@@ -138,10 +138,10 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
           value={selectedYear}
           onChange={(e) => handleYearChange(e.target.value)}
           placeholder={String(years[0] || '')}
-          className="w-full xs:w-24"
+          className="w-24"
         />
         {(selectedMonth !== null || selectedQuarter !== null) && (
-          <button onClick={handleClear} className="text-xs text-gray-400 hover:text-gray-600 underline self-start whitespace-nowrap">Clear</button>
+          <button onClick={handleClear} className="text-xs text-gray-400 hover:text-gray-600 underline whitespace-nowrap">Clear</button>
         )}
       </div>
 

@@ -181,8 +181,8 @@ export default function JournalEntriesPage() {
         </div>
       </Card>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative w-full sm:max-w-sm">
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -192,15 +192,13 @@ export default function JournalEntriesPage() {
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <div className="flex items-center gap-2 flex-1">
-          <PeriodSelector
-            periods={periods}
-            value={periodFilter}
-            onChange={setPeriodFilter}
-            className="flex-1 min-w-0"
-          />
-          <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
-        </div>
+        <PeriodSelector
+          periods={periods}
+          value={periodFilter}
+          onChange={setPeriodFilter}
+          className="flex-1"
+        />
+        <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
       </div>
 
       <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
@@ -308,8 +306,8 @@ function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
 
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
               {lines.map((line, idx) => (
-                <div key={idx} className="p-3 grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-4">
+                <div key={idx} className="p-3 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-end">
+                  <div className="sm:col-span-4">
                     <Select
                       placeholder={accountPlaceholder}
                       options={accountOptions}
@@ -317,16 +315,16 @@ function NewJournalEntryForm({ onClose }: { onClose: () => void }) {
                       onChange={(e) => updateLine(idx, 'account_id', Number(e.target.value))}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <Input type="number" step="0.01" min="0" placeholder="Debit" value={line.debit_amount || ''} onChange={(e) => updateLine(idx, 'debit_amount', Number(e.target.value))} />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <Input type="number" step="0.01" min="0" placeholder="Credit" value={line.credit_amount || ''} onChange={(e) => updateLine(idx, 'credit_amount', Number(e.target.value))} />
                   </div>
-                  <div className="col-span-3">
+                  <div className="sm:col-span-3">
                     <Input placeholder="Line desc (opt)" value={line.description || ''} onChange={(e) => updateLine(idx, 'description', e.target.value)} />
                   </div>
-                  <div className="col-span-1 flex justify-end">
+                  <div className="sm:col-span-1 flex justify-end">
                     {lines.length > 2 && (
                       <button type="button" onClick={() => removeLine(idx)} className="text-red-400 hover:text-red-600 cursor-pointer">
                         <Trash2 className="w-4 h-4" />

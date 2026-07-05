@@ -1,6 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+
+/** Above search dropdowns (z-30), nav menus (z-100), and select portals (z-200). */
+export const MODAL_Z_INDEX_CLASS = 'z-[10000]';
 
 interface ModalProps {
   isOpen: boolean;
@@ -40,23 +44,20 @@ export function Modal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50"
-            onClick={onClose}
-          />
+        <div
+          className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} flex items-center justify-center p-4 pointer-events-none`}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`relative w-full ${sizeClasses[size]} bg-white rounded-xl shadow-xl max-h-[90vh] ${overflowVisible ? 'overflow-y-auto md:overflow-visible' : 'overflow-y-auto'} ${panelClassName ?? ''}`}
+            className={`relative pointer-events-auto w-full ${sizeClasses[size]} bg-white opacity-100 rounded-xl shadow-2xl ring-1 ring-black/10 max-h-[90vh] ${overflowVisible ? 'overflow-y-auto md:overflow-visible' : 'overflow-y-auto'} ${panelClassName ?? ''}`}
           >
             {title && (
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -75,6 +76,7 @@ export function Modal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

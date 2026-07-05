@@ -9,6 +9,14 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { matchesProductSearch, findProductByBarcode } from '../../shared/utils/productSearch';
 import { Button } from '../../shared/components/buttons/Button';
 import { Input } from '../../shared/components/inputs/Input';
+import CustomerContactField, { EMPTY_CUSTOMER_CONTACT } from '../../shared/components/customers/CustomerContactField';
+import { contactFromValue, useResolveCustomerContact } from '../../shared/hooks/useResolveCustomerContact';
+import {
+  customerToContact,
+  type CustomerContactValue,
+} from '../../shared/utils/customerContactUtils';
+import type { Customer } from '../customers/api/customers/CustomerTypes';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 import QuantityEditModal from '../sales/ui/QuantityEditModal';
 import {
   defaultDueDate,
@@ -18,7 +26,7 @@ import {
   type InvoiceLineItem,
 } from './invoiceLineItems';
 import {
-  Search, Plus, Minus, Trash, ShoppingCart, Package, X, User, FileText,
+  Search, Plus, Minus, Trash, ShoppingCart, Package, X, FileText,
   MessageSquare, Calendar, RotateCcw, Save,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -55,6 +63,8 @@ export default function InvoiceBuilderForm({
   const { taxSettings } = useBusinessTaxSettings();
   const createInvoice = useCreateInvoice();
   const updateInvoice = useUpdateInvoice();
+  const resolveCustomer = useResolveCustomerContact();
+  const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
 
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>(
     () => seed?.lineItems?.map((item) => ({ ...item })) ?? [],
@@ -63,20 +73,22 @@ export default function InvoiceBuilderForm({
   const [search, setSearch] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [customerId, setCustomerId] = useState(() =>
-    seed?.customerId ? String(seed.customerId) : '',
-  );
+  const [contact, setContact] = useState<CustomerContactValue>(() => {
+    if (seed?.customerId) {
+      return { customerId: seed.customerId, name: '', email: '', phone: '' };
+    }
+    return EMPTY_CUSTOMER_CONTACT;
+  });
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(defaultDueDate);
   const [notes, setNotes] = useState(() => seed?.notes ?? '');
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
   const [qtyEdit, setQtyEdit] = useState<{
     lineKey: string;
     productId: number;
     productName: string;
     currentQty: number;
   } | null>(null);
+  const [prevSeedCustomerId, setPrevSeedCustomerId] = useState(seed?.customerId ?? null);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -85,30 +97,32 @@ export default function InvoiceBuilderForm({
     if (!isEdit || !invoice || !products || formInitialized) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate edit form when products load
     setLineItems(invoiceItemsToLineItems(invoice, products));
-    setCustomerId(invoice.customer_id ? String(invoice.customer_id) : '');
+    if (invoice.customer_id && invoice.customer) {
+      setContact(customerToContact(invoice.customer as Customer));
+    } else if (invoice.customer_id) {
+      setContact({ customerId: invoice.customer_id, name: '', email: '', phone: '' });
+    } else {
+      setContact(EMPTY_CUSTOMER_CONTACT);
+    }
     setIssueDate(invoice.issue_date.slice(0, 10));
     setDueDate(invoice.due_date.slice(0, 10));
     setNotes(invoice.notes ?? '');
-    if (invoice.customer?.name) setCustomerSearch(invoice.customer.name);
     setFormInitialized(true);
   }, [isEdit, invoice, products, formInitialized]);
+
+  const seedCustomerId = seed?.customerId ?? null;
+  if (seedCustomerId && seedCustomerId !== prevSeedCustomerId && customers?.length) {
+    const match = customers.find((c) => c.id === seedCustomerId);
+    if (match) {
+      setPrevSeedCustomerId(seedCustomerId);
+      setContact(customerToContact(match));
+    }
+  }
 
   const results = useMemo(() => {
     if (!products || !search.trim()) return [];
     return products.filter((p) => p.is_active && matchesProductSearch(p, search)).slice(0, 8);
   }, [products, search]);
-
-  const filteredCustomers = useMemo(() => {
-    if (!customers) return [];
-    const q = customerSearch.toLowerCase();
-    return customers.filter((c) => {
-      const name = c.name?.toLowerCase() ?? '';
-      const phone = c.phone ?? '';
-      return name.includes(q) || phone.includes(q);
-    });
-  }, [customers, customerSearch]);
-
-  const selectedCustomer = customerId ? (customers ?? []).find((c) => c.id === Number(customerId)) : null;
 
   const taxBreakdown = useMemo(
     () => computeSaleTax(taxSettings, lineItems, 0),
@@ -196,25 +210,42 @@ export default function InvoiceBuilderForm({
 
   function resetForm() {
     setLineItems([]);
-    setCustomerId('');
+    setContact(EMPTY_CUSTOMER_CONTACT);
     setIssueDate(new Date().toISOString().slice(0, 10));
     setDueDate(defaultDueDate());
     setNotes('');
-    setCustomerSearch('');
   }
 
-  const payload = useMemo(() => ({
-    customer_id: customerId ? Number(customerId) : null,
+  const buildPayload = useCallback((resolvedCustomerId: number | null) => ({
+    customer_id: resolvedCustomerId,
     sale_id: seed?.saleId ?? undefined,
     issue_date: issueDate,
     due_date: dueDate,
     tax_total: taxBreakdown.taxTotal,
     notes: notes || undefined,
     items: lineItemsToPayload(lineItems),
-  }), [customerId, seed?.saleId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
+  }), [seed?.saleId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
 
-  function handleSave() {
+  async function resolveCustomerId(): Promise<number | null> {
+    if (contact.customerId) return contact.customerId;
+
+    const hasDraft = contact.name.trim() || contact.email.trim() || contact.phone.trim();
+    if (!hasDraft || isOffline) return null;
+
+    try {
+      const customer = await resolveCustomer.mutateAsync(contactFromValue(contact));
+      setContact(customerToContact(customer));
+      return customer.id;
+    } catch {
+      return null;
+    }
+  }
+
+  async function handleSave() {
     if (lineItems.length === 0 || !dueDate) return;
+
+    const resolvedCustomerId = await resolveCustomerId();
+    const payload = buildPayload(resolvedCustomerId);
 
     if (isEdit && invoice) {
       updateInvoice.mutate(
@@ -232,7 +263,7 @@ export default function InvoiceBuilderForm({
     });
   }
 
-  const isPending = createInvoice.isPending || updateInvoice.isPending;
+  const isPending = createInvoice.isPending || updateInvoice.isPending || resolveCustomer.isPending;
   const showLoading = isEdit && !formInitialized;
 
   return (
@@ -488,51 +519,12 @@ export default function InvoiceBuilderForm({
               </span>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Customer</label>
-              <div className="relative">
-                <button
-                  type="button"
-                  className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm hover:border-gray-300 bg-white text-left"
-                  onClick={() => setShowCustomerDropdown(!showCustomerDropdown)}
-                >
-                  <User className="w-4 h-4 text-gray-400 shrink-0" />
-                  <span className={selectedCustomer ? 'text-gray-800' : 'text-gray-400 truncate'}>
-                    {selectedCustomer ? selectedCustomer.name : 'Walk-in customer'}
-                  </span>
-                </button>
-                {showCustomerDropdown && (
-                  <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border-b border-gray-100 text-sm outline-none focus:bg-blue-50"
-                      placeholder="Search customers..."
-                      value={customerSearch}
-                      onChange={(e) => setCustomerSearch(e.target.value)}
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-50"
-                      onClick={() => { setCustomerId(''); setShowCustomerDropdown(false); setCustomerSearch(''); }}
-                    >
-                      Walk-in customer
-                    </button>
-                    {filteredCustomers.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50"
-                        onClick={() => { setCustomerId(String(c.id)); setCustomerSearch(c.name); setShowCustomerDropdown(false); }}
-                      >
-                        <span className="font-medium text-gray-800">{c.name}</span>
-                        {c.phone && <span className="text-gray-400 ml-2">{c.phone}</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <CustomerContactField
+              value={contact}
+              onChange={setContact}
+              disabled={isPending || showLoading}
+              surface="invoice"
+            />
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -584,7 +576,7 @@ export default function InvoiceBuilderForm({
             <div className="flex flex-col gap-2">
               <Button
                 className="w-full h-12 text-base font-semibold"
-                onClick={handleSave}
+                onClick={() => void handleSave()}
                 loading={isPending}
                 disabled={lineItems.length === 0 || !dueDate || showLoading}
               >

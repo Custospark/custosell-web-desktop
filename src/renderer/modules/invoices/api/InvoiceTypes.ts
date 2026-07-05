@@ -14,7 +14,7 @@ export interface Invoice {
   invoice_number: string;
   customer_id: number | null;
   sale_id?: number | null;
-  customer?: { id: number; name: string; phone?: string } | null;
+  customer?: { id: number; name: string; phone?: string; email?: string | null } | null;
   issue_date: string;
   due_date: string;
   status: 'draft' | 'sent' | 'paid' | 'partially_paid' | 'cancelled' | 'overdue';
@@ -23,6 +23,8 @@ export interface Invoice {
   total_amount: number;
   amount_paid: number;
   notes: string | null;
+  email_sent_count?: number;
+  last_emailed_at?: string | null;
   items: InvoiceItem[];
   payments?: import('../../payments/paymentTypes').Payment[];
   created_at: string;

@@ -15,6 +15,8 @@ export interface Payment {
   attachment_url?: string | null;
   recorded_by?: number | null;
   shift_id?: number | null;
+  email_sent_count?: number;
+  last_emailed_at?: string | null;
   _pendingSync?: boolean;
 }
 

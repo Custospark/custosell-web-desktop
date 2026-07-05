@@ -195,7 +195,14 @@ export default function FinancialStatementsPage() {
       </Card>
 
       <div className="flex items-center gap-4">
-        <PeriodSelector periods={periods} value={periodId} onChange={setPeriodId} className="w-full" />
+        <PeriodSelector
+          periods={periods}
+          value={periodFilter}
+          onChange={setPeriodFilter}
+          startYear={startYear}
+          endYear={endYear}
+          className="w-full"
+        />
       </div>
 
       {isLoading ? (

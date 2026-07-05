@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useInvoice, useRecordPayment } from './api/InvoiceQueries';
 import type { Invoice } from './api/InvoiceTypes';
 import type { Payment } from '../payments/paymentTypes';
@@ -8,6 +9,7 @@ import { getPaymentErrorMessage } from '../payments/paymentQueries';
 import { computeInvoiceBalance, computePayableTotal } from '../payments/payableBalance';
 import type { RecordPaymentInput } from '../payments/RecordPaymentForm';
 import { Button } from '../../shared/components/buttons/Button';
+import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
 import { X } from 'lucide-react';
 
 interface RecordPaymentModalProps {
@@ -59,13 +61,12 @@ export default function RecordPaymentModal({ invoice, onClose, onPaymentRecorded
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+  return createPortal(
+    <div className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} flex items-center justify-center p-4 pointer-events-none`}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl lg:max-w-3xl xl:max-w-4xl max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full max-w-xl lg:max-w-3xl xl:max-w-4xl max-h-[92vh] overflow-y-auto"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 backdrop-blur px-5 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4">
           <div />
           <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
             <X className="w-5 h-5" />
@@ -96,6 +97,7 @@ export default function RecordPaymentModal({ invoice, onClose, onPaymentRecorded
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

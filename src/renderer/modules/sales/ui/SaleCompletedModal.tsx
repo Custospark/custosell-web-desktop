@@ -1,13 +1,18 @@
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useReactToPrint } from 'react-to-print';
-import { Printer, Plus, CheckCircle, X, FileText } from 'lucide-react';
+import { Printer, Plus, CheckCircle, X, FileText, Mail } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import ReceiptContent from './receipt/ReceiptContent';
 import PaymentReceiptModal from '../../payments/PaymentReceiptModal';
+import SendDocumentEmailModal from '../../../shared/components/email/SendDocumentEmailModal';
+import { EmailSentCountBadge, emailSentLabel } from '../../../shared/components/email/EmailSentCountBadge';
+import type { SendDocumentEmailResult } from '../../../shared/hooks/useDocumentEmail';
 import type { Payment } from '../../payments/paymentTypes';
 import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { netSaleAmount } from '../utils/saleAmounts';
+import { MODAL_Z_INDEX_CLASS } from '../../../shared/components/modals/Modal';
 
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;
@@ -20,6 +25,17 @@ interface SaleCompletedModalProps {
 export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClose, onGenerateInvoice }: SaleCompletedModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const paymentForEmail = lastPayment;
+  const baseEmailSentCount = lastPayment?.email_sent_count ?? 0;
+  const [emailSentOverride, setEmailSentOverride] = useState<number | null>(null);
+  const emailSyncKey = lastPayment ? `${lastPayment.id}:${baseEmailSentCount}` : '';
+  const [prevEmailSyncKey, setPrevEmailSyncKey] = useState(emailSyncKey);
+  if (emailSyncKey !== prevEmailSyncKey) {
+    setPrevEmailSyncKey(emailSyncKey);
+    setEmailSentOverride(null);
+  }
+  const emailSentCount = emailSentOverride ?? baseEmailSentCount;
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -40,6 +56,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   const totalAmount = netSaleAmount(sale);
   const balanceDue = Math.max(0, totalAmount - amountPaid);
   const isPartial = sale.payment_status === 'partially_paid' || balanceDue > 0.009;
+  const canEmailReceipt = paymentForEmail != null && paymentForEmail.id > 0 && !paymentForEmail._pendingSync;
 
   if (showPaymentReceipt && lastPayment) {
     return (
@@ -55,8 +72,10 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 no-print">
-      <div className="bg-white rounded-2xl shadow-2xl w-full p-4 sm:p-6 lg:p-8 flex flex-col relative" style={{ maxWidth: '480px' }}>
+    <>
+    {createPortal(
+    <div className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} flex items-center justify-center p-3 sm:p-4 pointer-events-none no-print`}>
+      <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full p-4 sm:p-6 lg:p-8 flex flex-col relative" style={{ maxWidth: '480px' }}>
         <button
           type="button"
           onClick={onClose ?? onNewSale}
@@ -100,6 +119,20 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
               Payment receipt
             </Button>
           )}
+          {canEmailReceipt && paymentForEmail && (
+            <Button
+              className="flex-1 py-2.5 sm:py-3"
+              variant="outline"
+              onClick={() => setEmailOpen(true)}
+              title={emailSentLabel(emailSentCount)}
+            >
+              <span className="relative inline-flex items-center">
+                <Mail className="w-4 h-4 mr-1" />
+                Email receipt
+                <EmailSentCountBadge count={emailSentCount} className="-top-2 -right-3" />
+              </span>
+            </Button>
+          )}
           <Button className="flex-1 py-2.5 sm:py-3" variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1" />
             {isPartial ? 'Sale summary' : 'Print receipt'}
@@ -110,6 +143,29 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
+    )}
+
+    {emailOpen && paymentForEmail && (
+      <SendDocumentEmailModal
+        open
+        onClose={() => setEmailOpen(false)}
+        documentType="payment_receipt"
+        documentId={paymentForEmail.id}
+        documentLabel={`Receipt ${paymentForEmail.receipt_number}`}
+        customerName={sale.customer?.name}
+        defaultEmail={sale.customer?.email}
+        customerId={sale.customer_id}
+        saleId={sale.id}
+        emailSentCount={emailSentCount}
+        onSent={(result: SendDocumentEmailResult) => {
+          setEmailSentOverride(result.email_sent_count);
+        }}
+        blocked={!canEmailReceipt}
+        blockedReason={paymentForEmail._pendingSync ? 'Receipt must sync before it can be emailed.' : undefined}
+      />
+    )}
+    </>
   );
 }

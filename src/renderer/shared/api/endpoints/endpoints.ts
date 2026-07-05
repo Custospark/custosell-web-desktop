@@ -8,7 +8,7 @@ export const ROLES = { BASE: '/roles', BY_ID: (id: number) => `/roles/${id}` };
 export const USERS = { BASE: '/users', BY_ID: (id: number) => `/users/${id}` };
 export const CATEGORIES = '/categories';
 export const PRODUCTS = { BASE: '/products', LOW_STOCK: '/products/low-stock' };
-export const CUSTOMERS = { BASE: '/customers', PURCHASES: (id: number) => `/customers/${id}/purchases` };
+export const CUSTOMERS = { BASE: '/customers', RESOLVE: '/customers/resolve', PURCHASES: (id: number) => `/customers/${id}/purchases` };
 export const SHIFTS = {
   CLOCK_IN: '/shifts/clock-in',
   ACTIVE: '/shifts/active',
@@ -20,11 +20,13 @@ export const SALES = {
   DAILY: '/sales/daily',
   REFUND: (id: number) => `/sales/${id}/refund`,
   PAYMENT: (id: number) => `/sales/${id}/payment`,
+  ASSIGN_CUSTOMER: (id: number) => `/sales/${id}/customer`,
 };
 
 export const PAYMENTS = {
   BY_ID: (id: number) => `/payments/${id}`,
   RECEIPT: (id: number) => `/payments/${id}/receipt`,
+  EMAIL: (id: number) => `/payments/${id}/email`,
 };
 export const STOCK_MOVEMENTS = '/stock-movements';
 export const SUBSCRIPTIONS = { BASE: '/subscriptions', UPGRADE: '/subscriptions/upgrade', CANCEL: '/subscriptions/cancel' };
@@ -45,6 +47,7 @@ export const INVOICES = {
   BASE: '/invoices',
   BY_ID: (id: number) => `/invoices/${id}`,
   SEND: (id: number) => `/invoices/${id}/send`,
+  EMAIL: (id: number) => `/invoices/${id}/email`,
   PAYMENT: (id: number) => `/invoices/${id}/payment`,
   PDF: (id: number) => `/invoices/${id}/pdf`,
 };

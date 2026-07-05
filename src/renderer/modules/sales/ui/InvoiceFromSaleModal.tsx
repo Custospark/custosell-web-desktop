@@ -13,9 +13,12 @@ import { viewInvoicePdf } from '../../invoices/useInvoicePdf';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import SendDocumentEmailModal from '../../../shared/components/email/SendDocumentEmailModal';
+import { EmailSentCountBadge, emailSentLabel } from '../../../shared/components/email/EmailSentCountBadge';
+import type { SendDocumentEmailResult } from '../../../shared/hooks/useDocumentEmail';
 import {
   FileText, CheckCircle2, Eye, ArrowRight, ShoppingCart, AlertTriangle, Send,
-  BookOpen, User, Calendar, Sparkles, DollarSign,
+  BookOpen, User, Calendar, Sparkles, DollarSign, Mail,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
@@ -46,6 +49,8 @@ interface InvoiceSuccessPanelProps {
   onOpenInvoices: () => void;
   onDone: () => void;
   onRecordPayment?: () => void;
+  onEmail?: () => void;
+  emailSentCount?: number;
   linkedToSale?: boolean;
   linkedReceipt?: string;
 }
@@ -60,6 +65,8 @@ function InvoiceSuccessPanel({
   onOpenInvoices,
   onDone,
   onRecordPayment,
+  onEmail,
+  emailSentCount = 0,
   linkedToSale,
   linkedReceipt,
 }: InvoiceSuccessPanelProps) {
@@ -78,13 +85,6 @@ function InvoiceSuccessPanel({
             : 'border-slate-200 bg-gradient-to-br from-slate-50 via-white to-blue-50/50',
         )}
       >
-        <div
-          className={cn(
-            'absolute -right-8 -top-8 h-32 w-32 rounded-full blur-2xl opacity-40 pointer-events-none',
-            isSent ? 'bg-emerald-300' : 'bg-blue-300',
-          )}
-        />
-
         <div className="relative px-4 pt-5 pb-4 sm:px-6 sm:pt-6">
           <div className="flex items-start gap-3 sm:gap-4">
             <div
@@ -149,21 +149,21 @@ function InvoiceSuccessPanel({
 
           {/* Detail tiles */}
           <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            <div className="rounded-xl border border-white/80 bg-white/70 backdrop-blur-sm px-3 py-2.5 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</p>
-              <p className="mt-0.5 text-base sm:text-lg font-bold text-gray-900 tabular-nums truncate">
+              <p className="mt-0.5 text-base sm:text-lg font-bold text-gray-900 tabular-nums break-words leading-snug">
                 {formatCurrency(invoice.total_amount)}
               </p>
             </div>
-            <div className="rounded-xl border border-white/80 bg-white/70 backdrop-blur-sm px-3 py-2.5 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1">
                 <User className="w-3 h-3" /> Customer
               </p>
-              <p className="mt-0.5 text-sm font-medium text-gray-800 truncate" title={customerLabel}>
+              <p className="mt-0.5 text-sm font-medium text-gray-800 break-words leading-snug">
                 {customerLabel}
               </p>
             </div>
-            <div className="rounded-xl border border-white/80 bg-white/70 backdrop-blur-sm px-3 py-2.5 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1">
                 <Calendar className="w-3 h-3" /> Due
               </p>
@@ -171,11 +171,11 @@ function InvoiceSuccessPanel({
                 {formatShiftDate(invoice.due_date)}
               </p>
             </div>
-            <div className="rounded-xl border border-white/80 bg-white/70 backdrop-blur-sm px-3 py-2.5 shadow-sm col-span-2 sm:col-span-1">
+            <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm col-span-2 sm:col-span-1 min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                 {isSent ? 'Balance' : 'Lines'}
               </p>
-              <p className="mt-0.5 text-sm font-semibold tabular-nums text-gray-800">
+              <p className="mt-0.5 text-sm font-semibold tabular-nums text-gray-800 break-words leading-snug">
                 {isSent ? (
                   <span className={due > 0 ? 'text-amber-700' : 'text-emerald-700'}>
                     {formatCurrency(due)}
@@ -258,6 +258,22 @@ function InvoiceSuccessPanel({
             <Eye className="w-3.5 h-3.5 mr-1.5" />
             Preview PDF
           </Button>
+          {onEmail && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEmail}
+              disabled={sendLoading || pdfLoading}
+              className="shrink-0"
+              title={emailSentLabel(emailSentCount)}
+            >
+              <span className="relative inline-flex items-center">
+                <Mail className="w-3.5 h-3.5 mr-1.5" />
+                Email
+                <EmailSentCountBadge count={emailSentCount} className="-top-1.5 -right-2.5" />
+              </span>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -313,6 +329,7 @@ export default function InvoiceFromSaleModal({
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [invoiceOverride, setInvoiceOverride] = useState<Invoice | null>(null);
 
   const isViewingExisting = open && existingInvoice != null;
@@ -327,6 +344,21 @@ export default function InvoiceFromSaleModal({
     }
     return successPhase;
   })();
+
+  function patchInvoiceEmailCount(result: SendDocumentEmailResult) {
+    const patch = {
+      email_sent_count: result.email_sent_count,
+      last_emailed_at: result.last_emailed_at ?? null,
+    };
+    if (isViewingExisting) {
+      setInvoiceOverride((prev) => {
+        const base = prev ?? existingInvoice;
+        return base ? { ...base, ...patch } : prev;
+      });
+    } else {
+      setCreatedInvoice((prev) => (prev ? { ...prev, ...patch } : prev));
+    }
+  }
 
   const seed = useMemo(() => {
     if (!open || isViewingExisting) return undefined;
@@ -431,13 +463,20 @@ export default function InvoiceFromSaleModal({
     : 'closed';
 
   return (
+    <>
     <Modal
       isOpen={open}
       onClose={handleClose}
       title={modalTitle}
-      size={displayStep === 'success' ? 'lg' : '2xl'}
-      bodyClassName="px-4 py-4 sm:px-6"
-      panelClassName="max-h-[95vh]"
+      size={displayStep === 'success' ? 'xl' : '2xl'}
+      bodyClassName={cn(
+        'px-4 py-4 sm:px-6',
+        displayStep === 'success' && 'lg:px-8 lg:py-6',
+      )}
+      panelClassName={cn(
+        'max-h-[95vh]',
+        displayStep === 'success' && 'lg:max-w-3xl xl:max-w-4xl lg:min-h-[28rem]',
+      )}
     >
       {displayStep === 'success' && displayInvoice ? (
         <InvoiceSuccessPanel
@@ -454,6 +493,8 @@ export default function InvoiceFromSaleModal({
               ? () => setPaymentModalOpen(true)
               : undefined
           }
+          onEmail={displayInvoice.id > 0 ? () => setEmailModalOpen(true) : undefined}
+          emailSentCount={displayInvoice.email_sent_count ?? 0}
           linkedToSale={isLinkedSale}
           linkedReceipt={linkedReceipt}
         />
@@ -540,5 +581,22 @@ export default function InvoiceFromSaleModal({
         />
       )}
     </Modal>
+
+    {emailModalOpen && displayInvoice && (
+      <SendDocumentEmailModal
+        open
+        onClose={() => setEmailModalOpen(false)}
+        documentType="invoice"
+        documentId={displayInvoice.id}
+        documentLabel={`Invoice ${displayInvoice.invoice_number}`}
+        customerName={displayInvoice.customer?.name}
+        defaultEmail={displayInvoice.customer?.email ?? linkedSale?.customer?.email}
+        customerId={displayInvoice.customer_id ?? linkedSale?.customer_id}
+        saleId={linkedSale?.id}
+        emailSentCount={displayInvoice.email_sent_count ?? 0}
+        onSent={patchInvoiceEmailCount}
+      />
+    )}
+    </>
   );
 }

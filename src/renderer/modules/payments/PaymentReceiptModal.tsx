@@ -12,7 +12,10 @@ import {
 } from './paymentReceiptDetails';
 import { viewPaymentReceiptPdf, downloadPaymentReceiptPdf } from './usePaymentPdf';
 import PaymentReceiptContent, { buildPaymentReceiptContext } from './PaymentReceiptContent';
-import { CheckCircle2, Eye, Download, Printer } from 'lucide-react';
+import { CheckCircle2, Eye, Download, Printer, Mail } from 'lucide-react';
+import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEmailModal';
+import { EmailSentCountBadge, emailSentLabel } from '../../shared/components/email/EmailSentCountBadge';
+import type { SendDocumentEmailResult } from '../../shared/hooks/useDocumentEmail';
 import { cn } from '../../shared/utils/cn';
 
 interface PaymentReceiptModalProps {
@@ -40,9 +43,21 @@ export default function PaymentReceiptModal({
 }: PaymentReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState<'view' | 'download' | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const baseEmailSentCount = payment.email_sent_count ?? 0;
+  const [emailSentOverride, setEmailSentOverride] = useState<number | null>(null);
+  const emailSyncKey = `${payment.id}:${baseEmailSentCount}`;
+  const [prevEmailSyncKey, setPrevEmailSyncKey] = useState(emailSyncKey);
+  if (emailSyncKey !== prevEmailSyncKey) {
+    setPrevEmailSyncKey(emailSyncKey);
+    setEmailSentOverride(null);
+  }
+  const emailSentCount = emailSentOverride ?? baseEmailSentCount;
   const refLabel = referenceLabel ?? invoice?.invoice_number ?? `#${payment.payable_id}`;
   const isPaidInFull = payment.balance_after <= 0;
   const canPdf = payment.id > 0 && !payment._pendingSync;
+  const defaultEmail = invoice?.customer?.email ?? sale?.customer?.email ?? null;
+  const customerName = invoice?.customer?.name ?? sale?.customer?.name;
 
   const billDetails = billDetailsProp
     ?? (sale ? buildBillDetailsFromSale(sale) : invoice ? buildBillDetailsFromInvoice(invoice) : null);
@@ -82,6 +97,7 @@ export default function PaymentReceiptModal({
   }
 
   return (
+    <>
     <Modal isOpen onClose={onClose} title="Payment receipt" size="md" bodyClassName="px-5 py-4">
       <div className="space-y-4">
         <div className={cn(
@@ -102,6 +118,9 @@ export default function PaymentReceiptModal({
                 {isPaidInFull ? 'Paid in full' : 'Partial payment'}
               </p>
               <p className="text-xs text-gray-600 mt-0.5 font-mono">{payment.receipt_number}</p>
+              {emailSentCount > 0 && (
+                <p className="text-[11px] text-violet-700 mt-0.5">{emailSentLabel(emailSentCount)}</p>
+              )}
               {payment._pendingSync && (
                 <p className="text-xs text-amber-600 mt-1">Saved locally — syncs when online</p>
               )}
@@ -128,6 +147,13 @@ export default function PaymentReceiptModal({
                 <Download className="w-3.5 h-3.5 mr-1.5" />
                 Download
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setEmailOpen(true)} title={emailSentLabel(emailSentCount)}>
+                <span className="relative inline-flex items-center">
+                  <Mail className="w-3.5 h-3.5 mr-1.5" />
+                  Email
+                  <EmailSentCountBadge count={emailSentCount} className="-top-1.5 -right-3" />
+                </span>
+              </Button>
             </>
           )}
           {payment.attachment_url && (
@@ -144,5 +170,26 @@ export default function PaymentReceiptModal({
         </div>
       </div>
     </Modal>
+
+    {emailOpen && (
+      <SendDocumentEmailModal
+        open
+        onClose={() => setEmailOpen(false)}
+        documentType="payment_receipt"
+        documentId={payment.id}
+        documentLabel={`Receipt ${payment.receipt_number}`}
+        customerName={customerName}
+        defaultEmail={defaultEmail}
+        customerId={sale?.customer_id ?? invoice?.customer_id}
+        saleId={sale?.id}
+        emailSentCount={emailSentCount}
+        onSent={(result: SendDocumentEmailResult) => {
+          setEmailSentOverride(result.email_sent_count);
+        }}
+        blocked={!canPdf}
+        blockedReason={payment._pendingSync ? 'Receipt must sync before it can be emailed.' : undefined}
+      />
+    )}
+    </>
   );
 }

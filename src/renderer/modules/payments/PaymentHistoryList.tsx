@@ -114,6 +114,9 @@ export default function PaymentHistoryList({
                   <p className="text-xs text-gray-500">
                     {formatShiftDate(payment.paid_at)} · {payment.payment_method.replace('_', ' ')}
                     {payment._pendingSync && ' · pending sync'}
+                    {(payment.email_sent_count ?? 0) > 0 && (
+                      <span className="text-violet-600"> · Emailed {payment.email_sent_count}×</span>
+                    )}
                   </p>
                   {payment.notes && (
                     <p className="text-[11px] text-gray-400 truncate mt-0.5">{payment.notes}</p>

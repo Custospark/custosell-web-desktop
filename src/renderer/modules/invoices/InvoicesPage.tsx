@@ -14,8 +14,10 @@ import RecordPaymentModal from './RecordPaymentModal';
 import { viewInvoicePdf, downloadInvoicePdf } from './useInvoicePdf';
 import {
   FileText, Plus, Send, Download, Trash2, DollarSign, Search,
-  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle, Pencil, Receipt,
+  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle, Pencil, Receipt, Mail,
 } from 'lucide-react';
+import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEmailModal';
+import { EmailSentCountBadge, emailSentLabel } from '../../shared/components/email/EmailSentCountBadge';
 import { cn } from '../../shared/utils/cn';
 import { formatShiftDate } from '../../shared/utils/formatDateTime';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -99,6 +101,7 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentModal, setPaymentModal] = useState<Invoice | null>(null);
+  const [emailTarget, setEmailTarget] = useState<Invoice | null>(null);
   const [busyAction, setBusyAction] = useState<{ id: number; type: string } | null>(null);
 
   const { showToast } = useToast();
@@ -252,6 +255,7 @@ export default function InvoicesPage() {
         const rowBusy = busyAction?.id === item.id;
         const canPay = item.status === 'sent' || item.status === 'partially_paid' || isOverdue(item);
         const paymentCount = item.payments?.length ?? 0;
+        const emailSentCount = item.email_sent_count ?? 0;
 
         return (
           <div
@@ -326,6 +330,17 @@ export default function InvoicesPage() {
               onClick={() => void handlePdfAction(item.id, 'download')}
             >
               <Download className="w-3.5 h-3.5" />
+            </IconAction>
+            <IconAction
+              title={emailSentLabel(emailSentCount)}
+              disabled={busyAction !== null}
+              onClick={() => setEmailTarget(item)}
+              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+            >
+              <span className="relative inline-flex">
+                <Mail className="w-3.5 h-3.5" />
+                <EmailSentCountBadge count={emailSentCount} />
+              </span>
             </IconAction>
             {(item.status === 'draft' || item.status === 'cancelled') && (
               <IconAction
@@ -566,6 +581,24 @@ export default function InvoicesPage() {
         <RecordPaymentModal
           invoice={paymentModal}
           onClose={() => setPaymentModal(null)}
+        />
+      )}
+
+      {emailTarget && (
+        <SendDocumentEmailModal
+          open
+          onClose={() => setEmailTarget(null)}
+          documentType="invoice"
+          documentId={emailTarget.id}
+          documentLabel={`Invoice ${emailTarget.invoice_number}`}
+          customerName={emailTarget.customer?.name}
+          defaultEmail={emailTarget.customer?.email}
+          emailSentCount={emailTarget.email_sent_count ?? 0}
+          onSent={(result) => {
+            setEmailTarget((prev) => prev
+              ? { ...prev, email_sent_count: result.email_sent_count, last_emailed_at: result.last_emailed_at ?? null }
+              : null);
+          }}
         />
       )}
     </div>

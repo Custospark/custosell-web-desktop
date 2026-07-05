@@ -6,8 +6,11 @@ import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
+import CustomerContactField, { EMPTY_CUSTOMER_CONTACT } from '../../shared/components/customers/CustomerContactField';
+import { contactFromValue, hasResolvableContact, useResolveCustomerContact } from '../../shared/hooks/useResolveCustomerContact';
+import { customerToContact, type CustomerContactValue } from '../../shared/utils/customerContactUtils';
 import type { Sale } from './api/salesTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck, FileText } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck, FileText } from 'lucide-react';
 import { HiCheckCircle } from 'react-icons/hi2';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
@@ -137,6 +140,7 @@ function BillingControls() {
   const discountType = useAppSelector((s) => s.sales.discountType);
   const { data: customers } = useCustomers();
   const createSale = useCreateSale();
+  const resolveCustomer = useResolveCustomerContact();
   const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
   const authUser = useAppSelector((s) => s.auth.user);
   const { taxSettings, business: taxBusinessRecord } = useBusinessTaxSettings();
@@ -147,8 +151,26 @@ function BillingControls() {
   const [lastPayment, setLastPayment] = useState<import('../../payments/paymentTypes').Payment | null>(null);
   const [installmentMode, setInstallmentMode] = useState(false);
 
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
+  const [contact, setContact] = useState<CustomerContactValue>(EMPTY_CUSTOMER_CONTACT);
+  const [prevSyncCustomerId, setPrevSyncCustomerId] = useState(customerId);
+
+  if (customerId !== prevSyncCustomerId) {
+    setPrevSyncCustomerId(customerId);
+    if (customerId && customers?.length) {
+      const match = customers.find((c) => c.id === customerId);
+      if (match) setContact(customerToContact(match));
+    } else if (!customerId) {
+      setContact(EMPTY_CUSTOMER_CONTACT);
+    }
+  }
+
+  useEffect(() => {
+    if (contact.customerId && contact.customerId !== customerId) {
+      dispatch(setCustomer(contact.customerId));
+    } else if (!contact.customerId && !contact.name && !contact.email && !contact.phone && customerId) {
+      dispatch(setCustomer(null));
+    }
+  }, [contact, customerId, dispatch]);
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const discountValue = discountType === 'percentage'
@@ -166,94 +188,72 @@ function BillingControls() {
   const changeDue = paymentMethod === 'cash' && !isPartialPayment
     ? Math.max(0, amountTendered - total)
     : 0;
-  const selectedCustomer = customerId ? (customers || []).find((c) => c.id === customerId) : null;
-
-  const filteredCustomers = useMemo(() => {
-    if (!customers) return [];
-    const q = customerSearch.toLowerCase();
-    return customers.filter((c) => {
-      const name = c.name?.toLowerCase() ?? '';
-      const phone = c.phone ?? '';
-      return name.includes(q) || phone.includes(q);
-    });
-  }, [customers, customerSearch]);
-
   const handleCompleteSale = () => {
     if (cartItems.length === 0) return;
 
-    createSale.mutate(
-      {
-        items: cartItems.map((c) => ({
-          product_id: c.product_id,
-          quantity: c.quantity,
-          unit_price: c.unit_price,
-        })),
-        subtotal: taxBreakdown.subtotalNet,
-        tax_total: taxBreakdown.taxTotal,
-        discount_amount: taxBreakdown.discountAmount,
-        total_amount: taxBreakdown.total,
-        payment_method: paymentMethod,
-        customer_id: customerId,
-        amount_paid: isPartialPayment ? payNow : undefined,
-        amount_tendered: paymentMethod === 'cash'
-          ? (isPartialPayment ? payNow : (amountTendered > 0 ? amountTendered : null))
-          : (installmentMode ? payNow : null),
-        change_given: paymentMethod === 'cash'
-          ? (isPartialPayment
-            ? (amountTendered > payNow ? amountTendered - payNow : null)
-            : (amountTendered >= total ? changeDue : null))
-          : null,
-        shift_id: currentShiftId || null,
-      },
-      {
-        onSuccess: (sale) => {
-          dispatch(clearCart());
-          dispatch(setAmountTendered(0));
-          dispatch(setCustomer(null));
-          dispatch(setDiscount(0));
-          setInstallmentMode(false);
-          setCompletedSale(sale);
-          const payments = (sale as Sale & { payments?: import('../../payments/paymentTypes').Payment[] }).payments;
-          setLastPayment(payments?.length ? payments[payments.length - 1] : null);
+    const submitSale = (resolvedCustomerId: number | null) => {
+      createSale.mutate(
+        {
+          items: cartItems.map((c) => ({
+            product_id: c.product_id,
+            quantity: c.quantity,
+            unit_price: c.unit_price,
+          })),
+          subtotal: taxBreakdown.subtotalNet,
+          tax_total: taxBreakdown.taxTotal,
+          discount_amount: taxBreakdown.discountAmount,
+          total_amount: taxBreakdown.total,
+          payment_method: paymentMethod,
+          customer_id: resolvedCustomerId,
+          amount_paid: isPartialPayment ? payNow : undefined,
+          amount_tendered: paymentMethod === 'cash'
+            ? (isPartialPayment ? payNow : (amountTendered > 0 ? amountTendered : null))
+            : (installmentMode ? payNow : null),
+          change_given: paymentMethod === 'cash'
+            ? (isPartialPayment
+              ? (amountTendered > payNow ? amountTendered - payNow : null)
+              : (amountTendered >= total ? changeDue : null))
+            : null,
+          shift_id: currentShiftId || null,
         },
-      }
-    );
+        {
+          onSuccess: (sale) => {
+            dispatch(clearCart());
+            dispatch(setAmountTendered(0));
+            dispatch(setCustomer(null));
+            dispatch(setDiscount(0));
+            setContact(EMPTY_CUSTOMER_CONTACT);
+            setInstallmentMode(false);
+            setCompletedSale(sale);
+            const payments = (sale as Sale & { payments?: import('../../payments/paymentTypes').Payment[] }).payments;
+            setLastPayment(payments?.length ? payments[payments.length - 1] : null);
+          },
+        },
+      );
+    };
+
+    const shouldResolve = hasResolvableContact(contact, contact.email)
+      && (!customerId || contact.email.trim() || contact.name.trim() || contact.phone.trim());
+
+    if (shouldResolve && !isOffline) {
+      void resolveCustomer.mutateAsync(contactFromValue(contact))
+        .then((customer) => submitSale(customer.id))
+        .catch(() => submitSale(customerId));
+      return;
+    }
+
+    submitSale(customerId);
   };
 
   return (
     <>
     <div className="bg-white rounded-xl border border-gray-200 p-5 h-fit sticky top-0">
       <div className="space-y-5">
-        {/* Customer */}
-        <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Customer</label>
-          <div className="relative">
-            <button title="Select customer" className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors bg-white"
-              onClick={() => setShowCustomerDropdown(!showCustomerDropdown)}>
-              <User className="w-4 h-4 text-gray-400 shrink-0" />
-              <span className={selectedCustomer ? 'text-gray-800' : 'text-gray-400 truncate'}>
-                {selectedCustomer ? selectedCustomer.name : 'Walk-in customer'}
-              </span>
-            </button>
-            {showCustomerDropdown && (
-              <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                <input title="Search customers" className="w-full px-3 py-2 border-b border-gray-100 text-sm outline-none focus:bg-blue-50"
-                  placeholder="Search customers..." value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} autoFocus />
-                <button title="Select walk-in customer" className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-50"
-                  onClick={() => { dispatch(setCustomer(null)); setShowCustomerDropdown(false); setCustomerSearch(''); }}>
-                  Walk-in customer
-                </button>
-                {filteredCustomers.map((c) => (
-                  <button key={c.id} title={`Select ${c.name}`} className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 transition-colors"
-                    onClick={() => { dispatch(setCustomer(c.id)); setCustomerSearch(c.name); setShowCustomerDropdown(false); }}>
-                    <span className="font-medium text-gray-800">{c.name}</span>
-                    <span className="text-gray-400 ml-2">{c.phone}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <CustomerContactField
+          value={contact}
+          onChange={setContact}
+          disabled={createSale.isPending || resolveCustomer.isPending}
+        />
 
         {/* Payment Method */}
         <div>

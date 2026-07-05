@@ -82,7 +82,7 @@ export interface Sale {
   balance_due?: number;
   notes: string | null;
   sale_date: string;
-  customer?: { id: number; name: string; phone?: string };
+  customer?: { id: number; name: string; phone?: string; email?: string | null };
   sale_items?: SaleItem[];
   payments?: import('../../payments/paymentTypes').Payment[];
   created_at: string;

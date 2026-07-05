@@ -126,7 +126,7 @@ function ProductSearchEmptyState({
 // ============================================================
 // BILLING CONTROLS COMPONENT (Right Column)
 // ============================================================
-function BillingControls() {
+function BillingControls({ onGenerateInvoice }: { onGenerateInvoice?: () => void }) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
@@ -142,6 +142,8 @@ function BillingControls() {
   const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
 
 
@@ -743,7 +745,7 @@ export default function NewSale() {
           {/* Hold / Take Buttons */}
           <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
             {cartItems.length > 0 && (
-              <button title="Create an invoice instead of completing sale" onClick={() => setInvoiceModalOpen(true)}
+              <button title="Create an invoice instead of completing sale" onClick={() => onGenerateInvoice?.()}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm">
                 <FileText className="w-4 h-4" /> Generate Invoice
               </button>
@@ -772,7 +774,7 @@ export default function NewSale() {
 
         {/* RIGHT COLUMN: Billing Controls */}
         <div className="w-full lg:w-96 shrink-0">
-          <BillingControls />
+          <BillingControls onGenerateInvoice={() => setInvoiceModalOpen(true)} />
         </div>
       </div>
 

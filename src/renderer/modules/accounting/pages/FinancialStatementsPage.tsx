@@ -6,7 +6,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import { Scale, BarChart3, ClipboardList, TrendingUp, PieChart, FileText, Download, Calendar } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-import { useAppSelector } from '../../../app/store/hooks/useApp';
+
 import { motion } from 'framer-motion';
 
 function fmt(n: number): string {
@@ -36,7 +36,9 @@ const CARD_STYLES: Record<string, { icon: React.ElementType; label: string; bord
   },
 };
 
-function MetricRow({ label, value, positive, negative }: { label: string; value: string; positive?: boolean; negative?: boolean }) {
+type MetricItem = { label: string; value: string; positive?: boolean; negative?: boolean };
+
+function MetricRow({ label, value, positive, negative }: MetricItem) {
   return (
     <div className="flex items-center justify-between py-1">
       <span className="text-[11px] text-gray-500 uppercase tracking-wide">{label}</span>
@@ -140,7 +142,7 @@ export default function FinancialStatementsPage() {
     );
   }
 
-  const statements = [
+  const statements: { key: string; data: any; metrics: MetricItem[]; badge: any }[] = [
     {
       key: 'trial-balance',
       data: tb,

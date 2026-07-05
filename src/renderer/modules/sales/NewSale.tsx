@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import type { Product } from '../inventory/api/products/ProductTypes';
@@ -126,7 +127,7 @@ function ProductSearchEmptyState({
 // ============================================================
 // BILLING CONTROLS COMPONENT (Right Column)
 // ============================================================
-function BillingControls({ onGenerateInvoice }: { onGenerateInvoice?: () => void }) {
+function BillingControls() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
@@ -744,15 +745,15 @@ export default function NewSale() {
           {/* Hold / Take Buttons */}
           <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
             {cartItems.length > 0 && (
-              <button title="Create an invoice instead of completing sale" onClick={() => onGenerateInvoice?.()}
+              <button title="Create an invoice instead of completing sale" onClick={() => setInvoiceModalOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm">
                 <FileText className="w-4 h-4" /> Generate Invoice
               </button>
             )}
-            <a href="/invoices" title="View and manage all invoices"
+            <Link to="/invoices" title="View and manage all invoices"
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm">
               <FileText className="w-4 h-4" /> Manage Invoices
-            </a>
+            </Link>
             {cartItems.length > 0 && (
               <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm">
@@ -773,7 +774,7 @@ export default function NewSale() {
 
         {/* RIGHT COLUMN: Billing Controls */}
         <div className="w-full lg:w-96 shrink-0">
-          <BillingControls onGenerateInvoice={() => setInvoiceModalOpen(true)} />
+          <BillingControls />
         </div>
       </div>
 
@@ -782,11 +783,6 @@ export default function NewSale() {
       <InvoiceFromSaleModal
         open={invoiceModalOpen}
         onClose={() => setInvoiceModalOpen(false)}
-        cartItems={cartItems.map((c) => ({ product_id: c.product_id, name: c.name, quantity: c.quantity, unit_price: c.unit_price }))}
-        subtotal={taxBreakdown.subtotalNet}
-        taxTotal={taxBreakdown.taxTotal}
-        total={taxBreakdown.total}
-        customerId={customerId}
         onSuccess={() => {
           dispatch(clearCart());
           dispatch(setCustomer(null));

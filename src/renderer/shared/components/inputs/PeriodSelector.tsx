@@ -20,7 +20,7 @@ interface PeriodSelectorProps {
   className?: string;
 }
 
-export function PeriodSelector({ periods, value, onChange, className }: PeriodSelectorProps) {
+export function PeriodSelector({ periods, value: _value, onChange, className }: PeriodSelectorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);

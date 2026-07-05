@@ -12,9 +12,11 @@ interface Props {
   productName: string;
   currentQty: number;
   maxQty: number;
+  /** When set, updates quantity via callback instead of the sales cart slice. */
+  onConfirm?: (quantity: number) => void;
 }
 
-export default function QuantityEditModal({ open, onClose, productId, productName, currentQty, maxQty }: Props) {
+export default function QuantityEditModal({ open, onClose, productId, productName, currentQty, maxQty, onConfirm }: Props) {
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(String(currentQty));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -25,7 +27,13 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
 
   const handleSave = () => {
     const n = parseInt(qty);
-    if (n > 0 && n <= maxQty) dispatch(updateQuantity({ product_id: productId, quantity: n }));
+    if (n <= 0) return;
+    if (onConfirm) {
+      if (maxQty > 0 && n > maxQty) return;
+      onConfirm(n);
+    } else if (n <= maxQty) {
+      dispatch(updateQuantity({ product_id: productId, quantity: n }));
+    }
     onClose();
   };
 

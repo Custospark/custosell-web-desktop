@@ -4,10 +4,10 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useAccountingPeriods, useTrialBalance, useIncomeStatement, useBalanceSheet, useCashFlow, useEquity } from '../api/AccountingQueries';
+import { axiosInstance } from '../../../app/api/axiosConfig';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
-import { Scale, BarChart3, ClipboardList, TrendingUp, PieChart, FileText, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { Scale, BarChart3, ClipboardList, TrendingUp, PieChart, FileText, CheckCircle, XCircle, Download } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 
 function fmt(n: number): string {
@@ -21,10 +21,11 @@ interface StatementCardProps {
   periodName: string;
   children?: React.ReactNode;
   status?: 'balanced' | 'unbalanced' | 'positive' | 'negative' | 'info';
-  pdfUrl: string;
+  onViewPdf: () => void;
+  loading?: boolean;
 }
 
-function StatementCard({ title, icon: Icon, accent, periodName, children, status, pdfUrl }: StatementCardProps) {
+function StatementCard({ title, icon: Icon, accent, periodName, children, status, onViewPdf, loading }: StatementCardProps) {
   return (
     <Card padding={false} className="flex flex-col h-full">
       <div className={cn('p-5 border-b', accent)}>
@@ -57,16 +58,15 @@ function StatementCard({ title, icon: Icon, accent, periodName, children, status
             </div>
           )}
         </div>
-        <a
-          href={pdfUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center justify-center gap-2 w-full mt-4 px-4 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+        <button
+          onClick={onViewPdf}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 w-full mt-4 px-4 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FileText className="w-4 h-4" />
-          View {title}
-          <ExternalLink className="w-3.5 h-3.5 ml-auto text-blue-400" />
-        </a>
+          {loading ? 'Loading...' : `View ${title}`}
+          <Download className="w-3.5 h-3.5 ml-auto text-blue-400" />
+        </button>
       </div>
     </Card>
   );
@@ -89,27 +89,36 @@ export default function FinancialStatementsPage() {
     return p?.name ?? '';
   }, [effectivePeriodId, periods]);
 
-  function buildPdfUrl(type: string): string {
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  function viewPdf(type: string) {
+    setDownloading(type);
     const pid = effectivePeriodId;
-    if (!pid) return '#';
+    if (!pid) return;
+
+    const params: Record<string, string | number> = { format: 'pdf' };
     const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-    const params = new URLSearchParams();
-    params.set('format', 'pdf');
 
     if (ids.length > 1) {
       const first = periods?.find((p: any) => p.id === ids[0]);
       const last = periods?.find((p: any) => p.id === ids[ids.length - 1]);
       if (first?.start_date && last?.end_date) {
-        params.set('date_from', first.start_date.slice(0, 10));
-        params.set('date_to', last.end_date.slice(0, 10));
+        params.date_from = first.start_date.slice(0, 10);
+        params.date_to = last.end_date.slice(0, 10);
       }
     } else {
-      params.set('period_id', String(pid));
+      params.period_id = pid;
     }
 
-    // Use the API base URL for the PDF endpoint with auth token
-    const baseUrl = import.meta.env.DEV ? 'http://localhost:8000/api/v1' : (import.meta.env.VITE_API_BASE_URL || 'https://api.custosell.com/api/v1');
-    return `${baseUrl}${ACCOUNTING.EXPORT(type)}?${params.toString()}`;
+    axiosInstance.get(ACCOUNTING.EXPORT(type), { params, responseType: 'blob' })
+      .then((res) => {
+        const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+        window.open(url, '_blank');
+        setDownloading(null);
+      })
+      .catch(() => {
+        setDownloading(null);
+      });
   }
 
   // Fetch data for summary cards
@@ -161,7 +170,7 @@ export default function FinancialStatementsPage() {
         {/* Trial Balance */}
         <StatementCard title="Trial Balance" icon={Scale} accent="border-l-4 border-l-blue-500" periodName={periodName}
           status={tb?.is_balanced ? 'balanced' : tb ? 'unbalanced' : undefined}
-          pdfUrl={buildPdfUrl('trial-balance')}>
+          onViewPdf={() => viewPdf('trial-balance')} loading={downloading === 'trial-balance'}>
           {tb ? (
             <>
               <p className="text-xs text-gray-500">Total Debits</p>
@@ -177,7 +186,7 @@ export default function FinancialStatementsPage() {
         {/* Income Statement */}
         <StatementCard title="Income Statement" icon={BarChart3} accent="border-l-4 border-l-green-500" periodName={periodName}
           status={stmt ? (stmt.net_income >= 0 ? 'positive' : 'negative') : undefined}
-          pdfUrl={buildPdfUrl('income-statement')}>
+          onViewPdf={() => viewPdf('income-statement')} loading={downloading === 'income-statement'}>
           {stmt ? (
             <>
               <p className="text-xs text-gray-500">Revenue</p>
@@ -193,7 +202,7 @@ export default function FinancialStatementsPage() {
         {/* Balance Sheet */}
         <StatementCard title="Balance Sheet" icon={ClipboardList} accent="border-l-4 border-l-purple-500" periodName={periodName}
           status={bs?.is_balanced ? 'balanced' : bs ? 'unbalanced' : undefined}
-          pdfUrl={buildPdfUrl('balance-sheet')}>
+          onViewPdf={() => viewPdf('balance-sheet')} loading={downloading === 'balance-sheet'}>
           {bs ? (
             <>
               <p className="text-xs text-gray-500">Total Assets</p>
@@ -211,7 +220,7 @@ export default function FinancialStatementsPage() {
         {/* Cash Flow Statement */}
         <StatementCard title="Cash Flow Statement" icon={TrendingUp} accent="border-l-4 border-l-cyan-500" periodName={periodName}
           status={cf ? (cf.net_change >= 0 ? 'positive' : 'negative') : undefined}
-          pdfUrl={buildPdfUrl('cash-flow')}>
+          onViewPdf={() => viewPdf('cash-flow')} loading={downloading === 'cash-flow'}>
           {cf ? (
             <>
               <p className="text-xs text-gray-500">Operating</p>
@@ -227,7 +236,7 @@ export default function FinancialStatementsPage() {
         {/* Statement of Changes in Equity */}
         <StatementCard title="Changes in Equity" icon={PieChart} accent="border-l-4 border-l-rose-500" periodName={periodName}
           status="info"
-          pdfUrl={buildPdfUrl('equity')}>
+          onViewPdf={() => viewPdf('equity')} loading={downloading === 'equity'}>
           {eq ? (
             <>
               <p className="text-xs text-gray-500">Opening Retained Earnings</p>

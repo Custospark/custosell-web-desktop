@@ -20,6 +20,7 @@ import {
   FileText, CheckCircle2, Eye, ArrowRight, ShoppingCart, AlertTriangle, Send,
   BookOpen, User, Calendar, Sparkles, DollarSign, Mail,
 } from 'lucide-react';
+import { netSaleAmount, toAmount } from '../utils/saleAmounts';
 import { cn } from '../../../shared/utils/cn';
 
 interface InvoiceFromSaleModalProps {
@@ -37,6 +38,11 @@ type SuccessPhase = 'draft' | 'sent';
 
 function balanceDue(inv: Invoice): number {
   return Math.max(0, inv.total_amount - (inv.amount_paid || 0));
+}
+
+function parsePaidAmount(value?: string | number | null): number {
+  const parsed = parseFloat(String(value ?? 0));
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 interface InvoiceSuccessPanelProps {
@@ -72,7 +78,9 @@ function InvoiceSuccessPanel({
 }: InvoiceSuccessPanelProps) {
   const isSent = phase === 'sent';
   const customerLabel = invoice.customer?.name ?? 'Walk-in customer';
+  const paid = parsePaidAmount(invoice.amount_paid);
   const due = balanceDue(invoice);
+  const hasPayments = paid > 0.009;
 
   return (
     <div className="space-y-4 sm:space-y-5 py-1">
@@ -129,8 +137,11 @@ function InvoiceSuccessPanel({
                 {isSent ? (
                   <>
                     <span className="font-mono font-semibold text-gray-900">{invoice.invoice_number}</span>
-                    {' '}is live — revenue and receivables are on the books.
-                    {due > 0 && (
+                    {' '}
+                    {linkedToSale
+                      ? 'is live — billing document posted without duplicating sale revenue.'
+                      : 'is live — revenue and receivables are on the books.'}
+                    {due > 0.009 && (
                       <span className="block mt-1 text-gray-500">
                         {formatCurrency(due)} outstanding until payment is recorded.
                       </span>
@@ -140,7 +151,14 @@ function InvoiceSuccessPanel({
                   <>
                     <span className="font-mono font-semibold text-gray-900">{invoice.invoice_number}</span>
                     {' '}saved for <span className="font-medium text-gray-800">{customerLabel}</span>.
-                    {' '}Send when ready to post to accounting.
+                    {hasPayments ? (
+                      <span className="block mt-1 text-gray-500">
+                        {formatCurrency(paid)} already collected on the linked sale
+                        {due > 0.009 ? ` · ${formatCurrency(due)} balance due` : ' · paid in full'}.
+                      </span>
+                    ) : (
+                      <> Send when ready to post to accounting.</>
+                    )}
                   </>
                 )}
               </p>
@@ -148,7 +166,10 @@ function InvoiceSuccessPanel({
           </div>
 
           {/* Detail tiles */}
-          <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <div className={cn(
+            'mt-4 sm:mt-5 grid grid-cols-2 gap-2 sm:gap-3',
+            (hasPayments || isSent) ? 'sm:grid-cols-5' : 'sm:grid-cols-4',
+          )}>
             <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</p>
               <p className="mt-0.5 text-base sm:text-lg font-bold text-gray-900 tabular-nums break-words leading-snug">
@@ -173,10 +194,12 @@ function InvoiceSuccessPanel({
             </div>
             <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm col-span-2 sm:col-span-1 min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                {isSent ? 'Balance' : 'Lines'}
+                {hasPayments ? 'Paid' : isSent ? 'Balance' : 'Lines'}
               </p>
               <p className="mt-0.5 text-sm font-semibold tabular-nums text-gray-800 break-words leading-snug">
-                {isSent ? (
+                {hasPayments ? (
+                  <span className="text-emerald-700">{formatCurrency(paid)}</span>
+                ) : isSent ? (
                   <span className={due > 0 ? 'text-amber-700' : 'text-emerald-700'}>
                     {formatCurrency(due)}
                   </span>
@@ -185,6 +208,16 @@ function InvoiceSuccessPanel({
                 )}
               </p>
             </div>
+            {(hasPayments || isSent) && (
+              <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm col-span-2 sm:col-span-1 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Balance</p>
+                <p className="mt-0.5 text-sm font-semibold tabular-nums break-words leading-snug">
+                  <span className={due > 0.009 ? 'text-amber-700' : 'text-emerald-700'}>
+                    {formatCurrency(due)}
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -214,7 +247,11 @@ function InvoiceSuccessPanel({
               {linkedToSale ? (
                 <>
                   Linked to sale <span className="font-mono font-semibold">{linkedReceipt}</span>.{' '}
-                  <strong className="font-semibold">Send &amp; post</strong> delivers the billing document without duplicating sale revenue.
+                  {hasPayments ? (
+                    <>Payments on the sale carry over to this invoice. <strong className="font-semibold">Send &amp; post</strong> delivers the billing document without duplicating sale revenue.</>
+                  ) : (
+                    <><strong className="font-semibold">Send &amp; post</strong> delivers the billing document without duplicating sale revenue.</>
+                  )}
                 </>
               ) : (
                 <>
@@ -369,6 +406,10 @@ export default function InvoiceFromSaleModal({
         lineItems,
         customerId: linkedSale.customer_id,
         saleId: linkedSale.id > 0 ? linkedSale.id : null,
+        saleTaxTotal: parsePaidAmount(linkedSale.tax_total),
+        saleDiscountAmount: parsePaidAmount(linkedSale.discount_amount),
+        saleAmountPaid: toAmount(linkedSale.amount_paid),
+        saleNetTotal: netSaleAmount(linkedSale),
         notes: linkedSale.notes ?? undefined,
       };
     }
@@ -381,6 +422,9 @@ export default function InvoiceFromSaleModal({
   }, [open, isViewingExisting, isLinkedSale, linkedSale, cartItems, customerId, saleNotes]);
 
   const lineCount = seed?.lineItems.length ?? 0;
+  const linkedSalePaid = linkedSale ? toAmount(linkedSale.amount_paid) : 0;
+  const linkedSaleTotal = linkedSale ? netSaleAmount(linkedSale) : 0;
+  const linkedSaleBalance = Math.max(0, linkedSaleTotal - linkedSalePaid);
 
   const modalTitle = useMemo(() => {
     if (displayStep === 'success') {
@@ -556,7 +600,18 @@ export default function InvoiceFromSaleModal({
               <strong className="text-gray-800">{seed?.lineItems.reduce((s, c) => s + c.quantity, 0) ?? 0}</strong> items total
             </span>
             <span className="text-gray-400 hidden sm:inline">·</span>
-            <span className="w-full sm:w-auto">No payment recorded — customer pays when invoice is settled</span>
+            <span className="w-full sm:w-auto">
+              {isLinkedSale && linkedSalePaid > 0.009 ? (
+                <>
+                  <strong className="text-gray-800">{formatCurrency(linkedSalePaid)}</strong> already collected on this sale
+                  {linkedSaleBalance > 0.009 && (
+                    <> · <strong className="text-gray-800">{formatCurrency(linkedSaleBalance)}</strong> balance will carry to the invoice</>
+                  )}
+                </>
+              ) : (
+                'No payment recorded — customer pays when invoice is settled'
+              )}
+            </span>
           </div>
 
           <InvoiceBuilderForm

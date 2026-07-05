@@ -36,6 +36,14 @@ interface InvoiceBuilderSeed {
   lineItems: InvoiceLineItem[];
   customerId?: number | null;
   saleId?: number | null;
+  /** When billing a completed sale, reuse sale tax so invoice total matches collections. */
+  saleTaxTotal?: number;
+  /** Sale-level discount already applied at checkout — keeps invoice total aligned. */
+  saleDiscountAmount?: number;
+  /** Amount already collected on the linked sale (carries to invoice). */
+  saleAmountPaid?: number;
+  /** Net sale total after refunds — for balance messaging. */
+  saleNetTotal?: number;
   notes?: string;
 }
 
@@ -124,10 +132,18 @@ export default function InvoiceBuilderForm({
     return products.filter((p) => p.is_active && matchesProductSearch(p, search)).slice(0, 8);
   }, [products, search]);
 
-  const taxBreakdown = useMemo(
-    () => computeSaleTax(taxSettings, lineItems, 0),
-    [taxSettings, lineItems],
-  );
+  const taxBreakdown = useMemo(() => {
+    const discount = seed?.saleDiscountAmount ?? 0;
+    const computed = computeSaleTax(taxSettings, lineItems, discount);
+    if (seed?.saleId != null && seed.saleTaxTotal != null) {
+      return {
+        ...computed,
+        taxTotal: seed.saleTaxTotal,
+        total: computed.subtotalNet + seed.saleTaxTotal,
+      };
+    }
+    return computed;
+  }, [taxSettings, lineItems, seed]);
 
   const addItem = useCallback((
     id: number,
@@ -515,7 +531,15 @@ export default function InvoiceBuilderForm({
               <span>
                 {isEdit
                   ? 'Changes apply to this draft only. Send the invoice when ready to post to accounting.'
-                  : 'No payment is recorded — the customer pays when the invoice is settled.'}
+                  : seed?.saleId
+                    ? (seed.saleAmountPaid ?? 0) > 0.009
+                      ? `Payments on the linked sale carry over to this invoice (${formatCurrency(seed.saleAmountPaid ?? 0)} collected${
+                          Math.max(0, (seed.saleNetTotal ?? taxBreakdown.total) - (seed.saleAmountPaid ?? 0)) > 0.009
+                            ? ` · ${formatCurrency(Math.max(0, (seed.saleNetTotal ?? taxBreakdown.total) - (seed.saleAmountPaid ?? 0)))} will remain due`
+                            : ' · paid in full on the sale'
+                        }).`
+                      : 'Linked to a completed sale with no payment collected yet — balance settles on the invoice.'
+                    : 'No payment is recorded — the customer pays when the invoice is settled.'}
               </span>
             </div>
 

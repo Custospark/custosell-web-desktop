@@ -24,30 +24,50 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../shared/utils/cn';
 
+interface InvoiceBuilderSeed {
+  lineItems: InvoiceLineItem[];
+  customerId?: number | null;
+  notes?: string;
+}
+
 interface InvoiceBuilderFormProps {
   mode: 'create' | 'edit';
   invoice?: Invoice;
-  onComplete: () => void;
+  seed?: InvoiceBuilderSeed;
+  layout?: 'page' | 'modal';
+  onComplete: (invoice?: Invoice) => void;
   onCancel?: () => void;
 }
 
-export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel }: InvoiceBuilderFormProps) {
+export default function InvoiceBuilderForm({
+  mode,
+  invoice,
+  seed,
+  layout = 'page',
+  onComplete,
+  onCancel,
+}: InvoiceBuilderFormProps) {
   const isEdit = mode === 'edit';
+  const isModal = layout === 'modal';
   const { data: products } = useProducts();
   const { data: customers } = useCustomers();
   const { taxSettings } = useBusinessTaxSettings();
   const createInvoice = useCreateInvoice();
   const updateInvoice = useUpdateInvoice();
 
-  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([]);
-  const [formInitialized, setFormInitialized] = useState(!isEdit);
+  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>(
+    () => seed?.lineItems?.map((item) => ({ ...item })) ?? [],
+  );
+  const [formInitialized, setFormInitialized] = useState(() => !isEdit);
   const [search, setSearch] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [customerId, setCustomerId] = useState('');
+  const [customerId, setCustomerId] = useState(() =>
+    seed?.customerId ? String(seed.customerId) : '',
+  );
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(defaultDueDate);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(() => seed?.notes ?? '');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [qtyEdit, setQtyEdit] = useState<{
@@ -62,6 +82,7 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
 
   useEffect(() => {
     if (!isEdit || !invoice || !products || formInitialized) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate edit form when products load
     setLineItems(invoiceItemsToLineItems(invoice, products));
     setCustomerId(invoice.customer_id ? String(invoice.customer_id) : '');
     setIssueDate(invoice.issue_date.slice(0, 10));
@@ -128,6 +149,7 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
     if (!products || !search.trim()) return;
     const match = findProductByBarcode(products, search);
     if (!match || !match.is_active) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- barcode scanner adds product on scan
     addItem(
       match.id,
       match.name,
@@ -139,8 +161,9 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
   }, [search, products, addItem]);
 
   useEffect(() => {
-    if (!isEdit) searchRef.current?.focus();
-  }, [isEdit]);
+    if (isEdit || isModal) return;
+    searchRef.current?.focus();
+  }, [isEdit, isModal]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -194,15 +217,15 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
     if (isEdit && invoice) {
       updateInvoice.mutate(
         { id: invoice.id, payload },
-        { onSuccess: () => onComplete() },
+        { onSuccess: (updated) => onComplete(updated) },
       );
       return;
     }
 
     createInvoice.mutate(payload, {
-      onSuccess: () => {
-        resetForm();
-        onComplete();
+      onSuccess: (created) => {
+        if (!seed) resetForm();
+        onComplete(created);
       },
     });
   }
@@ -212,16 +235,25 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
 
   return (
     <>
-      <div className="h-full flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="mb-4 pb-3 border-b border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900">
-              {isEdit ? `Edit draft ${invoice?.invoice_number ?? ''}` : 'New Invoice'}
+      <div className={cn(
+        'h-full flex gap-6',
+        isModal ? 'flex-col xl:flex-row max-h-[calc(90vh-7rem)]' : 'flex-col lg:flex-row',
+      )}>
+        <div className={cn('flex-1 flex flex-col min-w-0', isModal && 'min-h-0')}>
+          <div className={cn('mb-4 pb-3 border-b border-gray-200', isModal && 'mb-3 pb-2')}>
+            <h2 className={cn('font-bold text-gray-900', isModal ? 'text-base' : 'text-lg')}>
+              {isEdit
+                ? `Edit draft ${invoice?.invoice_number ?? ''}`
+                : seed
+                  ? 'Invoice from cart'
+                  : 'New Invoice'}
             </h2>
             <p className="text-sm text-gray-500">
               {isEdit
                 ? 'Adjust items, quantities, customer, and dates — then save'
-                : 'Search products and add them to the invoice'}
+                : seed
+                  ? 'Review cart items, adjust quantities, add products, then create a draft'
+                  : 'Search products and add them to the invoice'}
             </p>
           </div>
 
@@ -355,7 +387,7 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
                 </div>
               )}
 
-              <div className="flex-1 overflow-y-auto">
+              <div className={cn('flex-1 overflow-y-auto', isModal && 'min-h-0')}>
                 {lineItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-gray-400 py-16 border border-dashed border-gray-200 rounded-lg">
                     <ShoppingCart className="w-12 h-12 mb-3" />
@@ -440,8 +472,11 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
           )}
         </div>
 
-        <div className="w-full lg:w-96 shrink-0">
-          <div className="bg-white rounded-xl border border-gray-200 p-5 h-fit sticky top-0 space-y-5">
+        <div className={cn('w-full shrink-0', isModal ? 'xl:w-80' : 'lg:w-96')}>
+          <div className={cn(
+            'bg-white rounded-xl border border-gray-200 p-5 h-fit space-y-5',
+            !isModal && 'sticky top-0',
+          )}>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 flex items-start gap-2">
               <FileText className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
@@ -556,6 +591,11 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
                     <Save className="w-5 h-5 mr-2" />
                     Save changes
                   </>
+                ) : seed ? (
+                  <>
+                    <FileText className="w-5 h-5 mr-2" />
+                    Create draft invoice
+                  </>
                 ) : (
                   <>
                     <FileText className="w-5 h-5 mr-2" />
@@ -563,7 +603,7 @@ export default function InvoiceBuilderForm({ mode, invoice, onComplete, onCancel
                   </>
                 )}
               </Button>
-              {isEdit && onCancel && (
+              {(isEdit || isModal) && onCancel && (
                 <Button variant="outline" className="w-full" onClick={onCancel} disabled={isPending}>
                   Cancel
                 </Button>

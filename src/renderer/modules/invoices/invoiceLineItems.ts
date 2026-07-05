@@ -57,3 +57,27 @@ export function lineItemsToPayload(items: InvoiceLineItem[]) {
     subtotal: item.quantity * item.unit_price,
   }));
 }
+
+/** Map sales cart rows into editable invoice line items (stable lineKey per cart row). */
+export function cartItemsToLineItems(
+  cartItems: {
+    product_id: number;
+    name: string;
+    unit_price: number;
+    quantity: number;
+    unit?: string | null;
+    tax_percentage?: number | string | null;
+    tax_class?: string | null;
+  }[],
+): InvoiceLineItem[] {
+  return cartItems.map((item) => ({
+    lineKey: `cart-${item.product_id}`,
+    product_id: item.product_id,
+    name: item.name,
+    unit_price: Number(item.unit_price),
+    quantity: Number(item.quantity),
+    unit: item.unit ?? null,
+    tax_percentage: item.tax_percentage != null ? String(item.tax_percentage) : null,
+    tax_class: item.tax_class ?? null,
+  }));
+}

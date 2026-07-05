@@ -157,7 +157,7 @@ function BillingControls() {
   );
   const total = taxBreakdown.total;
   const changeDue = paymentMethod === 'cash' ? Math.max(0, amountTendered - total) : 0;
-  const selectedCustomer = customerId ? (customers || []).find((c: any) => c.id === customerId) : null;
+  const selectedCustomer = customerId ? (customers || []).find((c) => c.id === customerId) : null;
 
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
@@ -224,7 +224,7 @@ function BillingControls() {
                   onClick={() => { dispatch(setCustomer(null)); setShowCustomerDropdown(false); setCustomerSearch(''); }}>
                   Walk-in customer
                 </button>
-                {filteredCustomers.map((c: any) => (
+                {filteredCustomers.map((c) => (
                   <button key={c.id} title={`Select ${c.name}`} className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 transition-colors"
                     onClick={() => { dispatch(setCustomer(c.id)); setCustomerSearch(c.name); setShowCustomerDropdown(false); }}>
                     <span className="font-medium text-gray-800">{c.name}</span>
@@ -405,6 +405,7 @@ export default function NewSale() {
 
   // Invoice generation state
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [invoiceSession, setInvoiceSession] = useState(0);
 
   const showReloadFeedback = useCallback((feedback: Exclude<ReloadFeedback, 'idle'>) => {
     setReloadFeedback(feedback);
@@ -479,6 +480,7 @@ export default function NewSale() {
     if (!products || !search.trim()) return;
     const match = findProductByBarcode(products, search);
     if (!match || !match.is_active || match.stock_quantity <= 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- barcode scanner adds product on scan
     addItem(
       match.id,
       match.name,
@@ -499,6 +501,7 @@ export default function NewSale() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset reload banner when search changes
     clearReloadFeedback();
   }, [search, clearReloadFeedback]);
 
@@ -745,8 +748,14 @@ export default function NewSale() {
           {/* Hold / Take Buttons */}
           <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
             {cartItems.length > 0 && (
-              <button title="Create an invoice instead of completing sale" onClick={() => setInvoiceModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm">
+              <button
+                title="Create a draft invoice from the current cart — adjust items before saving"
+                onClick={() => {
+                  setInvoiceSession((s) => s + 1);
+                  setInvoiceModalOpen(true);
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm"
+              >
                 <FileText className="w-4 h-4" /> Generate Invoice
               </button>
             )}
@@ -781,6 +790,7 @@ export default function NewSale() {
       <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />
       <HoldOrderModal open={holdModalOpen} onClose={() => setHoldModalOpen(false)} />
       <InvoiceFromSaleModal
+        key={invoiceSession}
         open={invoiceModalOpen}
         onClose={() => setInvoiceModalOpen(false)}
         onSuccess={() => {

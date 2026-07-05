@@ -151,15 +151,6 @@ export default function FinancialStatementsPage() {
       badge: tb ? { label: tb.is_balanced ? 'Balanced' : 'Unbalanced', type: tb.is_balanced ? 'success' as const : 'danger' as const } : null,
     },
     {
-      key: 'income-statement',
-      data: stmt,
-      metrics: stmt ? [
-        { label: 'Revenue', value: fmt(stmt.total_revenue) },
-        { label: 'Net Income', value: fmt(stmt.net_income), positive: stmt.net_income >= 0, negative: stmt.net_income < 0 },
-      ] : [],
-      badge: stmt ? { label: stmt.net_income >= 0 ? 'Profitable' : 'Net Loss', type: stmt.net_income >= 0 ? 'success' as const : 'danger' as const } : null,
-    },
-    {
       key: 'balance-sheet',
       data: bs,
       metrics: bs ? [
@@ -168,6 +159,15 @@ export default function FinancialStatementsPage() {
         { label: 'Equity', value: fmt(bs.total_equity) },
       ] : [],
       badge: bs ? { label: bs.is_balanced ? 'A = L + E' : 'Out of Balance', type: bs.is_balanced ? 'success' as const : 'danger' as const } : null,
+    },
+    {
+      key: 'income-statement',
+      data: stmt,
+      metrics: stmt ? [
+        { label: 'Revenue', value: fmt(stmt.total_revenue) },
+        { label: 'Net Income', value: fmt(stmt.net_income), positive: stmt.net_income >= 0, negative: stmt.net_income < 0 },
+      ] : [],
+      badge: stmt ? { label: stmt.net_income >= 0 ? 'Profitable' : 'Net Loss', type: stmt.net_income >= 0 ? 'success' as const : 'danger' as const } : null,
     },
     {
       key: 'cash-flow',

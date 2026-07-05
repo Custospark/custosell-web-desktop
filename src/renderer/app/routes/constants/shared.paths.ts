@@ -10,6 +10,7 @@ export const ROUTES = {
   SALES: { INDEX: '/sales', NEW: '/sales/new', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: { INDEX: '/inventory', PRODUCTS: '/inventory/products', CATEGORIES: '/inventory/categories', STOCK: '/inventory/stock' },
   CUSTOMERS: { INDEX: '/customers' },
+  INVOICES: { INDEX: '/invoices', NEW: '/invoices/new', DETAIL: (id: number) => `/invoices/${id}` },
   EXPENSES: { INDEX: '/expenses', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
   ACCOUNT: {
     INDEX: '/account',

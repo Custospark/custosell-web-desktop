@@ -26,6 +26,14 @@ export const NOTIFICATIONS = {
   DELETE: (id: number) => `/notifications/${id}`,
 };
 
+export const INVOICES = {
+  BASE: '/invoices',
+  BY_ID: (id: number) => `/invoices/${id}`,
+  SEND: (id: number) => `/invoices/${id}/send`,
+  PAYMENT: (id: number) => `/invoices/${id}/payment`,
+  PDF: (id: number) => `/invoices/${id}/pdf`,
+};
+
 export const ACCOUNTING = {
   COA: '/chart-of-accounts',
   COA_TREE: '/chart-of-accounts/tree',

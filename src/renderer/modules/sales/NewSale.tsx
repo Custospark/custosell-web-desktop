@@ -6,11 +6,12 @@ import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
 import { useCustomers, useCreateSale } from './api/salesQueries';
 import type { Sale } from './api/salesTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, User, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck, FileText } from 'lucide-react';
 import { HiCheckCircle } from 'react-icons/hi2';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
+import InvoiceFromSaleModal from './ui/InvoiceFromSaleModal';
 import SaleCompletedModal from './ui/SaleCompletedModal';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -141,6 +142,7 @@ function BillingControls() {
   const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
 
 
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -741,6 +743,12 @@ export default function NewSale() {
           {/* Hold / Take Buttons */}
           <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
             {cartItems.length > 0 && (
+              <button title="Create an invoice instead of completing sale" onClick={() => setInvoiceModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm">
+                <FileText className="w-4 h-4" /> Generate Invoice
+              </button>
+            )}
+            {cartItems.length > 0 && (
               <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm">
                 <PauseCircle className="w-4 h-4" /> Hold Order
@@ -766,6 +774,20 @@ export default function NewSale() {
 
       <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />
       <HoldOrderModal open={holdModalOpen} onClose={() => setHoldModalOpen(false)} />
+      <InvoiceFromSaleModal
+        open={invoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
+        cartItems={cartItems.map((c) => ({ product_id: c.product_id, name: c.name, quantity: c.quantity, unit_price: c.unit_price }))}
+        subtotal={taxBreakdown.subtotalNet}
+        taxTotal={taxBreakdown.taxTotal}
+        total={taxBreakdown.total}
+        customerId={customerId}
+        onSuccess={() => {
+          dispatch(clearCart());
+          dispatch(setCustomer(null));
+          dispatch(setDiscount(0));
+        }}
+      />
       {qtyEdit && (
         <QuantityEditModal
           open={!!qtyEdit}

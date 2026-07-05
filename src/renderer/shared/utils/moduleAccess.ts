@@ -123,6 +123,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/account') || pathname.startsWith('/notifications')) return 'account';
   if (pathname.startsWith('/settings')) return 'settings';
   if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/invoices')) return 'sales';
   if (pathname.startsWith('/sales')) return 'sales';
   if (pathname.startsWith('/inventory')) return 'inventory';
   if (pathname.startsWith('/customers')) return 'customers';

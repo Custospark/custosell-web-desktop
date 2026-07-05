@@ -24,6 +24,7 @@ import ProductsPage from '../../modules/inventory/ProductsPage';
 import CategoriesPage from '../../modules/inventory/CategoriesPage';
 import StockLedgerPage from '../../modules/inventory/StockLedgerPage';
 import CustomerListPage from '../../modules/customers/CustomerListPage';
+import InvoicesPage from '../../modules/invoices/InvoicesPage';
 import SettingsPage from '../../modules/settings/SettingsPage';
 import BusinessSettingsPage from '../../modules/settings/BusinessSettingsPage';
 import TaxCompliancePage from '../../modules/settings/TaxCompliancePage';
@@ -96,6 +97,7 @@ export function AppRoutes() {
             <Route path={ROUTES.SALES.HISTORY} element={<SuspenseWrapper><SalesHistoryPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.REFUNDS} element={<SuspenseWrapper><RefundsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.MY_SHIFT} element={<SuspenseWrapper><MyShiftPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVOICES.INDEX} element={<SuspenseWrapper><InvoicesPage /></SuspenseWrapper>} />
           </Route>
           <Route element={<ModuleAccessMiddleware module="inventory" />}>
             <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />

@@ -2,7 +2,7 @@ export interface Customer {
   id: number;
   business_id: number;
   name: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   total_purchases: string;
   last_purchase_at: string | null;
@@ -10,11 +10,11 @@ export interface Customer {
 
 export interface CreateCustomerData {
   name: string;
-  phone: string;
+  phone?: string | null;
   email?: string | null;
 }
 
-export interface UpdateCustomerData extends Partial<CreateCustomerData> {}
+export type UpdateCustomerData = Partial<CreateCustomerData>;
 
 export interface CustomerPurchase {
   id: number;

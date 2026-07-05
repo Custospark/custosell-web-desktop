@@ -10,6 +10,7 @@ import {
   getDefaultCountryCode,
   parseInternationalPhone,
 } from '../../../../shared/utils/phoneNumber';
+import { displayCustomerPhone } from '../../../../shared/utils/customerContactUtils';
 
 interface CustomerFormDrawerProps {
   open: boolean;
@@ -37,11 +38,12 @@ export function CustomerFormDrawer({ open, onClose, customer }: CustomerFormDraw
   useEffect(() => {
     queueMicrotask(() => {
       if (customer) {
-        const parsed = parseInternationalPhone(customer.phone);
-        setCountryCode(parsed.countryCode);
+        const displayPhone = displayCustomerPhone(customer.phone);
+        const parsed = displayPhone ? parseInternationalPhone(displayPhone) : null;
+        setCountryCode(parsed?.countryCode ?? getDefaultCountryCode());
         setForm({
           name: customer.name,
-          localPhone: parsed.localNumber,
+          localPhone: parsed?.localNumber ?? '',
           email: customer.email ?? '',
         });
       } else {

@@ -16,7 +16,8 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { CustomerStatsCards } from './CustomerStatsCards';
 import CustomerFormDrawer from './CustomerFormDrawer';
 import CustomerPurchaseModal from './CustomerPurchaseModal';
-import { Users, Plus, Pencil, Trash, ShoppingBag } from 'lucide-react';
+import { displayCustomerPhone } from '../../../../shared/utils/customerContactUtils';
+import { Plus, Users, Pencil, Trash, ShoppingBag } from 'lucide-react';
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
@@ -40,9 +41,10 @@ export default function CustomerList() {
     const safe = customers.filter(Boolean) as CustomerWithSyncMeta[];
     if (!search.trim()) return safe;
     const q = search.toLowerCase();
-    return safe.filter((c) =>
-      c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
-    );
+    return safe.filter((c) => {
+      const phone = displayCustomerPhone(c.phone) ?? '';
+      return c.name.toLowerCase().includes(q) || phone.toLowerCase().includes(q);
+    });
   }, [customers, search]);
 
   const paginated = usePagination(filtered, 10);
@@ -102,7 +104,7 @@ export default function CustomerList() {
                 {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
               </div>
             )},
-            { key: 'phone', header: 'Phone' },
+            { key: 'phone', header: 'Phone', render: (item) => displayCustomerPhone(item.phone) ?? <span className="text-gray-400">—</span> },
             { key: 'email', header: 'Email', render: (item) => item.email || <span className="text-gray-400">—</span> },
             { key: 'total_purchases', header: 'Total Purchases', render: (item) => formatCurrency(item.total_purchases) },
             { key: 'last_purchase_at', header: 'Last Purchase', render: (item) => formatDate(item.last_purchase_at) },

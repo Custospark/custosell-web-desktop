@@ -16,12 +16,23 @@ export const EMPTY_CUSTOMER_CONTACT: CustomerContactValue = {
   phone: '',
 };
 
+export function isSyntheticCustomerPhone(phone?: string | null): boolean {
+  if (!phone?.trim()) return false;
+  return phone.startsWith('em-') || phone.startsWith('walkin-');
+}
+
+/** Phone for display — hides internal backend placeholders. */
+export function displayCustomerPhone(phone?: string | null): string | null {
+  if (!phone?.trim() || isSyntheticCustomerPhone(phone)) return null;
+  return phone.trim();
+}
+
 export function customerToContact(customer: Customer): CustomerContactValue {
   return {
     customerId: customer.id,
     name: customer.name ?? '',
     email: customer.email ?? '',
-    phone: customer.phone ?? '',
+    phone: displayCustomerPhone(customer.phone) ?? '',
   };
 }
 
@@ -65,7 +76,7 @@ export function getCustomerContactMeta(
     displayName: selected?.name || value.name.trim() || 'Walk-in customer',
     statusLabel,
     email: selected?.email || value.email.trim() || null,
-    phone: selected?.phone || value.phone.trim() || null,
+    phone: displayCustomerPhone(selected?.phone || value.phone.trim() || null),
   };
 }
 
@@ -74,7 +85,7 @@ export function filterCustomersByQuery(customers: Customer[], query: string): Cu
   if (!q) return customers;
   return customers.filter((c) => {
     const name = c.name?.toLowerCase() ?? '';
-    const phone = c.phone ?? '';
+    const phone = displayCustomerPhone(c.phone) ?? '';
     const email = c.email?.toLowerCase() ?? '';
     return name.includes(q) || phone.includes(q) || email.includes(q);
   });

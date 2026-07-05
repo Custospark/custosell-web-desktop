@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Search, User, UserPlus, Users, X, Check, Store, Mail, Phone,
+  Search, UserPlus, Users, X, Check, Store, Mail, Phone,
 } from 'lucide-react';
 import { useCustomers } from '../../../modules/customers/api/customers/CustomerQueries';
 import { Input } from '../inputs/Input';
@@ -8,6 +8,7 @@ import { cn } from '../../utils/cn';
 import {
   customerToContact,
   customerContactInitials,
+  displayCustomerPhone,
   filterCustomersByQuery,
   type CustomerContactValue,
   EMPTY_CUSTOMER_CONTACT,
@@ -104,7 +105,7 @@ export default function CustomerContactPicker({
 
   const summaryName = selected?.name || value.name.trim() || null;
   const summaryEmail = selected?.email || value.email.trim() || null;
-  const summaryPhone = selected?.phone || value.phone.trim() || null;
+  const summaryPhone = displayCustomerPhone(selected?.phone) || displayCustomerPhone(value.phone) || null;
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -290,7 +291,7 @@ export default function CustomerContactPicker({
                     <span className="flex-1 min-w-0">
                       <span className="font-medium text-gray-900 block truncate">{c.name}</span>
                       <span className="text-[11px] text-gray-500 block truncate">
-                        {[c.phone, c.email].filter(Boolean).join(' · ') || 'No phone or email'}
+                        {[displayCustomerPhone(c.phone), c.email].filter(Boolean).join(' · ') || 'No phone or email'}
                       </span>
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}

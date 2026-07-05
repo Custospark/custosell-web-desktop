@@ -8,18 +8,19 @@ import { useToast } from '../../app/contexts/useToast';
 import { useInvoices, useSendInvoice, useDeleteInvoice } from './api/InvoiceQueries';
 import type { Invoice } from './api/InvoiceTypes';
 import NewInvoiceBuilder from './NewInvoiceBuilder';
+import EditInvoiceDraftPanel from './EditInvoiceDraftPanel';
 import RecordPaymentModal from './RecordPaymentModal';
 import { viewInvoicePdf, downloadInvoicePdf } from './useInvoicePdf';
 import {
   FileText, Plus, Send, Download, Trash2, DollarSign, Search,
-  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle,
+  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle, Pencil,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { formatShiftDate } from '../../shared/utils/formatDateTime';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 
-type InvoiceView = 'list' | 'create';
+type InvoiceView = 'list' | 'create' | 'edit';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 ring-1 ring-gray-200',
@@ -93,6 +94,7 @@ function IconAction({
 
 export default function InvoicesPage() {
   const [view, setView] = useState<InvoiceView>('list');
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentModal, setPaymentModal] = useState<Invoice | null>(null);
@@ -253,17 +255,30 @@ export default function InvoicesPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {item.status === 'draft' && (
-              <IconAction
-                title="Send invoice (posts to accounting)"
-                loading={rowBusy && busyAction?.type === 'send'}
-                disabled={busyAction !== null && !rowBusy}
-                onClick={() => runRowAction(item.id, 'send', () => {
-                  sendInvoice.mutate(item.id, { onSettled: () => setBusyAction(null) });
-                })}
-                className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </IconAction>
+              <>
+                <IconAction
+                  title="Edit draft"
+                  disabled={busyAction !== null}
+                  onClick={() => {
+                    setEditingId(item.id);
+                    setView('edit');
+                  }}
+                  className="text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </IconAction>
+                <IconAction
+                  title="Send invoice (posts to accounting)"
+                  loading={rowBusy && busyAction?.type === 'send'}
+                  disabled={busyAction !== null && !rowBusy}
+                  onClick={() => runRowAction(item.id, 'send', () => {
+                    sendInvoice.mutate(item.id, { onSettled: () => setBusyAction(null) });
+                  })}
+                  className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </IconAction>
+              </>
             )}
             {canPay && balanceDue(item) > 0 && (
               <IconAction
@@ -334,7 +349,9 @@ export default function InvoicesPage() {
               <p className="text-sm text-gray-500 mt-0.5">
                 {view === 'list'
                   ? 'Create → Send (accounting) → Record payment'
-                  : 'Add products and create a draft invoice'}
+                  : view === 'edit'
+                    ? 'Edit draft items, customer, and dates'
+                    : 'Add products and create a draft invoice'}
               </p>
             </div>
           </div>
@@ -342,7 +359,7 @@ export default function InvoicesPage() {
           <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 self-start sm:self-auto">
             <button
               type="button"
-              onClick={() => setView('list')}
+              onClick={() => { setView('list'); setEditingId(null); }}
               className={cn(
                 'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
                 view === 'list'
@@ -355,7 +372,7 @@ export default function InvoicesPage() {
             </button>
             <button
               type="button"
-              onClick={() => setView('create')}
+              onClick={() => { setView('create'); setEditingId(null); }}
               className={cn(
                 'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
                 view === 'create'
@@ -388,7 +405,15 @@ export default function InvoicesPage() {
         )}
       </Card>
 
-      {view === 'create' ? (
+      {view === 'edit' && editingId ? (
+        <Card className="p-5">
+          <EditInvoiceDraftPanel
+            invoiceId={editingId}
+            onSaved={() => { setView('list'); setEditingId(null); }}
+            onCancel={() => { setView('list'); setEditingId(null); }}
+          />
+        </Card>
+      ) : view === 'create' ? (
         <Card className="p-5">
           <NewInvoiceBuilder onCreated={() => setView('list')} />
         </Card>
@@ -428,6 +453,7 @@ export default function InvoicesPage() {
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
                 <strong>{stats.drafts}</strong> draft{stats.drafts !== 1 ? 's' : ''} — use{' '}
+                <Pencil className="w-3.5 h-3.5 inline -mt-0.5" /> Edit to adjust items, then{' '}
                 <Send className="w-3.5 h-3.5 inline -mt-0.5" /> Send to post revenue and receivables to accounting.
               </span>
             </div>

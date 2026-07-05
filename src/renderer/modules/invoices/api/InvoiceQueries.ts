@@ -89,6 +89,33 @@ export function useInvoice(id: number) {
   });
 }
 
+export type UpdateInvoicePayload = {
+  customer_id?: number | null;
+  issue_date: string;
+  due_date: string;
+  tax_total?: number;
+  items: { product_id?: number | null; description: string; quantity: number; unit_price: number; subtotal: number }[];
+  notes?: string;
+};
+
+export function useUpdateInvoice() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<Invoice, AxiosError, { id: number; payload: UpdateInvoicePayload }>({
+    mutationFn: async ({ id, payload }) => {
+      const { data } = await axiosInstance.put(INVOICES.BY_ID(id), payload);
+      return normalizeInvoiceResponse(data);
+    },
+    onSuccess: (invoice) => {
+      upsertInvoiceInCache(qc, invoice);
+      qc.setQueryData(invoiceKeys.detail(invoice.id), invoice);
+      void qc.invalidateQueries({ queryKey: invoiceKeys.all });
+      showToast('success', 'Invoice updated');
+    },
+    onError: (e) => showToast('error', sanitizeErrorMessage(e, 'Failed to update invoice')),
+  });
+}
+
 export function useCreateInvoice() {
   const qc = useQueryClient();
   const { showToast } = useToast();

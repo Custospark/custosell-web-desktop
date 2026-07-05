@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { Table } from '../../shared/components/tables/Table';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { useToast } from '../../app/contexts/useToast';
 
 import { useInvoices, useSendInvoice, useDeleteInvoice } from './api/InvoiceQueries';
@@ -123,6 +124,8 @@ export default function InvoicesPage() {
       return true;
     });
   }, [sorted, search, statusFilter]);
+
+  const paginated = usePagination(filtered, 15);
 
   const stats = useMemo(() => {
     const list = invoices ?? [];
@@ -248,6 +251,7 @@ export default function InvoicesPage() {
       render: (item: Invoice) => {
         const rowBusy = busyAction?.id === item.id;
         const canPay = item.status === 'sent' || item.status === 'partially_paid' || isOverdue(item);
+        const paymentCount = item.payments?.length ?? 0;
 
         return (
           <div
@@ -282,16 +286,29 @@ export default function InvoicesPage() {
             )}
             {(canPay && balanceDue(item) > 0) || ((item.amount_paid || 0) > 0 && item.status !== 'draft') ? (
               <IconAction
-                title={balanceDue(item) > 0 ? 'Payments — record or view history' : 'Payment history & receipts'}
+                title={
+                  paymentCount > 0
+                    ? `Payment history (${paymentCount})`
+                    : balanceDue(item) > 0
+                      ? 'Payments — record or view history'
+                      : 'Payment history & receipts'
+                }
                 disabled={busyAction !== null}
                 onClick={() => setPaymentModal(item)}
                 className="text-green-600 hover:bg-green-50 hover:text-green-700"
               >
-                {balanceDue(item) > 0 ? (
-                  <DollarSign className="w-3.5 h-3.5" />
-                ) : (
-                  <Receipt className="w-3.5 h-3.5" />
-                )}
+                <span className="relative inline-flex">
+                  {balanceDue(item) > 0 ? (
+                    <DollarSign className="w-3.5 h-3.5" />
+                  ) : (
+                    <Receipt className="w-3.5 h-3.5" />
+                  )}
+                  {paymentCount > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
+                      {paymentCount}
+                    </span>
+                  )}
+                </span>
               </IconAction>
             ) : null}
             <IconAction
@@ -525,9 +542,21 @@ export default function InvoicesPage() {
                 </Button>
               </div>
             ) : (
-              <div className="-mx-1">
-                <Table columns={columns} data={filtered} loading={false} rowKey={(item) => item.id} />
-              </div>
+              <>
+                <div className="-mx-1">
+                  <Table columns={columns} data={paginated.data} loading={false} rowKey={(item) => item.id} />
+                </div>
+                <div className="flex items-center justify-between mt-4 px-1">
+                  <Pagination
+                    currentPage={paginated.page}
+                    totalPages={paginated.totalPages}
+                    totalItems={paginated.totalItems}
+                    pageSize={paginated.pageSize}
+                    onPageChange={paginated.setPage}
+                    onPageSizeChange={paginated.setPageSize}
+                  />
+                </div>
+              </>
             )}
           </div>
         </Card>

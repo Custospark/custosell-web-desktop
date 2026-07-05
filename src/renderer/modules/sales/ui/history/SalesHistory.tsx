@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useSales } from '../../api/salesQueries';
+import { useInvoices } from '../../../invoices/api/InvoiceQueries';
+import { findInvoiceBySaleId } from '../../../invoices/invoiceUtils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
 import { Table } from '../../../../shared/components/tables/Table';
@@ -20,17 +22,20 @@ import SalePaymentsModal from './SalePaymentsModal';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 import { computeSaleBalance } from '../../../payments/payableBalance';
 import type { Sale } from '../../api/salesTypes';
+import type { Invoice } from '../../../invoices/api/InvoiceTypes';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 
 export default function SalesHistory() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { data: sales = [], isLoading, error, refetch, isFetching } = useSales();
+  const { data: invoices = [] } = useInvoices();
   const qc = useQueryClient();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [previewSale, setPreviewSale] = useState<Sale | null>(null);
   const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
   const [invoiceSale, setInvoiceSale] = useState<Sale | null>(null);
+  const [existingInvoiceForSale, setExistingInvoiceForSale] = useState<Invoice | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
@@ -70,6 +75,17 @@ export default function SalesHistory() {
       setSelectedIds(new Set(paginated.data.map((s) => s.id)));
     }
   }, [allSelected, paginated.data]);
+
+  const handleInvoiceClick = useCallback((sale: Sale) => {
+    const existing = findInvoiceBySaleId(invoices, sale.id);
+    setExistingInvoiceForSale(existing ?? null);
+    setInvoiceSale(sale);
+  }, [invoices]);
+
+  const handleCloseInvoiceModal = useCallback(() => {
+    setInvoiceSale(null);
+    setExistingInvoiceForSale(null);
+  }, []);
 
   const toggleOne = useCallback((id: number) => {
     setSelectedIds((prev) => {
@@ -201,13 +217,22 @@ export default function SalesHistory() {
             const hasPayments = paymentCount > 0 || s.payment_status === 'partially_paid';
             const hasItems = (s.sale_items?.length ?? 0) > 0;
             const canInvoice = s.id > 0 && hasItems && s.payment_status !== 'refunded';
+            const linkedInvoice = findInvoiceBySaleId(invoices, s.id);
             return (
             <div className="flex gap-1">
               <button title="Sale summary receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                 <Eye className="w-4 h-4" />
               </button>
               {canInvoice && (
-                <button title="Billing invoice linked to this sale" onClick={() => setInvoiceSale(s)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
+                <button
+                  title={
+                    linkedInvoice
+                      ? `View linked invoice ${linkedInvoice.invoice_number}`
+                      : 'Create billing invoice for this sale'
+                  }
+                  onClick={() => handleInvoiceClick(s)}
+                  className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+                >
                   <FileText className="w-4 h-4" />
                 </button>
               )}
@@ -240,8 +265,9 @@ export default function SalesHistory() {
         <InvoiceFromSaleModal
           open={!!invoiceSale}
           linkedSale={invoiceSale}
-          onClose={() => setInvoiceSale(null)}
-          onSuccess={() => setInvoiceSale(null)}
+          existingInvoice={existingInvoiceForSale}
+          onClose={handleCloseInvoiceModal}
+          onSuccess={handleCloseInvoiceModal}
         />
       )}
     </Card>

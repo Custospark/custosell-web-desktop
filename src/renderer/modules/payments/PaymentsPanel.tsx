@@ -65,7 +65,7 @@ function SummaryCard({
       </div>
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-wide text-gray-500 font-medium">{label}</p>
-        <p className="text-sm font-bold tabular-nums text-gray-900 mt-0.5 truncate">{value}</p>
+        <p className="text-sm font-bold tabular-nums text-gray-900 mt-0.5 break-words">{value}</p>
       </div>
     </div>
   );

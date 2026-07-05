@@ -67,7 +67,7 @@ export default function SalePaymentsModal({ sale, open, onClose }: SalePaymentsM
   }
 
   return (
-    <Modal isOpen={open} onClose={onClose} title="" size="lg" bodyClassName="px-5 py-4">
+    <Modal isOpen={open} onClose={onClose} title="" size="lg" panelClassName="lg:max-w-4xl" bodyClassName="px-5 py-4">
       <PaymentsPanel
         referenceLabel={activeSale.receipt_number}
         referenceType="Sale"

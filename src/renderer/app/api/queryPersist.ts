@@ -1,9 +1,27 @@
 import type { Query } from '@tanstack/react-query';
 
-/** Platform admin data should always be fetched fresh — never written to localStorage. */
+const ACCOUNTING_FRESH_REPORT_KINDS = new Set([
+  'trial-balance',
+  'income-statement',
+  'balance-sheet',
+  'cash-flow',
+  'equity',
+  'ratios',
+]);
+
+function isFreshFinancialReportQuery(key: readonly unknown[]): boolean {
+  return key[0] === 'accounting'
+    && typeof key[1] === 'string'
+    && ACCOUNTING_FRESH_REPORT_KINDS.has(key[1]);
+}
+
+/** Platform admin + live financial reports should always be fetched fresh — never written to localStorage. */
 export function shouldPersistQuery(query: Query): boolean {
   const root = query.queryKey[0];
   if (root === 'platform') {
+    return false;
+  }
+  if (isFreshFinancialReportQuery(query.queryKey)) {
     return false;
   }
   return query.state.status === 'success';

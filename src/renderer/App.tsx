@@ -17,7 +17,7 @@ import './App.css';
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 const Router = isElectron ? HashRouter : BrowserRouter;
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 
 const persister = createSyncStoragePersister({
   storage: window.localStorage,

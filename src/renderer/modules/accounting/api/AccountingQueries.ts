@@ -9,6 +9,16 @@ import type {
   CashFlowStatement, EquityStatement, InventoryReconciliation,
 } from './AccountingTypes';
 
+/** Statements + ratios always refetch when online (mount, focus, reconnect). */
+export const financialReportQueryDefaults = {
+  staleTime: 0,
+  gcTime: 0,
+  refetchOnMount: 'always' as const,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+  networkMode: 'always' as const,
+} as const;
+
 export const accountingKeys = {
   all: ['accounting'] as const,
   coa: (filters?: Record<string, string>) => [...accountingKeys.all, 'chart-of-accounts', filters] as const,
@@ -96,6 +106,7 @@ export function useTrialBalance(periodId?: number) {
       const { data } = await axiosInstance.get<{ data: TrialBalance }>(`${ACCOUNTING.TRIAL_BALANCE}${params}`);
       return data.data;
     },
+    ...financialReportQueryDefaults,
   });
 }
 
@@ -107,6 +118,7 @@ export function useIncomeStatement(periodId?: number) {
       const { data } = await axiosInstance.get<{ data: IncomeStatement }>(`${ACCOUNTING.INCOME_STATEMENT}${params}`);
       return data.data;
     },
+    ...financialReportQueryDefaults,
   });
 }
 
@@ -118,6 +130,7 @@ export function useBalanceSheet(periodId?: number) {
       const { data } = await axiosInstance.get<{ data: BalanceSheet }>(`${ACCOUNTING.BALANCE_SHEET}${params}`);
       return data.data;
     },
+    ...financialReportQueryDefaults,
   });
 }
 
@@ -129,6 +142,7 @@ export function useRatios(periodId?: number) {
       const { data } = await axiosInstance.get<{ data: RatioSet }>(`${ACCOUNTING.RATIOS}${params}`);
       return data.data;
     },
+    ...financialReportQueryDefaults,
   });
 }
 
@@ -141,8 +155,7 @@ export function useRatioTrends(interval = 'monthly', count = 12) {
       );
       return data.data ?? [];
     },
-    staleTime: 0,
-    refetchOnMount: 'always',
+    ...financialReportQueryDefaults,
     retry: 1,
   });
 }
@@ -339,6 +352,7 @@ export function useCashFlow(periodId?: number) {
       const { data } = await axiosInstance.get<{ data: CashFlowStatement }>(`${ACCOUNTING.CASH_FLOW}${params}`);
       return data.data;
     },
+    ...financialReportQueryDefaults,
   });
 }
 
@@ -350,6 +364,7 @@ export function useEquity(periodId?: number) {
       const { data } = await axiosInstance.get<{ data: EquityStatement }>(`${ACCOUNTING.EQUITY}${params}`);
       return data.data;
     },
+    ...financialReportQueryDefaults,
   });
 }
 

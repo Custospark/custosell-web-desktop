@@ -62,7 +62,7 @@ export default function RecordPaymentModal({ invoice, onClose, onPaymentRecorded
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl lg:max-w-3xl xl:max-w-4xl max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 backdrop-blur px-5 py-4">

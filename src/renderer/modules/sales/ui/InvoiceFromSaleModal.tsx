@@ -25,6 +25,8 @@ interface InvoiceFromSaleModalProps {
   onSuccess: () => void;
   /** Completed sale to bill — links invoice via sale_id so send won't double-post revenue. */
   linkedSale?: Sale | null;
+  /** When set, opens the existing linked invoice instead of the create-draft flow. */
+  existingInvoice?: Invoice | null;
 }
 
 type BuilderStep = 'build' | 'success';
@@ -287,7 +289,13 @@ function InvoiceSuccessPanel({
   );
 }
 
-export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedSale }: InvoiceFromSaleModalProps) {
+export default function InvoiceFromSaleModal({
+  open,
+  onClose,
+  onSuccess,
+  linkedSale,
+  existingInvoice,
+}: InvoiceFromSaleModalProps) {
   const navigate = useNavigate();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const customerId = useAppSelector((s) => s.sales.customerId);
@@ -305,9 +313,23 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [invoiceOverride, setInvoiceOverride] = useState<Invoice | null>(null);
+
+  const isViewingExisting = open && existingInvoice != null;
+  const resolvedExisting = invoiceOverride ?? existingInvoice;
+  const displayInvoice = isViewingExisting ? resolvedExisting : createdInvoice;
+  const displayStep: BuilderStep = isViewingExisting ? 'success' : step;
+  const displayPhase: SuccessPhase = (() => {
+    const inv = displayInvoice;
+    if (!inv) return successPhase;
+    if (isViewingExisting || invoiceOverride) {
+      return inv.status === 'draft' ? 'draft' : 'sent';
+    }
+    return successPhase;
+  })();
 
   const seed = useMemo(() => {
-    if (!open) return undefined;
+    if (!open || isViewingExisting) return undefined;
     if (isLinkedSale && linkedSale) {
       const lineItems = saleItemsToLineItems(linkedSale.sale_items ?? []);
       if (lineItems.length === 0) return undefined;
@@ -324,11 +346,22 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
       customerId,
       notes: saleNotes || undefined,
     };
-  }, [open, isLinkedSale, linkedSale, cartItems, customerId, saleNotes]);
+  }, [open, isViewingExisting, isLinkedSale, linkedSale, cartItems, customerId, saleNotes]);
 
   const lineCount = seed?.lineItems.length ?? 0;
 
+  const modalTitle = useMemo(() => {
+    if (displayStep === 'success') {
+      if (isViewingExisting) {
+        return displayInvoice?.status === 'draft' ? 'Linked draft invoice' : 'Linked invoice';
+      }
+      return displayPhase === 'sent' ? 'Invoice sent' : 'Draft saved';
+    }
+    return isLinkedSale ? 'Invoice from completed sale' : 'Generate invoice from cart';
+  }, [displayStep, displayPhase, isLinkedSale, isViewingExisting, displayInvoice?.status]);
+
   const hasSaleDiscount = useMemo(() => {
+    if (isViewingExisting) return false;
     if (isLinkedSale) return false;
     if (discountAmount <= 0) return false;
     const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
@@ -337,17 +370,15 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
       ? Math.min(subtotal * (discountAmount / 100), subtotal)
       : Math.min(discountAmount, subtotal);
     return discountValue > 0;
-  }, [cartItems, discountAmount, discountType, isLinkedSale]);
-
-  const modalTitle = useMemo(() => {
-    if (step !== 'success') {
-      return isLinkedSale ? 'Invoice from completed sale' : 'Generate invoice from cart';
-    }
-    return successPhase === 'sent' ? 'Invoice sent' : 'Draft saved';
-  }, [step, successPhase, isLinkedSale]);
+  }, [cartItems, discountAmount, discountType, isLinkedSale, isViewingExisting]);
 
   function handleClose() {
-    if (step === 'success') onSuccess();
+    if (displayStep === 'success' && !isViewingExisting) onSuccess();
+    setStep('build');
+    setSuccessPhase('draft');
+    setCreatedInvoice(null);
+    setInvoiceOverride(null);
+    setPaymentModalOpen(false);
     onClose();
   }
 
@@ -359,20 +390,24 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
   }
 
   function handleSend() {
-    if (!createdInvoice) return;
-    sendInvoice.mutate(createdInvoice.id, {
+    if (!displayInvoice) return;
+    sendInvoice.mutate(displayInvoice.id, {
       onSuccess: (updated) => {
-        setCreatedInvoice(updated);
-        setSuccessPhase('sent');
+        if (isViewingExisting) {
+          setInvoiceOverride(updated);
+        } else {
+          setCreatedInvoice(updated);
+          setSuccessPhase('sent');
+        }
       },
     });
   }
 
   async function handleViewPdf() {
-    if (!createdInvoice) return;
+    if (!displayInvoice) return;
     setPdfLoading(true);
     try {
-      await viewInvoicePdf(createdInvoice.id);
+      await viewInvoicePdf(displayInvoice.id);
     } finally {
       setPdfLoading(false);
     }
@@ -400,14 +435,14 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
       isOpen={open}
       onClose={handleClose}
       title={modalTitle}
-      size={step === 'success' ? 'lg' : '2xl'}
+      size={displayStep === 'success' ? 'lg' : '2xl'}
       bodyClassName="px-4 py-4 sm:px-6"
       panelClassName="max-h-[95vh]"
     >
-      {step === 'success' && createdInvoice ? (
+      {displayStep === 'success' && displayInvoice ? (
         <InvoiceSuccessPanel
-          invoice={createdInvoice}
-          phase={successPhase}
+          invoice={displayInvoice}
+          phase={displayPhase}
           pdfLoading={pdfLoading}
           sendLoading={sendInvoice.isPending}
           onSend={handleSend}
@@ -415,7 +450,7 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
           onOpenInvoices={finishAndGoToInvoices}
           onDone={finishAndStayOnSales}
           onRecordPayment={
-            successPhase === 'sent' && balanceDue(createdInvoice) > 0
+            displayPhase === 'sent' && balanceDue(displayInvoice) > 0
               ? () => setPaymentModalOpen(true)
               : undefined
           }
@@ -493,12 +528,13 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedS
           />
         </div>
       )}
-      {paymentModalOpen && createdInvoice && (
+      {paymentModalOpen && displayInvoice && (
         <RecordPaymentModal
-          invoice={createdInvoice}
+          invoice={displayInvoice}
           onClose={() => setPaymentModalOpen(false)}
           onPaymentRecorded={({ invoice }) => {
-            setCreatedInvoice(invoice);
+            if (isViewingExisting) setInvoiceOverride(invoice);
+            else setCreatedInvoice(invoice);
             setPaymentModalOpen(false);
           }}
         />

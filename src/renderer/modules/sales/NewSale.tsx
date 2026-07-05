@@ -748,6 +748,10 @@ export default function NewSale() {
                 <FileText className="w-4 h-4" /> Generate Invoice
               </button>
             )}
+            <a href="/invoices" title="View and manage all invoices"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm">
+              <FileText className="w-4 h-4" /> Manage Invoices
+            </a>
             {cartItems.length > 0 && (
               <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm">

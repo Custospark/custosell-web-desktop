@@ -168,7 +168,7 @@ export default function FinancialStatementsPage() {
 
       {activeTab && (
         <PdfReportView
-          key={`${activeTab}-${periodId || effectivePeriodId ?? 'none'}`}
+          key={`${activeTab}-${(periodId || effectivePeriodId) ?? 'none'}`}
           type={STATEMENT_TYPE[activeTab]}
           periodId={effectivePeriodId}
           rawPeriodId={periodId}

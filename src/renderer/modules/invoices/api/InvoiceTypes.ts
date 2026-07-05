@@ -13,6 +13,7 @@ export interface Invoice {
   business_id: number;
   invoice_number: string;
   customer_id: number | null;
+  sale_id?: number | null;
   customer?: { id: number; name: string; phone?: string } | null;
   issue_date: string;
   due_date: string;

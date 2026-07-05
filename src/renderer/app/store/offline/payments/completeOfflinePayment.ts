@@ -3,14 +3,10 @@ import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
 import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../sales/localSalesStore';
 import { getOfflineDb } from '../core/offlineDb';
-import { offlinePaymentReceiptNumber } from '../../../../shared/utils/documentNumbers';
 import { computeSaleBalance } from '../../../../modules/payments/payableBalance';
 import type { RecordPaymentPayload, Payment, RecordSalePaymentResult } from '../../../../modules/payments/paymentTypes';
 import type { Sale } from '../../../../modules/sales/api/salesTypes';
-
-export function shouldCompletePaymentLocally(): boolean {
-  return shouldCompleteMutationLocally();
-}
+import { offlinePaymentReceiptNumber } from '../../../../shared/utils/documentNumbers';
 
 function buildLocalPaymentReceiptNumber(): string {
   return offlinePaymentReceiptNumber();

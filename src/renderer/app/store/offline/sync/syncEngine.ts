@@ -32,17 +32,24 @@ import type { StaffUser } from '../../../../modules/settings/api/settings/StaffT
 import { commitMutationQueueEntry } from './syncMutationFinalize';
 import { refreshExpenseCategoriesSnapshot } from '../catalogs/expensesCatalogSnapshot';
 import { invalidateAfterItemCommitted } from './syncCacheRefresh';
+import {
+  getSaleIdFromScopedUrl,
+  isSalePaymentMutation,
+  isSaleScopedMutation,
+  remapSaleScopedUrl,
+} from './saleSyncRemap';
 
-function getRefundSaleId(m: QueuedMutation): number | null {
-  const match = m.url.match(/^\/sales\/(-?\d+)\/refund$/);
-  return match ? Number(match[1]) : null;
-}
-
-async function isRefundBlocked(m: QueuedMutation): Promise<boolean> {
-  const saleId = getRefundSaleId(m);
+async function isSaleScopedMutationBlocked(m: QueuedMutation): Promise<boolean> {
+  const saleId = getSaleIdFromScopedUrl(m.url);
   if (!saleId || saleId > 0) return false;
   const pending = await localSalesStore.getPending();
   return pending.some((r) => r.sale.id === saleId && r.syncStatus === 'pending');
+}
+
+function needsSaleIdRemap(m: QueuedMutation, saleIdMap: Map<number, number>): boolean {
+  const saleId = getSaleIdFromScopedUrl(m.url);
+  if (!saleId || saleId > 0) return false;
+  return !saleIdMap.has(saleId);
 }
 
 function extractShiftIdFromCloseUrl(url: string): number | null {
@@ -612,6 +619,7 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
   const roleCreates = pending.filter(isRoleCreateMutation);
   const staffCreates = pending.filter(isStaffCreateMutation);
   const saleMutations = pending.filter(isSaleMutation);
+  const salePaymentMutations = pending.filter(isSalePaymentMutation);
   const productCreates = pending.filter(isProductCreateMutation);
   const expenseMutations = pending.filter(isExpenseMutation);
   const refundMutations = pending.filter(isRefundMutation);
@@ -625,10 +633,12 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
       !isRoleCreateMutation(m) &&
       !isStaffCreateMutation(m) &&
       !isSaleMutation(m) &&
+      !isSalePaymentMutation(m) &&
       !isProductCreateMutation(m) &&
       !isExpenseMutation(m) &&
       !isRefundMutation(m) &&
-      !isShiftCloseMutation(m),
+      !isShiftCloseMutation(m) &&
+      !isSaleScopedMutation(m),
   );
 
   let synced = 0;
@@ -678,7 +688,8 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
 
   reporter?.setTier(2, 'Transactions');
 
-  const salesResult = await processSalesInChunks(saleMutations, idMap, reporter);
+  const saleIdMap = new Map<number, number>();
+  const salesResult = await processSalesInChunks(saleMutations, idMap, saleIdMap, reporter);
   synced += salesResult.synced;
   failed += salesResult.failed;
 
@@ -701,9 +712,34 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
   failed += expenseResult.failed;
   reporter?.addProgress(expenseResult.synced, expenseResult.failed);
 
+  reporter?.setTier(2, 'Sale payments');
+
+  for (const m of salePaymentMutations) {
+    if (await isSaleScopedMutationBlocked(m)) continue;
+    if (needsSaleIdRemap(m, saleIdMap)) {
+      console.warn('[SyncEngine] Sale payment waiting for sale id remap:', {
+        mutationId: m.id,
+        saleId: getSaleIdFromScopedUrl(m.url),
+      });
+      continue;
+    }
+    const remapped = { ...m, url: remapSaleScopedUrl(m.url, saleIdMap) };
+    const ok = await processMutation(remapped);
+    if (ok) synced++;
+    else failed++;
+  }
+
   for (const m of refundMutations) {
-    if (await isRefundBlocked(m)) continue;
-    const ok = await processMutation(m);
+    if (await isSaleScopedMutationBlocked(m)) continue;
+    if (needsSaleIdRemap(m, saleIdMap)) {
+      console.warn('[SyncEngine] Sale refund waiting for sale id remap:', {
+        mutationId: m.id,
+        saleId: getSaleIdFromScopedUrl(m.url),
+      });
+      continue;
+    }
+    const remapped = { ...m, url: remapSaleScopedUrl(m.url, saleIdMap) };
+    const ok = await processMutation(remapped);
     if (ok) synced++;
     else failed++;
   }

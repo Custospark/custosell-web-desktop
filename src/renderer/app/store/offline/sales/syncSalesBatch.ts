@@ -49,12 +49,19 @@ export function sortSalesMutationsChronologically(mutations: QueuedMutation[]): 
   });
 }
 
-async function commitSaleSync(m: QueuedMutation, serverSale?: Sale): Promise<void> {
+async function commitSaleSync(
+  m: QueuedMutation,
+  serverSale?: Sale,
+  saleIdMap?: Map<number, number>,
+): Promise<void> {
   const localRecord = await localSalesStore.getByMutationId(m.id);
   await commitMutationQueueEntry(m.id);
   await localSalesStore.removeByMutationId(m.id);
 
   if (serverSale && localRecord) {
+    if (localRecord.sale.id < 0 && serverSale.id > 0) {
+      saleIdMap?.set(localRecord.sale.id, serverSale.id);
+    }
     applySyncedSaleToCache(queryClient, localRecord.sale, serverSale);
   }
 }
@@ -68,12 +75,16 @@ async function markSaleFailed(m: QueuedMutation, message: string): Promise<void>
   await localSalesStore.markFailedByMutationId(m.id);
 }
 
-async function reconcileDuplicateSale(m: QueuedMutation, message: string): Promise<boolean> {
+async function reconcileDuplicateSale(
+  m: QueuedMutation,
+  message: string,
+  saleIdMap: Map<number, number>,
+): Promise<boolean> {
   if (!/duplicate|already|exists|unique/i.test(message)) return false;
 
   const committed = await commitMutationQueueEntryIfPresent(m.id);
   if (committed) {
-    await commitSaleSync(m);
+    await commitSaleSync(m, undefined, saleIdMap);
   }
   return committed;
 }
@@ -136,7 +147,11 @@ async function reconcileAmbiguousSaleFailure(
   }
 }
 
-async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Promise<boolean> {
+async function syncSingleSale(
+  m: QueuedMutation,
+  idMap: Map<number, number>,
+  saleIdMap: Map<number, number>,
+): Promise<boolean> {
   const queued = await mutationQueue.getById(m.id);
   if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) {
     return true;
@@ -151,7 +166,7 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
     });
     const wrapped = response.data as { data?: Sale };
     const serverSale = extractBatchSales(response.data)[0] ?? wrapped?.data ?? (response.data as Sale);
-    await commitSaleSync(m, serverSale);
+    await commitSaleSync(m, serverSale, saleIdMap);
     return true;
   } catch (error: unknown) {
     if (isAuthHttpError(error)) throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
@@ -159,12 +174,12 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
     if (!axiosErr.response) {
       const reconciled = await reconcileAmbiguousSaleFailure(m, payload);
       if (reconciled) {
-        await commitSaleSync(m, reconciled);
+        await commitSaleSync(m, reconciled, saleIdMap);
         return true;
       }
     }
     const message = extractErrorMessage(error, 'Sale sync failed');
-    if (await reconcileDuplicateSale(m, message)) return true;
+    if (await reconcileDuplicateSale(m, message, saleIdMap)) return true;
     await markSaleFailed(m, message);
     return false;
   }
@@ -173,6 +188,7 @@ async function syncSingleSale(m: QueuedMutation, idMap: Map<number, number>): Pr
 async function syncSalesChunkBatch(
   chunk: QueuedMutation[],
   idMap: Map<number, number>,
+  saleIdMap: Map<number, number>,
 ): Promise<{ synced: number; failed: number }> {
   const activeChunk = (
     await Promise.all(chunk.map(async (m) => ({ m, queued: await mutationQueue.getById(m.id) })))
@@ -199,7 +215,7 @@ async function syncSalesChunkBatch(
       for (let i = 0; i < activeChunk.length; i++) {
         const m = activeChunk[i];
         const serverSale = syncedSales[i];
-        await commitSaleSync(m, serverSale);
+        await commitSaleSync(m, serverSale, saleIdMap);
       }
 
       await finalizeSalesSyncUi();
@@ -222,7 +238,7 @@ async function syncSalesChunkBatch(
   let synced = 0;
   let failed = 0;
   for (const m of activeChunk) {
-    const ok = await syncSingleSale(m, idMap);
+    const ok = await syncSingleSale(m, idMap, saleIdMap);
     if (ok) synced++;
     else failed++;
   }
@@ -235,6 +251,7 @@ async function syncSalesChunkBatch(
 export async function processSalesInChunks(
   saleMutations: QueuedMutation[],
   idMap: Map<number, number>,
+  saleIdMap: Map<number, number>,
   reporter?: SyncProgressReporter,
 ): Promise<{ synced: number; failed: number }> {
   if (saleMutations.length === 0) return { synced: 0, failed: 0 };
@@ -249,7 +266,7 @@ export async function processSalesInChunks(
     if (isOfflineMode()) break;
 
     const chunk = sorted.slice(i, i + SALES_BATCH_SIZE);
-    const result = await syncSalesChunkBatch(chunk, idMap);
+    const result = await syncSalesChunkBatch(chunk, idMap, saleIdMap);
     synced += result.synced;
     failed += result.failed;
     reporter?.addProgress(result.synced, result.failed);

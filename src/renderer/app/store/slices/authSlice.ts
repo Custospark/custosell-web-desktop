@@ -26,6 +26,14 @@ export interface BusinessInfo {
   business_type: string | null;
   currency: string | null;
   receipt_footer: string | null;
+  payment_bank_name?: string | null;
+  payment_bank_account_name?: string | null;
+  payment_bank_account_number?: string | null;
+  payment_bank_branch?: string | null;
+  payment_mobile_money_provider?: string | null;
+  payment_mobile_money_account_name?: string | null;
+  payment_mobile_money_number?: string | null;
+  payment_instructions?: string | null;
   logo_path: string | null;
   status: string;
   owner_id?: number | null;

@@ -3,8 +3,8 @@ import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
-import { Select } from '../../../shared/components/inputs/Select';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+
+
 import { useFixedAssets, useCreateFixedAsset } from '../api/AccountingQueries';
 import type { FixedAsset } from '../api/AccountingTypes';
 import { Building2, Plus, Play } from 'lucide-react';

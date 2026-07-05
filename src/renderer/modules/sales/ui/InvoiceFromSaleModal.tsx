@@ -5,7 +5,7 @@ import { Select } from '../../../shared/components/inputs/Select';
 import { Input } from '../../../shared/components/inputs/Input';
 import { useCustomers } from '../api/salesQueries';
 import { useCreateInvoice } from '../../invoices/api/InvoiceQueries';
-import { FileText, Calendar, User, MessageSquare } from 'lucide-react';
+import { FileText, Calendar, MessageSquare } from 'lucide-react';
 
 interface CartItem {
   product_id: number;

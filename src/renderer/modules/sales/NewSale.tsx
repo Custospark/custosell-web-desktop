@@ -144,10 +144,6 @@ function BillingControls({ onGenerateInvoice }: { onGenerateInvoice?: () => void
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
 
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
-
-
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
@@ -405,6 +401,9 @@ export default function NewSale() {
     }
     setReloadFeedback('idle');
   }, []);
+
+  // Invoice generation state
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
 
   const showReloadFeedback = useCallback((feedback: Exclude<ReloadFeedback, 'idle'>) => {
     setReloadFeedback(feedback);

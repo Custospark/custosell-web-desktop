@@ -5,10 +5,10 @@ import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+
 import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
-import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight, Edit3, RotateCcw, Eye } from 'lucide-react';
+import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight, RotateCcw, Eye } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
@@ -101,7 +101,7 @@ export default function JournalEntriesPage() {
       header: 'Attach.',
       render: (item: JournalEntry) => item.attachment_url ? (
         <a href={item.attachment_url} target="_blank" rel="noreferrer"
-          onClick={(e) => { e.stopPropagation(); window.open(item.attachment_url, '_blank'); }}
+          onClick={(e) => { e.stopPropagation(); window.open(item.attachment_url ?? undefined, "_blank"); }}
           className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 underline"
           title="View attachment">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>

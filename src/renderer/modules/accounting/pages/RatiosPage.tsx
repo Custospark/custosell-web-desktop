@@ -176,7 +176,7 @@ function RatioLine({ def, value, selected, onClick, recommendation }: { def: Rat
   const [hovered, setHovered] = useState(false);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
   const [tipSide, setTipSide] = useState<'left' | 'right'>('left');
-  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const iconColor = health === 'healthy' ? 'text-green-400' : health === 'warning' ? 'text-amber-400' : 'text-red-400';
 
   const show = useCallback(() => {
@@ -525,7 +525,6 @@ export default function RatiosPage() {
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
                       const row = payload[0]?.payload as { label: string; value: number; change: number };
-                      const health = getHealth(row.value, selectedDef);
                       const arrow = row.change > 0 ? '↑' : row.change < 0 ? '↓' : '→';
                       return (
                         <ChartTooltipShell title={row.label}>

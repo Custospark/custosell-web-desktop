@@ -61,7 +61,7 @@ function StatusBadge({ label, type }: { label: string; type: 'success' | 'danger
 export default function FinancialStatementsPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const { data: periods } = useAccountingPeriods();
-  const business = useAppSelector((s) => s.auth.user?.business);
+
 
   const effectivePeriodId = useMemo(() => {
     const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];

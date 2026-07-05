@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { Table } from '../../shared/components/tables/Table';
-import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
+
 import { useInvoices, useSendInvoice, useDeleteInvoice } from './api/InvoiceQueries';
 import type { Invoice } from './api/InvoiceTypes';
 import InvoiceFormPage from './InvoiceFormPage';

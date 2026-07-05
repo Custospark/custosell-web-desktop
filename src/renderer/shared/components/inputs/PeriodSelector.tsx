@@ -112,7 +112,7 @@ export function PeriodSelector({ periods, value, onChange, className }: PeriodSe
     onChange('');
   }
 
-  const currentYear = selectedYear || String(years[0] || '');
+
 
   return (
     <div className={cn('space-y-2', className)}>

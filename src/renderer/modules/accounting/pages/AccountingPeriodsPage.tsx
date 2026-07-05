@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+
 import { useAccountingPeriods, useClosePeriod } from '../api/AccountingQueries';
 import type { AccountingPeriod } from '../api/AccountingTypes';
 import { Calendar, Lock, Unlock, AlertTriangle } from 'lucide-react';

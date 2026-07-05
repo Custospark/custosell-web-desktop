@@ -56,7 +56,7 @@ export default function InvoiceFormPage({ onClose }: InvoiceFormPageProps) {
         if (i !== index) return item;
         const updated = { ...item, [field]: value };
         if (field === 'product_id') {
-          const product = products.find((p: any) => p.id === value);
+          const product = (products ?? []).find((p: any) => p.id === value);
           if (product) {
             updated.description = product.name;
             updated.unit_price = parseFloat(product.unit_price) || 0;
@@ -173,7 +173,7 @@ export default function InvoiceFormPage({ onClose }: InvoiceFormPageProps) {
 
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
               {items.map((item, idx) => {
-                const filteredProducts = products.filter((p: any) => {
+                const filteredProducts = (products ?? []).filter((p: any) => {
                   if (!productSearch[idx]) return true;
                   const q = productSearch[idx].toLowerCase();
                   return p.name.toLowerCase().includes(q);

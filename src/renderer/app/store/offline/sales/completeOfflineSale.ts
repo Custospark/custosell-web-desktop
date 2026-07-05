@@ -40,7 +40,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
   const isFullyPaid = Math.abs(amountPaid - total) < 0.01;
   const paymentStatus = isFullyPaid ? 'paid' : 'partially_paid';
 
-  const localPayment = !isFullyPaid && amountPaid > 0 ? {
+  const localPayment = amountPaid > 0 ? {
     id: localIdNum - 999,
     business_id: authUser?.business_id ?? 0,
     payable_type: 'sale' as const,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Mail, WifiOff } from 'lucide-react';
 import { Modal } from '../modals/Modal';
 import { Button } from '../buttons/Button';
@@ -75,25 +75,36 @@ export default function SendDocumentEmailModal({
   const [message, setMessage] = useState('');
   const [toError, setToError] = useState<string | undefined>();
 
-  useEffect(() => {
-    if (!open) return;
-    setContact({
-      customerId: customerId ?? null,
-      name: customerName?.trim() ?? '',
-      email: defaultEmail?.trim() ?? '',
-      phone: '',
-    });
-    setTo(defaultEmail?.trim() ?? '');
-    setMessage('');
-    setToError(undefined);
-  }, [open, defaultEmail, customerName, customerId, documentId]);
+  function handleContactChange(next: CustomerContactValue) {
+    setContact(next);
 
-  useEffect(() => {
-    const email = contact.email.trim();
-    if (email && !to.trim()) {
-      setTo(email);
+    if (next.customerId != null) {
+      setTo(next.email.trim());
+    } else if (!next.name.trim() && !next.phone.trim() && !next.email.trim()) {
+      setTo('');
+    } else if (!next.customerId && next.email.trim()) {
+      setTo(next.email.trim());
     }
-  }, [contact.email, to]);
+
+    if (toError) setToError(undefined);
+  }
+
+  const [prevOpen, setPrevOpen] = useState(false);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setContact({
+        customerId: customerId ?? null,
+        name: customerName?.trim() ?? '',
+        email: defaultEmail?.trim() ?? '',
+        phone: '',
+      });
+      setTo(defaultEmail?.trim() ?? '');
+      setMessage('');
+      setToError(undefined);
+    }
+  }
 
   const offline = isCompletelyOffline;
   const cannotSend = blocked || offline || documentId <= 0;
@@ -166,7 +177,7 @@ export default function SendDocumentEmailModal({
 
         <CustomerContactPicker
           value={contact}
-          onChange={setContact}
+          onChange={handleContactChange}
           disabled={cannotSend || isPending}
           compact
           context="email"

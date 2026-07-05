@@ -6,6 +6,8 @@ import { useToast } from '../../app/contexts/useToast';
 import { sanitizeErrorMessage, shouldCompleteMutationLocally } from '../../app/store/offline/core/offlineQueryUtils';
 import { SALES } from '../../shared/api/endpoints/endpoints';
 import { completeOfflineSalePayment } from '../../app/store/offline/payments/completeOfflinePayment';
+import { salesKeys } from '../sales/api/salesQueries';
+import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 import type { Payment, RecordPaymentPayload, RecordSalePaymentResult } from './paymentTypes';
 import type { Sale } from '../sales/api/salesTypes';
 
@@ -83,9 +85,14 @@ export function useRecordSalePayment() {
         payment: normalizePayment(obj.payment),
       };
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['sales'] });
-      void qc.invalidateQueries({ queryKey: ['shifts'] });
+    onSuccess: (result) => {
+      qc.setQueryData<SaleWithSyncMeta[]>(salesKeys.list(), (old) =>
+        (old ?? []).map((s) => (s.id === result.sale.id ? { ...s, ...result.sale } : s)),
+      );
+      queueMicrotask(() => {
+        void qc.invalidateQueries({ queryKey: ['sales'] });
+        void qc.invalidateQueries({ queryKey: ['shifts'] });
+      });
       showToast('success', 'Payment recorded');
     },
     onError: (e) => showToast('error', sanitizeErrorMessage(e, 'Failed to record payment')),

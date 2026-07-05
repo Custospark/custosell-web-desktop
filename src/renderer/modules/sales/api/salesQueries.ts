@@ -387,11 +387,13 @@ export function useCreateSale() {
       applySaleOptimisticUpdates(qc, sale, payload);
 
       if (!isLocal) {
-        qc.invalidateQueries({ queryKey: salesKeys.all });
-        qc.invalidateQueries({ queryKey: salesKeys.list() });
-        qc.invalidateQueries({ queryKey: dashboardKeys.all });
-        qc.invalidateQueries({ queryKey: shiftKeys.all });
-        qc.invalidateQueries({ queryKey: inventoryKeys.products() });
+        // Cache is already updated optimistically — defer non-critical refetches so the modal opens faster.
+        queueMicrotask(() => {
+          void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+          if (payload.shift_id) {
+            void qc.invalidateQueries({ queryKey: [...shiftKeys.all, 'sales', payload.shift_id] });
+          }
+        });
       }
     },
     onError: (e) => {

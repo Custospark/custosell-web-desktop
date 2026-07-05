@@ -813,8 +813,9 @@ export default function NewSale() {
             )}
           </div>
 
-          {/* Hold / Take Buttons */}
-          <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 flex items-center justify-end gap-3">
+          {/* Hold / Take Buttons — inner w-max row so justify-end overflow can scroll to hidden actions */}
+          <div className="sticky bottom-0 z-10 shrink-0 bg-white pt-4 pb-2 border-t border-gray-200 mt-4 -mx-4 px-4 sm:-mx-6 sm:px-6 max-w-full overflow-x-auto overscroll-x-contain">
+            <div className="flex w-max min-w-full flex-nowrap items-center justify-end gap-3">
             {cartItems.length > 0 && (
               <button
                 title="Create a draft invoice from the current cart — adjust items before saving"
@@ -822,23 +823,23 @@ export default function NewSale() {
                   setInvoiceSession((s) => s + 1);
                   setInvoiceModalOpen(true);
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm"
+                className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm whitespace-nowrap"
               >
                 <FileText className="w-4 h-4" /> Generate Invoice
               </button>
             )}
             <Link to="/invoices" title="View and manage all invoices"
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm">
+              className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
               <FileText className="w-4 h-4" /> Manage Invoices
             </Link>
             {cartItems.length > 0 && (
               <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm">
+                className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm whitespace-nowrap">
                 <PauseCircle className="w-4 h-4" /> Hold Order
               </button>
             )}
             <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm relative">
+              className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm relative whitespace-nowrap">
               <RotateCcw className="w-4 h-4" /> Take Order
               {heldOrders.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
@@ -846,6 +847,7 @@ export default function NewSale() {
                 </span>
               )}
             </button>
+            </div>
           </div>
         </div>
 

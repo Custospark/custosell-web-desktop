@@ -13,12 +13,23 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
   const cashierName = sale.user?.name;
   const customer = sale.customer;
   const currency = business?.currency || 'UGX';
-  const tendered = sale.amount_tendered ? parseFloat(sale.amount_tendered) : null;
-  const change = sale.change_given ? parseFloat(sale.change_given) : null;
   const discount = parseFloat(sale.discount_amount);
   const taxTotal = parseFloat(sale.tax_total || '0');
   const totalRefunded = (sale.sale_items ?? []).reduce((sum, i) => sum + parseFloat(i.refunded_amount || '0'), 0);
   const netAmount = Math.max(0, Math.round((parseFloat(sale.total_amount) - totalRefunded) * 100) / 100);
+  const amountPaid = parseFloat(String(sale.amount_paid ?? sale.total_amount));
+  const balanceDue = Math.max(0, netAmount - amountPaid);
+  const payments = sale.payments ?? [];
+  const isPartiallyPaid = sale.payment_status === 'partially_paid' || balanceDue > 0.009;
+  const tenderedRaw = sale.amount_tendered ? parseFloat(sale.amount_tendered) : null;
+  const changeRaw = sale.change_given ? parseFloat(sale.change_given) : null;
+  const hasInstallments = payments.length > 0;
+  const displayTendered = hasInstallments
+    ? (payments[0]?.amount_tendered ?? payments[0]?.amount ?? tenderedRaw)
+    : (isPartiallyPaid && tenderedRaw != null ? Math.min(tenderedRaw, amountPaid) : tenderedRaw);
+  const displayChange = hasInstallments
+    ? (payments[0]?.change_given ?? changeRaw)
+    : changeRaw;
   const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
 
   return (
@@ -129,17 +140,40 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
             <span className="text-gray-500">Payment Method</span>
             <span className="capitalize font-medium text-gray-800">{sale.payment_method.replace('_', ' ')}</span>
           </div>
-          {tendered !== null && (
+          {displayTendered !== null && displayTendered > 0 && (
             <div className="flex justify-between">
               <span className="text-gray-500">Amount Tendered</span>
-              <span className="text-gray-800">{formatCurrency(tendered)}</span>
+              <span className="text-gray-800">{formatCurrency(displayTendered)}</span>
             </div>
           )}
-          {change !== null && change > 0 && (
+          {displayChange !== null && displayChange > 0 && (
             <div className="flex justify-between">
               <span className="text-gray-500">Change Given</span>
-              <span className="text-green-600 font-medium">{formatCurrency(change)}</span>
+              <span className="text-green-600 font-medium">{formatCurrency(displayChange)}</span>
             </div>
+          )}
+          {hasInstallments && payments.length > 1 && (
+            <div className="pt-1 mt-1 border-t border-dashed border-gray-200 space-y-0.5">
+              <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Installments ({payments.length})</p>
+              {payments.map((p, i) => (
+                <div key={p.id} className="flex justify-between text-[11px]">
+                  <span className="text-gray-500">#{i + 1} {p.receipt_number}</span>
+                  <span className="text-emerald-700 tabular-nums">{formatCurrency(p.amount)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {isPartiallyPaid && (
+            <>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Amount Paid</span>
+                <span className="text-emerald-700 font-medium">{formatCurrency(amountPaid)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Balance Due</span>
+                <span className="text-amber-700 font-bold">{formatCurrency(balanceDue)}</span>
+              </div>
+            </>
           )}
         </div>
 
@@ -148,6 +182,8 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
             <span className="font-semibold uppercase tracking-wider text-red-500">Full Refund</span>
           ) : sale.payment_status === 'partially_refunded' ? (
             <span className="font-semibold uppercase tracking-wider text-amber-500">Partially Refunded</span>
+          ) : isPartiallyPaid ? (
+            <span className="font-semibold uppercase tracking-wider text-amber-600">Partially Paid</span>
           ) : (
             <span className="font-semibold uppercase tracking-wider text-green-600">Paid</span>
           )}

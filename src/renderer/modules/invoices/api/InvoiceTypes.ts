@@ -23,5 +23,6 @@ export interface Invoice {
   amount_paid: number;
   notes: string | null;
   items: InvoiceItem[];
+  payments?: import('../../payments/paymentTypes').Payment[];
   created_at: string;
 }

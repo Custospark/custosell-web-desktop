@@ -1,6 +1,7 @@
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Settings, Database } from 'lucide-react';
+import { InventoryReconciliationCard } from '../ui/InventoryReconciliationCard';
 
 const defaultAccountMappings = [
   { key: 'Cash', account: '1000 - Cash' },
@@ -39,6 +40,8 @@ export default function AccountingSettingsPage() {
           </span>
         </div>
       </Card>
+
+      <InventoryReconciliationCard />
 
       <Card>
         <div className="flex items-center justify-between mb-4">

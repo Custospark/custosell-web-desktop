@@ -4,6 +4,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import InvoiceBuilderForm from '../../invoices/InvoiceBuilderForm';
+import RecordPaymentModal from '../../invoices/RecordPaymentModal';
 import { useSendInvoice } from '../../invoices/api/InvoiceQueries';
 import { cartItemsToLineItems } from '../../invoices/invoiceLineItems';
 import type { Invoice } from '../../invoices/api/InvoiceTypes';
@@ -13,7 +14,7 @@ import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   FileText, CheckCircle2, Eye, ArrowRight, ShoppingCart, AlertTriangle, Send,
-  BookOpen, User, Calendar, Sparkles,
+  BookOpen, User, Calendar, Sparkles, DollarSign,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
@@ -39,6 +40,7 @@ interface InvoiceSuccessPanelProps {
   onPreviewPdf: () => void;
   onOpenInvoices: () => void;
   onDone: () => void;
+  onRecordPayment?: () => void;
 }
 
 function InvoiceSuccessPanel({
@@ -50,6 +52,7 @@ function InvoiceSuccessPanel({
   onPreviewPdf,
   onOpenInvoices,
   onDone,
+  onRecordPayment,
 }: InvoiceSuccessPanelProps) {
   const isSent = phase === 'sent';
   const customerLabel = invoice.customer?.name ?? 'Walk-in customer';
@@ -206,6 +209,12 @@ function InvoiceSuccessPanel({
       {/* Compact action buttons — fit content, wrap on mobile */}
       <div className="flex flex-col items-stretch sm:items-center gap-3 pt-1">
         <div className="flex flex-wrap items-center justify-center gap-2">
+          {isSent && due > 0 && onRecordPayment && (
+            <Button size="sm" onClick={onRecordPayment} className="shrink-0">
+              <DollarSign className="w-3.5 h-3.5 mr-1.5" />
+              Record payment
+            </Button>
+          )}
           {!isSent && (
             <Button
               size="sm"
@@ -274,6 +283,7 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
   const [successPhase, setSuccessPhase] = useState<SuccessPhase>('draft');
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const seed = useMemo(() => {
     if (!open || cartItems.length === 0) return undefined;
@@ -363,6 +373,11 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
           onPreviewPdf={() => void handleViewPdf()}
           onOpenInvoices={finishAndGoToInvoices}
           onDone={finishAndStayOnSales}
+          onRecordPayment={
+            successPhase === 'sent' && balanceDue(createdInvoice) > 0
+              ? () => setPaymentModalOpen(true)
+              : undefined
+          }
         />
       ) : cartItems.length === 0 ? (
         <div className="py-8 text-center space-y-4">
@@ -409,6 +424,16 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
             onCancel={onClose}
           />
         </div>
+      )}
+      {paymentModalOpen && createdInvoice && (
+        <RecordPaymentModal
+          invoice={createdInvoice}
+          onClose={() => setPaymentModalOpen(false)}
+          onPaymentRecorded={({ invoice }) => {
+            setCreatedInvoice(invoice);
+            setPaymentModalOpen(false);
+          }}
+        />
       )}
     </Modal>
   );

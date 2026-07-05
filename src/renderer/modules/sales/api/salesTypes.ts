@@ -77,11 +77,14 @@ export interface Sale {
   amount_tendered: string | null;
   change_given: string | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';
-  payment_status: 'paid' | 'partially_refunded' | 'refunded';
+  payment_status: 'paid' | 'partially_paid' | 'partially_refunded' | 'refunded';
+  amount_paid?: string | number;
+  balance_due?: number;
   notes: string | null;
   sale_date: string;
   customer?: { id: number; name: string; phone?: string };
   sale_items?: SaleItem[];
+  payments?: import('../../payments/paymentTypes').Payment[];
   created_at: string;
   updated_at: string;
 }
@@ -93,6 +96,7 @@ export interface CreateSalePayload {
   discount_amount?: number;
   total_amount: number;
   amount_tendered?: number | null;
+  amount_paid?: number | null;
   change_given?: number | null;
   shift_id?: number | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';

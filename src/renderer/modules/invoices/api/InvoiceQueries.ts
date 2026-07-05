@@ -5,6 +5,9 @@ import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { INVOICES } from '../../../shared/api/endpoints/endpoints';
 import type { Invoice } from './InvoiceTypes';
+import type { RecordPaymentResult } from '../../payments/paymentTypes';
+import { normalizePayment, buildPaymentFormData } from '../../payments/paymentQueries';
+import type { RecordPaymentPayload } from '../../payments/paymentTypes';
 
 export const invoiceKeys = {
   all: ['invoices'] as const,
@@ -150,20 +153,56 @@ export function useSendInvoice() {
   });
 }
 
+function normalizeRecordPaymentResponse(payload: unknown): RecordPaymentResult {
+  if (payload && typeof payload === 'object') {
+    const obj = payload as Record<string, unknown>;
+    if (obj.invoice && obj.payment) {
+      return {
+        invoice: normalizeInvoiceResponse(obj.invoice),
+        payment: normalizePayment(obj.payment),
+      };
+    }
+  }
+  return {
+    invoice: normalizeInvoiceResponse(payload),
+    payment: normalizePayment({ id: 0, receipt_number: '—', amount: 0, balance_after: 0 }),
+  };
+}
+
 export function useRecordPayment() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<Invoice, AxiosError, { id: number; amount: number; payment_method: string }>({
-    mutationFn: async ({ id, amount, payment_method }) => {
-      const { data } = await axiosInstance.post(INVOICES.PAYMENT(id), { amount, payment_method });
-      return normalizeInvoiceResponse(data);
+  return useMutation<RecordPaymentResult, AxiosError, { id: number } & RecordPaymentPayload>({
+    mutationFn: async ({ id, ...payload }) => {
+      const formData = buildPaymentFormData(payload);
+      const { data } = await axiosInstance.post(INVOICES.PAYMENT(id), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (data && typeof data === 'object' && 'payment' in data) {
+        return normalizeRecordPaymentResponse(data);
+      }
+      return {
+        invoice: normalizeInvoiceResponse(data),
+        payment: normalizePayment({
+          id: 0,
+          business_id: 0,
+          payable_type: 'invoice',
+          payable_id: id,
+          receipt_number: 'PENDING',
+          amount: payload.amount,
+          payment_method: payload.payment_method,
+          balance_after: 0,
+          paid_at: new Date().toISOString(),
+        }),
+      };
     },
-    onSuccess: (invoice) => {
+    onSuccess: ({ invoice }) => {
       upsertInvoiceInCache(qc, invoice);
+      qc.setQueryData(invoiceKeys.detail(invoice.id), invoice);
       void qc.invalidateQueries({ queryKey: invoiceKeys.all });
       showToast('success', 'Payment recorded');
     },
-    onError: () => showToast('error', 'Failed to record payment'),
+    onError: (e) => showToast('error', sanitizeErrorMessage(e, 'Failed to record payment')),
   });
 }
 

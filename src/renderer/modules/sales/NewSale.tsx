@@ -143,6 +143,8 @@ function BillingControls() {
   const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [lastPayment, setLastPayment] = useState<import('../../payments/paymentTypes').Payment | null>(null);
+  const [installmentMode, setInstallmentMode] = useState(false);
 
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -156,7 +158,13 @@ function BillingControls() {
     [taxSettings, cartItems, discountValue],
   );
   const total = taxBreakdown.total;
-  const changeDue = paymentMethod === 'cash' ? Math.max(0, amountTendered - total) : 0;
+  const payNow = installmentMode
+    ? Math.min(Math.max(0, amountTendered), total)
+    : total;
+  const isPartialPayment = payNow > 0 && payNow < total - 0.009;
+  const changeDue = paymentMethod === 'cash' && !isPartialPayment
+    ? Math.max(0, amountTendered - total)
+    : 0;
   const selectedCustomer = customerId ? (customers || []).find((c) => c.id === customerId) : null;
 
   const filteredCustomers = useMemo(() => {
@@ -185,8 +193,15 @@ function BillingControls() {
         total_amount: taxBreakdown.total,
         payment_method: paymentMethod,
         customer_id: customerId,
-        amount_tendered: amountTendered > 0 ? amountTendered : null,
-        change_given: paymentMethod === 'cash' && amountTendered >= total ? changeDue : null,
+        amount_paid: isPartialPayment ? payNow : undefined,
+        amount_tendered: paymentMethod === 'cash'
+          ? (isPartialPayment ? payNow : (amountTendered > 0 ? amountTendered : null))
+          : (installmentMode ? payNow : null),
+        change_given: paymentMethod === 'cash'
+          ? (isPartialPayment
+            ? (amountTendered > payNow ? amountTendered - payNow : null)
+            : (amountTendered >= total ? changeDue : null))
+          : null,
         shift_id: currentShiftId || null,
       },
       {
@@ -195,7 +210,10 @@ function BillingControls() {
           dispatch(setAmountTendered(0));
           dispatch(setCustomer(null));
           dispatch(setDiscount(0));
+          setInstallmentMode(false);
           setCompletedSale(sale);
+          const payments = (sale as Sale & { payments?: import('../../payments/paymentTypes').Payment[] }).payments;
+          setLastPayment(payments?.length ? payments[payments.length - 1] : null);
         },
       }
     );
@@ -257,13 +275,31 @@ function BillingControls() {
           </div>
         </div>
 
-        {/* Amount Tendered (Cash Only) */}
-        {paymentMethod === 'cash' && (
+        {/* Installment mode */}
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Amount Tendered</label>
+            <p className="text-xs font-semibold text-gray-700">Pay in installments</p>
+            <p className="text-[11px] text-gray-500">Customer pays part now, rest later</p>
+          </div>
+          <button
+            type="button"
+            title="Toggle installment payments"
+            onClick={() => setInstallmentMode((v) => !v)}
+            className={`relative h-6 w-11 rounded-full transition-colors ${installmentMode ? 'bg-blue-600' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${installmentMode ? 'left-5' : 'left-0.5'}`} />
+          </button>
+        </div>
+
+        {/* Amount paying now */}
+        {(installmentMode || paymentMethod === 'cash') && (
+          <div>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+              {installmentMode ? 'Amount paying now' : 'Amount Tendered'}
+            </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
-              <input title="Enter amount tendered" type="number" min={0} step="100"
+              <input title="Enter amount paying now" type="number" min={0} step="100"
                 className="w-full pl-11 pr-28 py-2.5 border border-gray-300 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0" value={amountTendered || ''}
                 onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
@@ -272,11 +308,16 @@ function BillingControls() {
                 onClick={() => dispatch(setAmountTendered(total))}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
                 <ArrowDownToLine className="w-3.5 h-3.5" />
-                Auto Fill Amount
+                Full amount
               </button>
             </div>
-            {amountTendered > 0 && amountTendered < total && (
-              <p className="text-xs text-amber-600 mt-1.5">Short by {formatCurrency(total - amountTendered)}</p>
+            {isPartialPayment && (
+              <p className="text-xs text-amber-700 mt-1.5 font-medium">
+                Balance after this: {formatCurrency(total - payNow)}
+              </p>
+            )}
+            {!installmentMode && amountTendered > 0 && amountTendered < total && (
+              <p className="text-xs text-amber-600 mt-1.5">Short by {formatCurrency(total - amountTendered)} — enable installments to accept partial pay</p>
             )}
           </div>
         )}
@@ -336,10 +377,16 @@ function BillingControls() {
               <span className="text-base font-semibold text-gray-700">Total</span>
               <span className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</span>
             </div>
-            {paymentMethod === 'cash' && amountTendered > 0 && (
+            {paymentMethod === 'cash' && !isPartialPayment && amountTendered > 0 && (
               <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
                 <span className="text-sm font-medium text-green-600">Change Due</span>
                 <span className="text-xl font-bold text-green-600">{formatCurrency(changeDue)}</span>
+              </div>
+            )}
+            {isPartialPayment && (
+              <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                <span className="text-sm font-medium text-amber-700">Paying now</span>
+                <span className="text-xl font-bold text-amber-700 tabular-nums">{formatCurrency(payNow)}</span>
               </div>
             )}
           </div>
@@ -352,20 +399,26 @@ function BillingControls() {
           </div>
         )}
         {/* Complete Sale Button */}
-        <Button title="Finalize and complete the sale"
+        <Button title={isPartialPayment ? 'Record partial payment' : 'Finalize and complete the sale'}
           className="w-full h-12 text-base font-semibold" 
           onClick={handleCompleteSale} 
           loading={createSale.isPending}
-          disabled={cartItems.length === 0 || (paymentMethod === 'cash' && amountTendered < total)}
+          disabled={
+            cartItems.length === 0
+            || (isPartialPayment && payNow <= 0)
+            || (!installmentMode && paymentMethod === 'cash' && amountTendered < total)
+            || (installmentMode && payNow <= 0)
+          }
         >
           <HiCheckCircle className="w-5 h-5 mr-2" />
-          Complete Sale
+          {isPartialPayment ? `Record ${formatCurrency(payNow)} payment` : 'Complete Sale'}
         </Button>
       </div>
     </div>
     <SaleCompletedModal
       sale={completedSale}
-      onNewSale={() => { setCompletedSale(null); createSale.reset(); }}
+      lastPayment={lastPayment}
+      onNewSale={() => { setCompletedSale(null); setLastPayment(null); createSale.reset(); }}
     />
     </>
   );

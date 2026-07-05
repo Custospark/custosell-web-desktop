@@ -5,7 +5,7 @@ import { stockLedger } from '../inventory/stockLedger';
 import { localSalesStore, type SaleWithSyncMeta } from './localSalesStore';
 import { buildStockSeedMap } from '../inventory/offlineStockOverlay';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
-import { generateLocalReceiptNumber } from './receiptGenerator';
+import { offlineSaleReceiptNumber, offlinePaymentReceiptNumber } from '../../../../shared/utils/documentNumbers';
 import { computeSaleTax } from '../../../../shared/utils/taxEngine';
 import { resolveBusinessForTax } from '../../../../modules/settings/api/settings/businessAuthSync';
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
@@ -18,7 +18,7 @@ export function shouldCompleteSaleLocally(): boolean {
 }
 
 export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
-  const receiptNumber = generateLocalReceiptNumber();
+  const receiptNumber = offlineSaleReceiptNumber();
   const now = new Date().toISOString();
   const localIdNum = -Date.now();
   const authUser = store.getState().auth.user;
@@ -33,13 +33,37 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
     };
   });
   const taxBreakdown = computeSaleTax(resolveBusinessForTax(), cartLines, payload.discount_amount ?? 0);
+  const total = taxBreakdown.total;
+  const amountPaid = payload.amount_paid != null
+    ? Math.min(payload.amount_paid, total)
+    : total;
+  const isFullyPaid = Math.abs(amountPaid - total) < 0.01;
+  const paymentStatus = isFullyPaid ? 'paid' : 'partially_paid';
+
+  const localPayment = !isFullyPaid && amountPaid > 0 ? {
+    id: localIdNum - 999,
+    business_id: authUser?.business_id ?? 0,
+    payable_type: 'sale' as const,
+    payable_id: localIdNum,
+    receipt_number: offlinePaymentReceiptNumber(),
+    amount: amountPaid,
+    amount_tendered: payload.amount_tendered ?? amountPaid,
+    change_given: payload.change_given ?? null,
+    payment_method: payload.payment_method,
+    balance_after: Math.max(0, total - amountPaid),
+    paid_at: now,
+    notes: null,
+    recorded_by: authUser?.id ?? null,
+    _pendingSync: true,
+  } : null;
 
   const sale: Sale = {
     id: localIdNum,
     receipt_number: receiptNumber,
-    total_amount: taxBreakdown.total.toString(),
+    total_amount: total.toString(),
     payment_method: payload.payment_method,
-    payment_status: 'paid',
+    payment_status: paymentStatus,
+    amount_paid: amountPaid.toString(),
     subtotal: taxBreakdown.subtotalNet.toString(),
     tax_total: taxBreakdown.taxTotal.toString(),
     discount_amount: (payload.discount_amount || 0).toString(),
@@ -53,6 +77,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
     change_given: payload.change_given ? payload.change_given.toString() : null,
     notes: payload.notes ?? null,
     sale_date: now,
+    payments: localPayment ? [localPayment] : undefined,
     sale_items: payload.items.map((item, i) => ({
       id: localIdNum - i,
       sale_id: localIdNum,

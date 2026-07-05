@@ -1,0 +1,112 @@
+import { useRef, useState } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { Printer } from 'lucide-react';
+import { Modal } from '../../../../shared/components/modals/Modal';
+import { Button } from '../../../../shared/components/buttons/Button';
+import ReceiptContent from '../receipt/ReceiptContent';
+import PaymentsPanel from '../../../payments/PaymentsPanel';
+import PaymentReceiptModal from '../../../payments/PaymentReceiptModal';
+import type { RecordPaymentInput } from '../../../payments/RecordPaymentForm';
+import { useSale } from '../../api/salesQueries';
+import { useRecordSalePayment, getPaymentErrorMessage } from '../../../payments/paymentQueries';
+import { computeSaleBalance, computePayableTotal } from '../../../payments/payableBalance';
+import type { Sale } from '../../api/salesTypes';
+import type { Payment } from '../../../payments/paymentTypes';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
+
+interface SalePaymentsModalProps {
+  sale: Sale;
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function SalePaymentsModal({ sale, open, onClose }: SalePaymentsModalProps) {
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const isOffline = useAppSelector(selectIsCompletelyOffline);
+  const { data: freshSale } = useSale(sale.id);
+  const activeSale = freshSale ?? sale;
+  const payments = activeSale.payments ?? [];
+
+  const totalAmount = computePayableTotal(activeSale, 'sale');
+  const amountPaid = parseFloat(String(activeSale.amount_paid ?? 0));
+  const remainingBalance = computeSaleBalance(activeSale);
+  const canRecord = remainingBalance > 0.009 && activeSale.payment_status !== 'refunded';
+
+  const recordPayment = useRecordSalePayment();
+  const [receiptPayment, setReceiptPayment] = useState<Payment | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
+
+  const handlePrint = useReactToPrint({
+    contentRef: receiptRef,
+    documentTitle: activeSale.receipt_number,
+    pageStyle: `@page { margin: 0; } @media print { .no-print { display: none !important; } }`,
+  });
+
+  function handleSubmit(input: RecordPaymentInput) {
+    if (!canRecord) return;
+    recordPayment.reset();
+    recordPayment.mutate(
+      { id: activeSale.id, ...input },
+      { onSuccess: ({ payment }) => setReceiptPayment(payment) },
+    );
+  }
+
+  if (receiptPayment) {
+    return (
+      <PaymentReceiptModal
+        payment={receiptPayment}
+        sale={activeSale}
+        referenceLabel={activeSale.receipt_number}
+        referenceType="Sale"
+        totalBill={totalAmount}
+        totalPaidOnPayable={amountPaid + receiptPayment.amount}
+        onClose={() => setReceiptPayment(null)}
+      />
+    );
+  }
+
+  return (
+    <Modal isOpen={open} onClose={onClose} title="" size="lg" bodyClassName="px-5 py-4">
+      <PaymentsPanel
+        referenceLabel={activeSale.receipt_number}
+        referenceType="Sale"
+        totalAmount={totalAmount}
+        amountPaid={amountPaid}
+        remainingBalance={remainingBalance}
+        payments={payments}
+        canRecord={canRecord}
+        sale={activeSale}
+        defaultMethod={activeSale.payment_method || 'cash'}
+        loading={recordPayment.isPending}
+        errorMessage={recordPayment.isError ? getPaymentErrorMessage(recordPayment.error) : null}
+        offline={isOffline}
+        onDismissError={() => recordPayment.reset()}
+        onSubmit={handleSubmit}
+      >
+        <div className="border-t border-gray-100 pt-3 no-print">
+          <button
+            type="button"
+            onClick={() => setShowSummary((v) => !v)}
+            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+          >
+            {showSummary ? 'Hide sale summary receipt' : 'Show sale summary receipt'}
+          </button>
+        </div>
+
+        {showSummary && (
+          <div className="border-t border-gray-100 pt-4">
+            <div className="no-print flex justify-between items-center mb-3">
+              <p className="text-sm font-medium text-gray-700">Sale summary</p>
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="w-4 h-4 mr-1" />
+                Print
+              </Button>
+            </div>
+            <ReceiptContent ref={receiptRef} sale={activeSale} />
+          </div>
+        )}
+      </PaymentsPanel>
+    </Modal>
+  );
+}

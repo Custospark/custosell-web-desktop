@@ -1,18 +1,24 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
-import { Printer, Plus, CheckCircle, X } from 'lucide-react';
+import { Printer, Plus, CheckCircle, X, FileText } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import ReceiptContent from './receipt/ReceiptContent';
+import PaymentReceiptModal from '../../payments/PaymentReceiptModal';
+import type { Payment } from '../../payments/paymentTypes';
 import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { netSaleAmount } from '../utils/saleAmounts';
 
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;
+  lastPayment?: Payment | null;
   onNewSale: () => void;
   onClose?: () => void;
 }
 
-export default function SaleCompletedModal({ sale, onNewSale, onClose }: SaleCompletedModalProps) {
+export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClose }: SaleCompletedModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -29,6 +35,24 @@ export default function SaleCompletedModal({ sale, onNewSale, onClose }: SaleCom
 
   if (!sale) return null;
 
+  const amountPaid = parseFloat(String(sale.amount_paid ?? sale.total_amount));
+  const totalAmount = netSaleAmount(sale);
+  const balanceDue = Math.max(0, totalAmount - amountPaid);
+  const isPartial = sale.payment_status === 'partially_paid' || balanceDue > 0.009;
+
+  if (showPaymentReceipt && lastPayment) {
+    return (
+      <PaymentReceiptModal
+        payment={lastPayment}
+        referenceLabel={sale.receipt_number}
+        referenceType="Sale"
+        totalBill={totalAmount}
+        totalPaidOnPayable={amountPaid}
+        onClose={() => { setShowPaymentReceipt(false); onNewSale(); }}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 no-print">
       <div className="bg-white rounded-2xl shadow-2xl w-full p-4 sm:p-6 lg:p-8 flex flex-col relative" style={{ maxWidth: '480px' }}>
@@ -43,7 +67,14 @@ export default function SaleCompletedModal({ sale, onNewSale, onClose }: SaleCom
         <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-100 flex items-center justify-center mb-3 sm:mb-4">
           <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
         </div>
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 text-center mb-3 sm:mb-4">Sale Completed</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 text-center mb-1">
+          {isPartial ? 'Partial payment recorded' : 'Sale completed'}
+        </h2>
+        {isPartial && (
+          <p className="text-sm text-center text-amber-700 mb-3 tabular-nums">
+            {formatCurrency(amountPaid)} paid · {formatCurrency(balanceDue)} remaining
+          </p>
+        )}
 
         {sale._pendingSync && (
           <p className="text-xs text-amber-600 font-medium text-center mb-3 sm:mb-4">
@@ -56,13 +87,19 @@ export default function SaleCompletedModal({ sale, onNewSale, onClose }: SaleCom
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4">
-          <Button className="flex-1 order-2 sm:order-1 py-2.5 sm:py-3" variant="outline" onClick={handlePrint}>
+          {lastPayment && (
+            <Button className="flex-1 py-2.5 sm:py-3" variant="outline" onClick={() => setShowPaymentReceipt(true)}>
+              <FileText className="w-4 h-4 mr-1" />
+              Payment receipt
+            </Button>
+          )}
+          <Button className="flex-1 py-2.5 sm:py-3" variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1" />
-            Print Receipt
+            {isPartial ? 'Sale summary' : 'Print receipt'}
           </Button>
-          <Button className="flex-1 order-1 sm:order-2 py-2.5 sm:py-3" onClick={onNewSale}>
+          <Button className="flex-1 py-2.5 sm:py-3" onClick={onNewSale}>
             <Plus className="w-4 h-4 mr-1" />
-            New Sale
+            New sale
           </Button>
         </div>
       </div>

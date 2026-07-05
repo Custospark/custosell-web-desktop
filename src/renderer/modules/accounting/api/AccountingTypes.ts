@@ -193,3 +193,28 @@ export interface EquityStatement {
   total_equity: number;
   period_id: number;
 }
+
+export interface InventoryReconciliationExcluded {
+  id: number;
+  name: string;
+  sku: string | null;
+  stock_quantity: number;
+  cost_price: number;
+  line_value: number;
+  reason: string;
+}
+
+export interface InventoryReconciliation {
+  stock_book_value: number;
+  raw_stock_book_value: number;
+  gl_inventory_balance: number;
+  adjustment_needed: number;
+  is_aligned: boolean;
+  included_sku_count: number;
+  excluded_sku_count: number;
+  warnings: string[];
+  excluded_samples: InventoryReconciliationExcluded[];
+  can_post_opening: boolean;
+  requires_force: boolean;
+  tracked_products_only?: boolean;
+}

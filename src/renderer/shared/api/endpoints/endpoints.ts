@@ -10,7 +10,17 @@ export const CATEGORIES = '/categories';
 export const PRODUCTS = { BASE: '/products', LOW_STOCK: '/products/low-stock' };
 export const CUSTOMERS = { BASE: '/customers', PURCHASES: (id: number) => `/customers/${id}/purchases` };
 export const SHIFTS = { CLOCK_IN: '/shifts/clock-in', ACTIVE: '/shifts/active', BASE: '/shifts' };
-export const SALES = { BASE: '/sales', DAILY: '/sales/daily', REFUND: (id: number) => `/sales/${id}/refund` };
+export const SALES = {
+  BASE: '/sales',
+  DAILY: '/sales/daily',
+  REFUND: (id: number) => `/sales/${id}/refund`,
+  PAYMENT: (id: number) => `/sales/${id}/payment`,
+};
+
+export const PAYMENTS = {
+  BY_ID: (id: number) => `/payments/${id}`,
+  RECEIPT: (id: number) => `/payments/${id}/receipt`,
+};
 export const STOCK_MOVEMENTS = '/stock-movements';
 export const SUBSCRIPTIONS = { BASE: '/subscriptions', UPGRADE: '/subscriptions/upgrade', CANCEL: '/subscriptions/cancel' };
 export const EXPENSE_CATEGORIES = '/expense-categories';
@@ -58,4 +68,6 @@ export const ACCOUNTING = {
   FIXED_ASSETS: '/fixed-assets',
   FIXED_ASSET: (id: number) => `/fixed-assets/${id}`,
   EXPORT: (type: string) => `/accounting/export/${type}`,
+  INVENTORY_RECONCILIATION: '/inventory/reconciliation',
+  INVENTORY_OPENING_BALANCE: '/inventory/opening-balance',
 };

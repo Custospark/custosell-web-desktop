@@ -13,7 +13,7 @@ import RecordPaymentModal from './RecordPaymentModal';
 import { viewInvoicePdf, downloadInvoicePdf } from './useInvoicePdf';
 import {
   FileText, Plus, Send, Download, Trash2, DollarSign, Search,
-  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle, Pencil,
+  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle, Pencil, Receipt,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { formatShiftDate } from '../../shared/utils/formatDateTime';
@@ -280,16 +280,20 @@ export default function InvoicesPage() {
                 </IconAction>
               </>
             )}
-            {canPay && balanceDue(item) > 0 && (
+            {(canPay && balanceDue(item) > 0) || ((item.amount_paid || 0) > 0 && item.status !== 'draft') ? (
               <IconAction
-                title="Record payment"
+                title={balanceDue(item) > 0 ? 'Payments — record or view history' : 'Payment history & receipts'}
                 disabled={busyAction !== null}
                 onClick={() => setPaymentModal(item)}
                 className="text-green-600 hover:bg-green-50 hover:text-green-700"
               >
-                <DollarSign className="w-3.5 h-3.5" />
+                {balanceDue(item) > 0 ? (
+                  <DollarSign className="w-3.5 h-3.5" />
+                ) : (
+                  <Receipt className="w-3.5 h-3.5" />
+                )}
               </IconAction>
-            )}
+            ) : null}
             <IconAction
               title="View PDF"
               loading={rowBusy && busyAction?.type === 'view'}

@@ -6,7 +6,7 @@ import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import type {
   ChartOfAccount, AccountingPeriod, JournalEntry, JournalEntryLine,
   TrialBalance, IncomeStatement, BalanceSheet, RatioSet, RatioTrendItem, FixedAsset,
-  CashFlowStatement, EquityStatement,
+  CashFlowStatement, EquityStatement, InventoryReconciliation,
 } from './AccountingTypes';
 
 export const accountingKeys = {
@@ -22,6 +22,7 @@ export const accountingKeys = {
   fixedAssets: (filters?: Record<string, string>) => [...accountingKeys.all, 'fixed-assets', filters] as const,
   cashFlow: (periodId?: number) => [...accountingKeys.all, 'cash-flow', periodId] as const,
   equity: (periodId?: number) => [...accountingKeys.all, 'equity', periodId] as const,
+  inventoryReconciliation: () => [...accountingKeys.all, 'inventory-reconciliation'] as const,
 };
 
 export function useChartOfAccounts(filters?: Record<string, string>) {
@@ -348,6 +349,38 @@ export function useEquity(periodId?: number) {
       const params = periodId ? `?period_id=${periodId}` : '';
       const { data } = await axiosInstance.get<{ data: EquityStatement }>(`${ACCOUNTING.EQUITY}${params}`);
       return data.data;
+    },
+  });
+}
+
+export function useInventoryReconciliation() {
+  return useQuery<InventoryReconciliation>({
+    queryKey: accountingKeys.inventoryReconciliation(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: InventoryReconciliation }>(ACCOUNTING.INVENTORY_RECONCILIATION);
+      return data.data;
+    },
+  });
+}
+
+export function usePostOpeningInventory() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<{ entry_number: string; gl_inventory_balance: number; adjustment_posted: number }, AxiosError, { force?: boolean }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post<{ data: { entry_number: string; gl_inventory_balance: number; adjustment_posted: number } }>(
+        ACCOUNTING.INVENTORY_OPENING_BALANCE,
+        payload,
+      );
+      return data.data;
+    },
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: accountingKeys.all });
+      showToast('success', `Opening inventory posted (${result.entry_number})`);
+    },
+    onError: (err) => {
+      const msg = (err.response?.data as { message?: string })?.message ?? 'Failed to post opening inventory';
+      showToast('error', msg);
     },
   });
 }

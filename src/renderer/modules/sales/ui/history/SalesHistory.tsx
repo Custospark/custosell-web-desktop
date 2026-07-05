@@ -11,11 +11,13 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
-import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
+import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff, DollarSign } from 'lucide-react';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
+import SalePaymentsModal from './SalePaymentsModal';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
+import { computeSaleBalance } from '../../../payments/payableBalance';
 import type { Sale } from '../../api/salesTypes';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 
@@ -26,6 +28,7 @@ export default function SalesHistory() {
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [previewSale, setPreviewSale] = useState<Sale | null>(null);
+  const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
@@ -175,14 +178,43 @@ export default function SalesHistory() {
               )}
             </div>
           )},
-          { key: 'payment_status', header: 'Status', render: (s) => s.payment_status === 'refunded' ? <Badge variant="danger">Full Refund</Badge> : s.payment_status === 'partially_refunded' ? <Badge variant="warning">Partially Refunded</Badge> : <Badge variant="success">Paid</Badge> },
-          { key: 'actions', header: 'Receipt', render: (s) => (
+          { key: 'payment_status', header: 'Status', render: (s) => {
+            const balance = computeSaleBalance(s);
+            if (s.payment_status === 'refunded') return <Badge variant="danger">Full Refund</Badge>;
+            if (s.payment_status === 'partially_refunded') return <Badge variant="warning">Partially Refunded</Badge>;
+            if (s.payment_status === 'partially_paid' || balance > 0.009) {
+              return (
+                <div>
+                  <Badge variant="warning">Partially Paid</Badge>
+                  <p className="text-[10px] text-amber-700 mt-0.5 tabular-nums">{formatCurrency(balance)} due</p>
+                </div>
+              );
+            }
+            return <Badge variant="success">Paid</Badge>;
+          }},
+          { key: 'actions', header: 'Actions', render: (s) => {
+            const balance = computeSaleBalance(s);
+            const hasBalance = balance > 0.009;
+            const paymentCount = s.payments?.length ?? 0;
+            const hasPayments = paymentCount > 0 || s.payment_status === 'partially_paid';
+            return (
             <div className="flex gap-1">
-              <button title="Preview receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+              <button title="Sale summary receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                 <Eye className="w-4 h-4" />
               </button>
+              {(hasBalance || hasPayments) && (
+                <button title={`Payment history (${paymentCount})`} onClick={() => setPaymentsSale(s)} className="relative p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
+                  <DollarSign className="w-4 h-4" />
+                  {paymentCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
+                      {paymentCount}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
-          )},
+            );
+          }},
         ]}
         data={paginated.data}
       />
@@ -191,6 +223,9 @@ export default function SalesHistory() {
       </div>
       {previewSale && (
         <ReceiptPreviewModal sale={previewSale} open={!!previewSale} onClose={() => setPreviewSale(null)} />
+      )}
+      {paymentsSale && (
+        <SalePaymentsModal sale={paymentsSale} open={!!paymentsSale} onClose={() => setPaymentsSale(null)} />
       )}
     </Card>
   );

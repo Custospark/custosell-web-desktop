@@ -75,12 +75,20 @@ export function isIndexedDbError(err: unknown): boolean {
 
 export function sanitizeErrorMessage(err: unknown, fallback: string): string {
   if (isIndexedDbError(err)) return fallback;
-  const axiosErr = err as AxiosError<{ message?: string }>;
-  const serverMessage = axiosErr.response?.data?.message;
-  if (serverMessage) return serverMessage;
+  const axiosErr = err as AxiosError<{ message?: string; errors?: Record<string, string[]> }>;
+  const data = axiosErr.response?.data;
+  const fieldErrors = data?.errors;
+  if (fieldErrors) {
+    const firstFieldMessage = Object.values(fieldErrors).flat().find(Boolean);
+    if (firstFieldMessage) return firstFieldMessage;
+  }
+  const serverMessage = data?.message;
+  if (serverMessage && serverMessage !== 'Server Error') return serverMessage;
   if (isMutationTimeout(err) && !isCompletelyOffline()) {
     return 'Request timed out. Your action may still be processing — wait and refresh before trying again.';
   }
-  if (err instanceof Error) return err.message;
+  if (err instanceof Error && err.message && err.message !== 'Request failed with status code 422') {
+    return err.message;
+  }
   return fallback;
 }

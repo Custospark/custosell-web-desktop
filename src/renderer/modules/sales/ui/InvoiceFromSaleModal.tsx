@@ -6,8 +6,9 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import InvoiceBuilderForm from '../../invoices/InvoiceBuilderForm';
 import RecordPaymentModal from '../../invoices/RecordPaymentModal';
 import { useSendInvoice } from '../../invoices/api/InvoiceQueries';
-import { cartItemsToLineItems } from '../../invoices/invoiceLineItems';
+import { cartItemsToLineItems, saleItemsToLineItems } from '../../invoices/invoiceLineItems';
 import type { Invoice } from '../../invoices/api/InvoiceTypes';
+import type { Sale } from '../api/salesTypes';
 import { viewInvoicePdf } from '../../invoices/useInvoicePdf';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -22,6 +23,8 @@ interface InvoiceFromSaleModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  /** Completed sale to bill — links invoice via sale_id so send won't double-post revenue. */
+  linkedSale?: Sale | null;
 }
 
 type BuilderStep = 'build' | 'success';
@@ -41,6 +44,8 @@ interface InvoiceSuccessPanelProps {
   onOpenInvoices: () => void;
   onDone: () => void;
   onRecordPayment?: () => void;
+  linkedToSale?: boolean;
+  linkedReceipt?: string;
 }
 
 function InvoiceSuccessPanel({
@@ -53,6 +58,8 @@ function InvoiceSuccessPanel({
   onOpenInvoices,
   onDone,
   onRecordPayment,
+  linkedToSale,
+  linkedReceipt,
 }: InvoiceSuccessPanelProps) {
   const isSent = phase === 'sent';
   const customerLabel = invoice.customer?.name ?? 'Walk-in customer';
@@ -193,14 +200,25 @@ function InvoiceSuccessPanel({
           <>
             <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
             <span>
-              Accounts receivable and revenue are recorded. Record payment on the Invoices page when the customer pays.
+              {linkedToSale
+                ? `Linked to sale ${linkedReceipt} — revenue was already posted on the sale, so accounting was not duplicated.`
+                : 'Accounts receivable and revenue are recorded. Record payment on the Invoices page when the customer pays.'}
             </span>
           </>
         ) : (
           <>
             <Send className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
             <span>
-              Drafts are editable from Invoices. <strong className="font-semibold">Send &amp; post</strong> posts revenue and receivables to accounting — same as the Send action on the Invoices page.
+              {linkedToSale ? (
+                <>
+                  Linked to sale <span className="font-mono font-semibold">{linkedReceipt}</span>.{' '}
+                  <strong className="font-semibold">Send &amp; post</strong> delivers the billing document without duplicating sale revenue.
+                </>
+              ) : (
+                <>
+                  Drafts are editable from Invoices. <strong className="font-semibold">Send &amp; post</strong> posts revenue and receivables to accounting — same as the Send action on the Invoices page.
+                </>
+              )}
             </span>
           </>
         )}
@@ -269,13 +287,16 @@ function InvoiceSuccessPanel({
   );
 }
 
-export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: InvoiceFromSaleModalProps) {
+export default function InvoiceFromSaleModal({ open, onClose, onSuccess, linkedSale }: InvoiceFromSaleModalProps) {
   const navigate = useNavigate();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const customerId = useAppSelector((s) => s.sales.customerId);
   const discountAmount = useAppSelector((s) => s.sales.discountAmount);
   const discountType = useAppSelector((s) => s.sales.discountType);
   const saleNotes = useAppSelector((s) => s.sales.notes);
+
+  const isLinkedSale = linkedSale != null;
+  const linkedReceipt = linkedSale?.receipt_number;
 
   const sendInvoice = useSendInvoice();
 
@@ -286,15 +307,29 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const seed = useMemo(() => {
-    if (!open || cartItems.length === 0) return undefined;
+    if (!open) return undefined;
+    if (isLinkedSale && linkedSale) {
+      const lineItems = saleItemsToLineItems(linkedSale.sale_items ?? []);
+      if (lineItems.length === 0) return undefined;
+      return {
+        lineItems,
+        customerId: linkedSale.customer_id,
+        saleId: linkedSale.id > 0 ? linkedSale.id : null,
+        notes: linkedSale.notes ?? undefined,
+      };
+    }
+    if (cartItems.length === 0) return undefined;
     return {
       lineItems: cartItemsToLineItems(cartItems),
       customerId,
       notes: saleNotes || undefined,
     };
-  }, [open, cartItems, customerId, saleNotes]);
+  }, [open, isLinkedSale, linkedSale, cartItems, customerId, saleNotes]);
+
+  const lineCount = seed?.lineItems.length ?? 0;
 
   const hasSaleDiscount = useMemo(() => {
+    if (isLinkedSale) return false;
     if (discountAmount <= 0) return false;
     const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
     if (subtotal <= 0) return false;
@@ -302,12 +337,14 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
       ? Math.min(subtotal * (discountAmount / 100), subtotal)
       : Math.min(discountAmount, subtotal);
     return discountValue > 0;
-  }, [cartItems, discountAmount, discountType]);
+  }, [cartItems, discountAmount, discountType, isLinkedSale]);
 
   const modalTitle = useMemo(() => {
-    if (step !== 'success') return 'Generate invoice from cart';
+    if (step !== 'success') {
+      return isLinkedSale ? 'Invoice from completed sale' : 'Generate invoice from cart';
+    }
     return successPhase === 'sent' ? 'Invoice sent' : 'Draft saved';
-  }, [step, successPhase]);
+  }, [step, successPhase, isLinkedSale]);
 
   function handleClose() {
     if (step === 'success') onSuccess();
@@ -352,7 +389,11 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
     onClose();
   }
 
-  const builderKey = open ? `sale-invoice-${cartItems.map((c) => `${c.product_id}:${c.quantity}`).join('|')}` : 'closed';
+  const builderKey = open
+    ? isLinkedSale && linkedSale
+      ? `linked-sale-${linkedSale.id}`
+      : `sale-invoice-${cartItems.map((c) => `${c.product_id}:${c.quantity}`).join('|')}`
+    : 'closed';
 
   return (
     <Modal
@@ -378,15 +419,23 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
               ? () => setPaymentModalOpen(true)
               : undefined
           }
+          linkedToSale={isLinkedSale}
+          linkedReceipt={linkedReceipt}
         />
-      ) : cartItems.length === 0 ? (
+      ) : lineCount === 0 ? (
         <div className="py-8 text-center space-y-4">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600">
             <ShoppingCart className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-800">Your cart is empty</p>
-            <p className="text-sm text-gray-500 mt-1">Add products to the cart before generating an invoice.</p>
+            <p className="text-sm font-medium text-gray-800">
+              {isLinkedSale ? 'No billable items on this sale' : 'Your cart is empty'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {isLinkedSale
+                ? 'Fully refunded sales cannot be invoiced.'
+                : 'Add products to the cart before generating an invoice.'}
+            </p>
           </div>
           <Button variant="outline" size="sm" className="mx-auto" onClick={onClose}>
             Back to Sales
@@ -404,12 +453,31 @@ export default function InvoiceFromSaleModal({ open, onClose, onSuccess }: Invoi
             </div>
           )}
 
+          {isLinkedSale && linkedSale && linkedSale.id <= 0 && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                This sale is not synced yet. The invoice will be created without a sale link until the sale syncs.
+              </span>
+            </div>
+          )}
+
+          {isLinkedSale && linkedSale && linkedSale.id > 0 && (
+            <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
+              <FileText className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Billing document for sale <span className="font-mono font-semibold">{linkedSale.receipt_number}</span>.
+                Sending will not duplicate revenue already posted on the sale.
+              </span>
+            </div>
+          )}
+
           <div className={cn(
             'rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-4 gap-y-1',
           )}>
-            <span><strong className="text-gray-800">{cartItems.length}</strong> line{cartItems.length !== 1 ? 's' : ''} from cart</span>
+            <span><strong className="text-gray-800">{lineCount}</strong> line{lineCount !== 1 ? 's' : ''}{isLinkedSale ? ' from sale' : ' from cart'}</span>
             <span>
-              <strong className="text-gray-800">{cartItems.reduce((s, c) => s + c.quantity, 0)}</strong> items total
+              <strong className="text-gray-800">{seed?.lineItems.reduce((s, c) => s + c.quantity, 0) ?? 0}</strong> items total
             </span>
             <span className="text-gray-400 hidden sm:inline">·</span>
             <span className="w-full sm:w-auto">No payment recorded — customer pays when invoice is settled</span>

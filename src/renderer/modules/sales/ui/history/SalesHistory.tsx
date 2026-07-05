@@ -11,7 +11,8 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
-import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff, DollarSign } from 'lucide-react';
+import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff, DollarSign, FileText } from 'lucide-react';
+import InvoiceFromSaleModal from '../InvoiceFromSaleModal';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
@@ -29,6 +30,7 @@ export default function SalesHistory() {
   const [search, setSearch] = useState('');
   const [previewSale, setPreviewSale] = useState<Sale | null>(null);
   const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
+  const [invoiceSale, setInvoiceSale] = useState<Sale | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
@@ -197,11 +199,18 @@ export default function SalesHistory() {
             const hasBalance = balance > 0.009;
             const paymentCount = s.payments?.length ?? 0;
             const hasPayments = paymentCount > 0 || s.payment_status === 'partially_paid';
+            const hasItems = (s.sale_items?.length ?? 0) > 0;
+            const canInvoice = s.id > 0 && hasItems && s.payment_status !== 'refunded';
             return (
             <div className="flex gap-1">
               <button title="Sale summary receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                 <Eye className="w-4 h-4" />
               </button>
+              {canInvoice && (
+                <button title="Billing invoice linked to this sale" onClick={() => setInvoiceSale(s)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
+                  <FileText className="w-4 h-4" />
+                </button>
+              )}
               {(hasBalance || hasPayments) && (
                 <button title={`Payment history (${paymentCount})`} onClick={() => setPaymentsSale(s)} className="relative p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
                   <DollarSign className="w-4 h-4" />
@@ -226,6 +235,14 @@ export default function SalesHistory() {
       )}
       {paymentsSale && (
         <SalePaymentsModal sale={paymentsSale} open={!!paymentsSale} onClose={() => setPaymentsSale(null)} />
+      )}
+      {invoiceSale && (
+        <InvoiceFromSaleModal
+          open={!!invoiceSale}
+          linkedSale={invoiceSale}
+          onClose={() => setInvoiceSale(null)}
+          onSuccess={() => setInvoiceSale(null)}
+        />
       )}
     </Card>
   );

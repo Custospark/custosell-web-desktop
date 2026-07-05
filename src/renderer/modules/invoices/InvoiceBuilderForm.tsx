@@ -27,6 +27,7 @@ import { cn } from '../../shared/utils/cn';
 interface InvoiceBuilderSeed {
   lineItems: InvoiceLineItem[];
   customerId?: number | null;
+  saleId?: number | null;
   notes?: string;
 }
 
@@ -204,12 +205,13 @@ export default function InvoiceBuilderForm({
 
   const payload = useMemo(() => ({
     customer_id: customerId ? Number(customerId) : null,
+    sale_id: seed?.saleId ?? undefined,
     issue_date: issueDate,
     due_date: dueDate,
     tax_total: taxBreakdown.taxTotal,
     notes: notes || undefined,
     items: lineItemsToPayload(lineItems),
-  }), [customerId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
+  }), [customerId, seed?.saleId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
 
   function handleSave() {
     if (lineItems.length === 0 || !dueDate) return;

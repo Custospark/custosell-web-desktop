@@ -14,9 +14,10 @@ interface SaleCompletedModalProps {
   lastPayment?: Payment | null;
   onNewSale: () => void;
   onClose?: () => void;
+  onGenerateInvoice?: () => void;
 }
 
-export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClose }: SaleCompletedModalProps) {
+export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClose, onGenerateInvoice }: SaleCompletedModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
 
@@ -87,6 +88,12 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4">
+          {onGenerateInvoice && sale.id > 0 && (sale.sale_items?.length ?? 0) > 0 && (
+            <Button className="flex-1 py-2.5 sm:py-3" variant="outline" onClick={onGenerateInvoice}>
+              <FileText className="w-4 h-4 mr-1" />
+              Invoice
+            </Button>
+          )}
           {lastPayment && (
             <Button className="flex-1 py-2.5 sm:py-3" variant="outline" onClick={() => setShowPaymentReceipt(true)}>
               <FileText className="w-4 h-4 mr-1" />

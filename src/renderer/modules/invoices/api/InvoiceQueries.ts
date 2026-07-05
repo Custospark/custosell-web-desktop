@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
-import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import { sanitizeErrorMessage, shouldCompleteMutationLocally } from '../../../app/store/offline/core/offlineQueryUtils';
 import { INVOICES } from '../../../shared/api/endpoints/endpoints';
 import type { Invoice } from './InvoiceTypes';
 import type { RecordPaymentResult } from '../../payments/paymentTypes';
 import { normalizePayment, buildPaymentFormData } from '../../payments/paymentQueries';
 import type { RecordPaymentPayload } from '../../payments/paymentTypes';
+import { completeOfflineInvoicePayment } from '../../../app/store/offline/payments/completeOfflineInvoicePayment';
 
 export const invoiceKeys = {
   all: ['invoices'] as const,
@@ -119,10 +120,20 @@ export function useUpdateInvoice() {
   });
 }
 
+export type CreateInvoicePayload = {
+  customer_id?: number | null;
+  sale_id?: number | null;
+  issue_date: string;
+  due_date: string;
+  tax_total?: number;
+  items: { product_id?: number | null; description: string; quantity: number; unit_price: number; subtotal: number }[];
+  notes?: string;
+};
+
 export function useCreateInvoice() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<Invoice, AxiosError, { customer_id?: number | null; issue_date: string; due_date: string; tax_total?: number; items: { product_id?: number | null; description: string; quantity: number; unit_price: number; subtotal: number }[]; notes?: string }>({
+  return useMutation<Invoice, AxiosError, CreateInvoicePayload>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post(INVOICES.BASE, payload);
       return normalizeInvoiceResponse(data);
@@ -174,6 +185,9 @@ export function useRecordPayment() {
   const { showToast } = useToast();
   return useMutation<RecordPaymentResult, AxiosError, { id: number } & RecordPaymentPayload>({
     mutationFn: async ({ id, ...payload }) => {
+      if (shouldCompleteMutationLocally()) {
+        return completeOfflineInvoicePayment(id, payload);
+      }
       const formData = buildPaymentFormData(payload);
       const { data } = await axiosInstance.post(INVOICES.PAYMENT(id), formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

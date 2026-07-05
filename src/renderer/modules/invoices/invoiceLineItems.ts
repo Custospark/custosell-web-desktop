@@ -81,3 +81,31 @@ export function cartItemsToLineItems(
     tax_class: item.tax_class ?? null,
   }));
 }
+
+/** Map completed sale lines into invoice builder rows (net of refunds). */
+export function saleItemsToLineItems(
+  saleItems: {
+    id: number;
+    product_id: number | null;
+    product_name: string;
+    unit_price: string | number;
+    quantity: number;
+    refunded_quantity?: number;
+  }[],
+): InvoiceLineItem[] {
+  return saleItems
+    .map((item) => {
+      const netQty = item.quantity - (item.refunded_quantity ?? 0);
+      return {
+        lineKey: `sale-item-${item.id}`,
+        product_id: item.product_id,
+        name: item.product_name,
+        unit_price: Number(item.unit_price),
+        quantity: netQty,
+        unit: null,
+        tax_percentage: null,
+        tax_class: null,
+      };
+    })
+    .filter((item) => item.quantity > 0);
+}

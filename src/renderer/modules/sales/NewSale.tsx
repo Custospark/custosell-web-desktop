@@ -143,6 +143,7 @@ function BillingControls() {
   const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [invoiceFromSale, setInvoiceFromSale] = useState<Sale | null>(null);
   const [lastPayment, setLastPayment] = useState<import('../../payments/paymentTypes').Payment | null>(null);
   const [installmentMode, setInstallmentMode] = useState(false);
 
@@ -418,8 +419,22 @@ function BillingControls() {
     <SaleCompletedModal
       sale={completedSale}
       lastPayment={lastPayment}
-      onNewSale={() => { setCompletedSale(null); setLastPayment(null); createSale.reset(); }}
+      onNewSale={() => { setCompletedSale(null); setLastPayment(null); setInvoiceFromSale(null); createSale.reset(); }}
+      onGenerateInvoice={() => completedSale && setInvoiceFromSale(completedSale)}
     />
+    {invoiceFromSale && (
+      <InvoiceFromSaleModal
+        open={!!invoiceFromSale}
+        linkedSale={invoiceFromSale}
+        onClose={() => setInvoiceFromSale(null)}
+        onSuccess={() => {
+          setInvoiceFromSale(null);
+          setCompletedSale(null);
+          setLastPayment(null);
+          createSale.reset();
+        }}
+      />
+    )}
     </>
   );
 }

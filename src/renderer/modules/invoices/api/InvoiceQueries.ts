@@ -6,9 +6,12 @@ import { sanitizeErrorMessage, shouldCompleteMutationLocally } from '../../../ap
 import { INVOICES } from '../../../shared/api/endpoints/endpoints';
 import type { Invoice } from './InvoiceTypes';
 import type { RecordPaymentResult } from '../../payments/paymentTypes';
-import { normalizePayment, buildPaymentFormData } from '../../payments/paymentQueries';
+import { normalizePayment, buildPaymentFormData, resolveActiveShiftIdForPayment } from '../../payments/paymentQueries';
 import type { RecordPaymentPayload } from '../../payments/paymentTypes';
 import { completeOfflineInvoicePayment } from '../../../app/store/offline/payments/completeOfflineInvoicePayment';
+import { salesKeys } from '../../sales/api/salesQueries';
+import { dashboardKeys } from '../../dashboard/DashboardQueries';
+import { shiftKeys } from '../../shifts/ShiftQueries';
 
 export const invoiceKeys = {
   all: ['invoices'] as const,
@@ -185,10 +188,11 @@ export function useRecordPayment() {
   const { showToast } = useToast();
   return useMutation<RecordPaymentResult, AxiosError, { id: number } & RecordPaymentPayload>({
     mutationFn: async ({ id, ...payload }) => {
+      const withShift = resolveActiveShiftIdForPayment(payload);
       if (shouldCompleteMutationLocally()) {
-        return completeOfflineInvoicePayment(id, payload);
+        return completeOfflineInvoicePayment(id, withShift);
       }
-      const formData = buildPaymentFormData(payload);
+      const formData = buildPaymentFormData(withShift);
       const { data } = await axiosInstance.post(INVOICES.PAYMENT(id), formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -214,6 +218,9 @@ export function useRecordPayment() {
       upsertInvoiceInCache(qc, invoice);
       qc.setQueryData(invoiceKeys.detail(invoice.id), invoice);
       void qc.invalidateQueries({ queryKey: invoiceKeys.all });
+      void qc.invalidateQueries({ queryKey: salesKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
+      void qc.invalidateQueries({ queryKey: shiftKeys.all });
       showToast('success', 'Payment recorded');
     },
     onError: (e) => showToast('error', sanitizeErrorMessage(e, 'Failed to record payment')),

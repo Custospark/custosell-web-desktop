@@ -38,6 +38,9 @@ import {
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import type { Sale } from '../sales/api/salesTypes';
 import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
+import type { Payment } from '../payments/paymentTypes';
+import { normalizePayment } from '../payments/paymentQueries';
+import { SHIFTS } from '../../shared/api/endpoints/endpoints';
 
 export interface Shift extends ShiftRecord {
   user?: { data: { id: number; name: string } };
@@ -122,6 +125,7 @@ export const shiftKeys = {
   active: () => [...shiftKeys.all, 'active'] as const,
   list: () => [...shiftKeys.all, 'list'] as const,
   expenses: (shiftId: number) => [...shiftKeys.all, 'expenses', shiftId] as const,
+  payments: (shiftId: number) => [...shiftKeys.all, 'payments', shiftId] as const,
 };
 
 function mergeShiftExpenseLists(
@@ -196,6 +200,47 @@ async function readShiftSalesBaseline(shiftId: number): Promise<Sale[]> {
 async function readShiftSales(shiftId: number): Promise<SaleWithSyncMeta[]> {
   const baseline = await readShiftSalesBaseline(shiftId);
   return mergeShiftSales(baseline, shiftId);
+}
+
+export function appendShiftPaymentToCache(shiftId: number, payment: Payment): void {
+  queryClient.setQueryData<Payment[]>(shiftKeys.payments(shiftId), (old) => {
+    const list = old ?? [];
+    if (list.some((p) => p.id === payment.id)) return list;
+    return [...list, payment];
+  });
+}
+
+async function readShiftPayments(shiftId: number): Promise<Payment[]> {
+  return queryClient.getQueryData<Payment[]>(shiftKeys.payments(shiftId)) ?? [];
+}
+
+export function useShiftPayments(shiftId: number | null) {
+  return useQuery<Payment[]>({
+    queryKey: shiftId ? shiftKeys.payments(shiftId) : ([...shiftKeys.all, 'payments', 'none'] as const),
+    queryFn: async () => {
+      if (!shiftId) return [];
+
+      const readClient = () => readShiftPayments(shiftId);
+
+      if (shouldUseClientStorage() || isCompletelyOffline() || shiftId < 0) {
+        return readClient();
+      }
+
+      return readWithOfflineStrategy({
+        readFromClient: readClient,
+        fetchFromServer: async () => {
+          const { data } = await axiosInstance.get<{ data: unknown[] }>(SHIFTS.PAYMENTS(shiftId));
+          return (data.data ?? []).map((row) => normalizePayment(row));
+        },
+      });
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    enabled: !!shiftId,
+    placeholderData: (prev) => prev ?? [],
+    retry: (count, err) => !isNetworkFailure(err) && count < 1,
+    networkMode: 'offlineFirst',
+  });
 }
 
 export function useActiveShift() {

@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useActiveShift, useClockIn, useShiftExpenses, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
+import { useActiveShift, useClockIn, useShiftExpenses, useShiftPayments, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
 import { useEndShiftAction } from './useEndShiftAction';
 import type { ShiftWithSyncMeta } from '../../app/store/offline/sales/localShiftsStore';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -36,6 +36,7 @@ import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shif
 import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
 import { grossSaleAmount, netSaleAmount, netSaleTaxAmount, refundedAmount, saleTaxRefundedAmount, toAmount } from '../sales/utils/saleAmounts';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
+import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import { useToast } from '../../app/contexts/useToast';
 
 const cardStyles = {
@@ -92,6 +93,7 @@ export default function MyShiftPage() {
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
   const { data: shiftSales } = useShiftSales(shiftId ?? null);
+  const { data: shiftPayments = [] } = useShiftPayments(shiftId ?? null);
   const { data: shiftExpenses = [] } = useShiftExpenses(shiftId ?? null);
 
   const filteredSales = useMemo(() => {
@@ -110,9 +112,10 @@ export default function MyShiftPage() {
   const shiftVatRefunded = shiftSales?.reduce((s, sale) => s + saleTaxRefundedAmount(sale), 0) || 0;
   const shiftExpenseTotal = shiftExpenses.reduce((sum, expense) => sum + toAmount(expense.amount), 0);
   const netShiftTotal = netSales(shiftGrossTotal, shiftRefundsTotal, shiftExpenseTotal);
-  const cashTotal = shiftSales?.filter((s) => s.payment_method === 'cash').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
-  const mobileTotal = shiftSales?.filter((s) => s.payment_method === 'mobile_money').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
-  const cardTotal = shiftSales?.filter((s) => s.payment_method === 'card' || s.payment_method === 'other').reduce((s, sale) => s + netSaleAmount(sale), 0) || 0;
+  const collections = computeShiftCollections(shiftPayments, shiftSales ?? []);
+  const cashTotal = collections.cash;
+  const mobileTotal = collections.mobile;
+  const cardTotal = collections.card;
   const handoverAmount = cashHandover(cashTotal, shiftExpenseTotal);
 
   const clockInValue = shift?.clock_in || authUser?.shift_clock_in;
@@ -125,6 +128,7 @@ export default function MyShiftPage() {
         clockIn: clockInValue,
         clockOut: shift?.clock_out ?? null,
         shiftSales: shiftSales ?? [],
+        shiftPayments,
         shiftExpenses,
         isOfflineCopy: isOffline,
         taxEnabled,
@@ -135,6 +139,7 @@ export default function MyShiftPage() {
       clockInValue,
       shift?.clock_out,
       shiftSales,
+      shiftPayments,
       shiftExpenses,
       isOffline,
       taxEnabled,

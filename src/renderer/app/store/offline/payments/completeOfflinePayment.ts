@@ -1,6 +1,7 @@
 import { queryClient } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { appendShiftPaymentToCache } from '../../../../modules/shifts/ShiftQueries';
 import { localSalesStore, toSaleWithSyncMeta, type SaleWithSyncMeta } from '../sales/localSalesStore';
 import { getOfflineDb } from '../core/offlineDb';
 import { computeSaleBalance } from '../../../../modules/payments/payableBalance';
@@ -66,6 +67,7 @@ export async function completeOfflineSalePayment(
     paid_at: now,
     notes: payload.notes ?? null,
     recorded_by: authUser?.id ?? null,
+    shift_id: payload.shift_id ?? authUser?.shift_id ?? null,
     _pendingSync: true,
   };
 
@@ -85,12 +87,18 @@ export async function completeOfflineSalePayment(
     (old ?? []).map((s) => (s.id === saleId ? updatedSale : s)),
   );
 
+  const activeShiftId = payload.shift_id ?? authUser?.shift_id ?? null;
+  if (activeShiftId) {
+    appendShiftPaymentToCache(activeShiftId, payment);
+  }
+
   const formData = new FormData();
   formData.append('amount', String(payload.amount));
   formData.append('payment_method', payload.payment_method);
   if (payload.notes) formData.append('notes', payload.notes);
   if (payload.amount_tendered != null) formData.append('amount_tendered', String(payload.amount_tendered));
   if (payload.change_given != null) formData.append('change_given', String(payload.change_given));
+  if (activeShiftId) formData.append('shift_id', String(activeShiftId));
   if (payload.attachment) formData.append('attachment', payload.attachment);
 
   await mutationQueue.enqueue({

@@ -5,8 +5,9 @@ import { useLogoutAction } from '../../app/contexts/LogoutContext';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { getUserFirstName } from '../../shared/utils/userDisplayName';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
-import { grossSaleAmount, netSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
-import { useActiveShift, useClockOut, useShiftExpenses, useShiftSales } from './ShiftQueries';
+import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
+import { grossSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
+import { useActiveShift, useClockOut, useShiftExpenses, useShiftPayments, useShiftSales } from './ShiftQueries';
 
 function buildEndShiftConfirmMessage(
   firstName: string,
@@ -27,6 +28,7 @@ export function useEndShiftAction() {
   const shiftId = shift?.id || authUser?.shift_id || null;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
   const { data: shiftSales = [] } = useShiftSales(shiftId);
+  const { data: shiftPayments = [] } = useShiftPayments(shiftId);
   const { data: shiftExpenses = [] } = useShiftExpenses(shiftId);
 
   const totals = useMemo(() => {
@@ -34,15 +36,10 @@ export function useEndShiftAction() {
     const shiftRefundsTotal = shiftSales.reduce((sum, sale) => sum + refundedAmount(sale), 0);
     const shiftExpenseTotal = shiftExpenses.reduce((sum, expense) => sum + toAmount(expense.amount), 0);
     const netShiftTotal = netSales(shiftGrossTotal, shiftRefundsTotal, shiftExpenseTotal);
-    const cashTotal = shiftSales
-      .filter((s) => s.payment_method === 'cash')
-      .reduce((sum, sale) => sum + netSaleAmount(sale), 0);
-    const mobileTotal = shiftSales
-      .filter((s) => s.payment_method === 'mobile_money')
-      .reduce((sum, sale) => sum + netSaleAmount(sale), 0);
-    const cardTotal = shiftSales
-      .filter((s) => s.payment_method === 'card' || s.payment_method === 'other')
-      .reduce((sum, sale) => sum + netSaleAmount(sale), 0);
+    const collections = computeShiftCollections(shiftPayments, shiftSales);
+    const cashTotal = collections.cash;
+    const mobileTotal = collections.mobile;
+    const cardTotal = collections.card;
     const handoverAmount = cashHandover(cashTotal, shiftExpenseTotal);
 
     return {
@@ -53,7 +50,7 @@ export function useEndShiftAction() {
       handoverAmount,
       transactionCount: shiftSales.length,
     };
-  }, [shiftSales, shiftExpenses]);
+  }, [shiftSales, shiftPayments, shiftExpenses]);
 
   const requestEndShift = useCallback(async () => {
     if (!shiftId) return false;

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../app/api/axiosConfig';
+import { store } from '../../app/store/store';
 import { useToast } from '../../app/contexts/useToast';
 import { sanitizeErrorMessage, shouldCompleteMutationLocally } from '../../app/store/offline/core/offlineQueryUtils';
 import { SALES } from '../../shared/api/endpoints/endpoints';
@@ -29,6 +30,7 @@ export function normalizePayment(payload: unknown): Payment {
     attachment_path: p.attachment_path != null ? String(p.attachment_path) : null,
     attachment_url: p.attachment_url != null ? String(p.attachment_url) : null,
     recorded_by: p.recorded_by != null ? Number(p.recorded_by) : null,
+    shift_id: p.shift_id != null ? Number(p.shift_id) : null,
     _pendingSync: p._pendingSync === true,
   };
 }
@@ -47,8 +49,15 @@ export function buildPaymentFormData(payload: RecordPaymentPayload): FormData {
   if (payload.notes) formData.append('notes', payload.notes);
   if (payload.amount_tendered != null) formData.append('amount_tendered', String(payload.amount_tendered));
   if (payload.change_given != null) formData.append('change_given', String(payload.change_given));
+  if (payload.shift_id != null) formData.append('shift_id', String(payload.shift_id));
   if (payload.attachment) formData.append('attachment', payload.attachment);
   return formData;
+}
+
+export function resolveActiveShiftIdForPayment(payload: RecordPaymentPayload): RecordPaymentPayload {
+  if (payload.shift_id != null) return payload;
+  const shiftId = store.getState().auth.user?.shift_id;
+  return shiftId ? { ...payload, shift_id: shiftId } : payload;
 }
 
 export function getPaymentErrorMessage(err: unknown): string {
@@ -60,10 +69,11 @@ export function useRecordSalePayment() {
   const { showToast } = useToast();
   return useMutation<RecordSalePaymentResult, AxiosError, { id: number } & RecordPaymentPayload>({
     mutationFn: async ({ id, ...payload }) => {
+      const withShift = resolveActiveShiftIdForPayment(payload);
       if (shouldCompleteMutationLocally()) {
-        return completeOfflineSalePayment(id, payload);
+        return completeOfflineSalePayment(id, withShift);
       }
-      const formData = buildPaymentFormData(payload);
+      const formData = buildPaymentFormData(withShift);
       const { data } = await axiosInstance.post(SALES.PAYMENT(id), formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -75,6 +85,7 @@ export function useRecordSalePayment() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['sales'] });
+      void qc.invalidateQueries({ queryKey: ['shifts'] });
       showToast('success', 'Payment recorded');
     },
     onError: (e) => showToast('error', sanitizeErrorMessage(e, 'Failed to record payment')),

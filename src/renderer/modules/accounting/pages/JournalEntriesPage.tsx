@@ -6,7 +6,8 @@ import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 
-import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry, useChartOfAccounts, useAccountingPeriods } from '../api/AccountingQueries';
+import { useJournalEntries, useCreateJournalEntry, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry, useChartOfAccounts } from '../api/AccountingQueries';
+import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
 import type { JournalEntry, JournalEntryLine } from '../api/AccountingTypes';
 import { FileText, Plus, Send, X, PlusCircle, Trash2, Search, ChevronLeft, ChevronRight, RotateCcw, Eye } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -16,7 +17,7 @@ const PAGE_SIZE = 20;
 
 export default function JournalEntriesPage() {
   const [formOpen, setFormOpen] = useState(false);
-  const [periodFilter, setPeriodFilter] = useState('');
+  const { periodFilter, setPeriodFilter, startYear, endYear, periods } = useAccountingPeriodSelection();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionId, setActionId] = useState<number | null>(null);
@@ -25,7 +26,6 @@ export default function JournalEntriesPage() {
 
   // All filtering client-side — always fetch all entries
   const { data: entries, isLoading } = useJournalEntries();
-  const { data: periods } = useAccountingPeriods();
   const postEntry = usePostJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
   const reverseEntry = useReverseJournalEntry();
@@ -201,6 +201,8 @@ export default function JournalEntriesPage() {
           periods={periods}
           value={periodFilter}
           onChange={setPeriodFilter}
+          startYear={startYear}
+          endYear={endYear}
           className="flex-1"
         />
         <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>

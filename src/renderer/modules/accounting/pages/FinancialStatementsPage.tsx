@@ -1,17 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
-import { useAccountingPeriods, useTrialBalance, useIncomeStatement, useBalanceSheet, useCashFlow, useEquity } from '../api/AccountingQueries';
+import { useTrialBalance, useIncomeStatement, useBalanceSheet, useCashFlow, useEquity } from '../api/AccountingQueries';
+import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
+import { buildReportQueryString } from '../utils/periodSelectionUtils';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import { Scale, BarChart3, ClipboardList, TrendingUp, PieChart, FileText, Download, Calendar } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
 import { motion } from 'framer-motion';
-
-function fmt(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
-}
 
 const CARD_STYLES: Record<string, { icon: React.ElementType; label: string; border: string; bg: string; iconBg: string; iconColor: string; gradient: string }> = {
   'trial-balance': {
@@ -61,42 +60,24 @@ function StatusBadge({ label, type }: { label: string; type: 'success' | 'danger
 }
 
 export default function FinancialStatementsPage() {
-  const [periodId, setPeriodId] = useState<string>('');
-  const { data: periods } = useAccountingPeriods();
-
-
-  const effectivePeriodId = useMemo(() => {
-    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-    return ids.length > 0 ? ids[ids.length - 1] : undefined;
-  }, [periodId]);
-
-  const periodName = useMemo(() => {
-    const id = effectivePeriodId;
-    if (!id || !periods) return '';
-    const p = periods.find((p: any) => p.id === id);
-    return p?.name ?? '';
-  }, [effectivePeriodId, periods]);
+  const {
+    periodFilter,
+    setPeriodFilter,
+    reportParams,
+    selectionLabel: periodName,
+    startYear,
+    endYear,
+    periods,
+  } = useAccountingPeriodSelection();
 
   const [downloading, setDownloading] = useState<string | null>(null);
 
   function viewPdf(type: string) {
+    if (!reportParams) return;
     setDownloading(type);
-    const pid = effectivePeriodId;
-    if (!pid) return;
 
-    const params: Record<string, string | number> = { format: 'pdf' };
-    const ids = periodId ? periodId.split(',').map(Number).filter(Boolean) : [];
-
-    if (ids.length > 1) {
-      const first = periods?.find((p: any) => p.id === ids[0]);
-      const last = periods?.find((p: any) => p.id === ids[ids.length - 1]);
-      if (first?.start_date && last?.end_date) {
-        params.date_from = first.start_date.slice(0, 10);
-        params.date_to = last.end_date.slice(0, 10);
-      }
-    } else {
-      params.period_id = pid;
-    }
+    const query = buildReportQueryString(reportParams).replace(/^\?/, '');
+    const params = Object.fromEntries(new URLSearchParams(`${query}&format=pdf`));
 
     axiosInstance.get(ACCOUNTING.EXPORT(type), { params, responseType: 'blob' })
       .then((res) => {
@@ -107,15 +88,15 @@ export default function FinancialStatementsPage() {
       .catch(() => setDownloading(null));
   }
 
-  const { data: tb } = useTrialBalance(effectivePeriodId);
-  const { data: stmt } = useIncomeStatement(effectivePeriodId);
-  const { data: bs } = useBalanceSheet(effectivePeriodId);
-  const { data: cf } = useCashFlow(effectivePeriodId);
-  const { data: eq } = useEquity(effectivePeriodId);
+  const { data: tb } = useTrialBalance(reportParams);
+  const { data: stmt } = useIncomeStatement(reportParams);
+  const { data: bs } = useBalanceSheet(reportParams);
+  const { data: cf } = useCashFlow(reportParams);
+  const { data: eq } = useEquity(reportParams);
 
-  const isLoading = effectivePeriodId && !tb && !stmt && !bs && !cf && !eq;
+  const isLoading = reportParams && !tb && !stmt && !bs && !cf && !eq;
 
-  if (!effectivePeriodId) {
+  if (!reportParams) {
     return (
       <div className="space-y-6">
         <Card>
@@ -130,7 +111,14 @@ export default function FinancialStatementsPage() {
           </div>
         </Card>
         <div className="flex items-center gap-4">
-          <PeriodSelector periods={periods} value={periodId} onChange={setPeriodId} className="w-full" />
+          <PeriodSelector
+            periods={periods}
+            value={periodFilter}
+            onChange={setPeriodFilter}
+            startYear={startYear}
+            endYear={endYear}
+            className="w-full"
+          />
         </div>
         <div className="flex items-center justify-center h-48 text-sm text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
           <div className="text-center">
@@ -142,13 +130,13 @@ export default function FinancialStatementsPage() {
     );
   }
 
-  const statements: { key: string; data: any; metrics: MetricItem[]; badge: any }[] = [
+  const statements: { key: string; data: unknown; metrics: MetricItem[]; badge: { label: string; type: 'success' | 'danger' | 'warning' | 'info' } | null }[] = [
     {
       key: 'trial-balance',
       data: tb,
       metrics: tb ? [
-        { label: 'Total Debits', value: fmt(tb.total_debits) },
-        { label: 'Total Credits', value: fmt(tb.total_credits) },
+        { label: 'Total Debits', value: formatCurrency(tb.total_debits) },
+        { label: 'Total Credits', value: formatCurrency(tb.total_credits) },
       ] : [],
       badge: tb ? { label: tb.is_balanced ? 'Balanced' : 'Unbalanced', type: tb.is_balanced ? 'success' as const : 'danger' as const } : null,
     },
@@ -156,9 +144,9 @@ export default function FinancialStatementsPage() {
       key: 'balance-sheet',
       data: bs,
       metrics: bs ? [
-        { label: 'Assets', value: fmt(bs.total_assets) },
-        { label: 'Liabilities', value: fmt(bs.total_liabilities) },
-        { label: 'Equity', value: fmt(bs.total_equity) },
+        { label: 'Assets', value: formatCurrency(bs.total_assets) },
+        { label: 'Liabilities', value: formatCurrency(bs.total_liabilities) },
+        { label: 'Equity', value: formatCurrency(bs.total_equity) },
       ] : [],
       badge: bs ? { label: bs.is_balanced ? 'A = L + E' : 'Out of Balance', type: bs.is_balanced ? 'success' as const : 'danger' as const } : null,
     },
@@ -166,8 +154,8 @@ export default function FinancialStatementsPage() {
       key: 'income-statement',
       data: stmt,
       metrics: stmt ? [
-        { label: 'Revenue', value: fmt(stmt.total_revenue) },
-        { label: 'Net Income', value: fmt(stmt.net_income), positive: stmt.net_income >= 0, negative: stmt.net_income < 0 },
+        { label: 'Revenue', value: formatCurrency(stmt.total_revenue) },
+        { label: 'Net Income', value: formatCurrency(stmt.net_income), positive: stmt.net_income >= 0, negative: stmt.net_income < 0 },
       ] : [],
       badge: stmt ? { label: stmt.net_income >= 0 ? 'Profitable' : 'Net Loss', type: stmt.net_income >= 0 ? 'success' as const : 'danger' as const } : null,
     },
@@ -175,8 +163,8 @@ export default function FinancialStatementsPage() {
       key: 'cash-flow',
       data: cf,
       metrics: cf ? [
-        { label: 'Operating', value: fmt(cf.operating.total) },
-        { label: 'Net Change', value: fmt(cf.net_change), positive: cf.net_change >= 0, negative: cf.net_change < 0 },
+        { label: 'Operating', value: formatCurrency(cf.operating.total) },
+        { label: 'Net Change', value: formatCurrency(cf.net_change), positive: cf.net_change >= 0, negative: cf.net_change < 0 },
       ] : [],
       badge: cf ? { label: cf.net_change >= 0 ? 'Positive' : 'Negative', type: cf.net_change >= 0 ? 'success' as const : 'danger' as const } : null,
     },
@@ -184,9 +172,9 @@ export default function FinancialStatementsPage() {
       key: 'equity',
       data: eq,
       metrics: eq ? [
-        { label: 'Opening RE', value: fmt(eq.opening_retained_earnings) },
-        { label: 'Net Income', value: fmt(eq.net_income), positive: eq.net_income >= 0, negative: eq.net_income < 0 },
-        { label: 'Total Equity', value: fmt(eq.total_equity) },
+        { label: 'Opening RE', value: formatCurrency(eq.opening_retained_earnings) },
+        { label: 'Net Income', value: formatCurrency(eq.net_income), positive: eq.net_income >= 0, negative: eq.net_income < 0 },
+        { label: 'Total Equity', value: formatCurrency(eq.total_equity) },
       ] : [],
       badge: eq ? { label: 'Equity', type: 'info' as const } : null,
     },

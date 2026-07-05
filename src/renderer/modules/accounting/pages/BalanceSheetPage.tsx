@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Select } from '../../../shared/components/inputs/Select';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -6,15 +6,16 @@ import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinne
 import { useBalanceSheet, useAccountingPeriods } from '../api/AccountingQueries';
 import { Printer, BarChart3 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-
-function fmt(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
-}
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
 export default function BalanceSheetPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const { data: periods } = useAccountingPeriods();
-  const { data: sheet, isLoading, isError } = useBalanceSheet(periodId ? Number(periodId) : undefined);
+  const reportParams = useMemo(
+    () => (periodId ? { period_id: Number(periodId), cacheKey: `period-${periodId}` } : undefined),
+    [periodId],
+  );
+  const { data: sheet, isLoading, isError } = useBalanceSheet(reportParams);
 
   return (
     <div className="space-y-6">
@@ -77,12 +78,12 @@ export default function BalanceSheetPage() {
                           {accounts.map((acc) => (
                             <tr key={acc.account_id}>
                               <td className="py-1 pr-4 pl-6 text-gray-600">{acc.code} - {acc.name}</td>
-                              <td className="py-1 pl-4 text-right font-mono tabular-nums text-gray-800 w-36">{fmt(acc.balance)}</td>
+                              <td className="py-1 pl-4 text-right font-mono tabular-nums text-gray-800 w-36">{formatCurrency(acc.balance)}</td>
                             </tr>
                           ))}
                           <tr>
                             <td className="py-2 pr-4 pl-6 font-semibold text-gray-900 border-t border-gray-300">Total {name}</td>
-                            <td className="py-2 pl-4 text-right font-mono tabular-nums font-semibold text-gray-900 border-t border-gray-300">{fmt(total)}</td>
+                            <td className="py-2 pl-4 text-right font-mono tabular-nums font-semibold text-gray-900 border-t border-gray-300">{formatCurrency(total)}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -99,22 +100,22 @@ export default function BalanceSheetPage() {
                     <tbody>
                       <tr>
                         <td className="text-sm font-semibold text-gray-900 border-t-2 border-gray-800 pt-3">Total Assets (A)</td>
-                        <td className="text-sm font-semibold text-gray-900 border-t-2 border-gray-800 pt-3 text-right font-mono tabular-nums w-36">{fmt(sheet.total_assets)}</td>
+                        <td className="text-sm font-semibold text-gray-900 border-t-2 border-gray-800 pt-3 text-right font-mono tabular-nums w-36">{formatCurrency(sheet.total_assets)}</td>
                       </tr>
                       <tr>
                         <td className="text-sm font-semibold text-gray-900 pt-1">Total Liabilities (L)</td>
-                        <td className="text-sm font-semibold text-gray-900 pt-1 text-right font-mono tabular-nums">{fmt(sheet.total_liabilities)}</td>
+                        <td className="text-sm font-semibold text-gray-900 pt-1 text-right font-mono tabular-nums">{formatCurrency(sheet.total_liabilities)}</td>
                       </tr>
                       <tr>
                         <td className="text-sm font-semibold text-gray-900 pb-1">Total Equity (E)</td>
-                        <td className="text-sm font-semibold text-gray-900 pb-1 text-right font-mono tabular-nums">{fmt(sheet.total_equity)}</td>
+                        <td className="text-sm font-semibold text-gray-900 pb-1 text-right font-mono tabular-nums">{formatCurrency(sheet.total_equity)}</td>
                       </tr>
                       <tr>
                         <td className={cn('text-sm font-bold pt-2 border-t-2 border-gray-800', sheet.is_balanced ? 'text-green-600' : 'text-red-500')}>
                           A = L + E
                         </td>
                         <td className={cn('text-sm font-bold pt-2 border-t-2 border-gray-800 text-right font-mono tabular-nums', sheet.is_balanced ? 'text-green-600' : 'text-red-500')}>
-                          {fmt(sheet.total_assets)} = {fmt(sheet.total_liabilities + sheet.total_equity)}
+                          {formatCurrency(sheet.total_assets)} = {formatCurrency(sheet.total_liabilities + sheet.total_equity)}
                           {sheet.is_balanced ? ' ✅' : ' ⛔'}
                         </td>
                       </tr>

@@ -14,6 +14,7 @@ export interface Payment {
   attachment_path?: string | null;
   attachment_url?: string | null;
   recorded_by?: number | null;
+  shift_id?: number | null;
   _pendingSync?: boolean;
 }
 
@@ -23,6 +24,7 @@ export interface RecordPaymentPayload {
   notes?: string;
   amount_tendered?: number;
   change_given?: number;
+  shift_id?: number | null;
   attachment?: File | null;
 }
 

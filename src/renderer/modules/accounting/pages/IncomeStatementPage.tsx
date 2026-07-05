@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Select } from '../../../shared/components/inputs/Select';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -6,17 +6,14 @@ import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinne
 import { useIncomeStatement, useAccountingPeriods } from '../api/AccountingQueries';
 import { Printer, BarChart3 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-
-function fmt(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
-}
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
 function Row({ label, amount, bold, indent, positive, topBorder }: { label: string; amount: number; bold?: boolean; indent?: boolean; positive?: boolean; topBorder?: boolean }) {
   return (
     <tr className={cn(topBorder && 'border-t-2 border-gray-800')}>
       <td className={cn('py-1.5 pr-4', bold ? 'font-semibold text-gray-900' : 'text-gray-600', indent && 'pl-8')}>{label}</td>
       <td className={cn('py-1.5 pl-4 text-right font-mono tabular-nums w-36', positive ? 'text-green-600 font-semibold' : amount < 0 ? 'text-red-600' : 'text-gray-900', bold && 'font-semibold')}>
-        {fmt(Math.abs(amount))}
+        {formatCurrency(Math.abs(amount))}
       </td>
     </tr>
   );
@@ -25,7 +22,11 @@ function Row({ label, amount, bold, indent, positive, topBorder }: { label: stri
 export default function IncomeStatementPage() {
   const [periodId, setPeriodId] = useState<string>('');
   const { data: periods } = useAccountingPeriods();
-  const { data: stmt, isLoading, isError } = useIncomeStatement(periodId ? Number(periodId) : undefined);
+  const reportParams = useMemo(
+    () => (periodId ? { period_id: Number(periodId), cacheKey: `period-${periodId}` } : undefined),
+    [periodId],
+  );
+  const { data: stmt, isLoading, isError } = useIncomeStatement(reportParams);
 
   return (
     <div className="space-y-6">

@@ -9,7 +9,12 @@ export const USERS = { BASE: '/users', BY_ID: (id: number) => `/users/${id}` };
 export const CATEGORIES = '/categories';
 export const PRODUCTS = { BASE: '/products', LOW_STOCK: '/products/low-stock' };
 export const CUSTOMERS = { BASE: '/customers', PURCHASES: (id: number) => `/customers/${id}/purchases` };
-export const SHIFTS = { CLOCK_IN: '/shifts/clock-in', ACTIVE: '/shifts/active', BASE: '/shifts' };
+export const SHIFTS = {
+  CLOCK_IN: '/shifts/clock-in',
+  ACTIVE: '/shifts/active',
+  BASE: '/shifts',
+  PAYMENTS: (id: number) => `/shifts/${id}/payments`,
+};
 export const SALES = {
   BASE: '/sales',
   DAILY: '/sales/daily',

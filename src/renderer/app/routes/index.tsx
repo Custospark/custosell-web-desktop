@@ -42,6 +42,7 @@ import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessage
 import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
 import ChartOfAccountsPage from '../../modules/accounting/pages/ChartOfAccountsPage';
+import AccountingReportingLayout from '../../modules/accounting/AccountingReportingLayout';
 import JournalEntriesPage from '../../modules/accounting/pages/JournalEntriesPage';
 import TrialBalancePage from '../../modules/accounting/pages/TrialBalancePage';
 import IncomeStatementPage from '../../modules/accounting/pages/IncomeStatementPage';
@@ -128,12 +129,14 @@ export function AppRoutes() {
           <Route element={<ModuleAccessMiddleware module="accounting" />}>
             <Route path={ROUTES.ACCOUNTING.INDEX} element={<Navigate to={ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS} replace />} />
             <Route path={ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS} element={<SuspenseWrapper><ChartOfAccountsPage /></SuspenseWrapper>} />
-            <Route path={ROUTES.ACCOUNTING.JOURNAL_ENTRIES} element={<SuspenseWrapper><JournalEntriesPage /></SuspenseWrapper>} />
+            <Route element={<AccountingReportingLayout />}>
+              <Route path={ROUTES.ACCOUNTING.JOURNAL_ENTRIES} element={<SuspenseWrapper><JournalEntriesPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.ACCOUNTING.RATIOS} element={<SuspenseWrapper><RatiosPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.ACCOUNTING.STATEMENTS} element={<SuspenseWrapper><FinancialStatementsPage /></SuspenseWrapper>} />
+            </Route>
             <Route path={ROUTES.ACCOUNTING.TRIAL_BALANCE} element={<SuspenseWrapper><TrialBalancePage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.INCOME_STATEMENT} element={<SuspenseWrapper><IncomeStatementPage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.BALANCE_SHEET} element={<SuspenseWrapper><BalanceSheetPage /></SuspenseWrapper>} />
-            <Route path={ROUTES.ACCOUNTING.RATIOS} element={<SuspenseWrapper><RatiosPage /></SuspenseWrapper>} />
-            <Route path={ROUTES.ACCOUNTING.STATEMENTS} element={<SuspenseWrapper><FinancialStatementsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.PERIODS} element={<SuspenseWrapper><AccountingPeriodsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.FIXED_ASSETS} element={<SuspenseWrapper><FixedAssetsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.SETTINGS} element={<SuspenseWrapper><AccountingSettingsPage /></SuspenseWrapper>} />

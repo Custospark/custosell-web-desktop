@@ -8,6 +8,9 @@ import type {
   TrialBalance, IncomeStatement, BalanceSheet, RatioSet, RatioTrendItem, FixedAsset,
   CashFlowStatement, EquityStatement, InventoryReconciliation,
 } from './AccountingTypes';
+import { buildReportQueryString, type ReportPeriodParams } from '../utils/periodSelectionUtils';
+
+export type { ReportPeriodParams };
 
 /** Statements + ratios always refetch when online (mount, focus, reconnect). */
 export const financialReportQueryDefaults = {
@@ -25,13 +28,13 @@ export const accountingKeys = {
   periods: () => [...accountingKeys.all, 'periods'] as const,
   journalEntries: (filters?: Record<string, string>) => [...accountingKeys.all, 'journal-entries', filters] as const,
   journalEntry: (id: number) => [...accountingKeys.all, 'journal-entries', id] as const,
-  trialBalance: (periodId?: number) => [...accountingKeys.all, 'trial-balance', periodId] as const,
-  incomeStatement: (periodId?: number) => [...accountingKeys.all, 'income-statement', periodId] as const,
-  balanceSheet: (periodId?: number) => [...accountingKeys.all, 'balance-sheet', periodId] as const,
-  ratios: (periodId?: number) => [...accountingKeys.all, 'ratios', periodId] as const,
+  trialBalance: (params?: ReportPeriodParams) => [...accountingKeys.all, 'trial-balance', params?.cacheKey ?? 'current'] as const,
+  incomeStatement: (params?: ReportPeriodParams) => [...accountingKeys.all, 'income-statement', params?.cacheKey ?? 'current'] as const,
+  balanceSheet: (params?: ReportPeriodParams) => [...accountingKeys.all, 'balance-sheet', params?.cacheKey ?? 'current'] as const,
+  ratios: (params?: ReportPeriodParams) => [...accountingKeys.all, 'ratios', params?.cacheKey ?? 'current'] as const,
   fixedAssets: (filters?: Record<string, string>) => [...accountingKeys.all, 'fixed-assets', filters] as const,
-  cashFlow: (periodId?: number) => [...accountingKeys.all, 'cash-flow', periodId] as const,
-  equity: (periodId?: number) => [...accountingKeys.all, 'equity', periodId] as const,
+  cashFlow: (params?: ReportPeriodParams) => [...accountingKeys.all, 'cash-flow', params?.cacheKey ?? 'current'] as const,
+  equity: (params?: ReportPeriodParams) => [...accountingKeys.all, 'equity', params?.cacheKey ?? 'current'] as const,
   inventoryReconciliation: () => [...accountingKeys.all, 'inventory-reconciliation'] as const,
 };
 
@@ -98,11 +101,11 @@ export function useJournalEntry(id: number) {
   });
 }
 
-export function useTrialBalance(periodId?: number) {
+export function useTrialBalance(reportParams?: ReportPeriodParams) {
   return useQuery<TrialBalance>({
-    queryKey: accountingKeys.trialBalance(periodId),
+    queryKey: accountingKeys.trialBalance(reportParams),
     queryFn: async () => {
-      const params = periodId ? `?period_id=${periodId}` : '';
+      const params = buildReportQueryString(reportParams);
       const { data } = await axiosInstance.get<{ data: TrialBalance }>(`${ACCOUNTING.TRIAL_BALANCE}${params}`);
       return data.data;
     },
@@ -110,11 +113,11 @@ export function useTrialBalance(periodId?: number) {
   });
 }
 
-export function useIncomeStatement(periodId?: number) {
+export function useIncomeStatement(reportParams?: ReportPeriodParams) {
   return useQuery<IncomeStatement>({
-    queryKey: accountingKeys.incomeStatement(periodId),
+    queryKey: accountingKeys.incomeStatement(reportParams),
     queryFn: async () => {
-      const params = periodId ? `?period_id=${periodId}` : '';
+      const params = buildReportQueryString(reportParams);
       const { data } = await axiosInstance.get<{ data: IncomeStatement }>(`${ACCOUNTING.INCOME_STATEMENT}${params}`);
       return data.data;
     },
@@ -122,11 +125,11 @@ export function useIncomeStatement(periodId?: number) {
   });
 }
 
-export function useBalanceSheet(periodId?: number) {
+export function useBalanceSheet(reportParams?: ReportPeriodParams) {
   return useQuery<BalanceSheet>({
-    queryKey: accountingKeys.balanceSheet(periodId),
+    queryKey: accountingKeys.balanceSheet(reportParams),
     queryFn: async () => {
-      const params = periodId ? `?period_id=${periodId}` : '';
+      const params = buildReportQueryString(reportParams);
       const { data } = await axiosInstance.get<{ data: BalanceSheet }>(`${ACCOUNTING.BALANCE_SHEET}${params}`);
       return data.data;
     },
@@ -134,11 +137,11 @@ export function useBalanceSheet(periodId?: number) {
   });
 }
 
-export function useRatios(periodId?: number) {
+export function useRatios(reportParams?: ReportPeriodParams) {
   return useQuery<RatioSet>({
-    queryKey: accountingKeys.ratios(periodId),
+    queryKey: accountingKeys.ratios(reportParams),
     queryFn: async () => {
-      const params = periodId ? `?period_id=${periodId}` : '';
+      const params = buildReportQueryString(reportParams);
       const { data } = await axiosInstance.get<{ data: RatioSet }>(`${ACCOUNTING.RATIOS}${params}`);
       return data.data;
     },
@@ -344,11 +347,11 @@ export function useCreateFixedAsset() {
   });
 }
 
-export function useCashFlow(periodId?: number) {
+export function useCashFlow(reportParams?: ReportPeriodParams) {
   return useQuery<CashFlowStatement>({
-    queryKey: accountingKeys.cashFlow(periodId),
+    queryKey: accountingKeys.cashFlow(reportParams),
     queryFn: async () => {
-      const params = periodId ? `?period_id=${periodId}` : '';
+      const params = buildReportQueryString(reportParams);
       const { data } = await axiosInstance.get<{ data: CashFlowStatement }>(`${ACCOUNTING.CASH_FLOW}${params}`);
       return data.data;
     },
@@ -356,11 +359,11 @@ export function useCashFlow(periodId?: number) {
   });
 }
 
-export function useEquity(periodId?: number) {
+export function useEquity(reportParams?: ReportPeriodParams) {
   return useQuery<EquityStatement>({
-    queryKey: accountingKeys.equity(periodId),
+    queryKey: accountingKeys.equity(reportParams),
     queryFn: async () => {
-      const params = periodId ? `?period_id=${periodId}` : '';
+      const params = buildReportQueryString(reportParams);
       const { data } = await axiosInstance.get<{ data: EquityStatement }>(`${ACCOUNTING.EQUITY}${params}`);
       return data.data;
     },

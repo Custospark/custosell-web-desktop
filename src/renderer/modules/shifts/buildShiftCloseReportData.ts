@@ -1,9 +1,10 @@
 import type { AuthUser, BusinessInfo } from '../../app/store/slices/authSlice';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
+import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
+import type { Payment } from '../payments/paymentTypes';
 import {
   grossSaleAmount,
-  netSaleAmount,
   netSaleTaxAmount,
   refundedAmount,
   saleTaxRefundedAmount,
@@ -33,6 +34,7 @@ export function buildShiftCloseReportData(params: {
   clockIn: string | null | undefined;
   clockOut?: string | null;
   shiftSales: SaleWithSyncMeta[];
+  shiftPayments?: Payment[];
   shiftExpenses: ExpenseWithSyncMeta[];
   isOfflineCopy?: boolean;
   taxEnabled?: boolean;
@@ -43,6 +45,7 @@ export function buildShiftCloseReportData(params: {
     clockIn,
     clockOut = null,
     shiftSales,
+    shiftPayments = [],
     shiftExpenses,
     isOfflineCopy = false,
     taxEnabled = false,
@@ -58,15 +61,10 @@ export function buildShiftCloseReportData(params: {
   );
   const netSalesTotal = netSales(grossSales, refunds, shiftExpenseTotal);
 
-  const cash = shiftSales
-    .filter((s) => s.payment_method === 'cash')
-    .reduce((sum, sale) => sum + netSaleAmount(sale), 0);
-  const mobileMoney = shiftSales
-    .filter((s) => s.payment_method === 'mobile_money')
-    .reduce((sum, sale) => sum + netSaleAmount(sale), 0);
-  const cardOther = shiftSales
-    .filter((s) => s.payment_method === 'card' || s.payment_method === 'other')
-    .reduce((sum, sale) => sum + netSaleAmount(sale), 0);
+  const collections = computeShiftCollections(shiftPayments, shiftSales);
+  const cash = collections.cash;
+  const mobileMoney = collections.mobile;
+  const cardOther = collections.card;
 
   const resolvedClockIn = clockIn ?? new Date().toISOString();
 

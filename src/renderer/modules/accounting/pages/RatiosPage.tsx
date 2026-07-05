@@ -11,7 +11,9 @@ import { ChartContainer } from '../../../shared/components/charts/ChartContainer
 import {
   CHART_THEME, ChartTooltipRow, ChartTooltipShell, chartAverage,
 } from '../../../shared/components/charts/chartPrimitives';
-import { useAccountingPeriods, useRatioTrends, useRatios } from '../api/AccountingQueries';
+import { useRatioTrends, useRatios } from '../api/AccountingQueries';
+import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
+import { periodFilterToReportParams } from '../utils/periodSelectionUtils';
 import { useReportDownload } from '../../dashboard/DashboardQueries';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import type { RatioSet } from '../api/AccountingTypes';
@@ -264,107 +266,46 @@ const CATEGORY_META: Record<string, { title: string; icon: React.ElementType; ac
 };
 
 export default function RatiosPage() {
-  const [periodId, setPeriodId] = useState<string>('');
+  const {
+    periodFilter,
+    setPeriodFilter,
+    reportParams,
+    startYear,
+    endYear,
+    periods,
+  } = useAccountingPeriodSelection();
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
-  const [modalPeriodId, setModalPeriodId] = useState<string>('');
+  const [modalPeriodFilter, setModalPeriodFilter] = useState<string>('');
 
-  const { data: periods } = useAccountingPeriods();
   const { data: trends, isLoading: trendsLoading } = useRatioTrends('monthly', 12);
   const downloadReport = useReportDownload();
 
-  // Resolve the effective period ID (last ID for quarters, single for months)
-  const effectivePeriodId = useMemo(() => {
-    if (!periodId) return undefined;
-    const ids = periodId.split(',').map(Number).filter(Boolean);
-    return ids.length > 0 ? ids[ids.length - 1] : undefined;
-  }, [periodId]);
-
-  // Fetch ratios directly from backend for the selected period
-  const { data: fetchedRatios, isLoading: ratiosLoading, isError: ratiosError } = useRatios(effectivePeriodId);
-
-  // For quarter mode, average the ratios from trends data instead of using a single period
-  const ratios = useMemo(() => {
-    if (!periodId) return fetchedRatios;
-    const ids = periodId.split(',').map(Number).filter(Boolean);
-    if (ids.length <= 1 || !trends) return fetchedRatios;
-
-    // Quarter mode: average across the months in trends
-    const quarterRatios = ids.map((id) => trends.find((t: any) => t.period_id === id)?.ratios).filter(Boolean);
-    if (quarterRatios.length === 0) return fetchedRatios;
-
-    const avgField = (cat: string, field: string) => {
-      const vals = quarterRatios.map((r: any) => r[cat]?.[field]).filter((v: any) => v !== null && v !== undefined);
-      return vals.length > 0 ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
-    };
-
-    return {
-      liquidity: {
-        current_ratio: avgField('liquidity', 'current_ratio'),
-        quick_ratio: avgField('liquidity', 'quick_ratio'),
-        cash_ratio: avgField('liquidity', 'cash_ratio'),
-      },
-      profitability: {
-        gross_profit_margin: avgField('profitability', 'gross_profit_margin'),
-        net_profit_margin: avgField('profitability', 'net_profit_margin'),
-        return_on_assets: avgField('profitability', 'return_on_assets'),
-        return_on_equity: avgField('profitability', 'return_on_equity'),
-      },
-      solvency: {
-        debt_to_equity: avgField('solvency', 'debt_to_equity'),
-        debt_ratio: avgField('solvency', 'debt_ratio'),
-        interest_coverage_ratio: avgField('solvency', 'interest_coverage_ratio'),
-      },
-      efficiency: {
-        asset_turnover: avgField('efficiency', 'asset_turnover'),
-        inventory_turnover: avgField('efficiency', 'inventory_turnover'),
-        accounts_receivable_turnover: avgField('efficiency', 'accounts_receivable_turnover'),
-      },
-      recommendations: fetchedRatios?.recommendations ?? [],
-    } as RatioSet;
-  }, [periodId, fetchedRatios, trends]);
+  const { data: ratios, isLoading: ratiosLoading, isError: ratiosError } = useRatios(reportParams);
 
   const isLoading = trendsLoading && ratiosLoading;
   const isError = ratiosError && !ratios;
 
   function openDownload() {
-    setModalPeriodId(periodId);
+    setModalPeriodFilter(periodFilter);
     setDownloadFormat('pdf');
     setDownloadOpen(true);
   }
 
   function doDownload() {
-    const ids = modalPeriodId ? modalPeriodId.split(',').map(Number).filter(Boolean) : [];
+    const params = periodFilterToReportParams(modalPeriodFilter, periods);
+    if (!params) return;
 
-    if (ids.length > 0) {
-      const lastPid = ids[ids.length - 1];
-      const params = new URLSearchParams();
-
-      if (ids.length > 1) {
-        const first = periods?.find((p: any) => p.id === ids[0]);
-        const last = periods?.find((p: any) => p.id === lastPid);
-        if (first?.start_date && last?.end_date) {
-          params.set('date_from', first.start_date.slice(0, 10));
-          params.set('date_to', last.end_date.slice(0, 10));
-        }
-      } else {
-        params.set('period_id', String(lastPid));
-      }
-
-      params.set('format', downloadFormat);
-      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
-      setDownloadOpen(false);
-      return;
+    const search = new URLSearchParams();
+    if (params.period_id) search.set('period_id', String(params.period_id));
+    if (params.date_from && params.date_to) {
+      search.set('date_from', params.date_from);
+      search.set('date_to', params.date_to);
     }
-
-    if (trends?.length) {
-      const params = new URLSearchParams();
-      params.set('period_id', String(trends[trends.length - 1].period_id));
-      params.set('format', downloadFormat);
-      downloadReport(ACCOUNTING.EXPORT('ratios'), params, `ratios.${downloadFormat}`);
-      setDownloadOpen(false);
-    }
+    search.set('format', downloadFormat);
+    downloadReport(ACCOUNTING.EXPORT('ratios'), search, `ratios.${downloadFormat}`);
+    setDownloadOpen(false);
   }
 
   const selectedDef = selectedRatioKey
@@ -423,8 +364,10 @@ export default function RatiosPage() {
       <div className="flex flex-wrap items-end gap-4">
         <PeriodSelector
           periods={periods}
-          value={periodId}
-          onChange={setPeriodId}
+          value={periodFilter}
+          onChange={setPeriodFilter}
+          startYear={startYear}
+          endYear={endYear}
           className="flex-1"
         />
       </div>
@@ -450,7 +393,7 @@ export default function RatiosPage() {
                   {defs.map((def) => {
                     const value = getRatioValue(ratios, def.category, def.key);
                     const selected = selectedRatioKey === def.key;
-                    const rec = ratios?.recommendations?.find((r: any) => r.ratio_key === def.key);
+                    const rec = ratios?.recommendations?.find((r) => r.ratio_key === def.key);
                     return (
                       <RatioLine
                         key={def.key}
@@ -622,8 +565,10 @@ export default function RatiosPage() {
 
           <PeriodSelector
             periods={periods}
-            value={modalPeriodId}
-            onChange={setModalPeriodId}
+            value={modalPeriodFilter}
+            onChange={setModalPeriodFilter}
+            startYear={startYear}
+            endYear={endYear}
           />
 
           <div className="flex gap-2 pt-2">

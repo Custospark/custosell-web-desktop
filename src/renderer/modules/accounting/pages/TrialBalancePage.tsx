@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Select } from '../../../shared/components/inputs/Select';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -6,15 +6,16 @@ import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinne
 import { useTrialBalance, useAccountingPeriods } from '../api/AccountingQueries';
 import { Printer, Scale, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-
-function fmt(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2 });
-}
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
 export default function TrialBalancePage() {
   const [periodId, setPeriodId] = useState<string>('');
   const { data: periods } = useAccountingPeriods();
-  const { data: tb, isLoading, isError } = useTrialBalance(periodId ? Number(periodId) : undefined);
+  const reportParams = useMemo(
+    () => (periodId ? { period_id: Number(periodId), cacheKey: `period-${periodId}` } : undefined),
+    [periodId],
+  );
+  const { data: tb, isLoading, isError } = useTrialBalance(reportParams);
 
   return (
     <div className="space-y-6">
@@ -77,10 +78,10 @@ export default function TrialBalancePage() {
                   <td className="py-2 px-2 text-gray-500 font-mono">{acc.code}</td>
                   <td className="py-2 px-2 text-gray-500">{acc.type}</td>
                   <td className="py-2 px-2 text-right font-mono tabular-nums">
-                    {acc.debit_balance > 0 ? fmt(acc.debit_balance) : '-'}
+                    {acc.debit_balance > 0 ? formatCurrency(acc.debit_balance) : '-'}
                   </td>
                   <td className="py-2 pl-2 text-right font-mono tabular-nums">
-                    {acc.credit_balance > 0 ? fmt(acc.credit_balance) : '-'}
+                    {acc.credit_balance > 0 ? formatCurrency(acc.credit_balance) : '-'}
                   </td>
                 </tr>
               ))}
@@ -88,15 +89,15 @@ export default function TrialBalancePage() {
             <tfoot>
               <tr className="border-t-2 border-gray-800 font-semibold">
                 <td colSpan={3} className="py-3 pr-2 text-gray-900 text-right">Totals</td>
-                <td className="py-3 px-2 text-right font-mono tabular-nums text-gray-900">{fmt(tb.total_debits)}</td>
-                <td className="py-3 pl-2 text-right font-mono tabular-nums text-gray-900">{fmt(tb.total_credits)}</td>
+                <td className="py-3 px-2 text-right font-mono tabular-nums text-gray-900">{formatCurrency(tb.total_debits)}</td>
+                <td className="py-3 pl-2 text-right font-mono tabular-nums text-gray-900">{formatCurrency(tb.total_credits)}</td>
               </tr>
             </tfoot>
           </table>
 
           <div className="mt-6 flex items-center justify-between text-sm border-t border-gray-200 pt-4">
             <span className="text-gray-500">
-              Difference: <strong className="text-gray-900">{fmt(Math.abs(tb.total_debits - tb.total_credits))}</strong>
+              Difference: <strong className="text-gray-900">{formatCurrency(Math.abs(tb.total_debits - tb.total_credits))}</strong>
             </span>
             <span className={cn('inline-flex items-center gap-1.5 font-medium', tb.is_balanced ? 'text-green-600' : 'text-red-500')}>
               {tb.is_balanced ? <><CheckCircle className="w-4 h-4" /> Balanced</> : <><XCircle className="w-4 h-4" /> Not Balanced</>}

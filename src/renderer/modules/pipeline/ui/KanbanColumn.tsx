@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import LeadCard from './LeadCard';
 import { cn } from '../../../shared/utils/cn';
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { Inbox, MoreHorizontal, Plus } from 'lucide-react';
 
 interface KanbanColumnProps {
@@ -23,6 +24,8 @@ export default function KanbanColumn({
   const [menuOpen, setMenuOpen] = useState(false);
   const leads = stage.leads ?? [];
   const stageColor = stage.color ?? '#64748b';
+  const totalValue = stage.total_value ?? leads.reduce((sum, l) => sum + (l.estimated_value ?? 0), 0);
+  const currency = stage.currency ?? leads.find((l) => l.currency)?.currency ?? 'UGX';
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -50,23 +53,30 @@ export default function KanbanColumn({
       onDrop={handleDrop}
     >
       <div
-        className="relative flex items-center justify-between gap-2 rounded-t-2xl border-b border-gray-100 px-3 py-3"
+        className="relative shrink-0 rounded-t-2xl border-b border-gray-100 px-3 py-3"
         style={{ background: `linear-gradient(135deg, ${stageColor}14, transparent)` }}
       >
-        <div className="flex min-w-0 items-center gap-2">
-          <span
-            className="h-3 w-3 shrink-0 rounded-full shadow-sm ring-2 ring-white"
-            style={{ backgroundColor: stageColor }}
-          />
-          <h3 className="truncate text-sm font-semibold text-gray-900">{stage.name}</h3>
-          <span
-            className="rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums"
-            style={{ backgroundColor: `${stageColor}20`, color: stageColor }}
-          >
-            {leads.length}
-          </span>
+        <div className="flex items-center justify-between gap-2 pr-14">
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className="h-3 w-3 shrink-0 rounded-full shadow-sm ring-2 ring-white"
+              style={{ backgroundColor: stageColor }}
+            />
+            <h3 className="truncate text-sm font-semibold text-gray-900">{stage.name}</h3>
+            <span
+              className="rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums"
+              style={{ backgroundColor: `${stageColor}20`, color: stageColor }}
+            >
+              {leads.length}
+            </span>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5">
+        {totalValue > 0 && (
+          <p className="mt-1.5 pl-5 text-xs font-semibold tabular-nums text-emerald-700">
+            {formatCurrency(totalValue, currency)}
+          </p>
+        )}
+        <div className="absolute right-2 top-3 flex shrink-0 items-center gap-0.5">
           <button
             type="button"
             onClick={() => onAddLead(stage.id)}

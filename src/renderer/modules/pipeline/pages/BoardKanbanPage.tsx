@@ -79,7 +79,14 @@ export default function BoardKanbanPage() {
   );
 
   const handleDropLead = (leadId: number, stageId: number, position: number) => {
-    moveLead.mutate({ id: leadId, stage_id: stageId, position, board_id: boardId });
+    const lead = allStages.flatMap((s) => s.leads ?? []).find((l) => l.id === leadId);
+    moveLead.mutate({
+      id: leadId,
+      stage_id: stageId,
+      position,
+      board_id: boardId,
+      card_type: lead?.card_type,
+    });
   };
 
   if (isLoading || !board) {
@@ -174,14 +181,14 @@ export default function BoardKanbanPage() {
                   <Columns3 className="h-4 w-4" />
                   Add column
                 </Button>
-                <Button
-                  onClick={() => setCreateStageId(stages[0]?.id ?? allStages[0]?.id ?? null)}
-                  className="inline-flex items-center gap-2 shadow-sm"
-                  disabled={!allStages.length}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Add lead
-                </Button>
+          <Button
+            onClick={() => setCreateStageId(stages[0]?.id ?? allStages[0]?.id ?? null)}
+            className="inline-flex items-center gap-2 shadow-sm"
+            disabled={!allStages.length}
+          >
+            <UserPlus className="h-4 w-4" />
+            Add card
+          </Button>
               </>
             )}
           </div>

@@ -41,6 +41,7 @@ import {
   Video,
 } from 'lucide-react';
 import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTypes';
+import CardDetailExtras from './CardDetailExtras';
 
 interface LeadDetailDrawerProps {
   leadId: number;
@@ -87,7 +88,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
 
   if (isLoading || !lead) {
     return (
-      <SlideDrawer open title="Lead" onClose={onClose} hideFooter hideKeyboardTip width="sm:w-[680px]">
+      <SlideDrawer open title="Loading…" onClose={onClose} hideFooter hideKeyboardTip width="sm:w-[680px]">
         <div className="flex justify-center py-12">
           <LoadingSpinner />
         </div>
@@ -95,8 +96,10 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
     );
   }
 
-  const canConvert = lead.status !== 'converted';
+  const canConvert = lead.status !== 'converted' && (lead.card_type ?? 'lead') === 'lead';
+  const isLead = (lead.card_type ?? 'lead') === 'lead';
   const stageColor = lead.stage?.color ?? '#6366f1';
+  const resolvedBoardId = boardId ?? lead.board_id;
 
   const handleConvert = async () => {
     await convertLead.mutateAsync({ id: lead.id });
@@ -110,19 +113,19 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
 
   const handleArchive = async () => {
     const ok = await confirm({
-      title: 'Archive lead?',
+      title: 'Archive card?',
       message: `"${lead.title}" will be removed from the board. This cannot be undone from the UI.`,
       confirmText: 'Archive',
       variant: 'danger',
     });
     if (!ok) return;
-    await deleteLead.mutateAsync({ id: lead.id, board_id: boardId ?? lead.board_id });
+    await deleteLead.mutateAsync({
+      id: lead.id,
+      board_id: boardId ?? lead.board_id,
+      card_type: lead.card_type,
+    });
     onClose();
   };
-
-  const closeDateValue = lead.expected_close_date
-    ? lead.expected_close_date.slice(0, 10)
-    : '';
 
   return (
     <SlideDrawer
@@ -174,7 +177,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
           </div>
         </div>
 
-        <PipelineFormSection title="Lead details" icon={Type}>
+        <PipelineFormSection title="Card details" icon={Type}>
           <PipelineIconField label="Title" icon={Type}>
             <input
               defaultValue={lead.title}
@@ -187,22 +190,11 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
               }}
             />
           </PipelineIconField>
-          <PipelineIconField label="Expected close date" icon={Calendar}>
-            <input
-              type="date"
-              defaultValue={closeDateValue}
-              className={pipelineInputClass}
-              onBlur={(e) => {
-                const v = e.target.value || null;
-                const current = lead.expected_close_date?.slice(0, 10) ?? null;
-                if (v !== current) {
-                  updateLead.mutate({ id: lead.id, expected_close_date: v });
-                }
-              }}
-            />
-          </PipelineIconField>
         </PipelineFormSection>
 
+        <CardDetailExtras lead={lead} boardId={resolvedBoardId} />
+
+        {isLead && (
         <PipelineFormSection title="Contact" icon={User}>
           <div className="grid gap-4 sm:grid-cols-2">
             <PipelineIconField label="Contact name" icon={User}>
@@ -247,9 +239,11 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
             />
           </PipelineIconField>
         </PipelineFormSection>
+        )}
 
-        <PipelineFormSection title="Assignment & source" icon={Tag}>
+        <PipelineFormSection title={isLead ? 'Assignment & source' : 'Assignment'} icon={Tag}>
           <div className="grid gap-4 sm:grid-cols-2">
+            {isLead && (
             <PipelineIconField label="Source" icon={Tag}>
               <select
                 value={lead.source_id ?? ''}
@@ -262,6 +256,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
                 ))}
               </select>
             </PipelineIconField>
+            )}
             <PipelineIconField label="Assignee" icon={UserRound}>
               <select
                 value={lead.assigned_to ?? ''}
@@ -275,7 +270,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
               </select>
             </PipelineIconField>
           </div>
-          {lead.estimated_value != null && (
+          {isLead && lead.estimated_value != null && (
             <PipelineIconField label="Deal value" icon={DollarSign}>
               <input
                 type="number"
@@ -302,7 +297,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
             className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
           >
             <Trash2 className="h-4 w-4" />
-            Archive lead
+            Archive card
           </Button>
         </div>
 

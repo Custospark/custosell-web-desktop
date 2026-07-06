@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useCreatePipelineLead, usePipelineSources } from '../api/usePipelineQueries';
+import type { PipelineCardType } from '../api/pipelineTypes';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import {
   PipelineFormSection,
@@ -11,8 +12,9 @@ import {
   pipelineSelectClass,
 } from './pipelineFormFields';
 import {
-  DollarSign, Mail, Phone, Tag, User, UserPlus, UserRound, Users,
+  DollarSign, Kanban, Mail, Phone, Tag, User, UserPlus, UserRound,
 } from 'lucide-react';
+import { cn } from '../../../shared/utils/cn';
 
 interface CreateLeadModalProps {
   open: boolean;
@@ -27,6 +29,7 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
   const { data: staff } = useStaff();
 
   const [title, setTitle] = useState('');
+  const [cardType, setCardType] = useState<PipelineCardType>('lead');
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -36,6 +39,7 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
 
   const reset = () => {
     setTitle('');
+    setCardType('lead');
     setContactName('');
     setContactEmail('');
     setContactPhone('');
@@ -56,28 +60,50 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
       board_id: boardId,
       stage_id: stageId,
       title: title.trim(),
-      contact_name: contactName.trim() || undefined,
-      contact_email: contactEmail.trim() || undefined,
-      contact_phone: contactPhone.trim() || undefined,
-      estimated_value: estimatedValue ? Number(estimatedValue) : undefined,
-      source_id: sourceId ? Number(sourceId) : undefined,
+      card_type: cardType,
+      contact_name: cardType === 'lead' ? (contactName.trim() || undefined) : undefined,
+      contact_email: cardType === 'lead' ? (contactEmail.trim() || undefined) : undefined,
+      contact_phone: cardType === 'lead' ? (contactPhone.trim() || undefined) : undefined,
+      estimated_value: cardType === 'lead' && estimatedValue ? Number(estimatedValue) : undefined,
+      source_id: cardType === 'lead' && sourceId ? Number(sourceId) : undefined,
       assigned_to: assignedTo ? Number(assignedTo) : undefined,
     });
     handleClose();
   };
 
   return (
-    <Modal isOpen={open} onClose={handleClose} title="Add lead" size="lg">
+    <Modal isOpen={open} onClose={handleClose} title="Add card" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
           icon={UserPlus}
           tone="emerald"
-          title="New opportunity"
-          description="Add a lead to this stage. Contact details help when you convert to a customer."
+          title="New card"
+          description="Add a sales lead or a general project/task card to this column."
         />
 
-        <PipelineFormSection title="Lead details" icon={Tag}>
-          <PipelineIconField label="Lead title" icon={Tag} required>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { value: 'lead' as const, label: 'Sales lead', icon: UserPlus, hint: 'CRM contact & value' },
+            { value: 'card' as const, label: 'Project card', icon: Kanban, hint: 'Tasks & projects' },
+          ]).map(({ value, label, icon: Icon, hint }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setCardType(value)}
+              className={cn(
+                'rounded-xl border p-3 text-left',
+                cardType === value ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200' : 'border-gray-200',
+              )}
+            >
+              <Icon className="mb-1 h-4 w-4" />
+              <p className="text-sm font-semibold">{label}</p>
+              <p className="text-[11px] text-gray-500">{hint}</p>
+            </button>
+          ))}
+        </div>
+
+        <PipelineFormSection title="Card details" icon={Tag}>
+          <PipelineIconField label="Title" icon={Tag} required>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -89,6 +115,7 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
           </PipelineIconField>
         </PipelineFormSection>
 
+        {cardType === 'lead' && (
         <PipelineFormSection title="Contact" icon={User}>
           <div className="grid gap-4 sm:grid-cols-2">
             <PipelineIconField label="Contact name" icon={User}>
@@ -118,7 +145,9 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
             />
           </PipelineIconField>
         </PipelineFormSection>
+        )}
 
+        {cardType === 'lead' && (
         <PipelineFormSection title="Deal info" icon={DollarSign}>
           <div className="grid gap-4 sm:grid-cols-2">
             <PipelineIconField label="Estimated value" icon={DollarSign}>
@@ -157,12 +186,30 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
             </select>
           </PipelineIconField>
         </PipelineFormSection>
+        )}
+
+        {cardType === 'card' && (
+        <PipelineFormSection title="Assignment" icon={UserRound}>
+          <PipelineIconField label="Assign to" icon={UserRound}>
+            <select
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+              className={pipelineSelectClass}
+            >
+              <option value="">Unassigned</option>
+              {(staff ?? []).map((u) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </PipelineIconField>
+        </PipelineFormSection>
+        )}
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={handleClose}>Cancel</Button>
           <Button type="submit" loading={createLead.isPending} className="inline-flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Add lead
+            <Kanban className="h-4 w-4" />
+            Add card
           </Button>
         </div>
       </form>

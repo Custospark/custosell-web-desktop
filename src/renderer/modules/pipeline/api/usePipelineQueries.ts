@@ -9,7 +9,11 @@ import type {
   CreateLeadPayload,
   PipelineBoard,
   PipelineCalendarDay,
+  PipelineChecklist,
+  PipelineChecklistItem,
+  PipelineAttachment,
   PipelineInsightsSummary,
+  PipelineLabel,
   PipelineLead,
   PipelineLeadActivity,
   PipelineSource,
@@ -17,6 +21,7 @@ import type {
   UpdateLeadPayload,
 } from './pipelineTypes';
 import { moveLeadOptimistic, replaceLeadOnKanban } from './pipelineKanbanCache';
+import { pipelineItemLabel } from './pipelineCardTerms';
 
 export const pipelineKeys = {
   all: ['pipeline'] as const,
@@ -29,6 +34,7 @@ export const pipelineKeys = {
   insights: (boardId?: number) => [...pipelineKeys.all, 'insights', boardId ?? 'all'] as const,
   calendar: (boardId: number, year: number, month: number) =>
     [...pipelineKeys.all, 'calendar', boardId, year, month] as const,
+  labels: (boardId?: number) => [...pipelineKeys.all, 'labels', boardId ?? 'all'] as const,
 };
 
 const queryDefaults = {
@@ -72,7 +78,7 @@ export function usePipelineBoards() {
       const { data } = await axiosInstance.get(PIPELINE.BOARDS);
       return normalizeList<PipelineBoard>(data);
     },
-    placeholderData: (prev) => prev ?? [],
+    placeholderData: (previousData) => previousData,
     ...queryDefaults,
   });
 }
@@ -128,7 +134,10 @@ export function useUpdatePipelineBoard() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, ...payload }: Partial<CreateBoardPayload> & { id: number; is_archived?: boolean }) => {
+    mutationFn: async ({
+      id,
+      ...payload
+    }: Partial<CreateBoardPayload> & { id: number; is_archived?: boolean; members?: { user_id: number; role: 'editor' | 'viewer' }[] }) => {
       const { data } = await axiosInstance.patch(PIPELINE.BOARD(id), payload);
       return normalizeItem<PipelineBoard>(data);
     },
@@ -182,10 +191,10 @@ export function useCreatePipelineLead() {
     },
     onSuccess: (lead) => {
       invalidatePipeline(qc, lead.board_id);
-      showToast('success', 'Lead created');
+      showToast('success', `${pipelineItemLabel(lead.card_type)} created`);
     },
     onError: (err: AxiosError<{ message?: string }>) => {
-      showToast('error', sanitizeErrorMessage(err, 'Could not create lead'));
+      showToast('error', sanitizeErrorMessage(err, 'Could not create card'));
     },
   });
 }
@@ -202,10 +211,10 @@ export function useUpdatePipelineLead() {
     onSuccess: (lead) => {
       qc.setQueryData(pipelineKeys.lead(lead.id), lead);
       invalidatePipeline(qc, lead.board_id);
-      showToast('success', 'Lead updated');
+      showToast('success', `${pipelineItemLabel(lead.card_type)} updated`);
     },
     onError: (err: AxiosError<{ message?: string }>) => {
-      showToast('error', sanitizeErrorMessage(err, 'Could not update lead'));
+      showToast('error', sanitizeErrorMessage(err, 'Could not save changes'));
     },
   });
 }
@@ -224,6 +233,7 @@ export function useMovePipelineLead() {
       stage_id: number;
       position: number;
       board_id: number;
+      card_type?: PipelineLead['card_type'];
     }) => {
       const { data } = await axiosInstance.patch(PIPELINE.LEAD_STAGE(id), { stage_id, position });
       return normalizeItem<PipelineLead>(data);
@@ -247,11 +257,12 @@ export function useMovePipelineLead() {
       qc.invalidateQueries({ queryKey: pipelineKeys.leads() });
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
     },
-    onError: (err, _vars, context) => {
+    onError: (err, vars, context) => {
       if (context?.previous && context.board_id) {
         qc.setQueryData(pipelineKeys.kanban(context.board_id), context.previous);
       }
-      showToast('error', sanitizeErrorMessage(err, 'Could not move lead'));
+      const noun = pipelineItemLabel(vars.card_type).toLowerCase();
+      showToast('error', sanitizeErrorMessage(err, `Could not move ${noun}`));
     },
   });
 }
@@ -394,15 +405,15 @@ export function useDeletePipelineLead() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: number; board_id: number }) => {
+    mutationFn: async ({ id }: { id: number; board_id: number; card_type?: PipelineLead['card_type'] }) => {
       await axiosInstance.delete(PIPELINE.LEAD(id));
     },
     onSuccess: (_data, vars) => {
       invalidatePipeline(qc, vars.board_id);
-      showToast('success', 'Lead archived');
+      showToast('success', `${pipelineItemLabel(vars.card_type)} archived`);
     },
     onError: (err: AxiosError<{ message?: string }>) => {
-      showToast('error', sanitizeErrorMessage(err, 'Could not archive lead'));
+      showToast('error', sanitizeErrorMessage(err, 'Could not archive'));
     },
   });
 }
@@ -473,6 +484,138 @@ export function useDeletePipelineSource() {
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not delete source'));
+    },
+  });
+}
+
+export function usePipelineLabels(boardId?: number) {
+  const params = boardId ? `?board_id=${boardId}` : '';
+  return useQuery<PipelineLabel[]>({
+    queryKey: pipelineKeys.labels(boardId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`${PIPELINE.LABELS}${params}`);
+      return normalizeList<PipelineLabel>(data);
+    },
+    enabled: boardId !== undefined,
+    ...queryDefaults,
+  });
+}
+
+export function useCreatePipelineLabel(boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (payload: { name: string; color?: string }) => {
+      const { data } = await axiosInstance.post(PIPELINE.LABELS, { ...payload, board_id: boardId });
+      return normalizeItem<PipelineLabel>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.labels(boardId) });
+      showToast('success', 'Label created');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not create label'));
+    },
+  });
+}
+
+export function useDeletePipelineLabel(boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(PIPELINE.LABEL(id));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.labels(boardId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Label deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete label'));
+    },
+  });
+}
+
+export function useCreatePipelineChecklist(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (title?: string) => {
+      const { data } = await axiosInstance.post(PIPELINE.LEAD_CHECKLISTS(leadId), { title: title || 'Checklist' });
+      return normalizeItem<PipelineChecklist>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    },
+  });
+}
+
+export function useCreateChecklistItem(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ checklistId, title }: { checklistId: number; title: string }) => {
+      const { data } = await axiosInstance.post(PIPELINE.CHECKLIST_ITEMS(checklistId), { title });
+      return normalizeItem<PipelineChecklistItem>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    },
+  });
+}
+
+export function useUpdateChecklistItem(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<PipelineChecklistItem> & { id: number }) => {
+      const { data } = await axiosInstance.patch(PIPELINE.CHECKLIST_ITEM(id), payload);
+      return normalizeItem<PipelineChecklistItem>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    },
+  });
+}
+
+export function useUploadPipelineAttachment(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await axiosInstance.post(PIPELINE.LEAD_ATTACHMENTS(leadId), form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return normalizeItem<PipelineAttachment>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Attachment uploaded');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not upload file'));
+    },
+  });
+}
+
+export function useDeletePipelineAttachment(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(PIPELINE.ATTACHMENT(id));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Attachment removed');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not remove attachment'));
     },
   });
 }

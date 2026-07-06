@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useCreatePipelineBoard } from '../api/usePipelineQueries';
-import type { PipelineVisibility } from '../api/pipelineTypes';
+import type { BoardMemberInput, PipelineVisibility } from '../api/pipelineTypes';
+import BoardMemberPicker from './BoardMemberPicker';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   PipelineFormSection,
@@ -39,12 +40,14 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<PipelineVisibility>('team');
   const [coverColor, setCoverColor] = useState('#6366f1');
+  const [members, setMembers] = useState<BoardMemberInput[]>([]);
 
   const reset = () => {
     setName('');
     setDescription('');
     setVisibility('team');
     setCoverColor('#6366f1');
+    setMembers([]);
   };
 
   const handleClose = () => {
@@ -60,6 +63,7 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
       description: description.trim() || undefined,
       visibility,
       cover_color: coverColor,
+      members: visibility === 'shared' ? members : undefined,
     });
     handleClose();
     navigate(ROUTES.PIPELINE.BOARD(board.id));
@@ -129,6 +133,12 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
             })}
           </div>
         </PipelineFormSection>
+
+        {visibility === 'shared' && (
+          <PipelineFormSection title="Members" icon={Users}>
+            <BoardMemberPicker value={members} onChange={setMembers} />
+          </PipelineFormSection>
+        )}
 
         <PipelineFormSection title="Board color" icon={Palette}>
           <div className="flex flex-wrap gap-2">

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useUpdatePipelineBoard } from '../api/usePipelineQueries';
-import type { PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
+import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
+import BoardMemberPicker, { membersFromBoard } from './BoardMemberPicker';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   PipelineFormSection,
@@ -35,6 +36,11 @@ const VISIBILITY_OPTIONS: {
 const PRESET_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
 export default function EditBoardModal({ open, board, onClose }: EditBoardModalProps) {
+  if (!open) return null;
+  return <EditBoardModalForm key={board.id} board={board} onClose={onClose} />;
+}
+
+function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose: () => void }) {
   const navigate = useNavigate();
   const updateBoard = useUpdatePipelineBoard();
   const { confirm } = useConfirm();
@@ -43,15 +49,7 @@ export default function EditBoardModal({ open, board, onClose }: EditBoardModalP
   const [description, setDescription] = useState(board.description ?? '');
   const [visibility, setVisibility] = useState<PipelineVisibility>(board.visibility);
   const [coverColor, setCoverColor] = useState(board.cover_color ?? '#6366f1');
-
-  useEffect(() => {
-    if (open) {
-      setName(board.name);
-      setDescription(board.description ?? '');
-      setVisibility(board.visibility);
-      setCoverColor(board.cover_color ?? '#6366f1');
-    }
-  }, [open, board]);
+  const [members, setMembers] = useState<BoardMemberInput[]>(membersFromBoard(board.members));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +60,7 @@ export default function EditBoardModal({ open, board, onClose }: EditBoardModalP
       description: description.trim() || undefined,
       visibility,
       cover_color: coverColor,
+      members: visibility === 'shared' ? members : [],
     });
     onClose();
   };
@@ -80,7 +79,7 @@ export default function EditBoardModal({ open, board, onClose }: EditBoardModalP
   };
 
   return (
-    <Modal isOpen={open} onClose={onClose} title="Board settings" size="lg">
+    <Modal isOpen onClose={onClose} title="Board settings" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
           icon={Kanban}
@@ -129,6 +128,12 @@ export default function EditBoardModal({ open, board, onClose }: EditBoardModalP
             ))}
           </div>
         </PipelineFormSection>
+
+        {visibility === 'shared' && (
+          <PipelineFormSection title="Members" icon={Users}>
+            <BoardMemberPicker value={members} onChange={setMembers} excludeUserId={board.created_by} />
+          </PipelineFormSection>
+        )}
 
         <PipelineFormSection title="Cover color" icon={Palette}>
           <div className="flex flex-wrap gap-2">

@@ -13,19 +13,20 @@ import { cn } from '../../../shared/utils/cn';
 export default function BoardsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const { data: boards, isLoading } = usePipelineBoards();
+  const { data: boards, isLoading, isFetched } = usePipelineBoards();
 
   const filtered = useMemo(() => {
+    const boardList = boards ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return boards ?? [];
-    return (boards ?? []).filter(
+    if (!q) return boardList;
+    return boardList.filter(
       (b) =>
         b.name.toLowerCase().includes(q)
         || (b.description?.toLowerCase().includes(q) ?? false),
     );
   }, [boards, search]);
 
-  if (isLoading) {
+  if (isLoading || !isFetched) {
     return (
       <div className="flex justify-center py-16">
         <LoadingSpinner />
@@ -95,7 +96,9 @@ export default function BoardsPage() {
 
       {filtered.length === 0 && (
         <Card className="py-12 text-center text-sm text-gray-500">
-          No boards found. Try a different search or create a new board.
+          {search.trim()
+            ? 'No boards match your search. Try a different term or create a new board.'
+            : 'No boards yet. Create your first board to get started.'}
         </Card>
       )}
 

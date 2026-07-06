@@ -2,6 +2,10 @@ export type PipelineVisibility = 'team' | 'private' | 'shared';
 
 export type PipelineLeadStatus = 'open' | 'won' | 'lost' | 'converted' | 'archived';
 
+export type PipelineCardType = 'lead' | 'card';
+
+export type PipelinePriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export type PipelineActivityType = 'note' | 'call' | 'email' | 'meeting' | 'system' | 'stage_change';
 
 export interface PipelineUserRef {
@@ -26,6 +30,8 @@ export interface PipelineStage {
   is_won: boolean;
   is_lost: boolean;
   rotting_days: number | null;
+  total_value?: number;
+  currency?: string | null;
   leads?: PipelineLead[];
 }
 
@@ -56,12 +62,51 @@ export interface PipelineSource {
   sort_order: number;
 }
 
+export interface PipelineLabel {
+  id: number;
+  business_id: number;
+  board_id: number | null;
+  name: string;
+  color: string;
+  sort_order: number;
+}
+
+export interface PipelineChecklistItem {
+  id: number;
+  checklist_id: number;
+  title: string;
+  is_done: boolean;
+  sort_order: number;
+}
+
+export interface PipelineChecklist {
+  id: number;
+  lead_id: number;
+  title: string;
+  sort_order: number;
+  items?: PipelineChecklistItem[];
+}
+
+export interface PipelineAttachment {
+  id: number;
+  lead_id: number;
+  user_id: number | null;
+  file_name: string;
+  file_path: string;
+  file_url: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+  created_at?: string;
+  user?: PipelineUserRef | null;
+}
+
 export interface PipelineLead {
   id: number;
   business_id: number;
   board_id: number;
   stage_id: number;
   title: string;
+  card_type: PipelineCardType;
   description: string | null;
   contact_name: string | null;
   contact_email: string | null;
@@ -75,6 +120,12 @@ export interface PipelineLead {
   status: PipelineLeadStatus;
   position: number;
   expected_close_date: string | null;
+  due_date: string | null;
+  start_date: string | null;
+  priority: PipelinePriority | null;
+  checklist_total?: number | null;
+  checklist_done?: number | null;
+  attachments_count?: number | null;
   won_at: string | null;
   lost_at: string | null;
   converted_at: string | null;
@@ -85,6 +136,9 @@ export interface PipelineLead {
   source?: { id: number; name: string } | null;
   customer?: { id: number; name: string; email?: string | null; phone?: string | null } | null;
   converted_customer?: { id: number; name: string; email?: string | null; phone?: string | null } | null;
+  labels?: PipelineLabel[];
+  checklists?: PipelineChecklist[];
+  attachments?: PipelineAttachment[];
   activities?: PipelineLeadActivity[];
   created_at?: string;
   updated_at?: string;
@@ -116,18 +170,25 @@ export interface PipelineInsightsSummary {
   }>;
 }
 
+export interface BoardMemberInput {
+  user_id: number;
+  role: 'editor' | 'viewer';
+}
+
 export interface CreateBoardPayload {
   name: string;
   description?: string;
   visibility: PipelineVisibility;
   cover_color?: string;
   member_ids?: number[];
+  members?: BoardMemberInput[];
 }
 
 export interface CreateLeadPayload {
   board_id: number;
   stage_id: number;
   title: string;
+  card_type?: PipelineCardType;
   description?: string;
   contact_name?: string;
   contact_email?: string;
@@ -138,10 +199,15 @@ export interface CreateLeadPayload {
   estimated_value?: number;
   currency?: string;
   expected_close_date?: string;
+  due_date?: string;
+  start_date?: string;
+  priority?: PipelinePriority;
+  label_ids?: number[];
 }
 
 export interface UpdateLeadPayload {
   title?: string;
+  card_type?: PipelineCardType;
   description?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -152,7 +218,11 @@ export interface UpdateLeadPayload {
   estimated_value?: number | null;
   currency?: string;
   expected_close_date?: string | null;
+  due_date?: string | null;
+  start_date?: string | null;
+  priority?: PipelinePriority | null;
   lost_reason?: string | null;
+  label_ids?: number[];
 }
 
 export interface PipelineCalendarLead {

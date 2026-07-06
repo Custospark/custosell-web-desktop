@@ -68,6 +68,14 @@ export const PIPELINE = {
   SOURCES: '/pipeline/sources',
   SOURCE: (id: number) => `/pipeline/sources/${id}`,
   INSIGHTS: '/pipeline/insights',
+  LABELS: '/pipeline/labels',
+  LABEL: (id: number) => `/pipeline/labels/${id}`,
+  LEAD_CHECKLISTS: (leadId: number) => `/pipeline/leads/${leadId}/checklists`,
+  CHECKLIST: (id: number) => `/pipeline/checklists/${id}`,
+  CHECKLIST_ITEMS: (checklistId: number) => `/pipeline/checklists/${checklistId}/items`,
+  CHECKLIST_ITEM: (id: number) => `/pipeline/checklist-items/${id}`,
+  LEAD_ATTACHMENTS: (leadId: number) => `/pipeline/leads/${leadId}/attachments`,
+  ATTACHMENT: (id: number) => `/pipeline/attachments/${id}`,
 };
 
 export const ACCOUNTING = {

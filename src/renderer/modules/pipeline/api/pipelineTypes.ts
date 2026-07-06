@@ -160,11 +160,19 @@ export interface PipelineInsightsSummary {
   open_pipeline_value: number;
   won_leads: number;
   lost_leads: number;
+  converted_leads: number;
   win_rate_percent: number;
   by_stage: Array<{
     stage_id: number;
     stage_name: string;
     color: string | null;
+    sort_order?: number;
+    count: number;
+    value: number;
+  }>;
+  by_source: Array<{
+    source_id: number | null;
+    source_name: string;
     count: number;
     value: number;
   }>;

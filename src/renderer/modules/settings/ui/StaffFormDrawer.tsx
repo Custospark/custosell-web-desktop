@@ -9,7 +9,7 @@ import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import RoleFormDrawer from './RoleFormDrawer';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { User, Mail, Key, ShieldCheck, ToggleLeft, Plus, LayoutGrid } from 'lucide-react';
+import { User, Mail, Key, ShieldCheck, ToggleLeft, Plus, LayoutGrid, Eye, EyeOff } from 'lucide-react';
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import {
   buildInternationalPhone,
@@ -61,6 +61,8 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const [form, setForm] = useState<FormState>(emptyForm);
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [roleDrawerOpen, setRoleDrawerOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -74,7 +76,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           password: '',
           password_confirmation: '',
           role_id: staff.role_id ?? null,
-          is_active: staff.is_active,
+          is_active: staff.is_active ?? true,
           modules: (staff.modules ?? []).filter((m): m is BusinessModuleSlug =>
             (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
           ),
@@ -87,6 +89,8 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           role_id: defaultRole?.id ?? 0,
         });
       }
+      setShowPassword(false);
+      setShowConfirmPassword(false);
     });
   }, [staff, open, roles]);
 
@@ -278,13 +282,21 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
             <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
-                className={inputClass}
-                type="password"
+                className={`${inputClass} pr-12`}
+                type={showPassword ? 'text' : 'password'}
                 value={form.password}
                 onChange={(e) => update('password', e.target.value)}
                 placeholder={passwordRequired ? 'Enter password' : 'Leave blank to keep current password'}
                 required={passwordRequired}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
           <div>
@@ -294,13 +306,21 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
             <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
-                className={inputClass}
-                type="password"
+                className={`${inputClass} pr-12`}
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={form.password_confirmation}
                 onChange={(e) => update('password_confirmation', e.target.value)}
                 placeholder="Confirm password"
                 required={passwordRequired}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                aria-label={showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'}
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
             {form.password_confirmation && !passwordsMatch && (
               <p className="text-xs text-red-500 mt-1">Passwords do not match</p>

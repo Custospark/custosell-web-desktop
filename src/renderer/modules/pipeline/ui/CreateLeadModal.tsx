@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useCreatePipelineLead, usePipelineSources } from '../api/usePipelineQueries';
+import { useCreatePipelineLead, usePipelineBoards, usePipelineKanban, usePipelineSources } from '../api/usePipelineQueries';
 import type { PipelineCardType } from '../api/pipelineTypes';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import {
@@ -18,15 +18,39 @@ import { cn } from '../../../shared/utils/cn';
 
 interface CreateLeadModalProps {
   open: boolean;
-  boardId: number;
-  stageId: number;
   onClose: () => void;
+  boardId?: number;
+  stageId?: number;
 }
 
-export default function CreateLeadModal({ open, boardId, stageId, onClose }: CreateLeadModalProps) {
+export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: fixedStageId, onClose }: CreateLeadModalProps) {
   const createLead = useCreatePipelineLead();
+  const { data: boards = [] } = usePipelineBoards();
   const { data: sources } = usePipelineSources();
   const { data: staff } = useStaff();
+
+  const [selectedBoardId, setSelectedBoardId] = useState<number | ''>('');
+  const [selectedStageId, setSelectedStageId] = useState<number | ''>('');
+
+  const defaultBoardId = useMemo(
+    () => (boards.find((b) => b.is_default) ?? boards[0])?.id,
+    [boards],
+  );
+
+  const resolvedBoardId = fixedBoardId
+    ?? (selectedBoardId !== '' ? selectedBoardId : defaultBoardId);
+
+  const { data: kanbanBoard } = usePipelineKanban(resolvedBoardId ?? 0);
+  const stages = useMemo(
+    () => [...(kanbanBoard?.stages ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+    [kanbanBoard?.stages],
+  );
+
+  const resolvedStageId = fixedStageId
+    ?? (selectedStageId !== '' ? selectedStageId : stages[0]?.id);
+
+  const boardSelectValue = fixedBoardId ?? (selectedBoardId !== '' ? selectedBoardId : defaultBoardId) ?? '';
+  const stageSelectValue = fixedStageId ?? (selectedStageId !== '' ? selectedStageId : stages[0]?.id) ?? '';
 
   const [title, setTitle] = useState('');
   const [cardType, setCardType] = useState<PipelineCardType>('lead');
@@ -46,6 +70,8 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
     setEstimatedValue('');
     setSourceId('');
     setAssignedTo('');
+    setSelectedBoardId('');
+    setSelectedStageId('');
   };
 
   const handleClose = () => {
@@ -55,10 +81,10 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || !resolvedBoardId || !resolvedStageId) return;
     await createLead.mutateAsync({
-      board_id: boardId,
-      stage_id: stageId,
+      board_id: resolvedBoardId,
+      stage_id: resolvedStageId,
       title: title.trim(),
       card_type: cardType,
       contact_name: cardType === 'lead' ? (contactName.trim() || undefined) : undefined,
@@ -101,6 +127,42 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
             </button>
           ))}
         </div>
+
+        {!fixedBoardId && (
+          <PipelineFormSection title="Board & column" icon={Kanban}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PipelineIconField label="Board" icon={Kanban} required>
+                <select
+                  value={boardSelectValue}
+                  onChange={(e) => {
+                    setSelectedBoardId(e.target.value ? Number(e.target.value) : '');
+                    setSelectedStageId('');
+                  }}
+                  className={pipelineSelectClass}
+                  required
+                >
+                  <option value="">Select board</option>
+                  {boards.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </PipelineIconField>
+              <PipelineIconField label="Column" icon={Kanban} required>
+                <select
+                  value={stageSelectValue}
+                  onChange={(e) => setSelectedStageId(e.target.value ? Number(e.target.value) : '')}
+                  className={pipelineSelectClass}
+                  required
+                  disabled={!resolvedBoardId || !stages.length}
+                >
+                  {stages.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </PipelineIconField>
+            </div>
+          </PipelineFormSection>
+        )}
 
         <PipelineFormSection title="Card details" icon={Tag}>
           <PipelineIconField label="Title" icon={Tag} required>
@@ -207,7 +269,7 @@ export default function CreateLeadModal({ open, boardId, stageId, onClose }: Cre
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button type="submit" loading={createLead.isPending} className="inline-flex items-center gap-2">
+          <Button type="submit" loading={createLead.isPending} disabled={!resolvedBoardId || !resolvedStageId} className="inline-flex items-center gap-2">
             <Kanban className="h-4 w-4" />
             Add card
           </Button>

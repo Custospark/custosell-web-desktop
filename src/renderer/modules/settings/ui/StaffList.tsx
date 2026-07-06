@@ -130,7 +130,7 @@ export default function StaffList() {
                 return phone || <span className="text-gray-400">—</span>;
               } },
             { key: 'role', header: 'Role', render: (item) => item.role?.name || <span className="text-gray-400">—</span> },
-            { key: 'is_active', header: 'Status', render: (item) => item.is_active
+            { key: 'is_active', header: 'Status', render: (item) => (item.is_active ?? true)
               ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><BadgeCheck className="w-3 h-3" />Active</span>
               : <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><BadgeX className="w-3 h-3" />Inactive</span>
             },

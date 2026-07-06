@@ -37,11 +37,19 @@ function resolveRole(roleId: number | null | undefined): { id: number; name: str
   return role ? { id: role.id, name: role.name, slug: role.slug } : null;
 }
 
-function withResolvedRole(staff: StaffUser): StaffUser {
+function normalizeStaffUser(staff: StaffUser): StaffUser {
   return {
     ...staff,
-    role: staff.role ?? resolveRole(staff.role_id),
+    is_active: staff.is_active ?? true,
+    modules: staff.modules ?? [],
   };
+}
+
+function withResolvedRole(staff: StaffUser): StaffUser {
+  return normalizeStaffUser({
+    ...staff,
+    role: staff.role ?? resolveRole(staff.role_id),
+  });
 }
 
 async function findServerStaffByEmail(email: string): Promise<StaffWithSyncMeta | null> {

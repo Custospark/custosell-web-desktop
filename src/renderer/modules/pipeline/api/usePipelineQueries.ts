@@ -496,7 +496,7 @@ export function usePipelineLabels(boardId?: number) {
       const { data } = await axiosInstance.get(`${PIPELINE.LABELS}${params}`);
       return normalizeList<PipelineLabel>(data);
     },
-    enabled: boardId !== undefined,
+    enabled: Boolean(boardId),
     ...queryDefaults,
   });
 }

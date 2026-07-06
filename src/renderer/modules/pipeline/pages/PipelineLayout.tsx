@@ -17,7 +17,7 @@ export default function PipelineLayout() {
 
   if (onKanban) {
     return (
-      <div className="-mx-4 -mt-4 -mb-2 flex h-full min-h-0 flex-col sm:-mx-6 sm:-mt-6 sm:-mb-6">
+      <div className="-mx-4 -mt-4 -mb-4 flex min-h-0 flex-1 flex-col sm:-mx-6 sm:-mt-6 sm:-mb-6">
         <Outlet />
       </div>
     );

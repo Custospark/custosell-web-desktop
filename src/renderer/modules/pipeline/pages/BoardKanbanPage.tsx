@@ -97,30 +97,27 @@ export default function BoardKanbanPage() {
     );
   }
 
-  const resolveBoardBackground = (b: typeof board) => {
-    if (b.background_type === 'color' && b.background_value) {
-      return { backgroundColor: b.background_value };
-    }
-    if ((b.background_type === 'gallery' || b.background_type === 'upload') && b.background_value) {
-      const imgUrl = b.background_type === 'upload' ? `/storage/${b.background_value}` : b.background_value;
-      return {
-        backgroundImage: `url(${imgUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      };
-    }
-    return {};
-  };
-
   const accent = resolveBoardCoverColor(board, boards, boardId);
   const isProject = Boolean(board?.project_id);
   const itemLabel = isProject ? 'task' : 'lead';
 
+  let boardBgStyle = pipelineBoardBackgroundStyle(accent);
+  if (board.background_type === 'color' && board.background_value) {
+    boardBgStyle = { backgroundColor: board.background_value };
+  } else if ((board.background_type === 'gallery' || board.background_type === 'upload') && board.background_value) {
+    const imgUrl = board.background_type === 'upload' ? `/storage/${board.background_value}` : board.background_value;
+    boardBgStyle = {
+      backgroundImage: `url(${imgUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    };
+  }
+
   return (
     <div
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 shadow-sm"
-      style={{ ...pipelineBoardBackgroundStyle(accent), ...resolveBoardBackground(board) }}
+      style={boardBgStyle}
     >
       <header className="relative z-40 shrink-0 border-b border-gray-200/70 bg-white/90 px-3 py-3 backdrop-blur-md sm:px-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">

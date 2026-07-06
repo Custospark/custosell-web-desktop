@@ -108,7 +108,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
   };
 
   return (
-    <Modal isOpen variant="wide" title="Board settings" size="lg">
+    <Modal isOpen onClose={onClose} title="Board settings" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
           icon={Kanban}

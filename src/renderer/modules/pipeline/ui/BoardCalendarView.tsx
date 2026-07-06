@@ -24,6 +24,7 @@ import {
 interface BoardCalendarViewProps {
   boardId: number;
   onLeadClick: (leadId: number) => void;
+  isProjectBoard?: boolean;
 }
 
 const DATE_FIELD_OPTIONS: { value: PipelineCalendarDateField; label: string; shortLabel: string; hint: string }[] = [
@@ -99,7 +100,7 @@ function CalendarLeadChip({
   );
 }
 
-export default function BoardCalendarView({ boardId, onLeadClick }: BoardCalendarViewProps) {
+export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard = false }: BoardCalendarViewProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -215,8 +216,8 @@ export default function BoardCalendarView({ boardId, onLeadClick }: BoardCalenda
         {[
           { label: 'Unique cards', short: 'Cards', value: String(monthStats.items) },
           { label: 'Calendar entries', short: 'Entries', value: String(monthStats.entries) },
-          { label: 'Overdue open', short: 'Overdue', value: String(monthStats.overdue), warn: monthStats.overdue > 0 },
-          { label: 'Pipeline value', short: 'Value', value: formatCurrency(monthStats.value), wrap: true },
+          { label: `Overdue open ${isProjectBoard ? 'tasks' : 'leads'}`, short: 'Overdue', value: String(monthStats.overdue), warn: monthStats.overdue > 0 },
+          { label: `${isProjectBoard ? 'Project' : 'Pipeline'} value`, short: 'Value', value: formatCurrency(monthStats.value), wrap: true },
         ].map((stat) => (
           <Card key={stat.label} className="min-w-0 px-2.5 py-2 sm:px-3 sm:py-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">

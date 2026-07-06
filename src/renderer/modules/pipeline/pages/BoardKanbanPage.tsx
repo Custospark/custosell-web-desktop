@@ -232,7 +232,7 @@ export default function BoardKanbanPage() {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} />
+          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isProject} />
         </div>
       )}
 

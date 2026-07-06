@@ -86,7 +86,7 @@ export default function BoardsPage() {
                     <VisIcon className="h-3 w-3" />
                     {vis.label}
                   </span>
-                  <span className="text-gray-500">{board.open_leads_count ?? 0} open leads</span>
+                  <span className="text-gray-500">{board.open_leads_count ?? 0} open {board.project_id ? 'tasks' : 'leads'}</span>
                 </div>
               </Card>
             </Link>

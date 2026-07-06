@@ -29,8 +29,10 @@ import {
   Calendar,
   CheckCircle2,
   DollarSign,
+  FileSpreadsheet,
   Mail,
   MessageSquare,
+  Palette,
   Phone,
   Send,
   Tag,
@@ -39,7 +41,7 @@ import {
   User,
   UserRound,
   Video,
-  FileSpreadsheet,
+  X,
 } from 'lucide-react';
 import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
@@ -192,6 +194,37 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
               }}
             />
           </PipelineIconField>
+        </PipelineFormSection>
+
+        <PipelineFormSection title="Card appearance" icon={Palette}>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-600">Background color</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => updateLead.mutate({ id: lead.id, background_color: null })}
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-medium transition-colors',
+                  !lead.background_color ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300',
+                )}
+                title="No color"
+              >
+                <X className="h-3 w-3 text-gray-400" />
+              </button>
+              {['#f0f9ff', '#f0fdf4', '#fefce8', '#fef2f2', '#faf5ff', '#fdf2f8', '#f8fafc', '#fff7ed'].map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => updateLead.mutate({ id: lead.id, background_color: color })}
+                  className={cn(
+                    'h-8 w-8 rounded-lg border shadow-sm transition-transform hover:scale-105',
+                    lead.background_color === color ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200',
+                  )}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
         </PipelineFormSection>
 
         <CardDetailExtras lead={lead} boardId={resolvedBoardId} />

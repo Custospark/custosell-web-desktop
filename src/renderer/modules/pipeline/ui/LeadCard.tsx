@@ -50,7 +50,9 @@ export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCa
         'hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md',
         dragging && 'rotate-1 opacity-60 shadow-lg',
         overdue && 'border-red-200/80',
+        !lead.background_color && 'bg-white',
       )}
+      style={lead.background_color ? { backgroundColor: lead.background_color } : undefined}
     >
       {(lead.labels ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1 px-2.5 pt-2">

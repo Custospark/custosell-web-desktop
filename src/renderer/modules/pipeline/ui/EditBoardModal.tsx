@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useUpdatePipelineBoard } from '../api/usePipelineQueries';
+import { useUploadBoardBackground } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
 import BoardMemberPicker, { membersFromBoard } from './BoardMemberPicker';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -12,7 +13,10 @@ import {
   PipelineModalHero,
   pipelineInputClass,
 } from './pipelineFormFields';
-import { AlignLeft, Archive, Kanban, Lock, Palette, Share2, Type, Users } from 'lucide-react';
+import BackgroundGallery from './BackgroundGallery';
+import {
+  AlignLeft, Archive, Kanban, Lock, Palette, Share2, Type, Users, X,
+} from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 
@@ -33,8 +37,6 @@ const VISIBILITY_OPTIONS: {
   { value: 'shared', label: 'Shared', hint: 'Invite specific members', icon: Share2 },
 ];
 
-const PRESET_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
-
 export default function EditBoardModal({ open, board, onClose }: EditBoardModalProps) {
   if (!open) return null;
   return <EditBoardModalForm key={board.id} board={board} onClose={onClose} />;
@@ -43,14 +45,36 @@ export default function EditBoardModal({ open, board, onClose }: EditBoardModalP
 function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose: () => void }) {
   const navigate = useNavigate();
   const updateBoard = useUpdatePipelineBoard();
+  const uploadBg = useUploadBoardBackground();
   const { confirm } = useConfirm();
   const [isArchiving, setIsArchiving] = useState(false);
 
   const [name, setName] = useState(board.name);
   const [description, setDescription] = useState(board.description ?? '');
   const [visibility, setVisibility] = useState<PipelineVisibility>(board.visibility);
-  const [coverColor, setCoverColor] = useState(board.cover_color ?? '#6366f1');
   const [members, setMembers] = useState<BoardMemberInput[]>(membersFromBoard(board.members));
+  const [bgType, setBgType] = useState(board.background_type ?? 'color');
+  const [bgValue, setBgValue] = useState(board.background_value ?? board.cover_color ?? '#6366f1');
+
+  const handleBgSelect = (type: string, value: string) => {
+    setBgType(type);
+    setBgValue(value);
+    if (type === 'color') {
+      updateBoard.mutate({ id: board.id, cover_color: value, background_type: 'color', background_value: value });
+    } else if (type === 'gallery') {
+      updateBoard.mutate({ id: board.id, background_type: 'gallery', background_value: value });
+    }
+  };
+
+  const handleBgUpload = async (file: File) => {
+    try {
+      const result = await uploadBg.mutateAsync({ boardId: board.id, file });
+      setBgType('upload');
+      setBgValue(result.url);
+    } catch {
+      /* toast handled in mutation */
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +84,9 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
       name: name.trim(),
       description: description.trim() || undefined,
       visibility,
-      cover_color: coverColor,
+      cover_color: bgType === 'color' ? bgValue : board.cover_color,
+      background_type: bgType,
+      background_value: bgValue,
       members: visibility === 'shared' ? members : [],
     });
     onClose();
@@ -69,7 +95,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
   const handleArchive = async () => {
     const ok = await confirm({
       title: 'Archive board?',
-      message: `"${board.name}" will be hidden from the board list. Leads are preserved.`,
+      message: `"${board.name}" will be hidden from the board list. Cards are preserved.`,
       confirmText: 'Archive',
       variant: 'danger',
     });
@@ -82,13 +108,13 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
   };
 
   return (
-    <Modal isOpen onClose={onClose} title="Board settings" size="lg">
+    <Modal isOpen variant="wide" title="Board settings" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
           icon={Kanban}
           tone="indigo"
           title="Edit pipeline board"
-          description="Update name, visibility, and cover color."
+          description="Update name, background, visibility, and team members."
         />
 
         <PipelineFormSection title="Board details" icon={Type}>
@@ -108,6 +134,16 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
               className={cn(pipelineInputClass, 'resize-none')}
             />
           </PipelineIconField>
+        </PipelineFormSection>
+
+        <PipelineFormSection title="Background" icon={Palette}>
+          <BackgroundGallery
+            currentType={bgType}
+            currentValue={bgValue}
+            onSelect={handleBgSelect}
+            onUpload={handleBgUpload}
+            isUploading={uploadBg.isPending}
+          />
         </PipelineFormSection>
 
         <PipelineFormSection title="Visibility" icon={Users}>
@@ -133,28 +169,35 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
         </PipelineFormSection>
 
         {visibility === 'shared' && (
-          <PipelineFormSection title="Members" icon={Users}>
+          <PipelineFormSection title="Team members" icon={Users}>
+            {members.length > 0 && (
+              <div className="mb-3 space-y-2">
+                {members.map((m, idx) => (
+                  <div key={m.user_id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+                        {(m.name ?? 'U').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{m.name ?? `User #${m.user_id}`}</p>
+                        <p className="text-xs capitalize text-gray-500">{m.role ?? 'editor'}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMembers(members.filter((_, i) => i !== idx))}
+                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      aria-label="Remove member"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <BoardMemberPicker value={members} onChange={setMembers} excludeUserId={board.created_by} />
           </PipelineFormSection>
         )}
-
-        <PipelineFormSection title="Cover color" icon={Palette}>
-          <div className="flex flex-wrap gap-2">
-            {PRESET_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setCoverColor(color)}
-                className={cn(
-                  'h-9 w-9 rounded-lg shadow-sm ring-2 ring-offset-2 transition-transform hover:scale-105',
-                  coverColor === color ? 'ring-indigo-500' : 'ring-transparent',
-                )}
-                style={{ backgroundColor: color }}
-                aria-label={`Color ${color}`}
-              />
-            ))}
-          </div>
-        </PipelineFormSection>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
           {!board.is_default && (

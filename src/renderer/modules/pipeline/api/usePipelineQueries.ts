@@ -625,3 +625,26 @@ export function useDeletePipelineAttachment(leadId: number, boardId: number) {
     },
   });
 }
+
+export function useUploadBoardBackground() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ boardId, file }: { boardId: number; file: File }) => {
+      const form = new FormData();
+      form.append('background', file);
+      const { data } = await axiosInstance.post(PIPELINE.BOARD_BACKGROUND(boardId), form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data as { background_type: string; background_value: string; url: string };
+    },
+    onSuccess: (_, { boardId }) => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.board(boardId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Background updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not upload background'));
+    },
+  });
+}

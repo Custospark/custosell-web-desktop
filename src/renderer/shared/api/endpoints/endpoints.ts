@@ -88,6 +88,7 @@ export const PIPELINE = {
   BOARD: (id: number) => `/pipeline/boards/${id}`,
   BOARD_KANBAN: (id: number) => `/pipeline/boards/${id}/kanban`,
   BOARD_CALENDAR: (id: number) => `/pipeline/boards/${id}/calendar`,
+  BOARD_BACKGROUND: (id: number) => `/pipeline/boards/${id}/background`,
   STAGES: (boardId: number) => `/pipeline/boards/${boardId}/stages`,
   STAGES_REORDER: (boardId: number) => `/pipeline/boards/${boardId}/stages/reorder`,
   STAGE: (stageId: number) => `/pipeline/stages/${stageId}`,

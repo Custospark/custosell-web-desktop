@@ -45,6 +45,8 @@ export interface PipelineBoard {
   is_default: boolean;
   is_archived: boolean;
   project_id?: number | null;
+  background_type?: string;
+  background_value?: string | null;
   sort_order: number;
   open_leads_count?: number;
   created_by: number;
@@ -124,6 +126,7 @@ export interface PipelineLead {
   due_date: string | null;
   start_date: string | null;
   priority: PipelinePriority | null;
+  background_color?: string | null;
   checklist_total?: number | null;
   checklist_done?: number | null;
   attachments_count?: number | null;

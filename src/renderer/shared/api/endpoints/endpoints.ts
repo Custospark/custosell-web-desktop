@@ -80,6 +80,7 @@ export const PROJECTS = {
   ALLOCATION: (projectId: number, allocationId: number) => `/projects/${projectId}/allocations/${allocationId}`,
   BUDGET_SUMMARY: (id: number) => `/projects/${id}/budget-summary`,
   PROFITABILITY: (id: number) => `/projects/${id}/profitability`,
+  BOARD: (id: number) => `/projects/${id}/board`,
 };
 
 export const PIPELINE = {

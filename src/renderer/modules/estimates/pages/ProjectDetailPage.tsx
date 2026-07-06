@@ -13,8 +13,10 @@ import {
   useProjectProfitability,
   useCreateCostAllocation,
   useDeleteCostAllocation,
+  useProjectBoard,
 } from '../api/useProjectQueries';
 import type { CreateCostAllocationPayload, AllocationType } from '../api/projectTypes';
+import type { PipelineStage, PipelineLead } from '../../pipeline/api/pipelineTypes';
 import { BudgetProgressBar, PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -24,9 +26,10 @@ const n = (v: unknown): number => Number(v) || 0;
 import {
   ArrowLeft, CheckSquare, Clock, DollarSign, Target, TrendingUp, Percent,
   FolderKanban, BarChart3, Info, Plus, Trash2, AlertTriangle, Wallet,
+  LayoutPanelTop, UserCircle,
 } from 'lucide-react';
 
-type ProjectTab = 'overview' | 'tasks' | 'timesheets' | 'costs';
+type ProjectTab = 'overview' | 'tasks' | 'timesheets' | 'costs' | 'board';
 
 const cardStyles = {
   blue: { border: 'border-blue-500', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', glow: 'bg-blue-500/10' },
@@ -85,6 +88,7 @@ export default function ProjectDetailPage() {
 
   const createAllocation = useCreateCostAllocation(projectId);
   const deleteAllocation = useDeleteCostAllocation(projectId);
+  const { data: projectBoard } = useProjectBoard(activeTab === 'board' ? projectId : 0);
 
   if (isLoading || !project) {
     return <LoadingSkeleton variant="dashboard" />;
@@ -138,6 +142,7 @@ export default function ProjectDetailPage() {
     { key: 'overview' as const, label: 'Overview', icon: FolderKanban },
     { key: 'tasks' as const, label: 'Tasks', icon: CheckSquare },
     { key: 'timesheets' as const, label: 'Timesheets', icon: Clock },
+    { key: 'board' as const, label: 'Board', icon: LayoutPanelTop },
     { key: 'costs' as const, label: 'Cost allocations', icon: DollarSign },
   ];
 
@@ -443,6 +448,77 @@ export default function ProjectDetailPage() {
             </div>
           )}
         </Card>
+      )}
+
+      {activeTab === 'board' && (
+        <div className="space-y-4">
+          {!projectBoard ? (
+            <Card className="flex flex-col items-center py-12 text-center">
+              <LayoutPanelTop className="mb-3 h-12 w-12 text-gray-300" />
+              <p className="text-sm font-medium text-gray-700">Loading project board...</p>
+            </Card>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <LayoutPanelTop className="h-4 w-4 text-blue-600" />
+                  {projectBoard.name}
+                </h3>
+              </div>
+              <div className="grid auto-cols-[280px] grid-flow-col gap-4 overflow-x-auto pb-2">
+                {(projectBoard.stages ?? []).map((stage: PipelineStage) => (
+                  <div key={stage.id} className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/50">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stage.color ?? '#94a3b8' }} />
+                        <span className="text-sm font-semibold text-gray-800">{stage.name}</span>
+                      </div>
+                      <span className="text-xs text-gray-400">{(stage.leads ?? []).length}</span>
+                    </div>
+                    <div className="flex-1 space-y-2 p-3 min-h-[200px]">
+                      {(stage.leads ?? []).length === 0 ? (
+                        <p className="py-8 text-center text-xs text-gray-400">No tasks</p>
+                      ) : (
+                        (stage.leads ?? []).map((card: PipelineLead) => (
+                          <div
+                            key={card.id}
+                            className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                          >
+                            <p className="text-sm font-medium text-gray-900">{card.title}</p>
+                            {card.description && (
+                              <p className="mt-1 text-xs text-gray-500 line-clamp-2">{card.description}</p>
+                            )}
+                            <div className="mt-2 flex items-center justify-between">
+                              {card.assigned_to ? (
+                                <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                                  <UserCircle className="h-3 w-3" />
+                                  {card.assignee?.name ?? 'Assigned'}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-300">Unassigned</span>
+                              )}
+                              {card.priority && (
+                                <span className={cn(
+                                  'rounded px-1.5 py-0.5 text-[10px] font-medium',
+                                  card.priority === 'urgent' ? 'bg-red-50 text-red-700' :
+                                  card.priority === 'high' ? 'bg-amber-50 text-amber-700' :
+                                  card.priority === 'medium' ? 'bg-blue-50 text-blue-700' :
+                                  'bg-gray-100 text-gray-600',
+                                )}>
+                                  {card.priority}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {activeTab === 'costs' && (

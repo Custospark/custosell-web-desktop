@@ -44,6 +44,7 @@ export interface PipelineBoard {
   cover_color: string | null;
   is_default: boolean;
   is_archived: boolean;
+  project_id?: number | null;
   sort_order: number;
   open_leads_count?: number;
   created_by: number;

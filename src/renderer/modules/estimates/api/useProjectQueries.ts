@@ -17,6 +17,7 @@ import type {
   TimesheetEntry,
   UpdateProjectPayload,
 } from './projectTypes';
+import type { PipelineBoard } from '../../pipeline/api/pipelineTypes';
 
 export const projectKeys = {
   all: ['projects'] as const,
@@ -247,6 +248,18 @@ export function useProjectProfitability(projectId: number) {
     queryFn: async () => {
       const { data } = await axiosInstance.get(PROJECTS.PROFITABILITY(projectId));
       return unwrapEntity<ProjectProfitability>(data);
+    },
+    enabled: Boolean(projectId),
+    ...queryDefaults,
+  });
+}
+
+export function useProjectBoard(projectId: number) {
+  return useQuery<PipelineBoard>({
+    queryKey: [...projectKeys.all, 'board', projectId] as const,
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(PROJECTS.BOARD(projectId));
+      return unwrapEntity<PipelineBoard>(data);
     },
     enabled: Boolean(projectId),
     ...queryDefaults,

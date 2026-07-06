@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import { resolveBoardBackgroundImageUrl } from '../api/pipelineKanbanCache';
 import PipelineColorPicker from './PipelineColorPicker';
-import { Upload, Image, Palette } from 'lucide-react';
+import { Upload, Image, Palette, History } from 'lucide-react';
 
 const GALLERY_IMAGES = [
   { id: 1, url: 'https://picsum.photos/id/10/1200/800', thumb: 'https://picsum.photos/id/10/400/300' },
@@ -22,16 +22,20 @@ const GALLERY_IMAGES = [
 type BackgroundMode = 'color' | 'gallery' | 'upload';
 
 interface BackgroundGalleryProps {
+  boardId: number;
   currentType?: string;
   currentValue?: string | null;
+  uploadHistory?: string[];
   onSelect: (type: BackgroundMode, value: string) => void;
   onUpload?: (file: File) => void;
   isUploading?: boolean;
 }
 
 export default function BackgroundGallery({
+  boardId,
   currentType,
   currentValue,
+  uploadHistory = [],
   onSelect,
   onUpload,
   isUploading,
@@ -39,6 +43,10 @@ export default function BackgroundGallery({
   const fileRef = useRef<HTMLInputElement>(null);
   const [localBlobPreview, setLocalBlobPreview] = useState<string | null>(null);
   const blobPreviewRef = useRef<string | null>(null);
+
+  useEffect(() => () => {
+    if (blobPreviewRef.current) URL.revokeObjectURL(blobPreviewRef.current);
+  }, []);
 
   const savedUploadPreview = useMemo(() => {
     if (currentType === 'upload' && currentValue) {
@@ -48,6 +56,14 @@ export default function BackgroundGallery({
   }, [currentType, currentValue]);
 
   const uploadPreview = localBlobPreview ?? savedUploadPreview;
+
+  const historyThumbs = useMemo(
+    () => uploadHistory.map((path) => ({
+      path,
+      url: resolveBoardBackgroundImageUrl('upload', path),
+    })).filter((item): item is { path: string; url: string } => Boolean(item.url)),
+    [uploadHistory],
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -141,6 +157,32 @@ export default function BackgroundGallery({
           )}
         </button>
       </div>
+
+      {historyThumbs.length > 0 && (
+        <div>
+          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600">
+            <History className="h-3 w-3" />
+            Your uploads
+            <span className="font-normal text-gray-400">— reuse a previous image</span>
+          </p>
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+            {historyThumbs.map(({ path, url }) => (
+              <button
+                key={`${boardId}-${path}`}
+                type="button"
+                onClick={() => onSelect('upload', path)}
+                className={cn(
+                  'relative aspect-video overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-1 transition-transform hover:scale-105',
+                  currentType === 'upload' && currentValue === path ? 'ring-blue-500' : 'ring-transparent',
+                )}
+                title="Reuse this upload"
+              >
+                <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

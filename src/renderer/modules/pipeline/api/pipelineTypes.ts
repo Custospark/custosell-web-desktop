@@ -186,6 +186,7 @@ export interface PipelineInsightsSummary {
 export interface BoardMemberInput {
   user_id: number;
   role: 'editor' | 'viewer';
+  name?: string;
 }
 
 export interface CreateBoardPayload {

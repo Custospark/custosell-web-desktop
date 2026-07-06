@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useReorderPipelineStages, useUpdatePipelineStage } from '../api/usePipelineQueries';
@@ -10,7 +10,8 @@ import {
   pipelineInputClass,
 } from './pipelineFormFields';
 import { ArrowLeft, ArrowRight, Columns3, Palette, Type } from 'lucide-react';
-import { cn } from '../../../shared/utils/cn';
+import PipelineColorPicker from './PipelineColorPicker';
+import { BOARD_PRESET_COLORS } from './pipelineColorPresets';
 
 interface EditStageModalProps {
   open: boolean;
@@ -21,7 +22,7 @@ interface EditStageModalProps {
   onDelete: () => void;
 }
 
-const PRESET_COLORS = ['#64748b', '#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLUMN_PRESET_COLORS = ['#64748b', ...BOARD_PRESET_COLORS.filter((c) => c !== '#64748b')];
 
 export default function EditStageModal({
   open,
@@ -36,13 +37,6 @@ export default function EditStageModal({
 
   const [name, setName] = useState(stage.name);
   const [color, setColor] = useState(stage.color ?? '#64748b');
-
-  useEffect(() => {
-    if (open) {
-      setName(stage.name);
-      setColor(stage.color ?? '#64748b');
-    }
-  }, [open, stage]);
 
   const sorted = [...allStages].sort((a, b) => a.sort_order - b.sort_order);
   const stageIndex = sorted.findIndex((s) => s.id === stage.id);
@@ -67,7 +61,7 @@ export default function EditStageModal({
 
   return (
     <Modal isOpen={open} onClose={onClose} title="Edit column" size="md">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form key={stage.id} onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
           icon={Columns3}
           tone="slate"
@@ -87,20 +81,7 @@ export default function EditStageModal({
         </PipelineFormSection>
 
         <PipelineFormSection title="Color" icon={Palette}>
-          <div className="flex flex-wrap gap-2">
-            {PRESET_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                className={cn(
-                  'h-8 w-8 rounded-lg ring-2 ring-offset-2',
-                  color === c ? 'ring-indigo-500' : 'ring-transparent',
-                )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+          <PipelineColorPicker value={color} presets={COLUMN_PRESET_COLORS} onChange={setColor} />
         </PipelineFormSection>
 
         <div className="flex gap-2">

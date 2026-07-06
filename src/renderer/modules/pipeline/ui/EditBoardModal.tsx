@@ -5,7 +5,8 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { useUpdatePipelineBoard } from '../api/usePipelineQueries';
 import { useUploadBoardBackground } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
-import BoardMemberPicker, { membersFromBoard } from './BoardMemberPicker';
+import BoardMemberPicker from './BoardMemberPicker';
+import { membersFromBoard } from '../api/pipelineBoardMembers';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   PipelineFormSection,
@@ -15,8 +16,9 @@ import {
 } from './pipelineFormFields';
 import BackgroundGallery from './BackgroundGallery';
 import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
+import { addBoardUploadHistory, loadBoardUploadHistory } from '../api/boardUploadHistory';
 import {
-  AlignLeft, Archive, Kanban, Lock, Palette, Share2, Type, Users, X,
+  AlignLeft, Archive, Kanban, Lock, Palette, Share2, Type, Users,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
@@ -61,6 +63,9 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
 
   const [bgType, setBgType] = useState(initialBgType);
   const [bgValue, setBgValue] = useState(initialBgValue);
+  const [uploadHistory, setUploadHistory] = useState<string[]>(() =>
+    loadBoardUploadHistory(board.id, initialBgType === 'upload' ? initialBgValue : null),
+  );
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);
@@ -75,14 +80,25 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
       });
     } else if (type === 'gallery') {
       updateBoard.mutate({ id: board.id, background_type: 'gallery', background_value: value, silent: true });
+    } else if (type === 'upload') {
+      const path = normalizeBoardBackgroundUploadPath(value);
+      setUploadHistory((prev) => (prev.includes(path) ? prev : [path, ...prev]));
+      updateBoard.mutate({
+        id: board.id,
+        background_type: 'upload',
+        background_value: path,
+        silent: true,
+      });
     }
   };
 
   const handleBgUpload = async (file: File) => {
     try {
       const result = await uploadBg.mutateAsync({ boardId: board.id, file });
+      const path = normalizeBoardBackgroundUploadPath(result.background_value);
       setBgType('upload');
-      setBgValue(normalizeBoardBackgroundUploadPath(result.background_value));
+      setBgValue(path);
+      setUploadHistory(addBoardUploadHistory(board.id, path));
     } catch {
       /* toast handled in mutation */
     }
@@ -150,9 +166,10 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
 
         <PipelineFormSection title="Background" icon={Palette}>
           <BackgroundGallery
-            key={`${board.id}-${bgType}-${bgValue}`}
+            boardId={board.id}
             currentType={bgType}
             currentValue={bgValue}
+            uploadHistory={uploadHistory}
             onSelect={handleBgSelect}
             onUpload={handleBgUpload}
             isUploading={uploadBg.isPending}
@@ -183,31 +200,6 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
 
         {visibility === 'shared' && (
           <PipelineFormSection title="Team members" icon={Users}>
-            {members.length > 0 && (
-              <div className="mb-3 space-y-2">
-                {members.map((m, idx) => (
-                  <div key={m.user_id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
-                        {(m.name ?? 'U').charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{m.name ?? `User #${m.user_id}`}</p>
-                        <p className="text-xs capitalize text-gray-500">{m.role ?? 'editor'}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setMembers(members.filter((_, i) => i !== idx))}
-                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      aria-label="Remove member"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
             <BoardMemberPicker value={members} onChange={setMembers} excludeUserId={board.created_by} />
           </PipelineFormSection>
         )}

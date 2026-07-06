@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { cn } from '../../utils/cn';
 
 /** Above search dropdowns (z-30), nav menus (z-100), and select portals (z-200). */
 export const MODAL_Z_INDEX_CLASS = 'z-[10000]';
@@ -10,10 +11,13 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   bodyClassName?: string;
   panelClassName?: string;
+  titleCentered?: boolean;
+  /** @deprecated Color pickers and menus use portals; body always scrolls. */
   overflowVisible?: boolean;
 }
 
@@ -29,11 +33,12 @@ export function Modal({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
   size = 'md',
   bodyClassName,
   panelClassName,
-  overflowVisible = false,
+  titleCentered = false,
 }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -57,22 +62,44 @@ export function Modal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`relative pointer-events-auto w-full ${sizeClasses[size]} bg-white opacity-100 rounded-xl shadow-2xl ring-1 ring-black/10 max-h-[90vh] ${overflowVisible ? 'overflow-y-auto md:overflow-visible' : 'overflow-y-auto'} ${panelClassName ?? ''}`}
+            className={cn(
+              'relative pointer-events-auto flex w-full max-h-[90vh] flex-col overflow-hidden rounded-xl bg-white opacity-100 shadow-2xl ring-1 ring-black/10',
+              sizeClasses[size],
+              panelClassName,
+            )}
           >
-            {title && (
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-                  <X className="w-5 h-5" />
+            {title ? (
+              <div
+                className={cn(
+                  'relative flex shrink-0 border-b border-gray-200 px-6 py-4',
+                  titleCentered ? 'flex-col items-center text-center' : 'items-start justify-between',
+                )}
+              >
+                <div className={cn('min-w-0', titleCentered ? 'px-8' : 'pr-4')}>
+                  <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+                  {subtitle && <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>}
+                </div>
+                <button
+                  onClick={onClose}
+                  className={cn(
+                    'shrink-0 text-gray-400 transition-colors hover:text-gray-600',
+                    titleCentered ? 'absolute right-4 top-4' : '',
+                  )}
+                >
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-            )}
-            {!title && (
-              <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
-                <X className="w-5 h-5" />
+            ) : (
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 z-10 text-gray-400 transition-colors hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
               </button>
             )}
-            <div className={bodyClassName ?? `px-6 py-4${overflowVisible ? ' overflow-visible' : ''}`}>{children}</div>
+            <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', bodyClassName ?? 'px-6 py-4')}>
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

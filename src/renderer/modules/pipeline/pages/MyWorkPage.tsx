@@ -4,7 +4,7 @@ import { Card } from '../../../shared/components/cards/Card';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { usePipelineLeads } from '../api/usePipelineQueries';
-import LeadDetailDrawer from '../ui/LeadDetailDrawer';
+import LeadDetailModal from '../ui/LeadDetailModal';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
@@ -74,7 +74,7 @@ export default function MyWorkPage() {
       )}
 
       {selectedLeadId != null && (
-        <LeadDetailDrawer leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+        <LeadDetailModal leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
       )}
     </div>
   );

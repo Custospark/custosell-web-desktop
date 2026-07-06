@@ -773,11 +773,33 @@ export function useCreatePipelineLabel(boardId: number) {
       const { data } = await axiosInstance.post(PIPELINE.LABELS, { ...payload, board_id: boardId });
       return normalizeItem<PipelineLabel>(data);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.labels(boardId) });
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.labels(boardId) });
+      const previous = qc.getQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId));
+      const tempId = -Date.now();
+      const optimistic: PipelineLabel = {
+        id: tempId,
+        business_id: 0,
+        board_id: boardId,
+        name: payload.name,
+        color: payload.color ?? '#6366f1',
+        sort_order: previous?.length ?? 0,
+      };
+      qc.setQueryData(pipelineKeys.labels(boardId), [...(previous ?? []), optimistic]);
+      return { previous, tempId };
+    },
+    onSuccess: (label, _vars, context) => {
+      qc.setQueryData(pipelineKeys.labels(boardId), (old) => {
+        if (!old) return [label];
+        const withoutTemp = old.filter((l) => l.id !== context?.tempId);
+        return [...withoutTemp, label];
+      });
       showToast('success', 'Label created');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(pipelineKeys.labels(boardId), context.previous);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not create label'));
     },
   });

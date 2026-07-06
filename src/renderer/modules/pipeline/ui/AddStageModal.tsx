@@ -9,7 +9,8 @@ import {
   pipelineInputClass,
 } from './pipelineFormFields';
 import { Columns3, Palette, Type } from 'lucide-react';
-import { cn } from '../../../shared/utils/cn';
+import PipelineColorPicker from './PipelineColorPicker';
+import { BOARD_PRESET_COLORS } from './pipelineColorPresets';
 
 interface AddStageModalProps {
   open: boolean;
@@ -17,7 +18,7 @@ interface AddStageModalProps {
   onClose: () => void;
 }
 
-const PRESET_COLORS = ['#64748b', '#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLUMN_PRESET_COLORS = ['#64748b', ...BOARD_PRESET_COLORS.filter((c) => c !== '#64748b')];
 
 export default function AddStageModal({ open, boardId, onClose }: AddStageModalProps) {
   const createStage = useCreatePipelineStage(boardId);
@@ -65,20 +66,7 @@ export default function AddStageModal({ open, boardId, onClose }: AddStageModalP
         </PipelineFormSection>
 
         <PipelineFormSection title="Color" icon={Palette}>
-          <div className="flex flex-wrap gap-2">
-            {PRESET_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                className={cn(
-                  'h-8 w-8 rounded-lg ring-2 ring-offset-2',
-                  color === c ? 'ring-indigo-500' : 'ring-transparent',
-                )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+          <PipelineColorPicker value={color} presets={COLUMN_PRESET_COLORS} onChange={setColor} />
         </PipelineFormSection>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">

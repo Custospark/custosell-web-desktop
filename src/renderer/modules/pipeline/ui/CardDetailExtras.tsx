@@ -13,6 +13,8 @@ import {
 import { PipelineFormSection, PipelineIconField, pipelineInputClass } from './pipelineFormFields';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
+import PipelineColorPicker from './PipelineColorPicker';
+import { BOARD_PRESET_COLORS } from './pipelineColorPresets';
 import {
   Calendar, CheckSquare, Flag, Paperclip, Plus, Tag, Trash2, AlignLeft,
 } from 'lucide-react';
@@ -23,8 +25,6 @@ const PRIORITIES: { value: PipelinePriority; label: string; color: string }[] = 
   { value: 'high', label: 'High', color: '#f59e0b' },
   { value: 'urgent', label: 'Urgent', color: '#ef4444' },
 ];
-
-const LABEL_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
 interface CardDetailExtrasProps {
   lead: PipelineLead;
@@ -44,10 +44,11 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
   const deleteAttachment = useDeletePipelineAttachment(lead.id, boardId);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [newItemText, setNewItemText] = useState<Record<number, string>>({});
+  const [addingItemChecklistId, setAddingItemChecklistId] = useState<number | null>(null);
+  const [newItemDraft, setNewItemDraft] = useState('');
   const [showCreateLabel, setShowCreateLabel] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
-  const [newLabelColor, setNewLabelColor] = useState(LABEL_COLORS[0]);
+  const [newLabelColor, setNewLabelColor] = useState(BOARD_PRESET_COLORS[0]);
   const selectedLabelIds = new Set((lead.labels ?? []).map((l) => l.id));
   const isLead = (lead.card_type ?? 'lead') === 'lead';
 
@@ -58,26 +59,45 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
     patchLead({ label_ids: [...next] });
   };
 
-  const handleCreateLabel = async () => {
+  const handleCreateLabel = () => {
     const name = newLabelName.trim();
     if (!name) return;
-    const label = await createLabel.mutateAsync({ name, color: newLabelColor });
-    const next = new Set(selectedLabelIds);
-    next.add(label.id);
-    patchLead({ label_ids: [...next] });
-    setNewLabelName('');
-    setShowCreateLabel(false);
+    createLabel.mutate(
+      { name, color: newLabelColor },
+      {
+        onSuccess: (label) => {
+          const next = new Set(selectedLabelIds);
+          next.add(label.id);
+          patchLead({ label_ids: [...next] });
+          setNewLabelName('');
+          setShowCreateLabel(false);
+        },
+      },
+    );
   };
 
   const handleAddChecklist = async () => {
-    await createChecklist.mutateAsync('Checklist');
+    const checklist = await createChecklist.mutateAsync('Checklist');
+    setAddingItemChecklistId(checklist.id);
+    setNewItemDraft('');
   };
 
   const handleAddItem = async (checklistId: number) => {
-    const title = (newItemText[checklistId] ?? '').trim();
+    const title = newItemDraft.trim();
     if (!title) return;
     await createItem.mutateAsync({ checklistId, title });
-    setNewItemText((prev) => ({ ...prev, [checklistId]: '' }));
+    setNewItemDraft('');
+    setAddingItemChecklistId(null);
+  };
+
+  const openAddItem = (checklistId: number) => {
+    setAddingItemChecklistId(checklistId);
+    setNewItemDraft('');
+  };
+
+  const cancelAddItem = () => {
+    setAddingItemChecklistId(null);
+    setNewItemDraft('');
   };
 
   return (
@@ -184,21 +204,12 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                 if (e.key === 'Escape') setShowCreateLabel(false);
               }}
             />
-            <div className="flex flex-wrap gap-1.5">
-              {LABEL_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setNewLabelColor(color)}
-                  className={cn(
-                    'h-7 w-7 rounded-md ring-2 ring-offset-1 transition-transform hover:scale-105',
-                    newLabelColor === color ? 'ring-gray-500' : 'ring-transparent',
-                  )}
-                  style={{ backgroundColor: color }}
-                  aria-label={`Color ${color}`}
-                />
-              ))}
-            </div>
+            <PipelineColorPicker
+              value={newLabelColor}
+              presets={BOARD_PRESET_COLORS}
+              swatchSize="md"
+              onChange={setNewLabelColor}
+            />
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -273,16 +284,39 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                   </li>
                 ))}
               </ul>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={newItemText[checklist.id] ?? ''}
-                  onChange={(e) => setNewItemText((p) => ({ ...p, [checklist.id]: e.target.value }))}
-                  placeholder="Add an item…"
-                  className={cn(pipelineInputClass, 'pl-3 text-sm')}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddItem(checklist.id); } }}
-                />
-                <Button type="button" size="sm" onClick={() => handleAddItem(checklist.id)}>Add</Button>
-              </div>
+              {addingItemChecklistId === checklist.id ? (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={newItemDraft}
+                    onChange={(e) => setNewItemDraft(e.target.value)}
+                    placeholder="Add an item…"
+                    className={cn(pipelineInputClass, 'pl-3 text-sm')}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddItem(checklist.id);
+                      }
+                      if (e.key === 'Escape') cancelAddItem();
+                    }}
+                  />
+                  <Button type="button" size="sm" onClick={() => handleAddItem(checklist.id)} loading={createItem.isPending}>
+                    Add
+                  </Button>
+                  <Button type="button" size="sm" variant="secondary" onClick={cancelAddItem}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAddItem(checklist.id)}
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add item
+                </button>
+              )}
             </div>
           );
         })}

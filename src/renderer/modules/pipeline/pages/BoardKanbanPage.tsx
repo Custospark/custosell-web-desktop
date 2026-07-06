@@ -16,7 +16,7 @@ import EditBoardModal from '../ui/EditBoardModal';
 import EditStageModal from '../ui/EditStageModal';
 import DeleteStageModal from '../ui/DeleteStageModal';
 import AddStageModal from '../ui/AddStageModal';
-import LeadDetailDrawer from '../ui/LeadDetailDrawer';
+import LeadDetailModal from '../ui/LeadDetailModal';
 import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
 import BoardCalendarView from '../ui/BoardCalendarView';
@@ -304,7 +304,7 @@ export default function BoardKanbanPage() {
       )}
 
       {selectedLeadId != null && (
-        <LeadDetailDrawer
+        <LeadDetailModal
           leadId={selectedLeadId}
           boardId={boardId}
           onClose={() => setSelectedLeadId(null)}

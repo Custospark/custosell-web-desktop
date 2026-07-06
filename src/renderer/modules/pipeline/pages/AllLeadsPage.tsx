@@ -11,7 +11,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { usePipelineBoards, usePipelineLeads, usePipelineSources } from '../api/usePipelineQueries';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import type { PipelineLead } from '../api/pipelineTypes';
-import LeadDetailDrawer from '../ui/LeadDetailDrawer';
+import LeadDetailModal from '../ui/LeadDetailModal';
 import CreateLeadModal from '../ui/CreateLeadModal';
 import { PipelineStatusBadge } from '../ui/pipelineStatusBadge';
 import { pipelineSelectClass } from '../ui/pipelineFormFields';
@@ -297,7 +297,7 @@ export default function AllLeadsPage() {
       </Card>
 
       {selectedLeadId != null && (
-        <LeadDetailDrawer leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+        <LeadDetailModal leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
       )}
 
       {createOpen && (

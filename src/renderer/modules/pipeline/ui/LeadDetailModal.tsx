@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import {
@@ -45,9 +45,10 @@ import {
 import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
 import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
-import PipelineColorPicker, { CARD_PRESET_COLORS } from './PipelineColorPicker';
+import PipelineColorPicker from './PipelineColorPicker';
+import { CARD_PRESET_COLORS } from './pipelineColorPresets';
 
-interface LeadDetailDrawerProps {
+interface LeadDetailModalProps {
   leadId: number;
   boardId?: number;
   onClose: () => void;
@@ -77,7 +78,7 @@ const ACTIVITY_ICONS: Record<string, typeof MessageSquare> = {
   stage_change: ArrowRightLeft,
 };
 
-export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetailDrawerProps) {
+export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetailModalProps) {
   const { data: lead, isLoading } = usePipelineLead(leadId);
   const { data: sources } = usePipelineSources();
   const { data: staff } = useStaff();
@@ -92,11 +93,11 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
 
   if (isLoading || !lead) {
     return (
-      <SlideDrawer open title="Loading…" onClose={onClose} hideFooter hideKeyboardTip width="sm:w-[680px]">
+      <Modal isOpen onClose={onClose} title="Loading card…" size="xl">
         <div className="flex justify-center py-12">
           <LoadingSpinner />
         </div>
-      </SlideDrawer>
+      </Modal>
     );
   }
 
@@ -134,16 +135,15 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
   };
 
   return (
-    <SlideDrawer
-      open
+    <Modal
+      isOpen
       title={lead.title}
       subtitle={lead.stage?.name ?? undefined}
+      titleCentered
       onClose={onClose}
-      hideFooter
-      hideKeyboardTip
-      width="sm:w-[680px]"
+      size="xl"
     >
-      <div className="space-y-5 pb-6">
+      <div className="space-y-5 pb-2">
         {/* Hero strip */}
         <div
           className="overflow-hidden rounded-xl border border-gray-200 shadow-sm"
@@ -204,6 +204,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
             <PipelineColorPicker
               value={lead.background_color}
               presets={CARD_PRESET_COLORS}
+              swatchSize="md"
               allowClear
               onClear={() => patchLead({ background_color: null })}
               onChange={(color) => patchLead({ background_color: color })}
@@ -451,6 +452,6 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
           </ul>
         </PipelineFormSection>
       </div>
-    </SlideDrawer>
+    </Modal>
   );
 }

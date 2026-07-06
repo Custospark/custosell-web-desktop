@@ -9,6 +9,7 @@ import {
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
+  Kanban, Briefcase, TrendingUp, SlidersHorizontal,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -35,11 +36,21 @@ interface NavGroup {
   subItems: SubItem[];
 }
 
+function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
+  if (pathname === itemTo) return true;
+  if (itemTo === ROUTES.PIPELINE.BOARDS) {
+    return /^\/pipeline\/boards\/\d+/.test(pathname);
+  }
+  return pathname.startsWith(`${itemTo}/`);
+}
+
 const baseSubRoutes = [
   ROUTES.DASHBOARD,
   ROUTES.SALES.NEW, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
+  ROUTES.PIPELINE.BOARDS, ROUTES.PIPELINE.MY_WORK, ROUTES.PIPELINE.LEADS,
+  ROUTES.PIPELINE.INSIGHTS, ROUTES.PIPELINE.SETTINGS,
   ROUTES.INVOICES.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
   ROUTES.ACCOUNTING.RATIOS, ROUTES.ACCOUNTING.STATEMENTS,
@@ -113,6 +124,17 @@ const baseNavGroups: NavGroup[] = [
     label: 'Customers',
     subItems: [
       { to: ROUTES.CUSTOMERS.INDEX, label: 'Customer List', icon: Users },
+    ],
+  },
+  {
+    icon: Kanban,
+    label: 'Pipeline',
+    subItems: [
+      { to: ROUTES.PIPELINE.BOARDS, label: 'Boards', icon: Kanban },
+      { to: ROUTES.PIPELINE.MY_WORK, label: 'My Work', icon: Briefcase },
+      { to: ROUTES.PIPELINE.LEADS, label: 'All Leads', icon: Users },
+      { to: ROUTES.PIPELINE.INSIGHTS, label: 'Insights', icon: TrendingUp },
+      { to: ROUTES.PIPELINE.SETTINGS, label: 'Settings', icon: SlidersHorizontal },
     ],
   },
   {
@@ -278,12 +300,18 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
             );
           }
 
+          const hasActiveChild = group.subItems.some((item) =>
+            isSidebarSubItemActive(location.pathname, item.to),
+          );
+
           return (
             <div key={group.label}>
               <button
                 onClick={() => setOpenGroup(isOpen ? null : groupIndex)}
                 className={`flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                  isOpen ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  isOpen || hasActiveChild
+                    ? 'bg-gray-100 text-gray-900 font-medium'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
@@ -293,7 +321,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
               {isOpen && (
                 <div className="ml-2 mt-1 space-y-0.5 border-l border-gray-200 pl-3">
                   {group.subItems.map((item) => {
-                    const isChildActive = location.pathname === item.to;
+                    const isChildActive = isSidebarSubItemActive(location.pathname, item.to);
                     return (
                       <NavLink
                         key={item.to}

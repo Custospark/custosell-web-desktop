@@ -56,6 +56,13 @@ import GuideTutorialsPage from '../../modules/guide/GuideTutorialsPage';
 import GuideFaqsPage from '../../modules/guide/GuideFaqsPage';
 import GuideFeedbackPage from '../../modules/guide/GuideFeedbackPage';
 import GuideContactPage from '../../modules/guide/GuideContactPage';
+import PipelineLayout from '../../modules/pipeline/pages/PipelineLayout';
+import BoardsPage from '../../modules/pipeline/pages/BoardsPage';
+import BoardKanbanPage from '../../modules/pipeline/pages/BoardKanbanPage';
+import MyWorkPage from '../../modules/pipeline/pages/MyWorkPage';
+import AllLeadsPage from '../../modules/pipeline/pages/AllLeadsPage';
+import InsightsPage from '../../modules/pipeline/pages/InsightsPage';
+import PipelineSettingsPage from '../../modules/pipeline/pages/PipelineSettingsPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
@@ -110,6 +117,17 @@ export function AppRoutes() {
           </Route>
           <Route element={<ModuleAccessMiddleware module="customers" />}>
             <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="pipeline" />}>
+            <Route path={ROUTES.PIPELINE.INDEX} element={<Navigate to={ROUTES.PIPELINE.BOARDS} replace />} />
+            <Route element={<SuspenseWrapper><PipelineLayout /></SuspenseWrapper>}>
+              <Route path={ROUTES.PIPELINE.BOARDS} element={<SuspenseWrapper><BoardsPage /></SuspenseWrapper>} />
+              <Route path="/pipeline/boards/:boardId" element={<SuspenseWrapper><BoardKanbanPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.PIPELINE.MY_WORK} element={<SuspenseWrapper><MyWorkPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.PIPELINE.LEADS} element={<SuspenseWrapper><AllLeadsPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.PIPELINE.INSIGHTS} element={<SuspenseWrapper><InsightsPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.PIPELINE.SETTINGS} element={<SuspenseWrapper><PipelineSettingsPage /></SuspenseWrapper>} />
+            </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="expenses" />}>
             <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.LIST} replace />} />

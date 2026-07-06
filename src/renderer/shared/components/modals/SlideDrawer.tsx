@@ -18,6 +18,9 @@ interface SlideDrawerProps {
   width?: string;
   /** Span main content area only — leave the sidebar visible on large screens. */
   fullContentWidth?: boolean;
+  /** Hide Save/Cancel footer (e.g. read-only or auto-save drawers). */
+  hideFooter?: boolean;
+  hideKeyboardTip?: boolean;
 }
 
 export function SlideDrawer({
@@ -31,6 +34,8 @@ export function SlideDrawer({
   canSubmit,
   width = 'sm:w-[560px]',
   fullContentWidth = false,
+  hideFooter = false,
+  hideKeyboardTip = false,
 }: SlideDrawerProps) {
   const { state } = useAppContext();
   const sidebarOffsetClass = state.sidebarCollapsed
@@ -85,9 +90,11 @@ export function SlideDrawer({
           <div className="min-w-0 mr-4">
             <h2 className="text-lg font-semibold text-gray-900 truncate">{title}</h2>
             {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
-            <p className="text-xs text-gray-400 mt-1">
-              Tip: Press {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to save.
-            </p>
+            {!hideKeyboardTip && onSubmit && (
+              <p className="text-xs text-gray-400 mt-1">
+                Tip: Press {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to save.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -111,6 +118,7 @@ export function SlideDrawer({
         </div>
 
         {/* Footer */}
+        {!hideFooter && (
         <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -130,6 +138,7 @@ export function SlideDrawer({
             ) : 'Save'}
           </button>
         </div>
+        )}
       </div>
     </div>
   );

@@ -52,6 +52,22 @@ export const INVOICES = {
   PDF: (id: number) => `/invoices/${id}/pdf`,
 };
 
+export const PIPELINE = {
+  BOARDS: '/pipeline/boards',
+  BOARD: (id: number) => `/pipeline/boards/${id}`,
+  BOARD_KANBAN: (id: number) => `/pipeline/boards/${id}/kanban`,
+  STAGES: (boardId: number) => `/pipeline/boards/${boardId}/stages`,
+  STAGES_REORDER: (boardId: number) => `/pipeline/boards/${boardId}/stages/reorder`,
+  STAGE: (stageId: number) => `/pipeline/stages/${stageId}`,
+  LEADS: '/pipeline/leads',
+  LEAD: (id: number) => `/pipeline/leads/${id}`,
+  LEAD_STAGE: (id: number) => `/pipeline/leads/${id}/stage`,
+  LEAD_CONVERT: (id: number) => `/pipeline/leads/${id}/convert`,
+  LEAD_ACTIVITIES: (leadId: number) => `/pipeline/leads/${leadId}/activities`,
+  SOURCES: '/pipeline/sources',
+  INSIGHTS: '/pipeline/insights',
+};
+
 export const ACCOUNTING = {
   COA: '/chart-of-accounts',
   COA_TREE: '/chart-of-accounts/tree',

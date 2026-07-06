@@ -6,6 +6,7 @@ export const BUSINESS_MODULE_SLUGS = [
   'sales',
   'inventory',
   'customers',
+  'pipeline',
   'expenses',
   'accounting',
   'settings',
@@ -18,6 +19,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   sales: 'Sales',
   inventory: 'Inventory',
   customers: 'Customers',
+  pipeline: 'Pipeline',
   expenses: 'Expenses',
   accounting: 'Accounting',
   settings: 'Settings',
@@ -28,6 +30,7 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   sales: ROUTES.SALES.NEW,
   inventory: ROUTES.INVENTORY.PRODUCTS,
   customers: ROUTES.CUSTOMERS.INDEX,
+  pipeline: ROUTES.PIPELINE.BOARDS,
   expenses: ROUTES.EXPENSES.LIST,
   accounting: ROUTES.ACCOUNTING.RATIOS,
   settings: ROUTES.SETTINGS.BUSINESS,
@@ -36,11 +39,11 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'dashboard', 'sales', 'inventory', 'customers', 'expenses', 'accounting', 'settings',
+  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'expenses', 'accounting', 'settings',
 ];
 
 const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'sales', 'dashboard', 'inventory', 'customers', 'expenses', 'accounting', 'settings',
+  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'expenses', 'accounting', 'settings',
 ];
 
 /** Nav group label → module slug for business-scoped sidebar groups. */
@@ -49,6 +52,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Sales: 'sales',
   Inventory: 'inventory',
   Customers: 'customers',
+  Pipeline: 'pipeline',
   Expenses: 'expenses',
   Accounting: 'accounting',
   Settings: 'settings',
@@ -127,6 +131,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/sales')) return 'sales';
   if (pathname.startsWith('/inventory')) return 'inventory';
   if (pathname.startsWith('/customers')) return 'customers';
+  if (pathname.startsWith('/pipeline')) return 'pipeline';
   if (pathname.startsWith('/expenses')) return 'expenses';
   if (pathname.startsWith('/accounting')) return 'accounting';
   return null;

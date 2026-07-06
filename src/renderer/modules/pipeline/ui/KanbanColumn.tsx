@@ -1,0 +1,99 @@
+import { useState } from 'react';
+import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
+import LeadCard from './LeadCard';
+import { cn } from '../../../shared/utils/cn';
+import { Inbox, Plus } from 'lucide-react';
+
+interface KanbanColumnProps {
+  stage: PipelineStage;
+  onLeadClick: (lead: PipelineLead) => void;
+  onAddLead: (stageId: number) => void;
+  onDropLead: (leadId: number, stageId: number, position: number) => void;
+}
+
+export default function KanbanColumn({ stage, onLeadClick, onAddLead, onDropLead }: KanbanColumnProps) {
+  const [dragOver, setDragOver] = useState(false);
+  const leads = stage.leads ?? [];
+  const stageColor = stage.color ?? '#64748b';
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const leadId = Number(e.dataTransfer.getData('text/lead-id'));
+    if (!leadId) return;
+    onDropLead(leadId, stage.id, leads.length + 1);
+  };
+
+  return (
+    <div
+      className={cn(
+        'flex h-full min-h-[360px] w-[292px] shrink-0 flex-col rounded-2xl border shadow-sm backdrop-blur-sm transition-colors',
+        dragOver
+          ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-200'
+          : 'border-gray-200/80 bg-white/70',
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+    >
+      <div
+        className="flex items-center justify-between gap-2 rounded-t-2xl border-b border-gray-100 px-3 py-3"
+        style={{ background: `linear-gradient(135deg, ${stageColor}14, transparent)` }}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="h-3 w-3 shrink-0 rounded-full shadow-sm ring-2 ring-white"
+            style={{ backgroundColor: stageColor }}
+          />
+          <h3 className="truncate text-sm font-semibold text-gray-900">{stage.name}</h3>
+          <span
+            className="rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums"
+            style={{ backgroundColor: `${stageColor}20`, color: stageColor }}
+          >
+            {leads.length}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => onAddLead(stage.id)}
+          className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
+          title="Add lead to this stage"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">
+        {leads.length === 0 ? (
+          <button
+            type="button"
+            onClick={() => onAddLead(stage.id)}
+            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-8 text-center transition-colors hover:border-gray-300 hover:bg-gray-50"
+          >
+            <Inbox className="h-8 w-8 text-gray-300" />
+            <span className="text-xs font-medium text-gray-500">Drop a lead here or add one</span>
+          </button>
+        ) : (
+          leads.map((lead) => (
+            <div
+              key={lead.id}
+              draggable
+              className="cursor-grab active:cursor-grabbing"
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/lead-id', String(lead.id));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+            >
+              <LeadCard lead={lead} stageColor={stageColor} onClick={() => onLeadClick(lead)} />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

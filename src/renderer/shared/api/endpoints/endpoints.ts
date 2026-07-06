@@ -56,6 +56,7 @@ export const PIPELINE = {
   BOARDS: '/pipeline/boards',
   BOARD: (id: number) => `/pipeline/boards/${id}`,
   BOARD_KANBAN: (id: number) => `/pipeline/boards/${id}/kanban`,
+  BOARD_CALENDAR: (id: number) => `/pipeline/boards/${id}/calendar`,
   STAGES: (boardId: number) => `/pipeline/boards/${boardId}/stages`,
   STAGES_REORDER: (boardId: number) => `/pipeline/boards/${boardId}/stages/reorder`,
   STAGE: (stageId: number) => `/pipeline/stages/${stageId}`,
@@ -65,6 +66,7 @@ export const PIPELINE = {
   LEAD_CONVERT: (id: number) => `/pipeline/leads/${id}/convert`,
   LEAD_ACTIVITIES: (leadId: number) => `/pipeline/leads/${leadId}/activities`,
   SOURCES: '/pipeline/sources',
+  SOURCE: (id: number) => `/pipeline/sources/${id}`,
   INSIGHTS: '/pipeline/insights',
 };
 

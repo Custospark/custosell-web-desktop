@@ -154,3 +154,18 @@ export interface UpdateLeadPayload {
   expected_close_date?: string | null;
   lost_reason?: string | null;
 }
+
+export interface PipelineCalendarLead {
+  id: number;
+  title: string;
+  estimated_value: number | null;
+  currency: string;
+  status: PipelineLeadStatus;
+  stage: { id: number; name: string; color: string | null } | null;
+  assignee: PipelineUserRef | null;
+}
+
+export interface PipelineCalendarDay {
+  date: string;
+  leads: PipelineCalendarLead[];
+}

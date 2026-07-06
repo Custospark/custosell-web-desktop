@@ -2,7 +2,8 @@ import type { PipelineLead } from '../api/pipelineTypes';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
-import { GripVertical, Mail, Phone, Tag } from 'lucide-react';
+import { GripVertical, Calendar, Mail, Phone, Tag } from 'lucide-react';
+import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
 interface LeadCardProps {
   lead: PipelineLead;
@@ -64,6 +65,12 @@ export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCa
         )}
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {lead.expected_close_date && (
+            <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-100">
+              <Calendar className="h-2.5 w-2.5" />
+              {formatShiftDate(lead.expected_close_date)}
+            </span>
+          )}
           {lead.estimated_value != null && lead.estimated_value > 0 && (
             <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-100">
               {formatCurrency(lead.estimated_value, lead.currency)}

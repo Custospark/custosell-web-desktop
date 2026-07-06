@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- shared pipeline form utilities */
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
@@ -54,19 +55,23 @@ interface PipelineModalHeroProps {
   icon: LucideIcon;
   title: string;
   description: string;
-  tone?: 'indigo' | 'emerald' | 'blue';
+  tone?: 'indigo' | 'emerald' | 'blue' | 'slate' | 'red';
 }
 
 const heroTones = {
   indigo: 'border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-950',
   emerald: 'border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-950',
   blue: 'border-blue-100 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-950',
+  slate: 'border-slate-200 bg-gradient-to-r from-slate-50 to-gray-50 text-slate-950',
+  red: 'border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-950',
 };
 
 const heroIconTones = {
   indigo: 'bg-indigo-100 text-indigo-600',
   emerald: 'bg-emerald-100 text-emerald-600',
   blue: 'bg-blue-100 text-blue-600',
+  slate: 'bg-slate-100 text-slate-600',
+  red: 'bg-red-100 text-red-600',
 };
 
 export function PipelineModalHero({ icon: Icon, title, description, tone = 'indigo' }: PipelineModalHeroProps) {

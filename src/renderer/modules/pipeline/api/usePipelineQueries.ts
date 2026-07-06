@@ -8,6 +8,7 @@ import type {
   CreateBoardPayload,
   CreateLeadPayload,
   PipelineBoard,
+  PipelineCalendarDay,
   PipelineInsightsSummary,
   PipelineLead,
   PipelineLeadActivity,
@@ -26,6 +27,8 @@ export const pipelineKeys = {
   lead: (id: number) => [...pipelineKeys.all, 'lead', id] as const,
   sources: () => [...pipelineKeys.all, 'sources'] as const,
   insights: (boardId?: number) => [...pipelineKeys.all, 'insights', boardId ?? 'all'] as const,
+  calendar: (boardId: number, year: number, month: number) =>
+    [...pipelineKeys.all, 'calendar', boardId, year, month] as const,
 };
 
 const queryDefaults = {
@@ -58,6 +61,7 @@ function invalidatePipeline(qc: ReturnType<typeof useQueryClient>, boardId?: num
   if (boardId) {
     qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
     qc.invalidateQueries({ queryKey: pipelineKeys.board(boardId) });
+    qc.invalidateQueries({ queryKey: [...pipelineKeys.all, 'calendar'] });
   }
 }
 
@@ -328,6 +332,147 @@ export function useUpdatePipelineStage(boardId: number) {
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not update stage'));
+    },
+  });
+}
+
+export function useCreatePipelineStage(boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (payload: { name: string; color?: string }) => {
+      const { data } = await axiosInstance.post(PIPELINE.STAGES(boardId), payload);
+      return normalizeItem<PipelineStage>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Column added');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not add column'));
+    },
+  });
+}
+
+export function useDeletePipelineStage(boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ stageId, migrate_to_stage_id }: { stageId: number; migrate_to_stage_id?: number }) => {
+      await axiosInstance.delete(PIPELINE.STAGE(stageId), {
+        data: migrate_to_stage_id ? { migrate_to_stage_id } : undefined,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Column deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete column'));
+    },
+  });
+}
+
+export function useReorderPipelineStages(boardId: number) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (stageIds: number[]) => {
+      const { data } = await axiosInstance.post(PIPELINE.STAGES_REORDER(boardId), { stage_ids: stageIds });
+      return normalizeList<PipelineStage>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    },
+  });
+}
+
+export function useDeletePipelineLead() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: number; board_id: number }) => {
+      await axiosInstance.delete(PIPELINE.LEAD(id));
+    },
+    onSuccess: (_data, vars) => {
+      invalidatePipeline(qc, vars.board_id);
+      showToast('success', 'Lead archived');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not archive lead'));
+    },
+  });
+}
+
+export function usePipelineCalendar(boardId: number, year: number, month: number) {
+  return useQuery<PipelineCalendarDay[]>({
+    queryKey: pipelineKeys.calendar(boardId, year, month),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `${PIPELINE.BOARD_CALENDAR(boardId)}?year=${year}&month=${month}`,
+      );
+      return normalizeList<PipelineCalendarDay>(data);
+    },
+    enabled: Boolean(boardId),
+    ...queryDefaults,
+  });
+}
+
+export function useCreatePipelineSource() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (payload: { name: string }) => {
+      const { data } = await axiosInstance.post(PIPELINE.SOURCES, payload);
+      return normalizeItem<PipelineSource>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.sources() });
+      showToast('success', 'Source added');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not add source'));
+    },
+  });
+}
+
+export function useUpdatePipelineSource() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: number; name?: string }) => {
+      const { data } = await axiosInstance.patch(PIPELINE.SOURCE(id), payload);
+      return normalizeItem<PipelineSource>(data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.sources() });
+      showToast('success', 'Source updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not update source'));
+    },
+  });
+}
+
+export function useDeletePipelineSource() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(PIPELINE.SOURCE(id));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.sources() });
+      showToast('success', 'Source deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete source'));
     },
   });
 }

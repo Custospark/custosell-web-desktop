@@ -20,8 +20,8 @@ export default function BoardSwitcherStrip({ boards, activeBoardId, onCreateBoar
   }, [activeBoardId]);
 
   return (
-    <div className="shrink-0 border-t border-gray-200/80 bg-white/95 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-sm">
-      <div className="flex items-center gap-1 overflow-x-auto px-2 py-2 scrollbar-thin">
+    <div className="shrink-0 border-t border-gray-200/80 bg-white/95 backdrop-blur-sm">
+      <div className="flex items-center gap-1 overflow-x-auto px-2 py-1.5 scrollbar-thin">
         {boards.map((board) => {
           const isActive = board.id === activeBoardId;
           return (

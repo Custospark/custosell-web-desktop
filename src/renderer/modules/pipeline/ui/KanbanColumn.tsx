@@ -2,17 +2,25 @@ import { useState } from 'react';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import LeadCard from './LeadCard';
 import { cn } from '../../../shared/utils/cn';
-import { Inbox, Plus } from 'lucide-react';
+import { Inbox, MoreHorizontal, Plus } from 'lucide-react';
 
 interface KanbanColumnProps {
   stage: PipelineStage;
   onLeadClick: (lead: PipelineLead) => void;
   onAddLead: (stageId: number) => void;
   onDropLead: (leadId: number, stageId: number, position: number) => void;
+  onEditStage?: (stage: PipelineStage) => void;
 }
 
-export default function KanbanColumn({ stage, onLeadClick, onAddLead, onDropLead }: KanbanColumnProps) {
+export default function KanbanColumn({
+  stage,
+  onLeadClick,
+  onAddLead,
+  onDropLead,
+  onEditStage,
+}: KanbanColumnProps) {
   const [dragOver, setDragOver] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const leads = stage.leads ?? [];
   const stageColor = stage.color ?? '#64748b';
 
@@ -32,7 +40,7 @@ export default function KanbanColumn({ stage, onLeadClick, onAddLead, onDropLead
   return (
     <div
       className={cn(
-        'flex h-full min-h-[360px] w-[292px] shrink-0 flex-col rounded-2xl border shadow-sm backdrop-blur-sm transition-colors',
+        'flex h-full min-h-0 w-[292px] shrink-0 flex-col rounded-2xl border shadow-sm backdrop-blur-sm transition-colors',
         dragOver
           ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-200'
           : 'border-gray-200/80 bg-white/70',
@@ -42,7 +50,7 @@ export default function KanbanColumn({ stage, onLeadClick, onAddLead, onDropLead
       onDrop={handleDrop}
     >
       <div
-        className="flex items-center justify-between gap-2 rounded-t-2xl border-b border-gray-100 px-3 py-3"
+        className="relative flex items-center justify-between gap-2 rounded-t-2xl border-b border-gray-100 px-3 py-3"
         style={{ background: `linear-gradient(135deg, ${stageColor}14, transparent)` }}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -58,14 +66,50 @@ export default function KanbanColumn({ stage, onLeadClick, onAddLead, onDropLead
             {leads.length}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => onAddLead(stage.id)}
-          className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
-          title="Add lead to this stage"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => onAddLead(stage.id)}
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
+            title="Add lead to this stage"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+          {onEditStage && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
+                title="Column options"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+              {menuOpen && (
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-10 cursor-default"
+                    aria-label="Close menu"
+                    onClick={() => setMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onEditStage(stage);
+                      }}
+                    >
+                      Edit column
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">

@@ -6,11 +6,13 @@ import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinne
 import {
   useAddPipelineActivity,
   useConvertPipelineLead,
+  useDeletePipelineLead,
   usePipelineLead,
   usePipelineSources,
   useUpdatePipelineLead,
 } from '../api/usePipelineQueries';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import {
   PipelineFormSection,
   PipelineIconField,
@@ -32,6 +34,8 @@ import {
   Phone,
   Send,
   Tag,
+  Trash2,
+  Type,
   User,
   UserRound,
   Video,
@@ -40,6 +44,7 @@ import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTy
 
 interface LeadDetailDrawerProps {
   leadId: number;
+  boardId?: number;
   onClose: () => void;
 }
 
@@ -67,13 +72,15 @@ const ACTIVITY_ICONS: Record<string, typeof MessageSquare> = {
   stage_change: ArrowRightLeft,
 };
 
-export default function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerProps) {
+export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetailDrawerProps) {
   const { data: lead, isLoading } = usePipelineLead(leadId);
   const { data: sources } = usePipelineSources();
   const { data: staff } = useStaff();
   const updateLead = useUpdatePipelineLead();
   const convertLead = useConvertPipelineLead();
+  const deleteLead = useDeletePipelineLead();
   const addActivity = useAddPipelineActivity();
+  const { confirm } = useConfirm();
 
   const [note, setNote] = useState('');
   const [activityType, setActivityType] = useState<'note' | 'call' | 'email' | 'meeting'>('note');
@@ -100,6 +107,22 @@ export default function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerPr
     await addActivity.mutateAsync({ leadId: lead.id, type: activityType, body: note.trim() });
     setNote('');
   };
+
+  const handleArchive = async () => {
+    const ok = await confirm({
+      title: 'Archive lead?',
+      message: `"${lead.title}" will be removed from the board. This cannot be undone from the UI.`,
+      confirmText: 'Archive',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    await deleteLead.mutateAsync({ id: lead.id, board_id: boardId ?? lead.board_id });
+    onClose();
+  };
+
+  const closeDateValue = lead.expected_close_date
+    ? lead.expected_close_date.slice(0, 10)
+    : '';
 
   return (
     <SlideDrawer
@@ -150,6 +173,35 @@ export default function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerPr
             </div>
           </div>
         </div>
+
+        <PipelineFormSection title="Lead details" icon={Type}>
+          <PipelineIconField label="Title" icon={Type}>
+            <input
+              defaultValue={lead.title}
+              className={pipelineInputClass}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v && v !== lead.title) {
+                  updateLead.mutate({ id: lead.id, title: v });
+                }
+              }}
+            />
+          </PipelineIconField>
+          <PipelineIconField label="Expected close date" icon={Calendar}>
+            <input
+              type="date"
+              defaultValue={closeDateValue}
+              className={pipelineInputClass}
+              onBlur={(e) => {
+                const v = e.target.value || null;
+                const current = lead.expected_close_date?.slice(0, 10) ?? null;
+                if (v !== current) {
+                  updateLead.mutate({ id: lead.id, expected_close_date: v });
+                }
+              }}
+            />
+          </PipelineIconField>
+        </PipelineFormSection>
 
         <PipelineFormSection title="Contact" icon={User}>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -240,6 +292,19 @@ export default function LeadDetailDrawer({ leadId, onClose }: LeadDetailDrawerPr
             </PipelineIconField>
           )}
         </PipelineFormSection>
+
+        <div className="flex justify-end border-t border-gray-100 pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleArchive}
+            loading={deleteLead.isPending}
+            className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+            Archive lead
+          </Button>
+        </div>
 
         {lead.customer && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">

@@ -44,6 +44,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
   const navigate = useNavigate();
   const updateBoard = useUpdatePipelineBoard();
   const { confirm } = useConfirm();
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const [name, setName] = useState(board.name);
   const [description, setDescription] = useState(board.description ?? '');
@@ -73,7 +74,9 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
       variant: 'danger',
     });
     if (!ok) return;
+    setIsArchiving(true);
     await updateBoard.mutateAsync({ id: board.id, is_archived: true });
+    setIsArchiving(false);
     onClose();
     navigate(ROUTES.PIPELINE.BOARDS);
   };
@@ -159,7 +162,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
               type="button"
               variant="ghost"
               onClick={handleArchive}
-              loading={updateBoard.isPending}
+              loading={isArchiving}
               className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               <Archive className="h-4 w-4" />

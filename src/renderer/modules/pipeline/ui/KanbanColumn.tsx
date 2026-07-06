@@ -11,6 +11,7 @@ interface KanbanColumnProps {
   onAddLead: (stageId: number) => void;
   onDropLead: (leadId: number, stageId: number, position: number) => void;
   onEditStage?: (stage: PipelineStage) => void;
+  isProjectBoard?: boolean;
 }
 
 export default function KanbanColumn({
@@ -19,6 +20,7 @@ export default function KanbanColumn({
   onAddLead,
   onDropLead,
   onEditStage,
+  isProjectBoard = false,
 }: KanbanColumnProps) {
   const [dragOver, setDragOver] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -81,7 +83,7 @@ export default function KanbanColumn({
             type="button"
             onClick={() => onAddLead(stage.id)}
             className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
-            title="Add lead to this stage"
+            title={isProjectBoard ? 'Add task to this stage' : 'Add lead to this stage'}
           >
             <Plus className="h-4 w-4" />
           </button>

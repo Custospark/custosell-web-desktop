@@ -98,6 +98,8 @@ export default function BoardKanbanPage() {
   }
 
   const accent = resolveBoardCoverColor(board, boards, boardId);
+  const isProject = Boolean(board?.project_id);
+  const itemLabel = isProject ? 'task' : 'lead';
 
   return (
     <div
@@ -129,7 +131,7 @@ export default function BoardKanbanPage() {
                 type="search"
                 value={leadQuery}
                 onChange={(e) => setLeadQuery(e.target.value)}
-                placeholder="Search leads by name, email, phone, assignee…"
+                placeholder={isProject ? "Search tasks by title, assignee…" : "Search leads by name, email, phone, assignee…"}
                 className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               {leadQuery && (
@@ -187,7 +189,7 @@ export default function BoardKanbanPage() {
             disabled={!allStages.length}
           >
             <UserPlus className="h-4 w-4" />
-            Add card
+            {isProject ? 'Add task' : 'Add card'}
           </Button>
               </>
             )}
@@ -196,7 +198,7 @@ export default function BoardKanbanPage() {
 
         {viewMode === 'kanban' && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-            <span>{allLeadsCount} lead{allLeadsCount === 1 ? '' : 's'} on board</span>
+            <span>{allLeadsCount} {itemLabel}{allLeadsCount === 1 ? '' : 's'} on board</span>
             {leadQuery.trim() && (
               <span className="font-medium text-blue-700">
                 {filteredCount} matching &ldquo;{leadQuery.trim()}&rdquo;
@@ -216,6 +218,7 @@ export default function BoardKanbanPage() {
               onAddLead={(stageId) => setCreateStageId(stageId)}
               onDropLead={handleDropLead}
               onEditStage={(s) => setEditStage(s)}
+              isProjectBoard={isProject}
             />
           ))}
           <button

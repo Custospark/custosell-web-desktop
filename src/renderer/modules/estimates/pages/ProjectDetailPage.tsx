@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -16,7 +17,6 @@ import {
   useProjectBoard,
 } from '../api/useProjectQueries';
 import type { CreateCostAllocationPayload, AllocationType } from '../api/projectTypes';
-import type { PipelineStage, PipelineLead } from '../../pipeline/api/pipelineTypes';
 import { BudgetProgressBar, PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -26,7 +26,7 @@ const n = (v: unknown): number => Number(v) || 0;
 import {
   ArrowLeft, CheckSquare, Clock, DollarSign, Target, TrendingUp, Percent,
   FolderKanban, BarChart3, Info, Plus, Trash2, AlertTriangle, Wallet,
-  LayoutPanelTop, UserCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 type ProjectTab = 'overview' | 'tasks' | 'timesheets' | 'costs' | 'board';
@@ -73,6 +73,7 @@ function MiniStat({ label, value, icon: Icon, color, sub }: {
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
 
@@ -142,7 +143,7 @@ export default function ProjectDetailPage() {
     { key: 'overview' as const, label: 'Overview', icon: FolderKanban },
     { key: 'tasks' as const, label: 'Tasks', icon: CheckSquare },
     { key: 'timesheets' as const, label: 'Timesheets', icon: Clock },
-    { key: 'board' as const, label: 'Board', icon: LayoutPanelTop },
+    { key: 'board' as const, label: 'Board', icon: FolderKanban },
     { key: 'costs' as const, label: 'Cost allocations', icon: DollarSign },
   ];
 
@@ -451,74 +452,39 @@ export default function ProjectDetailPage() {
       )}
 
       {activeTab === 'board' && (
-        <div className="space-y-4">
+        <Card className="p-6">
           {!projectBoard ? (
-            <Card className="flex flex-col items-center py-12 text-center">
-              <LayoutPanelTop className="mb-3 h-12 w-12 text-gray-300" />
-              <p className="text-sm font-medium text-gray-700">Loading project board...</p>
-            </Card>
+            <div className="flex flex-col items-center py-8 text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+              <p className="mt-3 text-sm text-gray-500">Loading project board...</p>
+            </div>
           ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                  <LayoutPanelTop className="h-4 w-4 text-blue-600" />
-                  {projectBoard.name}
-                </h3>
+            <div className="flex flex-col items-center py-6 text-center">
+              <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 shadow-sm">
+                <FolderKanban className="h-8 w-8 text-white" />
               </div>
-              <div className="grid auto-cols-[280px] grid-flow-col gap-4 overflow-x-auto pb-2">
-                {(projectBoard.stages ?? []).map((stage: PipelineStage) => (
-                  <div key={stage.id} className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/50">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stage.color ?? '#94a3b8' }} />
-                        <span className="text-sm font-semibold text-gray-800">{stage.name}</span>
-                      </div>
-                      <span className="text-xs text-gray-400">{(stage.leads ?? []).length}</span>
-                    </div>
-                    <div className="flex-1 space-y-2 p-3 min-h-[200px]">
-                      {(stage.leads ?? []).length === 0 ? (
-                        <p className="py-8 text-center text-xs text-gray-400">No tasks</p>
-                      ) : (
-                        (stage.leads ?? []).map((card: PipelineLead) => (
-                          <div
-                            key={card.id}
-                            className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                          >
-                            <p className="text-sm font-medium text-gray-900">{card.title}</p>
-                            {card.description && (
-                              <p className="mt-1 text-xs text-gray-500 line-clamp-2">{card.description}</p>
-                            )}
-                            <div className="mt-2 flex items-center justify-between">
-                              {card.assigned_to ? (
-                                <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                                  <UserCircle className="h-3 w-3" />
-                                  {card.assignee?.name ?? 'Assigned'}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-gray-300">Unassigned</span>
-                              )}
-                              {card.priority && (
-                                <span className={cn(
-                                  'rounded px-1.5 py-0.5 text-[10px] font-medium',
-                                  card.priority === 'urgent' ? 'bg-red-50 text-red-700' :
-                                  card.priority === 'high' ? 'bg-amber-50 text-amber-700' :
-                                  card.priority === 'medium' ? 'bg-blue-50 text-blue-700' :
-                                  'bg-gray-100 text-gray-600',
-                                )}>
-                                  {card.priority}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <h3 className="mt-4 text-lg font-semibold text-gray-900">{projectBoard.name}</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Manage tasks with a Kanban board — drag cards between stages,
+                assign team members, track progress.
+              </p>
+              <div className="mt-6 flex items-center gap-6 text-sm text-gray-500">
+                <span><strong className="text-gray-900">{(projectBoard.stages ?? []).length}</strong> stages</span>
+                <span><strong className="text-gray-900">
+                  {(projectBoard.stages ?? []).reduce((sum: number, s: { leads?: unknown[] }) => sum + (s.leads ?? []).length, 0)}
+                </strong> cards</span>
               </div>
-            </>
+              <Button
+                size="lg"
+                className="mt-6 inline-flex items-center gap-2"
+                onClick={() => navigate(ROUTES.PIPELINE.BOARD(projectBoard.id))}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open board
+              </Button>
+            </div>
           )}
-        </div>
+        </Card>
       )}
 
       {activeTab === 'costs' && (

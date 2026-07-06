@@ -19,7 +19,7 @@ import LeadDetailDrawer from '../ui/LeadDetailDrawer';
 import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
 import BoardCalendarView from '../ui/BoardCalendarView';
-import { resolveBoardCoverColor, pipelineBoardBackgroundStyle } from '../api/pipelineKanbanCache';
+import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
 import { CalendarDays, Columns3, LayoutGrid, Plus, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
@@ -97,22 +97,10 @@ export default function BoardKanbanPage() {
     );
   }
 
-  const accent = resolveBoardCoverColor(board, boards, boardId);
   const isProject = Boolean(board?.project_id);
   const itemLabel = isProject ? 'task' : 'lead';
 
-  let boardBgStyle = pipelineBoardBackgroundStyle(accent);
-  if (board.background_type === 'color' && board.background_value) {
-    boardBgStyle = { backgroundColor: board.background_value };
-  } else if ((board.background_type === 'gallery' || board.background_type === 'upload') && board.background_value) {
-    const imgUrl = board.background_type === 'upload' ? `/storage/${board.background_value}` : board.background_value;
-    boardBgStyle = {
-      backgroundImage: `url(${imgUrl})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed',
-    };
-  }
+  const boardBgStyle = pipelineBoardBackgroundStyleFromBoard(board);
 
   return (
     <div

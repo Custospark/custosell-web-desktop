@@ -14,6 +14,7 @@ import {
   pipelineInputClass,
 } from './pipelineFormFields';
 import BackgroundGallery from './BackgroundGallery';
+import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import {
   AlignLeft, Archive, Kanban, Lock, Palette, Share2, Type, Users, X,
 } from 'lucide-react';
@@ -53,8 +54,13 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
   const [description, setDescription] = useState(board.description ?? '');
   const [visibility, setVisibility] = useState<PipelineVisibility>(board.visibility);
   const [members, setMembers] = useState<BoardMemberInput[]>(membersFromBoard(board.members));
-  const [bgType, setBgType] = useState(board.background_type ?? 'color');
-  const [bgValue, setBgValue] = useState(board.background_value ?? board.cover_color ?? '#6366f1');
+  const initialBgType = board.background_type ?? 'color';
+  const initialBgValue = initialBgType === 'upload'
+    ? normalizeBoardBackgroundUploadPath(board.background_value)
+    : (board.background_value ?? board.cover_color ?? '#6366f1');
+
+  const [bgType, setBgType] = useState(initialBgType);
+  const [bgValue, setBgValue] = useState(initialBgValue);
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);
@@ -70,7 +76,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
     try {
       const result = await uploadBg.mutateAsync({ boardId: board.id, file });
       setBgType('upload');
-      setBgValue(result.url);
+      setBgValue(normalizeBoardBackgroundUploadPath(result.background_value));
     } catch {
       /* toast handled in mutation */
     }
@@ -86,7 +92,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
       visibility,
       cover_color: bgType === 'color' ? bgValue : board.cover_color,
       background_type: bgType,
-      background_value: bgValue,
+      background_value: bgType === 'upload' ? normalizeBoardBackgroundUploadPath(bgValue) : bgValue,
       members: visibility === 'shared' ? members : [],
     });
     onClose();
@@ -138,6 +144,7 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
 
         <PipelineFormSection title="Background" icon={Palette}>
           <BackgroundGallery
+            key={`${board.id}-${bgType}-${bgValue}`}
             currentType={bgType}
             currentValue={bgValue}
             onSelect={handleBgSelect}

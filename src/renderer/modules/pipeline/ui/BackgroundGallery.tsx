@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
+import { resolveBoardBackgroundImageUrl } from '../api/pipelineKanbanCache';
 import { Upload, Image, Palette } from 'lucide-react';
 
 const PRESET_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b', '#ffffff', '#000000'];
@@ -37,15 +38,32 @@ export default function BackgroundGallery({
   isUploading,
 }: BackgroundGalleryProps) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [localBlobPreview, setLocalBlobPreview] = useState<string | null>(null);
+  const blobPreviewRef = useRef<string | null>(null);
+
+  const savedUploadPreview = useMemo(() => {
+    if (currentType === 'upload' && currentValue) {
+      return resolveBoardBackgroundImageUrl('upload', currentValue);
+    }
+    return null;
+  }, [currentType, currentValue]);
+
+  const uploadPreview = localBlobPreview ?? savedUploadPreview;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onUpload) return;
+    if (blobPreviewRef.current) {
+      URL.revokeObjectURL(blobPreviewRef.current);
+    }
     const previewUrl = URL.createObjectURL(file);
-    setUploadPreview(previewUrl);
+    blobPreviewRef.current = previewUrl;
+    setLocalBlobPreview(previewUrl);
     onUpload(file);
+    e.target.value = '';
   };
+
+  const uploadSelected = currentType === 'upload' && Boolean(currentValue);
 
   return (
     <div className="space-y-4">
@@ -101,7 +119,7 @@ export default function BackgroundGallery({
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/*"
           className="hidden"
           onChange={handleFileChange}
         />
@@ -110,14 +128,23 @@ export default function BackgroundGallery({
           onClick={() => fileRef.current?.click()}
           disabled={isUploading}
           className={cn(
-            'flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-sm transition-colors',
-            uploadPreview ? 'border-blue-300 bg-blue-50/50' : 'border-gray-300 hover:border-gray-400',
+            'flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-sm transition-colors',
+            uploadSelected || uploadPreview
+              ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-200 ring-offset-1'
+              : 'border-gray-300 hover:border-gray-400',
           )}
         >
           {isUploading ? (
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+            <span className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
           ) : uploadPreview ? (
-            <img src={uploadPreview} alt="" className="h-16 w-24 rounded object-cover" />
+            <>
+              <img
+                src={uploadPreview}
+                alt="Custom board background preview"
+                className="max-h-24 w-full max-w-xs rounded-lg object-cover shadow-sm"
+              />
+              <span className="text-xs font-medium text-blue-700">Custom image selected · click to replace</span>
+            </>
           ) : (
             <>
               <Upload className="h-5 w-5 text-gray-400" />

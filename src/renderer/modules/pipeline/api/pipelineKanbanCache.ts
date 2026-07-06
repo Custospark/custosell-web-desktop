@@ -1,5 +1,64 @@
 import type { CSSProperties } from 'react';
+import { getApiUrl } from '../../../shared/utils/env';
 import type { PipelineBoard, PipelineLead } from '../api/pipelineTypes';
+
+/** Resolve gallery or uploaded board background to a loadable image URL. */
+export function resolveBoardBackgroundImageUrl(
+  backgroundType: string | undefined,
+  backgroundValue: string | null | undefined,
+): string | null {
+  if (!backgroundValue?.trim()) return null;
+
+  const value = backgroundValue.trim();
+
+  if (backgroundType === 'gallery') {
+    return value;
+  }
+
+  if (backgroundType === 'upload') {
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('//')) {
+      return value;
+    }
+    const base = getApiUrl().replace(/\/api\/v1\/?$/, '');
+    const path = value.replace(/^\/+/, '').replace(/^storage\//, '');
+    return `${base}/storage/${path}`;
+  }
+
+  return null;
+}
+
+/** Normalize stored upload path (handles legacy full URLs saved in background_value). */
+export function normalizeBoardBackgroundUploadPath(value: string | null | undefined): string {
+  if (!value?.trim()) return '';
+  const trimmed = value.trim();
+  const storageMatch = trimmed.match(/\/storage\/(.+)$/);
+  if (storageMatch) return storageMatch[1];
+  return trimmed.replace(/^storage\//, '');
+}
+
+export function pipelineBoardImageBackgroundStyle(imageUrl: string): CSSProperties {
+  return {
+    backgroundImage: `url(${imageUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+  };
+}
+
+export function pipelineBoardBackgroundStyleFromBoard(
+  board: Pick<PipelineBoard, 'background_type' | 'background_value' | 'cover_color'>,
+): CSSProperties {
+  if (board.background_type === 'color' && board.background_value) {
+    return { backgroundColor: board.background_value };
+  }
+
+  const imageUrl = resolveBoardBackgroundImageUrl(board.background_type, board.background_value);
+  if (imageUrl && (board.background_type === 'gallery' || board.background_type === 'upload')) {
+    return pipelineBoardImageBackgroundStyle(imageUrl);
+  }
+
+  return pipelineBoardBackgroundStyle(board.cover_color);
+}
 
 /** Reliable rgba from #rgb or #rrggbb for board backgrounds. */
 export function pipelineColorAlpha(hex: string | null | undefined, alpha: number): string {

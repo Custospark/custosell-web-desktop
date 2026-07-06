@@ -21,7 +21,18 @@ import type {
   PipelineStage,
   UpdateLeadPayload,
 } from './pipelineTypes';
-import { moveLeadOptimistic, replaceLeadOnKanban } from './pipelineKanbanCache';
+import {
+  addLeadToKanban,
+  addStageToKanban,
+  mergeBoardOnKanban,
+  moveLeadOptimistic,
+  removeLeadFromKanban,
+  removeStageFromKanban,
+  reorderStagesOnKanban,
+  replaceLeadOnKanban,
+  updateLeadOnKanban,
+  updateStageOnKanban,
+} from './pipelineKanbanCache';
 import { pipelineItemLabel } from './pipelineCardTerms';
 
 export const pipelineKeys = {
@@ -59,6 +70,21 @@ function normalizeItem<T>(payload: unknown): T {
     return payload as T;
   }
   throw new Error('Invalid API response');
+}
+
+function omitSilent<T extends { silent?: boolean }>(vars: T): Omit<T, 'silent'> {
+  const { silent: _omit, ...rest } = vars;
+  void _omit;
+  return rest;
+}
+
+function omitLeadMeta<T extends { silent?: boolean; board_id?: number }>(
+  vars: T,
+): Omit<T, 'silent' | 'board_id'> {
+  const { silent: _s, board_id: _b, ...rest } = vars;
+  void _s;
+  void _b;
+  return rest;
 }
 
 function invalidatePipeline(qc: ReturnType<typeof useQueryClient>, boardId?: number): void {
@@ -135,22 +161,51 @@ export function useUpdatePipelineBoard() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...payload
-    }: Partial<CreateBoardPayload> & { id: number; is_archived?: boolean; members?: { user_id: number; role: 'editor' | 'viewer' }[] }) => {
+    mutationFn: async (input: Partial<CreateBoardPayload> & {
+      id: number;
+      is_archived?: boolean;
+      members?: { user_id: number; role: 'editor' | 'viewer' }[];
+      silent?: boolean;
+    }) => {
+      const { id, ...payload } = omitSilent(input);
       const { data } = await axiosInstance.patch(PIPELINE.BOARD(id), payload);
       return normalizeItem<PipelineBoard>(data);
     },
-    onSuccess: (board) => {
-      qc.setQueryData(pipelineKeys.kanban(board.id), (old) => {
-        if (!old) return old;
-        return { ...(old as PipelineBoard), ...board, stages: (old as PipelineBoard).stages };
-      });
-      invalidatePipeline(qc, board.id);
-      showToast('success', 'Board updated');
+    onMutate: async (input) => {
+      const { id, ...payload } = omitSilent(input);
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(id) });
+      await qc.cancelQueries({ queryKey: pipelineKeys.boards() });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(id));
+      const previousBoards = qc.getQueryData<PipelineBoard[]>(pipelineKeys.boards());
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(id), mergeBoardOnKanban(previousKanban, payload));
+      }
+      if (previousBoards) {
+        qc.setQueryData(
+          pipelineKeys.boards(),
+          previousBoards.map((b) => (b.id === id ? { ...b, ...payload } : b)),
+        );
+      }
+      return { previousKanban, previousBoards, boardId: id };
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onSuccess: (board, vars) => {
+      qc.setQueryData(pipelineKeys.kanban(board.id), (old) => {
+        if (!old) return board;
+        return mergeBoardOnKanban(old, board);
+      });
+      qc.setQueryData(pipelineKeys.boards(), (old) =>
+        (old as PipelineBoard[] | undefined)?.map((b) => (b.id === board.id ? { ...b, ...board } : b)),
+      );
+      qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
+      if (!vars.silent) showToast('success', 'Board updated');
+    },
+    onError: (err, vars, context) => {
+      if (context?.previousKanban && context.boardId) {
+        qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
+      }
+      if (context?.previousBoards) {
+        qc.setQueryData(pipelineKeys.boards(), context.previousBoards);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not update board'));
     },
   });
@@ -190,11 +245,70 @@ export function useCreatePipelineLead() {
       const { data } = await axiosInstance.post(PIPELINE.LEADS, payload);
       return normalizeItem<PipelineLead>(data);
     },
-    onSuccess: (lead) => {
-      invalidatePipeline(qc, lead.board_id);
+    onMutate: async (payload) => {
+      const boardId = payload.board_id;
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      const tempId = -Date.now();
+      const stage = previousKanban?.stages?.find((s) => s.id === payload.stage_id);
+      const optimisticLead: PipelineLead = {
+        id: tempId,
+        business_id: previousKanban?.business_id ?? 0,
+        board_id: boardId,
+        stage_id: payload.stage_id,
+        title: payload.title,
+        card_type: payload.card_type ?? 'lead',
+        description: payload.description ?? null,
+        contact_name: payload.contact_name ?? null,
+        contact_email: payload.contact_email ?? null,
+        contact_phone: payload.contact_phone ?? null,
+        customer_id: payload.customer_id ?? null,
+        converted_customer_id: null,
+        assigned_to: payload.assigned_to ?? null,
+        source_id: payload.source_id ?? null,
+        estimated_value: payload.estimated_value ?? null,
+        currency: payload.currency ?? 'UGX',
+        expected_close_date: payload.expected_close_date ?? null,
+        due_date: payload.due_date ?? null,
+        start_date: payload.start_date ?? null,
+        priority: payload.priority ?? null,
+        background_color: null,
+        status: 'open',
+        position: (stage?.leads?.length ?? 0) + 1,
+        won_at: null,
+        lost_at: null,
+        converted_at: null,
+        lost_reason: null,
+        stage: stage
+          ? {
+              id: stage.id,
+              name: stage.name,
+              color: stage.color,
+              is_won: stage.is_won,
+              is_lost: stage.is_lost,
+            }
+          : undefined,
+      };
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), addLeadToKanban(previousKanban, optimisticLead));
+      }
+      return { previousKanban, boardId, tempId };
+    },
+    onSuccess: (lead, _vars, context) => {
+      qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) => {
+        if (!old) return old;
+        const withoutTemp = context?.tempId
+          ? removeLeadFromKanban(old, context.tempId)
+          : old;
+        return addLeadToKanban(withoutTemp, lead);
+      });
+      qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
       showToast('success', `${pipelineItemLabel(lead.card_type)} created`);
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousKanban && context.boardId) {
+        qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not create card'));
     },
   });
@@ -205,16 +319,45 @@ export function useUpdatePipelineLead() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, ...payload }: UpdateLeadPayload & { id: number }) => {
+    mutationFn: async (input: UpdateLeadPayload & { id: number; board_id?: number; silent?: boolean }) => {
+      const { id, ...payload } = omitLeadMeta(input);
       const { data } = await axiosInstance.patch(PIPELINE.LEAD(id), payload);
       return normalizeItem<PipelineLead>(data);
     },
+    onMutate: async (input) => {
+      const { id, board_id, ...payload } = input;
+      const existing = qc.getQueryData<PipelineLead>(pipelineKeys.lead(id));
+      const boardId = board_id ?? existing?.board_id;
+      if (!boardId) return {};
+
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(id) });
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+
+      const previousLead = existing;
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+
+      if (previousLead) {
+        qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...payload });
+      }
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), updateLeadOnKanban(previousKanban, id, payload));
+      }
+      return { previousLead, previousKanban, boardId, leadId: id };
+    },
     onSuccess: (lead) => {
       qc.setQueryData(pipelineKeys.lead(lead.id), lead);
-      invalidatePipeline(qc, lead.board_id);
-      showToast('success', `${pipelineItemLabel(lead.card_type)} updated`);
+      qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) =>
+        old ? replaceLeadOnKanban(old as PipelineBoard, lead) : old,
+      );
+      qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousLead && context.leadId) {
+        qc.setQueryData(pipelineKeys.lead(context.leadId), context.previousLead);
+      }
+      if (context?.previousKanban && context.boardId) {
+        qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not save changes'));
     },
   });
@@ -273,15 +416,42 @@ export function useConvertPipelineLead() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, customer_id }: { id: number; customer_id?: number }) => {
+    mutationFn: async ({ id, customer_id }: { id: number; customer_id?: number; board_id?: number }) => {
       const { data } = await axiosInstance.post(PIPELINE.LEAD_CONVERT(id), customer_id ? { customer_id } : {});
       return normalizeItem<PipelineLead>(data);
     },
+    onMutate: async ({ id, board_id }) => {
+      const existing = qc.getQueryData<PipelineLead>(pipelineKeys.lead(id));
+      const boardId = board_id ?? existing?.board_id;
+      if (!boardId) return {};
+
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(id) });
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+
+      const previousLead = existing;
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      const partial = { status: 'converted' as const };
+
+      if (previousLead) qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...partial });
+      if (previousKanban) qc.setQueryData(pipelineKeys.kanban(boardId), updateLeadOnKanban(previousKanban, id, partial));
+
+      return { previousLead, previousKanban, boardId, leadId: id };
+    },
     onSuccess: (lead) => {
-      invalidatePipeline(qc, lead.board_id);
+      qc.setQueryData(pipelineKeys.lead(lead.id), lead);
+      qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) =>
+        old ? replaceLeadOnKanban(old as PipelineBoard, lead) : old,
+      );
+      qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
       showToast('success', 'Lead converted to customer');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousLead && context.leadId) {
+        qc.setQueryData(pipelineKeys.lead(context.leadId), context.previousLead);
+      }
+      if (context?.previousKanban && context.boardId) {
+        qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not convert lead'));
     },
   });
@@ -338,11 +508,24 @@ export function useUpdatePipelineStage(boardId: number) {
       const { data } = await axiosInstance.patch(PIPELINE.STAGE(stageId), payload);
       return normalizeItem<PipelineStage>(data);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    onMutate: async ({ stageId, ...payload }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), updateStageOnKanban(previousKanban, stageId, payload));
+      }
+      return { previousKanban, boardId };
+    },
+    onSuccess: (stage) => {
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) =>
+        old ? updateStageOnKanban(old as PipelineBoard, stage.id, stage) : old,
+      );
       showToast('success', 'Stage updated');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not update stage'));
     },
   });
@@ -357,11 +540,38 @@ export function useCreatePipelineStage(boardId: number) {
       const { data } = await axiosInstance.post(PIPELINE.STAGES(boardId), payload);
       return normalizeItem<PipelineStage>(data);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      const tempId = -Date.now();
+      const optimisticStage: PipelineStage = {
+        id: tempId,
+        board_id: boardId,
+        name: payload.name,
+        sort_order: previousKanban?.stages?.length ?? 0,
+        color: payload.color ?? '#64748b',
+        is_won: false,
+        is_lost: false,
+        rotting_days: null,
+        leads: [],
+      };
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), addStageToKanban(previousKanban, optimisticStage));
+      }
+      return { previousKanban, boardId, tempId };
+    },
+    onSuccess: (stage, _vars, context) => {
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const withoutTemp = (old.stages ?? []).filter((s) => s.id !== context?.tempId);
+        return addStageToKanban({ ...old, stages: withoutTemp }, stage);
+      });
       showToast('success', 'Column added');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not add column'));
     },
   });
@@ -376,12 +586,23 @@ export function useDeletePipelineStage(boardId: number) {
       await axiosInstance.delete(PIPELINE.STAGE(stageId), {
         data: migrate_to_stage_id ? { migrate_to_stage_id } : undefined,
       });
+      return stageId;
+    },
+    onMutate: async ({ stageId }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), removeStageFromKanban(previousKanban, stageId));
+      }
+      return { previousKanban, boardId };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
       showToast('success', 'Column deleted');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not delete column'));
     },
   });
@@ -389,14 +610,33 @@ export function useDeletePipelineStage(boardId: number) {
 
 export function useReorderPipelineStages(boardId: number) {
   const qc = useQueryClient();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: async (stageIds: number[]) => {
       const { data } = await axiosInstance.post(PIPELINE.STAGES_REORDER(boardId), { stage_ids: stageIds });
       return normalizeList<PipelineStage>(data);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    onMutate: async (stageIds) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), reorderStagesOnKanban(previousKanban, stageIds));
+      }
+      return { previousKanban, boardId };
+    },
+    onSuccess: (stages) => {
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const stageIds = stages.map((s) => s.id);
+        return reorderStagesOnKanban(old as PipelineBoard, stageIds);
+      });
+    },
+    onError: (err, _vars, context) => {
+      if (context?.previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), context.previousKanban);
+      }
+      showToast('error', sanitizeErrorMessage(err, 'Could not reorder columns'));
     },
   });
 }
@@ -408,12 +648,30 @@ export function useDeletePipelineLead() {
   return useMutation({
     mutationFn: async ({ id }: { id: number; board_id: number; card_type?: PipelineLead['card_type'] }) => {
       await axiosInstance.delete(PIPELINE.LEAD(id));
+      return id;
     },
-    onSuccess: (_data, vars) => {
-      invalidatePipeline(qc, vars.board_id);
+    onMutate: async ({ id, board_id }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(id) });
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(board_id) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(id));
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(board_id));
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(board_id), removeLeadFromKanban(previousKanban, id));
+      }
+      return { previousLead, previousKanban, boardId: board_id, leadId: id };
+    },
+    onSuccess: (_id, vars) => {
+      qc.removeQueries({ queryKey: pipelineKeys.lead(vars.id) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
       showToast('success', `${pipelineItemLabel(vars.card_type)} archived`);
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousLead && context.leadId) {
+        qc.setQueryData(pipelineKeys.lead(context.leadId), context.previousLead);
+      }
+      if (context?.previousKanban && context.boardId) {
+        qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not archive'));
     },
   });
@@ -638,12 +896,34 @@ export function useUploadBoardBackground() {
       });
       return data as { background_type: string; background_value: string; url: string };
     },
-    onSuccess: (_, { boardId }) => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.board(boardId) });
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    onMutate: async ({ boardId }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+      return { previousKanban, boardId };
+    },
+    onSuccess: (result, { boardId }) => {
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        return mergeBoardOnKanban(old as PipelineBoard, {
+          background_type: result.background_type,
+          background_value: result.background_value,
+        });
+      });
+      qc.setQueryData(pipelineKeys.board(boardId), (old) =>
+        old
+          ? {
+              ...(old as PipelineBoard),
+              background_type: result.background_type,
+              background_value: result.background_value,
+            }
+          : old,
+      );
       showToast('success', 'Background updated');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, { boardId }, context) => {
+      if (context?.previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not upload background'));
     },
   });

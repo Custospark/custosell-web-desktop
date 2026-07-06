@@ -1,9 +1,18 @@
-import { API_BASE_URL } from '../../app/api/apiConfig';
+import { getApiUrl } from './env';
 
-const BACKEND_ROOT = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+const backendRoot = () => getApiUrl().replace(/\/api\/v1\/?$/, '');
 
+/** Resolve avatar or other `/storage/...` paths to a loadable URL. */
 export function avatarUrl(path: string | null | undefined): string | undefined {
-  if (!path) return undefined;
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  return `${BACKEND_ROOT}${path.startsWith('/') ? '' : '/'}${path}`;
+  if (!path?.trim()) return undefined;
+  const trimmed = path.trim();
+  if (
+    trimmed.startsWith('http://')
+    || trimmed.startsWith('https://')
+    || trimmed.startsWith('data:')
+    || trimmed.startsWith('blob:')
+  ) {
+    return trimmed;
+  }
+  return `${backendRoot()}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 }

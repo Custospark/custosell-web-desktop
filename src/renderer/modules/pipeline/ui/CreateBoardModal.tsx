@@ -13,7 +13,7 @@ import {
   pipelineInputClass,
 } from './pipelineFormFields';
 import { AlignLeft, Kanban, Lock, Palette, Share2, Type, Users } from 'lucide-react';
-import { cn } from '../../../shared/utils/cn';
+import PipelineColorPicker from './PipelineColorPicker';
 
 interface CreateBoardModalProps {
   open: boolean;
@@ -31,7 +31,6 @@ const VISIBILITY_OPTIONS: {
   { value: 'shared', label: 'Shared', hint: 'Invite specific members', icon: Share2 },
 ];
 
-const PRESET_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
 export default function CreateBoardModal({ open, onClose }: CreateBoardModalProps) {
   const navigate = useNavigate();
@@ -141,30 +140,7 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
         )}
 
         <PipelineFormSection title="Board color" icon={Palette}>
-          <div className="flex flex-wrap gap-2">
-            {PRESET_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setCoverColor(color)}
-                className={cn(
-                  'h-9 w-9 rounded-lg shadow-sm ring-2 ring-offset-2 transition-transform hover:scale-105',
-                  coverColor === color ? 'ring-blue-500' : 'ring-transparent',
-                )}
-                style={{ backgroundColor: color }}
-                aria-label={`Color ${color}`}
-              />
-            ))}
-            <label className="relative flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-              <Palette className="h-4 w-4 text-gray-400" />
-              <input
-                type="color"
-                value={coverColor}
-                onChange={(e) => setCoverColor(e.target.value)}
-                className="absolute inset-0 cursor-pointer opacity-0"
-              />
-            </label>
-          </div>
+          <PipelineColorPicker value={coverColor} onChange={setCoverColor} />
           <div
             className="mt-3 h-12 rounded-xl border border-gray-200 shadow-inner"
             style={{ background: `linear-gradient(135deg, ${coverColor}, ${coverColor}99)` }}

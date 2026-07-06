@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { getApiUrl } from '../../../shared/utils/env';
-import type { PipelineBoard, PipelineLead } from '../api/pipelineTypes';
+import type { PipelineBoard, PipelineLead, PipelineStage } from '../api/pipelineTypes';
 
 /** Resolve gallery or uploaded board background to a loadable image URL. */
 export function resolveBoardBackgroundImageUrl(
@@ -160,4 +160,84 @@ export function replaceLeadOnKanban(board: PipelineBoard, lead: PipelineLead): P
         : stage,
     ),
   };
+}
+
+export function updateLeadOnKanban(
+  board: PipelineBoard,
+  leadId: number,
+  partial: Partial<PipelineLead>,
+): PipelineBoard {
+  if (!board.stages?.length) return board;
+  return {
+    ...board,
+    stages: board.stages.map((stage) => ({
+      ...stage,
+      leads: (stage.leads ?? []).map((lead) => (lead.id === leadId ? { ...lead, ...partial } : lead)),
+    })),
+  };
+}
+
+export function addLeadToKanban(board: PipelineBoard, lead: PipelineLead): PipelineBoard {
+  if (!board.stages?.length) return board;
+  return {
+    ...board,
+    stages: board.stages.map((stage) =>
+      stage.id === lead.stage_id
+        ? {
+            ...stage,
+            leads: [...(stage.leads ?? []).filter((l) => l.id !== lead.id), lead].sort(
+              (a, b) => a.position - b.position,
+            ),
+          }
+        : stage,
+    ),
+  };
+}
+
+export function removeLeadFromKanban(board: PipelineBoard, leadId: number): PipelineBoard {
+  if (!board.stages?.length) return board;
+  return {
+    ...board,
+    stages: board.stages.map((stage) => ({
+      ...stage,
+      leads: (stage.leads ?? []).filter((l) => l.id !== leadId),
+    })),
+  };
+}
+
+export function mergeBoardOnKanban(board: PipelineBoard, partial: Partial<PipelineBoard>): PipelineBoard {
+  return { ...board, ...partial, stages: board.stages };
+}
+
+export function reorderStagesOnKanban(board: PipelineBoard, stageIds: number[]): PipelineBoard {
+  if (!board.stages?.length) return board;
+  const byId = new Map(board.stages.map((s) => [s.id, s]));
+  const reordered = stageIds
+    .map((id, idx) => {
+      const stage = byId.get(id);
+      return stage ? { ...stage, sort_order: idx } : null;
+    })
+    .filter((s): s is PipelineStage => s != null);
+  const missing = board.stages.filter((s) => !stageIds.includes(s.id));
+  return { ...board, stages: [...reordered, ...missing] };
+}
+
+export function updateStageOnKanban(
+  board: PipelineBoard,
+  stageId: number,
+  partial: Partial<PipelineStage>,
+): PipelineBoard {
+  if (!board.stages?.length) return board;
+  return {
+    ...board,
+    stages: board.stages.map((stage) => (stage.id === stageId ? { ...stage, ...partial } : stage)),
+  };
+}
+
+export function addStageToKanban(board: PipelineBoard, stage: PipelineStage): PipelineBoard {
+  return { ...board, stages: [...(board.stages ?? []), stage] };
+}
+
+export function removeStageFromKanban(board: PipelineBoard, stageId: number): PipelineBoard {
+  return { ...board, stages: (board.stages ?? []).filter((s) => s.id !== stageId) };
 }

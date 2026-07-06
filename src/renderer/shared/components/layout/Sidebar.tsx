@@ -18,6 +18,7 @@ import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { canAccessModule, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
+import { avatarUrl } from '../../utils/avatarUrl';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -371,7 +372,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
             {user && (
               <div className="flex items-center gap-3">
                 {user.avatar ? (
-                  <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                  <img src={avatarUrl(user.avatar)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
                     {(user.name || 'U').charAt(0).toUpperCase()}

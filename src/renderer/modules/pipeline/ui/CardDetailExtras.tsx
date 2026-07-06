@@ -34,6 +34,8 @@ interface CardDetailExtrasProps {
 export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProps) {
   const { data: boardLabels = [] } = usePipelineLabels(boardId);
   const updateLead = useUpdatePipelineLead();
+  const patchLead = (payload: Record<string, unknown>) =>
+    updateLead.mutate({ id: lead.id, board_id: boardId, silent: true, ...payload });
   const createLabel = useCreatePipelineLabel(boardId);
   const createChecklist = useCreatePipelineChecklist(lead.id, boardId);
   const createItem = useCreateChecklistItem(lead.id, boardId);
@@ -53,7 +55,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
     const next = new Set(selectedLabelIds);
     if (next.has(labelId)) next.delete(labelId);
     else next.add(labelId);
-    updateLead.mutate({ id: lead.id, label_ids: [...next] });
+    patchLead({ label_ids: [...next] });
   };
 
   const handleCreateLabel = async () => {
@@ -62,7 +64,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
     const label = await createLabel.mutateAsync({ name, color: newLabelColor });
     const next = new Set(selectedLabelIds);
     next.add(label.id);
-    updateLead.mutate({ id: lead.id, label_ids: [...next] });
+    patchLead({ label_ids: [...next] });
     setNewLabelName('');
     setShowCreateLabel(false);
   };
@@ -89,7 +91,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
           onBlur={(e) => {
             const v = e.target.value.trim() || null;
             if (v !== (lead.description ?? null)) {
-              updateLead.mutate({ id: lead.id, description: v });
+              patchLead({ description: v });
             }
           }}
         />
@@ -105,7 +107,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               onBlur={(e) => {
                 const v = e.target.value || null;
                 if (v !== (lead.start_date?.slice(0, 10) ?? null)) {
-                  updateLead.mutate({ id: lead.id, start_date: v });
+                  patchLead({ start_date: v });
                 }
               }}
             />
@@ -119,7 +121,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                 const v = e.target.value || null;
                 const current = (lead.due_date ?? lead.expected_close_date)?.slice(0, 10) ?? null;
                 if (v !== current) {
-                  updateLead.mutate({ id: lead.id, due_date: v, expected_close_date: isLead ? v : lead.expected_close_date });
+                  patchLead({ due_date: v, expected_close_date: isLead ? v : lead.expected_close_date });
                 }
               }}
             />
@@ -131,8 +133,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               <button
                 key={p.value}
                 type="button"
-                onClick={() => updateLead.mutate({
-                  id: lead.id,
+                onClick={() => patchLead({
                   priority: lead.priority === p.value ? null : p.value,
                 })}
                 className={cn(

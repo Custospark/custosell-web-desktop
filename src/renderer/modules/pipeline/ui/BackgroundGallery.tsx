@@ -1,9 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import { resolveBoardBackgroundImageUrl } from '../api/pipelineKanbanCache';
+import PipelineColorPicker from './PipelineColorPicker';
 import { Upload, Image, Palette } from 'lucide-react';
-
-const PRESET_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b', '#ffffff', '#000000'];
 
 const GALLERY_IMAGES = [
   { id: 1, url: 'https://picsum.photos/id/10/1200/800', thumb: 'https://picsum.photos/id/10/400/300' },
@@ -72,21 +71,10 @@ export default function BackgroundGallery({
           <Palette className="h-3 w-3" />
           Solid colors
         </p>
-        <div className="flex flex-wrap gap-2">
-          {PRESET_COLORS.map((color) => (
-            <button
-              key={color}
-              type="button"
-              onClick={() => onSelect('color', color)}
-              className={cn(
-                'h-8 w-8 rounded-lg shadow-sm ring-2 ring-offset-1 transition-transform hover:scale-105',
-                currentType === 'color' && currentValue === color ? 'ring-blue-500' : 'ring-transparent',
-              )}
-              style={{ backgroundColor: color, border: color === '#ffffff' ? '1px solid #d1d5db' : undefined }}
-              aria-label={`Color ${color}`}
-            />
-          ))}
-        </div>
+        <PipelineColorPicker
+          value={currentType === 'color' ? currentValue ?? undefined : undefined}
+          onChange={(color) => onSelect('color', color)}
+        />
       </div>
 
       <div>

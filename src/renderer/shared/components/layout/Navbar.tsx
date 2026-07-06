@@ -11,6 +11,7 @@ import { GuideHeaderNav } from './GuideHeaderNav';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
+import { avatarUrl } from '../../utils/avatarUrl';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   Menu, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User,
@@ -257,7 +258,7 @@ export function Navbar() {
               )}
             >
               {user?.avatar ? (
-                <img src={user.avatar} alt="" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shrink-0" />
+                <img src={avatarUrl(user.avatar)} alt="" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shrink-0" />
               ) : (
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600 shrink-0">
                   {(user?.name || 'U').charAt(0).toUpperCase()}

@@ -18,6 +18,7 @@ import {
 } from '../../../shared/utils/phoneNumber';
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import { buildFullName, splitFullName } from '../../../shared/utils/userDisplayName';
+import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { cn } from '../../../shared/utils/cn';
 import {
   User,
@@ -149,13 +150,14 @@ export default function ProfileSettingsForm() {
     setBaseline(baselineFromUser(user));
     setCountryCode(next.countryCode);
     setForm(next.form);
-    setAvatarPreview(user.avatar || null);
+    setAvatarPreview(avatarUrl(user.avatar) ?? null);
     setAvatarFileSelected(false);
     if (fileRef.current) fileRef.current.value = '';
   }, []);
 
   useEffect(() => {
     if (authUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional form reset when authUser updates
       resetFromUser(authUser);
     }
   }, [authUser, resetFromUser]);

@@ -6,6 +6,7 @@ import {
   useMovePipelineLead,
   usePipelineBoards,
   usePipelineKanban,
+  useReorderPipelineStages,
 } from '../api/usePipelineQueries';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import KanbanColumn from '../ui/KanbanColumn';
@@ -44,6 +45,7 @@ export default function BoardKanbanPage() {
   const { data: board, isLoading } = usePipelineKanban(boardId);
   const { data: boards = [] } = usePipelineBoards();
   const moveLead = useMovePipelineLead();
+  const reorderStages = useReorderPipelineStages(boardId);
 
   const [viewMode, setViewMode] = useState<BoardViewMode>('kanban');
   const [leadQuery, setLeadQuery] = useState('');
@@ -77,6 +79,17 @@ export default function BoardKanbanPage() {
     () => stages.reduce((n, s) => n + (s.leads?.length ?? 0), 0),
     [stages],
   );
+
+  const handleDropColumn = (draggedStageId: number, targetStageId: number) => {
+    const ids = allStages.map((s) => s.id);
+    const fromIdx = ids.indexOf(draggedStageId);
+    const toIdx = ids.indexOf(targetStageId);
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    const next = [...ids];
+    next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, draggedStageId);
+    reorderStages.mutate(next);
+  };
 
   const handleDropLead = (leadId: number, stageId: number, position: number) => {
     const lead = allStages.flatMap((s) => s.leads ?? []).find((l) => l.id === leadId);
@@ -218,6 +231,7 @@ export default function BoardKanbanPage() {
               onLeadClick={(lead: PipelineLead) => setSelectedLeadId(lead.id)}
               onAddLead={(stageId) => setCreateStageId(stageId)}
               onDropLead={handleDropLead}
+              onDropColumn={handleDropColumn}
               onEditStage={(s) => setEditStage(s)}
               isProjectBoard={isProject}
             />

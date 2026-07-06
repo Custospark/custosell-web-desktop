@@ -66,9 +66,15 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
     setBgType(type);
     setBgValue(value);
     if (type === 'color') {
-      updateBoard.mutate({ id: board.id, cover_color: value, background_type: 'color', background_value: value });
+      updateBoard.mutate({
+        id: board.id,
+        cover_color: value,
+        background_type: 'color',
+        background_value: value,
+        silent: true,
+      });
     } else if (type === 'gallery') {
-      updateBoard.mutate({ id: board.id, background_type: 'gallery', background_value: value });
+      updateBoard.mutate({ id: board.id, background_type: 'gallery', background_value: value, silent: true });
     }
   };
 

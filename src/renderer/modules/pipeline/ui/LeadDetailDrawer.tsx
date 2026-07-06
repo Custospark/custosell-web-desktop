@@ -41,11 +41,11 @@ import {
   User,
   UserRound,
   Video,
-  X,
 } from 'lucide-react';
 import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
 import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
+import PipelineColorPicker, { CARD_PRESET_COLORS } from './PipelineColorPicker';
 
 interface LeadDetailDrawerProps {
   leadId: number;
@@ -104,9 +104,11 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
   const isLead = (lead.card_type ?? 'lead') === 'lead';
   const stageColor = lead.stage?.color ?? '#6366f1';
   const resolvedBoardId = boardId ?? lead.board_id;
+  const patchLead = (payload: Parameters<typeof updateLead.mutate>[0]) =>
+    updateLead.mutate({ ...payload, id: lead.id, board_id: resolvedBoardId, silent: true });
 
   const handleConvert = async () => {
-    await convertLead.mutateAsync({ id: lead.id });
+    await convertLead.mutateAsync({ id: lead.id, board_id: resolvedBoardId });
   };
 
   const handleAddNote = async () => {
@@ -189,7 +191,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
               onBlur={(e) => {
                 const v = e.target.value.trim();
                 if (v && v !== lead.title) {
-                  updateLead.mutate({ id: lead.id, title: v });
+                    patchLead({ title: v });
                 }
               }}
             />
@@ -199,31 +201,13 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
         <PipelineFormSection title="Card appearance" icon={Palette}>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-gray-600">Background color</label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => updateLead.mutate({ id: lead.id, background_color: null })}
-                className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-medium transition-colors',
-                  !lead.background_color ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300',
-                )}
-                title="No color"
-              >
-                <X className="h-3 w-3 text-gray-400" />
-              </button>
-              {['#f0f9ff', '#f0fdf4', '#fefce8', '#fef2f2', '#faf5ff', '#fdf2f8', '#f8fafc', '#fff7ed'].map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => updateLead.mutate({ id: lead.id, background_color: color })}
-                  className={cn(
-                    'h-8 w-8 rounded-lg border shadow-sm transition-transform hover:scale-105',
-                    lead.background_color === color ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200',
-                  )}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
+            <PipelineColorPicker
+              value={lead.background_color}
+              presets={CARD_PRESET_COLORS}
+              allowClear
+              onClear={() => patchLead({ background_color: null })}
+              onChange={(color) => patchLead({ background_color: color })}
+            />
           </div>
         </PipelineFormSection>
 
@@ -240,7 +224,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v !== (lead.contact_name ?? '')) {
-                    updateLead.mutate({ id: lead.id, contact_name: v || null });
+                    patchLead({ contact_name: v || null });
                   }
                 }}
               />
@@ -253,7 +237,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v !== (lead.contact_phone ?? '')) {
-                    updateLead.mutate({ id: lead.id, contact_phone: v || null });
+                    patchLead({ contact_phone: v || null });
                   }
                 }}
               />
@@ -268,7 +252,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
               onBlur={(e) => {
                 const v = e.target.value.trim();
                 if (v !== (lead.contact_email ?? '')) {
-                  updateLead.mutate({ id: lead.id, contact_email: v || null });
+                  patchLead({ contact_email: v || null });
                 }
               }}
             />
@@ -282,7 +266,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
             <PipelineIconField label="Source" icon={Tag}>
               <select
                 value={lead.source_id ?? ''}
-                onChange={(e) => updateLead.mutate({ id: lead.id, source_id: e.target.value ? Number(e.target.value) : null })}
+                onChange={(e) => patchLead({ source_id: e.target.value ? Number(e.target.value) : null })}
                 className={pipelineSelectClass}
               >
                 <option value="">None</option>
@@ -295,7 +279,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
             <PipelineIconField label="Assignee" icon={UserRound}>
               <select
                 value={lead.assigned_to ?? ''}
-                onChange={(e) => updateLead.mutate({ id: lead.id, assigned_to: e.target.value ? Number(e.target.value) : null })}
+                onChange={(e) => patchLead({ assigned_to: e.target.value ? Number(e.target.value) : null })}
                 className={pipelineSelectClass}
               >
                 <option value="">Unassigned</option>
@@ -315,7 +299,7 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
                 onBlur={(e) => {
                   const v = e.target.value ? Number(e.target.value) : null;
                   if (v !== lead.estimated_value) {
-                    updateLead.mutate({ id: lead.id, estimated_value: v });
+                    patchLead({ estimated_value: v });
                   }
                 }}
               />

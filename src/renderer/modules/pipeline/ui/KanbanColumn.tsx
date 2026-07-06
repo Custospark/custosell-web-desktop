@@ -3,13 +3,14 @@ import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import LeadCard from './LeadCard';
 import { cn } from '../../../shared/utils/cn';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { Inbox, MoreHorizontal, Plus } from 'lucide-react';
+import { Inbox, GripVertical, MoreHorizontal, Plus } from 'lucide-react';
 
 interface KanbanColumnProps {
   stage: PipelineStage;
   onLeadClick: (lead: PipelineLead) => void;
   onAddLead: (stageId: number) => void;
   onDropLead: (leadId: number, stageId: number, position: number) => void;
+  onDropColumn?: (draggedStageId: number, targetStageId: number) => void;
   onEditStage?: (stage: PipelineStage) => void;
   isProjectBoard?: boolean;
 }
@@ -19,10 +20,12 @@ export default function KanbanColumn({
   onLeadClick,
   onAddLead,
   onDropLead,
+  onDropColumn,
   onEditStage,
   isProjectBoard = false,
 }: KanbanColumnProps) {
   const [dragOver, setDragOver] = useState(false);
+  const [columnDragOver, setColumnDragOver] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const leads = stage.leads ?? [];
   const stageColor = stage.color ?? '#64748b';
@@ -31,12 +34,26 @@ export default function KanbanColumn({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(true);
+    if (e.dataTransfer.types.includes('text/stage-id')) {
+      setColumnDragOver(true);
+      setDragOver(false);
+    } else {
+      setDragOver(true);
+      setColumnDragOver(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
+    setColumnDragOver(false);
+
+    const draggedStageId = Number(e.dataTransfer.getData('text/stage-id'));
+    if (draggedStageId && draggedStageId !== stage.id && onDropColumn) {
+      onDropColumn(draggedStageId, stage.id);
+      return;
+    }
+
     const leadId = Number(e.dataTransfer.getData('text/lead-id'));
     if (!leadId) return;
     onDropLead(leadId, stage.id, leads.length + 1);
@@ -46,20 +63,32 @@ export default function KanbanColumn({
     <div
       className={cn(
         'flex h-full min-h-0 w-[292px] shrink-0 flex-col rounded-2xl border shadow-sm backdrop-blur-sm transition-colors',
-        dragOver
-          ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-200'
-          : 'border-gray-200/80 bg-white/70',
+        columnDragOver
+          ? 'border-violet-400 bg-violet-50/60 ring-2 ring-violet-200'
+          : dragOver
+            ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-200'
+            : 'border-gray-200/80 bg-white/70',
       )}
       onDragOver={handleDragOver}
-      onDragLeave={() => setDragOver(false)}
+      onDragLeave={() => {
+        setDragOver(false);
+        setColumnDragOver(false);
+      }}
       onDrop={handleDrop}
     >
       <div
-        className="relative shrink-0 rounded-t-2xl border-b border-gray-100 px-3 py-3"
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/stage-id', String(stage.id));
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        className="relative shrink-0 cursor-grab rounded-t-2xl border-b border-gray-100 px-3 py-3 active:cursor-grabbing"
         style={{ background: `linear-gradient(135deg, ${stageColor}14, transparent)` }}
+        title="Drag to reorder column"
       >
         <div className="flex items-center justify-between gap-2 pr-14">
           <div className="flex min-w-0 items-center gap-2">
+            <GripVertical className="h-4 w-4 shrink-0 text-gray-300" aria-hidden />
             <span
               className="h-3 w-3 shrink-0 rounded-full shadow-sm ring-2 ring-white"
               style={{ backgroundColor: stageColor }}

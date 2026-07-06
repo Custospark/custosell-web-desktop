@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
-import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat } from 'lucide-react';
+import { useProjects } from '../../estimates/api/useProjectQueries';
+import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat, FolderKanban } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
@@ -16,6 +17,7 @@ interface ExpenseFormProps {
 
 export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
   const { data: categories } = useExpenseCategories();
+  const { data: projects } = useProjects();
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
@@ -23,6 +25,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const activeShiftId = shiftId ?? authShiftId;
 
   const [categoryId, setCategoryId] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [reference, setReference] = useState('');
@@ -42,6 +45,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     queueMicrotask(() => {
       if (expense) {
         setCategoryId(expense.expense_category_id?.toString() || '');
+        setProjectId('');
         setAmount(parseFloat(expense.amount).toString());
         setDescription(expense.description);
         setReference(expense.reference || '');
@@ -56,6 +60,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setReceipt(null);
       } else {
         setCategoryId('');
+        setProjectId('');
         setAmount('');
         setDescription('');
         setReference('');
@@ -77,6 +82,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
     const formData = new FormData();
     if (categoryId) formData.append('expense_category_id', categoryId);
+    if (projectId) formData.append('project_id', projectId);
     formData.append('amount', amount);
     formData.append('description', description);
     if (reference) formData.append('reference', reference);
@@ -118,20 +124,27 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     >
       <div className="space-y-5">
 
-        {/* Category */}
+        {/* Category & Project */}
         <div className="rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4 text-gray-400" /> Category</h3>
+            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4 text-gray-400" /> Category &amp; Project</h3>
           </div>
-          <div className="p-4">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-                  <option value="">Select category</option>
-                  {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <div className="p-4 space-y-3">
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="">Select category</option>
+              {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <div>
+              <div className="relative">
+                <FolderKanban className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <select value={projectId} onChange={(e) => setProjectId(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none">
+                  <option value="">No project (general expense)</option>
+                  {(projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
+              <p className="mt-1 text-xs text-gray-400">Link to a project for automatic cost allocation and budget tracking.</p>
             </div>
           </div>
         </div>

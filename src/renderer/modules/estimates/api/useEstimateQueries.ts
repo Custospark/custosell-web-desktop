@@ -81,7 +81,6 @@ export function useEstimates(filters?: Record<string, string>) {
       const { data } = await axiosInstance.get(`${ESTIMATES.BASE}${params ? `?${params}` : ''}`);
       return unwrapList<Estimate>(data);
     },
-    placeholderData: (prev) => prev ?? [],
     ...queryDefaults,
   });
 }

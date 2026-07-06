@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
-import { Modal } from '../../../shared/components/modals/Modal';
+import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Input } from '../../../shared/components/inputs/Input';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import {
   useEstimateTemplates,
   useCreateEstimateTemplate,
@@ -11,8 +11,13 @@ import {
   useDeleteEstimateTemplate,
 } from '../api/useEstimateQueries';
 import type { EstimateTemplate } from '../api/estimateTypes';
-import { LayoutTemplate, Plus, Pencil, Trash2 } from 'lucide-react';
+import { LayoutTemplate, Plus, Pencil, Trash2, FileSpreadsheet, Percent, ScrollText, Tag } from 'lucide-react';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
+import { PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
+
+const cardStyles = {
+  border: 'border-indigo-500', shadow: 'hover:shadow-indigo-500/20', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700', glow: 'bg-indigo-500/10', hoverBg: 'group-hover:bg-indigo-200',
+};
 
 export default function EstimateTemplatesPage() {
   const { data: templates, isLoading } = useEstimateTemplates();
@@ -21,12 +26,15 @@ export default function EstimateTemplatesPage() {
   const deleteTemplate = useDeleteEstimateTemplate();
   const { confirm } = useConfirm();
 
-  const [modalOpen, setModalOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<EstimateTemplate | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [terms, setTerms] = useState('');
   const [taxRate, setTaxRate] = useState(0);
+
+  const isPending = createTemplate.isPending || updateTemplate.isPending;
+  const canSave = name.trim().length > 0;
 
   const openCreate = () => {
     setEditing(null);
@@ -34,7 +42,7 @@ export default function EstimateTemplatesPage() {
     setDescription('');
     setTerms('');
     setTaxRate(0);
-    setModalOpen(true);
+    setDrawerOpen(true);
   };
 
   const openEdit = (template: EstimateTemplate) => {
@@ -43,7 +51,7 @@ export default function EstimateTemplatesPage() {
     setDescription(template.description ?? '');
     setTerms(template.terms ?? '');
     setTaxRate(template.default_tax_rate);
-    setModalOpen(true);
+    setDrawerOpen(true);
   };
 
   const handleSave = async () => {
@@ -67,7 +75,7 @@ export default function EstimateTemplatesPage() {
     } else {
       await createTemplate.mutateAsync(payload);
     }
-    setModalOpen(false);
+    setDrawerOpen(false);
   };
 
   const handleDelete = async (template: EstimateTemplate) => {
@@ -94,64 +102,115 @@ export default function EstimateTemplatesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16"><LoadingSpinner /></div>
+        <LoadingSkeleton variant="card" />
       ) : (templates ?? []).length === 0 ? (
         <Card className="flex flex-col items-center py-16 text-center">
           <LayoutTemplate className="mb-3 h-12 w-12 text-gray-300" />
-          <p className="text-sm text-gray-600">No templates yet.</p>
+          <p className="text-sm font-medium text-gray-700">No templates yet</p>
+          <p className="mt-1 text-xs text-gray-500">Create reusable proposal structures to speed up quoting.</p>
+          <Button size="sm" className="mt-4" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            New template
+          </Button>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(templates ?? []).map((template) => (
-            <Card key={template.id} className="flex flex-col p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                  {template.description && (
-                    <p className="mt-1 text-sm text-gray-500">{template.description}</p>
-                  )}
+            <div
+              key={template.id}
+              className={`group relative flex flex-col rounded-xl border-2 bg-gradient-to-br from-white to-white p-5 transition-all duration-300 hover:-translate-y-0.5 ${cardStyles.border} ${cardStyles.shadow}`}
+            >
+              <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 overflow-hidden rounded-full blur-2xl ${cardStyles.glow}`} />
+              <div className="relative flex items-start justify-between gap-3">
+                <div className={`shrink-0 rounded-xl p-3 transition-all duration-300 ${cardStyles.iconBg} group-hover:scale-110 ${cardStyles.hoverBg}`}>
+                  <FileSpreadsheet className={`h-5 w-5 ${cardStyles.iconColor}`} />
                 </div>
                 {!template.is_active && (
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">Inactive</span>
+                  <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">Inactive</span>
                 )}
               </div>
-              <p className="mt-2 text-xs text-gray-400">
-                {template.line_items_template.length} line item(s) · Tax {template.default_tax_rate}%
-              </p>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => openEdit(template)}>
+              <div className="relative mt-4 flex-1">
+                <h3 className="font-semibold text-gray-900">{template.name}</h3>
+                {template.description && (
+                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">{template.description}</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-400">
+                  <span className="inline-flex items-center gap-1">
+                    <FileSpreadsheet className="h-3 w-3" />
+                    {template.line_items_template.length} item(s)
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Percent className="h-3 w-3" />
+                    Tax {template.default_tax_rate}%
+                  </span>
+                </div>
+              </div>
+              <div className="relative mt-4 flex items-center gap-2 border-t border-gray-100 pt-4">
+                <Button size="sm" variant="outline" onClick={() => openEdit(template)} className="inline-flex items-center gap-1.5">
                   <Pencil className="h-3.5 w-3.5" />
                   Edit
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleDelete(template)} className="text-red-600">
+                <Button size="sm" variant="ghost" onClick={() => handleDelete(template)} className="text-red-600 hover:bg-red-50 inline-flex items-center gap-1.5">
                   <Trash2 className="h-3.5 w-3.5" />
+                  Delete
                 </Button>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit template' : 'New template'}>
-        <div className="space-y-4">
-          <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <Input label="Default tax rate (%)" type="number" min="0" value={taxRate} onChange={(e) => setTaxRate(Number(e.target.value))} />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Terms</label>
-            <textarea
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-              rows={3}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-            />
-          </div>
+      <SlideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editing ? 'Edit template' : 'New template'}
+        subtitle={editing ? `Editing ${editing.name}` : 'Create a reusable proposal template'}
+        onSubmit={handleSave}
+        isSubmitting={isPending}
+        canSubmit={canSave}
+        width="sm:w-[560px]"
+      >
+        <div className="space-y-5">
+          <PipelineModalHero
+            icon={LayoutTemplate}
+            title={editing ? `Editing "${editing.name}"` : 'Create a proposal template'}
+            description="Templates define default line items, tax rate, and terms. Use them to speed up the quoting process."
+            tone="indigo"
+          />
+
+          <PipelineFormSection title="Template details" icon={Tag}>
+            <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Standard consulting proposal" />
+            <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of when to use this template" />
+          </PipelineFormSection>
+
+          <PipelineFormSection title="Defaults" icon={ScrollText}>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Default tax rate (%)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={taxRate === 0 ? '' : String(taxRate)}
+                placeholder="0"
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setTaxRate(raw === '' ? 0 : parseFloat(raw) || 0);
+                }}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Default terms & conditions</label>
+              <textarea
+                value={terms}
+                onChange={(e) => setTerms(e.target.value)}
+                rows={4}
+                placeholder="Payment terms, delivery conditions, warranty info..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
+              />
+            </div>
+          </PipelineFormSection>
         </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave} loading={createTemplate.isPending || updateTemplate.isPending}>Save</Button>
-        </div>
-      </Modal>
+      </SlideDrawer>
     </div>
   );
 }

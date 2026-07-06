@@ -6,7 +6,7 @@ export type EstimateStatus =
   | 'expired'
   | 'converted';
 
-export type EstimateLineItemType = 'labor' | 'material' | 'equipment' | 'other';
+export type EstimateLineItemType = 'labor' | 'material' | 'equipment' | 'service' | 'travel' | 'permit' | 'subcontractor' | 'discount' | 'other';
 export type MarkupType = 'none' | 'percent' | 'fixed';
 export type DiscountType = 'percent' | 'fixed' | null;
 
@@ -20,6 +20,32 @@ export interface EstimateCustomerRef {
   name: string;
   phone?: string | null;
   email?: string | null;
+}
+
+export interface EstimateInvoiceRef {
+  id: number;
+  invoice_number: string;
+  status: string;
+  total_amount: number;
+  amount_paid: number;
+  payments?: EstimatePaymentRef[];
+}
+
+export interface EstimatePaymentRef {
+  id: number;
+  receipt_number: string;
+  amount: number;
+  payment_method: string;
+  balance_after: number;
+  paid_at: string;
+  notes?: string | null;
+}
+
+export interface EstimateProjectRef {
+  id: number;
+  project_number: string;
+  name: string;
+  status: string;
 }
 
 export interface EstimateLineItem {
@@ -118,6 +144,8 @@ export interface Estimate {
   assignee?: EstimateUserRef | null;
   line_items: EstimateLineItem[];
   versions?: EstimateVersion[];
+  invoice?: EstimateInvoiceRef | null;
+  project?: EstimateProjectRef | null;
 }
 
 export interface EstimateAnalytics {

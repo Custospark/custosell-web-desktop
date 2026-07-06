@@ -1,9 +1,11 @@
-import { useMemo, useState, useCallback, type ReactNode } from 'react';
+import { useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
+import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { useToast } from '../../../app/contexts/useToast';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
@@ -13,17 +15,26 @@ import {
   useDuplicateEstimate,
 } from '../api/useEstimateQueries';
 import type { Estimate } from '../api/estimateTypes';
-import EstimateBuilderForm from './EstimateBuilderForm';
+import EstimateBuilderForm, { type EstimateBuilderHandle } from './EstimateBuilderForm';
 import EstimateStatusBadge, { displayEstimateStatus } from '../ui/EstimateStatusBadge';
 import { viewEstimatePdf, downloadEstimatePdf } from '../useEstimatePdf';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+const n = (v: unknown): number => Number(v) || 0;
+
 import {
   FileSpreadsheet, Plus, Send, Download, Trash2, Search, Eye, Pencil, Copy,
+  FileText, Target, TrendingUp, DollarSign,
 } from 'lucide-react';
 
-type EstimateView = 'list' | 'create' | 'edit';
+const cardStyles = {
+  blue: { border: 'border-blue-500', shadow: 'hover:shadow-blue-500/20', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700', glow: 'bg-blue-500/10', hoverBg: 'group-hover:bg-blue-200' },
+  green: { border: 'border-green-500', shadow: 'hover:shadow-green-500/20', iconBg: 'bg-green-100', iconColor: 'text-green-600', badge: 'bg-green-100 text-green-700', glow: 'bg-green-500/10', hoverBg: 'group-hover:bg-green-200' },
+  purple: { border: 'border-purple-500', shadow: 'hover:shadow-purple-500/20', iconBg: 'bg-purple-100', iconColor: 'text-purple-600', badge: 'bg-purple-100 text-purple-700', glow: 'bg-purple-500/10', hoverBg: 'group-hover:bg-purple-200' },
+  amber: { border: 'border-amber-500', shadow: 'hover:shadow-amber-500/20', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', badge: 'bg-amber-100 text-amber-700', glow: 'bg-amber-500/10', hoverBg: 'group-hover:bg-amber-200' },
+  indigo: { border: 'border-indigo-500', shadow: 'hover:shadow-indigo-500/20', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700', glow: 'bg-indigo-500/10', hoverBg: 'group-hover:bg-indigo-200' },
+};
 
 function IconAction({
   title, onClick, loading, disabled, children, className,
@@ -53,11 +64,13 @@ function IconAction({
 
 export default function EstimatesPage() {
   const navigate = useNavigate();
-  const [view, setView] = useState<EstimateView>('list');
+  const builderRef = useRef<EstimateBuilderHandle>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [busyAction, setBusyAction] = useState<{ id: number; type: string } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { showToast } = useToast();
   const { data: estimates, isLoading } = useEstimates();
@@ -98,10 +111,10 @@ export default function EstimatesPage() {
     const drafts = list.filter((e) => e.status === 'draft').length;
     const pipelineValue = list
       .filter((e) => ['draft', 'sent'].includes(e.status))
-      .reduce((sum, e) => sum + e.total, 0);
+      .reduce((sum, e) => sum + n(e.total), 0);
     const approved = list.filter((e) => e.status === 'approved').length;
     const avgMargin = list.length
-      ? list.reduce((sum, e) => sum + e.margin_percent, 0) / list.length
+      ? list.reduce((sum, e) => sum + n(e.margin_percent), 0) / list.length
       : 0;
     return { total: list.length, drafts, pipelineValue, approved, avgMargin };
   }, [estimates]);
@@ -117,6 +130,35 @@ export default function EstimatesPage() {
       setBusyAction(null);
     }
   }, [showToast]);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setDrawerOpen(true);
+  };
+
+  const openEdit = (id: number) => {
+    setEditingId(id);
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+    setEditingId(null);
+  };
+
+  const handleSave = async () => {
+    if (!builderRef.current) return;
+    setIsSaving(true);
+    try {
+      await builderRef.current.submit();
+      setDrawerOpen(false);
+      setEditingId(null);
+    } catch {
+      /* toast handled in mutation */
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const columns = useMemo(() => [
     {
@@ -157,9 +199,9 @@ export default function EstimatesPage() {
       render: (item: Estimate) => (
         <span className={cn(
           'text-sm font-medium tabular-nums',
-          item.margin_percent >= 20 ? 'text-emerald-700' : 'text-amber-700',
+          n(item.margin_percent) >= 20 ? 'text-emerald-700' : 'text-amber-700',
         )}>
-          {item.margin_percent.toFixed(1)}%
+          {n(item.margin_percent).toFixed(1)}%
         </span>
       ),
     },
@@ -191,10 +233,7 @@ export default function EstimatesPage() {
               <Eye className="h-4 w-4" />
             </IconAction>
             {isDraft && (
-              <IconAction
-                title="Edit"
-                onClick={() => { setEditingId(item.id); setView('edit'); }}
-              >
+              <IconAction title="Edit" onClick={() => openEdit(item.id)}>
                 <Pencil className="h-4 w-4" />
               </IconAction>
             )}
@@ -233,26 +272,17 @@ export default function EstimatesPage() {
     },
   ], [busyAction, deleteEstimate, duplicateEstimate, handlePdfAction, navigate, sendEstimate]);
 
-  if (view === 'create') {
-    return (
-      <EstimateBuilderForm
-        mode="create"
-        onComplete={() => setView('list')}
-        onCancel={() => setView('list')}
-      />
-    );
+  if (isLoading) {
+    return <LoadingSkeleton variant="dashboard" />;
   }
 
-  if (view === 'edit' && editingEstimate) {
-    return (
-      <EstimateBuilderForm
-        mode="edit"
-        estimate={editingEstimate}
-        onComplete={() => { setView('list'); setEditingId(null); }}
-        onCancel={() => { setView('list'); setEditingId(null); }}
-      />
-    );
-  }
+  const statCards = [
+    { label: 'Total estimates', key: 'total' as const, value: String(stats.total), icon: FileSpreadsheet, color: 'blue' as const, badge: 'All' },
+    { label: 'Drafts', key: 'drafts' as const, value: String(stats.drafts), icon: FileText, color: 'amber' as const, badge: 'Pending' },
+    { label: 'Pipeline value', key: 'pipelineValue' as const, value: formatCurrency(stats.pipelineValue), icon: Target, color: 'indigo' as const, badge: 'Open' },
+    { label: 'Approved', key: 'approved' as const, value: String(stats.approved), icon: TrendingUp, color: 'green' as const, badge: 'Won' },
+    { label: 'Avg margin', key: 'avgMargin' as const, value: `${stats.avgMargin.toFixed(1)}%`, icon: DollarSign, color: 'purple' as const, badge: 'Margin' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -261,33 +291,33 @@ export default function EstimatesPage() {
           <h2 className="text-lg font-semibold text-gray-900">All estimates</h2>
           <p className="mt-1 text-sm text-gray-500">Create proposals, track margins, and convert wins to invoices or projects.</p>
         </div>
-        <Button onClick={() => setView('create')} className="inline-flex items-center gap-2">
+        <Button onClick={openCreate} className="inline-flex items-center gap-2">
           <Plus className="h-4 w-4" />
           New estimate
         </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase text-gray-500">Total</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{stats.total}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase text-gray-500">Drafts</p>
-          <p className="mt-1 text-2xl font-bold text-gray-700">{stats.drafts}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase text-gray-500">Pipeline value</p>
-          <p className="mt-1 text-xl font-bold text-blue-700">{formatCurrency(stats.pipelineValue)}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase text-gray-500">Approved</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-700">{stats.approved}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase text-gray-500">Avg margin</p>
-          <p className="mt-1 text-2xl font-bold text-violet-700">{stats.avgMargin.toFixed(1)}%</p>
-        </Card>
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          const s = cardStyles[card.color];
+          return (
+            <div
+              key={card.label}
+              className={`group relative flex min-h-[120px] cursor-default flex-col justify-center rounded-xl border-2 bg-gradient-to-br from-white to-white p-5 transition-all duration-300 hover:-translate-y-0.5 ${s.border} ${s.shadow}`}
+            >
+              <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 overflow-hidden rounded-full blur-2xl ${s.glow}`} />
+              <div className="relative mb-3 flex items-start justify-between gap-2">
+                <div className={`shrink-0 rounded-xl p-3 transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>
+                  <Icon className={`h-5 w-5 ${s.iconColor}`} />
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${s.badge}`}>{card.badge}</span>
+              </div>
+              <p className="relative mb-0.5 text-xl font-bold leading-snug text-gray-900 sm:text-2xl">{card.value}</p>
+              <p className="relative whitespace-normal break-words text-sm font-medium leading-snug text-gray-500">{card.label}</p>
+            </div>
+          );
+        })}
       </div>
 
       <Card className="overflow-hidden">
@@ -297,7 +327,7 @@ export default function EstimatesPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by number, title, or customer…"
+              placeholder="Search by number, title, or customer..."
               className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -316,16 +346,12 @@ export default function EstimatesPage() {
           </select>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <FileSpreadsheet className="mb-3 h-12 w-12 text-gray-300" />
             <p className="text-sm font-medium text-gray-700">No estimates yet</p>
             <p className="mt-1 text-xs text-gray-500">Create your first proposal to track cost, price, and margin.</p>
-            <Button size="sm" className="mt-4" onClick={() => setView('create')}>
+            <Button size="sm" className="mt-4" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               New estimate
             </Button>
@@ -344,6 +370,29 @@ export default function EstimatesPage() {
           </>
         )}
       </Card>
+
+      <SlideDrawer
+        open={drawerOpen}
+        onClose={handleDrawerClose}
+        title={editingEstimate ? `Edit ${editingEstimate.estimate_number}` : 'New estimate'}
+        subtitle={editingEstimate ? editingEstimate.title : 'Create a new proposal with cost and margin tracking'}
+        onSubmit={handleSave}
+        isSubmitting={isSaving}
+        canSubmit
+        fullContentWidth
+      >
+        <EstimateBuilderForm
+          ref={builderRef}
+          mode={editingEstimate ? 'edit' : 'create'}
+          estimate={editingEstimate}
+          onComplete={() => {
+            setDrawerOpen(false);
+            setEditingId(null);
+          }}
+          onCancel={handleDrawerClose}
+          embedded
+        />
+      </SlideDrawer>
     </div>
   );
 }

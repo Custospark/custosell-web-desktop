@@ -12,12 +12,17 @@ const tabs = [
 
 export default function EstimatesLayout() {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Estimates</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Build proposals with cost and margin, send for approval, and convert to invoices or projects.
-        </p>
+    <div className="flex h-full min-h-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        <div className="shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-3 shadow-sm">
+          <FileSpreadsheet className="h-6 w-6 text-white" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900">Estimates & Projects</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Build proposals with cost and margin, send for approval, and convert to invoices or projects.
+          </p>
+        </div>
       </div>
 
       <nav className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">

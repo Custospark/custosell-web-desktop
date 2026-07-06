@@ -44,6 +44,9 @@ function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
   if (itemTo === ROUTES.ESTIMATES.PROJECTS) {
     return /^\/estimates\/projects\/\d+/.test(pathname);
   }
+  if (itemTo === ROUTES.ESTIMATES.INDEX) {
+    return /^\/estimates\/\d+/.test(pathname);
+  }
   return pathname.startsWith(`${itemTo}/`);
 }
 
@@ -146,7 +149,7 @@ const baseNavGroups: NavGroup[] = [
     icon: FileSpreadsheet,
     label: 'Estimates',
     subItems: [
-      { to: ROUTES.ESTIMATES.INDEX, label: 'Estimates', icon: FileSpreadsheet },
+      { to: ROUTES.ESTIMATES.INDEX, label: 'All estimates', icon: FileSpreadsheet },
       { to: ROUTES.ESTIMATES.PROJECTS, label: 'Projects', icon: FolderKanban },
       { to: ROUTES.ESTIMATES.INSIGHTS, label: 'Insights', icon: TrendingUp },
       { to: ROUTES.ESTIMATES.TEMPLATES, label: 'Templates', icon: LayoutTemplate },

@@ -3,14 +3,25 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Table } from '../../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useProjects } from '../api/useProjectQueries';
 import type { Project } from '../api/projectTypes';
+import { BudgetProgressBar } from '../ui/estimatesShared';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
-import { FolderKanban, Search } from 'lucide-react';
+import { FolderKanban, Search, Target, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
+
+const n = (v: unknown): number => Number(v) || 0;
+
+const cardStyles = {
+  blue: { border: 'border-blue-500', shadow: 'hover:shadow-blue-500/20', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700', glow: 'bg-blue-500/10', hoverBg: 'group-hover:bg-blue-200' },
+  green: { border: 'border-green-500', shadow: 'hover:shadow-green-500/20', iconBg: 'bg-green-100', iconColor: 'text-green-600', badge: 'bg-green-100 text-green-700', glow: 'bg-green-500/10', hoverBg: 'group-hover:bg-green-200' },
+  amber: { border: 'border-amber-500', shadow: 'hover:shadow-amber-500/20', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', badge: 'bg-amber-100 text-amber-700', glow: 'bg-amber-500/10', hoverBg: 'group-hover:bg-amber-200' },
+  purple: { border: 'border-purple-500', shadow: 'hover:shadow-purple-500/20', iconBg: 'bg-purple-100', iconColor: 'text-purple-600', badge: 'bg-purple-100 text-purple-700', glow: 'bg-purple-500/10', hoverBg: 'group-hover:bg-purple-200' },
+  rose: { border: 'border-rose-500', shadow: 'hover:shadow-rose-500/20', iconBg: 'bg-rose-100', iconColor: 'text-rose-600', badge: 'bg-rose-100 text-rose-700', glow: 'bg-rose-500/10', hoverBg: 'group-hover:bg-rose-200' },
+};
 
 const STATUS_STYLES: Record<string, string> = {
   planning: 'bg-gray-100 text-gray-700',
@@ -36,6 +47,15 @@ export default function ProjectsPage() {
 
   const paginated = usePagination(filtered, 15);
 
+  const stats = useMemo(() => {
+    const list = projects ?? [];
+    const active = list.filter((p) => p.status === 'active').length;
+    const totalBudget = list.reduce((sum, p) => sum + n(p.budget_cost), 0);
+    const totalActual = list.reduce((sum, p) => sum + n(p.actual_cost), 0);
+    const overBudget = list.filter((p) => n(p.actual_cost) > n(p.budget_cost) && n(p.budget_cost) > 0).length;
+    return { total: list.length, active, totalBudget, totalActual, overBudget };
+  }, [projects]);
+
   const columns = [
     {
       key: 'project_number',
@@ -49,55 +69,45 @@ export default function ProjectsPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (item: Project) => <span className="text-sm text-gray-800">{item.name}</span>,
+      render: (item: Project) => <span className="text-sm font-medium text-gray-800">{item.name}</span>,
     },
     {
       key: 'customer',
       header: 'Customer',
       render: (item: Project) => (
-        <span className="text-sm text-gray-600">{item.customer?.name ?? '—'}</span>
+        <span className={cn('text-sm', item.customer?.name ? 'text-gray-600' : 'text-gray-400 italic')}>
+          {item.customer?.name ?? '—'}
+        </span>
       ),
     },
     {
       key: 'status',
       header: 'Status',
       render: (item: Project) => (
-        <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium capitalize', STATUS_STYLES[item.status])}>
+        <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium capitalize whitespace-nowrap', STATUS_STYLES[item.status])}>
           {item.status.replace('_', ' ')}
         </span>
       ),
     },
     {
-      key: 'budget_revenue',
-      header: 'Budget revenue',
+      key: 'budget',
+      header: 'Budget vs actual',
       render: (item: Project) => (
-        <span className="text-sm tabular-nums">{formatCurrency(item.budget_revenue, item.currency)}</span>
+        <div className="min-w-[180px]">
+          <BudgetProgressBar
+            label=""
+            actual={n(item.actual_cost)}
+            budget={n(item.budget_cost)}
+            formatValue={(n) => formatCurrency(n, item.currency)}
+          />
+        </div>
       ),
-    },
-    {
-      key: 'budget_cost',
-      header: 'Budget cost',
-      render: (item: Project) => (
-        <span className="text-sm tabular-nums">{formatCurrency(item.budget_cost, item.currency)}</span>
-      ),
-    },
-    {
-      key: 'actual_cost',
-      header: 'Actual cost',
-      render: (item: Project) => {
-        const over = item.actual_cost > item.budget_cost && item.budget_cost > 0;
-        return (
-          <span className={cn('text-sm tabular-nums font-medium', over ? 'text-red-600' : 'text-gray-800')}>
-            {formatCurrency(item.actual_cost, item.currency)}
-          </span>
-        );
-      },
     },
     {
       key: 'variance',
       header: 'Cost variance',
       render: (item: Project) => {
-        const variance = item.budget_cost - item.actual_cost;
+        const variance = n(item.budget_cost) - n(item.actual_cost);
         return (
           <span className={cn('text-sm tabular-nums font-medium', variance < 0 ? 'text-red-600' : 'text-emerald-700')}>
             {formatCurrency(variance, item.currency)}
@@ -116,11 +126,46 @@ export default function ProjectsPage() {
     },
   ];
 
+  if (isLoading) {
+    return <LoadingSkeleton variant="table" />;
+  }
+
+  const statCards = [
+    { label: 'Total projects', value: String(stats.total), icon: FolderKanban, color: 'blue' as const, badge: 'All' },
+    { label: 'Active', value: String(stats.active), icon: TrendingUp, color: 'green' as const, badge: 'In progress' },
+    { label: 'Budget cost', value: formatCurrency(stats.totalBudget), icon: Target, color: 'purple' as const, badge: 'Budgeted' },
+    { label: 'Actual cost', value: formatCurrency(stats.totalActual), icon: DollarSign, color: 'amber' as const, badge: 'Spent' },
+    { label: 'Over budget', value: String(stats.overBudget), icon: AlertTriangle, color: 'rose' as const, badge: 'At risk' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-gray-900">Projects</h2>
         <p className="mt-1 text-sm text-gray-500">Track delivery, budget vs actual, and job costing.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          const s = cardStyles[card.color];
+          return (
+            <div
+              key={card.label}
+              className={`group relative flex min-h-[120px] cursor-default flex-col justify-center rounded-xl border-2 bg-gradient-to-br from-white to-white p-5 transition-all duration-300 hover:-translate-y-0.5 ${s.border} ${s.shadow}`}
+            >
+              <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 overflow-hidden rounded-full blur-2xl ${s.glow}`} />
+              <div className="relative mb-3 flex items-start justify-between gap-2">
+                <div className={`shrink-0 rounded-xl p-3 transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>
+                  <Icon className={`h-5 w-5 ${s.iconColor}`} />
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${s.badge}`}>{card.badge}</span>
+              </div>
+              <p className="relative mb-0.5 text-xl font-bold leading-snug text-gray-900 sm:text-2xl">{card.value}</p>
+              <p className="relative whitespace-normal break-words text-sm font-medium leading-snug text-gray-500">{card.label}</p>
+            </div>
+          );
+        })}
       </div>
 
       <Card className="overflow-hidden">
@@ -130,7 +175,7 @@ export default function ProjectsPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search projects…"
+              placeholder="Search projects..."
               className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -148,12 +193,11 @@ export default function ProjectsPage() {
           </select>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-16"><LoadingSpinner /></div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
             <FolderKanban className="mb-3 h-12 w-12 text-gray-300" />
-            <p className="text-sm text-gray-600">No projects yet. Convert an approved estimate to get started.</p>
+            <p className="text-sm font-medium text-gray-700">No projects yet</p>
+            <p className="mt-1 text-xs text-gray-500">Convert an approved estimate to get started with job costing.</p>
           </div>
         ) : (
           <>

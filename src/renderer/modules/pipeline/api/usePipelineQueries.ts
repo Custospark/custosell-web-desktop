@@ -9,6 +9,7 @@ import type {
   CreateLeadPayload,
   PipelineBoard,
   PipelineCalendarDay,
+  PipelineCalendarDateField,
   PipelineChecklist,
   PipelineChecklistItem,
   PipelineAttachment,
@@ -32,8 +33,8 @@ export const pipelineKeys = {
   lead: (id: number) => [...pipelineKeys.all, 'lead', id] as const,
   sources: () => [...pipelineKeys.all, 'sources'] as const,
   insights: (boardId?: number) => [...pipelineKeys.all, 'insights', boardId ?? 'all'] as const,
-  calendar: (boardId: number, year: number, month: number) =>
-    [...pipelineKeys.all, 'calendar', boardId, year, month] as const,
+  calendar: (boardId: number, year: number, month: number, dateField?: string) =>
+    [...pipelineKeys.all, 'calendar', boardId, year, month, dateField ?? 'due'] as const,
   labels: (boardId?: number) => [...pipelineKeys.all, 'labels', boardId ?? 'all'] as const,
 };
 
@@ -418,12 +419,17 @@ export function useDeletePipelineLead() {
   });
 }
 
-export function usePipelineCalendar(boardId: number, year: number, month: number) {
+export function usePipelineCalendar(
+  boardId: number,
+  year: number,
+  month: number,
+  dateField: PipelineCalendarDateField = 'due',
+) {
   return useQuery<PipelineCalendarDay[]>({
-    queryKey: pipelineKeys.calendar(boardId, year, month),
+    queryKey: pipelineKeys.calendar(boardId, year, month, dateField),
     queryFn: async () => {
       const { data } = await axiosInstance.get(
-        `${PIPELINE.BOARD_CALENDAR(boardId)}?year=${year}&month=${month}`,
+        `${PIPELINE.BOARD_CALENDAR(boardId)}?year=${year}&month=${month}&date_field=${dateField}`,
       );
       return normalizeList<PipelineCalendarDay>(data);
     },

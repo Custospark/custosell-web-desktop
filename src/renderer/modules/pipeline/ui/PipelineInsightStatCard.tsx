@@ -40,18 +40,18 @@ export default function PipelineInsightStatCard({
 
   return (
     <div
-      className={`group relative flex min-h-[130px] cursor-default flex-col justify-center overflow-hidden rounded-xl border-2 bg-gradient-to-br from-white to-white p-6 transition-all duration-300 hover:-translate-y-0.5 ${s.border} ${s.shadow}`}
+      className={`group relative flex min-h-[130px] min-w-0 w-full cursor-default flex-col justify-center rounded-xl border-2 bg-gradient-to-br from-white to-white p-6 transition-all duration-300 hover:-translate-y-0.5 ${s.border} ${s.shadow}`}
     >
-      <div className={`absolute -right-8 -top-8 h-24 w-24 rounded-full blur-2xl ${s.glow}`} />
-      <div className="relative mb-4 flex items-center justify-between">
-        <div className={`rounded-xl p-3.5 transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>
+      <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 overflow-hidden rounded-full blur-2xl ${s.glow}`} />
+      <div className="relative mb-4 flex items-start justify-between gap-2">
+        <div className={`shrink-0 rounded-xl p-3.5 transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>
           <Icon className={`h-6 w-6 ${s.iconColor}`} />
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.badge}`}>{badge}</span>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${s.badge}`}>{badge}</span>
       </div>
-      <p className="relative mb-0.5 truncate text-3xl font-bold text-gray-900">{value}</p>
-      <p className="relative text-sm font-medium text-gray-500">{label}</p>
-      {sub && <p className="relative mt-1 text-xs text-gray-400">{sub}</p>}
+      <p className="relative mb-0.5 whitespace-normal break-words text-xl font-bold leading-snug text-gray-900 sm:text-2xl xl:text-3xl">{value}</p>
+      <p className="relative whitespace-normal break-words text-sm font-medium leading-snug text-gray-500">{label}</p>
+      {sub && <p className="relative mt-1 whitespace-normal break-words text-xs leading-snug text-gray-400">{sub}</p>}
       {progress !== undefined && (
         <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200">
           <div className="h-full rounded-full bg-blue-500 transition-all duration-500" style={{ width: `${Math.min(100, progress)}%` }} />

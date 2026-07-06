@@ -78,7 +78,7 @@ export default function InsightsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
         <PipelineInsightStatCard
           label="Open leads"
           value={String(insights.open_leads)}

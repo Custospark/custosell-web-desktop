@@ -193,6 +193,8 @@ export interface CreateBoardPayload {
   description?: string;
   visibility: PipelineVisibility;
   cover_color?: string;
+  background_type?: string;
+  background_value?: string;
   member_ids?: number[];
   members?: BoardMemberInput[];
 }
@@ -234,6 +236,7 @@ export interface UpdateLeadPayload {
   due_date?: string | null;
   start_date?: string | null;
   priority?: PipelinePriority | null;
+  background_color?: string | null;
   lost_reason?: string | null;
   label_ids?: number[];
 }

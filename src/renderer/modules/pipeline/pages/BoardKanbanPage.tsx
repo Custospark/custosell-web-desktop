@@ -101,7 +101,7 @@ export default function BoardKanbanPage() {
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col rounded-xl border border-gray-200/80 shadow-sm"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 shadow-sm"
       style={pipelineBoardBackgroundStyle(accent)}
     >
       <header className="relative z-40 shrink-0 border-b border-gray-200/70 bg-white/90 px-3 py-3 backdrop-blur-md sm:px-4">
@@ -228,7 +228,9 @@ export default function BoardKanbanPage() {
           </button>
         </div>
       ) : (
-        <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} />
+        </div>
       )}
 
       <BoardSwitcherStrip

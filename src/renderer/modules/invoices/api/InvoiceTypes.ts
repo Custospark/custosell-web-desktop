@@ -14,6 +14,7 @@ export interface Invoice {
   invoice_number: string;
   customer_id: number | null;
   sale_id?: number | null;
+  estimate_id?: number | null;
   customer?: { id: number; name: string; phone?: string; email?: string | null } | null;
   issue_date: string;
   due_date: string;

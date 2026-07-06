@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import { ROUTES } from './constants/shared.paths';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { ErrorBoundary } from '../../shared/components/Feedback/ErrorBoundary';
@@ -70,6 +70,14 @@ import LandingPage from '../../modules/landing/LandingPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import PricingPage from '../../modules/landing/PricingPage';
 
+const EstimatesLayout = lazy(() => import('../../modules/estimates/pages/EstimatesLayout'));
+const EstimatesPage = lazy(() => import('../../modules/estimates/pages/EstimatesPage'));
+const EstimateDetailPage = lazy(() => import('../../modules/estimates/pages/EstimateDetailPage'));
+const ProjectsPage = lazy(() => import('../../modules/estimates/pages/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('../../modules/estimates/pages/ProjectDetailPage'));
+const EstimatesInsightsPage = lazy(() => import('../../modules/estimates/pages/EstimatesInsightsPage'));
+const EstimateTemplatesPage = lazy(() => import('../../modules/estimates/pages/EstimateTemplatesPage'));
+
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
@@ -127,6 +135,16 @@ export function AppRoutes() {
               <Route path={ROUTES.PIPELINE.LEADS} element={<SuspenseWrapper><AllLeadsPage /></SuspenseWrapper>} />
               <Route path={ROUTES.PIPELINE.INSIGHTS} element={<SuspenseWrapper><InsightsPage /></SuspenseWrapper>} />
               <Route path={ROUTES.PIPELINE.SETTINGS} element={<SuspenseWrapper><PipelineSettingsPage /></SuspenseWrapper>} />
+            </Route>
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="estimates" />}>
+            <Route element={<SuspenseWrapper><EstimatesLayout /></SuspenseWrapper>}>
+              <Route path={ROUTES.ESTIMATES.INDEX} element={<SuspenseWrapper><EstimatesPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.ESTIMATES.PROJECTS} element={<SuspenseWrapper><ProjectsPage /></SuspenseWrapper>} />
+              <Route path="/estimates/projects/:id" element={<SuspenseWrapper><ProjectDetailPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.ESTIMATES.INSIGHTS} element={<SuspenseWrapper><EstimatesInsightsPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.ESTIMATES.TEMPLATES} element={<SuspenseWrapper><EstimateTemplatesPage /></SuspenseWrapper>} />
+              <Route path="/estimates/:id" element={<SuspenseWrapper><EstimateDetailPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="expenses" />}>

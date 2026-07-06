@@ -52,6 +52,36 @@ export const INVOICES = {
   PDF: (id: number) => `/invoices/${id}/pdf`,
 };
 
+export const ESTIMATES = {
+  BASE: '/estimates',
+  BY_ID: (id: number) => `/estimates/${id}`,
+  SEND: (id: number) => `/estimates/${id}/send`,
+  APPROVE: (id: number) => `/estimates/${id}/approve`,
+  REJECT: (id: number) => `/estimates/${id}/reject`,
+  EMAIL: (id: number) => `/estimates/${id}/email`,
+  PDF: (id: number) => `/estimates/${id}/pdf`,
+  DUPLICATE: (id: number) => `/estimates/${id}/duplicate`,
+  VERSIONS: (id: number) => `/estimates/${id}/versions`,
+  CONVERT_INVOICE: (id: number) => `/estimates/${id}/convert-to-invoice`,
+  CONVERT_PROJECT: (id: number) => `/estimates/${id}/convert-to-project`,
+  ANALYTICS: '/estimates/analytics',
+  TEMPLATES: '/estimates/templates',
+  TEMPLATE: (id: number) => `/estimates/templates/${id}`,
+};
+
+export const PROJECTS = {
+  BASE: '/projects',
+  BY_ID: (id: number) => `/projects/${id}`,
+  TASKS: (id: number) => `/projects/${id}/tasks`,
+  TASK: (projectId: number, taskId: number) => `/projects/${projectId}/tasks/${taskId}`,
+  TIMESHEETS: (id: number) => `/projects/${id}/timesheets`,
+  TIMESHEET: (projectId: number, entryId: number) => `/projects/${projectId}/timesheets/${entryId}`,
+  ALLOCATIONS: (id: number) => `/projects/${id}/allocations`,
+  ALLOCATION: (projectId: number, allocationId: number) => `/projects/${projectId}/allocations/${allocationId}`,
+  BUDGET_SUMMARY: (id: number) => `/projects/${id}/budget-summary`,
+  PROFITABILITY: (id: number) => `/projects/${id}/profitability`,
+};
+
 export const PIPELINE = {
   BOARDS: '/pipeline/boards',
   BOARD: (id: number) => `/pipeline/boards/${id}`,

@@ -39,9 +39,11 @@ import {
   User,
   UserRound,
   Video,
+  FileSpreadsheet,
 } from 'lucide-react';
 import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
+import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
 
 interface LeadDetailDrawerProps {
   leadId: number;
@@ -309,6 +311,21 @@ export default function LeadDetailDrawer({ leadId, boardId, onClose }: LeadDetai
             </Link>
           </div>
         )}
+
+        <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
+              <FileSpreadsheet className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-950">Proposal</p>
+              <p className="mt-0.5 text-xs text-blue-800/80">
+                Build a costed estimate when the customer is linked or the lead is converted.
+              </p>
+              <CreateEstimateFromLeadButton lead={lead} className="mt-3" />
+            </div>
+          </div>
+        </div>
 
         {canConvert && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-4">

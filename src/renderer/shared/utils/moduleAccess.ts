@@ -7,6 +7,7 @@ export const BUSINESS_MODULE_SLUGS = [
   'inventory',
   'customers',
   'pipeline',
+  'estimates',
   'expenses',
   'accounting',
   'settings',
@@ -20,6 +21,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   inventory: 'Inventory',
   customers: 'Customers',
   pipeline: 'Pipeline',
+  estimates: 'Estimates',
   expenses: 'Expenses',
   accounting: 'Accounting',
   settings: 'Settings',
@@ -31,6 +33,7 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   inventory: ROUTES.INVENTORY.PRODUCTS,
   customers: ROUTES.CUSTOMERS.INDEX,
   pipeline: ROUTES.PIPELINE.BOARDS,
+  estimates: ROUTES.ESTIMATES.INDEX,
   expenses: ROUTES.EXPENSES.LIST,
   accounting: ROUTES.ACCOUNTING.RATIOS,
   settings: ROUTES.SETTINGS.BUSINESS,
@@ -39,11 +42,11 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'expenses', 'accounting', 'settings',
+  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'settings',
 ];
 
 const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'expenses', 'accounting', 'settings',
+  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'settings',
 ];
 
 /** Nav group label → module slug for business-scoped sidebar groups. */
@@ -53,6 +56,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Inventory: 'inventory',
   Customers: 'customers',
   Pipeline: 'pipeline',
+  Estimates: 'estimates',
   Expenses: 'expenses',
   Accounting: 'accounting',
   Settings: 'settings',
@@ -132,6 +136,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/inventory')) return 'inventory';
   if (pathname.startsWith('/customers')) return 'customers';
   if (pathname.startsWith('/pipeline')) return 'pipeline';
+  if (pathname.startsWith('/estimates')) return 'estimates';
   if (pathname.startsWith('/expenses')) return 'expenses';
   if (pathname.startsWith('/accounting')) return 'accounting';
   return null;

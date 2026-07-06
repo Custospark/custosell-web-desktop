@@ -130,6 +130,7 @@ export interface PipelineLead {
   lost_at: string | null;
   converted_at: string | null;
   lost_reason: string | null;
+  estimate_id?: number | null;
   board?: { id: number; name: string };
   stage?: { id: number; name: string; color: string | null; is_won: boolean; is_lost: boolean };
   assignee?: PipelineUserRef | null;

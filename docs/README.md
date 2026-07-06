@@ -43,7 +43,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | Document | Contents |
 |----------|----------|
 | [desktop-release.md](./platform/desktop-release.md) | Electron desktop builds |
-| [monetization.md](./product/monetization.md) | Product monetization notes |
+| [estimates-module.md](./estimates-module.md) | Project estimates, costing, projects, job delivery |
 | [design-system.md](./product/design-system.md) | Colors, typography, UI patterns |
 | [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
 

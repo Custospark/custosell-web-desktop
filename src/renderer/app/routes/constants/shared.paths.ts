@@ -20,6 +20,14 @@ export const ROUTES = {
     SETTINGS: '/pipeline/settings',
   },
   INVOICES: { INDEX: '/invoices', NEW: '/invoices/new', DETAIL: (id: number) => `/invoices/${id}` },
+  ESTIMATES: {
+    INDEX: '/estimates',
+    DETAIL: (id: number) => `/estimates/${id}`,
+    PROJECTS: '/estimates/projects',
+    PROJECT_DETAIL: (id: number) => `/estimates/projects/${id}`,
+    INSIGHTS: '/estimates/insights',
+    TEMPLATES: '/estimates/templates',
+  },
   EXPENSES: { INDEX: '/expenses', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
   ACCOUNT: {
     INDEX: '/account',

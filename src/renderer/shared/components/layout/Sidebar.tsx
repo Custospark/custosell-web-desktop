@@ -9,7 +9,7 @@ import {
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
-  Kanban, Briefcase, TrendingUp, SlidersHorizontal,
+  Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -41,6 +41,9 @@ function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
   if (itemTo === ROUTES.PIPELINE.BOARDS) {
     return /^\/pipeline\/boards\/\d+/.test(pathname);
   }
+  if (itemTo === ROUTES.ESTIMATES.PROJECTS) {
+    return /^\/estimates\/projects\/\d+/.test(pathname);
+  }
   return pathname.startsWith(`${itemTo}/`);
 }
 
@@ -51,6 +54,8 @@ const baseSubRoutes = [
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.PIPELINE.BOARDS, ROUTES.PIPELINE.MY_WORK, ROUTES.PIPELINE.LEADS,
   ROUTES.PIPELINE.INSIGHTS, ROUTES.PIPELINE.SETTINGS,
+  ROUTES.ESTIMATES.INDEX, ROUTES.ESTIMATES.PROJECTS,
+  ROUTES.ESTIMATES.INSIGHTS, ROUTES.ESTIMATES.TEMPLATES,
   ROUTES.INVOICES.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
   ROUTES.ACCOUNTING.RATIOS, ROUTES.ACCOUNTING.STATEMENTS,
@@ -135,6 +140,16 @@ const baseNavGroups: NavGroup[] = [
       { to: ROUTES.PIPELINE.LEADS, label: 'All Leads', icon: Users },
       { to: ROUTES.PIPELINE.INSIGHTS, label: 'Insights', icon: TrendingUp },
       { to: ROUTES.PIPELINE.SETTINGS, label: 'Settings', icon: SlidersHorizontal },
+    ],
+  },
+  {
+    icon: FileSpreadsheet,
+    label: 'Estimates',
+    subItems: [
+      { to: ROUTES.ESTIMATES.INDEX, label: 'Estimates', icon: FileSpreadsheet },
+      { to: ROUTES.ESTIMATES.PROJECTS, label: 'Projects', icon: FolderKanban },
+      { to: ROUTES.ESTIMATES.INSIGHTS, label: 'Insights', icon: TrendingUp },
+      { to: ROUTES.ESTIMATES.TEMPLATES, label: 'Templates', icon: LayoutTemplate },
     ],
   },
   {

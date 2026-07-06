@@ -245,6 +245,7 @@ export default function BoardKanbanPage() {
           boardId={boardId}
           stageId={createStageId}
           onClose={() => setCreateStageId(null)}
+          defaultCardType={board?.project_id ? 'card' : undefined}
         />
       )}
 

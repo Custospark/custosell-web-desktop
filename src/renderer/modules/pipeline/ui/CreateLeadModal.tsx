@@ -21,9 +21,11 @@ interface CreateLeadModalProps {
   onClose: () => void;
   boardId?: number;
   stageId?: number;
+  /** When set, card type selector is hidden and this type is used automatically */
+  defaultCardType?: PipelineCardType;
 }
 
-export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: fixedStageId, onClose }: CreateLeadModalProps) {
+export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: fixedStageId, onClose, defaultCardType }: CreateLeadModalProps) {
   const createLead = useCreatePipelineLead();
   const { data: boards = [] } = usePipelineBoards();
   const { data: sources } = usePipelineSources();
@@ -53,7 +55,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
   const stageSelectValue = fixedStageId ?? (selectedStageId !== '' ? selectedStageId : stages[0]?.id) ?? '';
 
   const [title, setTitle] = useState('');
-  const [cardType, setCardType] = useState<PipelineCardType>('lead');
+  const [cardType, setCardType] = useState<PipelineCardType>(defaultCardType ?? 'lead');
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -63,7 +65,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
 
   const reset = () => {
     setTitle('');
-    setCardType('lead');
+    setCardType(defaultCardType ?? 'lead');
     setContactName('');
     setContactEmail('');
     setContactPhone('');
@@ -101,12 +103,15 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
     <Modal isOpen={open} onClose={handleClose} title="Add card" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
-          icon={UserPlus}
-          tone="emerald"
-          title="New card"
-          description="Add a sales lead or a general project/task card to this column."
+          icon={defaultCardType === 'card' ? Kanban : UserPlus}
+          tone={defaultCardType === 'card' ? 'indigo' : 'emerald'}
+          title={defaultCardType === 'card' ? 'New task' : 'New card'}
+          description={defaultCardType === 'card'
+            ? 'Add a task card to this column. Team members can be assigned to work on it.'
+            : 'Add a sales lead or a general project/task card to this column.'}
         />
 
+        {!defaultCardType && (
         <div className="grid grid-cols-2 gap-2">
           {([
             { value: 'lead' as const, label: 'Sales lead', icon: UserPlus, hint: 'CRM contact & value' },
@@ -127,6 +132,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
             </button>
           ))}
         </div>
+        )}
 
         {!fixedBoardId && (
           <PipelineFormSection title="Board & column" icon={Kanban}>

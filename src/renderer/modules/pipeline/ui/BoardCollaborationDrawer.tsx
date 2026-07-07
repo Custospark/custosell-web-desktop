@@ -1,27 +1,33 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
+import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { cn } from '../../../shared/utils/cn';
-import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 import {
   useBoardAnnouncements,
   useBoardPolls,
   useCreateBoardAnnouncement,
   useCreateBoardPoll,
   useDeleteBoardAnnouncement,
+  useDeleteBoardPoll,
+  useRemovePollVote,
   useSetAnnouncementRead,
   useVotePoll,
 } from '../api/usePipelineCollaborationQueries';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { PipelineUserAttribution } from './pipelineUserAttribution';
 import {
   BarChart3,
   Bell,
   Check,
-  EyeOff,
+  CheckCircle2,
+  Circle,
   Megaphone,
   Pin,
   Plus,
   Trash2,
+  Undo2,
   Users,
 } from 'lucide-react';
 
@@ -29,36 +35,80 @@ interface BoardCollaborationDrawerProps {
   boardId: number;
   canManage: boolean;
   open: boolean;
+  initialTab?: Tab;
   onClose: () => void;
 }
 
 type Tab = 'notices' | 'polls';
 type ResultsVisibility = 'team' | 'creator_only';
 
+function CollaborationLoading() {
+  return (
+    <div className="flex justify-center py-12">
+      <LoadingSpinner />
+    </div>
+  );
+}
+
 export default function BoardCollaborationDrawer({
   boardId,
   canManage,
   open,
+  initialTab = 'notices',
   onClose,
 }: BoardCollaborationDrawerProps) {
   const user = useAppSelector((s) => s.auth.user);
-  const [tab, setTab] = useState<Tab>('notices');
-  const { data: announcements = [] } = useBoardAnnouncements(boardId, open);
-  const { data: polls = [] } = useBoardPolls(boardId, undefined, open);
+  const [tab, setTab] = useState<Tab>(initialTab);
+  const {
+    data: announcements = [],
+    isLoading: announcementsLoading,
+    isFetching: announcementsFetching,
+  } = useBoardAnnouncements(boardId, open);
+  const {
+    data: polls = [],
+    isLoading: pollsLoading,
+    isFetching: pollsFetching,
+  } = useBoardPolls(boardId, undefined, open);
   const createAnnouncement = useCreateBoardAnnouncement(boardId);
   const deleteAnnouncement = useDeleteBoardAnnouncement(boardId);
   const setAnnouncementRead = useSetAnnouncementRead(boardId);
   const createPoll = useCreateBoardPoll(boardId);
   const votePoll = useVotePoll(boardId);
+  const removePollVote = useRemovePollVote(boardId);
+  const deletePoll = useDeleteBoardPoll(boardId);
 
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeBody, setNoticeBody] = useState('');
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [resultsVisibility, setResultsVisibility] = useState<ResultsVisibility>('team');
+  const [markingAllRead, setMarkingAllRead] = useState(false);
 
-  const unreadNotices = announcements.filter((item) => !item.is_read).length;
-  const pendingPolls = polls.filter((poll) => !poll.user_has_voted).length;
+  const unreadNotices = useMemo(
+    () => announcements.filter((item) => !item.is_read),
+    [announcements],
+  );
+  const pendingPolls = useMemo(
+    () => polls.filter((poll) => !poll.user_has_voted),
+    [polls],
+  );
+
+  const sortedAnnouncements = useMemo(
+    () => [...announcements].sort((a, b) => Number(a.is_read) - Number(b.is_read)),
+    [announcements],
+  );
+
+  const sortedPolls = useMemo(
+    () =>
+      [...polls].sort((a, b) => {
+        const pendingDiff = Number(a.user_has_voted) - Number(b.user_has_voted);
+        if (pendingDiff !== 0) return pendingDiff;
+        const votesA = a.total_votes ?? 0;
+        const votesB = b.total_votes ?? 0;
+        return votesB - votesA;
+      }),
+    [polls],
+  );
 
   const resetForms = () => {
     setNoticeTitle('');
@@ -67,6 +117,25 @@ export default function BoardCollaborationDrawer({
     setPollOptions(['', '']);
     setResultsVisibility('team');
   };
+
+  const markNoticeRead = (id: number) => {
+    void setAnnouncementRead.mutateAsync({ id, is_read: true });
+  };
+
+  const markAllNoticesRead = async () => {
+    if (unreadNotices.length === 0) return;
+    setMarkingAllRead(true);
+    try {
+      await Promise.all(
+        unreadNotices.map((item) => setAnnouncementRead.mutateAsync({ id: item.id, is_read: true })),
+      );
+    } finally {
+      setMarkingAllRead(false);
+    }
+  };
+
+  const noticesShowLoading = announcementsLoading || (announcementsFetching && announcements.length === 0);
+  const pollsShowLoading = pollsLoading || (pollsFetching && polls.length === 0);
 
   return (
     <Modal
@@ -90,9 +159,9 @@ export default function BoardCollaborationDrawer({
         >
           <Megaphone className="h-4 w-4" />
           Notices
-          {unreadNotices > 0 && (
+          {unreadNotices.length > 0 && (
             <span className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
-              {unreadNotices > 9 ? '9+' : unreadNotices}
+              {unreadNotices.length > 9 ? '9+' : unreadNotices.length}
             </span>
           )}
         </button>
@@ -106,9 +175,9 @@ export default function BoardCollaborationDrawer({
         >
           <BarChart3 className="h-4 w-4" />
           Polls
-          {pendingPolls > 0 && (
+          {pendingPolls.length > 0 && (
             <span className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[9px] font-bold text-white">
-              {pendingPolls > 9 ? '9+' : pendingPolls}
+              {pendingPolls.length > 9 ? '9+' : pendingPolls.length}
             </span>
           )}
         </button>
@@ -116,6 +185,24 @@ export default function BoardCollaborationDrawer({
 
       {tab === 'notices' && (
         <div className="space-y-4">
+          {unreadNotices.length > 0 && !noticesShowLoading && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-medium text-amber-900">
+                {unreadNotices.length} unread notice{unreadNotices.length === 1 ? '' : 's'}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                loading={markingAllRead}
+                onClick={() => void markAllNoticesRead()}
+                className="shrink-0 bg-amber-600 hover:bg-amber-700"
+              >
+                <Check className="mr-1.5 h-4 w-4" />
+                Mark all read
+              </Button>
+            </div>
+          )}
+
           {canManage && (
             <div className="space-y-3 rounded-xl border border-blue-100 bg-blue-50/40 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-blue-900">
@@ -157,79 +244,104 @@ export default function BoardCollaborationDrawer({
             </div>
           )}
 
-          <ul className="max-h-[min(50vh,400px)] space-y-3 overflow-y-auto pr-1">
-            {announcements.length === 0 ? (
-              <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500">
-                No board notices yet.
-              </li>
-            ) : (
-              announcements.map((item) => {
-                const showReadStats = canManage || item.created_by === user?.id;
-                return (
-                  <li
-                    key={item.id}
-                    className={cn(
-                      'rounded-xl border bg-white p-4 shadow-sm',
-                      item.is_read ? 'border-gray-200' : 'border-amber-200 ring-1 ring-amber-100',
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {item.is_pinned && <Pin className="h-3.5 w-3.5 text-amber-500" />}
-                          <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                          {!item.is_read && (
-                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
-                              Unread
-                            </span>
-                          )}
+          {noticesShowLoading ? (
+            <CollaborationLoading />
+          ) : (
+            <ul className="max-h-[min(50vh,400px)] space-y-3 overflow-y-auto pr-1">
+              {sortedAnnouncements.length === 0 ? (
+                <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500">
+                  No board notices yet.
+                </li>
+              ) : (
+                sortedAnnouncements.map((item) => {
+                  const showReadStats = canManage || item.created_by === user?.id;
+                  const canDeleteNotice = item.can_delete ?? (canManage || item.created_by === user?.id);
+                  return (
+                    <li
+                      key={item.id}
+                      className={cn(
+                        'rounded-xl border bg-white p-4 shadow-sm',
+                        item.is_read ? 'border-gray-200' : 'border-amber-300 bg-amber-50/30 ring-1 ring-amber-200',
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.is_pinned && <Pin className="h-3.5 w-3.5 text-amber-500" />}
+                            <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                            {!item.is_read && (
+                              <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                New
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{item.body}</p>
+                          <div className="mt-2">
+                            <PipelineUserAttribution
+                              user={item.creator}
+                              timestamp={item.created_at}
+                              suffix={
+                                showReadStats && item.read_count != null && item.team_member_count != null ? (
+                                  <span className="text-gray-500">
+                                    · {item.read_count}/{item.team_member_count} read
+                                  </span>
+                                ) : undefined
+                              }
+                            />
+                          </div>
                         </div>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{item.body}</p>
-                        <p className="mt-2 text-[11px] text-gray-400">
-                          {item.creator?.name ?? 'Team'} · {item.created_at ? formatShiftDateTime(item.created_at) : ''}
-                          {showReadStats && item.read_count != null && item.team_member_count != null && (
-                            <span className="ml-2 text-gray-500">
-                              · {item.read_count}/{item.team_member_count} read
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 flex-col gap-1">
-                        <button
-                          type="button"
-                          onClick={() => void setAnnouncementRead.mutateAsync({ id: item.id, is_read: !item.is_read })}
-                          className={cn(
-                            'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1',
-                            item.is_read
-                              ? 'bg-gray-50 text-gray-600 ring-gray-200 hover:bg-gray-100'
-                              : 'bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100',
-                          )}
-                          title={item.is_read ? 'Mark as unread' : 'Mark as read'}
-                        >
-                          {item.is_read ? <EyeOff className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
-                          {item.is_read ? 'Unread' : 'Read'}
-                        </button>
-                        {canManage && (
+                        {canDeleteNotice && (
                           <button
                             type="button"
                             onClick={() => void deleteAnnouncement.mutate(item.id)}
-                            className="inline-flex items-center justify-center rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-100"
+                            className="shrink-0 rounded-md bg-red-50 p-2 text-red-600 ring-1 ring-red-200 hover:bg-red-100"
+                            title="Remove notice for everyone"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         )}
                       </div>
-                    </div>
-                  </li>
-                );
-              })
-            )}
-          </ul>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {!item.is_read ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            loading={setAnnouncementRead.isPending}
+                            onClick={() => markNoticeRead(item.id)}
+                            className="min-h-10 flex-1 bg-emerald-600 hover:bg-emerald-700 sm:flex-none"
+                          >
+                            <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                            Got it — mark as read
+                          </Button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void setAnnouncementRead.mutateAsync({ id: item.id, is_read: false })}
+                            className="min-h-10 rounded-lg px-4 text-sm font-medium text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50"
+                          >
+                            Mark as unread
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          )}
         </div>
       )}
 
       {tab === 'polls' && (
         <div className="space-y-4">
+          {pendingPolls.length > 0 && !pollsShowLoading && (
+            <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+              <span className="font-semibold">Tap any option to vote instantly.</span>
+              {' '}No extra submit step needed.
+            </div>
+          )}
+
           {canManage && (
             <div className="space-y-3 rounded-xl border border-violet-100 bg-violet-50/40 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-violet-900">
@@ -317,117 +429,200 @@ export default function BoardCollaborationDrawer({
             </div>
           )}
 
-          <ul className="max-h-[min(50vh,400px)] space-y-3 overflow-y-auto pr-1">
-            {polls.length === 0 ? (
-              <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500">
-                No polls on this board yet.
-              </li>
-            ) : (
-              polls.map((poll) => {
-                const canSeeResults = poll.can_see_results ?? true;
-                const totalVotes = poll.total_votes ?? poll.votes?.length ?? 0;
-                const myVotes = new Set(
-                  (poll.votes ?? []).filter((v) => v.user_id === user?.id).map((v) => v.option_id),
-                );
-                const isCreator = poll.created_by === user?.id;
+          {pollsShowLoading ? (
+            <CollaborationLoading />
+          ) : (
+            <ul className="max-h-[min(50vh,400px)] space-y-4 overflow-y-auto pr-1">
+              {sortedPolls.length === 0 ? (
+                <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500">
+                  No polls on this board yet.
+                </li>
+              ) : (
+                sortedPolls.map((poll) => {
+                  const canSeeResults = poll.can_see_results ?? true;
+                  const totalVotes = poll.total_votes ?? poll.votes?.length ?? 0;
+                  const myVotes = new Set(
+                    (poll.votes ?? []).filter((v) => v.user_id === user?.id).map((v) => v.option_id),
+                  );
+                  const canManagePoll = poll.can_manage_poll ?? (poll.created_by === user?.id || canManage);
+                  const needsVote = !poll.user_has_voted;
+                  const canRemoveOwnVote = poll.can_remove_own_vote ?? poll.user_has_voted;
 
-                return (
-                  <li key={poll.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{poll.question}</h3>
-                        <p className="mt-0.5 text-[11px] text-gray-400">
-                          {poll.creator?.name ?? 'Team'}
-                          {canSeeResults && (
-                            <> · {totalVotes} vote{totalVotes === 1 ? '' : 's'}</>
-                          )}
-                          {poll.results_visibility === 'creator_only' && (
-                            <span className="ml-2 text-violet-600">· Results hidden from team</span>
-                          )}
-                        </p>
-                      </div>
-                      {!poll.user_has_voted && (
-                        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-800">
-                          Vote needed
-                        </span>
+                  return (
+                    <li
+                      key={poll.id}
+                      className={cn(
+                        'rounded-xl border bg-white p-4 shadow-sm',
+                        needsVote ? 'border-violet-300 ring-1 ring-violet-200' : 'border-gray-200',
                       )}
-                    </div>
-
-                    {poll.results_hidden && !poll.user_has_voted && (
-                      <p className="mt-2 text-xs text-gray-500">
-                        Results are only visible to the poll creator. Cast your vote to confirm your choice.
-                      </p>
-                    )}
-
-                    <div className="mt-3 space-y-2">
-                      {(poll.options ?? []).map((option) => {
-                        const count = option.votes_count ?? (poll.votes ?? []).filter((v) => v.option_id === option.id).length;
-                        const pct = canSeeResults && totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                        const voted = myVotes.has(option.id);
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            disabled={votePoll.isPending}
-                            onClick={() => void votePoll.mutateAsync({ pollId: poll.id, optionId: option.id })}
-                            className={cn(
-                              'relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition-colors',
-                              voted
-                                ? 'border-violet-300 bg-violet-50 text-violet-900'
-                                : 'border-gray-200 hover:border-violet-200 hover:bg-violet-50/50',
-                            )}
-                          >
-                            {canSeeResults && (
-                              <div
-                                className="absolute inset-y-0 left-0 bg-violet-100/70"
-                                style={{ width: `${pct}%` }}
-                              />
-                            )}
-                            <span className="relative flex justify-between gap-2">
-                              <span>{option.label}</span>
-                              {canSeeResults ? (
-                                <span className="text-xs font-medium text-gray-500">{pct}%</span>
-                              ) : voted ? (
-                                <span className="text-xs font-medium text-violet-600">Your vote</span>
-                              ) : null}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-semibold text-gray-900">{poll.question}</h3>
+                          <div className="mt-1.5">
+                            <PipelineUserAttribution
+                              user={poll.creator}
+                              timestamp={poll.created_at}
+                              suffix={
+                                canSeeResults ? (
+                                  <span className="text-gray-500">
+                                    · {totalVotes} vote{totalVotes === 1 ? '' : 's'}
+                                  </span>
+                                ) : poll.results_visibility === 'creator_only' ? (
+                                  <span className="text-violet-600">· Results hidden from team</span>
+                                ) : undefined
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          {needsVote ? (
+                            <span className="rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                              Your vote
                             </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {isCreator && (poll.participants?.length ?? 0) > 0 && (
-                      <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-gray-700">
-                          <Users className="h-3.5 w-3.5" />
-                          Team participation
-                        </p>
-                        <ul className="space-y-1.5">
-                          {poll.participants!.map((participant) => (
-                            <li
-                              key={participant.user.id}
-                              className="flex items-center justify-between gap-2 text-xs"
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Voted
+                            </span>
+                          )}
+                          {canManagePoll && (
+                            <button
+                              type="button"
+                              onClick={() => void deletePoll.mutate(poll.id)}
+                              className="rounded-md bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-100"
                             >
-                              <span className="truncate font-medium text-gray-800">
-                                {participant.user.name ?? 'Team member'}
-                              </span>
-                              {participant.has_voted ? (
-                                <span className="shrink-0 text-violet-700">
-                                  {participant.voted_option_label ?? 'Voted'}
-                                </span>
-                              ) : (
-                                <span className="shrink-0 text-gray-400">Not voted</span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
+                              Delete poll
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </li>
-                );
-              })
-            )}
-          </ul>
+
+                      {needsVote && (
+                        <p className="mt-2 text-sm font-medium text-violet-800">
+                          Choose one option — your vote saves immediately.
+                        </p>
+                      )}
+
+                      {canRemoveOwnVote && !needsVote && (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => void removePollVote.mutateAsync({ pollId: poll.id })}
+                            disabled={removePollVote.isPending}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
+                          >
+                            <Undo2 className="h-3.5 w-3.5" />
+                            Remove my vote
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="mt-3 space-y-2">
+                        {(poll.options ?? []).map((option) => {
+                          const count = option.votes_count ?? (poll.votes ?? []).filter((v) => v.option_id === option.id).length;
+                          const pct = canSeeResults && totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                          const voted = myVotes.has(option.id);
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              disabled={votePoll.isPending}
+                              onClick={() => void votePoll.mutateAsync({ pollId: poll.id, optionId: option.id })}
+                              className={cn(
+                                'relative flex min-h-[48px] w-full items-center gap-3 overflow-hidden rounded-xl border-2 px-4 py-3 text-left text-sm font-medium transition-all active:scale-[0.99]',
+                                voted
+                                  ? 'border-violet-500 bg-violet-50 text-violet-900 shadow-sm'
+                                  : needsVote
+                                    ? 'border-violet-200 bg-white text-gray-800 hover:border-violet-400 hover:bg-violet-50'
+                                    : 'border-gray-200 bg-gray-50/50 text-gray-700 hover:border-violet-200 hover:bg-violet-50/40',
+                              )}
+                            >
+                              {canSeeResults && (
+                                <div
+                                  className="absolute inset-y-0 left-0 bg-violet-100/60"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              )}
+                              <span className="relative shrink-0">
+                                {voted ? (
+                                  <CheckCircle2 className="h-5 w-5 text-violet-600" />
+                                ) : (
+                                  <Circle className="h-5 w-5 text-gray-300" />
+                                )}
+                              </span>
+                              <span className="relative flex min-w-0 flex-1 items-center justify-between gap-2">
+                                <span className="truncate">{option.label}</span>
+                                {canSeeResults ? (
+                                  <span className="shrink-0 text-xs font-semibold text-gray-600">
+                                    {count} · {pct}%
+                                  </span>
+                                ) : voted ? (
+                                  <span className="shrink-0 text-xs font-semibold text-violet-600">Your pick</span>
+                                ) : needsVote ? (
+                                  <span className="shrink-0 text-xs font-semibold text-violet-500">Tap to vote</span>
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {canManagePoll && (poll.participants?.length ?? 0) > 0 && (
+                        <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+                            <Users className="h-3.5 w-3.5" />
+                            Team participation
+                          </p>
+                          <ul className="space-y-2">
+                            {poll.participants!.map((participant) => (
+                              <li
+                                key={participant.user.id}
+                                className="flex items-center justify-between gap-2 text-xs"
+                              >
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <UserAvatar
+                                    name={participant.user.name ?? 'Team member'}
+                                    avatar={participant.user.avatar}
+                                    size="xs"
+                                  />
+                                  <span className="truncate font-medium text-gray-800">
+                                    {participant.user.name ?? 'Team member'}
+                                  </span>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-2">
+                                  {participant.has_voted ? (
+                                    <span className="text-violet-700">
+                                      {participant.voted_option_label ?? 'Voted'}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400">Not voted</span>
+                                  )}
+                                  {participant.has_voted && (
+                                    <button
+                                      type="button"
+                                      title="Remove this member's vote"
+                                      onClick={() => void removePollVote.mutateAsync({
+                                        pollId: poll.id,
+                                        userId: participant.user.id,
+                                      })}
+                                      className="rounded p-1 text-red-500 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          )}
         </div>
       )}
     </Modal>

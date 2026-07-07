@@ -18,7 +18,7 @@ import {
   pipelineSelectClass,
 } from './pipelineFormFields';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { formatShiftDate, formatShiftDateTime } from '../../../shared/utils/formatDateTime';
+import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import LeadCommentsPanel from './LeadCommentsPanel';
 import LeadRemindersPanel from './LeadRemindersPanel';
@@ -46,6 +46,9 @@ import CardDetailExtras from './CardDetailExtras';
 import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
 import PipelineColorPicker from './PipelineColorPicker';
 import { CARD_PRESET_COLORS } from './pipelineColorPresets';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
+import { PipelineUserAttribution } from './pipelineUserAttribution';
 
 interface LeadDetailModalProps {
   leadId: number;
@@ -95,6 +98,7 @@ export default function LeadDetailModal({
   boardAccess,
   onClose,
 }: LeadDetailModalProps) {
+  const user = useAppSelector((s) => s.auth.user);
   const { data: lead, isLoading } = usePipelineLead(leadId, true, { poll: true });
   const { data: sources } = usePipelineSources();
   const updateLead = useUpdatePipelineLead();
@@ -124,6 +128,7 @@ export default function LeadDetailModal({
   };
 
   const systemActivities = (lead.activities ?? []).filter((a) => !USER_COMMENT_TYPES.has(a.type));
+  const canArchive = board ? canManageBoardSettings(user, board, boardAccess) : false;
 
   const handleArchive = async () => {
     const ok = await confirm({
@@ -317,18 +322,20 @@ export default function LeadDetailModal({
           )}
         </PipelineFormSection>
 
-        <div className="flex justify-end border-t border-gray-100 pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleArchive}
-            loading={deleteLead.isPending}
-            className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-            Archive card
-          </Button>
-        </div>
+        {canArchive && (
+          <div className="flex justify-end border-t border-gray-100 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleArchive}
+              loading={deleteLead.isPending}
+              className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Archive card
+            </Button>
+          </div>
+        )}
 
         {lead.customer && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
@@ -412,8 +419,10 @@ export default function LeadDetailModal({
                       <div className="min-w-0 flex-1">
                         <span className="font-medium capitalize text-gray-700">{activityTypeLabel(a.type)}</span>
                         {a.body && <span className="text-gray-600"> — {a.body}</span>}
-                        {a.created_at && (
-                          <span className="mt-0.5 block text-[11px] text-gray-400">{formatShiftDateTime(a.created_at)}</span>
+                        {(a.user || a.created_at) && (
+                          <div className="mt-1">
+                            <PipelineUserAttribution user={a.user} timestamp={a.created_at} />
+                          </div>
                         )}
                       </div>
                     </li>

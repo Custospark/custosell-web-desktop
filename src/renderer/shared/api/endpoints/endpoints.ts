@@ -119,6 +119,7 @@ export const PIPELINE = {
   ANNOUNCEMENT: (id: number) => `/pipeline/announcements/${id}`,
   ANNOUNCEMENT_READ: (id: number) => `/pipeline/announcements/${id}/read`,
   BOARD_POLLS: (boardId: number) => `/pipeline/boards/${boardId}/polls`,
+  POLL: (pollId: number) => `/pipeline/polls/${pollId}`,
   POLL_VOTE: (pollId: number) => `/pipeline/polls/${pollId}/vote`,
   LEAD_REMINDERS: (leadId: number) => `/pipeline/leads/${leadId}/reminders`,
   REMINDER: (id: number) => `/pipeline/reminders/${id}`,

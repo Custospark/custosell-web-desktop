@@ -38,8 +38,9 @@ export function useBoardCollaborationSummary(boardId: number, enabled = true) {
       return (data as { data: PipelineBoardCollaborationSummary }).data;
     },
     enabled: enabled && boardId > 0,
-    staleTime: 15_000,
-    refetchInterval: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -164,6 +165,47 @@ export function useVotePoll(boardId: number, leadId?: number) {
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not submit vote'));
+    },
+  });
+}
+
+export function useRemovePollVote(boardId: number, leadId?: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ pollId, userId }: { pollId: number; userId?: number }) => {
+      const { data } = await axiosInstance.delete(PIPELINE.POLL_VOTE(pollId), {
+        data: userId ? { user_id: userId } : undefined,
+      });
+      return (data as { data: PipelinePoll }).data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.polls(boardId, leadId) });
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.polls(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.summary(boardId) });
+      showToast('success', 'Vote removed');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not remove vote'));
+    },
+  });
+}
+
+export function useDeleteBoardPoll(boardId: number, leadId?: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (pollId: number) => {
+      await axiosInstance.delete(PIPELINE.POLL(pollId));
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.polls(boardId, leadId) });
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.polls(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.summary(boardId) });
+      showToast('success', 'Poll removed');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not remove poll'));
     },
   });
 }

@@ -186,6 +186,7 @@ export interface PipelineBoardAnnouncement {
   is_read?: boolean;
   read_count?: number | null;
   team_member_count?: number | null;
+  can_delete?: boolean;
 }
 
 export interface PipelinePollParticipant {
@@ -221,6 +222,8 @@ export interface PipelinePoll {
   can_see_results?: boolean;
   results_hidden?: boolean;
   participants?: PipelinePollParticipant[];
+  can_manage_poll?: boolean;
+  can_remove_own_vote?: boolean;
 }
 
 export interface PipelineBoardCollaborationSummary {
@@ -228,6 +231,8 @@ export interface PipelineBoardCollaborationSummary {
   unread_announcements_count: number;
   active_polls_count: number;
   polls_pending_vote_count: number;
+  attention_count?: number;
+  has_attention?: boolean;
 }
 
 export interface PipelineReminder {

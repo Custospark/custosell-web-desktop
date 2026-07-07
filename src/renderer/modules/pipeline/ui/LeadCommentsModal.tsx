@@ -6,10 +6,26 @@ import LeadCommentsPanel from './LeadCommentsPanel';
 interface LeadCommentsModalProps {
   leadId: number;
   boardId?: number;
+  board?: {
+    created_by?: number | null;
+    project_id?: number | null;
+    visibility?: string;
+    members?: { user_id: number; role: string }[];
+  };
+  boardAccess?: {
+    projectCreatedBy?: number | null;
+    projectMembers?: { user_id: number; role: string }[];
+  };
   onClose: () => void;
 }
 
-export default function LeadCommentsModal({ leadId, boardId, onClose }: LeadCommentsModalProps) {
+export default function LeadCommentsModal({
+  leadId,
+  boardId,
+  board,
+  boardAccess,
+  onClose,
+}: LeadCommentsModalProps) {
   const { data: lead, isLoading } = usePipelineLead(leadId, true);
 
   return (
@@ -28,6 +44,8 @@ export default function LeadCommentsModal({ leadId, boardId, onClose }: LeadComm
         <LeadCommentsPanel
           leadId={leadId}
           boardId={boardId}
+          board={board}
+          boardAccess={boardAccess}
           activities={lead.activities}
           compact
         />

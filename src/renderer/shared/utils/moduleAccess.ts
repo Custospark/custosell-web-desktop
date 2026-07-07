@@ -98,14 +98,11 @@ export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug
 
 export function ownerHasLegacyFullEstimatesAccess(user: AuthUser | null | undefined): boolean {
   if (!user || !isBusinessOwner(user)) return false;
-  const business = storedBusinessModules(user);
-  return business.includes('estimates') && business.length === BUSINESS_MODULE_SLUGS.length;
+  return staffHasFullEstimatesModule(user.modules);
 }
 
 export function ownerInitialEstimatesFullAccess(user: AuthUser | null | undefined): boolean {
-  if (!user) return false;
-  if (staffHasFullEstimatesModule(user.modules)) return true;
-  return ownerHasLegacyFullEstimatesAccess(user);
+  return staffHasFullEstimatesModule(user?.modules);
 }
 
 export function getAccessibleModules(user: AuthUser | null | undefined): string[] {
@@ -145,8 +142,7 @@ export function isProjectCollaboratorOnly(user: AuthUser | null | undefined): bo
 /** Full Projects & Estimates workspace (estimates, projects, insights, templates, costing). */
 export function canViewFullEstimates(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
-  if ((user.modules ?? []).includes(ESTIMATES_FULL_MODULE)) return true;
-  return ownerHasLegacyFullEstimatesAccess(user);
+  return staffHasFullEstimatesModule(user.modules);
 }
 
 export function staffHasFullEstimatesModule(modules: string[] | undefined): boolean {
@@ -197,16 +193,64 @@ export function getEstimatesFallbackRoute(user: AuthUser | null | undefined): st
   return getDefaultRoute(user);
 }
 
-/** Invite or change roles on a project team (full Estimates access, owner, or project manager). */
+/** Invite or change roles on a project team (owner, full estimates access, project creator, or project manager). */
 export function canManageProjectTeam(
   user: AuthUser | null | undefined,
   members: { user_id: number; role: string }[],
   projectCreatedBy?: number,
 ): boolean {
   if (!user) return false;
+  if (isBusinessOwner(user)) return true;
   if (canViewFullEstimates(user)) return true;
   if (projectCreatedBy && user.id === projectCreatedBy) return true;
   return members.some((m) => m.user_id === user.id && m.role === 'manager');
+}
+
+/** Board settings (visibility, team, appearance) — owners and managers only. */
+export function canManageBoardSettings(
+  user: AuthUser | null | undefined,
+  board: {
+    created_by?: number | null;
+    project_id?: number | null;
+    visibility?: string;
+    members?: { user_id: number; role: string }[];
+  },
+  options?: {
+    projectCreatedBy?: number | null;
+    projectMembers?: { user_id: number; role: string }[];
+  },
+): boolean {
+  if (!user) return false;
+  if (isBusinessOwner(user)) return true;
+
+  const projectCreatedBy = options?.projectCreatedBy ?? null;
+  const ownerId = board.project_id ? (projectCreatedBy ?? board.created_by) : board.created_by;
+
+  if (ownerId && user.id === ownerId) return true;
+
+  if (board.project_id && options?.projectMembers) {
+    return canManageProjectTeam(user, options.projectMembers, projectCreatedBy ?? undefined);
+  }
+
+  if (board.visibility === 'shared' && board.members?.length) {
+    const member = board.members.find((m) => m.user_id === user.id);
+    if (member?.role === 'editor') return true;
+  }
+
+  return false;
+}
+
+/** Comment author or board manager may delete user comments. */
+export function canDeletePipelineComment(
+  user: AuthUser | null | undefined,
+  activity: { user_id?: number | null; user?: { id: number } | null },
+  board: Parameters<typeof canManageBoardSettings>[1],
+  options?: Parameters<typeof canManageBoardSettings>[2],
+): boolean {
+  if (!user) return false;
+  const authorId = activity.user_id ?? activity.user?.id;
+  if (authorId && authorId === user.id) return true;
+  return canManageBoardSettings(user, board, options);
 }
 
 /** Estimates module, boards-only staff, or invited collaborator routes under /estimates. */

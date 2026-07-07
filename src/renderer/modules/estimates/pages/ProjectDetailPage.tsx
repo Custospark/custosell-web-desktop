@@ -16,6 +16,7 @@ import {
 } from '../../../shared/utils/moduleAccess';
 import {
   useProject,
+  useUpdateProject,
   useProjectBudgetSummary,
   useProjectProfitability,
   useCreateCostAllocation,
@@ -26,7 +27,7 @@ import {
   useUpdateProjectMember,
   useRemoveProjectMember,
 } from '../api/useProjectQueries';
-import type { CreateCostAllocationPayload, AllocationType } from '../api/projectTypes';
+import type { CreateCostAllocationPayload, AllocationType, ProjectStatus } from '../api/projectTypes';
 import { BudgetProgressBar, PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
 import ProjectMemberPicker from '../ui/ProjectMemberPicker';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
@@ -57,6 +58,14 @@ const ALLOCATION_TYPES: { value: AllocationType; label: string }[] = [
   { value: 'overhead', label: 'Overhead' },
   { value: 'expense', label: 'Expense' },
   { value: 'other', label: 'Other' },
+];
+
+const PROJECT_STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
+  { value: 'planning', label: 'Planning' },
+  { value: 'active', label: 'Active' },
+  { value: 'on_hold', label: 'On hold' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
 function MiniStat({ label, value, icon: Icon, color, sub }: {
@@ -105,6 +114,7 @@ export default function ProjectDetailPage() {
   const addMember = useAddProjectMember(projectId);
   const updateMember = useUpdateProjectMember(projectId);
   const removeMember = useRemoveProjectMember(projectId);
+  const updateProject = useUpdateProject();
 
   const [showAllocation, setShowAllocation] = useState(false);
   const [allocType, setAllocType] = useState<AllocationType>('overhead');
@@ -202,6 +212,43 @@ export default function ProjectDetailPage() {
             {project.status.replace('_', ' ')}
           </span>
         </div>
+        {canManageTeam && (
+          <div className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-gray-50/60 p-3">
+            <label className="text-sm">
+              <span className="mb-1 block text-xs font-medium text-gray-600">Status</span>
+              <select
+                value={project.status}
+                onChange={(e) => {
+                  void updateProject.mutateAsync({
+                    id: projectId,
+                    payload: { status: e.target.value as ProjectStatus },
+                  });
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                disabled={updateProject.isPending}
+              >
+                {PROJECT_STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-xs font-medium text-gray-600">Due date</span>
+              <input
+                type="date"
+                value={project.due_date?.slice(0, 10) ?? ''}
+                onChange={(e) => {
+                  void updateProject.mutateAsync({
+                    id: projectId,
+                    payload: { due_date: e.target.value || null },
+                  });
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                disabled={updateProject.isPending}
+              />
+            </label>
+          </div>
+        )}
         {project.description && (
           <p className="mt-2 max-w-2xl text-sm text-gray-600">{project.description}</p>
         )}

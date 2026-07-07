@@ -101,6 +101,7 @@ export const PIPELINE = {
   LEAD_STAGE: (id: number) => `/pipeline/leads/${id}/stage`,
   LEAD_CONVERT: (id: number) => `/pipeline/leads/${id}/convert`,
   LEAD_ACTIVITIES: (leadId: number) => `/pipeline/leads/${leadId}/activities`,
+  ACTIVITY: (id: number) => `/pipeline/activities/${id}`,
   SOURCES: '/pipeline/sources',
   SOURCE: (id: number) => `/pipeline/sources/${id}`,
   INSIGHTS: '/pipeline/insights',

@@ -13,6 +13,7 @@ import {
   useRejectEstimate,
   useEmailEstimate,
   useDuplicateEstimate,
+  useUpdateEstimate,
 } from '../api/useEstimateQueries';
 import EstimateStatusBadge, { displayEstimateStatus } from '../ui/EstimateStatusBadge';
 import EstimateMarginSummary from '../ui/EstimateMarginSummary';
@@ -71,6 +72,7 @@ export default function EstimateDetailPage() {
   const rejectEstimate = useRejectEstimate();
   const emailEstimate = useEmailEstimate();
   const duplicateEstimate = useDuplicateEstimate();
+  const updateEstimate = useUpdateEstimate();
 
   const [activeTab, setActiveTab] = useState<DetailTab>('items');
   const [showApprove, setShowApprove] = useState(false);
@@ -340,11 +342,25 @@ export default function EstimateDetailPage() {
                 <span>Total</span>
                 <span className="text-blue-700 tabular-nums">{formatCurrency(n(estimate.total), estimate.currency)}</span>
               </div>
-              {estimate.valid_until && (
-                <p className="flex items-center gap-1.5 pt-2 text-xs text-gray-400">
-                  <Calendar className="h-3 w-3" />
-                  Valid until {formatShiftDate(estimate.valid_until)}
-                </p>
+              {estimate.valid_until !== undefined && (
+                <div className="pt-2">
+                  <label className="flex items-center gap-2 text-xs text-gray-500">
+                    <Calendar className="h-3 w-3 shrink-0" />
+                    <span>Valid until</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={estimate.valid_until?.slice(0, 10) ?? ''}
+                    onChange={(e) => {
+                      void updateEstimate.mutateAsync({
+                        id: estimate.id,
+                        payload: { valid_until: e.target.value || null },
+                      });
+                    }}
+                    disabled={updateEstimate.isPending || estimate.status === 'converted'}
+                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-800"
+                  />
+                </div>
               )}
             </Card>
 

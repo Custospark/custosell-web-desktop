@@ -13,6 +13,9 @@ import { localStaffStore, toStaffWithSyncMeta, type StaffWithSyncMeta } from '..
 import type { RoleWithSyncMeta } from '../../../../app/store/offline/settings/localRolesStore';
 import type { BusinessWithSyncMeta } from '../../../../app/store/offline/settings/localBusinessSettingsStore';
 import { store } from '../../../../app/store/store';
+import { setUser } from '../../../../app/store/slices/authSlice';
+import { AUTH } from '../../../../shared/api/endpoints/endpoints';
+import type { AuthUser } from '../../../../app/store/slices/authSlice';
 import {
   completeOfflineCreateStaffInstant,
   completeOfflineDeleteStaffInstant,
@@ -234,6 +237,15 @@ export function useUpdateStaff() {
         showToast('success', 'Staff updated');
         void refreshStaffCatalogSnapshot();
         qc.invalidateQueries({ queryKey: staffKeys.list() });
+        const currentUserId = store.getState().auth.user?.id;
+        if (currentUserId === id) {
+          void axiosInstance.get<{ data?: AuthUser } | AuthUser>(AUTH.ME).then(({ data }) => {
+            const userData = (data && typeof data === 'object' && 'data' in data && data.data)
+              ? data.data
+              : data as AuthUser;
+            store.dispatch(setUser(userData));
+          }).catch(() => undefined);
+        }
       }
     },
     onError: (e) => {

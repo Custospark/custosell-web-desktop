@@ -31,6 +31,9 @@ import BoardCalendarView from '../ui/BoardCalendarView';
 import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
 import { CalendarDays, Columns3, LayoutGrid, Plus, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useProject, useProjectMembers } from '../../estimates/api/useProjectQueries';
+import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
 
 type BoardViewMode = 'kanban' | 'calendar';
 type BoardWorkspace = 'pipeline' | 'estimates';
@@ -79,6 +82,18 @@ export default function BoardKanbanPage() {
   const [deleteStage, setDeleteStage] = useState<PipelineStage | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [commentsLeadId, setCommentsLeadId] = useState<number | null>(null);
+
+  const user = useAppSelector((s) => s.auth.user);
+  const isProjectBoard = Boolean(board?.project_id);
+  const projectId = board?.project_id ?? 0;
+  const { data: project } = useProject(isProjectBoard ? projectId : 0);
+  const { data: projectMembers = [] } = useProjectMembers(isProjectBoard ? projectId : 0);
+  const canManageSettings = board
+    ? canManageBoardSettings(user, board, {
+        projectCreatedBy: project?.created_by,
+        projectMembers,
+      })
+    : false;
 
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
@@ -165,14 +180,16 @@ export default function BoardKanbanPage() {
               boardsListRoute={boardsListRoute}
               allowCreateBoard={allowCreateBoard}
             />
-            <button
-              type="button"
-              onClick={() => setEditBoardOpen(true)}
-              className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
-              title="Board settings"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
+            {canManageSettings && (
+              <button
+                type="button"
+                onClick={() => setEditBoardOpen(true)}
+                className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+                title="Board settings"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {viewMode === 'kanban' && (
@@ -348,10 +365,15 @@ export default function BoardKanbanPage() {
         />
       )}
 
-      {commentsLeadId != null && (
+      {commentsLeadId != null && board && (
         <LeadCommentsModal
           leadId={commentsLeadId}
           boardId={boardId}
+          board={board}
+          boardAccess={{
+            projectCreatedBy: project?.created_by,
+            projectMembers,
+          }}
           onClose={() => setCommentsLeadId(null)}
         />
       )}

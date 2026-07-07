@@ -11,6 +11,7 @@ import {
   useAddProjectMember,
   useUpdateProjectMember,
   useRemoveProjectMember,
+  useProject,
 } from '../../estimates/api/useProjectQueries';
 import ProjectMemberPicker from '../../estimates/ui/ProjectMemberPicker';
 import {
@@ -27,7 +28,7 @@ import { AlignLeft, Archive, Kanban, Type, Users } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canManageProjectTeam, isBusinessOwner } from '../../../shared/utils/moduleAccess';
+import { canManageBoardSettings, canManageProjectTeam, isBusinessOwner } from '../../../shared/utils/moduleAccess';
 import type { BoardWorkspace } from './boardVisibilityOptions';
 
 interface EditBoardModalProps {
@@ -75,6 +76,8 @@ function EditBoardModalForm({
 
   const isProjectBoard = Boolean(board.project_id);
   const projectId = board.project_id ?? 0;
+  const { data: project } = useProject(isProjectBoard ? projectId : 0);
+  const projectOwnerId = project?.created_by ?? board.created_by;
   const {
     data: projectMembers = [],
     isLoading: membersLoading,
@@ -85,11 +88,15 @@ function EditBoardModalForm({
   const removeProjectMember = useRemoveProjectMember(projectId);
   const memberMutationPending =
     addProjectMember.isPending || updateProjectMember.isPending || removeProjectMember.isPending;
-  const canManageTeam = canManageProjectTeam(user, projectMembers, board.created_by);
+  const canManageTeam = canManageProjectTeam(user, projectMembers, projectOwnerId ?? undefined);
+  const canManageSettings = canManageBoardSettings(user, board, {
+    projectCreatedBy: projectOwnerId,
+    projectMembers,
+  });
   const membersLoadingState = membersLoading || (membersFetching && projectMembers.length === 0);
 
   const canArchive = isProjectBoard
-    ? isBusinessOwner(user) || user?.id === board.created_by
+    ? isBusinessOwner(user) || user?.id === projectOwnerId
     : isBusinessOwner(user) || user?.id === board.created_by;
 
   const handleBgSelect = (type: string, value: string) => {
@@ -131,7 +138,7 @@ function EditBoardModalForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !canManageSettings) return;
     await updateBoard.mutateAsync({
       id: board.id,
       name: name.trim(),
@@ -186,6 +193,7 @@ function EditBoardModalForm({
               onChange={(e) => setName(e.target.value)}
               className={pipelineInputClass}
               required
+              disabled={!canManageSettings}
             />
           </PipelineIconField>
           <PipelineIconField label="Description" icon={AlignLeft}>
@@ -194,6 +202,7 @@ function EditBoardModalForm({
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               className={cn(pipelineInputClass, 'resize-none')}
+              disabled={!canManageSettings}
             />
           </PipelineIconField>
         </PipelineFormSection>
@@ -203,8 +212,8 @@ function EditBoardModalForm({
           bgType={bgType}
           bgValue={bgValue}
           uploadHistory={uploadHistory}
-          onSelect={handleBgSelect}
-          onUpload={handleBgUpload}
+          onSelect={canManageSettings ? handleBgSelect : () => {}}
+          onUpload={canManageSettings ? handleBgUpload : async () => {}}
           isUploading={uploadBg.isPending}
         />
 
@@ -218,7 +227,7 @@ function EditBoardModalForm({
               onAdd={(userId, role) => addProjectMember.mutate({ user_id: userId, role })}
               onRemove={(userId) => removeProjectMember.mutate(userId)}
               onRoleChange={(userId, role) => updateProjectMember.mutate({ userId, role })}
-              lockedUserId={board.created_by}
+              lockedUserId={projectOwnerId ?? undefined}
               loading={memberMutationPending}
               isLoading={membersLoadingState}
               canManage={canManageTeam}
@@ -233,7 +242,14 @@ function EditBoardModalForm({
             onMembersChange={setMembers}
             excludeUserId={board.created_by}
             lockedUserId={board.created_by}
+            canManage={canManageSettings}
           />
+        )}
+
+        {!canManageSettings && (
+          <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            You can view this board&apos;s settings. Only the board owner or managers can change team access and board options.
+          </p>
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
@@ -253,7 +269,7 @@ function EditBoardModalForm({
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" loading={updateBoard.isPending}>
+            <Button type="submit" loading={updateBoard.isPending} disabled={!canManageSettings}>
               Save changes
             </Button>
           </div>

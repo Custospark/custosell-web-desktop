@@ -15,6 +15,7 @@ interface BoardVisibilitySectionProps {
   onMembersChange: (members: BoardMemberInput[]) => void;
   excludeUserId?: number;
   lockedUserId?: number;
+  canManage?: boolean;
 }
 
 export default function BoardVisibilitySection({
@@ -25,6 +26,7 @@ export default function BoardVisibilitySection({
   onMembersChange,
   excludeUserId,
   lockedUserId,
+  canManage = true,
 }: BoardVisibilitySectionProps) {
   const options = visibilityOptionsForWorkspace(workspace);
   const { data: staff = [] } = useStaff();
@@ -44,12 +46,14 @@ export default function BoardVisibilitySection({
             <button
               key={value}
               type="button"
-              onClick={() => onVisibilityChange(value)}
+              onClick={() => canManage && onVisibilityChange(value)}
+              disabled={!canManage}
               className={cn(
                 'rounded-xl border p-3 text-left transition-colors',
                 visibility === value
                   ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
                   : 'border-gray-200 hover:border-gray-300',
+                !canManage && 'cursor-not-allowed opacity-70',
               )}
             >
               <Icon className="mb-1 h-4 w-4 text-gray-600" />
@@ -70,6 +74,7 @@ export default function BoardVisibilitySection({
             onChange={onMembersChange}
             excludeUserId={excludeUserId}
             lockedUserId={lockedUserId}
+            canManage={canManage}
           />
         </PipelineFormSection>
       )}

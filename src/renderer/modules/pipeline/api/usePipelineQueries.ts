@@ -511,6 +511,33 @@ export function useAddPipelineActivity() {
   });
 }
 
+export function useDeletePipelineActivity() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      activityId,
+    }: {
+      activityId: number;
+      leadId: number;
+      boardId?: number;
+    }) => {
+      await axiosInstance.delete(PIPELINE.ACTIVITY(activityId));
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
+      if (vars.boardId) {
+        qc.invalidateQueries({ queryKey: pipelineKeys.kanban(vars.boardId) });
+      }
+      showToast('success', 'Comment deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete comment'));
+    },
+  });
+}
+
 export function usePipelineSources() {
   return useQuery<PipelineSource[]>({
     queryKey: pipelineKeys.sources(),

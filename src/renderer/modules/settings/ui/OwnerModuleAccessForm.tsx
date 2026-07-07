@@ -76,9 +76,7 @@ export default function OwnerModuleAccessForm() {
     onSuccess: (freshUser) => {
       dispatch(setUser(freshUser));
       setModules(resolvedOwnerBusinessModules(freshUser));
-      setEstimatesFullAccess(
-        staffHasFullEstimatesModule(freshUser.modules) || ownerInitialEstimatesFullAccess(freshUser),
-      );
+      setEstimatesFullAccess(staffHasFullEstimatesModule(freshUser.modules));
       showToast('success', 'Module access updated');
     },
     onError: (err: AxiosError<{ message?: string }>) => {

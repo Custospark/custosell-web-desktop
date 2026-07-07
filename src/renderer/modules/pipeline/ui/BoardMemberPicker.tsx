@@ -10,6 +10,7 @@ interface BoardMemberPickerProps {
   onChange: (members: BoardMemberInput[]) => void;
   excludeUserId?: number;
   lockedUserId?: number;
+  canManage?: boolean;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export default function BoardMemberPicker({
   onChange,
   excludeUserId,
   lockedUserId,
+  canManage = true,
   className,
 }: BoardMemberPickerProps) {
   const { data: staff = [] } = useStaff();
@@ -48,17 +50,41 @@ export default function BoardMemberPicker({
   const staffNameFor = (userId: number) => staff.find((u) => u.id === userId)?.name;
 
   const addMember = (userId: number) => {
+    if (!canManage) return;
     const person = staff.find((u) => u.id === userId);
     onChange([...value, { user_id: userId, role: 'editor', name: person?.name }]);
   };
 
   const removeMember = (userId: number) => {
+    if (!canManage) return;
     onChange(value.filter((m) => m.user_id !== userId));
   };
 
   const setRole = (userId: number, role: 'editor' | 'viewer') => {
+    if (!canManage) return;
     onChange(value.map((m) => (m.user_id === userId ? { ...m, role } : m)));
   };
+
+  if (!canManage) {
+    return (
+      <div className={cn('space-y-2', className)}>
+        <p className="text-xs text-gray-500">
+          You can view the board team. Only the board owner or managers can invite members or change roles.
+        </p>
+        {value.length === 0 ? (
+          <p className="text-xs text-gray-400">No additional members on this board.</p>
+        ) : (
+          <ul className="space-y-2">
+            {value.map((member) => (
+              <li key={member.user_id} className="rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2 text-sm text-gray-800">
+                {memberDisplayName(member, staffNameFor(member.user_id))}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn('space-y-3', className)}>

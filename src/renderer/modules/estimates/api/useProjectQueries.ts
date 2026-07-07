@@ -60,9 +60,13 @@ export function useProjects(filters?: Record<string, string>) {
       const { data } = await axiosInstance.get(`${PROJECTS.BASE}${params ? `?${params}` : ''}`);
       return unwrapList<Project>(data);
     },
-    placeholderData: (prev) => prev ?? [],
     ...queryDefaults,
   });
+}
+
+/** Client/billable projects only — excludes personal internal projects from expense allocation. */
+export function useBillableProjects() {
+  return useProjects({ billable_only: '1' });
 }
 
 export function useProject(id: number) {

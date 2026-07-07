@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
@@ -12,7 +12,7 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import {
   canManageProjectTeam,
   canViewProjectCosting,
-  isProjectCollaboratorOnly,
+  isLimitedEstimatesUser,
 } from '../../../shared/utils/moduleAccess';
 import {
   useProject,
@@ -88,10 +88,17 @@ export default function ProjectDetailPage() {
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
   const canCosting = canViewProjectCosting(user);
-  const collaboratorOnly = isProjectCollaboratorOnly(user);
+  const limitedUser = isLimitedEstimatesUser(user);
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
 
   const { data: project, isLoading } = useProject(projectId);
+  const { data: redirectBoard, isSuccess: boardResolved } = useProjectBoard(limitedUser ? projectId : 0);
+
+  useEffect(() => {
+    if (limitedUser && boardResolved && redirectBoard?.id) {
+      navigate(ROUTES.ESTIMATES.BOARD(redirectBoard.id), { replace: true });
+    }
+  }, [limitedUser, boardResolved, redirectBoard?.id, navigate]);
   const { data: budget } = useProjectBudgetSummary(projectId, canCosting);
   const { data: profitability } = useProjectProfitability(projectId, canCosting);
   const { data: members = [] } = useProjectMembers(projectId);
@@ -173,7 +180,7 @@ export default function ProjectDetailPage() {
     <div className="space-y-6">
       <div>
         <Link
-          to={collaboratorOnly ? ROUTES.ESTIMATES.MY_PROJECTS : ROUTES.ESTIMATES.PROJECTS}
+          to={limitedUser ? ROUTES.ESTIMATES.BOARDS : ROUTES.ESTIMATES.PROJECTS}
           className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800"
         >
           <ArrowLeft className="h-4 w-4" />

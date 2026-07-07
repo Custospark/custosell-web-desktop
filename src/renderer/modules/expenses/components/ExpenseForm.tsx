@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
-import { useProjects } from '../../estimates/api/useProjectQueries';
+import { useBillableProjects } from '../../estimates/api/useProjectQueries';
 import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat, FolderKanban } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -17,7 +17,7 @@ interface ExpenseFormProps {
 
 export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
   const { data: categories } = useExpenseCategories();
-  const { data: projects } = useProjects();
+  const { data: projects } = useBillableProjects();
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);

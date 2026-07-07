@@ -117,8 +117,39 @@ export function isProjectCollaboratorOnly(user: AuthUser | null | undefined): bo
   return (user.project_member_ids?.length ?? 0) > 0;
 }
 
+/** Full Estimates workspace (estimates list, projects admin, insights, templates). Owner-only for now. */
+export function canViewFullEstimates(user: AuthUser | null | undefined): boolean {
+  return isBusinessOwner(user);
+}
+
+/** Project boards (+ member project detail) without full Estimates admin. */
+export function hasEstimatesBoardsAccess(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  return canViewFullEstimates(user)
+    || canAccessModule(user, 'estimates')
+    || (user.project_member_ids?.length ?? 0) > 0;
+}
+
+/** Staff with Estimates module or invited collaborators — not business owners. */
+export function isLimitedEstimatesUser(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  return hasEstimatesBoardsAccess(user) && !canViewFullEstimates(user);
+}
+
 export function canViewProjectCosting(user: AuthUser | null | undefined): boolean {
-  return isBusinessOwner(user) || canAccessModule(user, 'estimates');
+  return canViewFullEstimates(user);
+}
+
+export function getEstimatesModuleDefaultRoute(user: AuthUser | null | undefined): string {
+  if (canViewFullEstimates(user)) return ROUTES.ESTIMATES.INDEX;
+  return ROUTES.ESTIMATES.BOARDS;
+}
+
+export function getEstimatesFallbackRoute(user: AuthUser | null | undefined): string {
+  if (hasEstimatesBoardsAccess(user)) {
+    return getEstimatesModuleDefaultRoute(user);
+  }
+  return getDefaultRoute(user);
 }
 
 /** Invite or change roles on a project team (full Estimates access, owner, or project manager). */
@@ -128,33 +159,29 @@ export function canManageProjectTeam(
   projectCreatedBy?: number,
 ): boolean {
   if (!user) return false;
-  if (canViewProjectCosting(user)) return true;
+  if (canViewFullEstimates(user)) return true;
   if (projectCreatedBy && user.id === projectCreatedBy) return true;
   return members.some((m) => m.user_id === user.id && m.role === 'manager');
 }
 
-/** Estimates module or invited collaborator routes under /estimates/projects… */
+/** Estimates module, boards-only staff, or invited collaborator routes under /estimates. */
 export function canAccessEstimatesArea(
   user: AuthUser | null | undefined,
   pathname: string,
   params?: { id?: string },
 ): boolean {
   if (!user) return false;
-  if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return true;
-
-  if (pathname.startsWith('/estimates/my-projects')) {
-    return (user.project_member_ids?.length ?? 0) > 0;
-  }
+  if (canViewFullEstimates(user)) return true;
 
   if (pathname.startsWith('/estimates/boards')) {
-    if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return true;
-    return (user.project_member_ids?.length ?? 0) > 0;
+    return hasEstimatesBoardsAccess(user);
   }
 
   const projectMatch = pathname.match(/^\/estimates\/projects\/(\d+)/);
   const projectId = projectMatch ? Number(projectMatch[1]) : params?.id ? Number(params.id) : null;
   if (projectId) {
-    return isProjectMember(user, projectId);
+    if (isProjectMember(user, projectId)) return true;
+    return hasEstimatesBoardsAccess(user);
   }
 
   return false;
@@ -168,12 +195,15 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
 
   for (const mod of priority) {
     if (accessible.has(mod)) {
+      if (mod === 'estimates') {
+        return getEstimatesModuleDefaultRoute(user);
+      }
       return MODULE_DEFAULT_ROUTES[mod];
     }
   }
 
   if ((user.project_member_ids?.length ?? 0) > 0) {
-    return ROUTES.ESTIMATES.MY_PROJECTS;
+    return ROUTES.ESTIMATES.BOARDS;
   }
 
   if (accessible.has('account')) return MODULE_DEFAULT_ROUTES.account;

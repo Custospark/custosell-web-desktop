@@ -354,6 +354,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         <div className="p-4">
           <p className="text-xs text-gray-500 mb-3">
             Controls which sections appear in the app. Sales includes My Shift, where staff can record shift expenses.
+            Projects &amp; Estimates for staff unlocks project boards only — full estimates and costing stay owner-only.
             Account and Custosell Guide remain available to everyone.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

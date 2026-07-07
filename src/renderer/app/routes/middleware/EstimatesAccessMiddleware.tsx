@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks/useApp';
 import {
   canAccessEstimatesArea,
-  getDefaultRoute,
+  getEstimatesFallbackRoute,
 } from '../../../shared/utils/moduleAccess';
 
 export function EstimatesAccessMiddleware() {
@@ -18,5 +18,5 @@ export function EstimatesAccessMiddleware() {
     return <Outlet />;
   }
 
-  return <Navigate to={getDefaultRoute(user)} replace state={{ from: location.pathname }} />;
+  return <Navigate to={getEstimatesFallbackRoute(user)} replace state={{ from: location.pathname }} />;
 }

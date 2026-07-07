@@ -16,12 +16,15 @@ import { AlignLeft, Kanban, Lock, Palette, Share2, Type, Users } from 'lucide-re
 import PipelineColorPicker from './PipelineColorPicker';
 import { cn } from '../../../shared/utils/cn';
 
+type BoardWorkspace = 'pipeline' | 'estimates';
+
 interface CreateBoardModalProps {
   open: boolean;
   onClose: () => void;
+  workspace?: BoardWorkspace;
 }
 
-const VISIBILITY_OPTIONS: {
+const PIPELINE_VISIBILITY: {
   value: PipelineVisibility;
   label: string;
   hint: string;
@@ -32,20 +35,31 @@ const VISIBILITY_OPTIONS: {
   { value: 'shared', label: 'Shared', hint: 'Invite specific members', icon: Share2 },
 ];
 
+const ESTIMATES_VISIBILITY: typeof PIPELINE_VISIBILITY = [
+  { value: 'private', label: 'Private', hint: 'Only you can see this board', icon: Lock },
+  { value: 'shared', label: 'Shared', hint: 'Invite specific collaborators', icon: Share2 },
+  { value: 'team', label: 'Team', hint: 'Everyone with Projects & Estimates access', icon: Users },
+];
 
-export default function CreateBoardModal({ open, onClose }: CreateBoardModalProps) {
+export default function CreateBoardModal({
+  open,
+  onClose,
+  workspace = 'pipeline',
+}: CreateBoardModalProps) {
   const navigate = useNavigate();
   const createBoard = useCreatePipelineBoard();
+  const isEstimates = workspace === 'estimates';
+  const visibilityOptions = isEstimates ? ESTIMATES_VISIBILITY : PIPELINE_VISIBILITY;
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [visibility, setVisibility] = useState<PipelineVisibility>('team');
+  const [visibility, setVisibility] = useState<PipelineVisibility>(isEstimates ? 'private' : 'team');
   const [coverColor, setCoverColor] = useState('#6366f1');
   const [members, setMembers] = useState<BoardMemberInput[]>([]);
 
   const reset = () => {
     setName('');
     setDescription('');
-    setVisibility('team');
+    setVisibility(isEstimates ? 'private' : 'team');
     setCoverColor('#6366f1');
     setMembers([]);
   };
@@ -64,9 +78,12 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
       visibility,
       cover_color: coverColor,
       members: visibility === 'shared' ? members : undefined,
+      workspace,
     });
     handleClose();
-    navigate(ROUTES.PIPELINE.BOARD(board.id));
+    navigate(
+      isEstimates ? ROUTES.ESTIMATES.BOARD(board.id) : ROUTES.PIPELINE.BOARD(board.id),
+    );
   };
 
   return (
@@ -75,8 +92,12 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
         <PipelineModalHero
           icon={Kanban}
           tone="indigo"
-          title="New pipeline board"
-          description="Organize leads by stage. Pick a color so your team can spot it quickly."
+          title={isEstimates ? 'New personal board' : 'New pipeline board'}
+          description={
+            isEstimates
+              ? 'Organize your own tasks with private or shared visibility.'
+              : 'Organize leads by stage. Pick a color so your team can spot it quickly.'
+          }
         />
 
         <PipelineFormSection title="Board details" icon={Type}>
@@ -85,7 +106,7 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={pipelineInputClass}
-              placeholder="e.g. Enterprise deals"
+              placeholder={isEstimates ? 'e.g. My sprint board' : 'e.g. Enterprise deals'}
               required
               autoFocus
             />
@@ -100,7 +121,7 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               className={cn(pipelineInputClass, 'min-h-[72px] resize-none py-2.5 pl-3')}
-              placeholder="What kind of opportunities belong here?"
+              placeholder={isEstimates ? 'What are you tracking on this board?' : 'What kind of opportunities belong here?'}
             />
             <p className="mt-1 text-xs text-gray-500">Optional — shown in the board switcher</p>
           </div>
@@ -108,7 +129,7 @@ export default function CreateBoardModal({ open, onClose }: CreateBoardModalProp
 
         <PipelineFormSection title="Visibility" icon={Users}>
           <div className="grid gap-2 sm:grid-cols-3">
-            {VISIBILITY_OPTIONS.map((opt) => {
+            {visibilityOptions.map((opt) => {
               const Icon = opt.icon;
               const selected = visibility === opt.value;
               return (

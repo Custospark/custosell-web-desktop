@@ -45,6 +45,7 @@ export interface PipelineBoard {
   is_default: boolean;
   is_archived: boolean;
   project_id?: number | null;
+  workspace?: 'pipeline' | 'estimates';
   background_type?: string;
   background_value?: string | null;
   sort_order: number;
@@ -198,6 +199,7 @@ export interface CreateBoardPayload {
   background_value?: string;
   member_ids?: number[];
   members?: BoardMemberInput[];
+  workspace?: 'pipeline' | 'estimates';
 }
 
 export interface CreateLeadPayload {

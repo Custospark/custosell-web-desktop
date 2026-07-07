@@ -101,6 +101,8 @@ export interface Project {
   created_by: number;
   created_at: string;
   updated_at: string;
+  is_personal?: boolean;
+  board_id?: number | null;
   customer?: ProjectCustomerRef | null;
   manager?: ProjectUserRef | null;
   tasks?: ProjectTask[];
@@ -150,6 +152,7 @@ export type CreateProjectPayload = {
   due_date?: string | null;
   description?: string | null;
   manager_id?: number | null;
+  is_personal?: boolean;
 };
 
 export type UpdateProjectPayload = Partial<CreateProjectPayload>;

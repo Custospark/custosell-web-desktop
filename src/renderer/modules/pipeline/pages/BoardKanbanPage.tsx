@@ -10,6 +10,11 @@ import {
   useReorderPipelineStages,
 } from '../api/usePipelineQueries';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
+import {
+  boardBelongsToEstimatesWorkspace,
+  boardBelongsToPipelineWorkspace,
+  filterBoardsForWorkspace,
+} from '../api/pipelineBoardWorkspace';
 import KanbanColumn from '../ui/KanbanColumn';
 import CreateLeadModal from '../ui/CreateLeadModal';
 import CreateBoardModal from '../ui/CreateBoardModal';
@@ -53,7 +58,11 @@ export default function BoardKanbanPage() {
 
   const { data: board, isLoading } = usePipelineKanban(boardId);
   const { data: boards = [] } = usePipelineBoards(
-    workspace === 'estimates' ? { projectOnly: true } : { salesOnly: true },
+    workspace === 'estimates' ? { estimatesWorkspace: true } : { salesOnly: true },
+  );
+  const switcherBoards = useMemo(
+    () => filterBoardsForWorkspace(boards, workspace),
+    [boards, workspace],
   );
   const moveLead = useMovePipelineLead();
   const reorderStages = useReorderPipelineStages(boardId);
@@ -70,7 +79,7 @@ export default function BoardKanbanPage() {
 
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
-  const allowCreateBoard = workspace === 'pipeline';
+  const allowCreateBoard = workspace === 'pipeline' || workspace === 'estimates';
 
   const allStages = useMemo(
     () => [...(board?.stages ?? [])].sort((a, b) => a.sort_order - b.sort_order),
@@ -117,11 +126,11 @@ export default function BoardKanbanPage() {
     });
   };
 
-  if (workspace === 'pipeline' && board?.project_id) {
+  if (workspace === 'pipeline' && board && !boardBelongsToPipelineWorkspace(board)) {
     return <Navigate to={ROUTES.ESTIMATES.BOARD(boardId)} replace />;
   }
 
-  if (workspace === 'estimates' && board && !board.project_id) {
+  if (workspace === 'estimates' && board && !boardBelongsToEstimatesWorkspace(board)) {
     return <Navigate to={ROUTES.PIPELINE.BOARD(boardId)} replace />;
   }
 
@@ -146,7 +155,7 @@ export default function BoardKanbanPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="flex shrink-0 items-center gap-2 lg:min-w-[200px]">
             <BoardSearchMenu
-              boards={boards}
+              boards={switcherBoards}
               activeBoard={board}
               onCreateBoard={() => setCreateBoardOpen(true)}
               boardRoute={boardRoute}
@@ -277,7 +286,7 @@ export default function BoardKanbanPage() {
       )}
 
       <BoardSwitcherStrip
-        boards={boards}
+        boards={switcherBoards}
         activeBoardId={boardId}
         onCreateBoard={() => setCreateBoardOpen(true)}
         boardRoute={boardRoute}
@@ -295,7 +304,7 @@ export default function BoardKanbanPage() {
       )}
 
       {allowCreateBoard && createBoardOpen && (
-        <CreateBoardModal open onClose={() => setCreateBoardOpen(false)} />
+        <CreateBoardModal open onClose={() => setCreateBoardOpen(false)} workspace={workspace} />
       )}
 
       {editBoardOpen && (

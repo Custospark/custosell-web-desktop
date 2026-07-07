@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { canManageProjectTeam } from '../../../shared/utils/moduleAccess';
 
 type BoardWorkspace = 'pipeline' | 'estimates';
 
@@ -66,6 +68,7 @@ function EditBoardModalForm({
   workspace: BoardWorkspace;
 }) {
   const navigate = useNavigate();
+  const user = useAppSelector((s) => s.auth.user);
   const updateBoard = useUpdatePipelineBoard();
   const uploadBg = useUploadBoardBackground();
   const { confirm } = useConfirm();
@@ -95,6 +98,7 @@ function EditBoardModalForm({
   const removeProjectMember = useRemoveProjectMember(projectId);
   const memberMutationPending =
     addProjectMember.isPending || updateProjectMember.isPending || removeProjectMember.isPending;
+  const canManageTeam = canManageProjectTeam(user, projectMembers, board.created_by);
   const { data: staff = [] } = useStaff();
   const teamQuery = memberSearch.trim().toLowerCase();
   const pipelineTeamMembers = staff
@@ -231,6 +235,7 @@ function EditBoardModalForm({
               onRoleChange={(userId, role) => updateProjectMember.mutate({ userId, role })}
               lockedUserId={board.created_by}
               loading={memberMutationPending}
+              canManage={canManageTeam}
             />
           </PipelineFormSection>
         ) : (

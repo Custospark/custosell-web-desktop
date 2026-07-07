@@ -510,7 +510,7 @@ export default function ProjectDetailPage() {
               <Button
                 size="lg"
                 className="mt-6 inline-flex items-center gap-2"
-                onClick={() => navigate(ROUTES.ESTIMATES.PROJECT_BOARD(projectId))}
+                onClick={() => navigate(ROUTES.ESTIMATES.BOARD(projectBoard.id))}
               >
                 Open board
               </Button>

@@ -76,6 +76,7 @@ const EstimatesPage = lazy(() => import('../../modules/estimates/pages/Estimates
 const EstimateDetailPage = lazy(() => import('../../modules/estimates/pages/EstimateDetailPage'));
 const ProjectsPage = lazy(() => import('../../modules/estimates/pages/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('../../modules/estimates/pages/ProjectDetailPage'));
+const ProjectBoardsPage = lazy(() => import('../../modules/estimates/pages/ProjectBoardsPage'));
 const ProjectBoardPage = lazy(() => import('../../modules/estimates/pages/ProjectBoardPage'));
 const MyProjectsPage = lazy(() => import('../../modules/estimates/pages/MyProjectsPage'));
 const EstimatesInsightsPage = lazy(() => import('../../modules/estimates/pages/EstimatesInsightsPage'));
@@ -145,6 +146,8 @@ export function AppRoutes() {
               <Route path={ROUTES.ESTIMATES.INDEX} element={<SuspenseWrapper><EstimatesPage /></SuspenseWrapper>} />
               <Route path={ROUTES.ESTIMATES.MY_PROJECTS} element={<SuspenseWrapper><MyProjectsPage /></SuspenseWrapper>} />
               <Route path={ROUTES.ESTIMATES.PROJECTS} element={<SuspenseWrapper><ProjectsPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.ESTIMATES.BOARDS} element={<SuspenseWrapper><ProjectBoardsPage /></SuspenseWrapper>} />
+              <Route path="/estimates/boards/:boardId" element={<SuspenseWrapper><BoardKanbanPage /></SuspenseWrapper>} />
               <Route path="/estimates/projects/:id" element={<SuspenseWrapper><ProjectDetailPage /></SuspenseWrapper>} />
               <Route path="/estimates/projects/:id/board" element={<SuspenseWrapper><ProjectBoardPage /></SuspenseWrapper>} />
               <Route path={ROUTES.ESTIMATES.INSIGHTS} element={<SuspenseWrapper><EstimatesInsightsPage /></SuspenseWrapper>} />

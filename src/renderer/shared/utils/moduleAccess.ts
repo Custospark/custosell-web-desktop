@@ -56,6 +56,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Inventory: 'inventory',
   Customers: 'customers',
   Pipeline: 'pipeline',
+  'Projects & Estimates': 'estimates',
   Estimates: 'estimates',
   Expenses: 'expenses',
   Accounting: 'accounting',
@@ -130,6 +131,11 @@ export function canAccessEstimatesArea(
   if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return true;
 
   if (pathname.startsWith('/estimates/my-projects')) {
+    return (user.project_member_ids?.length ?? 0) > 0;
+  }
+
+  if (pathname.startsWith('/estimates/boards')) {
+    if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return true;
     return (user.project_member_ids?.length ?? 0) > 0;
   }
 

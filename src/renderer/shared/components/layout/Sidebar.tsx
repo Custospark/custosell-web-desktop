@@ -42,6 +42,9 @@ function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
   if (itemTo === ROUTES.PIPELINE.BOARDS) {
     return /^\/pipeline\/boards\/\d+/.test(pathname);
   }
+  if (itemTo === ROUTES.ESTIMATES.BOARDS) {
+    return /^\/estimates\/boards\/\d+/.test(pathname);
+  }
   if (itemTo === ROUTES.ESTIMATES.PROJECTS) {
     return /^\/estimates\/projects\/\d+/.test(pathname);
   }
@@ -58,7 +61,8 @@ const baseSubRoutes = [
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.PIPELINE.BOARDS, ROUTES.PIPELINE.MY_WORK, ROUTES.PIPELINE.LEADS,
   ROUTES.PIPELINE.INSIGHTS, ROUTES.PIPELINE.SETTINGS,
-  ROUTES.ESTIMATES.INDEX, ROUTES.ESTIMATES.PROJECTS,
+  ROUTES.ESTIMATES.INDEX, ROUTES.ESTIMATES.PROJECTS, ROUTES.ESTIMATES.BOARDS,
+  ROUTES.ESTIMATES.MY_PROJECTS,
   ROUTES.ESTIMATES.INSIGHTS, ROUTES.ESTIMATES.TEMPLATES,
   ROUTES.INVOICES.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
@@ -148,10 +152,11 @@ const baseNavGroups: NavGroup[] = [
   },
   {
     icon: FileSpreadsheet,
-    label: 'Estimates',
+    label: 'Projects & Estimates',
     subItems: [
       { to: ROUTES.ESTIMATES.INDEX, label: 'All estimates', icon: FileSpreadsheet },
       { to: ROUTES.ESTIMATES.PROJECTS, label: 'Projects', icon: FolderKanban },
+      { to: ROUTES.ESTIMATES.BOARDS, label: 'Project boards', icon: Kanban },
       { to: ROUTES.ESTIMATES.INSIGHTS, label: 'Insights', icon: TrendingUp },
       { to: ROUTES.ESTIMATES.TEMPLATES, label: 'Templates', icon: LayoutTemplate },
     ],
@@ -225,16 +230,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const businessGroups = baseNavGroups.filter((group) => {
       const moduleSlug = NAV_GROUP_MODULE[group.label];
       if (!moduleSlug) return true;
-      if (group.label === 'Estimates') {
+      if (group.label === 'Projects & Estimates') {
         return canAccessModule(user, 'estimates') || (user?.project_member_ids?.length ?? 0) > 0;
       }
       return canAccessModule(user, moduleSlug);
     }).map((group) => {
-      if (group.label === 'Estimates' && isProjectCollaboratorOnly(user)) {
+      if (group.label === 'Projects & Estimates' && isProjectCollaboratorOnly(user)) {
         return {
           ...group,
           subItems: [
             { to: ROUTES.ESTIMATES.MY_PROJECTS, label: 'My projects', icon: Briefcase },
+            { to: ROUTES.ESTIMATES.BOARDS, label: 'Project boards', icon: Kanban },
           ],
         };
       }

@@ -9,9 +9,17 @@ interface BoardSwitcherStripProps {
   boards: PipelineBoard[];
   activeBoardId: number;
   onCreateBoard: () => void;
+  boardRoute?: (id: number) => string;
+  allowCreateBoard?: boolean;
 }
 
-export default function BoardSwitcherStrip({ boards, activeBoardId, onCreateBoard }: BoardSwitcherStripProps) {
+export default function BoardSwitcherStrip({
+  boards,
+  activeBoardId,
+  onCreateBoard,
+  boardRoute = ROUTES.PIPELINE.BOARD,
+  allowCreateBoard = true,
+}: BoardSwitcherStripProps) {
   const navigate = useNavigate();
   const activeRef = useRef<HTMLButtonElement>(null);
 
@@ -29,7 +37,7 @@ export default function BoardSwitcherStrip({ boards, activeBoardId, onCreateBoar
               key={board.id}
               ref={isActive ? activeRef : undefined}
               type="button"
-              onClick={() => navigate(ROUTES.PIPELINE.BOARD(board.id))}
+              onClick={() => navigate(boardRoute(board.id))}
               className={cn(
                 'inline-flex max-w-[200px] shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive
@@ -51,6 +59,7 @@ export default function BoardSwitcherStrip({ boards, activeBoardId, onCreateBoar
             </button>
           );
         })}
+        {allowCreateBoard && (
         <button
           type="button"
           onClick={onCreateBoard}
@@ -59,6 +68,7 @@ export default function BoardSwitcherStrip({ boards, activeBoardId, onCreateBoar
           <Plus className="h-4 w-4" />
           New board
         </button>
+        )}
       </div>
     </div>
   );

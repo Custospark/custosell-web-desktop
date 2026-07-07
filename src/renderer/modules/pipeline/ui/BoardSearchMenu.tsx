@@ -14,9 +14,19 @@ interface BoardSearchMenuProps {
   boards: PipelineBoard[];
   activeBoard: PipelineBoard;
   onCreateBoard: () => void;
+  boardRoute?: (id: number) => string;
+  boardsListRoute?: string;
+  allowCreateBoard?: boolean;
 }
 
-export default function BoardSearchMenu({ boards, activeBoard, onCreateBoard }: BoardSearchMenuProps) {
+export default function BoardSearchMenu({
+  boards,
+  activeBoard,
+  onCreateBoard,
+  boardRoute = ROUTES.PIPELINE.BOARD,
+  boardsListRoute = ROUTES.PIPELINE.BOARDS,
+  allowCreateBoard = true,
+}: BoardSearchMenuProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -74,7 +84,7 @@ export default function BoardSearchMenu({ boards, activeBoard, onCreateBoard }: 
     setOpen(false);
     setQuery('');
     if (id !== activeBoard.id) {
-      navigate(ROUTES.PIPELINE.BOARD(id));
+      navigate(boardRoute(id));
     }
   };
 
@@ -148,12 +158,13 @@ export default function BoardSearchMenu({ boards, activeBoard, onCreateBoard }: 
       <div className="flex border-t border-gray-100 p-1">
         <button
           type="button"
-          onClick={() => { setOpen(false); navigate(ROUTES.PIPELINE.BOARDS); }}
+          onClick={() => { setOpen(false); navigate(boardsListRoute); }}
           className="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <LayoutGrid className="h-4 w-4" />
           All boards
         </button>
+        {allowCreateBoard && (
         <button
           type="button"
           onClick={() => { setOpen(false); onCreateBoard(); }}
@@ -162,6 +173,7 @@ export default function BoardSearchMenu({ boards, activeBoard, onCreateBoard }: 
           <Plus className="h-4 w-4" />
           New board
         </button>
+        )}
       </div>
     </div>
   ) : null;

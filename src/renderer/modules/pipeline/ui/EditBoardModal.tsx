@@ -9,6 +9,13 @@ import BoardMemberPicker from './BoardMemberPicker';
 import { membersFromBoard } from '../api/pipelineBoardMembers';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
+  useProjectMembers,
+  useAddProjectMember,
+  useUpdateProjectMember,
+  useRemoveProjectMember,
+} from '../../estimates/api/useProjectQueries';
+import ProjectMemberPicker from '../../estimates/ui/ProjectMemberPicker';
+import {
   PipelineFormSection,
   PipelineIconField,
   PipelineModalHero,
@@ -23,10 +30,13 @@ import {
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 
+type BoardWorkspace = 'pipeline' | 'estimates';
+
 interface EditBoardModalProps {
   open: boolean;
   board: PipelineBoard;
   onClose: () => void;
+  workspace?: BoardWorkspace;
 }
 
 const VISIBILITY_OPTIONS: {
@@ -40,12 +50,20 @@ const VISIBILITY_OPTIONS: {
   { value: 'shared', label: 'Shared', hint: 'Invite specific members', icon: Share2 },
 ];
 
-export default function EditBoardModal({ open, board, onClose }: EditBoardModalProps) {
+export default function EditBoardModal({ open, board, onClose, workspace = 'pipeline' }: EditBoardModalProps) {
   if (!open) return null;
-  return <EditBoardModalForm key={board.id} board={board} onClose={onClose} />;
+  return <EditBoardModalForm key={board.id} board={board} onClose={onClose} workspace={workspace} />;
 }
 
-function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose: () => void }) {
+function EditBoardModalForm({
+  board,
+  onClose,
+  workspace,
+}: {
+  board: PipelineBoard;
+  onClose: () => void;
+  workspace: BoardWorkspace;
+}) {
   const navigate = useNavigate();
   const updateBoard = useUpdatePipelineBoard();
   const uploadBg = useUploadBoardBackground();
@@ -66,6 +84,15 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
   const [uploadHistory, setUploadHistory] = useState<string[]>(() =>
     loadBoardUploadHistory(board.id, initialBgType === 'upload' ? initialBgValue : null),
   );
+
+  const isProjectBoard = Boolean(board.project_id);
+  const projectId = board.project_id ?? 0;
+  const { data: projectMembers = [] } = useProjectMembers(isProjectBoard ? projectId : 0);
+  const addProjectMember = useAddProjectMember(projectId);
+  const updateProjectMember = useUpdateProjectMember(projectId);
+  const removeProjectMember = useRemoveProjectMember(projectId);
+  const memberMutationPending =
+    addProjectMember.isPending || updateProjectMember.isPending || removeProjectMember.isPending;
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);
@@ -111,11 +138,13 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
       id: board.id,
       name: name.trim(),
       description: description.trim() || undefined,
-      visibility,
+      ...(!isProjectBoard && {
+        visibility,
+        members: visibility === 'shared' ? members : [],
+      }),
       cover_color: bgType === 'color' ? bgValue : board.cover_color,
       background_type: bgType,
       background_value: bgType === 'upload' ? normalizeBoardBackgroundUploadPath(bgValue) : bgValue,
-      members: visibility === 'shared' ? members : [],
     });
     onClose();
   };
@@ -132,7 +161,10 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
     await updateBoard.mutateAsync({ id: board.id, is_archived: true });
     setIsArchiving(false);
     onClose();
-    navigate(ROUTES.PIPELINE.BOARDS);
+    const listRoute = workspace === 'estimates' || isProjectBoard
+      ? ROUTES.ESTIMATES.BOARDS
+      : ROUTES.PIPELINE.BOARDS;
+    navigate(listRoute);
   };
 
   return (
@@ -141,8 +173,12 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
         <PipelineModalHero
           icon={Kanban}
           tone="indigo"
-          title="Edit pipeline board"
-          description="Update name, background, visibility, and team members."
+          title={isProjectBoard ? 'Edit project board' : 'Edit pipeline board'}
+          description={
+            isProjectBoard
+              ? 'Update board appearance and manage who can view or contribute on this project.'
+              : 'Update name, background, visibility, and team members.'
+          }
         />
 
         <PipelineFormSection title="Board details" icon={Type}>
@@ -176,6 +212,21 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
           />
         </PipelineFormSection>
 
+        {isProjectBoard ? (
+          <PipelineFormSection title="Project team" icon={Users}>
+            <p className="mb-3 text-xs text-gray-500">
+              Invite viewers (read-only), contributors (move cards and add tasks), or managers (manage team).
+            </p>
+            <ProjectMemberPicker
+              members={projectMembers}
+              onAdd={(userId, role) => addProjectMember.mutate({ user_id: userId, role })}
+              onRemove={(userId) => removeProjectMember.mutate(userId)}
+              onRoleChange={(userId, role) => updateProjectMember.mutate({ userId, role })}
+              loading={memberMutationPending}
+            />
+          </PipelineFormSection>
+        ) : (
+          <>
         <PipelineFormSection title="Visibility" icon={Users}>
           <div className="grid gap-2 sm:grid-cols-3">
             {VISIBILITY_OPTIONS.map(({ value, label, hint, icon: Icon }) => (
@@ -202,6 +253,8 @@ function EditBoardModalForm({ board, onClose }: { board: PipelineBoard; onClose:
           <PipelineFormSection title="Team members" icon={Users}>
             <BoardMemberPicker value={members} onChange={setMembers} excludeUserId={board.created_by} />
           </PipelineFormSection>
+        )}
+          </>
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">

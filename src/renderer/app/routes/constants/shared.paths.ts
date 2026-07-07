@@ -25,7 +25,10 @@ export const ROUTES = {
     DETAIL: (id: number) => `/estimates/${id}`,
     PROJECTS: '/estimates/projects',
     MY_PROJECTS: '/estimates/my-projects',
+    BOARDS: '/estimates/boards',
+    BOARD: (id: number) => `/estimates/boards/${id}`,
     PROJECT_DETAIL: (id: number) => `/estimates/projects/${id}`,
+    /** @deprecated Use ESTIMATES.BOARD — redirects from project id to board id */
     PROJECT_BOARD: (id: number) => `/estimates/projects/${id}/board`,
     INSIGHTS: '/estimates/insights',
     TEMPLATES: '/estimates/templates',

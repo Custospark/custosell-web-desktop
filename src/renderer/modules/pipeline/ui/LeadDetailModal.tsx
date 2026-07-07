@@ -21,15 +21,16 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import LeadCommentsPanel from './LeadCommentsPanel';
+import LeadHistoryPanel from './LeadHistoryPanel';
 import LeadRemindersPanel from './LeadRemindersPanel';
 import MultiAssigneeSelect from './MultiAssigneeSelect';
 import { cn } from '../../../shared/utils/cn';
 import {
   ArrowRightLeft,
   Bell,
-  CheckCircle2,
   DollarSign,
   FileSpreadsheet,
+  History,
   Mail,
   MessageSquare,
   Palette,
@@ -39,7 +40,6 @@ import {
   Type,
   User,
   UserRound,
-  Video,
 } from 'lucide-react';
 import type { PipelineLeadStatus, UpdateLeadPayload } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
@@ -48,7 +48,6 @@ import PipelineColorPicker from './PipelineColorPicker';
 import { CARD_PRESET_COLORS } from './pipelineColorPresets';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
-import { PipelineUserAttribution } from './pipelineUserAttribution';
 
 interface LeadDetailModalProps {
   leadId: number;
@@ -73,23 +72,6 @@ const STATUS_STYLES: Record<PipelineLeadStatus, string> = {
   converted: 'bg-violet-50 text-violet-800 ring-violet-100',
   archived: 'bg-gray-100 text-gray-700 ring-gray-200',
 };
-
-const ACTIVITY_ICONS: Record<string, typeof MessageSquare> = {
-  note: MessageSquare,
-  comment: MessageSquare,
-  call: Phone,
-  email: Mail,
-  meeting: Video,
-  system: CheckCircle2,
-  stage_change: ArrowRightLeft,
-};
-
-const USER_COMMENT_TYPES = new Set(['note', 'comment', 'call', 'email', 'meeting']);
-
-function activityTypeLabel(type: string): string {
-  if (type === 'comment' || type === 'note') return 'Comment';
-  return type.replace('_', ' ');
-}
 
 export default function LeadDetailModal({
   leadId,
@@ -127,7 +109,6 @@ export default function LeadDetailModal({
     await convertLead.mutateAsync({ id: lead.id, board_id: resolvedBoardId });
   };
 
-  const systemActivities = (lead.activities ?? []).filter((a) => !USER_COMMENT_TYPES.has(a.type));
   const canArchive = board ? canManageBoardSettings(user, board, boardAccess) : false;
 
   const handleArchive = async () => {
@@ -406,31 +387,10 @@ export default function LeadDetailModal({
             boardAccess={boardAccess}
             activities={lead.activities}
           />
+        </PipelineFormSection>
 
-          {systemActivities.length > 0 && (
-            <div className="border-t border-gray-100 pt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Activity log</p>
-              <ul className="space-y-2">
-                {systemActivities.map((a) => {
-                  const Icon = ACTIVITY_ICONS[a.type] ?? CheckCircle2;
-                  return (
-                    <li key={a.id} className="flex items-start gap-2 text-xs text-gray-600">
-                      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
-                      <div className="min-w-0 flex-1">
-                        <span className="font-medium capitalize text-gray-700">{activityTypeLabel(a.type)}</span>
-                        {a.body && <span className="text-gray-600"> — {a.body}</span>}
-                        {(a.user || a.created_at) && (
-                          <div className="mt-1">
-                            <PipelineUserAttribution user={a.user} timestamp={a.created_at} />
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
+        <PipelineFormSection title="History" icon={History}>
+          <LeadHistoryPanel activities={lead.activities} currency={lead.currency} />
         </PipelineFormSection>
       </div>
     </Modal>

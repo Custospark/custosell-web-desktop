@@ -133,6 +133,7 @@ export interface PipelineLead {
   checklist_done?: number | null;
   attachments_count?: number | null;
   comments_count?: number | null;
+  history_count?: number | null;
   created_by?: number | null;
   creator?: PipelineUserRef | null;
   won_at: string | null;

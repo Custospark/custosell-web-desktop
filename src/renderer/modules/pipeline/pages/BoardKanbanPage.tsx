@@ -25,6 +25,7 @@ import DeleteStageModal from '../ui/DeleteStageModal';
 import AddStageModal from '../ui/AddStageModal';
 import LeadDetailModal from '../ui/LeadDetailModal';
 import LeadCommentsModal from '../ui/LeadCommentsModal';
+import LeadHistoryModal from '../ui/LeadHistoryModal';
 import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
 import BoardCalendarView from '../ui/BoardCalendarView';
@@ -86,6 +87,7 @@ export default function BoardKanbanPage() {
   const [deleteStage, setDeleteStage] = useState<PipelineStage | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [commentsLeadId, setCommentsLeadId] = useState<number | null>(null);
+  const [historyLeadId, setHistoryLeadId] = useState<number | null>(null);
   const [collaborationOpen, setCollaborationOpen] = useState(false);
   const [collaborationInitialTab, setCollaborationInitialTab] = useState<'notices' | 'polls'>('notices');
 
@@ -301,6 +303,7 @@ export default function BoardKanbanPage() {
               stage={stage}
               onLeadClick={(lead: PipelineLead) => setSelectedLeadId(lead.id)}
               onLeadCommentsClick={(lead) => setCommentsLeadId(lead.id)}
+              onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
               onAddLead={(stageId) => setCreateStageId(stageId)}
               onDropLead={handleDropLead}
               onDropColumn={handleDropColumn}
@@ -392,6 +395,13 @@ export default function BoardKanbanPage() {
             projectMembers,
           }}
           onClose={() => setCommentsLeadId(null)}
+        />
+      )}
+
+      {historyLeadId != null && (
+        <LeadHistoryModal
+          leadId={historyLeadId}
+          onClose={() => setHistoryLeadId(null)}
         />
       )}
 

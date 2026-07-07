@@ -3,7 +3,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
-  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare,
+  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History,
 } from 'lucide-react';
 import LeadAssignmentChain from './LeadAssignmentChain';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -13,6 +13,7 @@ interface LeadCardProps {
   stageColor?: string | null;
   onClick: () => void;
   onCommentsClick?: (lead: PipelineLead) => void;
+  onHistoryClick?: (lead: PipelineLead) => void;
   dragging?: boolean;
 }
 
@@ -31,7 +32,7 @@ function isOverdue(dateStr: string | null | undefined): boolean {
   return d < today;
 }
 
-export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, dragging }: LeadCardProps) {
+export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, onHistoryClick, dragging }: LeadCardProps) {
   const displayName = lead.contact_name || lead.title;
   const accent = stageColor ?? lead.stage?.color ?? '#6366f1';
   const isCard = (lead.card_type ?? 'lead') === 'card';
@@ -41,6 +42,7 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, d
   const checklistDone = lead.checklist_done ?? 0;
   const attachmentsCount = lead.attachments_count ?? 0;
   const commentsCount = lead.comments_count ?? 0;
+  const historyCount = lead.history_count ?? 0;
 
   return (
     <div
@@ -90,27 +92,50 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, d
             )}
           </div>
           <GripVertical className="h-4 w-4 shrink-0 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCommentsClick?.(lead);
-            }}
-            className={cn(
-              'relative shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors',
-              'hover:bg-blue-50 hover:text-blue-600',
-              commentsCount > 0 && 'text-blue-500',
-            )}
-            title={commentsCount > 0 ? `${commentsCount} comment${commentsCount === 1 ? '' : 's'}` : 'Comments'}
-            aria-label="View comments"
-          >
-            <MessageSquare className="h-4 w-4" />
-            {commentsCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                {commentsCount > 99 ? '99+' : commentsCount}
-              </span>
-            )}
-          </button>
+          <div className="flex shrink-0 flex-col gap-0.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onHistoryClick?.(lead);
+              }}
+              className={cn(
+                'relative rounded-lg p-1.5 text-gray-400 transition-colors',
+                'hover:bg-violet-50 hover:text-violet-600',
+                historyCount > 0 && 'text-violet-500',
+              )}
+              title={historyCount > 0 ? `${historyCount} histor${historyCount === 1 ? 'y event' : 'y events'}` : 'Card history'}
+              aria-label="View card history"
+            >
+              <History className="h-4 w-4" />
+              {historyCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                  {historyCount > 99 ? '99+' : historyCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCommentsClick?.(lead);
+              }}
+              className={cn(
+                'relative rounded-lg p-1.5 text-gray-400 transition-colors',
+                'hover:bg-blue-50 hover:text-blue-600',
+                commentsCount > 0 && 'text-blue-500',
+              )}
+              title={commentsCount > 0 ? `${commentsCount} comment${commentsCount === 1 ? '' : 's'}` : 'Comments'}
+              aria-label="View comments"
+            >
+              <MessageSquare className="h-4 w-4" />
+              {commentsCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                  {commentsCount > 99 ? '99+' : commentsCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {!isCard && (lead.contact_phone || lead.contact_email) && (

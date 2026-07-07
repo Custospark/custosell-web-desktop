@@ -9,6 +9,7 @@ interface KanbanColumnProps {
   stage: PipelineStage;
   onLeadClick: (lead: PipelineLead) => void;
   onLeadCommentsClick?: (lead: PipelineLead) => void;
+  onLeadHistoryClick?: (lead: PipelineLead) => void;
   onAddLead: (stageId: number) => void;
   onDropLead: (leadId: number, stageId: number, position: number) => void;
   onDropColumn?: (draggedStageId: number, targetStageId: number) => void;
@@ -20,6 +21,7 @@ export default function KanbanColumn({
   stage,
   onLeadClick,
   onLeadCommentsClick,
+  onLeadHistoryClick,
   onAddLead,
   onDropLead,
   onDropColumn,
@@ -181,6 +183,7 @@ export default function KanbanColumn({
                 stageColor={stageColor}
                 onClick={() => onLeadClick(lead)}
                 onCommentsClick={onLeadCommentsClick}
+                onHistoryClick={onLeadHistoryClick}
               />
             </div>
           ))

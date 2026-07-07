@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import { Button } from '../../../shared/components/buttons/Button';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import type { ProjectMember, ProjectMemberRole } from '../api/projectTypes';
 import { UserPlus, X, Loader2 } from 'lucide-react';
@@ -137,18 +138,25 @@ export default function ProjectMemberPicker({
             {filteredMembers.map((member) => {
               const isLockedOwner = member.user_id === lockedUserId;
               const roleMeta = ROLE_OPTIONS.find((r) => r.value === member.role);
+              const memberName = member.user?.name ?? `User #${member.user_id}`;
+              const staffMember = staff.find((s) => s.id === member.user_id);
               return (
                 <li key={member.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {member.user?.name ?? `User #${member.user_id}`}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <UserIdentityChip
+                        name={memberName}
+                        avatar={member.user?.avatar ?? staffMember?.avatar}
+                        size="sm"
+                        nameClassName="text-sm font-medium text-gray-900"
+                      />
                       {isLockedOwner && (
-                        <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
                           Owner
                         </span>
                       )}
-                    </p>
-                    <p className="text-xs text-gray-500">{roleMeta?.hint}</p>
+                    </div>
+                    <p className="mt-0.5 pl-9 text-xs text-gray-500">{roleMeta?.hint}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {canManage ? (

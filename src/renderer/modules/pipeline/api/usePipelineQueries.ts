@@ -491,7 +491,7 @@ export function useAddPipelineActivity() {
     },
     onSuccess: (_activity, vars) => {
       qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
-      showToast('success', 'Activity added');
+      showToast('success', vars.type === 'comment' ? 'Comment posted' : 'Activity added');
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not add activity'));

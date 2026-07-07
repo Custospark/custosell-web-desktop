@@ -7,6 +7,7 @@ export type AllocationBasis = 'fixed' | 'percent' | 'hours';
 export interface ProjectUserRef {
   id: number;
   name: string;
+  avatar?: string | null;
 }
 
 export interface ProjectCustomerRef {

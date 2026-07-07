@@ -1,4 +1,4 @@
-import { getUserFirstName } from '../../../shared/utils/userDisplayName';
+import { shortDisplayName as getUserFirstName } from '../../../shared/utils/userDisplayName';
 
 export function buildOfflineToastMessage(name: string | null | undefined): string {
   const firstName = getUserFirstName(name);

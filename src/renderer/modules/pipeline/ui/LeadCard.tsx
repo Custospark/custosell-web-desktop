@@ -1,5 +1,6 @@
 import type { PipelineLead } from '../api/pipelineTypes';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
@@ -157,12 +158,12 @@ export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCa
             </span>
           )}
           {lead.assignee && (
-            <span
-              className="ml-auto inline-flex max-w-[100px] truncate rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800"
-              title={lead.assignee.name}
-            >
-              {lead.assignee.name}
-            </span>
+            <UserIdentityChip
+              name={lead.assignee.name}
+              avatar={lead.assignee.avatar}
+              size="xs"
+              className="ml-auto max-w-[108px] rounded-full bg-gray-50 py-0.5 pl-0.5 pr-2 ring-1 ring-gray-100"
+            />
           )}
         </div>
       </div>

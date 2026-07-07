@@ -21,12 +21,12 @@ import {
   pipelineSelectClass,
 } from './pipelineFormFields';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { formatShiftDate } from '../../../shared/utils/formatDateTime';
+import { formatShiftDate, formatShiftDateTime } from '../../../shared/utils/formatDateTime';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
 import {
   ArrowRightLeft,
-  Calendar,
   CheckCircle2,
   DollarSign,
   FileSpreadsheet,
@@ -42,7 +42,7 @@ import {
   UserRound,
   Video,
 } from 'lucide-react';
-import type { PipelineActivityType, PipelineLeadStatus } from '../api/pipelineTypes';
+import type { PipelineLeadStatus } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
 import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
 import PipelineColorPicker from './PipelineColorPicker';
@@ -62,8 +62,8 @@ const STATUS_STYLES: Record<PipelineLeadStatus, string> = {
   archived: 'bg-gray-100 text-gray-700 ring-gray-200',
 };
 
-const ACTIVITY_TYPES: { value: PipelineActivityType; label: string; icon: typeof MessageSquare }[] = [
-  { value: 'note', label: 'Note', icon: MessageSquare },
+const COMMENT_TYPES: { value: 'comment' | 'call' | 'email' | 'meeting'; label: string; icon: typeof MessageSquare }[] = [
+  { value: 'comment', label: 'Comment', icon: MessageSquare },
   { value: 'call', label: 'Call', icon: Phone },
   { value: 'email', label: 'Email', icon: Mail },
   { value: 'meeting', label: 'Meeting', icon: Video },
@@ -71,12 +71,20 @@ const ACTIVITY_TYPES: { value: PipelineActivityType; label: string; icon: typeof
 
 const ACTIVITY_ICONS: Record<string, typeof MessageSquare> = {
   note: MessageSquare,
+  comment: MessageSquare,
   call: Phone,
   email: Mail,
   meeting: Video,
   system: CheckCircle2,
   stage_change: ArrowRightLeft,
 };
+
+const USER_COMMENT_TYPES = new Set(['note', 'comment', 'call', 'email', 'meeting']);
+
+function activityTypeLabel(type: string): string {
+  if (type === 'comment' || type === 'note') return 'Comment';
+  return type.replace('_', ' ');
+}
 
 export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetailModalProps) {
   const { data: lead, isLoading } = usePipelineLead(leadId);
@@ -89,7 +97,7 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
   const { confirm } = useConfirm();
 
   const [note, setNote] = useState('');
-  const [activityType, setActivityType] = useState<'note' | 'call' | 'email' | 'meeting'>('note');
+  const [activityType, setActivityType] = useState<'comment' | 'call' | 'email' | 'meeting'>('comment');
 
   if (isLoading || !lead) {
     return (
@@ -117,6 +125,9 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
     await addActivity.mutateAsync({ leadId: lead.id, type: activityType, body: note.trim() });
     setNote('');
   };
+
+  const userComments = (lead.activities ?? []).filter((a) => USER_COMMENT_TYPES.has(a.type));
+  const systemActivities = (lead.activities ?? []).filter((a) => !USER_COMMENT_TYPES.has(a.type));
 
   const handleArchive = async () => {
     const ok = await confirm({
@@ -378,9 +389,9 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
           </div>
         )}
 
-        <PipelineFormSection title="Activity" icon={Calendar}>
+        <PipelineFormSection title="Comments" icon={MessageSquare}>
           <div className="flex flex-wrap gap-1.5">
-            {ACTIVITY_TYPES.map(({ value, label, icon: Icon }) => (
+            {COMMENT_TYPES.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
@@ -399,13 +410,19 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
           </div>
           <div className="flex gap-2">
             <div className="relative min-w-0 flex-1">
-              <MessageSquare className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
+              <MessageSquare className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Log a note, call summary, or next step…"
-                className={pipelineInputClass}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNote(); } }}
+                placeholder="Write a comment…"
+                rows={2}
+                className={cn(pipelineInputClass, 'min-h-[72px] resize-y py-2.5 pl-10')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    void handleAddNote();
+                  }
+                }}
               />
             </div>
             <Button
@@ -413,43 +430,70 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
               onClick={handleAddNote}
               loading={addActivity.isPending}
               disabled={!note.trim()}
-              className="inline-flex shrink-0 items-center gap-1.5"
+              className="inline-flex shrink-0 items-center gap-1.5 self-end"
             >
               <Send className="h-4 w-4" />
-              Add
+              Post
             </Button>
           </div>
 
-          <ul className="space-y-2 pt-1">
-            {(lead.activities ?? []).length === 0 ? (
+          <ul className="space-y-3 pt-1">
+            {userComments.length === 0 ? (
               <li className="rounded-lg border border-dashed border-gray-200 py-6 text-center text-xs text-gray-500">
-                No activity yet — log your first touchpoint above.
+                No comments yet — be the first to leave one.
               </li>
             ) : (
-              (lead.activities ?? []).map((a) => {
+              userComments.map((a) => {
                 const Icon = ACTIVITY_ICONS[a.type] ?? MessageSquare;
+                const authorName = a.user?.name ?? 'Unknown user';
                 return (
                   <li key={a.id} className="flex gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-gray-500 shadow-sm">
-                      <Icon className="h-4 w-4" />
-                    </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold capitalize text-gray-700">
-                          {a.type.replace('_', ' ')}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <UserIdentityChip
+                          name={authorName}
+                          avatar={a.user?.avatar}
+                          size="sm"
+                          nameClassName="text-sm font-semibold text-gray-900"
+                        />
+                        <span className="inline-flex items-center gap-1 text-[11px] capitalize text-gray-500">
+                          <Icon className="h-3 w-3" />
+                          {activityTypeLabel(a.type)}
                         </span>
                         {a.created_at && (
-                          <span className="text-[11px] text-gray-400">{formatShiftDate(a.created_at)}</span>
+                          <span className="text-[11px] text-gray-400">{formatShiftDateTime(a.created_at)}</span>
                         )}
                       </div>
-                      {a.body && <p className="mt-1 text-sm leading-relaxed text-gray-800">{a.body}</p>}
-                      {a.user && <p className="mt-1 text-[11px] text-gray-500">{a.user.name}</p>}
+                      {a.body && <p className="mt-1.5 text-sm leading-relaxed text-gray-800">{a.body}</p>}
                     </div>
                   </li>
                 );
               })
             )}
           </ul>
+
+          {systemActivities.length > 0 && (
+            <div className="border-t border-gray-100 pt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Activity log</p>
+              <ul className="space-y-2">
+                {systemActivities.map((a) => {
+                  const Icon = ACTIVITY_ICONS[a.type] ?? CheckCircle2;
+                  return (
+                    <li key={a.id} className="flex items-start gap-2 text-xs text-gray-600">
+                      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+                      <div className="min-w-0 flex-1">
+                        <span className="font-medium capitalize text-gray-700">{activityTypeLabel(a.type)}</span>
+                        {a.body && <span className="text-gray-600"> — {a.body}</span>}
+                        {a.created_at && (
+                          <span className="mt-0.5 block text-[11px] text-gray-400">{formatShiftDateTime(a.created_at)}</span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </PipelineFormSection>
       </div>
     </Modal>

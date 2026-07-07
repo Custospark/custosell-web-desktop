@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import type { BoardMemberInput } from '../api/pipelineTypes';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { Eye, Pencil, UserPlus, X } from 'lucide-react';
 
@@ -79,25 +80,28 @@ export default function BoardMemberPicker({
             {filteredMembers.map((member) => {
             const isLockedOwner = member.user_id === lockedUserId;
             const displayName = memberDisplayName(member, staffNameFor(member.user_id));
+            const staffMember = staff.find((u) => u.id === member.user_id);
             return (
               <li
                 key={member.user_id}
                 className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2.5"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
-                    {displayName.charAt(0).toUpperCase()}
-                  </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-gray-900">
-                      {displayName}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <UserIdentityChip
+                        name={displayName}
+                        avatar={staffMember?.avatar}
+                        size="sm"
+                        nameClassName="text-sm font-semibold text-gray-900"
+                      />
                       {isLockedOwner && (
-                        <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
                           Owner
                         </span>
                       )}
-                    </p>
-                    <p className="text-xs text-gray-500">{ROLE_LABELS[member.role]}</p>
+                    </div>
+                    <p className="mt-0.5 pl-9 text-xs text-gray-500">{ROLE_LABELS[member.role]}</p>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">

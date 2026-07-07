@@ -34,7 +34,7 @@ export default function BoardsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-8">
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1 sm:max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

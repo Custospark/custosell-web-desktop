@@ -17,7 +17,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider value={{ confirm }}>
       {children}
-      <ConfirmDialog open={!!options} options={options} onConfirm={handleConfirm} onCancel={handleCancel} />
+      <ConfirmDialog
+        key={options ? `${options.title}-${options.countdownSec ?? 0}` : 'closed'}
+        open={!!options}
+        options={options}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </ConfirmContext.Provider>
   );
 }

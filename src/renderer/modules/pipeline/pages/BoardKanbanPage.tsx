@@ -13,6 +13,7 @@ import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import {
   boardBelongsToEstimatesWorkspace,
   boardBelongsToPipelineWorkspace,
+  boardUsesTaskTerminology,
   filterBoardsForWorkspace,
 } from '../api/pipelineBoardWorkspace';
 import KanbanColumn from '../ui/KanbanColumn';
@@ -142,8 +143,8 @@ export default function BoardKanbanPage() {
     );
   }
 
-  const isProject = Boolean(board.project_id);
-  const itemLabel = isProject ? 'task' : 'lead';
+  const isTaskBoard = boardUsesTaskTerminology(board);
+  const itemLabel = isTaskBoard ? 'task' : 'lead';
   const boardBgStyle = pipelineBoardBackgroundStyleFromBoard(board);
 
   return (
@@ -179,7 +180,7 @@ export default function BoardKanbanPage() {
                 type="search"
                 value={leadQuery}
                 onChange={(e) => setLeadQuery(e.target.value)}
-                placeholder={isProject ? "Search tasks by title, assignee…" : "Search leads by name, email, phone, assignee…"}
+                placeholder={isTaskBoard ? "Search tasks by title, assignee…" : "Search leads by name, email, phone, assignee…"}
                 className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               {leadQuery && (
@@ -237,7 +238,7 @@ export default function BoardKanbanPage() {
                   disabled={!allStages.length}
                 >
                   <UserPlus className="h-4 w-4" />
-                  {isProject ? 'Add task' : 'Add card'}
+                  {isTaskBoard ? 'Add task' : 'Add card'}
                 </Button>
               </>
             )}
@@ -267,7 +268,7 @@ export default function BoardKanbanPage() {
               onDropLead={handleDropLead}
               onDropColumn={handleDropColumn}
               onEditStage={(s) => setEditStage(s)}
-              isProjectBoard={isProject}
+              isProjectBoard={isTaskBoard}
             />
           ))}
           <button
@@ -281,7 +282,7 @@ export default function BoardKanbanPage() {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isProject} />
+          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} />
         </div>
       )}
 
@@ -299,7 +300,7 @@ export default function BoardKanbanPage() {
           boardId={boardId}
           stageId={createStageId}
           onClose={() => setCreateStageId(null)}
-          defaultCardType={board.project_id ? 'card' : undefined}
+          defaultCardType={isTaskBoard ? 'card' : undefined}
         />
       )}
 

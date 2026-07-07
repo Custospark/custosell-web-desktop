@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertCircle, Briefcase, CalendarDays, ChevronLeft, ChevronRight, Kanban, UserRound,
+  AlertCircle, Briefcase, CalendarDays, ChevronLeft, ChevronRight, Kanban,
 } from 'lucide-react';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Card } from '../../../shared/components/cards/Card';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -381,10 +382,12 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
                       </p>
                     )}
                     {lead.assignee && (
-                      <p className="flex items-center gap-1.5">
-                        <UserRound className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{lead.assignee.name}</span>
-                      </p>
+                      <UserIdentityChip
+                        name={lead.assignee.name}
+                        avatar={lead.assignee.avatar}
+                        size="xs"
+                        className="max-w-full"
+                      />
                     )}
                     {showDateKind && lead.date_kind && (
                       <p>{DATE_KIND_STYLES[lead.date_kind]?.label ?? lead.date_kind} date</p>

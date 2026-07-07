@@ -6,11 +6,12 @@ export type PipelineCardType = 'lead' | 'card';
 
 export type PipelinePriority = 'low' | 'medium' | 'high' | 'urgent';
 
-export type PipelineActivityType = 'note' | 'call' | 'email' | 'meeting' | 'system' | 'stage_change';
+export type PipelineActivityType = 'note' | 'comment' | 'call' | 'email' | 'meeting' | 'system' | 'stage_change';
 
 export interface PipelineUserRef {
   id: number;
   name: string;
+  avatar?: string | null;
 }
 
 export interface PipelineBoardMember {

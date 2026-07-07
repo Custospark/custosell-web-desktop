@@ -7,6 +7,7 @@ export interface StaffUser {
   phone: string | null;
   is_active: boolean;
   modules?: string[];
+  avatar?: string | null;
   role?: { id: number; name: string; slug?: string | null } | null;
   created_at: string;
   updated_at: string;

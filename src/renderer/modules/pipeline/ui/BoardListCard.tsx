@@ -3,6 +3,7 @@ import { Kanban, Star } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import type { PipelineBoard } from '../api/pipelineTypes';
 import { pipelineBoardCardHeroStyle, pipelineColorAlpha } from '../api/pipelineKanbanCache';
+import { boardUsesTaskTerminology } from '../api/pipelineBoardWorkspace';
 import { PIPELINE_VISIBILITY_META } from './pipelineBoardMeta';
 
 export interface BoardListCardProps {
@@ -16,7 +17,8 @@ export default function BoardListCard({ board, to, showVisibility = false }: Boa
   const accent = board.cover_color ?? '#6366f1';
   const heroStyle = pipelineBoardCardHeroStyle(board);
   const openCount = board.open_leads_count ?? 0;
-  const countNoun = board.project_id
+  const usesTasks = boardUsesTaskTerminology(board);
+  const countNoun = usesTasks
     ? `open task${openCount === 1 ? '' : 's'}`
     : `open lead${openCount === 1 ? '' : 's'}`;
   const vis = showVisibility ? PIPELINE_VISIBILITY_META[board.visibility] : null;

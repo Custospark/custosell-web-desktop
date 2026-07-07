@@ -222,7 +222,7 @@ export function useUpdatePipelineBoard() {
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
       if (!vars.silent) showToast('success', 'Board updated');
     },
-    onError: (err, vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previousKanban && context.boardId) {
         qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
       }

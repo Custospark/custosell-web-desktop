@@ -1,4 +1,4 @@
-import { shortDisplayName as getUserFirstName } from '../../utils/userDisplayName';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 /** Reassuring offline banner — keep working; work is saved locally. */
 export function buildOfflineBannerHeadline(name: string | null | undefined): string {

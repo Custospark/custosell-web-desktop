@@ -45,7 +45,10 @@ export function reportingYearBounds(periods: AccountingPeriod[] | undefined): { 
   };
 }
 
-export function periodIdsForYear(periods: AccountingPeriod[], year: number): number[] {
+export function periodIdsForYear(
+  periods: Array<Pick<AccountingPeriod, 'id' | 'start_date'>>,
+  year: number,
+): number[] {
   return periods
     .filter((p) => new Date(p.start_date).getFullYear() === year)
     .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())

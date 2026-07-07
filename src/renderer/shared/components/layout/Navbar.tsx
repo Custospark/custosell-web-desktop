@@ -10,7 +10,7 @@ import { SyncHeaderChip } from '../Errors/SyncProgressBanner';
 import { GuideHeaderNav } from './GuideHeaderNav';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
-import { shortDisplayName as getUserFirstName } from '../../utils/userDisplayName';
+import { getUserFirstName } from '../../utils/userDisplayName';
 import { avatarUrl } from '../../utils/avatarUrl';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {

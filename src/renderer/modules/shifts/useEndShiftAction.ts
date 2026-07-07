@@ -3,7 +3,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../app/contexts/LogoutContext';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { shortDisplayName as getUserFirstName } from '../../shared/utils/userDisplayName';
+import { getUserFirstName } from '../../shared/utils/userDisplayName';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import { grossSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';

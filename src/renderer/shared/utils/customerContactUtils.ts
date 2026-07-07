@@ -28,7 +28,7 @@ export function displayCustomerPhone(phone?: string | null): string | null {
 }
 
 export function customerToContact(
-  customer: Pick<Customer, 'id' | 'name' | 'phone' | 'email'>,
+  customer: Pick<Customer, 'id' | 'name'> & Partial<Pick<Customer, 'phone' | 'email'>>,
 ): CustomerContactValue {
   return {
     customerId: customer.id,

@@ -1,6 +1,6 @@
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { CloudUpload } from 'lucide-react';
-import { shortDisplayName as getUserFirstName } from '../../utils/userDisplayName';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 export function AuthPendingBanner() {
   const pendingAuthSync = useAppSelector((state) => state.auth.pendingAuthSync);

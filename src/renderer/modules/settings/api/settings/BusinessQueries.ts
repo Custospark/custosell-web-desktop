@@ -41,6 +41,13 @@ function businessFromAuth(): Business | null {
     jurisdiction: business.jurisdiction ?? 'UG',
     prices_include_tax: business.prices_include_tax !== false,
     payment_bank_name: business.payment_bank_name ?? null,
+    payment_bank_account_name: business.payment_bank_account_name ?? null,
+    payment_bank_account_number: business.payment_bank_account_number ?? null,
+    payment_bank_branch: business.payment_bank_branch ?? null,
+    payment_mobile_money_provider: business.payment_mobile_money_provider ?? null,
+    payment_mobile_money_account_name: business.payment_mobile_money_account_name ?? null,
+    payment_mobile_money_number: business.payment_mobile_money_number ?? null,
+    payment_instructions: business.payment_instructions ?? null,
   };
 }
 

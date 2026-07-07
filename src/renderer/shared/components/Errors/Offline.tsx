@@ -3,7 +3,7 @@ import { WifiOff, Wifi, Plane, Router, Signal, RefreshCw } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { checkNetworkConnectivity } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
-import { shortDisplayName as getUserFirstName } from '../../utils/userDisplayName';
+import { getUserFirstName } from '../../utils/userDisplayName';
 
 const CONNECTION_TIPS = [
   { icon: Wifi, text: 'Check your internet connection — Wi‑Fi or mobile data should be on.' },

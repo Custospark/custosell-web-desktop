@@ -9,13 +9,13 @@ import {
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
-  Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate,
+  Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import LogoImage from '../../assets/LogoImage';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
-import { canAccessModule, hasEstimatesBoardsAccess, isLimitedEstimatesUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
+import { canAccessModule, hasEstimatesBoardsAccess, isBusinessOwner, isLimitedEstimatesUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
 import { avatarUrl } from '../../utils/avatarUrl';
@@ -29,6 +29,7 @@ interface SubItem {
   to: string;
   label: string;
   icon: React.ElementType;
+  ownerOnly?: boolean;
 }
 
 interface NavGroup {
@@ -69,7 +70,7 @@ const baseSubRoutes = [
   ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, ROUTES.ACCOUNTING.JOURNAL_ENTRIES,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
-  ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES,
+  ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES, ROUTES.SETTINGS.MODULES,
 ];
 
 const platformSubRoutes = [
@@ -205,6 +206,7 @@ const baseNavGroups: NavGroup[] = [
       // { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Subscription', icon: CreditCard },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
+      { to: ROUTES.SETTINGS.MODULES, label: 'Module access', icon: LayoutGrid, ownerOnly: true },
     ],
   },
 ];
@@ -240,6 +242,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           subItems: [
             { to: ROUTES.ESTIMATES.BOARDS, label: 'Project boards', icon: Kanban },
           ],
+        };
+      }
+      if (group.label === 'Settings') {
+        return {
+          ...group,
+          subItems: group.subItems.filter((item) => !item.ownerOnly || isBusinessOwner(user)),
         };
       }
       return group;

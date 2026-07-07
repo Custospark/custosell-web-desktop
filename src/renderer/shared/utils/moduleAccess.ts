@@ -85,6 +85,29 @@ function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   return [...BUSINESS_MODULE_SLUGS];
 }
 
+/** Owner sidebar/API modules — settings is always included. */
+export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug[] {
+  const stored = storedBusinessModules(user);
+  if (stored.length === 0) {
+    return [...BUSINESS_MODULE_SLUGS];
+  }
+  const modules = new Set<BusinessModuleSlug>(stored);
+  modules.add('settings');
+  return [...modules];
+}
+
+export function ownerHasLegacyFullEstimatesAccess(user: AuthUser | null | undefined): boolean {
+  if (!user || !isBusinessOwner(user)) return false;
+  const business = storedBusinessModules(user);
+  return business.includes('estimates') && business.length === BUSINESS_MODULE_SLUGS.length;
+}
+
+export function ownerInitialEstimatesFullAccess(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  if (staffHasFullEstimatesModule(user.modules)) return true;
+  return ownerHasLegacyFullEstimatesAccess(user);
+}
+
 export function getAccessibleModules(user: AuthUser | null | undefined): string[] {
   if (!user) return [];
 
@@ -96,7 +119,7 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
   }
 
   if (isBusinessOwner(user)) {
-    BUSINESS_MODULE_SLUGS.forEach((m) => modules.add(m));
+    resolvedOwnerBusinessModules(user).forEach((m) => modules.add(m));
   } else if (user.business_id) {
     storedBusinessModules(user).forEach((m) => modules.add(m));
   }
@@ -115,15 +138,15 @@ export function isProjectMember(user: AuthUser | null | undefined, projectId: nu
 
 export function isProjectCollaboratorOnly(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
-  if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return false;
+  if (canAccessModule(user, 'estimates')) return false;
   return (user.project_member_ids?.length ?? 0) > 0;
 }
 
 /** Full Projects & Estimates workspace (estimates, projects, insights, templates, costing). */
 export function canViewFullEstimates(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
-  if (isBusinessOwner(user)) return true;
-  return (user.modules ?? []).includes(ESTIMATES_FULL_MODULE);
+  if ((user.modules ?? []).includes(ESTIMATES_FULL_MODULE)) return true;
+  return ownerHasLegacyFullEstimatesAccess(user);
 }
 
 export function staffHasFullEstimatesModule(modules: string[] | undefined): boolean {

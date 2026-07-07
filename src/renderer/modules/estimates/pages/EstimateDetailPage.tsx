@@ -79,6 +79,7 @@ export default function EstimateDetailPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [emailTo, setEmailTo] = useState('');
   const [showEmail, setShowEmail] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState<'preview' | 'download' | null>(null);
 
   if (isLoading || !estimate) {
     return (
@@ -103,6 +104,28 @@ export default function EstimateDetailPage() {
       payload: { to: emailTo.trim(), customer_id: estimate.customer_id },
     });
     setShowEmail(false);
+  };
+
+  const handlePreview = async () => {
+    setPdfBusy('preview');
+    try {
+      await viewEstimatePdf(estimate.id);
+    } catch {
+      /* toast handled in the pdf utility */
+    } finally {
+      setPdfBusy(null);
+    }
+  };
+
+  const handleDownload = async () => {
+    setPdfBusy('download');
+    try {
+      await downloadEstimatePdf(estimate.id);
+    } catch {
+      /* toast handled in the pdf utility */
+    } finally {
+      setPdfBusy(null);
+    }
   };
 
   const tabs = [
@@ -184,7 +207,8 @@ export default function EstimateDetailPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => viewEstimatePdf(estimate.id)}
+              onClick={handlePreview}
+              loading={pdfBusy === 'preview'}
               title="Preview the estimate as a PDF document"
             >
               <Eye className="h-4 w-4" />
@@ -193,7 +217,8 @@ export default function EstimateDetailPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => downloadEstimatePdf(estimate.id)}
+              onClick={handleDownload}
+              loading={pdfBusy === 'download'}
               title="Download the estimate as a PDF file"
             >
               <Download className="h-4 w-4" />

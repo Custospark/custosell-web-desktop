@@ -8,6 +8,7 @@ interface BoardMemberPickerProps {
   value: BoardMemberInput[];
   onChange: (members: BoardMemberInput[]) => void;
   excludeUserId?: number;
+  lockedUserId?: number;
   className?: string;
 }
 
@@ -20,7 +21,13 @@ function memberDisplayName(member: BoardMemberInput, staffName?: string): string
   return member.name ?? staffName ?? `Team member #${member.user_id}`;
 }
 
-export default function BoardMemberPicker({ value, onChange, excludeUserId, className }: BoardMemberPickerProps) {
+export default function BoardMemberPicker({
+  value,
+  onChange,
+  excludeUserId,
+  lockedUserId,
+  className,
+}: BoardMemberPickerProps) {
   const { data: staff = [] } = useStaff();
   const [search, setSearch] = useState('');
 
@@ -70,6 +77,7 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
           />
           <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
             {filteredMembers.map((member) => {
+            const isLockedOwner = member.user_id === lockedUserId;
             const displayName = memberDisplayName(member, staffNameFor(member.user_id));
             return (
               <li
@@ -81,7 +89,14 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {displayName}
+                      {isLockedOwner && (
+                        <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                          Owner
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">{ROLE_LABELS[member.role]}</p>
                   </div>
                 </div>
@@ -94,6 +109,7 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
                       member.role === 'editor' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 ring-1 ring-gray-200',
                     )}
                     title="Can edit cards"
+                    disabled={isLockedOwner}
                   >
                     <Pencil className="h-3 w-3" />
                     Edit
@@ -106,6 +122,7 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
                       member.role === 'viewer' ? 'bg-slate-600 text-white' : 'bg-white text-gray-600 ring-1 ring-gray-200',
                     )}
                     title="View only"
+                    disabled={isLockedOwner}
                   >
                     <Eye className="h-3 w-3" />
                     View
@@ -113,8 +130,12 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
                   <button
                     type="button"
                     onClick={() => removeMember(member.user_id)}
-                    className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                    className={cn(
+                      'rounded p-1 text-gray-400',
+                      isLockedOwner ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-50 hover:text-red-600',
+                    )}
                     aria-label={`Remove ${displayName}`}
+                    disabled={isLockedOwner}
                   >
                     <X className="h-4 w-4" />
                   </button>

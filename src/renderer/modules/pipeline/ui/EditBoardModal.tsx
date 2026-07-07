@@ -229,6 +229,7 @@ function EditBoardModalForm({
               onAdd={(userId, role) => addProjectMember.mutate({ user_id: userId, role })}
               onRemove={(userId) => removeProjectMember.mutate(userId)}
               onRoleChange={(userId, role) => updateProjectMember.mutate({ userId, role })}
+              lockedUserId={board.created_by}
               loading={memberMutationPending}
             />
           </PipelineFormSection>
@@ -261,7 +262,12 @@ function EditBoardModalForm({
             <p className="mb-2 text-xs text-gray-500">
               Invite specific members and set their permissions for this board.
             </p>
-            <BoardMemberPicker value={members} onChange={setMembers} excludeUserId={board.created_by} />
+            <BoardMemberPicker
+              value={members}
+              onChange={setMembers}
+              excludeUserId={board.created_by}
+              lockedUserId={board.created_by}
+            />
           </PipelineFormSection>
         )}
         {visibility === 'team' && (

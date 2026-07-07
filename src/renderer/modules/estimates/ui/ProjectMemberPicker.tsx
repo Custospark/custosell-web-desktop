@@ -16,6 +16,7 @@ interface ProjectMemberPickerProps {
   onAdd: (userId: number, role: ProjectMemberRole) => void;
   onRemove: (userId: number) => void;
   onRoleChange: (userId: number, role: ProjectMemberRole) => void;
+  lockedUserId?: number;
   loading?: boolean;
 }
 
@@ -24,6 +25,7 @@ export default function ProjectMemberPicker({
   onAdd,
   onRemove,
   onRoleChange,
+  lockedUserId,
   loading,
 }: ProjectMemberPickerProps) {
   const { data: staff = [] } = useStaff();
@@ -86,10 +88,19 @@ export default function ProjectMemberPicker({
         <p className="text-sm text-gray-500">No collaborators yet. Invite staff to give board access without full Estimates module.</p>
       ) : (
         <ul className="divide-y divide-gray-100 rounded-xl border border-gray-200">
-          {members.map((member) => (
+          {members.map((member) => {
+            const isLockedOwner = member.user_id === lockedUserId;
+            return (
             <li key={member.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">{member.user?.name ?? `User #${member.user_id}`}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {member.user?.name ?? `User #${member.user_id}`}
+                  {isLockedOwner && (
+                    <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                      Owner
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-gray-500">{ROLE_OPTIONS.find((r) => r.value === member.role)?.hint}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -97,7 +108,7 @@ export default function ProjectMemberPicker({
                   value={member.role}
                   onChange={(e) => onRoleChange(member.user_id, e.target.value as ProjectMemberRole)}
                   className="rounded-lg border border-gray-200 px-2 py-1 text-xs"
-                  disabled={loading}
+                  disabled={loading || isLockedOwner}
                 >
                   {ROLE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -106,15 +117,19 @@ export default function ProjectMemberPicker({
                 <button
                   type="button"
                   onClick={() => onRemove(member.user_id)}
-                  className={cn('rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600')}
-                  disabled={loading}
+                  className={cn(
+                    'rounded-lg p-1.5 text-gray-400',
+                    isLockedOwner ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-50 hover:text-red-600',
+                  )}
+                  disabled={loading || isLockedOwner}
                   aria-label="Remove member"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

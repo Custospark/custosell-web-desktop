@@ -11,6 +11,7 @@ import PaymentHistoryList from './PaymentHistoryList';
 import RecordPaymentForm, { type RecordPaymentInput } from './RecordPaymentForm';
 import type { Sale } from '../sales/api/salesTypes';
 import type { Invoice } from '../invoices/api/InvoiceTypes';
+import type { Payment } from './paymentTypes';
 import { cn } from '../../shared/utils/cn';
 
 interface PaymentsPanelProps {

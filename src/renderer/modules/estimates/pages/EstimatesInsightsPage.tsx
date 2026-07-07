@@ -181,7 +181,7 @@ export default function EstimatesInsightsPage() {
                         if (!active || !payload?.length) return null;
                         const row = payload[0]?.payload;
                         return (
-                          <ChartTooltipShell title={label}>
+                          <ChartTooltipShell title={label != null ? String(label) : ''}>
                             <ChartTooltipRow label="Approved" value={String(row?.Approved ?? 0)} accent />
                             <ChartTooltipRow label="Rejected" value={String(row?.Rejected ?? 0)} muted />
                             <ChartTooltipRow label="Value" value={formatCurrency(row?.value ?? 0, currency)} />

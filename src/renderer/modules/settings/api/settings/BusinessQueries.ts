@@ -40,6 +40,7 @@ function businessFromAuth(): Business | null {
     default_vat_rate: business.default_vat_rate != null ? Number(business.default_vat_rate) : 18,
     jurisdiction: business.jurisdiction ?? 'UG',
     prices_include_tax: business.prices_include_tax !== false,
+    payment_bank_name: business.payment_bank_name ?? null,
   };
 }
 

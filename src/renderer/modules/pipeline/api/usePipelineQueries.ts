@@ -201,7 +201,7 @@ export function useUpdatePipelineBoard() {
       const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(id));
       const previousBoards = qc.getQueryData<PipelineBoard[]>(pipelineKeys.boards());
       if (previousKanban) {
-        qc.setQueryData(pipelineKeys.kanban(id), mergeBoardOnKanban(previousKanban, payload));
+        qc.setQueryData(pipelineKeys.kanban(id), mergeBoardOnKanban(previousKanban, payload as Partial<PipelineBoard>));
       }
       if (previousBoards) {
         qc.setQueryData(
@@ -212,7 +212,7 @@ export function useUpdatePipelineBoard() {
       return { previousKanban, previousBoards, boardId: id };
     },
     onSuccess: (board, vars) => {
-      qc.setQueryData(pipelineKeys.kanban(board.id), (old) => {
+      qc.setQueryData<PipelineBoard>(pipelineKeys.kanban(board.id), (old) => {
         if (!old) return board;
         return mergeBoardOnKanban(old, board);
       });
@@ -318,7 +318,7 @@ export function useCreatePipelineLead() {
       return { previousKanban, boardId, tempId };
     },
     onSuccess: (lead, _vars, context) => {
-      qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) => {
+      qc.setQueryData<PipelineBoard>(pipelineKeys.kanban(lead.board_id), (old) => {
         if (!old) return old;
         const withoutTemp = context?.tempId
           ? removeLeadFromKanban(old, context.tempId)
@@ -584,7 +584,7 @@ export function useCreatePipelineStage(boardId: number) {
       return { previousKanban, boardId, tempId };
     },
     onSuccess: (stage, _vars, context) => {
-      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+      qc.setQueryData<PipelineBoard>(pipelineKeys.kanban(boardId), (old) => {
         if (!old) return old;
         const withoutTemp = (old.stages ?? []).filter((s) => s.id !== context?.tempId);
         return addStageToKanban({ ...old, stages: withoutTemp }, stage);
@@ -812,7 +812,7 @@ export function useCreatePipelineLabel(boardId: number) {
       return { previous, tempId };
     },
     onSuccess: (label, _vars, context) => {
-      qc.setQueryData(pipelineKeys.labels(boardId), (old) => {
+      qc.setQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId), (old) => {
         if (!old) return [label];
         const withoutTemp = old.filter((l) => l.id !== context?.tempId);
         return [...withoutTemp, label];

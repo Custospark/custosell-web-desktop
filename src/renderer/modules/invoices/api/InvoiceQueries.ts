@@ -40,7 +40,7 @@ function normalizeInvoiceResponse(payload: unknown): Invoice {
       return obj.data as Invoice;
     }
     if ('id' in obj && 'invoice_number' in obj) {
-      return obj as Invoice;
+      return obj as unknown as Invoice;
     }
   }
   throw new Error('Invalid invoice response');

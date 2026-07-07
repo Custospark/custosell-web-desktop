@@ -16,7 +16,7 @@ export function buildLocalCustomer(payload: CreateCustomerData): CustomerWithSyn
     id: localIdNum,
     business_id: authUser?.business_id ?? 0,
     name: payload.name,
-    phone: payload.phone,
+    phone: payload.phone ?? null,
     email: payload.email ?? null,
     total_purchases: '0',
     last_purchase_at: null,

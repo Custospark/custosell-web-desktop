@@ -46,8 +46,8 @@ function syncLinkedSaleInCache(invoice: Invoice, payment: Payment): void {
   };
 
   const patchSale = (sale: Sale): Sale => {
-    const total = sale.total_amount;
-    const prevPaid = sale.amount_paid ?? 0;
+    const total = Number(sale.total_amount);
+    const prevPaid = Number(sale.amount_paid ?? 0);
     const newPaid = Math.min(prevPaid + payment.amount, total);
     const balance = Math.max(0, total - newPaid);
     return {

@@ -1,4 +1,4 @@
-import type { AccountingPeriod } from '../../modules/accounting/api/AccountingTypes';
+import type { AccountingPeriod } from '../api/AccountingTypes';
 
 export type ReportPeriodParams = {
   period_id?: number;

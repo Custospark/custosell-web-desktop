@@ -29,4 +29,5 @@ export interface Invoice {
   items: InvoiceItem[];
   payments?: import('../../payments/paymentTypes').Payment[];
   created_at: string;
+  updated_at?: string;
 }

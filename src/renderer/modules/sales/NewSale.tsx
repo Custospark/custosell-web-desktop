@@ -10,6 +10,7 @@ import CustomerContactField, { EMPTY_CUSTOMER_CONTACT } from '../../shared/compo
 import { contactFromValue, hasResolvableContact, useResolveCustomerContact } from '../../shared/hooks/useResolveCustomerContact';
 import { customerToContact, type CustomerContactValue } from '../../shared/utils/customerContactUtils';
 import type { Sale } from './api/salesTypes';
+import type { Payment } from '../payments/paymentTypes';
 import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck, FileText } from 'lucide-react';
 import { HiCheckCircle } from 'react-icons/hi2';
 import HeldOrdersModal from './ui/HeldOrdersModal';
@@ -148,7 +149,7 @@ function BillingControls() {
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const [invoiceFromSale, setInvoiceFromSale] = useState<Sale | null>(null);
-  const [lastPayment, setLastPayment] = useState<import('../../payments/paymentTypes').Payment | null>(null);
+  const [lastPayment, setLastPayment] = useState<Payment | null>(null);
   const [installmentMode, setInstallmentMode] = useState(false);
 
   const [contact, setContact] = useState<CustomerContactValue>(EMPTY_CUSTOMER_CONTACT);
@@ -225,7 +226,7 @@ function BillingControls() {
             setContact(EMPTY_CUSTOMER_CONTACT);
             setInstallmentMode(false);
             setCompletedSale(sale);
-            const payments = (sale as Sale & { payments?: import('../../payments/paymentTypes').Payment[] }).payments;
+            const payments = (sale as Sale & { payments?: Payment[] }).payments;
             setLastPayment(payments?.length ? payments[payments.length - 1] : null);
           },
         },

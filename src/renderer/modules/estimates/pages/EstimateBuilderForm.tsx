@@ -34,6 +34,7 @@ interface EstimateBuilderFormProps {
     lineItems?: EditableLineItem[];
   };
   onComplete: (estimate?: Estimate) => void;
+  onCancel?: () => void;
   embedded?: boolean;
 }
 

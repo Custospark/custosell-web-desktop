@@ -27,7 +27,9 @@ export function displayCustomerPhone(phone?: string | null): string | null {
   return phone.trim();
 }
 
-export function customerToContact(customer: Customer): CustomerContactValue {
+export function customerToContact(
+  customer: Pick<Customer, 'id' | 'name' | 'phone' | 'email'>,
+): CustomerContactValue {
   return {
     customerId: customer.id,
     name: customer.name ?? '',

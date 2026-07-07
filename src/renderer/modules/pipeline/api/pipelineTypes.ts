@@ -195,9 +195,7 @@ export interface CreateBoardPayload {
   name: string;
   description?: string;
   visibility: PipelineVisibility;
-  cover_color?: string;
-  background_type?: string;
-  background_value?: string;
+  cover_color?: string | null;
   background_type?: string;
   background_value?: string;
   member_ids?: number[];

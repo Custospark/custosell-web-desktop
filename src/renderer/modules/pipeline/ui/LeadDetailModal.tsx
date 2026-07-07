@@ -42,7 +42,7 @@ import {
   UserRound,
   Video,
 } from 'lucide-react';
-import type { PipelineLeadStatus } from '../api/pipelineTypes';
+import type { PipelineLeadStatus, UpdateLeadPayload } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
 import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
 import PipelineColorPicker from './PipelineColorPicker';
@@ -113,7 +113,7 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
   const isLead = (lead.card_type ?? 'lead') === 'lead';
   const stageColor = lead.stage?.color ?? '#6366f1';
   const resolvedBoardId = boardId ?? lead.board_id;
-  const patchLead = (payload: Parameters<typeof updateLead.mutate>[0]) =>
+  const patchLead = (payload: UpdateLeadPayload) =>
     updateLead.mutate({ ...payload, id: lead.id, board_id: resolvedBoardId, silent: true });
 
   const handleConvert = async () => {

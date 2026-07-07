@@ -8,6 +8,8 @@ import { Input } from '../../../shared/components/inputs/Input';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { useToast } from '../../../app/contexts/useToast';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { canViewProjectCosting, isProjectCollaboratorOnly } from '../../../shared/utils/moduleAccess';
 import {
   useProject,
   useProjectBudgetSummary,
@@ -15,9 +17,14 @@ import {
   useCreateCostAllocation,
   useDeleteCostAllocation,
   useProjectBoard,
+  useProjectMembers,
+  useAddProjectMember,
+  useUpdateProjectMember,
+  useRemoveProjectMember,
 } from '../api/useProjectQueries';
 import type { CreateCostAllocationPayload, AllocationType } from '../api/projectTypes';
 import { BudgetProgressBar, PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
+import ProjectMemberPicker from '../ui/ProjectMemberPicker';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
@@ -26,7 +33,7 @@ const n = (v: unknown): number => Number(v) || 0;
 import {
   ArrowLeft, CheckSquare, Clock, DollarSign, Target, TrendingUp, Percent,
   FolderKanban, BarChart3, Info, Plus, Trash2, AlertTriangle, Wallet,
-  ExternalLink,
+  Users,
 } from 'lucide-react';
 
 type ProjectTab = 'overview' | 'tasks' | 'timesheets' | 'costs' | 'board';
@@ -75,11 +82,18 @@ export default function ProjectDetailPage() {
   const projectId = Number(id);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const user = useAppSelector((s) => s.auth.user);
+  const canCosting = canViewProjectCosting(user);
+  const collaboratorOnly = isProjectCollaboratorOnly(user);
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
 
   const { data: project, isLoading } = useProject(projectId);
-  const { data: budget } = useProjectBudgetSummary(projectId);
-  const { data: profitability } = useProjectProfitability(projectId);
+  const { data: budget } = useProjectBudgetSummary(projectId, canCosting);
+  const { data: profitability } = useProjectProfitability(projectId, canCosting);
+  const { data: members = [] } = useProjectMembers(canCosting ? projectId : 0);
+  const addMember = useAddProjectMember(projectId);
+  const updateMember = useUpdateProjectMember(projectId);
+  const removeMember = useRemoveProjectMember(projectId);
 
   const [showAllocation, setShowAllocation] = useState(false);
   const [allocType, setAllocType] = useState<AllocationType>('overhead');
@@ -142,16 +156,16 @@ export default function ProjectDetailPage() {
   const tabs = [
     { key: 'overview' as const, label: 'Overview', icon: FolderKanban },
     { key: 'tasks' as const, label: 'Tasks', icon: CheckSquare },
-    { key: 'timesheets' as const, label: 'Timesheets', icon: Clock },
+    ...(canCosting ? [{ key: 'timesheets' as const, label: 'Timesheets', icon: Clock }] : []),
     { key: 'board' as const, label: 'Board', icon: FolderKanban },
-    { key: 'costs' as const, label: 'Cost allocations', icon: DollarSign },
+    ...(canCosting ? [{ key: 'costs' as const, label: 'Cost allocations', icon: DollarSign }] : []),
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <Link
-          to={ROUTES.ESTIMATES.PROJECTS}
+          to={collaboratorOnly ? ROUTES.ESTIMATES.MY_PROJECTS : ROUTES.ESTIMATES.PROJECTS}
           className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -178,7 +192,7 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      {isOverBudget && (
+      {canCosting && isOverBudget && (
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3">
           <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
           <div className="text-sm text-red-900">
@@ -191,7 +205,7 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {isMarginNegative && (
+      {canCosting && isMarginNegative && (
         <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 px-4 py-3">
           <TrendingUp className="h-5 w-5 shrink-0 text-rose-600" />
           <div className="text-sm text-rose-900">
@@ -204,6 +218,7 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
+      {canCosting && (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <MiniStat
           label="Budget revenue"
@@ -239,7 +254,9 @@ export default function ProjectDetailPage() {
           sub={`Revenue ${formatCurrency(actualRevenue, currency)} · Cost ${formatCurrency(actualCost, currency)}`}
         />
       </div>
+      )}
 
+      {canCosting && (
       <Card className="p-4 sm:p-5">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-800">
           <TrendingUp className="h-4 w-4 text-blue-600" />
@@ -268,6 +285,7 @@ export default function ProjectDetailPage() {
           </span>
         </div>
       </Card>
+      )}
 
       <nav className="flex flex-wrap gap-1 border-b border-gray-200">
         {tabs.map(({ key, label, icon: Icon }) => (
@@ -320,7 +338,7 @@ export default function ProjectDetailPage() {
               </p>
             </Card>
           )}
-          {profitability && (
+          {canCosting && profitability && (
             <Card className="p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
@@ -342,6 +360,21 @@ export default function ProjectDetailPage() {
                   </span>
                 </div>
               </div>
+            </Card>
+          )}
+          {canCosting && (
+            <Card className="p-4 lg:col-span-2">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                <Users className="h-4 w-4 text-blue-600" />
+                Project team
+              </div>
+              <ProjectMemberPicker
+                members={members.length ? members : (project.members ?? [])}
+                loading={addMember.isPending || updateMember.isPending || removeMember.isPending}
+                onAdd={(userId, role) => addMember.mutate({ user_id: userId, role })}
+                onRoleChange={(userId, role) => updateMember.mutate({ userId, role })}
+                onRemove={(userId) => removeMember.mutate(userId)}
+              />
             </Card>
           )}
         </div>
@@ -477,9 +510,8 @@ export default function ProjectDetailPage() {
               <Button
                 size="lg"
                 className="mt-6 inline-flex items-center gap-2"
-                onClick={() => navigate(ROUTES.PIPELINE.BOARD(projectBoard.id))}
+                onClick={() => navigate(ROUTES.ESTIMATES.PROJECT_BOARD(projectId))}
               >
-                <ExternalLink className="h-4 w-4" />
                 Open board
               </Button>
             </div>

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 function leadsLink(params: Record<string, string>) {
-  const q = new URLSearchParams(params).toString();
+  const q = new URLSearchParams({ card_type: 'lead', ...params }).toString();
   return `${ROUTES.PIPELINE.LEADS}${q ? `?${q}` : ''}`;
 }
 
@@ -61,7 +61,7 @@ export default function InsightsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Pipeline performance</h2>
-          <p className="mt-1 text-sm text-gray-500">Track open pipeline, wins, and where leads come from.</p>
+          <p className="mt-1 text-sm text-gray-500">Sales leads only — project boards and task cards are excluded.</p>
         </div>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
@@ -70,8 +70,8 @@ export default function InsightsPage() {
             onChange={(e) => setBoardId(e.target.value ? Number(e.target.value) : undefined)}
             className={pipelineSelectClass}
           >
-            <option value="">All accessible boards</option>
-            {(boards ?? []).map((b) => (
+            <option value="">All sales boards</option>
+            {(boards ?? []).filter((b) => !b.project_id).map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>

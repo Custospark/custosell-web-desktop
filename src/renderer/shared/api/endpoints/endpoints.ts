@@ -71,7 +71,10 @@ export const ESTIMATES = {
 
 export const PROJECTS = {
   BASE: '/projects',
+  MY: '/my-projects',
   BY_ID: (id: number) => `/projects/${id}`,
+  MEMBERS: (id: number) => `/projects/${id}/members`,
+  MEMBER: (projectId: number, userId: number) => `/projects/${projectId}/members/${userId}`,
   TASKS: (id: number) => `/projects/${id}/tasks`,
   TASK: (projectId: number, taskId: number) => `/projects/${projectId}/tasks/${taskId}`,
   TIMESHEETS: (id: number) => `/projects/${id}/timesheets`,
@@ -81,6 +84,7 @@ export const PROJECTS = {
   BUDGET_SUMMARY: (id: number) => `/projects/${id}/budget-summary`,
   PROFITABILITY: (id: number) => `/projects/${id}/profitability`,
   BOARD: (id: number) => `/projects/${id}/board`,
+  BOARD_KANBAN: (id: number) => `/projects/${id}/board/kanban`,
 };
 
 export const PIPELINE = {

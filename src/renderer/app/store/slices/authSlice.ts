@@ -57,6 +57,7 @@ export interface AuthUser {
   is_business_owner?: boolean;
   modules?: string[];
   accessible_modules?: string[];
+  project_member_ids?: number[];
   last_login_at?: string | null;
 }
 

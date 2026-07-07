@@ -98,11 +98,13 @@ function invalidatePipeline(qc: ReturnType<typeof useQueryClient>, boardId?: num
   }
 }
 
-export function usePipelineBoards() {
+export function usePipelineBoards(options?: { salesOnly?: boolean }) {
+  const salesOnly = options?.salesOnly ?? true;
   return useQuery<PipelineBoard[]>({
-    queryKey: pipelineKeys.boards(),
+    queryKey: [...pipelineKeys.boards(), salesOnly ? 'sales' : 'all'],
     queryFn: async () => {
-      const { data } = await axiosInstance.get(PIPELINE.BOARDS);
+      const params = salesOnly ? '?sales_only=1' : '?sales_only=0';
+      const { data } = await axiosInstance.get(`${PIPELINE.BOARDS}${params}`);
       return normalizeList<PipelineBoard>(data);
     },
     placeholderData: (previousData) => previousData,

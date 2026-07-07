@@ -105,6 +105,43 @@ export function canAccessModule(user: AuthUser | null | undefined, module: strin
   return getAccessibleModules(user).includes(module);
 }
 
+export function isProjectMember(user: AuthUser | null | undefined, projectId: number): boolean {
+  if (!user?.project_member_ids?.length) return false;
+  return user.project_member_ids.includes(projectId);
+}
+
+export function isProjectCollaboratorOnly(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return false;
+  return (user.project_member_ids?.length ?? 0) > 0;
+}
+
+export function canViewProjectCosting(user: AuthUser | null | undefined): boolean {
+  return isBusinessOwner(user) || canAccessModule(user, 'estimates');
+}
+
+/** Estimates module or invited collaborator routes under /estimates/projects… */
+export function canAccessEstimatesArea(
+  user: AuthUser | null | undefined,
+  pathname: string,
+  params?: { id?: string },
+): boolean {
+  if (!user) return false;
+  if (canAccessModule(user, 'estimates') || isBusinessOwner(user)) return true;
+
+  if (pathname.startsWith('/estimates/my-projects')) {
+    return (user.project_member_ids?.length ?? 0) > 0;
+  }
+
+  const projectMatch = pathname.match(/^\/estimates\/projects\/(\d+)/);
+  const projectId = projectMatch ? Number(projectMatch[1]) : params?.id ? Number(params.id) : null;
+  if (projectId) {
+    return isProjectMember(user, projectId);
+  }
+
+  return false;
+}
+
 export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (!user) return ROUTES.LOGIN;
 
@@ -115,6 +152,10 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
     if (accessible.has(mod)) {
       return MODULE_DEFAULT_ROUTES[mod];
     }
+  }
+
+  if ((user.project_member_ids?.length ?? 0) > 0) {
+    return ROUTES.ESTIMATES.MY_PROJECTS;
   }
 
   if (accessible.has('account')) return MODULE_DEFAULT_ROUTES.account;

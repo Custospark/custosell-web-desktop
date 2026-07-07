@@ -12,6 +12,8 @@ import type {
   Project,
   ProjectBudgetSummary,
   ProjectCostAllocation,
+  ProjectMember,
+  ProjectMemberRole,
   ProjectProfitability,
   ProjectTask,
   TimesheetEntry,
@@ -230,26 +232,26 @@ export function useDeleteCostAllocation(projectId: number) {
   });
 }
 
-export function useProjectBudgetSummary(projectId: number) {
+export function useProjectBudgetSummary(projectId: number, enabled = true) {
   return useQuery<ProjectBudgetSummary>({
     queryKey: projectKeys.budget(projectId),
     queryFn: async () => {
       const { data } = await axiosInstance.get(PROJECTS.BUDGET_SUMMARY(projectId));
       return unwrapEntity<ProjectBudgetSummary>(data);
     },
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && enabled,
     ...queryDefaults,
   });
 }
 
-export function useProjectProfitability(projectId: number) {
+export function useProjectProfitability(projectId: number, enabled = true) {
   return useQuery<ProjectProfitability>({
     queryKey: projectKeys.profitability(projectId),
     queryFn: async () => {
       const { data } = await axiosInstance.get(PROJECTS.PROFITABILITY(projectId));
       return unwrapEntity<ProjectProfitability>(data);
     },
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && enabled,
     ...queryDefaults,
   });
 }
@@ -263,5 +265,88 @@ export function useProjectBoard(projectId: number) {
     },
     enabled: Boolean(projectId),
     ...queryDefaults,
+  });
+}
+
+export function useProjectBoardKanban(projectId: number) {
+  return useQuery<PipelineBoard>({
+    queryKey: [...projectKeys.all, 'board-kanban', projectId] as const,
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(PROJECTS.BOARD_KANBAN(projectId));
+      return unwrapEntity<PipelineBoard>(data);
+    },
+    enabled: Boolean(projectId),
+    ...queryDefaults,
+  });
+}
+
+export function useMyProjects() {
+  return useQuery<Project[]>({
+    queryKey: [...projectKeys.all, 'my'] as const,
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(PROJECTS.MY);
+      return unwrapList<Project>(data);
+    },
+    ...queryDefaults,
+  });
+}
+
+export function useProjectMembers(projectId: number) {
+  return useQuery<ProjectMember[]>({
+    queryKey: [...projectKeys.all, 'members', projectId] as const,
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(PROJECTS.MEMBERS(projectId));
+      return unwrapList<ProjectMember>(data);
+    },
+    enabled: Boolean(projectId),
+    ...queryDefaults,
+  });
+}
+
+export function useAddProjectMember(projectId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (payload: { user_id: number; role: ProjectMemberRole }) => {
+      const { data } = await axiosInstance.post(PROJECTS.MEMBERS(projectId), payload);
+      return unwrapEntity<ProjectMember>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...projectKeys.all, 'members', projectId] });
+      void qc.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
+      showToast('success', 'Team member invited');
+    },
+    onError: (e: AxiosError) => showToast('error', sanitizeErrorMessage(e, 'Failed to invite member')),
+  });
+}
+
+export function useUpdateProjectMember(projectId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ userId, role }: { userId: number; role: ProjectMemberRole }) => {
+      const { data } = await axiosInstance.patch(PROJECTS.MEMBER(projectId, userId), { role });
+      return unwrapEntity<ProjectMember>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...projectKeys.all, 'members', projectId] });
+      showToast('success', 'Member role updated');
+    },
+    onError: (e: AxiosError) => showToast('error', sanitizeErrorMessage(e, 'Failed to update member')),
+  });
+}
+
+export function useRemoveProjectMember(projectId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (userId: number) => {
+      await axiosInstance.delete(PROJECTS.MEMBER(projectId, userId));
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...projectKeys.all, 'members', projectId] });
+      showToast('success', 'Member removed');
+    },
+    onError: (e: AxiosError) => showToast('error', sanitizeErrorMessage(e, 'Failed to remove member')),
   });
 }

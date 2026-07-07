@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   useMovePipelineLead,
   usePipelineBoards,
   usePipelineKanban,
   useReorderPipelineStages,
 } from '../api/usePipelineQueries';
+import { useProjectBoardKanban } from '../../estimates/api/useProjectQueries';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import KanbanColumn from '../ui/KanbanColumn';
 import CreateLeadModal from '../ui/CreateLeadModal';
@@ -26,6 +28,11 @@ import { cn } from '../../../shared/utils/cn';
 
 type BoardViewMode = 'kanban' | 'calendar';
 
+interface BoardKanbanPageProps {
+  projectId?: number;
+  embeddedInEstimates?: boolean;
+}
+
 function leadMatchesQuery(lead: PipelineLead, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
@@ -39,13 +46,20 @@ function leadMatchesQuery(lead: PipelineLead, query: string): boolean {
   ].some((v) => v?.toLowerCase().includes(q));
 }
 
-export default function BoardKanbanPage() {
+export default function BoardKanbanPage({ projectId, embeddedInEstimates = false }: BoardKanbanPageProps = {}) {
   const { boardId: boardIdParam } = useParams();
-  const boardId = Number(boardIdParam);
-  const { data: board, isLoading } = usePipelineKanban(boardId);
-  const { data: boards = [] } = usePipelineBoards();
+  const routeBoardId = Number(boardIdParam);
+  const boardId = projectId ? 0 : routeBoardId;
+
+  const { data: projectBoard, isLoading: projectLoading } = useProjectBoardKanban(projectId ?? 0);
+  const { data: pipelineBoard, isLoading: pipelineLoading } = usePipelineKanban(boardId);
+  const board = projectId ? projectBoard : pipelineBoard;
+  const isLoading = projectId ? projectLoading : pipelineLoading;
+
+  const resolvedBoardId = board?.id ?? boardId;
+  const { data: boards = [] } = usePipelineBoards({ salesOnly: true });
   const moveLead = useMovePipelineLead();
-  const reorderStages = useReorderPipelineStages(boardId);
+  const reorderStages = useReorderPipelineStages(resolvedBoardId);
 
   const [viewMode, setViewMode] = useState<BoardViewMode>('kanban');
   const [leadQuery, setLeadQuery] = useState('');
@@ -97,10 +111,14 @@ export default function BoardKanbanPage() {
       id: leadId,
       stage_id: stageId,
       position,
-      board_id: boardId,
+      board_id: resolvedBoardId,
       card_type: lead?.card_type,
     });
   };
+
+  if (!embeddedInEstimates && board?.project_id) {
+    return <Navigate to={ROUTES.ESTIMATES.PROJECT_BOARD(board.project_id)} replace />;
+  }
 
   if (isLoading || !board) {
     return (
@@ -123,19 +141,26 @@ export default function BoardKanbanPage() {
       <header className="relative z-40 shrink-0 border-b border-gray-200/70 bg-white/90 px-3 py-3 backdrop-blur-md sm:px-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="flex shrink-0 items-center gap-2 lg:min-w-[200px]">
-            <BoardSearchMenu
-              boards={boards}
-              activeBoard={board}
-              onCreateBoard={() => setCreateBoardOpen(true)}
-            />
-            <button
-              type="button"
-              onClick={() => setEditBoardOpen(true)}
-              className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
-              title="Board settings"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
+            {!embeddedInEstimates && (
+              <>
+                <BoardSearchMenu
+                  boards={boards}
+                  activeBoard={board}
+                  onCreateBoard={() => setCreateBoardOpen(true)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditBoardOpen(true)}
+                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+                  title="Board settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            {embeddedInEstimates && (
+              <h2 className="text-lg font-semibold text-gray-900">{board.name}</h2>
+            )}
           </div>
 
           {viewMode === 'kanban' && (
@@ -247,42 +272,44 @@ export default function BoardKanbanPage() {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isProject} />
+          <BoardCalendarView boardId={resolvedBoardId} onLeadClick={setSelectedLeadId} isProjectBoard={isProject} />
         </div>
       )}
 
-      <BoardSwitcherStrip
-        boards={boards}
-        activeBoardId={boardId}
-        onCreateBoard={() => setCreateBoardOpen(true)}
-      />
+      {!embeddedInEstimates && (
+        <BoardSwitcherStrip
+          boards={boards}
+          activeBoardId={resolvedBoardId}
+          onCreateBoard={() => setCreateBoardOpen(true)}
+        />
+      )}
 
       {createStageId != null && (
         <CreateLeadModal
           open
-          boardId={boardId}
+          boardId={resolvedBoardId}
           stageId={createStageId}
           onClose={() => setCreateStageId(null)}
           defaultCardType={board?.project_id ? 'card' : undefined}
         />
       )}
 
-      {createBoardOpen && (
+      {!embeddedInEstimates && createBoardOpen && (
         <CreateBoardModal open onClose={() => setCreateBoardOpen(false)} />
       )}
 
-      {editBoardOpen && (
+      {!embeddedInEstimates && editBoardOpen && (
         <EditBoardModal open board={board} onClose={() => setEditBoardOpen(false)} />
       )}
 
       {addStageOpen && (
-        <AddStageModal open boardId={boardId} onClose={() => setAddStageOpen(false)} />
+        <AddStageModal open boardId={resolvedBoardId} onClose={() => setAddStageOpen(false)} />
       )}
 
       {editStage && (
         <EditStageModal
           open
-          boardId={boardId}
+          boardId={resolvedBoardId}
           stage={editStage}
           allStages={allStages}
           onClose={() => setEditStage(null)}
@@ -296,7 +323,7 @@ export default function BoardKanbanPage() {
       {deleteStage && (
         <DeleteStageModal
           open
-          boardId={boardId}
+          boardId={resolvedBoardId}
           stage={deleteStage}
           otherStages={allStages.filter((s) => s.id !== deleteStage.id)}
           onClose={() => setDeleteStage(null)}
@@ -306,7 +333,7 @@ export default function BoardKanbanPage() {
       {selectedLeadId != null && (
         <LeadDetailModal
           leadId={selectedLeadId}
-          boardId={boardId}
+          boardId={resolvedBoardId}
           onClose={() => setSelectedLeadId(null)}
         />
       )}

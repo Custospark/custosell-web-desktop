@@ -67,6 +67,18 @@ export interface ProjectCostAllocation {
   updated_at: string;
 }
 
+export type ProjectMemberRole = 'viewer' | 'contributor' | 'manager';
+
+export interface ProjectMember {
+  id: number;
+  project_id: number;
+  user_id: number;
+  role: ProjectMemberRole;
+  user?: ProjectUserRef | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Project {
   id: number;
   business_id: number;
@@ -77,10 +89,10 @@ export interface Project {
   name: string;
   status: ProjectStatus;
   currency: string;
-  budget_revenue: number;
-  budget_cost: number;
-  actual_cost: number;
-  actual_revenue: number;
+  budget_revenue?: number;
+  budget_cost?: number;
+  actual_cost?: number;
+  actual_revenue?: number;
   start_date: string | null;
   due_date: string | null;
   completed_at: string | null;
@@ -94,6 +106,7 @@ export interface Project {
   tasks?: ProjectTask[];
   timesheet_entries?: TimesheetEntry[];
   cost_allocations?: ProjectCostAllocation[];
+  members?: ProjectMember[];
 }
 
 export interface ProjectBudgetSummary {

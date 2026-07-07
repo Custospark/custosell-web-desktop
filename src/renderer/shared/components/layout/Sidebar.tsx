@@ -15,7 +15,7 @@ import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import LogoImage from '../../assets/LogoImage';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
-import { canAccessModule, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
+import { canAccessModule, isProjectCollaboratorOnly, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
 import { avatarUrl } from '../../utils/avatarUrl';
@@ -225,7 +225,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const businessGroups = baseNavGroups.filter((group) => {
       const moduleSlug = NAV_GROUP_MODULE[group.label];
       if (!moduleSlug) return true;
+      if (group.label === 'Estimates') {
+        return canAccessModule(user, 'estimates') || (user?.project_member_ids?.length ?? 0) > 0;
+      }
       return canAccessModule(user, moduleSlug);
+    }).map((group) => {
+      if (group.label === 'Estimates' && isProjectCollaboratorOnly(user)) {
+        return {
+          ...group,
+          subItems: [
+            { to: ROUTES.ESTIMATES.MY_PROJECTS, label: 'My projects', icon: Briefcase },
+          ],
+        };
+      }
+      return group;
     });
 
     if (user?.is_platform_admin) {

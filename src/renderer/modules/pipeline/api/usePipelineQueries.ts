@@ -93,6 +93,52 @@ function omitLeadMeta<T extends { silent?: boolean; board_id?: number }>(
   return rest;
 }
 
+function findKanbanLead(board: PipelineBoard | undefined, leadId: number): PipelineLead | undefined {
+  if (!board?.stages?.length) return undefined;
+  for (const stage of board.stages) {
+    const match = (stage.leads ?? []).find((lead) => lead.id === leadId);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+/** Keep kanban cards lean while syncing history/comments counts from mutation responses. */
+function toKanbanLeadSnapshot(lead: PipelineLead, existing?: PipelineLead): PipelineLead {
+  const merged = { ...(existing ?? {}), ...lead };
+  return {
+    ...merged,
+    activities: undefined,
+    checklists: existing?.checklists,
+    attachments: existing?.attachments,
+    history_count: lead.history_count ?? existing?.history_count ?? merged.history_count,
+    comments_count: lead.comments_count ?? existing?.comments_count ?? merged.comments_count,
+  };
+}
+
+function applyLeadMutationToCache(
+  qc: ReturnType<typeof useQueryClient>,
+  lead: PipelineLead,
+  boardId?: number,
+): void {
+  qc.setQueryData<PipelineLead>(pipelineKeys.lead(lead.id), (existing) => ({
+    ...(existing ?? {}),
+    ...lead,
+    activities: lead.activities ?? existing?.activities,
+    history_count: lead.history_count ?? existing?.history_count,
+    comments_count: lead.comments_count ?? existing?.comments_count,
+  }));
+
+  const resolvedBoardId = boardId ?? lead.board_id;
+  if (!resolvedBoardId) return;
+
+  qc.setQueryData(pipelineKeys.kanban(resolvedBoardId), (old) => {
+    if (!old) return old;
+    const board = old as PipelineBoard;
+    const existing = findKanbanLead(board, lead.id);
+    return replaceLeadOnKanban(board, toKanbanLeadSnapshot(lead, existing));
+  });
+}
+
 function invalidatePipeline(qc: ReturnType<typeof useQueryClient>, boardId?: number): void {
   qc.invalidateQueries({ queryKey: pipelineKeys.boards() });
   qc.invalidateQueries({ queryKey: pipelineKeys.leads() });
@@ -330,13 +376,12 @@ export function useCreatePipelineLead() {
       return { previousKanban, boardId, tempId };
     },
     onSuccess: (lead, _vars, context) => {
-      qc.setQueryData<PipelineBoard>(pipelineKeys.kanban(lead.board_id), (old) => {
-        if (!old) return old;
-        const withoutTemp = context?.tempId
-          ? removeLeadFromKanban(old, context.tempId)
-          : old;
-        return addLeadToKanban(withoutTemp, lead);
-      });
+      if (context?.tempId) {
+        qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) =>
+          old ? removeLeadFromKanban(old as PipelineBoard, context.tempId) : old,
+        );
+      }
+      applyLeadMutationToCache(qc, lead, lead.board_id);
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
       showToast('success', `${pipelineItemLabel(lead.card_type)} created`);
     },
@@ -380,10 +425,7 @@ export function useUpdatePipelineLead() {
       return { previousLead, previousKanban, boardId, leadId: id };
     },
     onSuccess: (lead) => {
-      qc.setQueryData(pipelineKeys.lead(lead.id), lead);
-      qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) =>
-        old ? replaceLeadOnKanban(old as PipelineBoard, lead) : old,
-      );
+      applyLeadMutationToCache(qc, lead, lead.board_id);
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
     },
     onError: (err, _vars, context) => {
@@ -429,10 +471,7 @@ export function useMovePipelineLead() {
       return { previous, board_id };
     },
     onSuccess: (lead, { board_id }) => {
-      qc.setQueryData(pipelineKeys.lead(lead.id), lead);
-      qc.setQueryData(pipelineKeys.kanban(board_id), (old) =>
-        old ? replaceLeadOnKanban(old as PipelineBoard, lead) : old,
-      );
+      applyLeadMutationToCache(qc, lead, board_id);
       qc.invalidateQueries({ queryKey: pipelineKeys.leads() });
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
     },
@@ -473,10 +512,7 @@ export function useConvertPipelineLead() {
       return { previousLead, previousKanban, boardId, leadId: id };
     },
     onSuccess: (lead) => {
-      qc.setQueryData(pipelineKeys.lead(lead.id), lead);
-      qc.setQueryData(pipelineKeys.kanban(lead.board_id), (old) =>
-        old ? replaceLeadOnKanban(old as PipelineBoard, lead) : old,
-      );
+      applyLeadMutationToCache(qc, lead, lead.board_id);
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
       showToast('success', 'Lead converted to customer');
     },

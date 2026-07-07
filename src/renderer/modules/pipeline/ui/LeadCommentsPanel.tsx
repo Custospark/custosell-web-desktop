@@ -166,7 +166,7 @@ export default function LeadCommentsPanel({
   const { confirm } = useConfirm();
   const addActivity = useAddPipelineActivity();
   const deleteActivity = useDeletePipelineActivity();
-  const toggleReaction = useToggleActivityReaction(leadId, boardId);
+  const toggleReaction = useToggleActivityReaction(leadId);
   const [note, setNote] = useState('');
   const [activityType, setActivityType] = useState<'comment' | 'call' | 'email' | 'meeting'>('comment');
   const [replyingTo, setReplyingTo] = useState<PipelineLeadActivity | null>(null);

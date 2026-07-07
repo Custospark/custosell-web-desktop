@@ -69,3 +69,8 @@ export interface UpdateBusinessData {
   payment_mobile_money_number?: string | null;
   payment_instructions?: string | null;
 }
+
+export interface UpdateBusinessMutationInput {
+  data: UpdateBusinessData;
+  logoFile?: File;
+}

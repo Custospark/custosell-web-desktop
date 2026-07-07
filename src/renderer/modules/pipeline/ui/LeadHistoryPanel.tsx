@@ -1,7 +1,7 @@
 import { ArrowRight, History } from 'lucide-react';
 import type { PipelineLeadActivity } from '../api/pipelineTypes';
 import { cn } from '../../../shared/utils/cn';
-import { ACTIVITY_ICONS } from './pipelineActivityMeta';
+import { historyIconForActivity } from './pipelineActivityMeta';
 import { buildHistoryTimeline, formatHistoryActivity } from './pipelineActivityHistory';
 import { PipelineUserAttribution } from './pipelineUserAttribution';
 
@@ -24,7 +24,7 @@ export default function LeadHistoryPanel({
         <History className="mx-auto mb-2 h-8 w-8 text-gray-300" />
         <p className="text-sm font-medium text-gray-600">No activity yet</p>
         <p className="mt-1 text-xs text-gray-500">
-          Stage moves, label changes, and updates will appear here.
+          Comments, moves, attachments, reactions, and all updates appear here.
         </p>
       </div>
     );
@@ -33,12 +33,15 @@ export default function LeadHistoryPanel({
   return (
     <ul className={cn('relative space-y-0', compact ? 'max-h-[min(60vh,480px)] overflow-y-auto pr-1' : '')}>
       {timeline.map((activity, index) => {
-        const Icon = ACTIVITY_ICONS[activity.type] ?? History;
+        const Icon = historyIconForActivity(activity);
         const display = formatHistoryActivity(activity, currency);
         const showFromTo = display.fromLabel != null && display.toLabel != null;
 
         return (
-          <li key={activity.id} className="relative flex gap-3 pb-5 last:pb-0">
+          <li
+            key={activity.id}
+            className={cn('relative flex gap-3 pb-5 last:pb-0', display.isReply && 'ml-6')}
+          >
             {index < timeline.length - 1 && (
               <span
                 className="absolute left-[15px] top-8 bottom-0 w-px bg-gray-200"

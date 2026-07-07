@@ -29,36 +29,29 @@ import {
   removeLeadFromKanban,
   removeStageFromKanban,
   reorderStagesOnKanban,
-  replaceLeadOnKanban,
   updateLeadOnKanban,
   updateStageOnKanban,
 } from './pipelineKanbanCache';
 import { pipelineItemLabel } from './pipelineCardTerms';
-
-export const pipelineKeys = {
-  all: ['pipeline'] as const,
-  boards: () => [...pipelineKeys.all, 'boards'] as const,
-  board: (id: number) => [...pipelineKeys.all, 'board', id] as const,
-  kanban: (id: number) => [...pipelineKeys.all, 'kanban', id] as const,
-  leads: (filters?: Record<string, string>) => [...pipelineKeys.all, 'leads', filters] as const,
-  lead: (id: number) => [...pipelineKeys.all, 'lead', id] as const,
-  sources: () => [...pipelineKeys.all, 'sources'] as const,
-  insights: (boardId?: number) => [...pipelineKeys.all, 'insights', boardId ?? 'all'] as const,
-  calendar: (boardId: number, year: number, month: number, dateField?: string) =>
-    [...pipelineKeys.all, 'calendar', boardId, year, month, dateField ?? 'due'] as const,
-  labels: (boardId?: number) => [...pipelineKeys.all, 'labels', boardId ?? 'all'] as const,
-};
-
-const queryDefaults = {
-  staleTime: 0,
-  refetchOnMount: 'always' as const,
-};
-
-/** Poll open kanban boards so collaborators see changes without manual refresh. */
-export const PIPELINE_KANBAN_POLL_MS = 30_000;
-
-/** Poll open lead detail / comments while a card discussion is visible. */
-export const PIPELINE_LEAD_POLL_MS = 20_000;
+import {
+  PIPELINE_KANBAN_POLL_MS,
+  PIPELINE_LEAD_POLL_MS,
+  pipelineKeys,
+} from './pipelineQueryKeys';
+export { pipelineKeys, PIPELINE_KANBAN_POLL_MS, PIPELINE_LEAD_POLL_MS } from './pipelineQueryKeys';
+import {
+  appendLeadActivitiesOptimistic,
+  applyLeadMutationToCache,
+  buildOptimisticComment,
+  buildOptimisticHistoryForUpdate,
+  buildOptimisticStageChange,
+  buildOptimisticSystemEntry,
+  findKanbanLead,
+  nextOptimisticId,
+  patchLeadFieldsOptimistic,
+  removeCommentWithHistoryOptimistic,
+  replaceOptimisticActivity,
+} from './pipelineOptimisticCache';
 
 function normalizeList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload as T[];
@@ -93,51 +86,10 @@ function omitLeadMeta<T extends { silent?: boolean; board_id?: number }>(
   return rest;
 }
 
-function findKanbanLead(board: PipelineBoard | undefined, leadId: number): PipelineLead | undefined {
-  if (!board?.stages?.length) return undefined;
-  for (const stage of board.stages) {
-    const match = (stage.leads ?? []).find((lead) => lead.id === leadId);
-    if (match) return match;
-  }
-  return undefined;
-}
-
-/** Keep kanban cards lean while syncing history/comments counts from mutation responses. */
-function toKanbanLeadSnapshot(lead: PipelineLead, existing?: PipelineLead): PipelineLead {
-  const merged = { ...(existing ?? {}), ...lead };
-  return {
-    ...merged,
-    activities: undefined,
-    checklists: existing?.checklists,
-    attachments: existing?.attachments,
-    history_count: lead.history_count ?? existing?.history_count ?? merged.history_count,
-    comments_count: lead.comments_count ?? existing?.comments_count ?? merged.comments_count,
-  };
-}
-
-function applyLeadMutationToCache(
-  qc: ReturnType<typeof useQueryClient>,
-  lead: PipelineLead,
-  boardId?: number,
-): void {
-  qc.setQueryData<PipelineLead>(pipelineKeys.lead(lead.id), (existing) => ({
-    ...(existing ?? {}),
-    ...lead,
-    activities: lead.activities ?? existing?.activities,
-    history_count: lead.history_count ?? existing?.history_count,
-    comments_count: lead.comments_count ?? existing?.comments_count,
-  }));
-
-  const resolvedBoardId = boardId ?? lead.board_id;
-  if (!resolvedBoardId) return;
-
-  qc.setQueryData(pipelineKeys.kanban(resolvedBoardId), (old) => {
-    if (!old) return old;
-    const board = old as PipelineBoard;
-    const existing = findKanbanLead(board, lead.id);
-    return replaceLeadOnKanban(board, toKanbanLeadSnapshot(lead, existing));
-  });
-}
+const queryDefaults = {
+  staleTime: 0,
+  refetchOnMount: 'always' as const,
+};
 
 function invalidatePipeline(qc: ReturnType<typeof useQueryClient>, boardId?: number): void {
   qc.invalidateQueries({ queryKey: pipelineKeys.boards() });
@@ -418,6 +370,10 @@ export function useUpdatePipelineLead() {
 
       if (previousLead) {
         qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...payload });
+        const historyEntries = buildOptimisticHistoryForUpdate(previousLead, payload);
+        if (historyEntries.length > 0) {
+          appendLeadActivitiesOptimistic(qc, id, boardId, historyEntries);
+        }
       }
       if (previousKanban) {
         qc.setQueryData(pipelineKeys.kanban(boardId), updateLeadOnKanban(previousKanban, id, payload));
@@ -460,15 +416,32 @@ export function useMovePipelineLead() {
       return normalizeItem<PipelineLead>(data);
     },
     onMutate: async ({ id, stage_id, position, board_id }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(id) });
       await qc.cancelQueries({ queryKey: pipelineKeys.kanban(board_id) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(id));
       const previous = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(board_id));
       if (previous) {
+        const fromLead = previousLead ?? findKanbanLead(previous, id);
+        const fromStageName = fromLead?.stage?.name ?? 'Previous stage';
+        const toStage = previous.stages?.find((stage) => stage.id === stage_id);
         qc.setQueryData(
           pipelineKeys.kanban(board_id),
           moveLeadOptimistic(previous, id, stage_id, position),
         );
+        if (fromLead && toStage && fromLead.stage_id !== stage_id) {
+          appendLeadActivitiesOptimistic(qc, id, board_id, [
+            buildOptimisticStageChange(fromLead, fromStageName, toStage.name),
+          ]);
+        }
+        const updatedLead = findKanbanLead(
+          qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(board_id)),
+          id,
+        );
+        if (previousLead && updatedLead) {
+          qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...updatedLead });
+        }
       }
-      return { previous, board_id };
+      return { previous, previousLead, board_id };
     },
     onSuccess: (lead, { board_id }) => {
       applyLeadMutationToCache(qc, lead, board_id);
@@ -476,6 +449,9 @@ export function useMovePipelineLead() {
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
     },
     onError: (err, vars, context) => {
+      if (context?.previousLead) {
+        qc.setQueryData(pipelineKeys.lead(vars.id), context.previousLead);
+      }
       if (context?.previous && context.board_id) {
         qc.setQueryData(pipelineKeys.kanban(context.board_id), context.previous);
       }
@@ -508,6 +484,9 @@ export function useConvertPipelineLead() {
 
       if (previousLead) qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...partial });
       if (previousKanban) qc.setQueryData(pipelineKeys.kanban(boardId), updateLeadOnKanban(previousKanban, id, partial));
+      appendLeadActivitiesOptimistic(qc, id, boardId, [
+        buildOptimisticSystemEntry(id, 'Lead converted to customer'),
+      ]);
 
       return { previousLead, previousKanban, boardId, leadId: id };
     },
@@ -552,14 +531,62 @@ export function useAddPipelineActivity() {
       });
       return normalizeItem<PipelineLeadActivity>(data);
     },
-    onSuccess: (_activity, vars) => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
+    onMutate: async ({
+      leadId,
+      type,
+      body,
+      parentId,
+      boardId,
+    }: {
+      leadId: number;
+      type: string;
+      body: string;
+      boardId?: number;
+      parentId?: number | null;
+    }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const tempId = nextOptimisticId();
+      const optimistic = {
+        ...buildOptimisticComment(
+          leadId,
+          type as PipelineLeadActivity['type'],
+          body,
+          parentId,
+        ),
+        id: tempId,
+      };
+      appendLeadActivitiesOptimistic(qc, leadId, boardId, [optimistic]);
+      return { previousLead, tempId, boardId };
+    },
+    onSuccess: (activity, vars, context) => {
+      if (context?.tempId) {
+        replaceOptimisticActivity(qc, vars.leadId, context.tempId, activity);
+      } else {
+        applyLeadMutationToCache(qc, {
+          ...(qc.getQueryData<PipelineLead>(pipelineKeys.lead(vars.leadId)) ?? { id: vars.leadId } as PipelineLead),
+          activities: [
+            ...(qc.getQueryData<PipelineLead>(pipelineKeys.lead(vars.leadId))?.activities ?? []),
+            activity,
+          ],
+        }, vars.boardId);
+      }
       if (vars.boardId) {
-        qc.invalidateQueries({ queryKey: pipelineKeys.kanban(vars.boardId) });
+        qc.setQueryData(pipelineKeys.kanban(vars.boardId), (old) => {
+          if (!old) return old;
+          const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(vars.leadId));
+          if (!lead) return old;
+          return updateLeadOnKanban(old as PipelineBoard, vars.leadId, {
+            comments_count: lead.comments_count,
+          });
+        });
       }
       showToast('success', vars.parentId ? 'Reply posted' : vars.type === 'comment' ? 'Comment posted' : 'Activity added');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err: AxiosError<{ message?: string }>, _vars, context) => {
+      if (context?.previousLead) {
+        qc.setQueryData(pipelineKeys.lead(_vars.leadId), context.previousLead);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not add activity'));
     },
   });
@@ -579,14 +606,41 @@ export function useDeletePipelineActivity() {
     }) => {
       await axiosInstance.delete(PIPELINE.ACTIVITY(activityId));
     },
+    onMutate: async ({
+      activityId,
+      leadId,
+      boardId,
+    }: {
+      activityId: number;
+      leadId: number;
+      boardId?: number;
+    }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      removeCommentWithHistoryOptimistic(qc, leadId, boardId, activityId);
+      return { previousLead, boardId };
+    },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
       if (vars.boardId) {
-        qc.invalidateQueries({ queryKey: pipelineKeys.kanban(vars.boardId) });
+        const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(vars.leadId));
+        if (lead) {
+          qc.setQueryData(pipelineKeys.kanban(vars.boardId), (old) =>
+            old
+              ? updateLeadOnKanban(old as PipelineBoard, vars.leadId, {
+                  comments_count: lead.comments_count,
+                  history_count: lead.history_count,
+                })
+              : old,
+          );
+        }
       }
       showToast('success', 'Comment deleted');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, vars, context) => {
+      if (context?.previousLead) {
+        qc.setQueryData(pipelineKeys.lead(vars.leadId), context.previousLead);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not delete comment'));
     },
   });
@@ -946,9 +1000,23 @@ export function useCreatePipelineChecklist(leadId: number, boardId: number) {
       const { data } = await axiosInstance.post(PIPELINE.LEAD_CHECKLISTS(leadId), { title: title || 'Checklist' });
       return normalizeItem<PipelineChecklist>(data);
     },
+    onMutate: async (title) => {
+      const label = title || 'Checklist';
+      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      patchLeadFieldsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        { checklist_total: (lead?.checklist_total ?? 0) + 1 },
+        buildOptimisticSystemEntry(leadId, `Checklist added: ${label}`, { action: 'checklist_added', title: label }),
+      );
+      return { previousLead: lead };
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
     },
   });
 }
@@ -960,9 +1028,22 @@ export function useCreateChecklistItem(leadId: number, boardId: number) {
       const { data } = await axiosInstance.post(PIPELINE.CHECKLIST_ITEMS(checklistId), { title });
       return normalizeItem<PipelineChecklistItem>(data);
     },
+    onMutate: async ({ title }) => {
+      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      patchLeadFieldsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        { checklist_total: (lead?.checklist_total ?? 0) + 1 },
+        buildOptimisticSystemEntry(leadId, `Checklist item added: ${title}`, { action: 'checklist_item_added', title }),
+      );
+      return { previousLead: lead };
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
     },
   });
 }
@@ -974,9 +1055,34 @@ export function useUpdateChecklistItem(leadId: number, boardId: number) {
       const { data } = await axiosInstance.patch(PIPELINE.CHECKLIST_ITEM(id), payload);
       return normalizeItem<PipelineChecklistItem>(data);
     },
+    onMutate: async ({ id, is_done, title }) => {
+      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      let historyEntry: PipelineLeadActivity | undefined;
+      let patch: Partial<PipelineLead> = {};
+      if (typeof is_done === 'boolean') {
+        const item = lead?.checklists?.flatMap((c) => c.items ?? []).find((i) => i.id === id);
+        const itemTitle = title ?? item?.title ?? 'Item';
+        if (item && item.is_done !== is_done) {
+          historyEntry = buildOptimisticSystemEntry(
+            leadId,
+            is_done ? `Checklist item completed: ${itemTitle}` : `Checklist item reopened: ${itemTitle}`,
+            { action: is_done ? 'checklist_item_done' : 'checklist_item_reopened', title: itemTitle },
+          );
+          const doneDelta = is_done ? 1 : -1;
+          patch = { checklist_done: Math.max(0, (lead?.checklist_done ?? 0) + doneDelta) };
+        }
+      }
+      if (historyEntry || Object.keys(patch).length > 0) {
+        patchLeadFieldsOptimistic(qc, leadId, boardId, patch, historyEntry);
+      }
+      return { previousLead: lead };
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
     },
   });
 }
@@ -993,12 +1099,26 @@ export function useUploadPipelineAttachment(leadId: number, boardId: number) {
       });
       return normalizeItem<PipelineAttachment>(data);
     },
+    onMutate: async (file) => {
+      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      patchLeadFieldsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        { attachments_count: (lead?.attachments_count ?? 0) + 1 },
+        buildOptimisticSystemEntry(leadId, `Attachment added: ${file.name}`, {
+          action: 'attachment_added',
+          file_name: file.name,
+        }),
+      );
+      return { previousLead: lead };
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
       showToast('success', 'Attachment uploaded');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err: AxiosError<{ message?: string }>, _file, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
       showToast('error', sanitizeErrorMessage(err, 'Could not upload file'));
     },
   });
@@ -1011,12 +1131,28 @@ export function useDeletePipelineAttachment(leadId: number, boardId: number) {
     mutationFn: async (id: number) => {
       await axiosInstance.delete(PIPELINE.ATTACHMENT(id));
     },
+    onMutate: async (id) => {
+      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const attachment = lead?.attachments?.find((a) => a.id === id);
+      const fileName = attachment?.file_name ?? 'Attachment';
+      patchLeadFieldsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        { attachments_count: Math.max(0, (lead?.attachments_count ?? 1) - 1) },
+        buildOptimisticSystemEntry(leadId, `Attachment removed: ${fileName}`, {
+          action: 'attachment_removed',
+          file_name: fileName,
+        }),
+      );
+      return { previousLead: lead };
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
-      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
       showToast('success', 'Attachment removed');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err: AxiosError<{ message?: string }>, _id, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
       showToast('error', sanitizeErrorMessage(err, 'Could not remove attachment'));
     },
   });

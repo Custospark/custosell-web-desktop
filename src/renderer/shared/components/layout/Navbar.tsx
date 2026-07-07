@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -11,7 +12,7 @@ import { GuideHeaderNav } from './GuideHeaderNav';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
-import { resolveBusinessDisplayName, resolveUserMenuLabel } from '../../utils/shellDisplay';
+import { resolveBusinessDisplayName, resolveBusinessLogoPath, resolveUserMenuLabel } from '../../utils/shellDisplay';
 import { avatarUrl } from '../../utils/avatarUrl';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
@@ -44,6 +45,9 @@ const networkStatusBtn =
 
 const iconBtn =
   'inline-flex items-center justify-center shrink-0 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors';
+
+const ACCOUNT_MENU_WIDTH_PX = 240;
+const ACCOUNT_MENU_GAP_PX = 6;
 
 function NavbarShiftBadge({ clockIn, className }: { clockIn: string; className?: string }) {
   return (
@@ -128,12 +132,25 @@ export function Navbar() {
   const user = useAppSelector((s) => s.auth.user);
   const { data: business } = useBusiness();
   const businessName = resolveBusinessDisplayName(user, business);
+  const businessLogoUrl = avatarUrl(resolveBusinessLogoPath(user, business));
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
   const { requestEndShift, isEnding } = useEndShiftAction();
   const { systemStatus, latency, retryConnection } = useNetworkStatus();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: ACCOUNT_MENU_WIDTH_PX });
+
+  const updateMenuPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const width = Math.min(ACCOUNT_MENU_WIDTH_PX, window.innerWidth - 16);
+    let left = rect.right - width;
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+    setMenuPos({ top: rect.bottom + ACCOUNT_MENU_GAP_PX, left, width });
+  }, []);
 
   const handleToggleSidebar = () => {
     if (window.innerWidth >= 1024) {
@@ -146,15 +163,35 @@ export function Navbar() {
   const isLargeScreen = window.innerWidth >= 1024;
   const sidebarLabel = (isLargeScreen ? !state.sidebarCollapsed : state.sidebarOpen) ? 'Hide sidebar' : 'Show sidebar';
 
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
+  useLayoutEffect(() => {
+    if (!dropdownOpen) return;
+    updateMenuPosition();
+    const onReposition = () => updateMenuPosition();
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
+    return () => {
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  }, [dropdownOpen, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setDropdownOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [dropdownOpen]);
 
   const handleLogout = async () => {
     const firstName = getUserFirstName(user?.name);
@@ -203,7 +240,15 @@ export function Navbar() {
               className="flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2 py-1.5 ring-1 ring-slate-100 sm:px-2.5"
               title={businessName}
             >
-              <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+              {businessLogoUrl ? (
+                <img
+                  src={businessLogoUrl}
+                  alt=""
+                  className="h-7 w-7 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
+                />
+              ) : (
+                <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+              )}
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[8rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">
                   {businessName}
@@ -234,10 +279,11 @@ export function Navbar() {
 
           <GuideHeaderNav />
 
-          <div ref={dropdownRef} className="relative shrink-0">
+          <div className="shrink-0">
             <button
+              ref={triggerRef}
               type="button"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
+              onClick={() => setDropdownOpen((open) => !open)}
               aria-expanded={dropdownOpen}
               aria-haspopup="menu"
               aria-label={`Account menu for ${user?.name ?? 'user'}`}
@@ -265,10 +311,12 @@ export function Navbar() {
               />
             </button>
 
-            {dropdownOpen && (
+            {dropdownOpen && typeof document !== 'undefined' && createPortal(
               <div
+                ref={menuRef}
                 role="menu"
-                className="absolute right-0 top-full mt-1.5 w-[min(100vw-1rem,15rem)] sm:w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] py-1"
+                className="fixed z-[300] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
+                style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
               >
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-semibold text-gray-900 break-words">{user?.name || 'User'}</p>
@@ -314,7 +362,8 @@ export function Navbar() {
                   <LogOut className="w-4 h-4 shrink-0" />
                   {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </button>
-              </div>
+              </div>,
+              document.body,
             )}
           </div>
         </div>

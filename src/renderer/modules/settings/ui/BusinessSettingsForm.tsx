@@ -29,6 +29,7 @@ import {
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
 import { cn } from '../../../shared/utils/cn';
+import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import {
   Building2,
   Globe,
@@ -52,6 +53,8 @@ import {
   Scale,
   Landmark,
   Smartphone,
+  Camera,
+  Image,
 } from 'lucide-react';
 
 const emptyForm: UpdateBusinessData = {
@@ -111,6 +114,7 @@ interface BusinessFormSnapshot {
   countryCode: CountryCode;
   localBusinessPhone: string;
   businessPhoneCountryCode: CountryCode;
+  logoPath: string | null;
 }
 
 function snapshotFromBusiness(business: NonNullable<ReturnType<typeof useBusiness>['data']>): BusinessFormSnapshot {
@@ -152,6 +156,7 @@ function snapshotFromBusiness(business: NonNullable<ReturnType<typeof useBusines
       payment_mobile_money_number: business.payment_mobile_money_number ?? null,
       payment_instructions: business.payment_instructions ?? null,
     },
+    logoPath: business.logo_path ?? null,
   };
 }
 
@@ -249,6 +254,7 @@ export default function BusinessSettingsForm() {
     countryCode: getDefaultCountryCode(),
     localBusinessPhone: '',
     businessPhoneCountryCode: getDefaultCountryCode(),
+    logoPath: null,
   });
   const [form, setForm] = useState<UpdateBusinessData>(emptyForm);
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
@@ -258,6 +264,9 @@ export default function BusinessSettingsForm() {
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySearch, setCurrencySearch] = useState('');
   const currencyRef = useRef<HTMLDivElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFileSelected, setLogoFileSelected] = useState(false);
 
   const resetFromBusiness = useCallback((nextBusiness: NonNullable<typeof business>) => {
     const snapshot = snapshotFromBusiness(nextBusiness);
@@ -267,6 +276,9 @@ export default function BusinessSettingsForm() {
     setBusinessPhoneCountryCode(snapshot.businessPhoneCountryCode);
     setLocalBusinessPhone(snapshot.localBusinessPhone);
     setForm(snapshot.form);
+    setLogoPreview(avatarUrl(snapshot.logoPath) ?? null);
+    setLogoFileSelected(false);
+    if (logoFileRef.current) logoFileRef.current.value = '';
   }, []);
 
   useEffect(() => {
@@ -290,7 +302,7 @@ export default function BusinessSettingsForm() {
     [countryCode, form, localPhone, localBusinessPhone, businessPhoneCountryCode],
   );
 
-  const hasChanges = isEditing && !snapshotsEqual(currentSnapshot, baseline);
+  const hasChanges = isEditing && (!snapshotsEqual(currentSnapshot, baseline) || logoFileSelected);
   const canSave = hasChanges && (form.name?.trim().length ?? 0) > 0 && !isCompletelyOffline;
 
   const update = <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) =>
@@ -338,7 +350,20 @@ export default function BusinessSettingsForm() {
     setBusinessPhoneCountryCode(baseline.businessPhoneCountryCode);
     setLocalBusinessPhone(baseline.localBusinessPhone);
     setForm(baseline.form);
+    setLogoPreview(avatarUrl(baseline.logoPath) ?? null);
+    setLogoFileSelected(false);
+    if (logoFileRef.current) logoFileRef.current.value = '';
     setIsEditing(false);
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setLogoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+      setLogoFileSelected(true);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -352,11 +377,17 @@ export default function BusinessSettingsForm() {
       business_phone: buildInternationalPhone(businessPhoneCountryCode, localBusinessPhone) ?? null,
     };
 
-    mutation.mutate(payload, {
-      onSuccess: () => {
-        setIsEditing(false);
+    mutation.mutate(
+      {
+        data: payload,
+        logoFile: logoFileRef.current?.files?.[0],
       },
-    });
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+      },
+    );
   };
 
   const hasPendingSync = Boolean(business?._pendingSync);
@@ -425,8 +456,12 @@ export default function BusinessSettingsForm() {
           {!isEditing && (
             <article className="rounded-xl border-2 border-blue-200 bg-blue-50/40 shadow-sm">
               <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
-                <div className="mx-auto flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-white shadow-md sm:mx-0">
-                  <Store className="h-10 w-10 text-blue-600" aria-hidden />
+                <div className="mx-auto flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md sm:mx-0">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Store className="h-10 w-10 text-blue-600" aria-hidden />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1 text-center sm:text-left">
                   <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || 'Your business'}</h2>
@@ -453,6 +488,39 @@ export default function BusinessSettingsForm() {
                 </div>
               </div>
             </article>
+          )}
+
+          {isEditing && (
+            <BusinessSectionCard
+              icon={Image}
+              title="Business logo"
+              description="Upload your logo — it appears in the app header next to your business name."
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="relative mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 sm:mx-0">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Store className="h-8 w-8 text-gray-400" aria-hidden />
+                  )}
+                </div>
+                <div className="flex-1 text-center sm:text-left">
+                  <input
+                    ref={logoFileRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                    aria-label="Upload business logo"
+                  />
+                  <Button type="button" variant="outline" onClick={() => logoFileRef.current?.click()}>
+                    <Camera className="mr-1.5 h-4 w-4" aria-hidden />
+                    Upload logo
+                  </Button>
+                  <p className="mt-2 text-xs text-gray-500">JPG, PNG or GIF. Max 2MB.</p>
+                </div>
+              </div>
+            </BusinessSectionCard>
           )}
 
           <BusinessSectionCard

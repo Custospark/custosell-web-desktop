@@ -5,7 +5,7 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { BUSINESSES } from '../../../../shared/api/endpoints/endpoints';
-import type { Business, UpdateBusinessData } from './BusinessTypes';
+import type { Business, UpdateBusinessData, UpdateBusinessMutationInput } from './BusinessTypes';
 import { setBusiness } from '../../../../app/store/slices/authSlice';
 import { useAppDispatch } from '../../../../app/store/hooks/useApp';
 import { store } from '../../../../app/store/store';
@@ -19,6 +19,22 @@ import {
 import { businessToAuthInfo } from './businessAuthSync';
 
 export { businessToAuthInfo, businessToTaxSettings, resolveBusinessForTax, resolveBusinessRecordForTax } from './businessAuthSync';
+
+function appendBusinessFormDataFields(formData: FormData, data: UpdateBusinessData): void {
+  (Object.keys(data) as (keyof UpdateBusinessData)[]).forEach((key) => {
+    const value = data[key];
+    if (value === undefined) return;
+    if (value === null) {
+      formData.append(key, '');
+      return;
+    }
+    if (typeof value === 'boolean') {
+      formData.append(key, value ? '1' : '0');
+      return;
+    }
+    formData.append(key, String(value));
+  });
+}
 
 export const businessKeys = {
   all: ['business'] as const,
@@ -93,12 +109,27 @@ export function useUpdateBusiness() {
   const qc = useQueryClient();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
-  return useMutation<BusinessWithSyncMeta, AxiosError<ApiError>, UpdateBusinessData>({
+  return useMutation<BusinessWithSyncMeta, AxiosError<ApiError>, UpdateBusinessMutationInput>({
     networkMode: 'always',
     retry: false,
-    mutationFn: async (data) => {
+    mutationFn: async ({ data, logoFile }) => {
       const existing = queryClient.getQueryData<BusinessWithSyncMeta>(businessKeys.mine()) ?? businessFromAuth();
       if (!existing) throw new Error('Business settings not available');
+
+      if (logoFile) {
+        if (shouldCompleteSettingsLocally()) {
+          throw new Error('Business logo upload requires an internet connection');
+        }
+        const formData = new FormData();
+        appendBusinessFormDataFields(formData, data);
+        formData.append('logo', logoFile);
+        const { data: response } = await axiosInstance.post<{ data: Business }>(
+          `${BUSINESSES.PROFILE}?_method=PUT`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } },
+        );
+        return response.data as BusinessWithSyncMeta;
+      }
 
       if (shouldCompleteSettingsLocally()) {
         return completeOfflineUpdateBusinessInstant(existing, data);

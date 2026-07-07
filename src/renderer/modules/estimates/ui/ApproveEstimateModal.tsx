@@ -145,7 +145,7 @@ export default function ApproveEstimateModal({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
-          <Button variant="ghost" onClick={handleApproveOnly} loading={isProcessing}>
+          <Button variant="ghost" onClick={handleApproveOnly} loading={approveEstimate.isPending}>
             <CheckCircle2 className="h-4 w-4" />
             Just approve
           </Button>

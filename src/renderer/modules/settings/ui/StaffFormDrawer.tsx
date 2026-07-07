@@ -16,7 +16,13 @@ import {
   getDefaultCountryCode,
   parseInternationalPhone,
 } from '../../../shared/utils/phoneNumber';
-import { BUSINESS_MODULE_SLUGS, MODULE_LABELS, type BusinessModuleSlug } from '../../../shared/utils/moduleAccess';
+import {
+  buildStaffModulesPayload,
+  BUSINESS_MODULE_SLUGS,
+  MODULE_LABELS,
+  staffHasFullEstimatesModule,
+  type BusinessModuleSlug,
+} from '../../../shared/utils/moduleAccess';
 
 interface StaffFormDrawerProps {
   open: boolean;
@@ -33,6 +39,7 @@ interface FormState {
   role_id: number | null;
   is_active: boolean;
   modules: BusinessModuleSlug[];
+  estimatesFullAccess: boolean;
 }
 
 const emptyForm: FormState = {
@@ -44,6 +51,7 @@ const emptyForm: FormState = {
   role_id: 0,
   is_active: true,
   modules: ['sales'],
+  estimatesFullAccess: false,
 };
 
 export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawerProps) {
@@ -69,6 +77,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       if (staff) {
         const parsedPhone = parseInternationalPhone(staff.phone);
         setCountryCode(parsedPhone.countryCode);
+        const staffModules = staff.modules ?? [];
         setForm({
           name: staff.name,
           email: staff.email,
@@ -77,9 +86,10 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           password_confirmation: '',
           role_id: staff.role_id ?? null,
           is_active: staff.is_active ?? true,
-          modules: (staff.modules ?? []).filter((m): m is BusinessModuleSlug =>
+          modules: staffModules.filter((m): m is BusinessModuleSlug =>
             (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
           ),
+          estimatesFullAccess: staffHasFullEstimatesModule(staffModules),
         });
       } else {
         const defaultRole = roles?.find((r) => r.is_default) ?? roles?.find((r) => r.slug === 'staff');
@@ -117,13 +127,23 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
     if (modulesLocked) return;
-    setForm((prev) => ({
-      ...prev,
-      modules: prev.modules.includes(module)
+    setForm((prev) => {
+      const removing = prev.modules.includes(module);
+      const modules = removing
         ? prev.modules.filter((m) => m !== module)
-        : [...prev.modules, module],
-    }));
+        : [...prev.modules, module];
+      return {
+        ...prev,
+        modules,
+        estimatesFullAccess: module === 'estimates' && removing ? false : prev.estimatesFullAccess,
+      };
+    });
   }, [modulesLocked]);
+
+  const resolvedModules = useMemo(
+    () => buildStaffModulesPayload(form.modules, form.estimatesFullAccess),
+    [form.estimatesFullAccess, form.modules],
+  );
 
   const passwordsMatch = form.password === form.password_confirmation;
   const passwordValid = passwordRequired
@@ -151,7 +171,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         phone: fullPhone,
         role_id: canChangeRole ? form.role_id || staff.role_id || null : staff.role_id ?? null,
         is_active: accountRules?.canDeactivate === false ? staff.is_active : form.is_active,
-        modules: modulesLocked ? undefined : form.modules,
+        modules: modulesLocked ? undefined : resolvedModules,
       };
       if (form.password.trim()) {
         payload.password = form.password.trim();
@@ -169,7 +189,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         password: form.password.trim(),
         password_confirmation: form.password_confirmation.trim(),
         role_id: form.role_id ?? 0,
-        modules: form.modules,
+        modules: resolvedModules,
       };
       createMutation.mutate(payload, { onSuccess: onClose });
     }
@@ -354,7 +374,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         <div className="p-4">
           <p className="text-xs text-gray-500 mb-3">
             Controls which sections appear in the app. Sales includes My Shift, where staff can record shift expenses.
-            Projects &amp; Estimates for staff unlocks project boards only — full estimates and costing stay owner-only.
+            Projects &amp; Estimates can be project boards only, or full workspace access when you enable it below.
             Account and Custosell Guide remain available to everyone.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -379,6 +399,25 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
               );
             })}
           </div>
+          {!modulesLocked && form.modules.includes('estimates') && (
+            <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={form.estimatesFullAccess}
+                  onChange={(e) => update('estimatesFullAccess', e.target.checked)}
+                  className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
+                  <span className="mt-0.5 block text-xs text-gray-600">
+                    Grants estimates, projects, insights, templates, and costing — not just project boards.
+                    Revoke anytime by unchecking this while keeping Projects &amp; Estimates enabled.
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
           {!modulesLocked && form.modules.length === 0 && (
             <p className="text-xs text-amber-700 mt-3">No business modules selected — they will only see Account and Guide.</p>
           )}

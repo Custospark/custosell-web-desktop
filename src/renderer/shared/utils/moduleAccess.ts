@@ -1,6 +1,8 @@
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 
+export const ESTIMATES_FULL_MODULE = 'estimates_full';
+
 export const BUSINESS_MODULE_SLUGS = [
   'dashboard',
   'sales',
@@ -117,9 +119,29 @@ export function isProjectCollaboratorOnly(user: AuthUser | null | undefined): bo
   return (user.project_member_ids?.length ?? 0) > 0;
 }
 
-/** Full Estimates workspace (estimates list, projects admin, insights, templates). Owner-only for now. */
+/** Full Projects & Estimates workspace (estimates, projects, insights, templates, costing). */
 export function canViewFullEstimates(user: AuthUser | null | undefined): boolean {
-  return isBusinessOwner(user);
+  if (!user) return false;
+  if (isBusinessOwner(user)) return true;
+  return (user.modules ?? []).includes(ESTIMATES_FULL_MODULE);
+}
+
+export function staffHasFullEstimatesModule(modules: string[] | undefined): boolean {
+  return (modules ?? []).includes(ESTIMATES_FULL_MODULE);
+}
+
+/** Persisted staff modules: business slugs plus optional `estimates_full` grant. */
+export function buildStaffModulesPayload(
+  businessModules: BusinessModuleSlug[],
+  estimatesFullAccess: boolean,
+): string[] {
+  if (!businessModules.includes('estimates')) {
+    return [...businessModules];
+  }
+  if (estimatesFullAccess) {
+    return [...businessModules, ESTIMATES_FULL_MODULE];
+  }
+  return [...businessModules];
 }
 
 /** Project boards (+ member project detail) without full Estimates admin. */

@@ -24,6 +24,7 @@ import EditStageModal from '../ui/EditStageModal';
 import DeleteStageModal from '../ui/DeleteStageModal';
 import AddStageModal from '../ui/AddStageModal';
 import LeadDetailModal from '../ui/LeadDetailModal';
+import LeadCommentsModal from '../ui/LeadCommentsModal';
 import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
 import BoardCalendarView from '../ui/BoardCalendarView';
@@ -77,6 +78,7 @@ export default function BoardKanbanPage() {
   const [editStage, setEditStage] = useState<PipelineStage | null>(null);
   const [deleteStage, setDeleteStage] = useState<PipelineStage | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
+  const [commentsLeadId, setCommentsLeadId] = useState<number | null>(null);
 
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
@@ -264,6 +266,7 @@ export default function BoardKanbanPage() {
               key={stage.id}
               stage={stage}
               onLeadClick={(lead: PipelineLead) => setSelectedLeadId(lead.id)}
+              onLeadCommentsClick={(lead) => setCommentsLeadId(lead.id)}
               onAddLead={(stageId) => setCreateStageId(stageId)}
               onDropLead={handleDropLead}
               onDropColumn={handleDropColumn}
@@ -342,6 +345,14 @@ export default function BoardKanbanPage() {
           stage={deleteStage}
           otherStages={allStages.filter((s) => s.id !== deleteStage.id)}
           onClose={() => setDeleteStage(null)}
+        />
+      )}
+
+      {commentsLeadId != null && (
+        <LeadCommentsModal
+          leadId={commentsLeadId}
+          boardId={boardId}
+          onClose={() => setCommentsLeadId(null)}
         />
       )}
 

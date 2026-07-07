@@ -8,6 +8,7 @@ import { Inbox, GripVertical, MoreHorizontal, Plus } from 'lucide-react';
 interface KanbanColumnProps {
   stage: PipelineStage;
   onLeadClick: (lead: PipelineLead) => void;
+  onLeadCommentsClick?: (lead: PipelineLead) => void;
   onAddLead: (stageId: number) => void;
   onDropLead: (leadId: number, stageId: number, position: number) => void;
   onDropColumn?: (draggedStageId: number, targetStageId: number) => void;
@@ -18,6 +19,7 @@ interface KanbanColumnProps {
 export default function KanbanColumn({
   stage,
   onLeadClick,
+  onLeadCommentsClick,
   onAddLead,
   onDropLead,
   onDropColumn,
@@ -174,7 +176,12 @@ export default function KanbanColumn({
                 e.dataTransfer.effectAllowed = 'move';
               }}
             >
-              <LeadCard lead={lead} stageColor={stageColor} onClick={() => onLeadClick(lead)} />
+              <LeadCard
+                lead={lead}
+                stageColor={stageColor}
+                onClick={() => onLeadClick(lead)}
+                onCommentsClick={onLeadCommentsClick}
+              />
             </div>
           ))
         )}

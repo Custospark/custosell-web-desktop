@@ -1,17 +1,18 @@
 import type { PipelineLead } from '../api/pipelineTypes';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
-  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban,
+  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare,
 } from 'lucide-react';
+import LeadAssignmentChain from './LeadAssignmentChain';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 
 interface LeadCardProps {
   lead: PipelineLead;
   stageColor?: string | null;
   onClick: () => void;
+  onCommentsClick?: (lead: PipelineLead) => void;
   dragging?: boolean;
 }
 
@@ -30,7 +31,7 @@ function isOverdue(dateStr: string | null | undefined): boolean {
   return d < today;
 }
 
-export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCardProps) {
+export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, dragging }: LeadCardProps) {
   const displayName = lead.contact_name || lead.title;
   const accent = stageColor ?? lead.stage?.color ?? '#6366f1';
   const isCard = (lead.card_type ?? 'lead') === 'card';
@@ -39,6 +40,7 @@ export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCa
   const checklistTotal = lead.checklist_total ?? 0;
   const checklistDone = lead.checklist_done ?? 0;
   const attachmentsCount = lead.attachments_count ?? 0;
+  const commentsCount = lead.comments_count ?? 0;
 
   return (
     <div
@@ -88,6 +90,27 @@ export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCa
             )}
           </div>
           <GripVertical className="h-4 w-4 shrink-0 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCommentsClick?.(lead);
+            }}
+            className={cn(
+              'relative shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors',
+              'hover:bg-blue-50 hover:text-blue-600',
+              commentsCount > 0 && 'text-blue-500',
+            )}
+            title={commentsCount > 0 ? `${commentsCount} comment${commentsCount === 1 ? '' : 's'}` : 'Comments'}
+            aria-label="View comments"
+          >
+            <MessageSquare className="h-4 w-4" />
+            {commentsCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                {commentsCount > 99 ? '99+' : commentsCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {!isCard && (lead.contact_phone || lead.contact_email) && (
@@ -158,12 +181,9 @@ export default function LeadCard({ lead, stageColor, onClick, dragging }: LeadCa
             </span>
           )}
           {lead.assignee && (
-            <UserIdentityChip
-              name={lead.assignee.name}
-              avatar={lead.assignee.avatar}
-              size="xs"
-              className="ml-auto max-w-[108px] rounded-full bg-gray-50 py-0.5 pl-0.5 pr-2 ring-1 ring-gray-100"
-            />
+            <div className="ml-auto min-w-0 max-w-full">
+              <LeadAssignmentChain creator={lead.creator} assignee={lead.assignee} />
+            </div>
           )}
         </div>
       </div>

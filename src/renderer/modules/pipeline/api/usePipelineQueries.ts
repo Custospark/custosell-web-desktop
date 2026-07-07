@@ -485,12 +485,24 @@ export function useAddPipelineActivity() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ leadId, type, body }: { leadId: number; type: string; body: string }) => {
+    mutationFn: async ({
+      leadId,
+      type,
+      body,
+    }: {
+      leadId: number;
+      type: string;
+      body: string;
+      boardId?: number;
+    }) => {
       const { data } = await axiosInstance.post(PIPELINE.LEAD_ACTIVITIES(leadId), { type, body });
       return normalizeItem<PipelineLeadActivity>(data);
     },
     onSuccess: (_activity, vars) => {
       qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
+      if (vars.boardId) {
+        qc.invalidateQueries({ queryKey: pipelineKeys.kanban(vars.boardId) });
+      }
       showToast('success', vars.type === 'comment' ? 'Comment posted' : 'Activity added');
     },
     onError: (err: AxiosError<{ message?: string }>) => {

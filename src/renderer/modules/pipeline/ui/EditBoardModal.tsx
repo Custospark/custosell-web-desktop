@@ -7,6 +7,7 @@ import { useUploadBoardBackground } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
 import BoardMemberPicker from './BoardMemberPicker';
 import { membersFromBoard } from '../api/pipelineBoardMembers';
+import { useStaff } from '../../settings/api/settings/StaffQueries';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   useProjectMembers,
@@ -81,6 +82,7 @@ function EditBoardModalForm({
 
   const [bgType, setBgType] = useState(initialBgType);
   const [bgValue, setBgValue] = useState(initialBgValue);
+  const [memberSearch, setMemberSearch] = useState('');
   const [uploadHistory, setUploadHistory] = useState<string[]>(() =>
     loadBoardUploadHistory(board.id, initialBgType === 'upload' ? initialBgValue : null),
   );
@@ -93,6 +95,11 @@ function EditBoardModalForm({
   const removeProjectMember = useRemoveProjectMember(projectId);
   const memberMutationPending =
     addProjectMember.isPending || updateProjectMember.isPending || removeProjectMember.isPending;
+  const { data: staff = [] } = useStaff();
+  const teamQuery = memberSearch.trim().toLowerCase();
+  const pipelineTeamMembers = staff
+    .filter((person) => person.id !== board.created_by && (person.modules ?? []).includes('pipeline'))
+    .filter((person) => !teamQuery || person.name.toLowerCase().includes(teamQuery));
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);
@@ -251,7 +258,38 @@ function EditBoardModalForm({
 
         {visibility === 'shared' && (
           <PipelineFormSection title="Team members" icon={Users}>
+            <p className="mb-2 text-xs text-gray-500">
+              Invite specific members and set their permissions for this board.
+            </p>
             <BoardMemberPicker value={members} onChange={setMembers} excludeUserId={board.created_by} />
+          </PipelineFormSection>
+        )}
+        {visibility === 'team' && (
+          <PipelineFormSection title="Members with team access" icon={Users}>
+            <p className="mb-2 text-xs text-gray-500">
+              Everyone listed here can access this board through Pipeline module access.
+            </p>
+            <input
+              type="search"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              placeholder="Search team members..."
+              className="mb-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+            />
+            <ul className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+              {pipelineTeamMembers.map((person) => (
+                <li
+                  key={person.id}
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/70 px-3 py-2"
+                >
+                  <span className="truncate text-sm font-medium text-gray-900">{person.name}</span>
+                  <span className="text-xs text-gray-500">{person.email}</span>
+                </li>
+              ))}
+            </ul>
+            {pipelineTeamMembers.length === 0 && (
+              <p className="text-xs text-gray-500">No team members found for this filter.</p>
+            )}
           </PipelineFormSection>
         )}
           </>

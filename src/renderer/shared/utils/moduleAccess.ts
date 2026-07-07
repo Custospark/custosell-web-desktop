@@ -21,7 +21,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   inventory: 'Inventory',
   customers: 'Customers',
   pipeline: 'Pipeline',
-  estimates: 'Estimates',
+  estimates: 'Projects & Estimates',
   expenses: 'Expenses',
   accounting: 'Accounting',
   settings: 'Settings',

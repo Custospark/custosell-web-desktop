@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import type { BoardMemberInput } from '../api/pipelineTypes';
 import { cn } from '../../../shared/utils/cn';
@@ -22,11 +22,20 @@ function memberDisplayName(member: BoardMemberInput, staffName?: string): string
 
 export default function BoardMemberPicker({ value, onChange, excludeUserId, className }: BoardMemberPickerProps) {
   const { data: staff = [] } = useStaff();
+  const [search, setSearch] = useState('');
 
   const available = useMemo(
     () => staff.filter((u) => u.id !== excludeUserId && !value.some((m) => m.user_id === u.id)),
     [staff, value, excludeUserId],
   );
+  const query = search.trim().toLowerCase();
+  const filteredMembers = useMemo(() => {
+    if (!query) return value;
+    return value.filter((member) => {
+      const displayName = memberDisplayName(member, staff.find((u) => u.id === member.user_id)?.name);
+      return displayName.toLowerCase().includes(query);
+    });
+  }, [query, staff, value]);
 
   const staffNameFor = (userId: number) => staff.find((u) => u.id === userId)?.name;
 
@@ -51,8 +60,16 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
       </div>
 
       {value.length > 0 && (
-        <ul className="space-y-2">
-          {value.map((member) => {
+        <>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search invited members..."
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          />
+          <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {filteredMembers.map((member) => {
             const displayName = memberDisplayName(member, staffNameFor(member.user_id));
             return (
               <li
@@ -104,8 +121,12 @@ export default function BoardMemberPicker({ value, onChange, excludeUserId, clas
                 </div>
               </li>
             );
-          })}
-        </ul>
+            })}
+          </ul>
+          {filteredMembers.length === 0 && (
+            <p className="text-xs text-gray-500">No invited members match your search.</p>
+          )}
+        </>
       )}
 
       {available.length > 0 ? (

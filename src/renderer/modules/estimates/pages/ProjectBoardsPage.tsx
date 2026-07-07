@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -7,35 +6,9 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { usePipelineBoards } from '../../pipeline/api/usePipelineQueries';
 import { filterBoardsForWorkspace } from '../../pipeline/api/pipelineBoardWorkspace';
 import CreateBoardModal from '../../pipeline/ui/CreateBoardModal';
-import { Kanban, Plus, Search } from 'lucide-react';
+import BoardListCard from '../../pipeline/ui/BoardListCard';
+import { Plus, Search } from 'lucide-react';
 import type { PipelineBoard } from '../../pipeline/api/pipelineTypes';
-
-function BoardCard({ board }: { board: PipelineBoard }) {
-  return (
-    <Link key={board.id} to={ROUTES.ESTIMATES.BOARD(board.id)} className="group block">
-      <Card className="h-full transition-shadow group-hover:shadow-md">
-        <div
-          className="mb-3 h-2 rounded-full"
-          style={{ backgroundColor: board.cover_color ?? '#6366f1' }}
-        />
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="truncate font-semibold text-gray-900 group-hover:text-blue-700">
-              {board.name}
-            </h3>
-            {board.description && (
-              <p className="mt-1 line-clamp-2 text-sm text-gray-500">{board.description}</p>
-            )}
-          </div>
-          <Kanban className="h-5 w-5 shrink-0 text-gray-400" />
-        </div>
-        <div className="mt-4 text-xs text-gray-500">
-          {board.open_leads_count ?? 0} open task{(board.open_leads_count ?? 0) === 1 ? '' : 's'}
-        </div>
-      </Card>
-    </Link>
-  );
-}
 
 export default function ProjectBoardsPage() {
   const [search, setSearch] = useState('');
@@ -112,7 +85,11 @@ export default function ProjectBoardsPage() {
           <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">My boards</h3>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filteredPersonalBoards.map((board) => (
-              <BoardCard key={board.id} board={board} />
+              <BoardListCard
+                key={board.id}
+                board={board}
+                to={ROUTES.ESTIMATES.BOARD(board.id)}
+              />
             ))}
           </div>
         </section>
@@ -123,7 +100,11 @@ export default function ProjectBoardsPage() {
         {filteredProjectBoards.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filteredProjectBoards.map((board) => (
-              <BoardCard key={board.id} board={board} />
+              <BoardListCard
+                key={board.id}
+                board={board}
+                to={ROUTES.ESTIMATES.BOARD(board.id)}
+              />
             ))}
           </div>
         ) : (

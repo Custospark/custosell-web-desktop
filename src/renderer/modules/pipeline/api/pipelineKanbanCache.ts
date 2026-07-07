@@ -81,6 +81,36 @@ export function pipelineBoardBackgroundStyle(coverColor: string | null | undefin
   };
 }
 
+/** Compact hero background for board list cards (no fixed attachment). */
+export function pipelineBoardCardHeroStyle(
+  board: Pick<PipelineBoard, 'background_type' | 'background_value' | 'cover_color'>,
+): CSSProperties {
+  const accent = board.cover_color ?? '#6366f1';
+
+  if (board.background_type === 'color' && board.background_value?.trim()) {
+    const fill = board.background_value.trim();
+    return {
+      background: `linear-gradient(155deg, ${fill} 0%, ${pipelineColorAlpha(fill, 0.78)} 55%, ${pipelineColorAlpha(accent, 0.55)} 100%)`,
+    };
+  }
+
+  const imageUrl = resolveBoardBackgroundImageUrl(board.background_type, board.background_value);
+  if (imageUrl && (board.background_type === 'gallery' || board.background_type === 'upload')) {
+    return {
+      backgroundImage: [
+        `linear-gradient(180deg, ${pipelineColorAlpha(accent, 0.12)} 0%, rgba(15,23,42,0.52) 100%)`,
+        `url(${imageUrl})`,
+      ].join(', '),
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    };
+  }
+
+  return {
+    background: `linear-gradient(155deg, ${accent} 0%, ${pipelineColorAlpha(accent, 0.82)} 42%, ${pipelineColorAlpha(accent, 0.45)} 100%)`,
+  };
+}
+
 export function resolveBoardCoverColor(
   kanbanBoard: PipelineBoard | undefined,
   boardsList: PipelineBoard[],

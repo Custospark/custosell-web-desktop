@@ -18,7 +18,6 @@ import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { canAccessModule, hasEstimatesBoardsAccess, isBusinessOwner, isLimitedEstimatesUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
-import { avatarUrl } from '../../utils/avatarUrl';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -279,7 +278,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
 function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void; navGroups: NavGroup[] }) {
   const { state } = useAppContext();
-  const user = useAppSelector((s) => s.auth.user);
   const collapsed = state.sidebarCollapsed;
   const location = useLocation();
 
@@ -390,30 +388,9 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         })}
       </nav>
 
-      <div className="shrink-0 p-4 border-t border-gray-200/50 space-y-3">
+      <div className="shrink-0 p-4 border-t border-gray-200/50">
         {!collapsed && (
-          <>
-            {/* User profile */}
-            {user && (
-              <div className="flex items-center gap-3">
-                {user.avatar ? (
-                  <img src={avatarUrl(user.avatar)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
-                    {(user.name || 'U').charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                </div>
-              </div>
-            )}
-
-            <hr className="border-gray-100" />
-
-            {/* Quick Support card */}
-            <div className="p-3 rounded-xl border bg-linear-to-br from-gray-50 to-gray-100/50 border-gray-200/50">
+          <div className="p-3 rounded-xl border bg-linear-to-br from-gray-50 to-gray-100/50 border-gray-200/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg shrink-0 bg-cyan-100">
                   <Headset className="w-4 h-4 text-cyan-600" />
@@ -443,7 +420,6 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                 </div>
               </div>
             </div>
-          </>
         )}
 
         {collapsed && (

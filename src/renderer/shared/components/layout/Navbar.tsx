@@ -11,14 +11,14 @@ import { GuideHeaderNav } from './GuideHeaderNav';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
+import { resolveBusinessDisplayName, resolveUserMenuLabel } from '../../utils/shellDisplay';
 import { avatarUrl } from '../../utils/avatarUrl';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
 import {
-  Menu, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User,
+  Menu, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User, Building2,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-
-const BUSINESS_NAME_DISPLAY_MAX = 25;
 
 const NETWORK_STATUS_THEME = {
   online: {
@@ -41,11 +41,6 @@ const NETWORK_STATUS_THEME = {
 
 const networkStatusBtn =
   'inline-flex items-center justify-center shrink-0 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2';
-
-function displayBusinessName(name: string): string {
-  if (name.length <= BUSINESS_NAME_DISPLAY_MAX) return name;
-  return `${name.slice(0, BUSINESS_NAME_DISPLAY_MAX - 1)}…`;
-}
 
 const iconBtn =
   'inline-flex items-center justify-center shrink-0 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors';
@@ -131,6 +126,8 @@ function NavbarNetworkStatus({
 export function Navbar() {
   const { state, dispatch } = useAppContext();
   const user = useAppSelector((s) => s.auth.user);
+  const { data: business } = useBusiness();
+  const businessName = resolveBusinessDisplayName(user, business);
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
   const { requestEndShift, isEnding } = useEndShiftAction();
@@ -147,8 +144,7 @@ export function Navbar() {
   };
 
   const isLargeScreen = window.innerWidth >= 1024;
-  const sidebarShowing = isLargeScreen ? !state.sidebarCollapsed : state.sidebarOpen;
-  const sidebarLabel = sidebarShowing ? 'Hide sidebar' : 'Show sidebar';
+  const sidebarLabel = (isLargeScreen ? !state.sidebarCollapsed : state.sidebarOpen) ? 'Hide sidebar' : 'Show sidebar';
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -190,49 +186,41 @@ export function Navbar() {
         'pl-1 sm:pl-2 lg:pl-3 pr-2 sm:pr-4 lg:pr-6',
       )}
     >
-      <div
-        className={cn(
-          'grid h-full items-center gap-x-1 sm:gap-x-2 md:gap-x-3',
-          'grid-cols-[auto_minmax(0,1fr)_auto]',
-        )}
-      >
-        {/* Left — menu toggle + shift */}
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+      <div className="flex h-full items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={handleToggleSidebar}
-            className={cn(iconBtn, 'w-10 h-10 sm:w-9 sm:h-9')}
+            className={cn(iconBtn, 'w-10 h-10 sm:w-9 sm:h-9 shrink-0')}
             title={sidebarLabel}
             aria-label={sidebarLabel}
           >
             <Menu className="w-6 h-6 sm:w-5 sm:h-5" />
           </button>
 
+          {businessName && (
+            <div
+              className="flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2 py-1.5 ring-1 ring-slate-100 sm:px-2.5"
+              title={businessName}
+            >
+              <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[8rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">
+                  {businessName}
+                </p>
+              </div>
+            </div>
+          )}
+
           {user?.shift_clock_in && (
             <NavbarShiftBadge
               clockIn={user.shift_clock_in}
-              className="hidden md:flex max-w-[10rem] lg:max-w-[14rem] xl:max-w-none"
+              className="hidden lg:flex max-w-[12rem] xl:max-w-none shrink-0"
             />
           )}
         </div>
 
-        {/* Center — business name (hidden on mobile, hidden on lg when sidebar expanded) */}
-        <div className={cn('hidden sm:flex justify-center min-w-0 px-0.5 sm:px-1', sidebarShowing && 'lg:hidden')}>
-          {user?.business_name && (
-            <span
-              className={cn(
-                'font-semibold text-blue-600 text-center',
-                'text-[11px] sm:text-xs md:text-sm lg:text-base',
-              )}
-              title={user.business_name}
-            >
-              {displayBusinessName(user.business_name)}
-            </span>
-          )}
-        </div>
-
-        {/* Right — status, guide, user */}
-        <div className="flex items-center justify-end gap-0.5 sm:gap-1.5 md:gap-2 min-w-0">
+        <div className="flex items-center justify-end gap-0.5 sm:gap-1.5 md:gap-2 shrink-0">
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <SyncHeaderChip />
             <NavbarNetworkStatus
@@ -252,20 +240,21 @@ export function Navbar() {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               aria-expanded={dropdownOpen}
               aria-haspopup="menu"
+              aria-label={`Account menu for ${user?.name ?? 'user'}`}
               className={cn(
                 iconBtn,
-                'gap-1 sm:gap-1.5 pl-0.5 pr-1 sm:px-1.5 h-8 sm:h-9 max-w-[9rem] sm:max-w-[12rem] md:max-w-[14rem]',
+                'gap-1.5 pl-0.5 pr-1 sm:px-1.5 h-9 max-w-[3rem] sm:max-w-[11rem] md:max-w-[14rem]',
               )}
             >
               {user?.avatar ? (
-                <img src={avatarUrl(user.avatar)} alt="" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shrink-0" />
+                <img src={avatarUrl(user.avatar)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-white" />
               ) : (
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600 shrink-0 ring-2 ring-white">
                   {(user?.name || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className="font-medium text-xs sm:text-sm text-gray-700 truncate hidden sm:inline">
-                {user?.name || 'User'}
+              <span className="font-medium text-sm text-gray-700 truncate hidden md:inline max-w-[8rem] lg:max-w-[10rem]">
+                {resolveUserMenuLabel(user?.name)}
               </span>
               <ChevronDown
                 className={cn(
@@ -282,12 +271,9 @@ export function Navbar() {
                 className="absolute right-0 top-full mt-1.5 w-[min(100vw-1rem,15rem)] sm:w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] py-1"
               >
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
+                  <p className="text-sm font-semibold text-gray-900 break-words">{user?.name || 'User'}</p>
                   {user?.email && (
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
-                  )}
-                  {user?.business_name && (
-                    <p className="text-xs text-gray-400 mt-0.5 break-words">{user.business_name}</p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5" title={user.email}>{user.email}</p>
                   )}
                   {user?.shift_clock_in && (
                     <div className="md:hidden mt-2 pt-2 border-t border-gray-100">

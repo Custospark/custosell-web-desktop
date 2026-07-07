@@ -26,7 +26,7 @@ export default function LeadCommentsModal({
   boardAccess,
   onClose,
 }: LeadCommentsModalProps) {
-  const { data: lead, isLoading } = usePipelineLead(leadId, true);
+  const { data: lead, isLoading } = usePipelineLead(leadId, true, { poll: true });
 
   return (
     <Modal

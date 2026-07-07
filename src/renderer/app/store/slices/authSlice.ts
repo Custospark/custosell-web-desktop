@@ -89,6 +89,9 @@ function normalizeAuthUser(user: AuthUser): AuthUser {
   if (user.business && 'data' in user.business) {
     user.business = (user.business as { data: BusinessInfo }).data;
   }
+  if (!user.business_name && user.business?.name) {
+    user.business_name = user.business.name;
+  }
   return user;
 }
 

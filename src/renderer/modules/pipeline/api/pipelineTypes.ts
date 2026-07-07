@@ -157,6 +157,7 @@ export interface PipelineLead {
 export interface PipelineLeadActivity {
   id: number;
   lead_id: number;
+  parent_id?: number | null;
   user_id: number | null;
   type: PipelineActivityType;
   body: string | null;

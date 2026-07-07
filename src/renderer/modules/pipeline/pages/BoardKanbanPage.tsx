@@ -61,7 +61,7 @@ export default function BoardKanbanPage() {
   const { boardId: boardIdParam } = useParams();
   const boardId = Number(boardIdParam);
 
-  const { data: board, isLoading } = usePipelineKanban(boardId);
+  const { data: board, isLoading } = usePipelineKanban(boardId, { poll: true });
   const { data: boards = [] } = usePipelineBoards(
     workspace === 'estimates' ? { estimatesWorkspace: true } : { salesOnly: true },
   );
@@ -378,10 +378,15 @@ export default function BoardKanbanPage() {
         />
       )}
 
-      {selectedLeadId != null && (
+      {selectedLeadId != null && board && (
         <LeadDetailModal
           leadId={selectedLeadId}
           boardId={boardId}
+          board={board}
+          boardAccess={{
+            projectCreatedBy: project?.created_by,
+            projectMembers,
+          }}
           onClose={() => setSelectedLeadId(null)}
         />
       )}

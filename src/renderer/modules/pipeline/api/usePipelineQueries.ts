@@ -54,6 +54,12 @@ const queryDefaults = {
   refetchOnMount: 'always' as const,
 };
 
+/** Poll open kanban boards so collaborators see changes without manual refresh. */
+export const PIPELINE_KANBAN_POLL_MS = 30_000;
+
+/** Poll open lead detail / comments while a card discussion is visible. */
+export const PIPELINE_LEAD_POLL_MS = 20_000;
+
 function normalizeList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload as T[];
   if (payload && typeof payload === 'object') {
@@ -145,7 +151,7 @@ export function usePipelineBoard(id: number) {
   });
 }
 
-export function usePipelineKanban(boardId: number) {
+export function usePipelineKanban(boardId: number, options?: { poll?: boolean }) {
   return useQuery<PipelineBoard>({
     queryKey: pipelineKeys.kanban(boardId),
     queryFn: async () => {
@@ -153,6 +159,9 @@ export function usePipelineKanban(boardId: number) {
       return normalizeItem<PipelineBoard>(data);
     },
     enabled: Boolean(boardId),
+    refetchInterval: options?.poll !== false && boardId ? PIPELINE_KANBAN_POLL_MS : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     ...queryDefaults,
   });
 }
@@ -247,7 +256,7 @@ export function usePipelineLeads(filters?: Record<string, string>) {
   });
 }
 
-export function usePipelineLead(id: number, enabled = true) {
+export function usePipelineLead(id: number, enabled = true, options?: { poll?: boolean }) {
   return useQuery<PipelineLead>({
     queryKey: pipelineKeys.lead(id),
     queryFn: async () => {
@@ -255,6 +264,9 @@ export function usePipelineLead(id: number, enabled = true) {
       return normalizeItem<PipelineLead>(data);
     },
     enabled: Boolean(id) && enabled,
+    refetchInterval: options?.poll && enabled && id ? PIPELINE_LEAD_POLL_MS : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     ...queryDefaults,
   });
 }
@@ -489,13 +501,19 @@ export function useAddPipelineActivity() {
       leadId,
       type,
       body,
+      parentId,
     }: {
       leadId: number;
       type: string;
       body: string;
       boardId?: number;
+      parentId?: number | null;
     }) => {
-      const { data } = await axiosInstance.post(PIPELINE.LEAD_ACTIVITIES(leadId), { type, body });
+      const { data } = await axiosInstance.post(PIPELINE.LEAD_ACTIVITIES(leadId), {
+        type,
+        body,
+        ...(parentId ? { parent_id: parentId } : {}),
+      });
       return normalizeItem<PipelineLeadActivity>(data);
     },
     onSuccess: (_activity, vars) => {
@@ -503,7 +521,7 @@ export function useAddPipelineActivity() {
       if (vars.boardId) {
         qc.invalidateQueries({ queryKey: pipelineKeys.kanban(vars.boardId) });
       }
-      showToast('success', vars.type === 'comment' ? 'Comment posted' : 'Activity added');
+      showToast('success', vars.parentId ? 'Reply posted' : vars.type === 'comment' ? 'Comment posted' : 'Activity added');
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not add activity'));

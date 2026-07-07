@@ -197,6 +197,8 @@ export interface CreateBoardPayload {
   cover_color?: string;
   background_type?: string;
   background_value?: string;
+  background_type?: string;
+  background_value?: string;
   member_ids?: number[];
   members?: BoardMemberInput[];
   workspace?: 'pipeline' | 'estimates';

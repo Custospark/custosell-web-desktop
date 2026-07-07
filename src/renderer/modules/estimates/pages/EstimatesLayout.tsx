@@ -76,7 +76,7 @@ export default function EstimatesLayout() {
         </nav>
       )}
 
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 pb-6">
         <Outlet />
       </div>
     </div>

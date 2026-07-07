@@ -2,12 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useUpdatePipelineBoard } from '../api/usePipelineQueries';
-import { useUploadBoardBackground } from '../api/usePipelineQueries';
+import { useUpdatePipelineBoard, useUploadBoardBackground } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
-import BoardMemberPicker from './BoardMemberPicker';
 import { membersFromBoard } from '../api/pipelineBoardMembers';
-import { useStaff } from '../../settings/api/settings/StaffQueries';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   useProjectMembers,
@@ -22,18 +19,16 @@ import {
   PipelineModalHero,
   pipelineInputClass,
 } from './pipelineFormFields';
-import BackgroundGallery from './BackgroundGallery';
+import BoardVisibilitySection from './BoardVisibilitySection';
+import BoardBackgroundSection from './BoardBackgroundSection';
 import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import { addBoardUploadHistory, loadBoardUploadHistory } from '../api/boardUploadHistory';
-import {
-  AlignLeft, Archive, Kanban, Lock, Palette, Share2, Type, Users,
-} from 'lucide-react';
+import { AlignLeft, Archive, Kanban, Type, Users } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canManageProjectTeam } from '../../../shared/utils/moduleAccess';
-
-type BoardWorkspace = 'pipeline' | 'estimates';
+import { canManageProjectTeam, isBusinessOwner } from '../../../shared/utils/moduleAccess';
+import type { BoardWorkspace } from './boardVisibilityOptions';
 
 interface EditBoardModalProps {
   open: boolean;
@@ -41,17 +36,6 @@ interface EditBoardModalProps {
   onClose: () => void;
   workspace?: BoardWorkspace;
 }
-
-const VISIBILITY_OPTIONS: {
-  value: PipelineVisibility;
-  label: string;
-  hint: string;
-  icon: typeof Users;
-}[] = [
-  { value: 'team', label: 'Team', hint: 'Everyone with Pipeline access', icon: Users },
-  { value: 'private', label: 'Private', hint: 'Only you can see this board', icon: Lock },
-  { value: 'shared', label: 'Shared', hint: 'Invite specific members', icon: Share2 },
-];
 
 export default function EditBoardModal({ open, board, onClose, workspace = 'pipeline' }: EditBoardModalProps) {
   if (!open) return null;
@@ -85,25 +69,28 @@ function EditBoardModalForm({
 
   const [bgType, setBgType] = useState(initialBgType);
   const [bgValue, setBgValue] = useState(initialBgValue);
-  const [memberSearch, setMemberSearch] = useState('');
   const [uploadHistory, setUploadHistory] = useState<string[]>(() =>
     loadBoardUploadHistory(board.id, initialBgType === 'upload' ? initialBgValue : null),
   );
 
   const isProjectBoard = Boolean(board.project_id);
   const projectId = board.project_id ?? 0;
-  const { data: projectMembers = [] } = useProjectMembers(isProjectBoard ? projectId : 0);
+  const {
+    data: projectMembers = [],
+    isLoading: membersLoading,
+    isFetching: membersFetching,
+  } = useProjectMembers(isProjectBoard ? projectId : 0);
   const addProjectMember = useAddProjectMember(projectId);
   const updateProjectMember = useUpdateProjectMember(projectId);
   const removeProjectMember = useRemoveProjectMember(projectId);
   const memberMutationPending =
     addProjectMember.isPending || updateProjectMember.isPending || removeProjectMember.isPending;
   const canManageTeam = canManageProjectTeam(user, projectMembers, board.created_by);
-  const { data: staff = [] } = useStaff();
-  const teamQuery = memberSearch.trim().toLowerCase();
-  const pipelineTeamMembers = staff
-    .filter((person) => person.id !== board.created_by && (person.modules ?? []).includes('pipeline'))
-    .filter((person) => !teamQuery || person.name.toLowerCase().includes(teamQuery));
+  const membersLoadingState = membersLoading || (membersFetching && projectMembers.length === 0);
+
+  const canArchive = isProjectBoard
+    ? isBusinessOwner(user) || user?.id === board.created_by
+    : isBusinessOwner(user) || user?.id === board.created_by;
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);
@@ -211,17 +198,15 @@ function EditBoardModalForm({
           </PipelineIconField>
         </PipelineFormSection>
 
-        <PipelineFormSection title="Background" icon={Palette}>
-          <BackgroundGallery
-            boardId={board.id}
-            currentType={bgType}
-            currentValue={bgValue}
-            uploadHistory={uploadHistory}
-            onSelect={handleBgSelect}
-            onUpload={handleBgUpload}
-            isUploading={uploadBg.isPending}
-          />
-        </PipelineFormSection>
+        <BoardBackgroundSection
+          boardId={board.id}
+          bgType={bgType}
+          bgValue={bgValue}
+          uploadHistory={uploadHistory}
+          onSelect={handleBgSelect}
+          onUpload={handleBgUpload}
+          isUploading={uploadBg.isPending}
+        />
 
         {isProjectBoard ? (
           <PipelineFormSection title="Project team" icon={Users}>
@@ -235,79 +220,24 @@ function EditBoardModalForm({
               onRoleChange={(userId, role) => updateProjectMember.mutate({ userId, role })}
               lockedUserId={board.created_by}
               loading={memberMutationPending}
+              isLoading={membersLoadingState}
               canManage={canManageTeam}
             />
           </PipelineFormSection>
         ) : (
-          <>
-        <PipelineFormSection title="Visibility" icon={Users}>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {VISIBILITY_OPTIONS.map(({ value, label, hint, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setVisibility(value)}
-                className={cn(
-                  'rounded-xl border p-3 text-left transition-colors',
-                  visibility === value
-                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
-                    : 'border-gray-200 hover:border-gray-300',
-                )}
-              >
-                <Icon className="mb-1 h-4 w-4 text-gray-600" />
-                <p className="text-sm font-semibold text-gray-900">{label}</p>
-                <p className="mt-0.5 text-[11px] text-gray-500">{hint}</p>
-              </button>
-            ))}
-          </div>
-        </PipelineFormSection>
-
-        {visibility === 'shared' && (
-          <PipelineFormSection title="Team members" icon={Users}>
-            <p className="mb-2 text-xs text-gray-500">
-              Invite specific members and set their permissions for this board.
-            </p>
-            <BoardMemberPicker
-              value={members}
-              onChange={setMembers}
-              excludeUserId={board.created_by}
-              lockedUserId={board.created_by}
-            />
-          </PipelineFormSection>
-        )}
-        {visibility === 'team' && (
-          <PipelineFormSection title="Members with team access" icon={Users}>
-            <p className="mb-2 text-xs text-gray-500">
-              Everyone listed here can access this board through Pipeline module access.
-            </p>
-            <input
-              type="search"
-              value={memberSearch}
-              onChange={(e) => setMemberSearch(e.target.value)}
-              placeholder="Search team members..."
-              className="mb-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-            />
-            <ul className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
-              {pipelineTeamMembers.map((person) => (
-                <li
-                  key={person.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/70 px-3 py-2"
-                >
-                  <span className="truncate text-sm font-medium text-gray-900">{person.name}</span>
-                  <span className="text-xs text-gray-500">{person.email}</span>
-                </li>
-              ))}
-            </ul>
-            {pipelineTeamMembers.length === 0 && (
-              <p className="text-xs text-gray-500">No team members found for this filter.</p>
-            )}
-          </PipelineFormSection>
-        )}
-          </>
+          <BoardVisibilitySection
+            workspace={workspace}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+            members={members}
+            onMembersChange={setMembers}
+            excludeUserId={board.created_by}
+            lockedUserId={board.created_by}
+          />
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
-          {!board.is_default && (
+          {!board.is_default && canArchive && (
             <Button
               type="button"
               variant="ghost"

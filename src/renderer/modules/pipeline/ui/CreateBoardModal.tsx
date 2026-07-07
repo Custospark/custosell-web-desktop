@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useCreatePipelineBoard } from '../api/usePipelineQueries';
+import { useCreatePipelineBoard, useUpdatePipelineBoard, useUploadBoardBackground } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineVisibility } from '../api/pipelineTypes';
-import BoardMemberPicker from './BoardMemberPicker';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   PipelineFormSection,
@@ -12,34 +11,18 @@ import {
   PipelineModalHero,
   pipelineInputClass,
 } from './pipelineFormFields';
-import { AlignLeft, Kanban, Lock, Palette, Share2, Type, Users } from 'lucide-react';
-import PipelineColorPicker from './PipelineColorPicker';
+import BoardVisibilitySection from './BoardVisibilitySection';
+import BoardBackgroundSection from './BoardBackgroundSection';
+import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
+import { AlignLeft, Kanban, Type } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-
-type BoardWorkspace = 'pipeline' | 'estimates';
+import type { BoardWorkspace } from './boardVisibilityOptions';
 
 interface CreateBoardModalProps {
   open: boolean;
   onClose: () => void;
   workspace?: BoardWorkspace;
 }
-
-const PIPELINE_VISIBILITY: {
-  value: PipelineVisibility;
-  label: string;
-  hint: string;
-  icon: typeof Users;
-}[] = [
-  { value: 'team', label: 'Team', hint: 'Everyone with Pipeline access', icon: Users },
-  { value: 'private', label: 'Private', hint: 'Only you can see this board', icon: Lock },
-  { value: 'shared', label: 'Shared', hint: 'Invite specific members', icon: Share2 },
-];
-
-const ESTIMATES_VISIBILITY: typeof PIPELINE_VISIBILITY = [
-  { value: 'private', label: 'Private', hint: 'Only you can see this board', icon: Lock },
-  { value: 'shared', label: 'Shared', hint: 'Invite specific collaborators', icon: Share2 },
-  { value: 'team', label: 'Team', hint: 'Everyone with Projects & Estimates access', icon: Users },
-];
 
 export default function CreateBoardModal({
   open,
@@ -48,20 +31,26 @@ export default function CreateBoardModal({
 }: CreateBoardModalProps) {
   const navigate = useNavigate();
   const createBoard = useCreatePipelineBoard();
+  const updateBoard = useUpdatePipelineBoard();
+  const uploadBg = useUploadBoardBackground();
   const isEstimates = workspace === 'estimates';
-  const visibilityOptions = isEstimates ? ESTIMATES_VISIBILITY : PIPELINE_VISIBILITY;
+  const pendingUploadRef = useRef<File | null>(null);
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<PipelineVisibility>(isEstimates ? 'private' : 'team');
-  const [coverColor, setCoverColor] = useState('#6366f1');
   const [members, setMembers] = useState<BoardMemberInput[]>([]);
+  const [bgType, setBgType] = useState('color');
+  const [bgValue, setBgValue] = useState('#6366f1');
 
   const reset = () => {
     setName('');
     setDescription('');
     setVisibility(isEstimates ? 'private' : 'team');
-    setCoverColor('#6366f1');
     setMembers([]);
+    setBgType('color');
+    setBgValue('#6366f1');
+    pendingUploadRef.current = null;
   };
 
   const handleClose = () => {
@@ -69,22 +58,55 @@ export default function CreateBoardModal({
     onClose();
   };
 
+  const handleBgSelect = (type: string, value: string) => {
+    setBgType(type);
+    setBgValue(value);
+    if (type !== 'upload') {
+      pendingUploadRef.current = null;
+    }
+  };
+
+  const handleBgUpload = (file: File) => {
+    pendingUploadRef.current = file;
+    setBgType('upload');
+    setBgValue(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    const pendingFile = pendingUploadRef.current;
+    const useDeferredUpload = bgType === 'upload' && pendingFile;
+
     const board = await createBoard.mutateAsync({
       name: name.trim(),
       description: description.trim() || undefined,
       visibility,
-      cover_color: coverColor,
+      cover_color: bgType === 'color' ? bgValue : undefined,
+      background_type: useDeferredUpload ? undefined : bgType,
+      background_value: useDeferredUpload ? undefined : (bgType === 'upload' ? normalizeBoardBackgroundUploadPath(bgValue) : bgValue),
       members: visibility === 'shared' ? members : undefined,
       workspace,
     });
+
+    if (useDeferredUpload && pendingFile) {
+      const result = await uploadBg.mutateAsync({ boardId: board.id, file: pendingFile });
+      await updateBoard.mutateAsync({
+        id: board.id,
+        background_type: 'upload',
+        background_value: normalizeBoardBackgroundUploadPath(result.background_value),
+        silent: true,
+      });
+    }
+
     handleClose();
     navigate(
       isEstimates ? ROUTES.ESTIMATES.BOARD(board.id) : ROUTES.PIPELINE.BOARD(board.id),
     );
   };
+
+  if (!open) return null;
 
   return (
     <Modal isOpen={open} onClose={handleClose} title="Create board" size="lg">
@@ -95,8 +117,8 @@ export default function CreateBoardModal({
           title={isEstimates ? 'New personal board' : 'New pipeline board'}
           description={
             isEstimates
-              ? 'Organize your own tasks with private or shared visibility.'
-              : 'Organize leads by stage. Pick a color so your team can spot it quickly.'
+              ? 'Organize your own tasks with the same background and visibility options as board settings.'
+              : 'Organize leads by stage with backgrounds, visibility, and team access.'
           }
         />
 
@@ -127,51 +149,29 @@ export default function CreateBoardModal({
           </div>
         </PipelineFormSection>
 
-        <PipelineFormSection title="Visibility" icon={Users}>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {visibilityOptions.map((opt) => {
-              const Icon = opt.icon;
-              const selected = visibility === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setVisibility(opt.value)}
-                  className={cn(
-                    'flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all',
-                    selected
-                      ? 'border-blue-500 bg-blue-50/80 shadow-sm ring-2 ring-blue-500/30'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
-                  )}
-                >
-                  <div className={cn('rounded-lg p-2', selected ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500')}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">{opt.label}</span>
-                  <span className="text-xs leading-snug text-gray-500">{opt.hint}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PipelineFormSection>
+        <BoardBackgroundSection
+          bgType={bgType}
+          bgValue={bgValue}
+          onSelect={handleBgSelect}
+          onUpload={handleBgUpload}
+          isUploading={uploadBg.isPending}
+        />
 
-        {visibility === 'shared' && (
-          <PipelineFormSection title="Members" icon={Users}>
-            <BoardMemberPicker value={members} onChange={setMembers} />
-          </PipelineFormSection>
-        )}
-
-        <PipelineFormSection title="Board color" icon={Palette}>
-          <PipelineColorPicker value={coverColor} onChange={setCoverColor} />
-          <div
-            className="mt-3 h-12 rounded-xl border border-gray-200 shadow-inner"
-            style={{ background: `linear-gradient(135deg, ${coverColor}, ${coverColor}99)` }}
-          />
-        </PipelineFormSection>
+        <BoardVisibilitySection
+          workspace={workspace}
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          members={members}
+          onMembersChange={setMembers}
+        />
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button type="submit" loading={createBoard.isPending} className="inline-flex items-center gap-2">
+          <Button
+            type="submit"
+            loading={createBoard.isPending || uploadBg.isPending}
+            className="inline-flex items-center gap-2"
+          >
             <Kanban className="h-4 w-4" />
             Create board
           </Button>

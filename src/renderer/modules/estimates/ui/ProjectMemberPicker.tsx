@@ -3,7 +3,7 @@ import { useStaff } from '../../settings/api/settings/StaffQueries';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { ProjectMember, ProjectMemberRole } from '../api/projectTypes';
-import { UserPlus, X } from 'lucide-react';
+import { UserPlus, X, Loader2 } from 'lucide-react';
 
 const ROLE_OPTIONS: { value: ProjectMemberRole; label: string; hint: string }[] = [
   { value: 'viewer', label: 'Viewer', hint: 'View board and tasks' },
@@ -19,6 +19,7 @@ interface ProjectMemberPickerProps {
   lockedUserId?: number;
   canManage?: boolean;
   loading?: boolean;
+  isLoading?: boolean;
 }
 
 export default function ProjectMemberPicker({
@@ -29,6 +30,7 @@ export default function ProjectMemberPicker({
   lockedUserId,
   canManage = true,
   loading,
+  isLoading,
 }: ProjectMemberPickerProps) {
   const { data: staff = [] } = useStaff();
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
@@ -55,6 +57,15 @@ export default function ProjectMemberPicker({
     setSelectedUserId('');
     setSelectedRole('contributor');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 py-10 text-sm text-gray-500">
+        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+        Loading team members…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

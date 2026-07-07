@@ -9,7 +9,11 @@ import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkele
 import { useToast } from '../../../app/contexts/useToast';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canViewProjectCosting, isProjectCollaboratorOnly } from '../../../shared/utils/moduleAccess';
+import {
+  canManageProjectTeam,
+  canViewProjectCosting,
+  isProjectCollaboratorOnly,
+} from '../../../shared/utils/moduleAccess';
 import {
   useProject,
   useProjectBudgetSummary,
@@ -90,7 +94,7 @@ export default function ProjectDetailPage() {
   const { data: project, isLoading } = useProject(projectId);
   const { data: budget } = useProjectBudgetSummary(projectId, canCosting);
   const { data: profitability } = useProjectProfitability(projectId, canCosting);
-  const { data: members = [] } = useProjectMembers(canCosting ? projectId : 0);
+  const { data: members = [] } = useProjectMembers(projectId);
   const addMember = useAddProjectMember(projectId);
   const updateMember = useUpdateProjectMember(projectId);
   const removeMember = useRemoveProjectMember(projectId);
@@ -105,9 +109,13 @@ export default function ProjectDetailPage() {
   const deleteAllocation = useDeleteCostAllocation(projectId);
   const { data: projectBoard } = useProjectBoard(activeTab === 'board' ? projectId : 0);
 
+  const teamMembers = members.length ? members : (project?.members ?? []);
+
   if (isLoading || !project) {
     return <LoadingSkeleton variant="dashboard" />;
   }
+
+  const canManageTeam = canManageProjectTeam(user, teamMembers, project.created_by);
 
   const currency = project.currency;
   const tasks = project.tasks ?? [];
@@ -362,21 +370,21 @@ export default function ProjectDetailPage() {
               </div>
             </Card>
           )}
-          {canCosting && (
-            <Card className="p-4 lg:col-span-2">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
-                <Users className="h-4 w-4 text-blue-600" />
-                Project team
-              </div>
-              <ProjectMemberPicker
-                members={members.length ? members : (project.members ?? [])}
-                loading={addMember.isPending || updateMember.isPending || removeMember.isPending}
-                onAdd={(userId, role) => addMember.mutate({ user_id: userId, role })}
-                onRoleChange={(userId, role) => updateMember.mutate({ userId, role })}
-                onRemove={(userId) => removeMember.mutate(userId)}
-              />
-            </Card>
-          )}
+          <Card className="p-4 lg:col-span-2">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+              <Users className="h-4 w-4 text-blue-600" />
+              Project team
+            </div>
+            <ProjectMemberPicker
+              members={teamMembers}
+              lockedUserId={project.created_by}
+              canManage={canManageTeam}
+              loading={addMember.isPending || updateMember.isPending || removeMember.isPending}
+              onAdd={(userId, role) => addMember.mutate({ user_id: userId, role })}
+              onRoleChange={(userId, role) => updateMember.mutate({ userId, role })}
+              onRemove={(userId) => removeMember.mutate(userId)}
+            />
+          </Card>
         </div>
       )}
 

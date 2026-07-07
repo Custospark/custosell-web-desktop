@@ -121,6 +121,18 @@ export function canViewProjectCosting(user: AuthUser | null | undefined): boolea
   return isBusinessOwner(user) || canAccessModule(user, 'estimates');
 }
 
+/** Invite or change roles on a project team (full Estimates access, owner, or project manager). */
+export function canManageProjectTeam(
+  user: AuthUser | null | undefined,
+  members: { user_id: number; role: string }[],
+  projectCreatedBy?: number,
+): boolean {
+  if (!user) return false;
+  if (canViewProjectCosting(user)) return true;
+  if (projectCreatedBy && user.id === projectCreatedBy) return true;
+  return members.some((m) => m.user_id === user.id && m.role === 'manager');
+}
+
 /** Estimates module or invited collaborator routes under /estimates/projects… */
 export function canAccessEstimatesArea(
   user: AuthUser | null | undefined,

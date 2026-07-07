@@ -338,7 +338,7 @@ export default function LeadDetailModal({ leadId, boardId, onClose }: LeadDetail
             <div className="flex-1">
               <p className="text-sm font-semibold text-blue-950">Proposal</p>
               <p className="mt-0.5 text-xs text-blue-800/80">
-                Build a costed estimate when the customer is linked or the lead is converted.
+                Draft a proposal from this card. Link or convert a customer to attach it to the estimate.
               </p>
               <CreateEstimateFromLeadButton lead={lead} className="mt-3" />
             </div>

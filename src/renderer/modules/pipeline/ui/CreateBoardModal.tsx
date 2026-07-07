@@ -14,6 +14,7 @@ import {
 } from './pipelineFormFields';
 import { AlignLeft, Kanban, Lock, Palette, Share2, Type, Users } from 'lucide-react';
 import PipelineColorPicker from './PipelineColorPicker';
+import { cn } from '../../../shared/utils/cn';
 
 interface CreateBoardModalProps {
   open: boolean;

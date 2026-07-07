@@ -209,8 +209,6 @@ export function useSales() {
   return useQuery<SaleWithSyncMeta[]>({
     queryKey: salesKeys.list(),
     queryFn: fetchSalesMerged,
-    staleTime: 0,
-    refetchOnMount: 'always',
     placeholderData: (prev) => prev,
     ...salesQueryDefaults,
   });
@@ -241,8 +239,6 @@ export function useDailySales(date?: string) {
         },
       });
     },
-    staleTime: 0,
-    refetchOnMount: 'always',
     placeholderData: (prev) => prev,
     ...salesQueryDefaults,
   });

@@ -85,6 +85,14 @@ function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   return [...BUSINESS_MODULE_SLUGS];
 }
 
+/** Modules an owner may grant to staff — mirrors owner’s enabled business modules. */
+export function assignableStaffModuleSlugs(owner: AuthUser | null | undefined): BusinessModuleSlug[] {
+  if (!owner || !isBusinessOwner(owner)) {
+    return [...BUSINESS_MODULE_SLUGS];
+  }
+  return resolvedOwnerBusinessModules(owner);
+}
+
 /** Owner sidebar/API modules — settings is always included. */
 export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   const stored = storedBusinessModules(user);

@@ -3,9 +3,10 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
-import { CornerDownRight, MessageSquare, Send, Trash2 } from 'lucide-react';
+import { CornerDownRight, MessageSquare, Send, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import type { PipelineLeadActivity } from '../api/pipelineTypes';
 import { useAddPipelineActivity, useDeletePipelineActivity } from '../api/usePipelineQueries';
+import { useToggleActivityReaction } from '../api/usePipelineCollaborationQueries';
 import { pipelineInputClass } from './pipelineFormFields';
 import {
   ACTIVITY_ICONS,
@@ -46,6 +47,8 @@ function CommentBubble({
   onDelete,
   onReply,
   deleting,
+  onReact,
+  reacting,
 }: {
   activity: PipelineLeadActivity;
   compact: boolean;
@@ -54,6 +57,8 @@ function CommentBubble({
   onDelete: () => void;
   onReply?: () => void;
   deleting: boolean;
+  onReact: (reaction: 'like' | 'dislike') => void;
+  reacting: boolean;
 }) {
   const Icon = ACTIVITY_ICONS[activity.type] ?? MessageSquare;
   const authorName = activity.user?.name ?? 'Unknown user';
@@ -84,12 +89,12 @@ function CommentBubble({
               <span className="text-[11px] text-gray-400">{formatShiftDateTime(activity.created_at)}</span>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-1">
             {onReply && (
               <button
                 type="button"
                 onClick={onReply}
-                className="rounded p-1 text-xs font-medium text-gray-400 opacity-0 transition-opacity hover:bg-blue-50 hover:text-blue-600 group-hover:opacity-100"
+                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600 ring-1 ring-blue-200 transition-colors hover:bg-blue-100 hover:text-blue-700"
               >
                 Reply
               </button>
@@ -99,11 +104,12 @@ function CommentBubble({
                 type="button"
                 onClick={onDelete}
                 disabled={deleting}
-                className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                title="Delete"
+                className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-200 transition-colors hover:bg-red-100 hover:text-red-700 disabled:opacity-50"
+                title="Delete comment"
                 aria-label="Delete comment"
               >
                 <Trash2 className="h-3.5 w-3.5" />
+                Delete
               </button>
             )}
           </div>
@@ -113,6 +119,36 @@ function CommentBubble({
             {activity.body}
           </p>
         )}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={reacting}
+            onClick={() => onReact('like')}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1 transition-colors',
+              activity.reactions?.user_reaction === 'like'
+                ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
+                : 'bg-emerald-50 text-emerald-600 ring-emerald-100 hover:bg-emerald-100',
+            )}
+          >
+            <ThumbsUp className="h-3.5 w-3.5" />
+            {activity.reactions?.likes ?? 0}
+          </button>
+          <button
+            type="button"
+            disabled={reacting}
+            onClick={() => onReact('dislike')}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1 transition-colors',
+              activity.reactions?.user_reaction === 'dislike'
+                ? 'bg-orange-100 text-orange-700 ring-orange-200'
+                : 'bg-orange-50 text-orange-600 ring-orange-100 hover:bg-orange-100',
+            )}
+          >
+            <ThumbsDown className="h-3.5 w-3.5" />
+            {activity.reactions?.dislikes ?? 0}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -130,6 +166,7 @@ export default function LeadCommentsPanel({
   const { confirm } = useConfirm();
   const addActivity = useAddPipelineActivity();
   const deleteActivity = useDeletePipelineActivity();
+  const toggleReaction = useToggleActivityReaction(leadId, boardId);
   const [note, setNote] = useState('');
   const [activityType, setActivityType] = useState<'comment' | 'call' | 'email' | 'meeting'>('comment');
   const [replyingTo, setReplyingTo] = useState<PipelineLeadActivity | null>(null);
@@ -171,6 +208,11 @@ export default function LeadCommentsPanel({
 
   const canDelete = (activity: PipelineLeadActivity) =>
     canDeletePipelineComment(user, activity, board ?? {}, boardAccess);
+
+  const handleReact = (activity: PipelineLeadActivity, reaction: 'like' | 'dislike') => {
+    const next = activity.reactions?.user_reaction === reaction ? null : reaction;
+    void toggleReaction.mutateAsync({ activityId: activity.id, reaction: next });
+  };
 
   return (
     <div className={cn('space-y-4', compact && 'space-y-3')}>
@@ -267,6 +309,8 @@ export default function LeadCommentsPanel({
                     setReplyingTo(root);
                     setActivityType('comment');
                   }}
+                  onReact={(reaction) => handleReact(root, reaction)}
+                  reacting={toggleReaction.isPending}
                 />
                 {shown.length > 0 && (
                   <div className="space-y-2">
@@ -279,6 +323,8 @@ export default function LeadCommentsPanel({
                         canDelete={canDelete(reply)}
                         deleting={deleteActivity.isPending}
                         onDelete={() => void handleDelete(reply)}
+                        onReact={(reaction) => handleReact(reply, reaction)}
+                        reacting={toggleReaction.isPending}
                       />
                     ))}
                   </div>

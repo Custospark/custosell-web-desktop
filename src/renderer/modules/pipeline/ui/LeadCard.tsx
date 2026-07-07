@@ -180,9 +180,13 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, d
               {attachmentsCount}
             </span>
           )}
-          {lead.assignee && (
+          {(lead.assignees?.length || lead.assignee) && (
             <div className="ml-auto min-w-0 max-w-full">
-              <LeadAssignmentChain creator={lead.creator} assignee={lead.assignee} />
+              <LeadAssignmentChain
+                creator={lead.creator}
+                assignee={lead.assignee}
+                assignees={lead.assignees}
+              />
             </div>
           )}
         </div>

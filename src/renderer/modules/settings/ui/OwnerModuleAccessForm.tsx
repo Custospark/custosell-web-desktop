@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { staffKeys } from '../api/settings/StaffQueries';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
@@ -34,6 +35,7 @@ function extractAuthUser(data: ProfileResponse): AuthUser {
 
 export default function OwnerModuleAccessForm() {
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
   const [modules, setModules] = useState<BusinessModuleSlug[]>([]);
@@ -77,6 +79,7 @@ export default function OwnerModuleAccessForm() {
       dispatch(setUser(freshUser));
       setModules(resolvedOwnerBusinessModules(freshUser));
       setEstimatesFullAccess(staffHasFullEstimatesModule(freshUser.modules));
+      void queryClient.invalidateQueries({ queryKey: staffKeys.list() });
       showToast('success', 'Module access updated');
     },
     onError: (err: AxiosError<{ message?: string }>) => {

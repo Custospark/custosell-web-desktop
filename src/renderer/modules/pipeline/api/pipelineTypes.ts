@@ -143,6 +143,7 @@ export interface PipelineLead {
   board?: { id: number; name: string };
   stage?: { id: number; name: string; color: string | null; is_won: boolean; is_lost: boolean };
   assignee?: PipelineUserRef | null;
+  assignees?: PipelineUserRef[];
   source?: { id: number; name: string } | null;
   customer?: { id: number; name: string; email?: string | null; phone?: string | null } | null;
   converted_customer?: { id: number; name: string; email?: string | null; phone?: string | null } | null;
@@ -154,6 +155,12 @@ export interface PipelineLead {
   updated_at?: string;
 }
 
+export interface PipelineActivityReactions {
+  likes: number;
+  dislikes: number;
+  user_reaction: 'like' | 'dislike' | null;
+}
+
 export interface PipelineLeadActivity {
   id: number;
   lead_id: number;
@@ -162,9 +169,78 @@ export interface PipelineLeadActivity {
   type: PipelineActivityType;
   body: string | null;
   metadata?: Record<string, unknown> | null;
+  reactions?: PipelineActivityReactions;
   user?: PipelineUserRef | null;
   created_at?: string;
 }
+
+export interface PipelineBoardAnnouncement {
+  id: number;
+  board_id: number;
+  title: string;
+  body: string;
+  is_pinned: boolean;
+  created_by: number;
+  creator?: PipelineUserRef;
+  created_at?: string;
+  is_read?: boolean;
+  read_count?: number | null;
+  team_member_count?: number | null;
+}
+
+export interface PipelinePollParticipant {
+  user: PipelineUserRef;
+  has_voted: boolean;
+  voted_option_id?: number | null;
+  voted_option_label?: string | null;
+}
+
+export interface PipelinePollOption {
+  id: number;
+  poll_id: number;
+  label: string;
+  sort_order: number;
+  votes_count?: number | null;
+}
+
+export interface PipelinePoll {
+  id: number;
+  board_id: number;
+  lead_id?: number | null;
+  question: string;
+  closes_at?: string | null;
+  allow_multiple: boolean;
+  results_visibility?: 'team' | 'creator_only';
+  created_by: number;
+  creator?: PipelineUserRef;
+  options?: PipelinePollOption[];
+  votes?: { id: number; poll_id: number; option_id: number; user_id: number }[];
+  created_at?: string;
+  total_votes?: number | null;
+  user_has_voted?: boolean;
+  can_see_results?: boolean;
+  results_hidden?: boolean;
+  participants?: PipelinePollParticipant[];
+}
+
+export interface PipelineBoardCollaborationSummary {
+  announcements_count: number;
+  unread_announcements_count: number;
+  active_polls_count: number;
+  polls_pending_vote_count: number;
+}
+
+export interface PipelineReminder {
+  id: number;
+  lead_id: number;
+  user_id: number;
+  remind_at: string;
+  message?: string | null;
+  channel: 'in_app' | 'email' | 'both';
+  sent_at?: string | null;
+  cancelled_at?: string | null;
+}
+
 
 export interface PipelineInsightsSummary {
   open_leads: number;
@@ -219,6 +295,7 @@ export interface CreateLeadPayload {
   customer_id?: number;
   source_id?: number;
   assigned_to?: number;
+  assignee_ids?: number[];
   estimated_value?: number;
   currency?: string;
   expected_close_date?: string;
@@ -238,6 +315,7 @@ export interface UpdateLeadPayload {
   customer_id?: number | null;
   source_id?: number | null;
   assigned_to?: number | null;
+  assignee_ids?: number[];
   estimated_value?: number | null;
   currency?: string;
   expected_close_date?: string | null;

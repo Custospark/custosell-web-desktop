@@ -3,7 +3,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useCreatePipelineLead, usePipelineBoards, usePipelineKanban, usePipelineSources } from '../api/usePipelineQueries';
 import type { PipelineCardType } from '../api/pipelineTypes';
-import { useStaff } from '../../settings/api/settings/StaffQueries';
+import MultiAssigneeSelect from './MultiAssigneeSelect';
 import {
   PipelineFormSection,
   PipelineIconField,
@@ -29,7 +29,6 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
   const createLead = useCreatePipelineLead();
   const { data: boards = [] } = usePipelineBoards();
   const { data: sources } = usePipelineSources();
-  const { data: staff } = useStaff();
 
   const [selectedBoardId, setSelectedBoardId] = useState<number | ''>('');
   const [selectedStageId, setSelectedStageId] = useState<number | ''>('');
@@ -61,7 +60,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
   const [contactPhone, setContactPhone] = useState('');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [sourceId, setSourceId] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
+  const [assigneeIds, setAssigneeIds] = useState<number[]>([]);
 
   const reset = () => {
     setTitle('');
@@ -71,7 +70,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
     setContactPhone('');
     setEstimatedValue('');
     setSourceId('');
-    setAssignedTo('');
+    setAssigneeIds([]);
     setSelectedBoardId('');
     setSelectedStageId('');
   };
@@ -94,7 +93,8 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
       contact_phone: cardType === 'lead' ? (contactPhone.trim() || undefined) : undefined,
       estimated_value: cardType === 'lead' && estimatedValue ? Number(estimatedValue) : undefined,
       source_id: cardType === 'lead' && sourceId ? Number(sourceId) : undefined,
-      assigned_to: assignedTo ? Number(assignedTo) : undefined,
+      assignee_ids: assigneeIds.length ? assigneeIds : undefined,
+      assigned_to: assigneeIds[0],
     });
     handleClose();
   };
@@ -242,16 +242,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
             </PipelineIconField>
           </div>
           <PipelineIconField label="Assign to" icon={UserRound}>
-            <select
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-              className={pipelineSelectClass}
-            >
-              <option value="">Unassigned</option>
-              {(staff ?? []).map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
+            <MultiAssigneeSelect value={assigneeIds} onChange={setAssigneeIds} />
           </PipelineIconField>
         </PipelineFormSection>
         )}
@@ -259,16 +250,7 @@ export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: 
         {cardType === 'card' && (
         <PipelineFormSection title="Assignment" icon={UserRound}>
           <PipelineIconField label="Assign to" icon={UserRound}>
-            <select
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-              className={pipelineSelectClass}
-            >
-              <option value="">Unassigned</option>
-              {(staff ?? []).map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
+            <MultiAssigneeSelect value={assigneeIds} onChange={setAssigneeIds} />
           </PipelineIconField>
         </PipelineFormSection>
         )}

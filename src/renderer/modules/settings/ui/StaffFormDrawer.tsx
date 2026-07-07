@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useCreateStaff, useUpdateStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
@@ -17,8 +17,10 @@ import {
   parseInternationalPhone,
 } from '../../../shared/utils/phoneNumber';
 import {
+  assignableStaffModuleSlugs,
   buildStaffModulesPayload,
   BUSINESS_MODULE_SLUGS,
+  isBusinessOwner,
   MODULE_LABELS,
   staffHasFullEstimatesModule,
   type BusinessModuleSlug,
@@ -71,10 +73,17 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const [roleDrawerOpen, setRoleDrawerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const loadedStaffIdRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (!open) {
+      loadedStaffIdRef.current = null;
+      return;
+    }
     queueMicrotask(() => {
       if (staff) {
+        if (loadedStaffIdRef.current === staff.id) return;
+        loadedStaffIdRef.current = staff.id;
         const parsedPhone = parseInternationalPhone(staff.phone);
         setCountryCode(parsedPhone.countryCode);
         const staffModules = staff.modules ?? [];
@@ -92,6 +101,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           estimatesFullAccess: staffHasFullEstimatesModule(staffModules),
         });
       } else {
+        loadedStaffIdRef.current = null;
         const defaultRole = roles?.find((r) => r.is_default) ?? roles?.find((r) => r.slug === 'staff');
         setCountryCode(getDefaultCountryCode());
         setForm({
@@ -123,7 +133,11 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const roleHelperText = accountRules?.roleChangeBlockedReason
     ?? (currentRoleMissingFromOptions ? 'This role is not available in the editable business role list, so it cannot be changed here.' : null);
   const modulesLocked = Boolean(accountRules?.isBusinessOwner);
-  const displayModules = modulesLocked ? [...BUSINESS_MODULE_SLUGS] : form.modules;
+  const assignableModules = useMemo(
+    () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
+    [authUser],
+  );
+  const displayModules = modulesLocked ? assignableModules : form.modules;
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
     if (modulesLocked) return;
@@ -140,15 +154,20 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     });
   }, [modulesLocked]);
 
-  const resolvedModules = useMemo(
-    () => buildStaffModulesPayload(form.modules, form.estimatesFullAccess),
-    [form.estimatesFullAccess, form.modules],
-  );
+  const resolvedModules = useMemo(() => {
+    const allowed = new Set(assignableModules);
+    const filteredModules = form.modules.filter((m) => allowed.has(m));
+    return buildStaffModulesPayload(
+      filteredModules,
+      form.estimatesFullAccess && filteredModules.includes('estimates'),
+    );
+  }, [assignableModules, form.estimatesFullAccess, form.modules]);
 
   const passwordsMatch = form.password === form.password_confirmation;
   const passwordValid = passwordRequired
     ? form.password.trim().length > 0 && passwordsMatch
     : (!form.password.trim() && !form.password_confirmation.trim()) || (form.password.trim().length > 0 && passwordsMatch);
+  const showConfirmPasswordField = passwordRequired || form.password.trim().length > 0;
   const hasRoleForSubmit = isEditing
     ? roleSelectionLocked || Boolean(form.role_id) || Boolean(staff?.role_id)
     : form.role_id !== 0;
@@ -204,7 +223,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       open={open}
       onClose={onClose}
       title={isEditing ? 'Edit Staff' : 'Add Staff'}
-      subtitle={isEditing ? 'Update staff member details' : 'Create a new staff member'}
+      subtitle={isEditing ? `Update ${staff?.name ?? 'staff member'} — email and details can be changed` : 'Create a new staff member'}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       canSubmit={canSubmit}
@@ -297,7 +316,8 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           </div>
           <div>
             <label className={labelClass}>
-              Password {passwordRequired && <span className="text-red-500">*</span>}
+              {isEditing && !isPendingCreate ? 'New password (optional)' : 'Password'}
+              {passwordRequired && <span className="text-red-500"> *</span>}
             </label>
             <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -319,6 +339,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
               </button>
             </div>
           </div>
+          {showConfirmPasswordField && (
           <div>
             <label className={labelClass}>
               Confirm Password {passwordRequired && <span className="text-red-500">*</span>}
@@ -346,6 +367,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
               <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
             )}
           </div>
+          )}
           {isEditing && (
             <label className="flex items-center gap-2 pt-2">
               <input
@@ -378,7 +400,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
             Account and Custosell Guide remain available to everyone.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {BUSINESS_MODULE_SLUGS.map((module) => {
+            {assignableModules.map((module) => {
               const checked = displayModules.includes(module);
               return (
                 <label

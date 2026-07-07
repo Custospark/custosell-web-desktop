@@ -172,7 +172,10 @@ export default function StaffList() {
 
       <StaffFormDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setEditingStaff(null);
+        }}
         staff={editingStaff}
       />
     </>

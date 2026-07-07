@@ -29,7 +29,9 @@ import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
 import BoardCalendarView from '../ui/BoardCalendarView';
 import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
-import { CalendarDays, Columns3, LayoutGrid, Plus, Search, Settings, UserPlus, X } from 'lucide-react';
+import BoardCollaborationDrawer from '../ui/BoardCollaborationDrawer';
+import { useBoardCollaborationSummary } from '../api/usePipelineCollaborationQueries';
+import { CalendarDays, Columns3, LayoutGrid, Megaphone, Plus, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useProject, useProjectMembers } from '../../estimates/api/useProjectQueries';
@@ -62,6 +64,7 @@ export default function BoardKanbanPage() {
   const boardId = Number(boardIdParam);
 
   const { data: board, isLoading } = usePipelineKanban(boardId, { poll: true });
+  const { data: collaborationSummary } = useBoardCollaborationSummary(boardId, boardId > 0);
   const { data: boards = [] } = usePipelineBoards(
     workspace === 'estimates' ? { estimatesWorkspace: true } : { salesOnly: true },
   );
@@ -82,6 +85,7 @@ export default function BoardKanbanPage() {
   const [deleteStage, setDeleteStage] = useState<PipelineStage | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [commentsLeadId, setCommentsLeadId] = useState<number | null>(null);
+  const [collaborationOpen, setCollaborationOpen] = useState(false);
 
   const user = useAppSelector((s) => s.auth.user);
   const isProjectBoard = Boolean(board?.project_id);
@@ -98,6 +102,10 @@ export default function BoardKanbanPage() {
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
   const allowCreateBoard = workspace === 'pipeline' || workspace === 'estimates';
+
+  const unreadNotices = collaborationSummary?.unread_announcements_count ?? 0;
+  const pendingPolls = collaborationSummary?.polls_pending_vote_count ?? 0;
+  const collaborationBadgeCount = unreadNotices + pendingPolls;
 
   const allStages = useMemo(
     () => [...(board?.stages ?? [])].sort((a, b) => a.sort_order - b.sort_order),
@@ -180,6 +188,36 @@ export default function BoardKanbanPage() {
               boardsListRoute={boardsListRoute}
               allowCreateBoard={allowCreateBoard}
             />
+            <button
+              type="button"
+              onClick={() => setCollaborationOpen(true)}
+              className={cn(
+                'relative rounded-lg p-2 text-violet-600 transition-colors hover:bg-violet-50 hover:text-violet-800',
+                collaborationBadgeCount > 0 && 'text-violet-700',
+              )}
+              title={
+                collaborationBadgeCount > 0
+                  ? `${unreadNotices} unread notice${unreadNotices === 1 ? '' : 's'}, ${pendingPolls} poll${pendingPolls === 1 ? '' : 's'} awaiting your vote`
+                  : 'Board notices & polls'
+              }
+            >
+              <Megaphone className="h-4 w-4" />
+              {unreadNotices > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                  {unreadNotices > 9 ? '9+' : unreadNotices}
+                </span>
+              )}
+              {pendingPolls > 0 && (
+                <span
+                  className={cn(
+                    'absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white',
+                    unreadNotices > 0 ? '-bottom-0.5 -right-0.5' : '-right-0.5 -top-0.5',
+                  )}
+                >
+                  {pendingPolls > 9 ? '9+' : pendingPolls}
+                </span>
+              )}
+            </button>
             {canManageSettings && (
               <button
                 type="button"
@@ -390,6 +428,13 @@ export default function BoardKanbanPage() {
           onClose={() => setSelectedLeadId(null)}
         />
       )}
+
+      <BoardCollaborationDrawer
+        boardId={boardId}
+        canManage={canManageSettings}
+        open={collaborationOpen}
+        onClose={() => setCollaborationOpen(false)}
+      />
     </div>
   );
 }

@@ -9,7 +9,6 @@ import {
   usePipelineSources,
   useUpdatePipelineLead,
 } from '../api/usePipelineQueries';
-import { useStaff } from '../../settings/api/settings/StaffQueries';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import {
   PipelineFormSection,
@@ -22,9 +21,12 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate, formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import LeadCommentsPanel from './LeadCommentsPanel';
+import LeadRemindersPanel from './LeadRemindersPanel';
+import MultiAssigneeSelect from './MultiAssigneeSelect';
 import { cn } from '../../../shared/utils/cn';
 import {
   ArrowRightLeft,
+  Bell,
   CheckCircle2,
   DollarSign,
   FileSpreadsheet,
@@ -95,7 +97,6 @@ export default function LeadDetailModal({
 }: LeadDetailModalProps) {
   const { data: lead, isLoading } = usePipelineLead(leadId, true, { poll: true });
   const { data: sources } = usePipelineSources();
-  const { data: staff } = useStaff();
   const updateLead = useUpdatePipelineLead();
   const convertLead = useConvertPipelineLead();
   const deleteLead = useDeletePipelineLead();
@@ -283,17 +284,19 @@ export default function LeadDetailModal({
               </select>
             </PipelineIconField>
             )}
-            <PipelineIconField label="Assignee" icon={UserRound}>
-              <select
-                value={lead.assigned_to ?? ''}
-                onChange={(e) => patchLead({ assigned_to: e.target.value ? Number(e.target.value) : null })}
-                className={pipelineSelectClass}
-              >
-                <option value="">Unassigned</option>
-                {(staff ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </select>
+            <PipelineIconField label="Assignees" icon={UserRound}>
+              <MultiAssigneeSelect
+                value={
+                  lead.assignees?.map((a) => a.id)
+                  ?? (lead.assigned_to ? [lead.assigned_to] : [])
+                }
+                onChange={(ids) => {
+                  patchLead({
+                    assignee_ids: ids,
+                    assigned_to: ids[0] ?? null,
+                  });
+                }}
+              />
             </PipelineIconField>
           </div>
           {isLead && lead.estimated_value != null && (
@@ -383,6 +386,10 @@ export default function LeadDetailModal({
             </span>
           </div>
         )}
+
+        <PipelineFormSection title="Reminders" icon={Bell}>
+          <LeadRemindersPanel leadId={lead.id} boardId={resolvedBoardId} />
+        </PipelineFormSection>
 
         <PipelineFormSection title="Comments" icon={MessageSquare}>
           <LeadCommentsPanel

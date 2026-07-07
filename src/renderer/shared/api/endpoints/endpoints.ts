@@ -113,6 +113,15 @@ export const PIPELINE = {
   CHECKLIST_ITEM: (id: number) => `/pipeline/checklist-items/${id}`,
   LEAD_ATTACHMENTS: (leadId: number) => `/pipeline/leads/${leadId}/attachments`,
   ATTACHMENT: (id: number) => `/pipeline/attachments/${id}`,
+  ACTIVITY_REACTION: (id: number) => `/pipeline/activities/${id}/reaction`,
+  BOARD_ANNOUNCEMENTS: (boardId: number) => `/pipeline/boards/${boardId}/announcements`,
+  BOARD_COLLABORATION_SUMMARY: (boardId: number) => `/pipeline/boards/${boardId}/collaboration-summary`,
+  ANNOUNCEMENT: (id: number) => `/pipeline/announcements/${id}`,
+  ANNOUNCEMENT_READ: (id: number) => `/pipeline/announcements/${id}/read`,
+  BOARD_POLLS: (boardId: number) => `/pipeline/boards/${boardId}/polls`,
+  POLL_VOTE: (pollId: number) => `/pipeline/polls/${pollId}/vote`,
+  LEAD_REMINDERS: (leadId: number) => `/pipeline/leads/${leadId}/reminders`,
+  REMINDER: (id: number) => `/pipeline/reminders/${id}`,
 };
 
 export const ACCOUNTING = {

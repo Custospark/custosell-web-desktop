@@ -3,7 +3,12 @@ export type NotificationChannel = 'email' | 'in_app' | 'both';
 export type NotificationType =
   | 'business_status'
   | 'platform_message'
-  | 'user_status';
+  | 'user_status'
+  | 'pipeline.assignment'
+  | 'pipeline.comment'
+  | 'pipeline.announcement'
+  | 'pipeline.poll'
+  | 'pipeline.reminder';
 
 export interface AppNotification {
   id: number;

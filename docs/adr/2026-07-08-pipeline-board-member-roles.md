@@ -102,6 +102,14 @@ members[].role: viewer | contributor | manager
 
 **Deferred.** Project boards tie to `projects` and estimates workspace; unifying tables is a larger schema and sync change with no immediate user benefit.
 
+## Migration note (MySQL ENUM)
+
+The `role` column starts as `ENUM('viewer', 'editor')`. Data cannot be updated to `contributor` until the enum is expanded. The migration therefore:
+
+1. Expands to `viewer | editor | contributor | manager`
+2. Updates `editor` → `contributor`
+3. Shrinks to `viewer | contributor | manager`
+
 ## References
 
 | Area | Path |

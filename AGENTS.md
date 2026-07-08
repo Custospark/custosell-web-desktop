@@ -40,7 +40,7 @@ Keep our interaction **conversational**—just like two teammates working side b
 | 4 | Check existing files first. Update > Create. |
 | 5 | **Go/No-Go gate before commit.** Run `npx tsc --noEmit` after every module. If it fails, fix before committing. |
 | 6 | **Architect trigger.** Run Blue only when the change touches 3+ files. Otherwise Sage → Rex directly. |
-| 7 | **Quill always documents.** Every module, every feature — documentation is project memory. |
+| 7 | **Quill always documents — never skip.** Every module, every feature, every meaningful change gets project memory under `docs/` (ADRs in `docs/adr/`, module notes, offline docs). Documentation is mandatory, not optional. |
 | 8 | **Stand-up before meaningful work.** For features, offline flows, auth, payments, inventory, sync, or user-facing bugs, run a short team stand-up before Rex codes. |
 | 9 | **Failure-state review is mandatory.** Every offline or user-facing flow must answer: what happens on validation failure, retry, duplicate submit, stale cache, and failed sync? |
 | 10 | **Parallel lanes are allowed with ownership.** Run agents in parallel when boundaries are clear; Mike reconciles conflicts before implementation is treated as complete. |
@@ -62,9 +62,17 @@ Keep our interaction **conversational**—just like two teammates working side b
 | 7 | **Vera** | Female | **Automated Verification** | `npm run vera:fast`, `npx tsc --noEmit`, diagnostics, go/no-go checks | Untested type surfaces and failing gates |
 | 8 | **Nora** | Female | **QA / Test Strategy** | Manual smoke matrices, regression scenarios, edge cases | Happy-path-only testing |
 | 9 | **Gauge** | Male | **Observability / Diagnostics** | Error surfacing, logs, sync visibility, debug paths | Silent failures and unactionable messages |
-| 10 | **Quill** | Female | **Docs** | Project memory, ADRs, module docs, route/API notes | Undocumented behavior and tribal knowledge |
+| 10 | **Quill** | Female | **Docs** | All project memory under `docs/` — ADRs, module docs, route/API notes, offline guides | Undocumented behavior and tribal knowledge |
 
-**Documentation index:** [docs/README.md](./docs/README.md) · Offline: [docs/offline/README.md](./docs/offline/README.md) · Source: [src/renderer/app/store/offline/README.md](./src/renderer/app/store/offline/README.md)
+**Documentation index:** [docs/README.md](./docs/README.md) · ADRs: [docs/adr/](./docs/adr/) · Offline: [docs/offline/README.md](./docs/offline/README.md) · Source: [src/renderer/app/store/offline/README.md](./src/renderer/app/store/offline/README.md)
+
+### Documentation Rules (Quill — Mandatory)
+
+- **Never skip documentation.** Quill runs on every handoff, including the small-change fast path.
+- **All docs live under `docs/`.** Do not leave feature memory in chat, commit messages only, or ad-hoc root markdown files.
+- **ADRs** for design decisions and permission/contract changes → `docs/adr/YYYY-MM-DD-short-title.md`, indexed in `docs/README.md`.
+- **Module and API notes** → appropriate `docs/` subfolder; update the index when adding new files.
+- Quill drafts after Rex; Quill finalizes after Vera passes.
 
 ---
 
@@ -109,7 +117,7 @@ Mike → (Sage FE+BE + Iris + Blue FE+BE + Atlas + Gauge + Nora) → Mike reconc
 For small, low-risk changes touching ≤2 files, Mike may use:
 
 ```
-Mike → Sage → Rex → Vera → Quill if docs changed → Mike → Oscar
+Mike → Sage → Rex → Vera → Quill → Mike → Oscar
 ```
 
 Blue, Atlas, Iris, Gauge, and Nora are mandatory when the change touches offline-first behavior, sync, IndexedDB, auth, payments, inventory correctness, routing, backend validation, API contracts, or user-facing failure states.

@@ -36,6 +36,7 @@ import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherIcons from '../ui/BoardSwitcherIcons';
 import AllBoardsPickerModal from '../ui/AllBoardsPickerModal';
 import BoardCalendarView from '../ui/BoardCalendarView';
+import BoardProgressView from '../ui/BoardProgressView';
 import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
 import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
 import BoardCollaborationDrawer from '../ui/BoardCollaborationDrawer';
@@ -44,6 +45,8 @@ import BoardResourcesModal from '../ui/BoardResourcesModal';
 import BoardConversationModal from '../ui/BoardConversationModal';
 import { useBoardResourcesSummary } from '../api/usePipelineResourceQueries';
 import { useBoardConversationSummary } from '../api/usePipelineConversationQueries';
+import { useBoardProgressSummary } from '../api/useBoardProgressQueries';
+import type { ProgressPeriod } from '../api/pipelineProgressTerms';
 import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -53,7 +56,7 @@ import BoardAccessBadges from '../ui/BoardAccessBadges';
 import { useBoardAccessChangeNotice } from '../ui/useBoardAccessChangeNotice';
 import type { PipelineBoardCollaborationSummary } from '../api/pipelineTypes';
 
-type BoardViewMode = 'kanban' | 'calendar';
+type BoardViewMode = 'kanban' | 'calendar' | 'progress';
 type BoardWorkspace = 'pipeline' | 'estimates';
 
 function workspaceFromPath(pathname: string): BoardWorkspace {
@@ -92,6 +95,7 @@ export default function BoardKanbanPage() {
   const reorderStages = useReorderPipelineStages(boardId);
 
   const [viewMode, setViewMode] = useState<BoardViewMode>('kanban');
+  const [progressPeriod, setProgressPeriod] = useState<ProgressPeriod>('month');
   const [leadQuery, setLeadQuery] = useState('');
   const [createStageId, setCreateStageId] = useState<number | null>(null);
   const [createBoardOpen, setCreateBoardOpen] = useState(false);
@@ -138,6 +142,15 @@ export default function BoardKanbanPage() {
   const { data: conversationSummary } = useBoardConversationSummary(boardId, boardId > 0, true);
   const conversationMessagesCount = conversationSummary?.messages_count ?? 0;
   const conversationUnreadCount = conversationSummary?.unread_count ?? 0;
+
+  const {
+    data: progressSummary,
+    isLoading: progressLoading,
+    isFetching: progressFetching,
+  } = useBoardProgressSummary(boardId, progressPeriod, {
+    enabled: boardId > 0 && viewMode === 'progress',
+    poll: viewMode === 'progress',
+  });
 
   const canContributeResources = canContribute;
 
@@ -448,18 +461,37 @@ export default function BoardKanbanPage() {
           </button>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'calendar' ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
           <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} />
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <BoardProgressView
+            boardId={boardId}
+            summary={progressSummary}
+            isLoading={progressLoading}
+            isFetching={progressFetching}
+            period={progressPeriod}
+            onPeriodChange={setProgressPeriod}
+          />
         </div>
       )}
 
       <BoardSwitcherIcons
         allowCreate={allowCreateBoard}
         onOpenAll={() => setAllBoardsOpen(true)}
-        onOpenResources={() => setResourcesOpen(true)}
+        onOpenResources={() => {
+          setViewMode('kanban');
+          setResourcesOpen(true);
+        }}
         resourcesCount={resourcesCount}
-        onOpenConversation={() => setConversationOpen(true)}
+        onOpenProgress={() => setViewMode((mode) => (mode === 'progress' ? 'kanban' : 'progress'))}
+        progressActive={viewMode === 'progress'}
+        onOpenConversation={() => {
+          setViewMode('kanban');
+          setConversationOpen(true);
+        }}
         conversationMessagesCount={conversationMessagesCount}
         conversationUnreadCount={conversationUnreadCount}
         onCreateNew={() => setCreateBoardOpen(true)}

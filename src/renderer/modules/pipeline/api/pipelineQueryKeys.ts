@@ -38,6 +38,15 @@ export const pipelineConversationKeys = {
   automations: (boardId: number) => [...pipelineKeys.all, 'board-automations', boardId] as const,
 };
 
+export const pipelineProgressKeys = {
+  summary: (boardId: number, period: string, from?: string, to?: string) =>
+    [...pipelineKeys.all, 'progress-summary', boardId, period, from ?? '', to ?? ''] as const,
+  summaryBoard: (boardId: number) => [...pipelineKeys.all, 'progress-summary', boardId] as const,
+  targets: (boardId: number) => [...pipelineKeys.all, 'board-targets', boardId] as const,
+};
+
+export const PIPELINE_PROGRESS_POLL_MS = 30_000;
+
 export const pipelineTemplateKeys = {
   list: (workspace: 'pipeline' | 'estimates') => [...pipelineKeys.all, 'board-templates', workspace] as const,
 };

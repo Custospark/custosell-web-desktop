@@ -60,7 +60,7 @@ const VISIBILITY_OPTIONS: { value: PipelineBoardResourceVisibility; label: strin
   { value: 'board', label: 'Everyone on board', hint: 'Anyone who can view this board' },
   { value: 'team', label: 'Board team', hint: 'Board creator and invited team members' },
   { value: 'members', label: 'Selected members', hint: 'Pick specific board members below' },
-  { value: 'owner_only', label: 'Only me', hint: 'Private unless you are the business owner' },
+  { value: 'owner_only', label: 'Only me', hint: 'Visible only to you' },
 ];
 
 const VISIBILITY_LABEL: Record<PipelineBoardResourceVisibility, string> = {

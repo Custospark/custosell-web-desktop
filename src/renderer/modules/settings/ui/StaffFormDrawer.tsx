@@ -3,7 +3,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useCreateStaff, useUpdateStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
-import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffAccountRules';
+import { getBusinessOwnerId, getStaffAccountRules, isBusinessOwnerStaff } from '../api/settings/staffAccountRules';
 import type { CreateStaffData, UpdateStaffData } from '../api/settings/StaffTypes';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
@@ -93,7 +93,12 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         loadedStaffIdRef.current = staff.id;
         const parsedPhone = parseInternationalPhone(staff.phone);
         setCountryCode(parsedPhone.countryCode);
-        const staffModules = intersectStaffModulesWithOwner(staff.modules, authUser);
+        const ownerAccount = isBusinessOwnerStaff(staff.id, businessOwnerId);
+        let staffModules = intersectStaffModulesWithOwner(staff.modules, authUser);
+        // Settings is required only for the business owner account (Module Access standard).
+        if (ownerAccount && !staffModules.includes('settings')) {
+          staffModules = [...staffModules, 'settings'];
+        }
         setForm({
           name: staff.name,
           email: staff.email,
@@ -117,7 +122,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       setShowPassword(false);
       setShowConfirmPassword(false);
     });
-  }, [staff, open, roles, authUser]);
+  }, [staff, open, roles, authUser, businessOwnerId]);
 
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
   const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
@@ -137,6 +142,8 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const roleDisplayName = currentRole?.name ?? (form.role_id ? `Role #${form.role_id}` : 'No role assigned');
   const roleHelperText = accountRules?.roleChangeBlockedReason
     ?? (currentRoleMissingFromOptions ? 'This role is not available in the editable business role list, so it cannot be changed here.' : null);
+  const emailLocked = Boolean(accountRules?.isBusinessOwner);
+  const settingsRequired = Boolean(accountRules?.isBusinessOwner);
   const modulesLocked = false;
   const assignableModules = useMemo(
     () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
@@ -147,10 +154,14 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     if (!open || modulesLocked) return;
     queueMicrotask(() => {
       setForm((prev) => {
-        const allowed = intersectStaffModulesWithOwner(prev.modules, authUser);
+        let allowed = intersectStaffModulesWithOwner(prev.modules, authUser);
+        if (settingsRequired && !allowed.includes('settings')) {
+          allowed = [...allowed, 'settings'];
+        }
         const estimatesFullAccess = prev.estimatesFullAccess && allowed.includes('estimates');
         if (
           allowed.length === prev.modules.length
+          && allowed.every((m, i) => m === prev.modules[i])
           && estimatesFullAccess === prev.estimatesFullAccess
         ) {
           return prev;
@@ -158,10 +169,11 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         return { ...prev, modules: allowed, estimatesFullAccess };
       });
     });
-  }, [authUser, assignableModules, modulesLocked, open]);
+  }, [authUser, assignableModules, modulesLocked, open, settingsRequired]);
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
-    if (modulesLocked || module === 'settings') return;
+    if (modulesLocked) return;
+    if (settingsRequired && module === 'settings') return;
     setForm((prev) => {
       const removing = prev.modules.includes(module);
       let modules = removing
@@ -172,22 +184,29 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       if (module === 'customers' && !removing && !modules.includes('sales')) {
         modules = [...modules, 'sales'];
       }
+      // Settings is required only when editing the business owner account.
+      if (settingsRequired && !modules.includes('settings')) {
+        modules = [...modules, 'settings'];
+      }
       return {
         ...prev,
         modules,
         estimatesFullAccess: module === 'estimates' && removing ? false : prev.estimatesFullAccess,
       };
     });
-  }, [modulesLocked]);
+  }, [modulesLocked, settingsRequired]);
 
   const resolvedModules = useMemo(() => {
     const allowed = new Set(assignableModules);
     const filteredModules = form.modules.filter((m) => allowed.has(m));
+    if (settingsRequired && !filteredModules.includes('settings') && allowed.has('settings')) {
+      filteredModules.push('settings');
+    }
     return buildStaffModulesPayload(
       filteredModules,
       form.estimatesFullAccess && filteredModules.includes('estimates'),
     );
-  }, [assignableModules, form.estimatesFullAccess, form.modules]);
+  }, [assignableModules, form.estimatesFullAccess, form.modules, settingsRequired]);
 
   const passwordsMatch = form.password === form.password_confirmation;
   const passwordValid = passwordRequired
@@ -212,7 +231,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     if (isEditing && staff) {
       const payload: UpdateStaffData = {
         name: form.name.trim(),
-        email: form.email.trim(),
+        email: emailLocked ? staff.email : form.email.trim(),
         phone: fullPhone,
         role_id: canChangeRole ? form.role_id || staff.role_id || null : staff.role_id ?? null,
         is_active: accountRules?.canDeactivate === false ? staff.is_active : form.is_active,
@@ -225,14 +244,29 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         }
       }
       updateMutation.mutate({ id: staff.id, data: payload }, {
-        onSuccess: async () => {
+        onSuccess: async (updatedStaff) => {
           if (staff.id === authUser?.id) {
             try {
               const { data: fresh } = await axiosInstance.get(AUTH.ME);
               const userData = (fresh && typeof fresh === 'object' && 'data' in fresh ? fresh.data : fresh) as AuthUser;
               dispatch(setUser(userData));
               await updateStoredAuthUser(userData);
-            } catch { /* non-critical */ }
+            } catch {
+              // Fallback: apply modules from the save response so the sidebar updates immediately.
+              if (authUser && updatedStaff) {
+                const fallback: AuthUser = {
+                  ...authUser,
+                  name: updatedStaff.name,
+                  email: updatedStaff.email,
+                  phone: updatedStaff.phone ?? authUser.phone,
+                  modules: updatedStaff.modules ?? authUser.modules,
+                };
+                dispatch(setUser(fallback));
+                try {
+                  await updateStoredAuthUser(fallback);
+                } catch { /* non-critical */ }
+              }
+            }
           }
           onClose();
         },
@@ -261,7 +295,13 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       open={open}
       onClose={onClose}
       title={isEditing ? 'Edit Staff' : 'Add Staff'}
-      subtitle={isEditing ? `Update ${staff?.name ?? 'staff member'} — email and details can be changed` : 'Create a new staff member'}
+      subtitle={
+        isEditing
+          ? (emailLocked
+            ? `Update ${staff?.name ?? 'staff member'} — owner email stays fixed`
+            : `Update ${staff?.name ?? 'staff member'} — email and details can be changed`)
+          : 'Create a new staff member'
+      }
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       canSubmit={canSubmit}
@@ -275,13 +315,17 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       {accountRules?.isCurrentUser && (
         <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
           <p className="font-medium">You are editing your own account</p>
-          <p className="mt-1">Your name, email, phone, and password can be updated here. Role changes and self-deactivation are blocked.</p>
+          <p className="mt-1">
+            {emailLocked
+              ? 'Your name, phone, password, and modules can be updated here. Email, role, and self-deactivation stay locked.'
+              : 'Your name, email, phone, and password can be updated here. Role changes and self-deactivation are blocked.'}
+          </p>
         </div>
       )}
       {accountRules?.isBusinessOwner && !accountRules.isCurrentUser && (
         <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           <p className="font-medium">Business owner account</p>
-          <p className="mt-1">The owner account cannot be deactivated.</p>
+          <p className="mt-1">The owner email cannot be changed here, and the account cannot be deactivated.</p>
         </div>
       )}
       <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
@@ -300,8 +344,21 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
             <label className={labelClass}>Email <span className="text-red-500">*</span></label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input className={inputClass} type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Enter email address" required />
+              <input
+                className={`${inputClass}${emailLocked ? ' bg-gray-50 text-gray-700 cursor-not-allowed' : ''}`}
+                type="email"
+                value={form.email}
+                onChange={(e) => update('email', e.target.value)}
+                placeholder="Enter email address"
+                required
+                readOnly={emailLocked}
+                disabled={emailLocked}
+                title={emailLocked ? 'Business owner email cannot be changed from staff settings.' : 'Staff email'}
+              />
             </div>
+            {emailLocked && (
+              <p className="text-xs text-gray-500 mt-1">Business owner email is read-only.</p>
+            )}
           </div>
           <PhoneNumberField
             label="Phone"
@@ -437,24 +494,29 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
             Projects &amp; Estimates can be project boards only, or full workspace access when you enable it below.
             Account and Custosell Guide remain available to everyone.
           </p>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Your modules</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {assignableModules.map((module) => {
               const checked = form.modules.includes(module);
+              const locked = modulesLocked || (settingsRequired && module === 'settings');
               return (
                 <label
                   key={module}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
                     checked ? 'border-blue-200 bg-blue-50 text-blue-800' : 'border-gray-200 text-gray-700'
-                  } ${modulesLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:border-blue-200'}`}
+                  } ${locked ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer hover:border-blue-200'}`}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleModule(module)}
-                    disabled={modulesLocked}
+                    disabled={locked}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   {MODULE_LABELS[module]}
+                  {settingsRequired && module === 'settings' && (
+                    <span className="ml-auto text-[10px] font-semibold uppercase text-gray-500">Required</span>
+                  )}
                 </label>
               );
             })}
@@ -471,8 +533,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
                 <span>
                   <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
                   <span className="mt-0.5 block text-xs text-gray-600">
-                    Grants estimates, projects, insights, templates, and costing — not just project boards.
-                    Revoke anytime by unchecking this while keeping Projects &amp; Estimates enabled.
+                    Grants full access to estimates, projects, insights, templates, project boards, and costing reports — not just project boards.
                   </span>
                 </span>
               </label>

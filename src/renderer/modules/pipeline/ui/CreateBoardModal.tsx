@@ -146,13 +146,13 @@ function CreateBoardModalForm({
 
   if (step === 'alerts' && createdBoard) {
     return (
-      <Modal isOpen onClose={() => finishAndOpen(createdBoard.id)} title="Conversation alerts" size="lg">
+      <Modal isOpen onClose={() => finishAndOpen(createdBoard.id)} title="Discussion alerts" size="lg">
         <div className="space-y-5">
           <PipelineModalHero
             icon={Kanban}
             tone="violet"
             title="Set up column alerts"
-            description={`Choose which columns on “${name.trim()}” should post to the board conversation. You can change these anytime in board settings.`}
+            description={`Choose which columns on “${name.trim()}” should post to the board discussion. You can change these anytime in board settings.`}
           />
           <BoardAutomationsSection
             boardId={createdBoard.id}
@@ -230,7 +230,7 @@ function CreateBoardModalForm({
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500">
-              Applies default columns, labels, starter resources, and conversation alerts after the board is created.
+              Applies default columns, labels, starter resources, and discussion alerts after the board is created.
             </p>
           </PipelineFormSection>
         )}

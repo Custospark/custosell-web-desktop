@@ -204,7 +204,7 @@ export default function BoardVisibilitySection({
       {visibility === 'private' && (
         <PipelineFormSection title="Private access" icon={Users}>
           <p className="text-xs text-gray-500">
-            Only the board owner (and business owner) can view and manage this board. Team and shared invites do not apply.
+            This board is private. Only the board owner can view or manage it — team visibility and shared invites do not apply.
           </p>
         </PipelineFormSection>
       )}

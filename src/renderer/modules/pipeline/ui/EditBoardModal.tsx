@@ -257,7 +257,7 @@ function EditBoardModalForm({
         )}
 
         {(board.stages?.length ?? 0) > 0 && (
-          <PipelineFormSection title="Conversation alerts" icon={Zap}>
+          <PipelineFormSection title="Discussion alerts" icon={Zap}>
             <BoardAutomationsSection
               boardId={board.id}
               stages={board.stages ?? []}

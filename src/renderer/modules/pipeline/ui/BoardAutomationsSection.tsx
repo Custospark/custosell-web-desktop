@@ -72,7 +72,7 @@ export default function BoardAutomationsSection({
 
   if (!sortedStages.length) {
     return (
-      <p className="text-sm text-gray-500">Add columns to this board before setting up conversation alerts.</p>
+      <p className="text-sm text-gray-500">Add columns to this board before setting up discussion alerts.</p>
     );
   }
 
@@ -91,9 +91,9 @@ export default function BoardAutomationsSection({
           <Zap className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-gray-900">Conversation alerts</p>
+          <p className="text-sm font-semibold text-gray-900">Discussion alerts</p>
           <p className="mt-0.5 text-xs text-gray-600">
-            Post to the board conversation when cards hit specific columns. Each board has its own columns and alerts.
+            Post to the board discussion when cards hit specific columns. Each board has its own columns and alerts.
           </p>
         </div>
       </div>

@@ -14,6 +14,7 @@ import type { RoleWithSyncMeta } from '../../../../app/store/offline/settings/lo
 import type { BusinessWithSyncMeta } from '../../../../app/store/offline/settings/localBusinessSettingsStore';
 import { store } from '../../../../app/store/store';
 import { setUser } from '../../../../app/store/slices/authSlice';
+import { updateStoredAuthUser } from '../../../../app/store/offline/auth/secureStorage';
 import { AUTH } from '../../../../shared/api/endpoints/endpoints';
 import type { AuthUser } from '../../../../app/store/slices/authSlice';
 import {
@@ -239,12 +240,33 @@ export function useUpdateStaff() {
         qc.invalidateQueries({ queryKey: staffKeys.list() });
         const currentUserId = store.getState().auth.user?.id;
         if (currentUserId === id) {
+          // Prefer ME, but fall back to the update response so sidebar modules refresh immediately
+          // (especially after owner module changes from Staff drawer).
+          const applyAuthUser = async (userData: AuthUser) => {
+            store.dispatch(setUser(userData));
+            try {
+              await updateStoredAuthUser(userData);
+            } catch {
+              /* non-critical */
+            }
+          };
+
           void axiosInstance.get<{ data?: AuthUser } | AuthUser>(AUTH.ME).then(({ data }) => {
             const userData = (data && typeof data === 'object' && 'data' in data && data.data)
               ? data.data
               : data as AuthUser;
-            store.dispatch(setUser(userData));
-          }).catch(() => undefined);
+            void applyAuthUser(userData);
+          }).catch(() => {
+            const current = store.getState().auth.user;
+            if (!current) return;
+            void applyAuthUser({
+              ...current,
+              name: staff.name,
+              email: staff.email,
+              phone: staff.phone ?? current.phone,
+              modules: staff.modules ?? current.modules,
+            });
+          });
         }
       }
     },

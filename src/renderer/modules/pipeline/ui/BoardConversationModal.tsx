@@ -478,7 +478,7 @@ export default function BoardConversationModal({
         setTab('chat');
         onClose();
       }}
-      title="Board conversation"
+      title="Board discussion"
       subtitle="Team chat, activity feed, and automations for this board"
       size="lg"
     >
@@ -508,7 +508,7 @@ export default function BoardConversationModal({
           <>
             {!canContributeResolved && (
               <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-                You have viewer access — conversation is read-only. You cannot post, reply, react, or edit messages.
+                You have viewer access — discussion is read-only. You cannot post, reply, react, or edit messages.
               </p>
             )}
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -534,7 +534,7 @@ export default function BoardConversationModal({
               ) : threads.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">
                   <MessageSquare className="mx-auto h-8 w-8 text-gray-300" />
-                  <p className="mt-3 text-sm font-medium text-gray-700">Start the conversation</p>
+                  <p className="mt-3 text-sm font-medium text-gray-700">Start the discussion</p>
                   <p className="mt-1 text-xs text-gray-500">
                     Share updates, @mention teammates, attach files, and pin key decisions.
                   </p>
@@ -643,7 +643,7 @@ export default function BoardConversationModal({
             <div className="relative shrink-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3">
               {!canContributeResolved ? (
                 <p className="text-xs text-blue-900">
-                  You have viewer access — you can read board conversation but cannot post messages.
+                  You have viewer access — you can read board discussion but cannot post messages.
                 </p>
               ) : (
               <>
@@ -820,7 +820,7 @@ export default function BoardConversationModal({
             ) : automations.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center">
                 <Zap className="mx-auto h-8 w-8 text-gray-300" />
-                <p className="mt-3 text-sm font-medium text-gray-700">No conversation alerts yet</p>
+                <p className="mt-3 text-sm font-medium text-gray-700">No discussion alerts yet</p>
                 <p className="mt-1 text-xs text-gray-500">
                   Turn on alerts per column when you set up or edit this board.
                 </p>

@@ -144,6 +144,10 @@ export const PIPELINE = {
   BOARD_AUTOMATIONS: (boardId: number) => `/pipeline/boards/${boardId}/automations`,
   BOARD_TEMPLATES: '/pipeline/board-templates',
   BOARD_APPLY_TEMPLATE: (boardId: number) => `/pipeline/boards/${boardId}/apply-template`,
+  BOARD_PROGRESS_SUMMARY: (boardId: number) => `/pipeline/boards/${boardId}/progress/summary`,
+  BOARD_PROGRESS_EXPORT: (boardId: number) => `/pipeline/boards/${boardId}/progress/export`,
+  BOARD_TARGETS: (boardId: number) => `/pipeline/boards/${boardId}/targets`,
+  BOARD_TARGET: (targetId: number) => `/pipeline/targets/${targetId}`,
 };
 
 export const ACCOUNTING = {

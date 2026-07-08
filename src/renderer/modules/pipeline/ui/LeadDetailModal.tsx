@@ -49,7 +49,7 @@ import PipelineColorPicker from './PipelineColorPicker';
 import { CARD_PRESET_COLORS } from './pipelineColorPresets';
 import { LeadDetailSkeleton } from './KanbanBoardSkeleton';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canContributeToBoard, canManageBoardSettings } from '../../../shared/utils/moduleAccess';
+import { canContributeToBoard, canManageBoardSettings, canViewFullEstimates } from '../../../shared/utils/moduleAccess';
 
 interface LeadDetailModalProps {
   leadId: number;
@@ -119,6 +119,7 @@ export default function LeadDetailModal({
   const resolvedBoardId = boardId ?? lead.board_id;
   const canArchive = board ? canManageBoardSettings(user, board, boardAccess) : false;
   const canEditCard = board ? canContributeToBoard(user, board, boardAccess) : false;
+  const canCreateProposal = canViewFullEstimates(user);
   const fieldDisabled = !canEditCard;
 
   const patchLead = (payload: UpdateLeadPayload) => {
@@ -381,7 +382,7 @@ export default function LeadDetailModal({
           </div>
         )}
 
-        {canEditCard && (
+        {canEditCard && canCreateProposal && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4">
           <div className="flex items-start gap-3">
             <div className="rounded-lg bg-blue-100 p-2 text-blue-700">

@@ -65,6 +65,8 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [2026-07-04-accounting-module-architecture.md](./adr/2026-07-04-accounting-module-architecture.md) | Double-entry accounting module |
 | [2026-07-08-pipeline-board-member-roles.md](./adr/2026-07-08-pipeline-board-member-roles.md) | Pipeline board viewer / contributor / manager roles |
+| [2026-07-08-staff-drawer-module-access-parity.md](./adr/2026-07-08-staff-drawer-module-access-parity.md) | Staff drawer module access matches Module Access; owner email read-only |
+| [2026-07-08-board-progress-targets.md](./adr/2026-07-08-board-progress-targets.md) | Board Progress canvas, targets/OKRs, pipeline vs project language |
 
 ## Key source locations
 

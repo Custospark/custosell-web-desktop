@@ -44,6 +44,7 @@ import {
   PIPELINE_BOARD_ACCESS_POLL_MS,
   PIPELINE_LEAD_POLL_MS,
   pipelineKeys,
+  pipelineProgressKeys,
 } from './pipelineQueryKeys';
 export {
   pipelineKeys,
@@ -140,6 +141,8 @@ function invalidatePipelineBoardScope(
     qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
     qc.invalidateQueries({ queryKey: pipelineKeys.board(boardId) });
     qc.invalidateQueries({ queryKey: [...pipelineKeys.all, 'calendar'] });
+    qc.invalidateQueries({ queryKey: pipelineProgressKeys.summaryBoard(boardId) });
+    qc.invalidateQueries({ queryKey: pipelineProgressKeys.targets(boardId) });
   }
   qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
 }

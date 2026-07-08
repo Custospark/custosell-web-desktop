@@ -1,10 +1,12 @@
-import { ArrowLeftRight, FolderOpen, MessageSquare, Plus } from 'lucide-react';
+import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardSwitcherIconsProps {
   onOpenAll: () => void;
   onOpenResources?: () => void;
   resourcesCount?: number;
+  onOpenProgress?: () => void;
+  progressActive?: boolean;
   onOpenConversation?: () => void;
   conversationMessagesCount?: number;
   conversationUnreadCount?: number;
@@ -17,6 +19,8 @@ export default function BoardSwitcherIcons({
   onOpenAll,
   onOpenResources,
   resourcesCount = 0,
+  onOpenProgress,
+  progressActive = false,
   onOpenConversation,
   conversationMessagesCount = 0,
   conversationUnreadCount = 0,
@@ -70,6 +74,24 @@ export default function BoardSwitcherIcons({
           <span className="hidden sm:inline">Resources</span>
         </button>
       )}
+      {onOpenProgress && (
+        <button
+          type="button"
+          onClick={onOpenProgress}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]',
+            progressActive
+              ? 'border-violet-500 bg-gradient-to-r from-violet-100 via-white to-fuchsia-100 text-violet-900 shadow-md shadow-violet-200/50'
+              : 'border-violet-300/90 bg-gradient-to-r from-violet-50 via-white to-fuchsia-50 text-violet-800 hover:border-violet-400 hover:from-violet-100 hover:to-fuchsia-100 hover:shadow-md hover:shadow-violet-200/50',
+          )}
+          title="Board progress"
+          aria-label="Board progress"
+          aria-pressed={progressActive}
+        >
+          <TrendingUp className="h-4 w-4 text-violet-600" />
+          <span className="hidden sm:inline">Progress</span>
+        </button>
+      )}
       {onOpenConversation && (
         <button
           type="button"
@@ -81,11 +103,11 @@ export default function BoardSwitcherIcons({
             'active:scale-[0.98]',
             conversationUnreadCount > 0 && 'border-blue-400 text-blue-900',
           )}
-          title="Board conversation"
+          title="Board discussion"
           aria-label={
             conversationMessagesCount > 0
-              ? `Board conversation (${conversationMessagesCount} message${conversationMessagesCount === 1 ? '' : 's'}${conversationUnreadCount > 0 ? `, ${conversationUnreadCount} unread` : ''})`
-              : 'Board conversation'
+              ? `Board discussion (${conversationMessagesCount} message${conversationMessagesCount === 1 ? '' : 's'}${conversationUnreadCount > 0 ? `, ${conversationUnreadCount} unread` : ''})`
+              : 'Board discussion'
           }
         >
           <span className="relative inline-flex shrink-0">
@@ -101,7 +123,7 @@ export default function BoardSwitcherIcons({
               </span>
             )}
           </span>
-          <span className="hidden sm:inline">Conversation</span>
+          <span className="hidden sm:inline">Discussion</span>
         </button>
       )}
       {allowCreate && (

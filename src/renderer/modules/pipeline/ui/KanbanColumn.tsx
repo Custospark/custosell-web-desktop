@@ -68,12 +68,12 @@ export default function KanbanColumn({
   return (
     <div
       className={cn(
-        'flex h-full min-h-0 w-[292px] shrink-0 flex-col rounded-2xl border shadow-sm backdrop-blur-sm transition-colors',
+        'flex h-full min-h-0 w-[292px] shrink-0 flex-col rounded-2xl border shadow-[0_8px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-200',
         columnDragOver
-          ? 'border-violet-400 bg-violet-50/60 ring-2 ring-violet-200'
+          ? 'border-violet-300/80 bg-white/75 ring-2 ring-violet-200/80'
           : dragOver
-            ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-200'
-            : 'border-gray-200/80 bg-white/70',
+            ? 'border-blue-300/80 bg-white/75 ring-2 ring-blue-200/80'
+            : 'border-white/60 bg-white/55 ring-1 ring-white/50',
       )}
       onDragOver={handleDragOver}
       onDragLeave={() => {

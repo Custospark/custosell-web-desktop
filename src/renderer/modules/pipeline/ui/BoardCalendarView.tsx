@@ -243,8 +243,8 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-gray-200/80 bg-white/90 shadow-sm backdrop-blur-sm">
-            <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/95">
+          <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
               {CALENDAR_WEEKDAYS.map((wd, i) => (
                 <div key={wd} className="px-0.5 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:px-2 sm:text-[11px]">
                   <span className="sm:hidden">{CALENDAR_WEEKDAYS_SHORT[i]}</span>

@@ -30,7 +30,7 @@ export default function BoardSwitcherStrip({
   }, [activeBoardId]);
 
   return (
-    <div className="relative z-30 shrink-0 border-t border-white/40 bg-white/75 backdrop-blur-sm">
+    <div className="relative z-30 shrink-0 border-t border-white/40 bg-white/85 backdrop-blur-sm">
       {workspaceLabel && (
         <p className="px-3 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-500/80">{workspaceLabel}</p>
       )}

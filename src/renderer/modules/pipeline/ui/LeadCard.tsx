@@ -67,7 +67,7 @@ export default function LeadCard({
         'hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md',
         dragging && 'rotate-1 opacity-60 shadow-lg',
         overdue && 'border-red-200/80',
-        isComplete && 'opacity-75',
+        isComplete && 'bg-gray-50/80',
         !lead.background_color && 'bg-white',
       )}
       style={lead.background_color ? { backgroundColor: lead.background_color } : undefined}

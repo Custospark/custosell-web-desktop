@@ -3,7 +3,7 @@ import { cn } from '../../../shared/utils/cn';
 function ColumnSkeleton({ delay = 0 }: { delay?: number }) {
   return (
     <div
-      className="flex h-full min-h-[320px] w-[292px] shrink-0 flex-col rounded-2xl border border-gray-200/80 bg-white/70 shadow-sm"
+      className="flex h-full min-h-[320px] w-[292px] shrink-0 flex-col rounded-2xl border border-white/60 bg-white/55 shadow-[0_8px_32px_rgba(15,23,42,0.08)] ring-1 ring-white/50 backdrop-blur-xl backdrop-saturate-150"
       style={{ animationDelay: `${delay}ms` }}
       aria-hidden
     >
@@ -18,7 +18,7 @@ function ColumnSkeleton({ delay = 0 }: { delay?: number }) {
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm"
+            className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm shadow-sm backdrop-blur-sm"
             style={{ animationDelay: `${delay + i * 80}ms` }}
           >
             <div className="flex gap-2">

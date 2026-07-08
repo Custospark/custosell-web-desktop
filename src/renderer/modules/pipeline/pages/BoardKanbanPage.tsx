@@ -209,7 +209,7 @@ export default function BoardKanbanPage() {
         className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm"
         style={boardBgStyle}
       >
-        <header className="shrink-0 border-b border-white/40 bg-white/75 px-3 py-3 backdrop-blur-md sm:px-4">
+        <header className="shrink-0 border-b border-white/40 bg-white/85 px-3 py-3 backdrop-blur-sm sm:px-4">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-indigo-500/80">{workspaceLabel}</span>
             <div className="h-4 w-32 animate-pulse rounded bg-indigo-100/80" />
@@ -235,7 +235,7 @@ export default function BoardKanbanPage() {
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm transition-opacity duration-200"
       style={boardBgStyle}
     >
-      <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/75 px-3 py-3 backdrop-blur-md sm:px-4">
+      <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/85 px-3 py-3 backdrop-blur-sm sm:px-4">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80">
           <span>{workspaceLabel}</span>
           {isFetching && !isLoading && (
@@ -277,7 +277,7 @@ export default function BoardKanbanPage() {
                 value={leadQuery}
                 onChange={(e) => setLeadQuery(e.target.value)}
                 placeholder={isTaskBoard ? 'Search tasks…' : 'Search leads…'}
-                className="w-full rounded-xl border border-blue-100/80 bg-white/90 py-2.5 pl-10 pr-10 text-sm text-slate-800 shadow-sm transition-shadow placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-xl border border-blue-100 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-800 shadow-sm transition-shadow placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               {leadQuery && (
                 <button
@@ -293,7 +293,7 @@ export default function BoardKanbanPage() {
           )}
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-lg border border-blue-100/80 bg-white/90 p-0.5 shadow-sm">
+            <div className="inline-flex rounded-lg border border-blue-100 bg-white p-0.5 shadow-sm">
               <button
                 type="button"
                 onClick={() => setViewMode('kanban')}
@@ -377,7 +377,7 @@ export default function BoardKanbanPage() {
           <button
             type="button"
             onClick={() => setAddStageOpen(true)}
-            className="flex h-full min-h-[120px] w-[48px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-gray-300/80 bg-white/40 text-gray-500 transition-colors hover:border-gray-400 hover:bg-white/70 hover:text-gray-700"
+            className="flex h-full min-h-[120px] w-[48px] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-white/50 bg-white/40 text-indigo-700 shadow-sm backdrop-blur-sm transition-colors hover:border-white/70 hover:bg-white/55"
             title="Add column"
           >
             <Plus className="h-5 w-5" />

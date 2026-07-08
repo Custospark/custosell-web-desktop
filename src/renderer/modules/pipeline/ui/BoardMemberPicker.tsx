@@ -53,6 +53,7 @@ export default function BoardMemberPicker({
 }: BoardMemberPickerProps) {
   const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(_workspace, {
     enabled: loadTeamMembers,
+    scope: 'business',
   });
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
   const [selectedRole, setSelectedRole] = useState<BoardMemberRole>('contributor');
@@ -102,7 +103,7 @@ export default function BoardMemberPicker({
     return (
       <div className={cn('flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 py-10 text-sm text-blue-700', className)}>
         <Loader2 className="h-5 w-5 animate-spin text-blue-500" aria-hidden />
-        Loading team members…
+        Loading business staff…
       </div>
     );
   }
@@ -149,17 +150,17 @@ export default function BoardMemberPicker({
         type="search"
         value={staffSearch}
         onChange={(e) => setStaffSearch(e.target.value)}
-        placeholder="Search team members by name or email…"
+        placeholder="Search staff by name or email…"
         className={pickerInputClass}
       />
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[180px] flex-1">
-          <label className="mb-1 block text-xs font-medium text-gray-700">Team member</label>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Staff member</label>
           <select
             value={selectedUserId}
             onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : '')}
             className={pickerInputClass}
-            aria-label="Team member to invite"
+            aria-label="Staff member to invite"
           >
             <option value="">Select staff…</option>
             {filteredAvailableStaff.map((u) => (
@@ -201,13 +202,13 @@ export default function BoardMemberPicker({
       </p>
 
       {filteredAvailableStaff.length === 0 && staffQuery && (
-        <p className="text-xs text-gray-500">No team members match your search.</p>
+        <p className="text-xs text-gray-500">No staff match your search.</p>
       )}
 
       {availableStaff.length === 0 && value.length === 0 && (
         <p className="text-sm text-gray-500">
           {teamMembers.length === 0
-            ? 'No staff with access to this workspace were found.'
+            ? 'No active staff were found in your business.'
             : 'No collaborators yet. Invite staff to share this board without giving everyone team access.'}
         </p>
       )}

@@ -38,7 +38,8 @@ export default function CreateBoardModal({
   onClose,
   workspace = 'pipeline',
 }: CreateBoardModalProps) {
-  useBoardTeamMembers(workspace, { enabled: open });
+  useBoardTeamMembers(workspace, { enabled: open, scope: 'business' });
+  useBoardTeamMembers(workspace, { enabled: open, scope: 'workspace' });
 
   if (!open) return null;
 

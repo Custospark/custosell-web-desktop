@@ -192,7 +192,7 @@ export function hasEstimatesBoardsAccess(user: AuthUser | null | undefined): boo
     || (user.project_member_ids?.length ?? 0) > 0;
 }
 
-/** Staff eligible to be invited or listed for a pipeline/personal board workspace. */
+/** Staff with module access for team-visibility board listings (not shared-board invites). */
 export function staffHasWorkspaceBoardAccess(
   modules: string[] | undefined,
   workspace: 'pipeline' | 'estimates',

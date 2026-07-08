@@ -169,14 +169,19 @@ export function usePipelineBoards(options?: {
   });
 }
 
+export type BoardTeamMemberScope = 'workspace' | 'business';
+
 export function useBoardTeamMembers(
   workspace: 'pipeline' | 'estimates' = 'pipeline',
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; scope?: BoardTeamMemberScope },
 ) {
+  const scope = options?.scope ?? 'workspace';
   return useQuery<BoardTeamMember[]>({
-    queryKey: pipelineKeys.teamMembers(workspace),
+    queryKey: pipelineKeys.teamMembers(workspace, scope),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(`${PIPELINE.TEAM_MEMBERS}?workspace=${workspace}`);
+      const { data } = await axiosInstance.get(
+        `${PIPELINE.TEAM_MEMBERS}?workspace=${workspace}&scope=${scope}`,
+      );
       return normalizeList<BoardTeamMember>(data);
     },
     staleTime: 30_000,

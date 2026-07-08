@@ -10,8 +10,10 @@ export const pipelineKeys = {
   calendar: (boardId: number, year: number, month: number, dateField?: string) =>
     [...pipelineKeys.all, 'calendar', boardId, year, month, dateField ?? 'due'] as const,
   labels: (boardId?: number) => [...pipelineKeys.all, 'labels', boardId ?? 'all'] as const,
-  teamMembers: (workspace: 'pipeline' | 'estimates') =>
-    [...pipelineKeys.all, 'team-members', workspace] as const,
+  teamMembers: (
+    workspace: 'pipeline' | 'estimates',
+    scope: 'workspace' | 'business' = 'workspace',
+  ) => [...pipelineKeys.all, 'team-members', workspace, scope] as const,
 };
 
 export const pipelineCollaborationKeys = {

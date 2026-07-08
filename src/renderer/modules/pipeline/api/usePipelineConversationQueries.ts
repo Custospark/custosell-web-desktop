@@ -46,7 +46,7 @@ export function useBoardConversationSummary(boardId: number, enabled = true, pol
     enabled: enabled && boardId > 0,
     staleTime: 15_000,
     refetchInterval: poll && enabled && boardId > 0 ? PIPELINE_KANBAN_POLL_MS : false,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
 }

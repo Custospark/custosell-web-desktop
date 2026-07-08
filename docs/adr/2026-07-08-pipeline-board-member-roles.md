@@ -73,7 +73,17 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 
 **Board collaboration (`BoardCollaborationDrawer`):**
 
-- Viewers: read-only — browse notices and polls only; no vote, post notices, create polls, mark read, or dismiss
+- Viewers: notices and polls read-only — no post, dismiss, vote, or remove own vote
+- Viewers may mark notices read/unread (read tracking is not a write action on board content)
+- Contributors and managers may vote and remove their own vote at any time
+- No one may remove another member's vote — Team participation is read-only
+
+**Live updates (all roles):**
+
+- Kanban polls every 45s (contributors/managers) or 20s (viewers); polls continue in background tabs
+- Board access sync (15s) merges role flags and presentation fields (name, cover, background) into kanban cache
+- Notices, polls, conversation, and resources summaries poll while the board page is open
+- Only poll creators and board managers may remove other users' votes (Team participation)
 
 **Shared-board invites (`BoardMemberPicker`):**
 
@@ -87,7 +97,10 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 | View kanban / leads | `assertCanViewBoard` |
 | Move lead, reorder columns, post conversation, add resources, card comments, reminders | `assertCanEditBoard` / `ensureCanContributeToBoard` → contributor or manager on shared boards |
 | React on conversation messages or card comments | `ensureCanContributeToBoard` (viewers blocked) |
-| Vote on polls, mark notices read, dismiss collaboration items | `ensureCanContributeToBoard` (viewers blocked) |
+| Vote on polls, remove own poll vote | `ensureCanContributeToBoard` (contributors and managers) |
+| Remove another user's poll vote | Not allowed — own vote only |
+| Mark notices read | Any board member with view access |
+| Mark notices read, dismiss collaboration items (delete/dismiss) | `ensureCanContributeToBoard` (viewers blocked for dismiss) |
 | Board settings, archive board/lead, add/edit/delete stages, automations, upload background, create polls | `userCanManageBoard` / `ensureCanManageBoard` → manager on shared boards |
 
 **Collaboration service fixes (viewers were incorrectly allowed):**

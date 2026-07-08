@@ -40,6 +40,7 @@ import {
 import { pipelineItemLabel } from './pipelineCardTerms';
 import {
   PIPELINE_KANBAN_POLL_MS,
+  PIPELINE_KANBAN_VIEWER_POLL_MS,
   PIPELINE_BOARD_ACCESS_POLL_MS,
   PIPELINE_LEAD_POLL_MS,
   pipelineKeys,
@@ -47,6 +48,7 @@ import {
 export {
   pipelineKeys,
   PIPELINE_KANBAN_POLL_MS,
+  PIPELINE_KANBAN_VIEWER_POLL_MS,
   PIPELINE_BOARD_ACCESS_POLL_MS,
   PIPELINE_LEAD_POLL_MS,
 } from './pipelineQueryKeys';
@@ -146,6 +148,7 @@ export function usePipelineBoards(options?: {
   salesOnly?: boolean;
   projectOnly?: boolean;
   estimatesWorkspace?: boolean;
+  poll?: boolean;
 }) {
   const projectOnly = options?.projectOnly ?? false;
   const estimatesWorkspace = options?.estimatesWorkspace ?? false;
@@ -173,6 +176,8 @@ export function usePipelineBoards(options?: {
       return normalizeList<PipelineBoard>(data);
     },
     placeholderData: (previousData) => previousData,
+    refetchInterval: options?.poll ? 60_000 : false,
+    refetchIntervalInBackground: Boolean(options?.poll),
     ...listQueryDefaults,
   });
 }
@@ -219,8 +224,13 @@ export function usePipelineKanban(boardId: number, options?: { poll?: boolean })
       return normalizeItem<PipelineBoard>(data);
     },
     enabled: Boolean(boardId),
-    refetchInterval: options?.poll !== false && boardId ? PIPELINE_KANBAN_POLL_MS : false,
-    refetchIntervalInBackground: false,
+    refetchInterval: (query) => {
+      if (options?.poll === false || !boardId) return false;
+      const board = query.state.data;
+      if (board?.can_contribute === false) return PIPELINE_KANBAN_VIEWER_POLL_MS;
+      return PIPELINE_KANBAN_POLL_MS;
+    },
+    refetchIntervalInBackground: true,
     placeholderData: (previousData) => previousData,
     structuralSharing: (oldData, newData) => {
       if (!oldData || !newData) return newData;
@@ -257,7 +267,7 @@ export function useBoardAccessSync(boardId: number, enabled = true) {
     },
     enabled: enabled && boardId > 0,
     refetchInterval: enabled && boardId > 0 ? PIPELINE_BOARD_ACCESS_POLL_MS : false,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
     staleTime: PIPELINE_BOARD_ACCESS_POLL_MS / 2,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -375,7 +385,7 @@ export function usePipelineLead(
     enabled: Boolean(id) && enabled,
     initialData: options?.initialData,
     refetchInterval: options?.poll && enabled && id ? PIPELINE_LEAD_POLL_MS : false,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
     ...leadDetailQueryDefaults,
   });
 }

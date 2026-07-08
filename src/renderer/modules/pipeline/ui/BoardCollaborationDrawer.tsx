@@ -187,13 +187,13 @@ export default function BoardCollaborationDrawer({
 
       {!canContribute && (
         <p className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-          You have viewer access — board collaboration is read-only. You can browse notices and polls but cannot vote, post, or change anything.
+          You have viewer access — notices and polls are read-only. You can still mark notices as read to track what is new.
         </p>
       )}
 
       {tab === 'notices' && (
         <div className="space-y-4">
-          {canContribute && unreadNotices.length > 0 && !noticesShowLoading && (
+          {unreadNotices.length > 0 && !noticesShowLoading && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
               <p className="text-sm font-medium text-amber-900">
                 {unreadNotices.length} unread notice{unreadNotices.length === 1 ? '' : 's'}
@@ -311,7 +311,6 @@ export default function BoardCollaborationDrawer({
                         )}
                       </div>
 
-                      {canContribute && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         {!item.is_read ? (
                           <Button
@@ -334,7 +333,6 @@ export default function BoardCollaborationDrawer({
                           </button>
                         )}
                       </div>
-                      )}
                     </li>
                   );
                 })
@@ -455,10 +453,11 @@ export default function BoardCollaborationDrawer({
                   const myVotes = new Set(
                     (poll.votes ?? []).filter((v) => v.user_id === user?.id).map((v) => v.option_id),
                   );
-                  const canManagePoll = poll.can_manage_poll ?? poll.can_delete ?? (poll.created_by === user?.id || canManage);
-                  const canDismissPoll = poll.can_dismiss ?? !canManagePoll;
+                  const canManagePoll = poll.can_manage_poll === true;
+                  const canDismissPoll = poll.can_dismiss === true;
                   const needsVote = !poll.user_has_voted;
-                  const canRemoveOwnVote = poll.can_remove_own_vote ?? poll.user_has_voted;
+                  const canVote = canContribute && (poll.can_vote ?? true);
+                  const canRemoveOwnVote = canVote && (poll.can_remove_own_vote ?? poll.user_has_voted);
 
                   return (
                     <li
@@ -488,16 +487,20 @@ export default function BoardCollaborationDrawer({
                           </div>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5">
-                          {canContribute && needsVote ? (
+                          {needsVote && canVote ? (
                             <span className="rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                               Your vote
                             </span>
-                          ) : canContribute && !needsVote ? (
+                          ) : needsVote && !canVote ? (
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-600 ring-1 ring-gray-200">
+                              View only
+                            </span>
+                          ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
                               <CheckCircle2 className="h-3 w-3" />
                               Voted
                             </span>
-                          ) : null}
+                          )}
                           {canContribute && canManagePoll && (
                             <button
                               type="button"
@@ -521,13 +524,13 @@ export default function BoardCollaborationDrawer({
                         </div>
                       </div>
 
-                      {canContribute && needsVote && (
+                      {needsVote && canVote && (
                         <p className="mt-2 text-sm font-medium text-violet-800">
                           Choose one option — your vote saves immediately.
                         </p>
                       )}
 
-                      {canContribute && canRemoveOwnVote && !needsVote && (
+                      {canRemoveOwnVote && !needsVote && (
                         <div className="mt-2">
                           <button
                             type="button"
@@ -550,7 +553,7 @@ export default function BoardCollaborationDrawer({
                             'relative flex min-h-[48px] w-full items-center gap-3 overflow-hidden rounded-xl border-2 px-4 py-3 text-left text-sm font-medium',
                             voted
                               ? 'border-violet-500 bg-violet-50 text-violet-900 shadow-sm'
-                              : needsVote && canContribute
+                              : needsVote && canVote
                                 ? 'border-violet-200 bg-white text-gray-800 hover:border-violet-400 hover:bg-violet-50'
                                 : 'border-gray-200 bg-gray-50/50 text-gray-700',
                           );
@@ -577,26 +580,22 @@ export default function BoardCollaborationDrawer({
                                   </span>
                                 ) : voted ? (
                                   <span className="shrink-0 text-xs font-semibold text-violet-600">Your pick</span>
-                                ) : needsVote && canContribute ? (
+                                ) : needsVote && canVote ? (
                                   <span className="shrink-0 text-xs font-semibold text-violet-500">Tap to vote</span>
                                 ) : null}
                               </span>
                             </>
                           );
-                          if (!canContribute) {
-                            return (
-                              <div key={option.id} className={optionClassName}>
-                                {optionContent}
-                              </div>
-                            );
-                          }
                           return (
                             <button
                               key={option.id}
                               type="button"
-                              disabled={votePoll.isPending}
-                              onClick={() => void votePoll.mutateAsync({ pollId: poll.id, optionId: option.id })}
-                              className={cn(optionClassName, 'transition-all active:scale-[0.99]')}
+                              disabled={!canVote || votePoll.isPending}
+                              onClick={canVote ? () => void votePoll.mutateAsync({ pollId: poll.id, optionId: option.id }) : undefined}
+                              className={cn(
+                                optionClassName,
+                                canVote ? 'transition-all active:scale-[0.99]' : 'cursor-default',
+                              )}
                             >
                               {optionContent}
                             </button>
@@ -633,19 +632,6 @@ export default function BoardCollaborationDrawer({
                                     </span>
                                   ) : (
                                     <span className="text-gray-400">Not voted</span>
-                                  )}
-                                  {participant.has_voted && (
-                                    <button
-                                      type="button"
-                                      title="Remove this member's vote"
-                                      onClick={() => void removePollVote.mutateAsync({
-                                        pollId: poll.id,
-                                        userId: participant.user.id,
-                                      })}
-                                      className="rounded p-1 text-red-500 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
                                   )}
                                 </div>
                               </li>

@@ -64,7 +64,7 @@ export function useBoardCollaborationSummary(boardId: number, enabled = true) {
     enabled: enabled && boardId > 0,
     staleTime: 30_000,
     refetchInterval: enabled && boardId > 0 ? 45_000 : false,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
 }

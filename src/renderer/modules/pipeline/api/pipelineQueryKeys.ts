@@ -43,6 +43,8 @@ export const pipelineTemplateKeys = {
 };
 
 export const PIPELINE_KANBAN_POLL_MS = 45_000;
+/** Faster kanban poll for read-only board members (viewers) so they still see team activity. */
+export const PIPELINE_KANBAN_VIEWER_POLL_MS = 20_000;
 /** Lighter board GET for visibility/role/permission changes (merged into kanban cache). */
 export const PIPELINE_BOARD_ACCESS_POLL_MS = 15_000;
 export const PIPELINE_LEAD_POLL_MS = 30_000;

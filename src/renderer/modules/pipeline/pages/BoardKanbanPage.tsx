@@ -21,7 +21,7 @@ import {
 import { findKanbanLead } from '../api/pipelineOptimisticCache';
 import { leadMatchesSearchQuery } from '../api/pipelineLeadSearch';
 import LeadSearchHint from '../ui/LeadSearchHint';
-import { pipelineCollaborationKeys } from '../api/usePipelineCollaborationQueries';
+import { pipelineCollaborationKeys, useBoardAnnouncements, useBoardPolls } from '../api/usePipelineCollaborationQueries';
 import KanbanColumn from '../ui/KanbanColumn';
 import CreateLeadModal from '../ui/CreateLeadModal';
 import CreateBoardModal from '../ui/CreateBoardModal';
@@ -69,8 +69,8 @@ export default function BoardKanbanPage() {
   const boardId = Number(boardIdParam);
 
   const boardsQueryOptions = workspace === 'estimates'
-    ? { estimatesWorkspace: true as const }
-    : { salesOnly: true as const };
+    ? { estimatesWorkspace: true as const, poll: true as const }
+    : { salesOnly: true as const, poll: true as const };
 
   const {
     data: board,
@@ -81,6 +81,8 @@ export default function BoardKanbanPage() {
     isFetching,
   } = usePipelineKanban(boardId, { poll: true });
   useBoardAccessSync(boardId, boardId > 0);
+  useBoardAnnouncements(boardId, boardId > 0);
+  useBoardPolls(boardId, undefined, boardId > 0);
   const { data: boards = [] } = usePipelineBoards(boardsQueryOptions);
   const switcherBoards = useMemo(
     () => filterBoardsForWorkspace(boards, workspace),

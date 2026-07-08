@@ -239,13 +239,18 @@ export function mergeBoardOnKanban(board: PipelineBoard, partial: Partial<Pipeli
   return { ...board, ...partial, stages: board.stages };
 }
 
-/** Always take fresh server access fields when merging polled or lightweight board responses. */
+/** Always take fresh server access + presentation fields when merging polled board responses. */
 export function applyBoardAccessFields(
   cached: PipelineBoard,
   fresh: Partial<PipelineBoard>,
 ): PipelineBoard {
   return {
     ...cached,
+    name: fresh.name ?? cached.name,
+    description: fresh.description !== undefined ? fresh.description : cached.description,
+    cover_color: fresh.cover_color !== undefined ? fresh.cover_color : cached.cover_color,
+    background_type: fresh.background_type !== undefined ? fresh.background_type : cached.background_type,
+    background_value: fresh.background_value !== undefined ? fresh.background_value : cached.background_value,
     visibility: fresh.visibility ?? cached.visibility,
     members: fresh.members ?? cached.members,
     current_member_role: fresh.current_member_role !== undefined

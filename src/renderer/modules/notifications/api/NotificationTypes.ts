@@ -8,7 +8,8 @@ export type NotificationType =
   | 'pipeline.comment'
   | 'pipeline.announcement'
   | 'pipeline.poll'
-  | 'pipeline.reminder';
+  | 'pipeline.reminder'
+  | 'pipeline.board_message';
 
 export interface AppNotification {
   id: number;

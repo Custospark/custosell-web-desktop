@@ -172,7 +172,8 @@ export interface PipelineLead {
 export interface PipelineActivityReactions {
   likes: number;
   dislikes: number;
-  user_reaction: 'like' | 'dislike' | null;
+  user_reaction: string | null;
+  emoji_counts?: Record<string, number>;
 }
 
 export interface PipelineLeadActivity {
@@ -282,6 +283,81 @@ export interface PipelineBoardResource {
 
 export interface PipelineBoardResourcesSummary {
   resources_count: number;
+}
+
+export interface PipelineBoardConversationSummary {
+  messages_count: number;
+  unread_count: number;
+  has_unread?: boolean;
+  pinned_count?: number;
+}
+
+export interface PipelineBoardMessageAttachment {
+  id: number;
+  message_id: number;
+  file_name: string;
+  mime_type?: string | null;
+  file_size?: number | null;
+  url: string;
+}
+
+export interface PipelineBoardMessage {
+  id: number;
+  board_id: number;
+  parent_id?: number | null;
+  user_id: number;
+  body: string;
+  is_pinned?: boolean;
+  pinned_at?: string | null;
+  pinned_by?: number | null;
+  edited_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  user?: PipelineUserRef | null;
+  mentions?: Array<{ user_id: number; user?: PipelineUserRef | null }>;
+  attachments?: PipelineBoardMessageAttachment[];
+  reactions?: PipelineActivityReactions;
+  can_edit?: boolean;
+  can_delete?: boolean;
+  can_pin?: boolean;
+}
+
+export interface PipelineBoardActivityEvent {
+  id: number;
+  board_id: number;
+  event_type: string;
+  title: string;
+  body?: string | null;
+  entity_type?: string | null;
+  entity_id?: number | null;
+  metadata?: Record<string, unknown> | null;
+  created_at?: string;
+  user?: PipelineUserRef | null;
+}
+
+export interface PipelineBoardAutomation {
+  id: number;
+  board_id: number;
+  name: string;
+  trigger_type: 'stage_entered' | 'status_won' | 'status_lost';
+  trigger_stage_id?: number | null;
+  trigger_stage?: { id: number; name: string } | null;
+  action_type: 'conversation_post' | 'conversation_notify';
+  action_body: string;
+  is_active: boolean;
+  creator?: PipelineUserRef | null;
+}
+
+export interface PipelineBoardTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  workspace: 'pipeline' | 'estimates';
+  stages?: Array<Record<string, unknown>>;
+  labels?: Array<Record<string, unknown>>;
+  resources?: Array<Record<string, unknown>>;
+  automations?: Array<Record<string, unknown>>;
+  is_system?: boolean;
 }
 
 export interface PipelineReminder {

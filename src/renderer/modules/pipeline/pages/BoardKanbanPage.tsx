@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Navigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../../shared/components/buttons/Button';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -40,7 +40,9 @@ import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCach
 import BoardCollaborationDrawer from '../ui/BoardCollaborationDrawer';
 import BoardCollaborationButton from '../ui/BoardCollaborationButton';
 import BoardResourcesModal from '../ui/BoardResourcesModal';
+import BoardConversationModal from '../ui/BoardConversationModal';
 import { useBoardResourcesSummary } from '../api/usePipelineResourceQueries';
+import { useBoardConversationSummary } from '../api/usePipelineConversationQueries';
 import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -57,6 +59,7 @@ function workspaceFromPath(pathname: string): BoardWorkspace {
 
 export default function BoardKanbanPage() {
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const workspace = workspaceFromPath(location.pathname);
   const queryClient = useQueryClient();
   const { boardId: boardIdParam } = useParams();
@@ -98,6 +101,9 @@ export default function BoardKanbanPage() {
   const [collaborationInitialTab, setCollaborationInitialTab] = useState<'notices' | 'polls'>('notices');
   const [allBoardsOpen, setAllBoardsOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
+  const [conversationOpen, setConversationOpen] = useState(
+    () => searchParams.get('conversation') === '1',
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const user = useAppSelector((s) => s.auth.user);
@@ -114,6 +120,10 @@ export default function BoardKanbanPage() {
 
   const { data: resourcesSummary } = useBoardResourcesSummary(boardId, boardId > 0, true);
   const resourcesCount = resourcesSummary?.resources_count ?? 0;
+
+  const { data: conversationSummary } = useBoardConversationSummary(boardId, boardId > 0, true);
+  const conversationMessagesCount = conversationSummary?.messages_count ?? 0;
+  const conversationUnreadCount = conversationSummary?.unread_count ?? 0;
 
   const canContributeResources = useMemo(() => {
     if (!board || !user) return false;
@@ -132,6 +142,13 @@ export default function BoardKanbanPage() {
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
   const allowCreateBoard = workspace === 'pipeline' || workspace === 'estimates';
   const workspaceLabel = workspace === 'estimates' ? 'Projects & Estimates' : 'Pipeline';
+
+  useEffect(() => {
+    if (searchParams.get('conversation') !== '1') return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('conversation');
+    setSearchParams(next, { replace: true });
+  }, [boardId, searchParams, setSearchParams]);
 
   const handleOpenCollaboration = () => {
     const summary = queryClient.getQueryData<PipelineBoardCollaborationSummary>(
@@ -422,6 +439,9 @@ export default function BoardKanbanPage() {
         onOpenAll={() => setAllBoardsOpen(true)}
         onOpenResources={() => setResourcesOpen(true)}
         resourcesCount={resourcesCount}
+        onOpenConversation={() => setConversationOpen(true)}
+        conversationMessagesCount={conversationMessagesCount}
+        conversationUnreadCount={conversationUnreadCount}
         onCreateNew={() => setCreateBoardOpen(true)}
       />
 
@@ -536,6 +556,14 @@ export default function BoardKanbanPage() {
         canContribute={canContributeResources}
         open={resourcesOpen}
         onClose={() => setResourcesOpen(false)}
+      />
+
+      <BoardConversationModal
+        boardId={boardId}
+        open={conversationOpen}
+        onClose={() => setConversationOpen(false)}
+        stages={allStages}
+        canManage={canManageSettings}
       />
     </div>
   );

@@ -28,5 +28,16 @@ export const pipelineResourceKeys = {
   members: (boardId: number) => [...pipelineKeys.all, 'resource-members', boardId] as const,
 };
 
+export const pipelineConversationKeys = {
+  summary: (boardId: number) => [...pipelineKeys.all, 'conversation-summary', boardId] as const,
+  messages: (boardId: number) => [...pipelineKeys.all, 'conversation-messages', boardId] as const,
+  activity: (boardId: number) => [...pipelineKeys.all, 'conversation-activity', boardId] as const,
+  automations: (boardId: number) => [...pipelineKeys.all, 'board-automations', boardId] as const,
+};
+
+export const pipelineTemplateKeys = {
+  list: (workspace: 'pipeline' | 'estimates') => [...pipelineKeys.all, 'board-templates', workspace] as const,
+};
+
 export const PIPELINE_KANBAN_POLL_MS = 45_000;
 export const PIPELINE_LEAD_POLL_MS = 30_000;

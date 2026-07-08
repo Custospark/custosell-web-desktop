@@ -132,6 +132,19 @@ export const PIPELINE = {
   BOARD_RESOURCE: (id: number) => `/pipeline/resources/${id}`,
   BOARD_RESOURCE_VIEW: (id: number) => `/pipeline/resources/${id}/view`,
   BOARD_RESOURCE_DOWNLOAD: (id: number) => `/pipeline/resources/${id}/download`,
+  BOARD_CONVERSATION_SUMMARY: (boardId: number) => `/pipeline/boards/${boardId}/conversation/summary`,
+  BOARD_CONVERSATION_MESSAGES: (boardId: number) => `/pipeline/boards/${boardId}/conversation/messages`,
+  BOARD_CONVERSATION_READ: (boardId: number) => `/pipeline/boards/${boardId}/conversation/read`,
+  BOARD_CONVERSATION_MESSAGE: (id: number) => `/pipeline/conversation/messages/${id}`,
+  BOARD_CONVERSATION_MESSAGE_REACTION: (id: number) => `/pipeline/conversation/messages/${id}/reaction`,
+  BOARD_CONVERSATION_MESSAGE_PIN: (id: number) => `/pipeline/conversation/messages/${id}/pin`,
+  BOARD_CONVERSATION_MESSAGE_ATTACHMENTS: (id: number) => `/pipeline/conversation/messages/${id}/attachments`,
+  BOARD_CONVERSATION_ATTACHMENT: (id: number) => `/pipeline/conversation/attachments/${id}`,
+  BOARD_CONVERSATION_ACTIVITY: (boardId: number) => `/pipeline/boards/${boardId}/conversation/activity`,
+  BOARD_AUTOMATIONS: (boardId: number) => `/pipeline/boards/${boardId}/automations`,
+  BOARD_AUTOMATION: (id: number) => `/pipeline/automations/${id}`,
+  BOARD_TEMPLATES: '/pipeline/board-templates',
+  BOARD_APPLY_TEMPLATE: (boardId: number) => `/pipeline/boards/${boardId}/apply-template`,
 };
 
 export const ACCOUNTING = {

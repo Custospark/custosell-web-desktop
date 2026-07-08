@@ -8,6 +8,7 @@ import {
   useUpdatePipelineBoard,
   useUploadBoardBackground,
 } from '../api/usePipelineQueries';
+import { useApplyBoardTemplate, useBoardTemplates } from '../api/usePipelineConversationQueries';
 import type { BoardMemberInput, PipelineVisibility } from '../api/pipelineTypes';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
@@ -56,6 +57,9 @@ function CreateBoardModalForm({
   const uploadBg = useUploadBoardBackground();
   const isEstimates = workspace === 'estimates';
   const pendingUploadRef = useRef<File | null>(null);
+  const [templateId, setTemplateId] = useState<number | ''>('');
+  const { data: templates = [] } = useBoardTemplates(workspace, true);
+  const applyTemplate = useApplyBoardTemplate();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -117,6 +121,10 @@ function CreateBoardModalForm({
       });
     }
 
+    if (templateId) {
+      await applyTemplate.mutateAsync({ boardId: board.id, templateId: Number(templateId) });
+    }
+
     handleClose();
     navigate(
       isEstimates ? ROUTES.ESTIMATES.BOARD(board.id) : ROUTES.PIPELINE.BOARD(board.id),
@@ -163,6 +171,26 @@ function CreateBoardModalForm({
             <p className="mt-1 text-xs text-gray-500">Optional — shown in the board switcher</p>
           </div>
         </PipelineFormSection>
+
+        {templates.length > 0 && (
+          <PipelineFormSection title="Board template" icon={Kanban}>
+            <select
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value ? Number(e.target.value) : '')}
+              className={pipelineInputClass}
+            >
+              <option value="">No template — start blank</option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Applies default columns, labels, starter resources, and automations after the board is created.
+            </p>
+          </PipelineFormSection>
+        )}
 
         <BoardBackgroundSection
           bgType={bgType}

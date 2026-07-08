@@ -322,7 +322,7 @@ export function getSharedBoardMemberRole(
   },
 ): BoardMemberRole | null {
   if (!user || board.visibility !== 'shared') return null;
-  if (board.current_member_role) return board.current_member_role;
+  if (board.current_member_role != null) return board.current_member_role;
   if (Number(board.created_by) === user.id) return 'manager';
   const member = board.members?.find((m) => m.user_id === user.id);
   return member ? normalizeBoardMemberRole(member.role) : null;

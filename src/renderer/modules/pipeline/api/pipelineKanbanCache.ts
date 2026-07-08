@@ -239,6 +239,28 @@ export function mergeBoardOnKanban(board: PipelineBoard, partial: Partial<Pipeli
   return { ...board, ...partial, stages: board.stages };
 }
 
+/** Always take fresh server access fields when merging polled or lightweight board responses. */
+export function applyBoardAccessFields(
+  cached: PipelineBoard,
+  fresh: Partial<PipelineBoard>,
+): PipelineBoard {
+  return {
+    ...cached,
+    visibility: fresh.visibility ?? cached.visibility,
+    members: fresh.members ?? cached.members,
+    current_member_role: fresh.current_member_role !== undefined
+      ? fresh.current_member_role
+      : cached.current_member_role,
+    can_contribute: fresh.can_contribute !== undefined
+      ? fresh.can_contribute
+      : cached.can_contribute,
+    can_manage_settings: fresh.can_manage_settings !== undefined
+      ? fresh.can_manage_settings
+      : cached.can_manage_settings,
+    updated_at: fresh.updated_at ?? cached.updated_at,
+  };
+}
+
 export function reorderStagesOnKanban(board: PipelineBoard, stageIds: number[]): PipelineBoard {
   if (!board.stages?.length) return board;
   const byId = new Map(board.stages.map((s) => [s.id, s]));

@@ -6,6 +6,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   useMovePipelineLead,
   usePipelineBoards,
+  useBoardAccessSync,
   usePipelineKanban,
   useReorderPipelineStages,
   useUpdatePipelineLead,
@@ -79,6 +80,7 @@ export default function BoardKanbanPage() {
     refetch,
     isFetching,
   } = usePipelineKanban(boardId, { poll: true });
+  useBoardAccessSync(boardId, boardId > 0);
   const { data: boards = [] } = usePipelineBoards(boardsQueryOptions);
   const switcherBoards = useMemo(
     () => filterBoardsForWorkspace(boards, workspace),
@@ -138,10 +140,11 @@ export default function BoardKanbanPage() {
 
   const canContributeResources = canContribute;
 
-  const mySharedBoardRole = useMemo(
-    () => (board ? getSharedBoardMemberRole(user, board) : null),
-    [board, user],
-  );
+  const mySharedBoardRole = board?.visibility === 'shared'
+    ? getSharedBoardMemberRole(user, board)
+    : null;
+  const showBoardManagementControls = canManageSettings
+    && !(board?.visibility === 'shared' && mySharedBoardRole != null && mySharedBoardRole !== 'manager');
 
   useBoardAccessChangeNotice(board, user);
 
@@ -315,7 +318,7 @@ export default function BoardKanbanPage() {
               boardId={boardId}
               onClick={handleOpenCollaboration}
             />
-            {canManageSettings && (
+            {showBoardManagementControls && (
               <button
                 type="button"
                 onClick={() => setEditBoardOpen(true)}
@@ -379,7 +382,7 @@ export default function BoardKanbanPage() {
 
             {viewMode === 'kanban' && (
               <>
-                {canManageSettings && (
+                {showBoardManagementControls && (
                   <Button
                     variant="secondary"
                     onClick={() => setAddStageOpen(true)}
@@ -431,11 +434,11 @@ export default function BoardKanbanPage() {
               onAddLead={canContribute ? (stageId) => setCreateStageId(stageId) : undefined}
               onDropLead={canContribute ? handleDropLead : undefined}
               onDropColumn={canContribute ? handleDropColumn : undefined}
-              onEditStage={canManageSettings ? (s) => setEditStage(s) : undefined}
+              onEditStage={showBoardManagementControls ? (s) => setEditStage(s) : undefined}
               isProjectBoard={isTaskBoard}
             />
           ))}
-          {canManageSettings && (
+          {showBoardManagementControls && (
           <button
             type="button"
             onClick={() => setAddStageOpen(true)}
@@ -563,7 +566,7 @@ export default function BoardKanbanPage() {
       <BoardCollaborationDrawer
         key={collaborationOpen ? collaborationInitialTab : 'closed'}
         boardId={boardId}
-        canManage={canManageSettings}
+        canManage={showBoardManagementControls}
         open={collaborationOpen}
         initialTab={collaborationInitialTab}
         onClose={() => setCollaborationOpen(false)}
@@ -581,7 +584,7 @@ export default function BoardKanbanPage() {
         open={conversationOpen}
         onClose={() => setConversationOpen(false)}
         canContribute={canContribute}
-        onOpenBoardSettings={canManageSettings ? () => {
+        onOpenBoardSettings={showBoardManagementControls ? () => {
           setConversationOpen(false);
           setEditBoardOpen(true);
         } : undefined}

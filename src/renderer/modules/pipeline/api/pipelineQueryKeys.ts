@@ -2,6 +2,7 @@ export const pipelineKeys = {
   all: ['pipeline'] as const,
   boards: () => [...pipelineKeys.all, 'boards'] as const,
   board: (id: number) => [...pipelineKeys.all, 'board', id] as const,
+  boardAccess: (id: number) => [...pipelineKeys.all, 'board-access', id] as const,
   kanban: (id: number) => [...pipelineKeys.all, 'kanban', id] as const,
   leads: (filters?: Record<string, string>) => [...pipelineKeys.all, 'leads', filters] as const,
   lead: (id: number) => [...pipelineKeys.all, 'lead', id] as const,
@@ -42,4 +43,6 @@ export const pipelineTemplateKeys = {
 };
 
 export const PIPELINE_KANBAN_POLL_MS = 45_000;
+/** Lighter board GET for visibility/role/permission changes (merged into kanban cache). */
+export const PIPELINE_BOARD_ACCESS_POLL_MS = 15_000;
 export const PIPELINE_LEAD_POLL_MS = 30_000;

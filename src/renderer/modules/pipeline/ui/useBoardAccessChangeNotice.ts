@@ -10,11 +10,24 @@ import type { PipelineVisibility } from '../api/pipelineTypes';
 type AccessSnapshot = {
   visibility: PipelineVisibility;
   role: BoardMemberRole | null;
+  canContribute: boolean;
 };
+
+function boardAccessKey(board: PipelineBoard | undefined, user: AuthUser | null | undefined): string {
+  if (!board || !user) return '';
+  return [
+    board.visibility,
+    board.current_member_role ?? '',
+    board.can_contribute ?? '',
+    board.can_manage_settings ?? '',
+    board.updated_at ?? '',
+    board.members?.find((m) => m.user_id === user.id)?.role ?? '',
+  ].join('|');
+}
 
 /**
  * Notifies the signed-in user when board visibility or their shared-board role
- * changes while they are viewing the board (polled kanban refresh).
+ * changes while they are viewing the board (access sync + kanban poll).
  */
 export function useBoardAccessChangeNotice(
   board: PipelineBoard | undefined,
@@ -22,13 +35,15 @@ export function useBoardAccessChangeNotice(
 ) {
   const { showToast } = useToast();
   const snapshotRef = useRef<AccessSnapshot | null>(null);
+  const accessKey = boardAccessKey(board, user);
 
   useEffect(() => {
-    if (!board || !user) return;
+    if (!board || !user || !accessKey) return;
 
     const next: AccessSnapshot = {
       visibility: board.visibility,
       role: getSharedBoardMemberRole(user, board),
+      canContribute: Boolean(board.can_contribute),
     };
     const prev = snapshotRef.current;
 
@@ -47,6 +62,20 @@ export function useBoardAccessChangeNotice(
           'info',
           `Your role changed from ${BOARD_ROLE_LABELS[prev.role]} to ${BOARD_ROLE_LABELS[next.role]}.`,
         );
+      } else if (
+        board.visibility === 'shared'
+        && !prev.canContribute
+        && next.canContribute
+        && prev.role === 'viewer'
+      ) {
+        showToast('info', 'You can now edit cards on this board.');
+      } else if (
+        board.visibility === 'shared'
+        && prev.canContribute
+        && !next.canContribute
+        && next.role === 'viewer'
+      ) {
+        showToast('info', 'Your access is now view-only on this board.');
       }
 
       if (board.visibility === 'shared' && prev.role && !next.role && Number(board.created_by) !== user.id) {
@@ -58,5 +87,5 @@ export function useBoardAccessChangeNotice(
     }
 
     snapshotRef.current = next;
-  }, [board, user, showToast]);
+  }, [accessKey, board, user, showToast]);
 }

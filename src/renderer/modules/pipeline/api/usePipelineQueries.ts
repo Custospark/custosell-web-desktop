@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { replaceEqualDeep } from '@tanstack/query-core';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
@@ -27,6 +28,7 @@ import type {
 import {
   addLeadToKanban,
   addStageToKanban,
+  applyBoardAccessFields,
   mergeBoardOnKanban,
   moveLeadOptimistic,
   removeLeadFromKanban,
@@ -38,10 +40,16 @@ import {
 import { pipelineItemLabel } from './pipelineCardTerms';
 import {
   PIPELINE_KANBAN_POLL_MS,
+  PIPELINE_BOARD_ACCESS_POLL_MS,
   PIPELINE_LEAD_POLL_MS,
   pipelineKeys,
 } from './pipelineQueryKeys';
-export { pipelineKeys, PIPELINE_KANBAN_POLL_MS, PIPELINE_LEAD_POLL_MS } from './pipelineQueryKeys';
+export {
+  pipelineKeys,
+  PIPELINE_KANBAN_POLL_MS,
+  PIPELINE_BOARD_ACCESS_POLL_MS,
+  PIPELINE_LEAD_POLL_MS,
+} from './pipelineQueryKeys';
 import {
   appendLeadActivitiesOptimistic,
   applyLeadMutationToCache,
@@ -214,7 +222,45 @@ export function usePipelineKanban(boardId: number, options?: { poll?: boolean })
     refetchInterval: options?.poll !== false && boardId ? PIPELINE_KANBAN_POLL_MS : false,
     refetchIntervalInBackground: false,
     placeholderData: (previousData) => previousData,
+    structuralSharing: (oldData, newData) => {
+      if (!oldData || !newData) return newData;
+      const merged = replaceEqualDeep(oldData, newData) as PipelineBoard;
+      return applyBoardAccessFields(merged, newData);
+    },
     ...kanbanQueryDefaults,
+  });
+}
+
+/**
+ * Polls the lightweight board endpoint and merges visibility/role/permission fields
+ * into the kanban cache so the top-bar badge and action gates update promptly.
+ */
+export function useBoardAccessSync(boardId: number, enabled = true) {
+  const qc = useQueryClient();
+
+  return useQuery({
+    queryKey: pipelineKeys.boardAccess(boardId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(PIPELINE.BOARD(boardId));
+      const fresh = normalizeItem<PipelineBoard>(data);
+      qc.setQueryData<PipelineBoard>(pipelineKeys.kanban(boardId), (old) =>
+        old ? applyBoardAccessFields(old, fresh) : old,
+      );
+      return {
+        visibility: fresh.visibility,
+        members: fresh.members,
+        current_member_role: fresh.current_member_role,
+        can_contribute: fresh.can_contribute,
+        can_manage_settings: fresh.can_manage_settings,
+        updated_at: fresh.updated_at,
+      };
+    },
+    enabled: enabled && boardId > 0,
+    refetchInterval: enabled && boardId > 0 ? PIPELINE_BOARD_ACCESS_POLL_MS : false,
+    refetchIntervalInBackground: false,
+    staleTime: PIPELINE_BOARD_ACCESS_POLL_MS / 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -287,6 +333,7 @@ export function useUpdatePipelineBoard() {
         (old as PipelineBoard[] | undefined)?.map((b) => (b.id === board.id ? { ...b, ...board } : b)),
       );
       qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
+      qc.invalidateQueries({ queryKey: pipelineKeys.boardAccess(board.id) });
       if (!vars.silent) showToast('success', 'Board updated');
     },
     onError: (err, _vars, context) => {

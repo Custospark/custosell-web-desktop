@@ -131,7 +131,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const roleDisplayName = currentRole?.name ?? (form.role_id ? `Role #${form.role_id}` : 'No role assigned');
   const roleHelperText = accountRules?.roleChangeBlockedReason
     ?? (currentRoleMissingFromOptions ? 'This role is not available in the editable business role list, so it cannot be changed here.' : null);
-  const modulesLocked = Boolean(accountRules?.isBusinessOwner && !accountRules?.isCurrentUser);
+  const modulesLocked = false;
   const assignableModules = useMemo(
     () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
     [authUser],

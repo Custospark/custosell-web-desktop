@@ -317,6 +317,8 @@ export interface PipelineBoardMessage {
   parent_id?: number | null;
   user_id: number;
   body: string;
+  /** True for board-automation generated posts — never editable; manager-only delete. */
+  is_system?: boolean;
   is_pinned?: boolean;
   pinned_at?: string | null;
   pinned_by?: number | null;

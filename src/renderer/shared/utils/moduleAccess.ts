@@ -386,11 +386,35 @@ export function canDeleteBoardConversationMessage(
     user_id?: number | null;
     user?: { id: number } | null;
     can_delete?: boolean;
+    is_system?: boolean;
   },
   board: Parameters<typeof canManageBoardSettings>[1],
   options?: Parameters<typeof canManageBoardSettings>[2],
 ): boolean {
+  if (!user) return false;
+
+  // Automation posts: managers only — even the triggering user cannot delete as "author".
+  if (message.is_system) {
+    if (typeof message.can_delete === 'boolean') return message.can_delete;
+    return canManageBoardSettings(user, board, options);
+  }
+
   return canDeletePipelineComment(user, message, board, options);
+}
+
+/** Board conversation edit: never for automation posts; otherwise author only. */
+export function canEditBoardConversationMessage(
+  user: AuthUser | null | undefined,
+  message: {
+    user_id?: number | null;
+    user?: { id: number } | null;
+    can_edit?: boolean;
+    is_system?: boolean;
+  },
+): boolean {
+  if (!user) return false;
+  if (message.is_system) return false;
+  return canEditPipelineComment(user, message);
 }
 
 /** Estimates module, boards-only staff, or invited collaborator routes under /estimates. */

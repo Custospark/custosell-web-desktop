@@ -28,7 +28,7 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import {
   canDeleteBoardConversationMessage,
-  canEditPipelineComment,
+  canEditBoardConversationMessage,
 } from '../../../shared/utils/moduleAccess';
 import {
   CONVERSATION_EMOJI_OPTIONS,
@@ -146,9 +146,15 @@ function MessageBubble({
                 Pinned
               </span>
             )}
+            {message.is_system && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-800">
+                <Zap className="h-3 w-3" />
+                Automation
+              </span>
+            )}
             <UserIdentityChip
-              name={message.user?.name ?? 'Team member'}
-              avatar={message.user?.avatar}
+              name={message.is_system ? 'Automation' : (message.user?.name ?? 'Team member')}
+              avatar={message.is_system ? undefined : message.user?.avatar}
               size="sm"
               nameClassName="text-sm font-semibold text-gray-900"
             />
@@ -513,7 +519,7 @@ export default function BoardConversationModal({
                     pinning: togglePin.isPending,
                     showActions: true,
                   };
-                  const canEditRoot = canEditPipelineComment(user, thread.root);
+                  const canEditRoot = canEditBoardConversationMessage(user, thread.root);
                   const canDeleteRoot = canDeleteBoardConversationMessage(
                     user,
                     thread.root,
@@ -551,7 +557,7 @@ export default function BoardConversationModal({
                         {...bubbleProps}
                       />
                       {shown.map((reply) => {
-                        const canEditReply = canEditPipelineComment(user, reply);
+                        const canEditReply = canEditBoardConversationMessage(user, reply);
                         const canDeleteReply = canDeleteBoardConversationMessage(
                           user,
                           reply,

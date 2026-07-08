@@ -169,7 +169,10 @@ export function usePipelineBoards(options?: {
   });
 }
 
-export function useBoardTeamMembers(workspace: 'pipeline' | 'estimates' = 'pipeline') {
+export function useBoardTeamMembers(
+  workspace: 'pipeline' | 'estimates' = 'pipeline',
+  options?: { enabled?: boolean },
+) {
   return useQuery<BoardTeamMember[]>({
     queryKey: pipelineKeys.teamMembers(workspace),
     queryFn: async () => {
@@ -178,6 +181,7 @@ export function useBoardTeamMembers(workspace: 'pipeline' | 'estimates' = 'pipel
     },
     staleTime: 30_000,
     placeholderData: (previousData) => previousData,
+    enabled: options?.enabled ?? true,
     ...listQueryDefaults,
   });
 }

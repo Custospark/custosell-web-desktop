@@ -2,7 +2,12 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useCreatePipelineBoard, useUpdatePipelineBoard, useUploadBoardBackground } from '../api/usePipelineQueries';
+import {
+  useBoardTeamMembers,
+  useCreatePipelineBoard,
+  useUpdatePipelineBoard,
+  useUploadBoardBackground,
+} from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineVisibility } from '../api/pipelineTypes';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
@@ -30,6 +35,20 @@ export default function CreateBoardModal({
   onClose,
   workspace = 'pipeline',
 }: CreateBoardModalProps) {
+  useBoardTeamMembers(workspace, { enabled: open });
+
+  if (!open) return null;
+
+  return <CreateBoardModalForm key={workspace} onClose={onClose} workspace={workspace} />;
+}
+
+function CreateBoardModalForm({
+  onClose,
+  workspace,
+}: {
+  onClose: () => void;
+  workspace: BoardWorkspace;
+}) {
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const createBoard = useCreatePipelineBoard();
@@ -45,19 +64,15 @@ export default function CreateBoardModal({
   const [bgType, setBgType] = useState('color');
   const [bgValue, setBgValue] = useState('#6366f1');
 
-  const reset = () => {
-    setName('');
-    setDescription('');
-    setVisibility(isEstimates ? 'private' : 'team');
-    setMembers([]);
-    setBgType('color');
-    setBgValue('#6366f1');
-    pendingUploadRef.current = null;
+  const handleClose = () => {
+    onClose();
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
+  const handleVisibilityChange = (next: PipelineVisibility) => {
+    setVisibility(next);
+    if (next !== 'shared') {
+      setMembers([]);
+    }
   };
 
   const handleBgSelect = (type: string, value: string) => {
@@ -108,10 +123,8 @@ export default function CreateBoardModal({
     );
   };
 
-  if (!open) return null;
-
   return (
-    <Modal isOpen={open} onClose={handleClose} title="Create board" size="lg">
+    <Modal isOpen onClose={handleClose} title="Create board" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <PipelineModalHero
           icon={Kanban}
@@ -119,8 +132,8 @@ export default function CreateBoardModal({
           title={isEstimates ? 'New personal board' : 'New pipeline board'}
           description={
             isEstimates
-              ? 'Organize your own tasks with the same background and visibility options as board settings.'
-              : 'Organize leads by stage with backgrounds, visibility, and team access.'
+              ? 'Set visibility and invite collaborators the same way as board settings — team, private, or shared with specific people.'
+              : 'Set visibility and invite collaborators the same way as board settings — team, private, or shared with specific people.'
           }
         />
 
@@ -162,10 +175,11 @@ export default function CreateBoardModal({
         <BoardVisibilitySection
           workspace={workspace}
           visibility={visibility}
-          onVisibilityChange={setVisibility}
+          onVisibilityChange={handleVisibilityChange}
           members={members}
           onMembersChange={setMembers}
           excludeUserId={user?.id}
+          loadTeamMembers
         />
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">

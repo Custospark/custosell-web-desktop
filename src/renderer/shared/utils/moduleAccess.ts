@@ -196,11 +196,10 @@ export function staffHasWorkspaceBoardAccess(
   modules: string[] | undefined,
   workspace: 'pipeline' | 'estimates',
 ): boolean {
-  const list = modules ?? [];
   if (workspace === 'estimates') {
-    return list.includes('estimates') || list.includes(ESTIMATES_FULL_MODULE);
+    return true;
   }
-  return list.includes('pipeline');
+  return (modules ?? []).includes('pipeline');
 }
 
 /** Staff with Estimates module or invited collaborators — not business owners. */

@@ -17,6 +17,8 @@ interface BoardVisibilitySectionProps {
   excludeUserId?: number;
   lockedUserId?: number;
   canManage?: boolean;
+  /** When false, skips loading staff (e.g. modal closed). */
+  loadTeamMembers?: boolean;
 }
 
 export default function BoardVisibilitySection({
@@ -28,9 +30,12 @@ export default function BoardVisibilitySection({
   excludeUserId,
   lockedUserId,
   canManage = true,
+  loadTeamMembers = true,
 }: BoardVisibilitySectionProps) {
   const options = visibilityOptionsForWorkspace(workspace);
-  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(workspace);
+  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(workspace, {
+    enabled: loadTeamMembers,
+  });
   const [memberSearch, setMemberSearch] = useState('');
   const teamQuery = memberSearch.trim().toLowerCase();
   const staffLoading = isLoading || (isFetching && teamMembers.length === 0);
@@ -82,6 +87,7 @@ export default function BoardVisibilitySection({
             excludeUserId={excludeUserId}
             lockedUserId={lockedUserId}
             canManage={canManage}
+            loadTeamMembers={loadTeamMembers}
           />
         </PipelineFormSection>
       )}
@@ -90,7 +96,7 @@ export default function BoardVisibilitySection({
         <PipelineFormSection title="Members with team access" icon={Users}>
           <p className="mb-2 text-xs text-gray-500">
             {workspace === 'estimates'
-              ? 'Everyone listed here can access this board through Projects & Estimates module access.'
+              ? 'Active staff in your business. Team boards are open to everyone with Projects & Estimates or Pipeline access; shared boards can invite anyone listed here.'
               : 'Everyone listed here can access this board through Pipeline module access.'}
           </p>
           {staffLoading ? (

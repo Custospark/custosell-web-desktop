@@ -39,6 +39,7 @@ interface BoardMemberPickerProps {
   lockedUserId?: number;
   canManage?: boolean;
   className?: string;
+  loadTeamMembers?: boolean;
 }
 
 function memberDisplayName(member: BoardMemberInput, staffName?: string): string {
@@ -53,12 +54,16 @@ export default function BoardMemberPicker({
   lockedUserId,
   canManage = true,
   className,
+  loadTeamMembers = true,
 }: BoardMemberPickerProps) {
-  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(workspace);
+  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(workspace, {
+    enabled: loadTeamMembers,
+  });
   const roleOptions = ROLE_OPTIONS(workspace);
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
   const [selectedRole, setSelectedRole] = useState<BoardMemberInput['role']>('editor');
   const [search, setSearch] = useState('');
+  const [staffSearch, setStaffSearch] = useState('');
 
   const staffLoading = isLoading || (isFetching && teamMembers.length === 0);
 
@@ -66,6 +71,16 @@ export default function BoardMemberPicker({
     () => teamMembers.filter((u) => u.id !== excludeUserId && !value.some((m) => m.user_id === u.id)),
     [teamMembers, value, excludeUserId],
   );
+
+  const staffQuery = staffSearch.trim().toLowerCase();
+  const filteredAvailableStaff = useMemo(() => {
+    if (!staffQuery) return availableStaff;
+    return availableStaff.filter(
+      (u) =>
+        u.name.toLowerCase().includes(staffQuery)
+        || (u.email?.toLowerCase().includes(staffQuery) ?? false),
+    );
+  }, [availableStaff, staffQuery]);
 
   const query = search.trim().toLowerCase();
   const filteredMembers = useMemo(() => {
@@ -131,6 +146,13 @@ export default function BoardMemberPicker({
 
   return (
     <div className={cn('space-y-4', className)}>
+      <input
+        type="search"
+        value={staffSearch}
+        onChange={(e) => setStaffSearch(e.target.value)}
+        placeholder="Search team members by name or email…"
+        className={pickerInputClass}
+      />
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[180px] flex-1">
           <label className="mb-1 block text-xs font-medium text-gray-700">Team member</label>
@@ -141,8 +163,10 @@ export default function BoardMemberPicker({
             aria-label="Team member to invite"
           >
             <option value="">Select staff…</option>
-            {availableStaff.map((u) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
+            {filteredAvailableStaff.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}{u.email ? ` — ${u.email}` : ''}
+              </option>
             ))}
           </select>
         </div>
@@ -170,6 +194,10 @@ export default function BoardMemberPicker({
           Invite
         </Button>
       </div>
+
+      {filteredAvailableStaff.length === 0 && staffQuery && (
+        <p className="text-xs text-gray-500">No team members match your search.</p>
+      )}
 
       {availableStaff.length === 0 && value.length === 0 && (
         <p className="text-sm text-gray-500">

@@ -3,6 +3,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
+import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 import {
@@ -146,15 +147,9 @@ function MessageBubble({
                 Pinned
               </span>
             )}
-            {message.is_system && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-800">
-                <Zap className="h-3 w-3" />
-                Automation
-              </span>
-            )}
             <UserIdentityChip
-              name={message.is_system ? 'Automation' : (message.user?.name ?? 'Team member')}
-              avatar={message.is_system ? undefined : message.user?.avatar}
+              name={message.user?.name ?? (message.is_system ? 'Automation' : 'Team member')}
+              avatar={message.user?.avatar}
               size="sm"
               nameClassName="text-sm font-semibold text-gray-900"
             />
@@ -168,8 +163,30 @@ function MessageBubble({
               <span className="text-[10px] font-medium uppercase tracking-wide text-blue-500">Sending…</span>
             )}
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {message.is_system && (
+              <span
+                className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-1.5 py-1"
+                title={message.user?.name ? `Automation by ${message.user.name}` : 'Automation'}
+              >
+                <span className="inline-flex items-center -space-x-2">
+                  <UserAvatar
+                    name={message.user?.name ?? 'Team member'}
+                    avatar={message.user?.avatar}
+                    size="xs"
+                    className="ring-violet-100"
+                  />
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white ring-2 ring-violet-100">
+                    <Zap className="h-3 w-3" />
+                  </span>
+                </span>
+                <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-violet-800">
+                  Automation
+                </span>
+              </span>
+            )}
           {showActions && persisted && (
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex items-center gap-1">
               {onReply && !editing && (
                 <button
                   type="button"
@@ -213,6 +230,7 @@ function MessageBubble({
               )}
             </div>
           )}
+          </div>
         </div>
         {editing ? (
           <div className="mt-2 space-y-2">
@@ -545,7 +563,7 @@ export default function BoardConversationModal({
                           setReplyingTo(null);
                         } : undefined}
                         onDelete={() => void handleDelete(thread.root)}
-                        onReply={canContribute ? () => {
+                        onReply={canContribute && !thread.root.is_system ? () => {
                           setReplyingTo(thread.root);
                           setEditingMessage(null);
                         } : undefined}

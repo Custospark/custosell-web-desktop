@@ -392,13 +392,9 @@ export function canDeleteBoardConversationMessage(
   options?: Parameters<typeof canManageBoardSettings>[2],
 ): boolean {
   if (!user) return false;
+  if (message.is_system) return false;
 
-  // Automation posts: managers only — even the triggering user cannot delete as "author".
-  if (message.is_system) {
-    if (typeof message.can_delete === 'boolean') return message.can_delete;
-    return canManageBoardSettings(user, board, options);
-  }
-
+  if (typeof message.can_delete === 'boolean') return message.can_delete;
   return canDeletePipelineComment(user, message, board, options);
 }
 

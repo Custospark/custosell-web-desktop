@@ -5,11 +5,12 @@ import { Button } from '../../../shared/components/buttons/Button';
 import {
   useBoardTeamMembers,
   useCreatePipelineBoard,
+  usePipelineKanban,
   useUpdatePipelineBoard,
   useUploadBoardBackground,
 } from '../api/usePipelineQueries';
 import { useApplyBoardTemplate, useBoardTemplates } from '../api/usePipelineConversationQueries';
-import type { BoardMemberInput, PipelineVisibility } from '../api/pipelineTypes';
+import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   PipelineFormSection,
@@ -19,6 +20,7 @@ import {
 } from './pipelineFormFields';
 import BoardVisibilitySection from './BoardVisibilitySection';
 import BoardBackgroundSection from './BoardBackgroundSection';
+import BoardAutomationsSection from './BoardAutomationsSection';
 import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import { AlignLeft, Kanban, Type } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -61,6 +63,10 @@ function CreateBoardModalForm({
   const { data: templates = [] } = useBoardTemplates(workspace, true);
   const applyTemplate = useApplyBoardTemplate();
 
+  const [step, setStep] = useState<'details' | 'alerts'>('details');
+  const [createdBoard, setCreatedBoard] = useState<PipelineBoard | null>(null);
+  const { data: createdBoardLive } = usePipelineKanban(createdBoard?.id ?? 0);
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<PipelineVisibility>(isEstimates ? 'private' : 'team');
@@ -68,8 +74,16 @@ function CreateBoardModalForm({
   const [bgType, setBgType] = useState('color');
   const [bgValue, setBgValue] = useState('#6366f1');
 
+  const boardForAlerts = createdBoardLive ?? createdBoard;
+  const stages = boardForAlerts?.stages ?? [];
+
   const handleClose = () => {
     onClose();
+  };
+
+  const finishAndOpen = (boardId: number) => {
+    handleClose();
+    navigate(isEstimates ? ROUTES.ESTIMATES.BOARD(boardId) : ROUTES.PIPELINE.BOARD(boardId));
   };
 
   const handleVisibilityChange = (next: PipelineVisibility) => {
@@ -93,7 +107,7 @@ function CreateBoardModalForm({
     setBgValue(URL.createObjectURL(file));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
@@ -125,15 +139,43 @@ function CreateBoardModalForm({
       await applyTemplate.mutateAsync({ boardId: board.id, templateId: Number(templateId) });
     }
 
-    handleClose();
-    navigate(
-      isEstimates ? ROUTES.ESTIMATES.BOARD(board.id) : ROUTES.PIPELINE.BOARD(board.id),
-    );
+    setCreatedBoard(board);
+    setStep('alerts');
   };
+
+  if (step === 'alerts' && createdBoard) {
+    return (
+      <Modal isOpen onClose={() => finishAndOpen(createdBoard.id)} title="Conversation alerts" size="lg">
+        <div className="space-y-5">
+          <PipelineModalHero
+            icon={Kanban}
+            tone="violet"
+            title="Set up column alerts"
+            description={`Choose which columns on “${name.trim()}” should post to the board conversation. You can change these anytime in board settings.`}
+          />
+          <BoardAutomationsSection
+            boardId={createdBoard.id}
+            stages={stages}
+            boardName={name.trim()}
+            canManage
+            compact
+          />
+          <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+            <Button type="button" variant="secondary" onClick={() => finishAndOpen(createdBoard.id)}>
+              Skip for now
+            </Button>
+            <Button type="button" onClick={() => finishAndOpen(createdBoard.id)}>
+              Open board
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal isOpen onClose={handleClose} title="Create board" size="lg">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleCreateBoard} className="space-y-5">
         <PipelineModalHero
           icon={Kanban}
           tone="indigo"
@@ -187,7 +229,7 @@ function CreateBoardModalForm({
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500">
-              Applies default columns, labels, starter resources, and automations after the board is created.
+              Applies default columns, labels, starter resources, and conversation alerts after the board is created.
             </p>
           </PipelineFormSection>
         )}
@@ -218,7 +260,7 @@ function CreateBoardModalForm({
             className="inline-flex items-center gap-2"
           >
             <Kanban className="h-4 w-4" />
-            Create board
+            Continue
           </Button>
         </div>
       </form>

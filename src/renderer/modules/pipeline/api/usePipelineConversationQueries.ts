@@ -7,7 +7,6 @@ import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQue
 import { notificationKeys } from '../../notifications/api/NotificationQueries';
 import type {
   PipelineActivityReactions,
-  PipelineBoardAutomation,
   PipelineBoardActivityEvent,
   PipelineBoardConversationSummary,
   PipelineBoardMessage,
@@ -75,18 +74,6 @@ export function useBoardConversationActivity(boardId: number, enabled = true) {
     },
     enabled: enabled && boardId > 0,
     staleTime: 15_000,
-  });
-}
-
-export function useBoardAutomations(boardId: number, enabled = true) {
-  return useQuery({
-    queryKey: pipelineConversationKeys.automations(boardId),
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(PIPELINE.BOARD_AUTOMATIONS(boardId));
-      return normalizeList<PipelineBoardAutomation>(data);
-    },
-    enabled: enabled && boardId > 0,
-    staleTime: 30_000,
   });
 }
 
@@ -309,48 +296,6 @@ export function useToggleBoardMessagePin(boardId: number) {
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not update pin'));
-    },
-  });
-}
-
-export function useCreateBoardAutomation(boardId: number) {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation({
-    mutationFn: async (payload: {
-      name: string;
-      trigger_type: PipelineBoardAutomation['trigger_type'];
-      trigger_stage_id?: number | null;
-      action_type: PipelineBoardAutomation['action_type'];
-      action_body: string;
-    }) => {
-      const { data } = await axiosInstance.post(PIPELINE.BOARD_AUTOMATIONS(boardId), payload);
-      return (data as { data: PipelineBoardAutomation }).data;
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: pipelineConversationKeys.automations(boardId) });
-      showToast('success', 'Automation created');
-    },
-    onError: (err: AxiosError<{ message?: string }>) => {
-      showToast('error', sanitizeErrorMessage(err, 'Could not create automation'));
-    },
-  });
-}
-
-export function useDeleteBoardAutomation(boardId: number) {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation({
-    mutationFn: async (automationId: number) => {
-      await axiosInstance.delete(PIPELINE.BOARD_AUTOMATION(automationId));
-      return automationId;
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: pipelineConversationKeys.automations(boardId) });
-      showToast('success', 'Automation removed');
-    },
-    onError: (err: AxiosError<{ message?: string }>) => {
-      showToast('error', sanitizeErrorMessage(err, 'Could not delete automation'));
     },
   });
 }

@@ -341,7 +341,14 @@ export interface PipelineBoardAutomation {
   name: string;
   trigger_type: 'stage_entered' | 'status_won' | 'status_lost';
   trigger_stage_id?: number | null;
-  trigger_stage?: { id: number; name: string } | null;
+  trigger_stage?: {
+    id: number;
+    name: string;
+    sort_order?: number;
+    is_won?: boolean;
+    is_lost?: boolean;
+    color?: string | null;
+  } | null;
   action_type: 'conversation_post' | 'conversation_notify';
   action_body: string;
   is_active: boolean;

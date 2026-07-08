@@ -6,11 +6,8 @@ import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 import {
-  useBoardAutomations,
   useBoardConversationActivity,
   useBoardConversationMessages,
-  useCreateBoardAutomation,
-  useDeleteBoardAutomation,
   useDeleteBoardMessage,
   useMarkBoardConversationRead,
   usePostBoardMessage,
@@ -18,8 +15,9 @@ import {
   useToggleBoardMessageReaction,
   useUpdateBoardMessage,
 } from '../api/usePipelineConversationQueries';
+import { useBoardAutomations } from '../api/usePipelineAutomationQueries';
 import { useBoardResourceMembers } from '../api/usePipelineResourceQueries';
-import type { PipelineBoardMessage, PipelineStage } from '../api/pipelineTypes';
+import type { PipelineBoardMessage } from '../api/pipelineTypes';
 import { pipelineInputClass } from './pipelineFormFields';
 import {
   buildBoardMessageThreads,
@@ -57,8 +55,7 @@ interface BoardConversationModalProps {
   boardId: number;
   open: boolean;
   onClose: () => void;
-  stages?: PipelineStage[];
-  canManage?: boolean;
+  onOpenBoardSettings?: () => void;
 }
 
 function MessageBubble({
@@ -284,8 +281,7 @@ export default function BoardConversationModal({
   boardId,
   open,
   onClose,
-  stages = [],
-  canManage = false,
+  onOpenBoardSettings,
 }: BoardConversationModalProps) {
   const { confirm } = useConfirm();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -302,8 +298,6 @@ export default function BoardConversationModal({
   const deleteMessage = useDeleteBoardMessage(boardId);
   const toggleReaction = useToggleBoardMessageReaction(boardId);
   const togglePin = useToggleBoardMessagePin(boardId);
-  const createAutomation = useCreateBoardAutomation(boardId);
-  const deleteAutomation = useDeleteBoardAutomation(boardId);
   const markRead = useMarkBoardConversationRead(boardId);
 
   const [draft, setDraft] = useState('');
@@ -314,11 +308,6 @@ export default function BoardConversationModal({
   const [editingMessage, setEditingMessage] = useState<PipelineBoardMessage | null>(null);
   const [editBody, setEditBody] = useState('');
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(() => new Set());
-
-  const [autoName, setAutoName] = useState('');
-  const [autoTrigger, setAutoTrigger] = useState<'stage_entered' | 'status_won' | 'status_lost'>('stage_entered');
-  const [autoStageId, setAutoStageId] = useState<number | ''>('');
-  const [autoBody, setAutoBody] = useState('Card {card} moved to {column}');
 
   const threads = useMemo(() => buildBoardMessageThreads(messages), [messages]);
   const totalMessages = countBoardMessages(messages);
@@ -416,19 +405,6 @@ export default function BoardConversationModal({
   const handlePin = (message: PipelineBoardMessage) => {
     if (!isPersistedMessageId(message.id)) return;
     void togglePin.mutateAsync(message.id);
-  };
-
-  const handleCreateAutomation = async () => {
-    if (!autoName.trim() || !autoBody.trim()) return;
-    await createAutomation.mutateAsync({
-      name: autoName.trim(),
-      trigger_type: autoTrigger,
-      trigger_stage_id: autoTrigger === 'stage_entered' && autoStageId ? Number(autoStageId) : null,
-      action_type: 'conversation_post',
-      action_body: autoBody.trim(),
-    });
-    setAutoName('');
-    setAutoBody('Card {card} moved to {column}');
   };
 
   const showLoading = isLoading || (isFetching && messages.length === 0);
@@ -725,94 +701,55 @@ export default function BoardConversationModal({
         )}
 
         {tab === 'automations' && (
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-            {!canManage && (
-              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Only board managers can create automations.
-              </p>
-            )}
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+            <p className="rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-900">
+              Alerts are tied to this board&apos;s columns. Manage them in{' '}
+              {onOpenBoardSettings ? (
+                <button type="button" onClick={onOpenBoardSettings} className="font-semibold underline">
+                  Board settings
+                </button>
+              ) : (
+                <span className="font-semibold">Board settings</span>
+              )}
+              .
+            </p>
             {automationsLoading ? (
               <div className="flex justify-center py-12">
                 <LoadingSpinner />
               </div>
+            ) : automations.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center">
+                <Zap className="mx-auto h-8 w-8 text-gray-300" />
+                <p className="mt-3 text-sm font-medium text-gray-700">No conversation alerts yet</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Turn on alerts per column when you set up or edit this board.
+                </p>
+              </div>
             ) : (
-              <>
-                {automations.map((automation) => (
-                  <div key={automation.id} className="rounded-xl border border-gray-100 bg-white p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-gray-900">{automation.name}</p>
-                        <p className="mt-1 text-xs text-gray-500">
-                          When <span className="font-medium">{automation.trigger_type.replace('_', ' ')}</span>
-                          {automation.trigger_stage?.name ? ` · ${automation.trigger_stage.name}` : ''}
-                        </p>
-                        <p className="mt-2 text-sm text-gray-700">{automation.action_body}</p>
-                      </div>
-                      {canManage && (
-                        <button
-                          type="button"
-                          onClick={() => void deleteAutomation.mutateAsync(automation.id)}
-                          className="text-xs font-semibold text-red-600 hover:text-red-800"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {canManage && (
-                  <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-4">
-                    <p className="text-sm font-semibold text-gray-900">New automation</p>
-                    <div className="mt-3 space-y-2">
-                      <input
-                        value={autoName}
-                        onChange={(e) => setAutoName(e.target.value)}
-                        placeholder="Automation name"
-                        className={pipelineInputClass}
+              automations.map((automation) => (
+                <div key={automation.id} className="rounded-xl border border-gray-100 bg-white p-3">
+                  <div className="flex items-start gap-3">
+                    {automation.trigger_stage?.color && (
+                      <span
+                        className="mt-1 h-3 w-3 shrink-0 rounded-full"
+                        style={{ backgroundColor: automation.trigger_stage.color }}
                       />
-                      <select
-                        value={autoTrigger}
-                        onChange={(e) => setAutoTrigger(e.target.value as typeof autoTrigger)}
-                        className={pipelineInputClass}
-                      >
-                        <option value="stage_entered">Card enters column</option>
-                        <option value="status_won">Card marked Won</option>
-                        <option value="status_lost">Card marked Lost</option>
-                      </select>
-                      {autoTrigger === 'stage_entered' && (
-                        <select
-                          value={autoStageId}
-                          onChange={(e) => setAutoStageId(e.target.value ? Number(e.target.value) : '')}
-                          className={pipelineInputClass}
-                        >
-                          <option value="">Any column</option>
-                          {stages.map((stage) => (
-                            <option key={stage.id} value={stage.id}>
-                              {stage.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                      <textarea
-                        value={autoBody}
-                        onChange={(e) => setAutoBody(e.target.value)}
-                        rows={2}
-                        className={cn(pipelineInputClass, 'min-h-[72px] resize-y')}
-                        placeholder="Message to post — use {card}, {column}, {board}"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        loading={createAutomation.isPending}
-                        disabled={!autoName.trim() || !autoBody.trim()}
-                        onClick={() => void handleCreateAutomation()}
-                      >
-                        Add automation
-                      </Button>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900">
+                        {automation.trigger_stage?.name ?? automation.name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">{automation.name}</p>
+                      <p className="mt-2 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                        {automation.action_body}
+                      </p>
                     </div>
+                    <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                      Active
+                    </span>
                   </div>
-                )}
-              </>
+                </div>
+              ))
             )}
           </div>
         )}

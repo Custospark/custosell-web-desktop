@@ -22,9 +22,10 @@ import {
 } from './pipelineFormFields';
 import BoardVisibilitySection from './BoardVisibilitySection';
 import BoardBackgroundSection from './BoardBackgroundSection';
+import BoardAutomationsSection from './BoardAutomationsSection';
 import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import { addBoardUploadHistory, loadBoardUploadHistory } from '../api/boardUploadHistory';
-import { AlignLeft, Archive, Kanban, Type, Users } from 'lucide-react';
+import { AlignLeft, Archive, Kanban, Type, Users, Zap } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -250,6 +251,17 @@ function EditBoardModalForm({
             lockedUserId={board.created_by}
             canManage={canManageSettings}
           />
+        )}
+
+        {(board.stages?.length ?? 0) > 0 && (
+          <PipelineFormSection title="Conversation alerts" icon={Zap}>
+            <BoardAutomationsSection
+              boardId={board.id}
+              stages={board.stages ?? []}
+              boardName={name}
+              canManage={canManageSettings}
+            />
+          </PipelineFormSection>
         )}
 
         {!canManageSettings && (

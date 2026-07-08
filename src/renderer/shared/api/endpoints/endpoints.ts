@@ -142,7 +142,6 @@ export const PIPELINE = {
   BOARD_CONVERSATION_ATTACHMENT: (id: number) => `/pipeline/conversation/attachments/${id}`,
   BOARD_CONVERSATION_ACTIVITY: (boardId: number) => `/pipeline/boards/${boardId}/conversation/activity`,
   BOARD_AUTOMATIONS: (boardId: number) => `/pipeline/boards/${boardId}/automations`,
-  BOARD_AUTOMATION: (id: number) => `/pipeline/automations/${id}`,
   BOARD_TEMPLATES: '/pipeline/board-templates',
   BOARD_APPLY_TEMPLATE: (boardId: number) => `/pipeline/boards/${boardId}/apply-template`,
 };

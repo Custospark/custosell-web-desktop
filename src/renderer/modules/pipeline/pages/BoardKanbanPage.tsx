@@ -562,8 +562,10 @@ export default function BoardKanbanPage() {
         boardId={boardId}
         open={conversationOpen}
         onClose={() => setConversationOpen(false)}
-        stages={allStages}
-        canManage={canManageSettings}
+        onOpenBoardSettings={() => {
+          setConversationOpen(false);
+          setEditBoardOpen(true);
+        }}
       />
     </div>
   );

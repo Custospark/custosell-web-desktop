@@ -289,7 +289,13 @@ export function useToggleBoardMessagePin(boardId: number) {
     onSuccess: (message) => {
       qc.setQueryData<PipelineBoardMessage[]>(
         pipelineConversationKeys.messages(boardId),
-        (existing) => (existing ?? []).map((item) => (item.id === message.id ? message : item)),
+        (existing) => (existing ?? []).map((item) => {
+          if (item.id === message.id) return message;
+          if (message.is_pinned && item.is_pinned) {
+            return { ...item, is_pinned: false, pinned_at: null, pinned_by: null };
+          }
+          return item;
+        }),
       );
       void qc.invalidateQueries({ queryKey: pipelineConversationKeys.summary(boardId) });
       showToast('success', message.is_pinned ? 'Message pinned' : 'Message unpinned');

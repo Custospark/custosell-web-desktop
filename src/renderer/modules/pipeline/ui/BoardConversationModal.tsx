@@ -30,6 +30,7 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import {
   canDeleteBoardConversationMessage,
   canEditBoardConversationMessage,
+  canManageBoardSettings,
 } from '../../../shared/utils/moduleAccess';
 import {
   CONVERSATION_EMOJI_OPTIONS,
@@ -93,10 +94,10 @@ function MessageBubble({
   onPin,
   deleting,
   reacting,
-  pinning,
   onReact,
   onEmojiReact,
   showActions,
+  canPinMessages,
   canEditMessage,
   canDeleteMessage,
 }: {
@@ -114,10 +115,10 @@ function MessageBubble({
   onPin?: () => void;
   deleting: boolean;
   reacting: boolean;
-  pinning?: boolean;
   onReact: (reaction: 'like' | 'dislike') => void;
   onEmojiReact: (emoji: string) => void;
   showActions: boolean;
+  canPinMessages: boolean;
   canEditMessage: boolean;
   canDeleteMessage: boolean;
 }) {
@@ -196,12 +197,11 @@ function MessageBubble({
                   Reply
                 </button>
               )}
-              {message.can_pin && onPin && !editing && (
+              {canPinMessages && onPin && !editing && (
                 <button
                   type="button"
                   onClick={onPin}
-                  disabled={pinning}
-                  className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100"
                 >
                   <Pin className="h-3.5 w-3.5" />
                   {message.is_pinned ? 'Unpin' : 'Pin'}
@@ -362,6 +362,7 @@ export default function BoardConversationModal({
 
   const threads = useMemo(() => buildBoardMessageThreads(messages), [messages]);
   const totalMessages = countBoardMessages(messages);
+  const canModerateConversation = canManageBoardSettings(user, board ?? {}, boardAccess);
   const latestPersistedMessageId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       const id = messages[i]?.id;
@@ -534,8 +535,8 @@ export default function BoardConversationModal({
                   const bubbleProps = {
                     deleting: deleteMessage.isPending,
                     reacting: toggleReaction.isPending,
-                    pinning: togglePin.isPending,
                     showActions: true,
+                    canPinMessages: canModerateConversation,
                   };
                   const canEditRoot = canEditBoardConversationMessage(user, thread.root);
                   const canDeleteRoot = canDeleteBoardConversationMessage(
@@ -567,7 +568,7 @@ export default function BoardConversationModal({
                           setReplyingTo(thread.root);
                           setEditingMessage(null);
                         } : undefined}
-                        onPin={thread.root.can_pin ? () => handlePin(thread.root) : undefined}
+                        onPin={canModerateConversation ? () => handlePin(thread.root) : undefined}
                         onReact={(reaction) => handleReact(thread.root, reaction)}
                         onEmojiReact={(emoji) => handleEmojiReact(thread.root, emoji)}
                         canEditMessage={canEditRoot}
@@ -602,7 +603,7 @@ export default function BoardConversationModal({
                               setReplyingTo(null);
                             } : undefined}
                             onDelete={() => void handleDelete(reply)}
-                            onPin={reply.can_pin ? () => handlePin(reply) : undefined}
+                            onPin={canModerateConversation ? () => handlePin(reply) : undefined}
                             onReact={(reaction) => handleReact(reply, reaction)}
                             onEmojiReact={(emoji) => handleEmojiReact(reply, emoji)}
                             canEditMessage={canEditReply}

@@ -772,7 +772,14 @@ export default function BoardConversationModal({
                     )}
                   </div>
                   {event.user?.name && (
-                    <p className="mt-2 text-xs text-gray-500">by {event.user.name}</p>
+                    <div className="mt-2">
+                      <UserIdentityChip
+                        name={event.user.name}
+                        avatar={event.user.avatar}
+                        size="xs"
+                        nameClassName="text-xs font-medium text-gray-600"
+                      />
+                    </div>
                   )}
                 </div>
               ))

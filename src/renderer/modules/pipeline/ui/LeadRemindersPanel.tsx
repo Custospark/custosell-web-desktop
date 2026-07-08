@@ -12,9 +12,10 @@ import { Bell, Clock, Trash2 } from 'lucide-react';
 interface LeadRemindersPanelProps {
   leadId: number;
   boardId?: number;
+  canContribute?: boolean;
 }
 
-export default function LeadRemindersPanel({ leadId, boardId }: LeadRemindersPanelProps) {
+export default function LeadRemindersPanel({ leadId, boardId, canContribute = false }: LeadRemindersPanelProps) {
   const { data: reminders = [] } = useLeadReminders(leadId);
   const createReminder = useCreateLeadReminder(leadId, boardId);
   const cancelReminder = useCancelLeadReminder(leadId);
@@ -25,6 +26,7 @@ export default function LeadRemindersPanel({ leadId, boardId }: LeadRemindersPan
 
   return (
     <div className="space-y-4">
+      {canContribute ? (
       <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 space-y-3">
         <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
           <Bell className="h-4 w-4" />
@@ -70,6 +72,9 @@ export default function LeadRemindersPanel({ leadId, boardId }: LeadRemindersPan
           Set reminder (email + in-app)
         </Button>
       </div>
+      ) : (
+        <p className="text-xs text-gray-500">Viewers cannot schedule reminders on this card.</p>
+      )}
 
       {pending.length > 0 && (
         <ul className="space-y-2">
@@ -86,6 +91,7 @@ export default function LeadRemindersPanel({ leadId, boardId }: LeadRemindersPan
                   <p className="truncate text-xs text-gray-500">{reminder.message}</p>
                 )}
               </div>
+              {canContribute && (
               <button
                 type="button"
                 onClick={() => void cancelReminder.mutate(reminder.id)}
@@ -93,6 +99,7 @@ export default function LeadRemindersPanel({ leadId, boardId }: LeadRemindersPan
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
+              )}
             </li>
           ))}
         </ul>

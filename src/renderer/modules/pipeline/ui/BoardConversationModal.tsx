@@ -55,6 +55,7 @@ interface BoardConversationModalProps {
   boardId: number;
   open: boolean;
   onClose: () => void;
+  canContribute?: boolean;
   onOpenBoardSettings?: () => void;
 }
 
@@ -281,6 +282,7 @@ export default function BoardConversationModal({
   boardId,
   open,
   onClose,
+  canContribute = false,
   onOpenBoardSettings,
 }: BoardConversationModalProps) {
   const { confirm } = useConfirm();
@@ -505,10 +507,10 @@ export default function BoardConversationModal({
                           setReplyingTo(null);
                         }}
                         onDelete={() => void handleDelete(thread.root)}
-                        onReply={() => {
+                        onReply={canContribute ? () => {
                           setReplyingTo(thread.root);
                           setEditingMessage(null);
-                        }}
+                        } : undefined}
                         onPin={() => handlePin(thread.root)}
                         onReact={(reaction) => handleReact(thread.root, reaction)}
                         onEmojiReact={(emoji) => handleEmojiReact(thread.root, emoji)}
@@ -556,6 +558,12 @@ export default function BoardConversationModal({
             </div>
 
             <div className="relative shrink-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3">
+              {!canContribute ? (
+                <p className="text-xs text-blue-900">
+                  You have viewer access — you can read board conversation but cannot post messages.
+                </p>
+              ) : (
+              <>
               {replyingTo && (
                 <div className="mb-2 flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs text-gray-600 ring-1 ring-blue-100">
                   <span>
@@ -666,6 +674,8 @@ export default function BoardConversationModal({
               <p className="mt-2 text-[11px] text-gray-500">
                 Ctrl+Enter to send · @mention teammates · Pin key decisions from message actions
               </p>
+              </>
+              )}
             </div>
           </>
         )}

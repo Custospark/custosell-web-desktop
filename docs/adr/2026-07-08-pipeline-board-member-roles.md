@@ -34,15 +34,70 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 - Board owner (`created_by`)
 - Project board: project owner, full estimates access, or project `manager` role
 
-### Backend enforcement (`PipelineService`)
+### Frontend enforcement
+
+| Helper | Purpose |
+|--------|---------|
+| `canManageBoardSettings` | Settings modal, archive, stage CRUD, automations |
+| `canContributeToBoard` | Drag cards/columns, add cards, resources, card field edits, comments, conversation posts, reminders |
+| `normalizeBoardMemberRole` | Maps legacy `editor` → `viewer` on the client (permissions); API normalizes stored roles on output |
+
+**Kanban (`BoardKanbanPage`, `KanbanColumn`):**
+
+- Viewers: no card drag, column reorder, add card, or mark-complete toggle
+- Contributors: move cards/columns, add cards, edit card content
+- Managers: above + settings gear, add/edit/delete columns, archive cards
+
+**Card detail (`LeadDetailModal`, `CardDetailExtras`):**
+
+- Viewer banner when `!canContributeToBoard`
+- All form fields read-only for viewers (title, contact, labels, checklists, attachments, dates, priority)
+- Archive, convert, and proposal actions hidden or blocked unless role allows
+- `LeadRemindersPanel` and `LeadCommentsPanel` — viewers read only; contributors can post
+
+**Board conversation (`BoardConversationModal`):**
+
+- Composer (post, reply, attach) gated with `canContribute`
+- Pin/edit/delete still driven by per-message API flags (`can_pin`, `can_edit`, `can_delete`)
+- Board settings link from automations tab — managers only
+
+**Shared-board invites (`BoardMemberPicker`):**
+
+- Staff list uses `GET /pipeline/team-members?scope=business` (all active business staff)
+- Team visibility listing still uses `scope=workspace` (module access)
+
+### Backend enforcement (`PipelineService` + collaboration)
 
 | Action | Gate |
 |--------|------|
 | View kanban / leads | `assertCanViewBoard` |
-| Move lead, reorder columns, post conversation, add resources | `assertCanEditBoard` → contributor or manager on shared boards |
-| Board settings, archive board/lead, add/edit/delete stages, automations | `userCanManageBoard` / `assertCanManageBoard` → manager on shared boards |
+| Move lead, reorder columns, post conversation, add resources, card comments, reminders | `assertCanEditBoard` / `ensureCanEditBoard` → contributor or manager on shared boards |
+| Board settings, archive board/lead, add/edit/delete stages, automations, upload background, create polls | `userCanManageBoard` / `ensureCanManageBoard` → manager on shared boards |
 
-Legacy API value `editor` is normalized to `contributor` on read and write.
+**Collaboration service fixes (viewers were incorrectly allowed):**
+
+- `POST /pipeline/boards/{id}/background` — now `ensureCanManageBoard`
+- `POST /pipeline/boards/{boardId}/polls` — now `assertCanManageBoard`
+- `POST /pipeline/leads/{leadId}/reminders` — now `ensureCanEditBoard`
+
+Legacy API value `editor` is normalized on the backend (`normalizeBoardMemberRole`: `editor` → `contributor` for stored rows). **Do not write `editor` to the DB** — `ProjectService::syncProjectBoardMember` maps project roles to `contributor` or `viewer` only.
+
+`PipelineBoardResource` exposes server-authoritative flags for the current user:
+
+- `can_contribute` — mirrors `userCanContributeToBoard`
+- `can_manage_settings` — mirrors `userCanManageBoard`
+- `current_member_role` — normalized shared-board invite role (or `manager` for owner/BO)
+
+The frontend prefers these flags over client-side inference when present.
+
+**Team members API:**
+
+```
+GET /api/v1/pipeline/team-members?workspace=pipeline|estimates&scope=workspace|business
+```
+
+- `scope=workspace` (default) — staff with Pipeline/Estimates module access (team board member list)
+- `scope=business` — all active business staff (shared-board invite picker)
 
 ### Database migration
 
@@ -50,21 +105,6 @@ Legacy API value `editor` is normalized to `contributor` on read and write.
 
 1. `UPDATE` existing `editor` rows → `contributor`
 2. Alter `pipeline_board_members.role` enum to `viewer | contributor | manager` (default `contributor`)
-
-### Frontend enforcement
-
-| Helper | Purpose |
-|--------|---------|
-| `canManageBoardSettings` | Settings modal, archive, stage CRUD, automations |
-| `canContributeToBoard` | Drag cards/columns, add cards, resources, card field edits |
-| `normalizeBoardMemberRole` | Maps legacy `editor` → `contributor` |
-
-**UI surfaces:**
-
-- `BoardMemberPicker` — invite with Viewer / Contributor / Manager
-- `BoardKanbanPage` — contribute vs manage action gates
-- `LeadDetailModal` — viewer read-only banner; archive gated to managers
-- Project boards — unchanged; still use `ProjectMemberPicker` + `project_members`
 
 ### API contract
 
@@ -120,3 +160,6 @@ The `role` column starts as `ENUM('viewer', 'editor')`. Data cannot be updated t
 | Role utilities (FE) | `Frontend/src/renderer/modules/pipeline/api/boardRoleUtils.ts` |
 | Access helpers (FE) | `Frontend/src/renderer/shared/utils/moduleAccess.ts` |
 | Member picker (FE) | `Frontend/src/renderer/modules/pipeline/ui/BoardMemberPicker.tsx` |
+| Kanban UI (FE) | `Frontend/src/renderer/modules/pipeline/pages/BoardKanbanPage.tsx`, `KanbanColumn.tsx` |
+| Card detail (FE) | `Frontend/src/renderer/modules/pipeline/ui/LeadDetailModal.tsx`, `CardDetailExtras.tsx` |
+| Collaboration (BE) | `Backend/app/Services/Pipeline/PipelineCollaborationService.php` |

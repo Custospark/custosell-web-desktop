@@ -118,7 +118,8 @@ export default function LeadDetailModal({
   const stageColor = lead.stage?.color ?? '#6366f1';
   const resolvedBoardId = boardId ?? lead.board_id;
   const canArchive = board ? canManageBoardSettings(user, board, boardAccess) : false;
-  const canEditCard = board ? canContributeToBoard(user, board, boardAccess) : true;
+  const canEditCard = board ? canContributeToBoard(user, board, boardAccess) : false;
+  const fieldDisabled = !canEditCard;
 
   const patchLead = (payload: UpdateLeadPayload) => {
     if (!canEditCard) return;
@@ -219,7 +220,9 @@ export default function LeadDetailModal({
           <PipelineIconField label="Title" icon={Type}>
             <input
               defaultValue={lead.title}
-              className={pipelineInputClass}
+              readOnly={fieldDisabled}
+              disabled={fieldDisabled}
+              className={cn(pipelineInputClass, fieldDisabled && 'bg-gray-50')}
               onBlur={(e) => {
                 const v = e.target.value.trim();
                 if (v && v !== lead.title) {
@@ -233,18 +236,20 @@ export default function LeadDetailModal({
         <PipelineFormSection title="Card appearance" icon={Palette}>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-gray-600">Background color</label>
+            <div className={cn(fieldDisabled && 'pointer-events-none opacity-60')}>
             <PipelineColorPicker
               value={lead.background_color}
               presets={CARD_PRESET_COLORS}
               swatchSize="md"
-              allowClear
-              onClear={() => patchLead({ background_color: null })}
+              allowClear={canEditCard}
+              onClear={canEditCard ? () => patchLead({ background_color: null }) : undefined}
               onChange={(color) => patchLead({ background_color: color })}
             />
+            </div>
           </div>
         </PipelineFormSection>
 
-        <CardDetailExtras lead={lead} boardId={resolvedBoardId} />
+        <CardDetailExtras lead={lead} boardId={resolvedBoardId} canEdit={canEditCard} />
 
         {isLead && (
         <PipelineFormSection title="Contact" icon={User}>
@@ -253,7 +258,9 @@ export default function LeadDetailModal({
               <input
                 defaultValue={lead.contact_name ?? ''}
                 placeholder="Full name"
-                className={pipelineInputClass}
+                readOnly={fieldDisabled}
+                disabled={fieldDisabled}
+                className={cn(pipelineInputClass, fieldDisabled && 'bg-gray-50')}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v !== (lead.contact_name ?? '')) {
@@ -266,7 +273,9 @@ export default function LeadDetailModal({
               <input
                 defaultValue={lead.contact_phone ?? ''}
                 placeholder="Phone number"
-                className={pipelineInputClass}
+                readOnly={fieldDisabled}
+                disabled={fieldDisabled}
+                className={cn(pipelineInputClass, fieldDisabled && 'bg-gray-50')}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v !== (lead.contact_phone ?? '')) {
@@ -281,7 +290,9 @@ export default function LeadDetailModal({
               type="email"
               defaultValue={lead.contact_email ?? ''}
               placeholder="Email address"
-              className={pipelineInputClass}
+              readOnly={fieldDisabled}
+              disabled={fieldDisabled}
+              className={cn(pipelineInputClass, fieldDisabled && 'bg-gray-50')}
               onBlur={(e) => {
                 const v = e.target.value.trim();
                 if (v !== (lead.contact_email ?? '')) {
@@ -299,8 +310,9 @@ export default function LeadDetailModal({
             <PipelineIconField label="Source" icon={Tag}>
               <select
                 value={lead.source_id ?? ''}
+                disabled={fieldDisabled}
                 onChange={(e) => patchLead({ source_id: e.target.value ? Number(e.target.value) : null })}
-                className={pipelineSelectClass}
+                className={cn(pipelineSelectClass, fieldDisabled && 'bg-gray-50')}
               >
                 <option value="">None</option>
                 {(sources ?? []).map((s) => (
@@ -315,6 +327,7 @@ export default function LeadDetailModal({
                   lead.assignees?.map((a) => a.id)
                   ?? (lead.assigned_to ? [lead.assigned_to] : [])
                 }
+                disabled={fieldDisabled}
                 onChange={(ids) => {
                   patchLead({
                     assignee_ids: ids,
@@ -330,7 +343,9 @@ export default function LeadDetailModal({
                 type="number"
                 min="0"
                 defaultValue={lead.estimated_value}
-                className={pipelineInputClass}
+                readOnly={fieldDisabled}
+                disabled={fieldDisabled}
+                className={cn(pipelineInputClass, fieldDisabled && 'bg-gray-50')}
                 onBlur={(e) => {
                   const v = e.target.value ? Number(e.target.value) : null;
                   if (v !== lead.estimated_value) {
@@ -366,6 +381,7 @@ export default function LeadDetailModal({
           </div>
         )}
 
+        {canEditCard && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4">
           <div className="flex items-start gap-3">
             <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
@@ -380,8 +396,9 @@ export default function LeadDetailModal({
             </div>
           </div>
         </div>
+        )}
 
-        {canConvert && (
+        {canEditCard && canConvert && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-4">
             <div className="flex items-start gap-3">
               <div className="rounded-lg bg-violet-100 p-2 text-violet-700">
@@ -415,7 +432,7 @@ export default function LeadDetailModal({
         )}
 
         <PipelineFormSection title="Reminders" icon={Bell}>
-          <LeadRemindersPanel leadId={lead.id} boardId={resolvedBoardId} />
+          <LeadRemindersPanel leadId={lead.id} boardId={resolvedBoardId} canContribute={canEditCard} />
         </PipelineFormSection>
 
         <PipelineFormSection title="Comments" icon={MessageSquare}>

@@ -244,6 +244,7 @@ function EditBoardModalForm({
           <BoardVisibilitySection
             workspace={workspace}
             visibility={visibility}
+            savedVisibility={board.visibility}
             onVisibilityChange={setVisibility}
             members={members}
             onMembersChange={setMembers}

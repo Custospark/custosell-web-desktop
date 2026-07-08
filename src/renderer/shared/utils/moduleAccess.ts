@@ -1,6 +1,6 @@
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { normalizeBoardMemberRole } from '../../modules/pipeline/api/boardRoleUtils';
+import { normalizeBoardMemberRole, type BoardMemberRole } from '../../modules/pipeline/api/boardRoleUtils';
 
 export const ESTIMATES_FULL_MODULE = 'estimates_full';
 
@@ -242,6 +242,7 @@ export function canManageProjectTeam(
 export function canManageBoardSettings(
   user: AuthUser | null | undefined,
   board: {
+    can_manage_settings?: boolean;
     created_by?: number | null;
     project_id?: number | null;
     visibility?: string;
@@ -253,6 +254,7 @@ export function canManageBoardSettings(
   },
 ): boolean {
   if (!user) return false;
+  if (typeof board.can_manage_settings === 'boolean') return board.can_manage_settings;
   if (isBusinessOwner(user)) return true;
 
   const projectCreatedBy = options?.projectCreatedBy ?? null;
@@ -276,6 +278,7 @@ export function canManageBoardSettings(
 export function canContributeToBoard(
   user: AuthUser | null | undefined,
   board: {
+    can_contribute?: boolean;
     created_by?: number | null;
     project_id?: number | null;
     visibility?: string;
@@ -287,6 +290,7 @@ export function canContributeToBoard(
   },
 ): boolean {
   if (!user) return false;
+  if (typeof board.can_contribute === 'boolean') return board.can_contribute;
   if (canManageBoardSettings(user, board, options)) return true;
 
   if (board.project_id && options?.projectMembers) {
@@ -305,6 +309,23 @@ export function canContributeToBoard(
   }
 
   return false;
+}
+
+/** Invited role on a shared board, or null when visibility is not shared / user is not listed. */
+export function getSharedBoardMemberRole(
+  user: AuthUser | null | undefined,
+  board: {
+    current_member_role?: BoardMemberRole | null;
+    created_by?: number | null;
+    visibility?: string;
+    members?: { user_id: number; role: string }[];
+  },
+): BoardMemberRole | null {
+  if (!user || board.visibility !== 'shared') return null;
+  if (board.current_member_role) return board.current_member_role;
+  if (Number(board.created_by) === user.id) return 'manager';
+  const member = board.members?.find((m) => m.user_id === user.id);
+  return member ? normalizeBoardMemberRole(member.role) : null;
 }
 
 /** Comment author or board manager may delete user comments. */

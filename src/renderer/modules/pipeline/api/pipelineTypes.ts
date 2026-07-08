@@ -57,6 +57,10 @@ export interface PipelineBoard {
   creator?: PipelineUserRef;
   members?: PipelineBoardMember[];
   stages?: PipelineStage[];
+  /** Server-computed for the current user; prefer over client inference when present. */
+  can_contribute?: boolean;
+  can_manage_settings?: boolean;
+  current_member_role?: PipelineBoardMemberRole | null;
   created_at?: string;
   updated_at?: string;
 }

@@ -11,8 +11,8 @@ interface KanbanColumnProps {
   onLeadCommentsClick?: (lead: PipelineLead) => void;
   onLeadHistoryClick?: (lead: PipelineLead) => void;
   onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
-  onAddLead: (stageId: number) => void;
-  onDropLead: (leadId: number, stageId: number, position: number) => void;
+  onAddLead?: (stageId: number) => void;
+  onDropLead?: (leadId: number, stageId: number, position: number) => void;
   onDropColumn?: (draggedStageId: number, targetStageId: number) => void;
   onEditStage?: (stage: PipelineStage) => void;
   isProjectBoard?: boolean;
@@ -36,16 +36,23 @@ export default function KanbanColumn({
   const leads = stage.leads ?? [];
   const stageColor = stage.color ?? '#64748b';
   const itemNoun = isProjectBoard ? 'card' : 'lead';
-  const emptyColumnMessage = `Drop a ${itemNoun} here or add one`;
+  const canDropLeads = Boolean(onDropLead);
+  const canReorderColumns = Boolean(onDropColumn);
+  const canAddLeads = Boolean(onAddLead);
+  const emptyColumnMessage = canAddLeads
+    ? `Drop a ${itemNoun} here or add one`
+    : `No ${itemNoun}s in this column`;
+
   const totalValue = stage.total_value ?? leads.reduce((sum, l) => sum + (l.estimated_value ?? 0), 0);
   const currency = stage.currency ?? leads.find((l) => l.currency)?.currency ?? 'UGX';
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (!canDropLeads && !canReorderColumns) return;
     e.preventDefault();
-    if (e.dataTransfer.types.includes('text/stage-id')) {
+    if (e.dataTransfer.types.includes('text/stage-id') && canReorderColumns) {
       setColumnDragOver(true);
       setDragOver(false);
-    } else {
+    } else if (canDropLeads) {
       setDragOver(true);
       setColumnDragOver(false);
     }
@@ -63,7 +70,7 @@ export default function KanbanColumn({
     }
 
     const leadId = Number(e.dataTransfer.getData('text/lead-id'));
-    if (!leadId) return;
+    if (!leadId || !onDropLead) return;
     onDropLead(leadId, stage.id, leads.length + 1);
   };
 
@@ -82,21 +89,26 @@ export default function KanbanColumn({
         setDragOver(false);
         setColumnDragOver(false);
       }}
-      onDrop={handleDrop}
+      onDrop={canDropLeads || canReorderColumns ? handleDrop : undefined}
     >
       <div
-        draggable
-        onDragStart={(e) => {
+        draggable={canReorderColumns}
+        onDragStart={canReorderColumns ? (e) => {
           e.dataTransfer.setData('text/stage-id', String(stage.id));
           e.dataTransfer.effectAllowed = 'move';
-        }}
-        className="relative shrink-0 cursor-grab rounded-t-2xl border-b border-gray-100 px-3 py-3 active:cursor-grabbing"
+        } : undefined}
+        className={cn(
+          'relative shrink-0 rounded-t-2xl border-b border-gray-100 px-3 py-3',
+          canReorderColumns ? 'cursor-grab active:cursor-grabbing' : '',
+        )}
         style={{ background: `linear-gradient(135deg, ${stageColor}14, transparent)` }}
-        title="Drag to reorder column"
+        title={canReorderColumns ? 'Drag to reorder column' : undefined}
       >
         <div className="flex items-center justify-between gap-2 pr-14">
           <div className="flex min-w-0 items-center gap-2">
-            <GripVertical className="h-4 w-4 shrink-0 text-gray-300" aria-hidden />
+            {canReorderColumns && (
+              <GripVertical className="h-4 w-4 shrink-0 text-gray-300" aria-hidden />
+            )}
             <span
               className="h-3 w-3 shrink-0 rounded-full shadow-sm ring-2 ring-white"
               style={{ backgroundColor: stageColor }}
@@ -116,14 +128,16 @@ export default function KanbanColumn({
           </p>
         )}
         <div className="absolute right-2 top-3 flex shrink-0 items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => onAddLead(stage.id)}
-            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
-            title={isProjectBoard ? 'Add card to this stage' : 'Add lead to this stage'}
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+          {canAddLeads && (
+            <button
+              type="button"
+              onClick={() => onAddLead?.(stage.id)}
+              className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
+              title={isProjectBoard ? 'Add card to this stage' : 'Add lead to this stage'}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
           {onEditStage && (
             <div className="relative">
               <button
@@ -163,24 +177,31 @@ export default function KanbanColumn({
 
       <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">
         {leads.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => onAddLead(stage.id)}
-            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-8 text-center transition-colors hover:border-gray-300 hover:bg-gray-50"
-          >
-            <Inbox className="h-8 w-8 text-gray-300" />
-            <span className="text-xs font-medium text-gray-500">{emptyColumnMessage}</span>
-          </button>
+          canAddLeads ? (
+            <button
+              type="button"
+              onClick={() => onAddLead?.(stage.id)}
+              className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-8 text-center transition-colors hover:border-gray-300 hover:bg-gray-50"
+            >
+              <Inbox className="h-8 w-8 text-gray-300" />
+              <span className="text-xs font-medium text-gray-500">{emptyColumnMessage}</span>
+            </button>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/30 px-4 py-8 text-center">
+              <Inbox className="h-8 w-8 text-gray-300" />
+              <span className="text-xs font-medium text-gray-500">{emptyColumnMessage}</span>
+            </div>
+          )
         ) : (
           leads.map((lead) => (
             <div
               key={lead.id}
-              draggable
-              className="cursor-grab active:cursor-grabbing"
-              onDragStart={(e) => {
+              draggable={canDropLeads}
+              className={cn(canDropLeads && 'cursor-grab active:cursor-grabbing')}
+              onDragStart={canDropLeads ? (e) => {
                 e.dataTransfer.setData('text/lead-id', String(lead.id));
                 e.dataTransfer.effectAllowed = 'move';
-              }}
+              } : undefined}
             >
               <LeadCard
                 lead={lead}

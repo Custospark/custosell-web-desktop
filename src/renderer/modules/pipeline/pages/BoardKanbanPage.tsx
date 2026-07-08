@@ -47,7 +47,9 @@ import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, 
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useProject, useProjectMembers } from '../../estimates/api/useProjectQueries';
-import { canContributeToBoard, canManageBoardSettings } from '../../../shared/utils/moduleAccess';
+import { canContributeToBoard, canManageBoardSettings, getSharedBoardMemberRole } from '../../../shared/utils/moduleAccess';
+import BoardAccessBadges from '../ui/BoardAccessBadges';
+import { useBoardAccessChangeNotice } from '../ui/useBoardAccessChangeNotice';
 import type { PipelineBoardCollaborationSummary } from '../api/pipelineTypes';
 
 type BoardViewMode = 'kanban' | 'calendar';
@@ -135,6 +137,13 @@ export default function BoardKanbanPage() {
   const conversationUnreadCount = conversationSummary?.unread_count ?? 0;
 
   const canContributeResources = canContribute;
+
+  const mySharedBoardRole = useMemo(
+    () => (board ? getSharedBoardMemberRole(user, board) : null),
+    [board, user],
+  );
+
+  useBoardAccessChangeNotice(board, user);
 
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
@@ -278,8 +287,15 @@ export default function BoardKanbanPage() {
       style={boardBgStyle}
     >
       <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/85 px-3 py-3 backdrop-blur-sm sm:px-4">
-        <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80">
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80">
           <span>{workspaceLabel}</span>
+          {board && (
+            <BoardAccessBadges
+              visibility={board.visibility}
+              memberRole={mySharedBoardRole}
+              className="normal-case tracking-normal"
+            />
+          )}
           {isFetching && !isLoading && (
             <span className="normal-case tracking-normal text-blue-600">Refreshing…</span>
           )}
@@ -411,7 +427,7 @@ export default function BoardKanbanPage() {
               onLeadClick={(lead: PipelineLead) => setSelectedLeadId(lead.id)}
               onLeadCommentsClick={(lead) => setCommentsLeadId(lead.id)}
               onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
-              onToggleComplete={handleToggleComplete}
+              onToggleComplete={canContribute ? handleToggleComplete : undefined}
               onAddLead={canContribute ? (stageId) => setCreateStageId(stageId) : undefined}
               onDropLead={canContribute ? handleDropLead : undefined}
               onDropColumn={canContribute ? handleDropColumn : undefined}
@@ -564,10 +580,11 @@ export default function BoardKanbanPage() {
         boardId={boardId}
         open={conversationOpen}
         onClose={() => setConversationOpen(false)}
-        onOpenBoardSettings={() => {
+        canContribute={canContribute}
+        onOpenBoardSettings={canManageSettings ? () => {
           setConversationOpen(false);
           setEditBoardOpen(true);
-        }}
+        } : undefined}
       />
     </div>
   );

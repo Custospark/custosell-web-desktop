@@ -19,7 +19,7 @@ import {
   visibleReplies,
 } from './pipelineCommentThreads';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canDeletePipelineComment, canEditPipelineComment } from '../../../shared/utils/moduleAccess';
+import { canContributeToBoard, canDeletePipelineComment, canEditPipelineComment } from '../../../shared/utils/moduleAccess';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 
 interface LeadCommentsPanelProps {
@@ -223,6 +223,7 @@ export default function LeadCommentsPanel({
 }: LeadCommentsPanelProps) {
   const user = useAppSelector((s) => s.auth.user);
   const { confirm } = useConfirm();
+  const canContribute = board ? canContributeToBoard(user, board, boardAccess) : false;
   const addActivity = useAddPipelineActivity();
   const updateActivity = useUpdatePipelineActivity();
   const deleteActivity = useDeletePipelineActivity();
@@ -238,7 +239,7 @@ export default function LeadCommentsPanel({
   const totalComments = countUserComments(activities);
 
   const handlePost = async () => {
-    if (!note.trim()) return;
+    if (!canContribute || !note.trim()) return;
     await addActivity.mutateAsync({
       leadId,
       type: activityType,
@@ -322,6 +323,12 @@ export default function LeadCommentsPanel({
 
   return (
     <div className={cn('space-y-4', compact && 'space-y-3')}>
+      {!canContribute ? (
+        <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+          You have viewer access — you can read comments but cannot post or reply.
+        </p>
+      ) : (
+      <>
       {!compact && (
         <div className="flex flex-wrap gap-1.5">
           {COMMENT_TYPES.map(({ value, label, icon: Icon }) => (
@@ -393,6 +400,8 @@ export default function LeadCommentsPanel({
         <span>{totalComments} comment{totalComments === 1 ? '' : 's'}</span>
         <span className="hidden sm:inline">Newest first · Ctrl+Enter to send</span>
       </div>
+      </>
+      )}
 
       <ul className="max-h-[min(55vh,420px)] space-y-4 overflow-y-auto pr-1">
         {threads.length === 0 ? (
@@ -407,10 +416,10 @@ export default function LeadCommentsPanel({
               <li key={root.id} className="space-y-2">
                 <CommentBubble
                   {...commentBubbleProps(root)}
-                  onReply={() => {
+                  onReply={canContribute ? () => {
                     setReplyingTo(root);
                     setActivityType('comment');
-                  }}
+                  } : undefined}
                 />
                 {shown.length > 0 && (
                   <div className="space-y-2">

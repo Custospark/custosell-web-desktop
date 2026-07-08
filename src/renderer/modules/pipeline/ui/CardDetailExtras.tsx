@@ -37,13 +37,16 @@ const checklistTextareaClass = cn(
 interface CardDetailExtrasProps {
   lead: PipelineLead;
   boardId: number;
+  canEdit?: boolean;
 }
 
-export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProps) {
+export default function CardDetailExtras({ lead, boardId, canEdit = true }: CardDetailExtrasProps) {
   const { data: boardLabels = [] } = usePipelineLabels(boardId);
   const updateLead = useUpdatePipelineLead();
-  const patchLead = (payload: Record<string, unknown>) =>
+  const patchLead = (payload: Record<string, unknown>) => {
+    if (!canEdit) return;
     updateLead.mutate({ id: lead.id, board_id: boardId, silent: true, ...payload });
+  };
   const createLabel = useCreatePipelineLabel(boardId);
   const createChecklist = useCreatePipelineChecklist(lead.id, boardId);
   const updateChecklist = useUpdatePipelineChecklist(lead.id, boardId);
@@ -68,6 +71,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
   const isLead = (lead.card_type ?? 'lead') === 'lead';
 
   const toggleLabel = (labelId: number) => {
+    if (!canEdit) return;
     const next = new Set(selectedLabelIds);
     if (next.has(labelId)) next.delete(labelId);
     else next.add(labelId);
@@ -75,6 +79,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
   };
 
   const handleCreateLabel = () => {
+    if (!canEdit) return;
     const name = newLabelName.trim();
     if (!name) return;
     createLabel.mutate(
@@ -92,6 +97,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
   };
 
   const handleCreateChecklist = async () => {
+    if (!canEdit) return;
     const title = newChecklistTitle.trim() || 'Checklist';
     const checklist = await createChecklist.mutateAsync({
       title,
@@ -106,6 +112,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
   };
 
   const handleAddItem = async (checklistId: number) => {
+    if (!canEdit) return;
     const title = newItemTitle.trim();
     if (!title) return;
     await createItem.mutateAsync({
@@ -137,7 +144,9 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
           defaultValue={lead.description ?? ''}
           rows={3}
           placeholder="Add a more detailed description…"
-          className={cn(pipelineInputClass, 'resize-none pl-3')}
+          readOnly={!canEdit}
+          disabled={!canEdit}
+          className={cn(pipelineInputClass, 'resize-none pl-3', !canEdit && 'bg-gray-50 text-gray-600')}
           onBlur={(e) => {
             const v = e.target.value.trim() || null;
             if (v !== (lead.description ?? null)) {
@@ -153,7 +162,9 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
             <input
               type="date"
               defaultValue={lead.start_date?.slice(0, 10) ?? ''}
-              className={pipelineInputClass}
+              readOnly={!canEdit}
+              disabled={!canEdit}
+              className={cn(pipelineInputClass, !canEdit && 'bg-gray-50')}
               onBlur={(e) => {
                 const v = e.target.value || null;
                 if (v !== (lead.start_date?.slice(0, 10) ?? null)) {
@@ -166,7 +177,9 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
             <input
               type="date"
               defaultValue={(lead.due_date ?? lead.expected_close_date)?.slice(0, 10) ?? ''}
-              className={pipelineInputClass}
+              readOnly={!canEdit}
+              disabled={!canEdit}
+              className={cn(pipelineInputClass, !canEdit && 'bg-gray-50')}
               onBlur={(e) => {
                 const v = e.target.value || null;
                 const current = (lead.due_date ?? lead.expected_close_date)?.slice(0, 10) ?? null;
@@ -183,6 +196,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               <button
                 key={p.value}
                 type="button"
+                disabled={!canEdit}
                 onClick={() => patchLead({
                   priority: lead.priority === p.value ? null : p.value,
                 })}
@@ -206,6 +220,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               <button
                 key={label.id}
                 type="button"
+                disabled={!canEdit}
                 onClick={() => toggleLabel(label.id)}
                 className={cn(
                   'rounded-md px-2.5 py-1 text-xs font-semibold text-white transition-opacity',
@@ -218,7 +233,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
             ))}
           </div>
         )}
-        {showCreateLabel ? (
+        {canEdit && (showCreateLabel ? (
           <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-3 space-y-3">
             <input
               value={newLabelName}
@@ -274,7 +289,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
             <Plus className="h-3.5 w-3.5" />
             Create label
           </Button>
-        )}
+        ))}
       </PipelineFormSection>
 
       <PipelineFormSection
@@ -282,7 +297,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
         icon={CheckSquare}
         description="Break work into sections with a heading and description, then track items under each list."
       >
-        {!showCreateChecklist ? (
+        {canEdit && (!showCreateChecklist ? (
           <Button
             type="button"
             variant="secondary"
@@ -342,7 +357,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               </Button>
             </div>
           </div>
-        )}
+        ))}
 
         {(lead.checklists ?? []).map((checklist) => {
           const items = checklist.items ?? [];
@@ -354,7 +369,9 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                   <input
                     defaultValue={checklist.title}
                     placeholder="Checklist heading"
-                    className={cn(pipelineInputClass, 'pl-3 text-sm font-semibold')}
+                    readOnly={!canEdit}
+                    disabled={!canEdit}
+                    className={cn(pipelineInputClass, 'pl-3 text-sm font-semibold', !canEdit && 'bg-gray-50')}
                     onBlur={(e) => {
                       const title = e.target.value.trim() || 'Checklist';
                       if (title !== checklist.title) {
@@ -366,7 +383,9 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                     defaultValue={checklist.description ?? ''}
                     rows={2}
                     placeholder="Checklist description (optional)"
-                    className={checklistTextareaClass}
+                    readOnly={!canEdit}
+                    disabled={!canEdit}
+                    className={cn(checklistTextareaClass, !canEdit && 'bg-gray-50')}
                     onBlur={(e) => {
                       const description = e.target.value.trim() || null;
                       if (description !== (checklist.description ?? null)) {
@@ -375,6 +394,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                     }}
                   />
                 </div>
+                {canEdit && (
                 <button
                   type="button"
                   onClick={() => deleteChecklist.mutate(checklist.id)}
@@ -383,6 +403,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
+                )}
               </div>
 
               {items.length > 0 && (
@@ -407,7 +428,11 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                       <input
                         type="checkbox"
                         checked={item.is_done}
-                        onChange={(e) => updateItem.mutate({ id: item.id, is_done: e.target.checked })}
+                        disabled={!canEdit}
+                        onChange={(e) => {
+                          if (!canEdit) return;
+                          updateItem.mutate({ id: item.id, is_done: e.target.checked });
+                        }}
                         className="mt-1 rounded border-gray-300"
                         aria-label={`Mark ${item.title} as done`}
                       />
@@ -415,10 +440,13 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                         <input
                           defaultValue={item.title}
                           placeholder="Item heading"
+                          readOnly={!canEdit}
+                          disabled={!canEdit}
                           className={cn(
                             pipelineInputClass,
                             'pl-3 text-sm',
                             item.is_done && 'text-gray-400 line-through',
+                            !canEdit && 'bg-gray-50',
                           )}
                           onBlur={(e) => {
                             const title = e.target.value.trim();
@@ -431,7 +459,9 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                           defaultValue={item.description ?? ''}
                           rows={2}
                           placeholder="Item description (optional)"
-                          className={cn(checklistTextareaClass, item.is_done && 'text-gray-400')}
+                          readOnly={!canEdit}
+                          disabled={!canEdit}
+                          className={cn(checklistTextareaClass, item.is_done && 'text-gray-400', !canEdit && 'bg-gray-50')}
                           onBlur={(e) => {
                             const description = e.target.value.trim() || null;
                             if (description !== (item.description ?? null)) {
@@ -440,6 +470,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                           }}
                         />
                       </div>
+                      {canEdit && (
                       <button
                         type="button"
                         onClick={() => deleteItem.mutate(item.id)}
@@ -448,12 +479,13 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
+                      )}
                     </div>
                   </li>
                 ))}
               </ul>
 
-              {addingItemChecklistId === checklist.id ? (
+              {canEdit && (addingItemChecklistId === checklist.id ? (
                 <div className="mt-3 space-y-2 rounded-lg border border-dashed border-gray-300 bg-white p-3">
                   <input
                     value={newItemTitle}
@@ -500,13 +532,14 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
                   <Plus className="h-3.5 w-3.5" />
                   Add item
                 </button>
-              )}
+              ))}
             </article>
           );
         })}
       </PipelineFormSection>
 
       <PipelineFormSection title="Attachments" icon={Paperclip}>
+        {canEdit && (
         <input
           ref={fileRef}
           type="file"
@@ -518,6 +551,8 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
             e.target.value = '';
           }}
         />
+        )}
+        {canEdit && (
         <Button
           type="button"
           variant="secondary"
@@ -529,6 +564,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
           <Paperclip className="h-3.5 w-3.5" />
           Upload file
         </Button>
+        )}
         <ul className="space-y-2">
           {(lead.attachments ?? []).map((att) => (
             <li key={att.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -540,6 +576,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               >
                 {att.file_name}
               </a>
+              {canEdit && (
               <button
                 type="button"
                 onClick={() => deleteAttachment.mutate(att.id)}
@@ -547,6 +584,7 @@ export default function CardDetailExtras({ lead, boardId }: CardDetailExtrasProp
               >
                 <Trash2 className="h-4 w-4" />
               </button>
+              )}
             </li>
           ))}
           {!(lead.attachments ?? []).length && (

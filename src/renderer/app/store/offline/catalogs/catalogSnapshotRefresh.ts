@@ -14,6 +14,7 @@ import { refreshExpensesCatalogSnapshotsForSession } from './expensesCatalogSnap
 import { refreshDashboardSummarySnapshot } from './dashboardCatalogSnapshot';
 import { stockLedger } from '../inventory/stockLedger';
 import { store } from '../../store';
+import { canAccessModule } from '../../../../shared/utils/moduleAccess';
 
 function normalizeList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload.filter(Boolean) as T[];
@@ -111,8 +112,7 @@ export async function refreshStaffCatalogSnapshot(): Promise<void> {
 }
 
 export async function refreshAllServerCatalogSnapshots(): Promise<void> {
-  const modules = store.getState().auth.user?.modules ?? [];
-  const canAccess = (slug: string) => modules.includes(slug);
+  const user = store.getState().auth.user;
 
   await Promise.all([
     refreshProductCatalogSnapshot(),
@@ -120,9 +120,9 @@ export async function refreshAllServerCatalogSnapshots(): Promise<void> {
     refreshCustomerCatalogSnapshot(),
     refreshRoleCatalogSnapshot(),
     refreshStaffCatalogSnapshot(),
-    canAccess('sales') ? refreshSalesCatalogSnapshotsForSession() : Promise.resolve(),
-    canAccess('expenses') ? refreshExpensesCatalogSnapshotsForSession() : Promise.resolve(),
-    canAccess('dashboard') ? refreshDashboardSummarySnapshot() : Promise.resolve(),
+    canAccessModule(user, 'sales') ? refreshSalesCatalogSnapshotsForSession() : Promise.resolve(),
+    canAccessModule(user, 'expenses') ? refreshExpensesCatalogSnapshotsForSession() : Promise.resolve(),
+    canAccessModule(user, 'dashboard') ? refreshDashboardSummarySnapshot() : Promise.resolve(),
   ]);
 }
 

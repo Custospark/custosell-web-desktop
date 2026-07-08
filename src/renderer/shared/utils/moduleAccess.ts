@@ -81,17 +81,19 @@ function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   if (!Array.isArray(user.modules)) {
     return [];
   }
-  return user.modules.filter((m): m is BusinessModuleSlug =>
+  const normalized = user.modules.filter((m): m is BusinessModuleSlug =>
     (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
   );
+  if (normalized.includes('customers') && !normalized.includes('sales')) {
+    normalized.push('sales');
+  }
+  return normalized;
 }
 
-/** Modules an owner may grant to staff — mirrors owner’s enabled business modules. */
+/** Modules an owner may grant to staff — full business catalog. */
 export function assignableStaffModuleSlugs(owner: AuthUser | null | undefined): BusinessModuleSlug[] {
-  if (!owner || !isBusinessOwner(owner)) {
-    return [...BUSINESS_MODULE_SLUGS];
-  }
-  return resolvedOwnerBusinessModules(owner);
+  void owner;
+  return [...BUSINESS_MODULE_SLUGS];
 }
 
 /** Staff modules intersected with what the owner currently allows — for forms and display. */
@@ -103,7 +105,11 @@ export function intersectStaffModulesWithOwner(
   const normalized = (staffModules ?? []).filter((m): m is BusinessModuleSlug =>
     (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
   );
-  return normalized.filter((m) => allowed.has(m));
+  const filtered = normalized.filter((m) => allowed.has(m));
+  if (filtered.includes('customers') && !filtered.includes('sales')) {
+    filtered.push('sales');
+  }
+  return filtered;
 }
 
 /** Owner sidebar/API modules — settings is always included. */
@@ -175,13 +181,17 @@ export function buildStaffModulesPayload(
   businessModules: BusinessModuleSlug[],
   estimatesFullAccess: boolean,
 ): string[] {
-  if (!businessModules.includes('estimates')) {
-    return [...businessModules];
+  const normalized = [...businessModules];
+  if (normalized.includes('customers') && !normalized.includes('sales')) {
+    normalized.push('sales');
+  }
+  if (!normalized.includes('estimates')) {
+    return [...normalized];
   }
   if (estimatesFullAccess) {
-    return [...businessModules, ESTIMATES_FULL_MODULE];
+    return [...normalized, ESTIMATES_FULL_MODULE];
   }
-  return [...businessModules];
+  return [...normalized];
 }
 
 /** Project boards (+ member project detail) without full Estimates admin. */

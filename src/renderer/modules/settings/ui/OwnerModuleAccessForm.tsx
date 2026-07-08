@@ -107,7 +107,9 @@ export default function OwnerModuleAccessForm() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Module access</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Choose which sections appear in your sidebar. Settings always stays available so you can change this later.
+            Controls which sections appear in the app. Sales includes My Shift, where staff can record shift expenses.
+            Projects &amp; Estimates can be project boards only, or full workspace access when you enable it below.
+            Account and Custosell Guide remain available to everyone.
           </p>
         </div>
       </div>
@@ -158,7 +160,7 @@ export default function OwnerModuleAccessForm() {
                 <span>
                   <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
                   <span className="mt-0.5 block text-xs text-gray-600">
-                    Includes estimates, projects, insights, templates, and costing — not just project boards.
+                    Grants full access to estimates, projects, insights, templates, project boards, and costing reports — not just project boards.
                   </span>
                 </span>
               </label>

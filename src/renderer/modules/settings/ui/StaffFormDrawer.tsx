@@ -136,9 +136,6 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
     [authUser],
   );
-  // Always show the full module catalog (within the owner’s allowed set).
-  // The previous behavior rendered only selected modules, preventing staff module assignment.
-  const displayModules = assignableModules;
 
   useEffect(() => {
     if (!open || modulesLocked) return;
@@ -424,7 +421,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {assignableModules.map((module) => {
-              const checked = displayModules.includes(module) && form.modules.includes(module);
+              const checked = form.modules.includes(module);
               return (
                 <label
                   key={module}

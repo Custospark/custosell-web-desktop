@@ -136,7 +136,9 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
     [authUser],
   );
-  const displayModules = modulesLocked ? assignableModules : form.modules;
+  // Always show the full module catalog (within the owner’s allowed set).
+  // The previous behavior rendered only selected modules, preventing staff module assignment.
+  const displayModules = assignableModules;
 
   useEffect(() => {
     if (!open || modulesLocked) return;
@@ -159,9 +161,14 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     if (modulesLocked) return;
     setForm((prev) => {
       const removing = prev.modules.includes(module);
-      const modules = removing
+      let modules = removing
         ? prev.modules.filter((m) => m !== module)
         : [...prev.modules, module];
+
+      // Customers depends on Sales — keep UX aligned with backend normalization.
+      if (module === 'customers' && !removing && !modules.includes('sales')) {
+        modules = [...modules, 'sales'];
+      }
       return {
         ...prev,
         modules,

@@ -76,6 +76,8 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 - Viewers: notices and polls read-only — no post, dismiss, vote, or remove own vote
 - Viewers may mark notices read/unread (read tracking is not a write action on board content)
 - Contributors and managers may vote and remove their own vote at any time
+- Poll creators set an optional **voting deadline** (`closes_at`); voting is blocked after that time for everyone
+- Only the **poll creator** may edit a published poll (question, options, deadline, results visibility)
 - No one may remove another member's vote — Team participation is read-only
 
 **Live updates (all roles):**
@@ -97,7 +99,8 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 | View kanban / leads | `assertCanViewBoard` |
 | Move lead, reorder columns, post conversation, add resources, card comments, reminders | `assertCanEditBoard` / `ensureCanContributeToBoard` → contributor or manager on shared boards |
 | React on conversation messages or card comments | `ensureCanContributeToBoard` (viewers blocked) |
-| Vote on polls, remove own poll vote | `ensureCanContributeToBoard` (contributors and managers) |
+| Vote on polls, remove own poll vote | `ensureCanContributeToBoard` and poll not closed (`closes_at` in future or unset) |
+| Edit published poll | Poll creator only (`PATCH /pipeline/polls/{id}`) |
 | Remove another user's poll vote | Not allowed — own vote only |
 | Mark notices read | Any board member with view access |
 | Mark notices read, dismiss collaboration items (delete/dismiss) | `ensureCanContributeToBoard` (viewers blocked for dismiss) |

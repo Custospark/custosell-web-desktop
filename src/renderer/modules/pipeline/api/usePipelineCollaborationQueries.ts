@@ -274,6 +274,32 @@ export function useCreateBoardPoll(boardId: number) {
   });
 }
 
+export function useUpdateBoardPoll(boardId: number, leadId?: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (payload: {
+      pollId: number;
+      question?: string;
+      options?: { id?: number; label: string }[];
+      closes_at?: string | null;
+      results_visibility?: 'team' | 'creator_only';
+    }) => {
+      const { pollId, ...body } = payload;
+      const { data } = await axiosInstance.patch(PIPELINE.POLL(pollId), body);
+      return (data as { data: PipelinePoll }).data;
+    },
+    onSuccess: (poll) => {
+      applyPollToCache(qc, boardId, poll, leadId);
+      void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.summary(boardId) });
+      showToast('success', 'Poll updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not update poll'));
+    },
+  });
+}
+
 export function useVotePoll(boardId: number, leadId?: number) {
   const qc = useQueryClient();
   const { showToast } = useToast();

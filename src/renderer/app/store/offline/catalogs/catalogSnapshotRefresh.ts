@@ -13,6 +13,7 @@ import { refreshSalesCatalogSnapshotsForSession } from './salesCatalogSnapshot';
 import { refreshExpensesCatalogSnapshotsForSession } from './expensesCatalogSnapshot';
 import { refreshDashboardSummarySnapshot } from './dashboardCatalogSnapshot';
 import { stockLedger } from '../inventory/stockLedger';
+import { store } from '../../store';
 
 function normalizeList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload.filter(Boolean) as T[];
@@ -110,15 +111,18 @@ export async function refreshStaffCatalogSnapshot(): Promise<void> {
 }
 
 export async function refreshAllServerCatalogSnapshots(): Promise<void> {
+  const modules = store.getState().auth.user?.modules ?? [];
+  const canAccess = (slug: string) => modules.includes(slug);
+
   await Promise.all([
     refreshProductCatalogSnapshot(),
     refreshCategoryCatalogSnapshot(),
     refreshCustomerCatalogSnapshot(),
     refreshRoleCatalogSnapshot(),
     refreshStaffCatalogSnapshot(),
-    refreshSalesCatalogSnapshotsForSession(),
-    refreshExpensesCatalogSnapshotsForSession(),
-    refreshDashboardSummarySnapshot(),
+    canAccess('sales') ? refreshSalesCatalogSnapshotsForSession() : Promise.resolve(),
+    canAccess('expenses') ? refreshExpensesCatalogSnapshotsForSession() : Promise.resolve(),
+    canAccess('dashboard') ? refreshDashboardSummarySnapshot() : Promise.resolve(),
   ]);
 }
 

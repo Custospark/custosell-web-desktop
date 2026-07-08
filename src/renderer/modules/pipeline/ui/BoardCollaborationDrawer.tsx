@@ -13,8 +13,16 @@ import {
   useDeleteBoardPoll,
   useRemovePollVote,
   useSetAnnouncementRead,
+  useUpdateBoardPoll,
   useVotePoll,
 } from '../api/usePipelineCollaborationQueries';
+import type { PipelinePoll } from '../api/pipelineTypes';
+import {
+  datetimeLocalToIso,
+  formatPollDeadline,
+  minDatetimeLocalValue,
+  toDatetimeLocalValue,
+} from '../api/pollDateTimeUtils';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { PipelineUserAttribution } from './pipelineUserAttribution';
 import {
@@ -23,7 +31,9 @@ import {
   Check,
   CheckCircle2,
   Circle,
+  Clock,
   Megaphone,
+  Pencil,
   Pin,
   Plus,
   Trash2,
@@ -42,6 +52,13 @@ interface BoardCollaborationDrawerProps {
 
 type Tab = 'notices' | 'polls';
 type ResultsVisibility = 'team' | 'creator_only';
+
+type PollEditDraft = {
+  question: string;
+  options: { id?: number; label: string }[];
+  closesAt: string;
+  resultsVisibility: ResultsVisibility;
+};
 
 function CollaborationLoading() {
   return (
@@ -75,6 +92,7 @@ export default function BoardCollaborationDrawer({
   const deleteAnnouncement = useDeleteBoardAnnouncement(boardId);
   const setAnnouncementRead = useSetAnnouncementRead(boardId);
   const createPoll = useCreateBoardPoll(boardId);
+  const updatePoll = useUpdateBoardPoll(boardId);
   const votePoll = useVotePoll(boardId);
   const removePollVote = useRemovePollVote(boardId);
   const deletePoll = useDeleteBoardPoll(boardId);
@@ -83,7 +101,10 @@ export default function BoardCollaborationDrawer({
   const [noticeBody, setNoticeBody] = useState('');
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
+  const [pollClosesAt, setPollClosesAt] = useState('');
   const [resultsVisibility, setResultsVisibility] = useState<ResultsVisibility>('team');
+  const [editingPollId, setEditingPollId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<PollEditDraft | null>(null);
   const [markingAllRead, setMarkingAllRead] = useState(false);
 
   const unreadNotices = useMemo(
@@ -91,7 +112,7 @@ export default function BoardCollaborationDrawer({
     [announcements],
   );
   const pendingPolls = useMemo(
-    () => polls.filter((poll) => !poll.user_has_voted),
+    () => polls.filter((poll) => !poll.user_has_voted && !poll.is_closed && poll.can_vote !== false),
     [polls],
   );
 
@@ -117,7 +138,25 @@ export default function BoardCollaborationDrawer({
     setNoticeBody('');
     setPollQuestion('');
     setPollOptions(['', '']);
+    setPollClosesAt('');
     setResultsVisibility('team');
+    setEditingPollId(null);
+    setEditDraft(null);
+  };
+
+  const startEditPoll = (poll: PipelinePoll) => {
+    setEditingPollId(poll.id);
+    setEditDraft({
+      question: poll.question,
+      options: (poll.options ?? []).map((option) => ({ id: option.id, label: option.label })),
+      closesAt: toDatetimeLocalValue(poll.closes_at),
+      resultsVisibility: poll.results_visibility ?? 'team',
+    });
+  };
+
+  const cancelEditPoll = () => {
+    setEditingPollId(null);
+    setEditDraft(null);
   };
 
   const markNoticeRead = (id: number) => {
@@ -387,6 +426,26 @@ export default function BoardCollaborationDrawer({
                 </button>
               )}
               <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
+                <p className="text-xs font-semibold text-violet-900">Voting deadline</p>
+                <p className="mt-1 text-xs text-violet-700">Optional — voting closes automatically after this date and time.</p>
+                <input
+                  type="datetime-local"
+                  value={pollClosesAt}
+                  min={minDatetimeLocalValue()}
+                  onChange={(e) => setPollClosesAt(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                {pollClosesAt && (
+                  <button
+                    type="button"
+                    onClick={() => setPollClosesAt('')}
+                    className="mt-2 text-xs font-medium text-gray-500 hover:text-gray-700"
+                  >
+                    Clear deadline
+                  </button>
+                )}
+              </div>
+              <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
                 <p className="text-xs font-semibold text-violet-900">Results visible to</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
@@ -422,13 +481,16 @@ export default function BoardCollaborationDrawer({
                 loading={createPoll.isPending}
                 disabled={!pollQuestion.trim() || pollOptions.filter((o) => o.trim()).length < 2}
                 onClick={() => {
+                  const closesAt = datetimeLocalToIso(pollClosesAt);
                   void createPoll.mutateAsync({
                     question: pollQuestion.trim(),
                     options: pollOptions.map((o) => o.trim()).filter(Boolean),
                     results_visibility: resultsVisibility,
+                    closes_at: closesAt,
                   }).then(() => {
                     setPollQuestion('');
                     setPollOptions(['', '']);
+                    setPollClosesAt('');
                     setResultsVisibility('team');
                   });
                 }}
@@ -454,17 +516,153 @@ export default function BoardCollaborationDrawer({
                     (poll.votes ?? []).filter((v) => v.user_id === user?.id).map((v) => v.option_id),
                   );
                   const canManagePoll = poll.can_manage_poll === true;
+                  const canEditPoll = poll.can_edit_poll === true;
                   const canDismissPoll = poll.can_dismiss === true;
-                  const needsVote = !poll.user_has_voted;
-                  const canVote = canContribute && (poll.can_vote ?? true);
-                  const canRemoveOwnVote = canVote && (poll.can_remove_own_vote ?? poll.user_has_voted);
+                  const isClosed = poll.is_closed === true;
+                  const deadlineLabel = formatPollDeadline(poll.closes_at);
+                  const isEditing = editingPollId === poll.id && editDraft != null;
+                  const needsVote = !poll.user_has_voted && !isClosed;
+                  const canVote = canContribute && !isClosed && poll.can_vote !== false;
+                  const canRemoveOwnVote = poll.can_remove_own_vote === true;
+
+                  if (isEditing && editDraft) {
+                    return (
+                      <li
+                        key={poll.id}
+                        className="rounded-xl border border-violet-300 bg-violet-50/30 p-4 shadow-sm ring-1 ring-violet-200"
+                      >
+                        <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-violet-900">
+                          <Pencil className="h-4 w-4" />
+                          Edit poll
+                        </p>
+                        <div className="space-y-3">
+                          <input
+                            value={editDraft.question}
+                            onChange={(e) => setEditDraft({ ...editDraft, question: e.target.value })}
+                            placeholder="Poll question"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                          />
+                          {editDraft.options.map((opt, idx) => (
+                            <input
+                              key={opt.id ?? `new-${idx}`}
+                              value={opt.label}
+                              onChange={(e) => {
+                                const next = [...editDraft.options];
+                                next[idx] = { ...next[idx], label: e.target.value };
+                                setEditDraft({ ...editDraft, options: next });
+                              }}
+                              placeholder={`Option ${idx + 1}`}
+                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                            />
+                          ))}
+                          {editDraft.options.length < 8 && (
+                            <button
+                              type="button"
+                              onClick={() => setEditDraft({
+                                ...editDraft,
+                                options: [...editDraft.options, { label: '' }],
+                              })}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Add option
+                            </button>
+                          )}
+                          <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
+                            <p className="text-xs font-semibold text-violet-900">Voting deadline</p>
+                            <input
+                              type="datetime-local"
+                              value={editDraft.closesAt}
+                              onChange={(e) => setEditDraft({ ...editDraft, closesAt: e.target.value })}
+                              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            />
+                            {editDraft.closesAt && (
+                              <button
+                                type="button"
+                                onClick={() => setEditDraft({ ...editDraft, closesAt: '' })}
+                                className="mt-2 text-xs font-medium text-gray-500 hover:text-gray-700"
+                              >
+                                Remove deadline
+                              </button>
+                            )}
+                          </div>
+                          <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
+                            <p className="text-xs font-semibold text-violet-900">Results visible to</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditDraft({ ...editDraft, resultsVisibility: 'team' })}
+                                className={cn(
+                                  'rounded-md px-3 py-1.5 text-xs font-semibold ring-1',
+                                  editDraft.resultsVisibility === 'team'
+                                    ? 'bg-violet-600 text-white ring-violet-600'
+                                    : 'bg-white text-gray-600 ring-gray-200 hover:bg-violet-50',
+                                )}
+                              >
+                                All team members
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditDraft({ ...editDraft, resultsVisibility: 'creator_only' })}
+                                className={cn(
+                                  'rounded-md px-3 py-1.5 text-xs font-semibold ring-1',
+                                  editDraft.resultsVisibility === 'creator_only'
+                                    ? 'bg-violet-600 text-white ring-violet-600'
+                                    : 'bg-white text-gray-600 ring-gray-200 hover:bg-violet-50',
+                                )}
+                              >
+                                Only me (poll creator)
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              loading={updatePoll.isPending}
+                              disabled={
+                                !editDraft.question.trim()
+                                || editDraft.options.filter((o) => o.label.trim()).length < 2
+                              }
+                              onClick={() => {
+                                void updatePoll.mutateAsync({
+                                  pollId: poll.id,
+                                  question: editDraft.question.trim(),
+                                  options: editDraft.options
+                                    .map((o) => ({ id: o.id, label: o.label.trim() }))
+                                    .filter((o) => o.label),
+                                  closes_at: editDraft.closesAt
+                                    ? datetimeLocalToIso(editDraft.closesAt) ?? null
+                                    : null,
+                                  results_visibility: editDraft.resultsVisibility,
+                                }).then(() => cancelEditPoll());
+                              }}
+                            >
+                              Save changes
+                            </Button>
+                            <button
+                              type="button"
+                              onClick={cancelEditPoll}
+                              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  }
 
                   return (
                     <li
                       key={poll.id}
                       className={cn(
                         'rounded-xl border bg-white p-4 shadow-sm',
-                        needsVote ? 'border-violet-300 ring-1 ring-violet-200' : 'border-gray-200',
+                        isClosed
+                          ? 'border-gray-300 bg-gray-50/80'
+                          : needsVote
+                            ? 'border-violet-300 ring-1 ring-violet-200'
+                            : 'border-gray-200',
                       )}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -475,19 +673,31 @@ export default function BoardCollaborationDrawer({
                               user={poll.creator}
                               timestamp={poll.created_at}
                               suffix={
-                                canSeeResults ? (
-                                  <span className="text-gray-500">
-                                    · {totalVotes} vote{totalVotes === 1 ? '' : 's'}
-                                  </span>
-                                ) : poll.results_visibility === 'creator_only' ? (
-                                  <span className="text-violet-600">· Results hidden from team</span>
-                                ) : undefined
+                                <>
+                                  {deadlineLabel && (
+                                    <span className={cn(isClosed ? 'text-red-600' : 'text-gray-500')}>
+                                      · <Clock className="mr-0.5 inline h-3 w-3" />
+                                      {isClosed ? 'Closed' : 'Closes'} {deadlineLabel}
+                                    </span>
+                                  )}
+                                  {canSeeResults ? (
+                                    <span className="text-gray-500">
+                                      · {totalVotes} vote{totalVotes === 1 ? '' : 's'}
+                                    </span>
+                                  ) : poll.results_visibility === 'creator_only' ? (
+                                    <span className="text-violet-600">· Results hidden from team</span>
+                                  ) : null}
+                                </>
                               }
                             />
                           </div>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5">
-                          {needsVote && canVote ? (
+                          {isClosed ? (
+                            <span className="rounded-full bg-gray-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-700 ring-1 ring-gray-300">
+                              Closed
+                            </span>
+                          ) : needsVote && canVote ? (
                             <span className="rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                               Your vote
                             </span>
@@ -500,6 +710,16 @@ export default function BoardCollaborationDrawer({
                               <CheckCircle2 className="h-3 w-3" />
                               Voted
                             </span>
+                          )}
+                          {canEditPoll && (
+                            <button
+                              type="button"
+                              onClick={() => startEditPoll(poll)}
+                              className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100"
+                              title="Edit poll"
+                            >
+                              Edit
+                            </button>
                           )}
                           {canContribute && canManagePoll && (
                             <button
@@ -527,6 +747,12 @@ export default function BoardCollaborationDrawer({
                       {needsVote && canVote && (
                         <p className="mt-2 text-sm font-medium text-violet-800">
                           Choose one option — your vote saves immediately.
+                        </p>
+                      )}
+
+                      {isClosed && !poll.user_has_voted && (
+                        <p className="mt-2 text-sm font-medium text-gray-600">
+                          Voting closed{deadlineLabel ? ` on ${deadlineLabel}` : ''}.
                         </p>
                       )}
 

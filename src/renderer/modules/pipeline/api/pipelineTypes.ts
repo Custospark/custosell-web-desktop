@@ -249,6 +249,8 @@ export interface PipelinePoll {
   results_hidden?: boolean;
   participants?: PipelinePollParticipant[];
   can_manage_poll?: boolean;
+  can_edit_poll?: boolean;
+  is_closed?: boolean;
   can_vote?: boolean;
   can_remove_own_vote?: boolean;
   can_delete?: boolean;

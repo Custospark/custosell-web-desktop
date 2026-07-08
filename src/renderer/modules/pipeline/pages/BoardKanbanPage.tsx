@@ -78,7 +78,6 @@ export default function BoardKanbanPage() {
     isError,
     error,
     refetch,
-    isFetching,
   } = usePipelineKanban(boardId, { poll: true });
   useBoardAccessSync(boardId, boardId > 0);
   useBoardAnnouncements(boardId, boardId > 0);
@@ -301,9 +300,7 @@ export default function BoardKanbanPage() {
               className="normal-case tracking-normal"
             />
           )}
-          {isFetching && !isLoading && (
-            <span className="normal-case tracking-normal text-blue-600">Refreshing…</span>
-          )}
+          {/* Keeping the header clean — "Refreshing…" chip removed. */}
         </div>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="flex shrink-0 items-center gap-2 lg:min-w-[200px]">

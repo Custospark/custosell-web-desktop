@@ -594,7 +594,13 @@ export function patchAnnouncementOptimistic(
 }
 
 export function prependPollOptimistic(qc: QueryClient, boardId: number, poll: PipelinePoll, leadId?: number): void {
-  for (const key of [pipelineCollaborationKeys.polls(boardId), pipelineCollaborationKeys.polls(boardId, leadId)]) {
+  // Avoid writing twice to the same query key when `leadId` is undefined
+  // (pipelineCollaborationKeys.polls(boardId, undefined) normalizes to the same "board" key).
+  const keys = leadId === undefined
+    ? [pipelineCollaborationKeys.polls(boardId)]
+    : [pipelineCollaborationKeys.polls(boardId), pipelineCollaborationKeys.polls(boardId, leadId)];
+
+  for (const key of keys) {
     qc.setQueryData<PipelinePoll[]>(key, (existing) => [poll, ...(existing ?? [])]);
   }
   patchCollaborationSummary(qc, boardId, {
@@ -604,13 +610,21 @@ export function prependPollOptimistic(qc: QueryClient, boardId: number, poll: Pi
 }
 
 export function removePollOptimistic(qc: QueryClient, boardId: number, pollId: number, leadId?: number): void {
-  for (const key of [pipelineCollaborationKeys.polls(boardId), pipelineCollaborationKeys.polls(boardId, leadId)]) {
+  const keys = leadId === undefined
+    ? [pipelineCollaborationKeys.polls(boardId)]
+    : [pipelineCollaborationKeys.polls(boardId), pipelineCollaborationKeys.polls(boardId, leadId)];
+
+  for (const key of keys) {
     qc.setQueryData<PipelinePoll[]>(key, (existing) => (existing ?? []).filter((p) => p.id !== pollId));
   }
 }
 
 export function applyPollToCache(qc: QueryClient, boardId: number, poll: PipelinePoll, leadId?: number): void {
-  for (const key of [pipelineCollaborationKeys.polls(boardId), pipelineCollaborationKeys.polls(boardId, leadId)]) {
+  const keys = leadId === undefined
+    ? [pipelineCollaborationKeys.polls(boardId)]
+    : [pipelineCollaborationKeys.polls(boardId), pipelineCollaborationKeys.polls(boardId, leadId)];
+
+  for (const key of keys) {
     qc.setQueryData<PipelinePoll[]>(key, (existing) =>
       (existing ?? []).map((item) => (item.id === poll.id ? { ...item, ...poll } : item)),
     );

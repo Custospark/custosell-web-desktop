@@ -35,6 +35,8 @@ export default function KanbanColumn({
   const [menuOpen, setMenuOpen] = useState(false);
   const leads = stage.leads ?? [];
   const stageColor = stage.color ?? '#64748b';
+  const itemNoun = isProjectBoard ? 'card' : 'lead';
+  const emptyColumnMessage = `Drop a ${itemNoun} here or add one`;
   const totalValue = stage.total_value ?? leads.reduce((sum, l) => sum + (l.estimated_value ?? 0), 0);
   const currency = stage.currency ?? leads.find((l) => l.currency)?.currency ?? 'UGX';
 
@@ -118,7 +120,7 @@ export default function KanbanColumn({
             type="button"
             onClick={() => onAddLead(stage.id)}
             className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
-            title={isProjectBoard ? 'Add task to this stage' : 'Add lead to this stage'}
+            title={isProjectBoard ? 'Add card to this stage' : 'Add lead to this stage'}
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -167,7 +169,7 @@ export default function KanbanColumn({
             className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-8 text-center transition-colors hover:border-gray-300 hover:bg-gray-50"
           >
             <Inbox className="h-8 w-8 text-gray-300" />
-            <span className="text-xs font-medium text-gray-500">Drop a lead here or add one</span>
+            <span className="text-xs font-medium text-gray-500">{emptyColumnMessage}</span>
           </button>
         ) : (
           leads.map((lead) => (

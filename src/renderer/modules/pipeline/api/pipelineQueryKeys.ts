@@ -22,5 +22,11 @@ export const pipelineCollaborationKeys = {
   reminders: (leadId: number) => [...pipelineKeys.all, 'reminders', leadId] as const,
 };
 
+export const pipelineResourceKeys = {
+  summary: (boardId: number) => [...pipelineKeys.all, 'resources-summary', boardId] as const,
+  list: (boardId: number) => [...pipelineKeys.all, 'resources', boardId] as const,
+  members: (boardId: number) => [...pipelineKeys.all, 'resource-members', boardId] as const,
+};
+
 export const PIPELINE_KANBAN_POLL_MS = 45_000;
 export const PIPELINE_LEAD_POLL_MS = 30_000;

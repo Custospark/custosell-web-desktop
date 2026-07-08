@@ -124,6 +124,14 @@ export const PIPELINE = {
   POLL_VOTE: (pollId: number) => `/pipeline/polls/${pollId}/vote`,
   LEAD_REMINDERS: (leadId: number) => `/pipeline/leads/${leadId}/reminders`,
   REMINDER: (id: number) => `/pipeline/reminders/${id}`,
+  BOARD_RESOURCES_SUMMARY: (boardId: number) => `/pipeline/boards/${boardId}/resources/summary`,
+  BOARD_RESOURCE_MEMBERS: (boardId: number) => `/pipeline/boards/${boardId}/resources/members`,
+  BOARD_RESOURCES: (boardId: number) => `/pipeline/boards/${boardId}/resources`,
+  BOARD_RESOURCE_LINK: (boardId: number) => `/pipeline/boards/${boardId}/resources/link`,
+  BOARD_RESOURCE_UPLOAD: (boardId: number) => `/pipeline/boards/${boardId}/resources/upload`,
+  BOARD_RESOURCE: (id: number) => `/pipeline/resources/${id}`,
+  BOARD_RESOURCE_VIEW: (id: number) => `/pipeline/resources/${id}/view`,
+  BOARD_RESOURCE_DOWNLOAD: (id: number) => `/pipeline/resources/${id}/download`,
 };
 
 export const ACCOUNTING = {

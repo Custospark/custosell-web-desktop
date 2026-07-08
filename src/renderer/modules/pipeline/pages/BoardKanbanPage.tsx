@@ -39,6 +39,8 @@ import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
 import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
 import BoardCollaborationDrawer from '../ui/BoardCollaborationDrawer';
 import BoardCollaborationButton from '../ui/BoardCollaborationButton';
+import BoardResourcesModal from '../ui/BoardResourcesModal';
+import { useBoardResourcesSummary } from '../api/usePipelineResourceQueries';
 import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -95,6 +97,7 @@ export default function BoardKanbanPage() {
   const [collaborationOpen, setCollaborationOpen] = useState(false);
   const [collaborationInitialTab, setCollaborationInitialTab] = useState<'notices' | 'polls'>('notices');
   const [allBoardsOpen, setAllBoardsOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const user = useAppSelector((s) => s.auth.user);
@@ -108,6 +111,22 @@ export default function BoardKanbanPage() {
         projectMembers,
       })
     : false;
+
+  const { data: resourcesSummary } = useBoardResourcesSummary(boardId, boardId > 0, true);
+  const resourcesCount = resourcesSummary?.resources_count ?? 0;
+
+  const canContributeResources = useMemo(() => {
+    if (!board || !user) return false;
+    if (user.is_business_owner || canManageSettings) return true;
+    if (Number(board.created_by) === user.id) return true;
+    if (board.visibility === 'team') return true;
+    if (board.visibility === 'shared') {
+      const membership = board.members?.find((member) => member.user_id === user.id);
+      return membership?.role === 'editor';
+    }
+    if (isProjectBoard) return true;
+    return false;
+  }, [board, user, canManageSettings, isProjectBoard]);
 
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
@@ -401,6 +420,8 @@ export default function BoardKanbanPage() {
       <BoardSwitcherIcons
         allowCreate={allowCreateBoard}
         onOpenAll={() => setAllBoardsOpen(true)}
+        onOpenResources={() => setResourcesOpen(true)}
+        resourcesCount={resourcesCount}
         onCreateNew={() => setCreateBoardOpen(true)}
       />
 
@@ -508,6 +529,13 @@ export default function BoardKanbanPage() {
         open={collaborationOpen}
         initialTab={collaborationInitialTab}
         onClose={() => setCollaborationOpen(false)}
+      />
+
+      <BoardResourcesModal
+        boardId={boardId}
+        canContribute={canContributeResources}
+        open={resourcesOpen}
+        onClose={() => setResourcesOpen(false)}
       />
     </div>
   );

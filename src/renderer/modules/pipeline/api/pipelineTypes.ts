@@ -252,6 +252,38 @@ export interface PipelineBoardCollaborationSummary {
   has_attention?: boolean;
 }
 
+export type PipelineBoardResourceType = 'file' | 'link' | 'image';
+export type PipelineBoardResourceVisibility = 'board' | 'team' | 'members' | 'owner_only';
+
+export interface PipelineBoardResource {
+  id: number;
+  board_id: number;
+  type: PipelineBoardResourceType;
+  title: string;
+  description?: string | null;
+  visibility: PipelineBoardResourceVisibility;
+  group_name?: string | null;
+  url?: string | null;
+  file_name?: string | null;
+  file_path?: string | null;
+  file_url?: string | null;
+  mime_type?: string | null;
+  file_size?: number | null;
+  views_count: number;
+  downloads_count: number;
+  created_at?: string;
+  updated_at?: string;
+  owner?: PipelineUserRef | null;
+  members?: PipelineUserRef[];
+  can_manage?: boolean;
+  can_edit?: boolean;
+  can_delete?: boolean;
+}
+
+export interface PipelineBoardResourcesSummary {
+  resources_count: number;
+}
+
 export interface PipelineReminder {
   id: number;
   lead_id: number;

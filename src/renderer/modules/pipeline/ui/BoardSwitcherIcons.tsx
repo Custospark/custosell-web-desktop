@@ -1,8 +1,10 @@
-import { ArrowLeftRight, Plus } from 'lucide-react';
+import { ArrowLeftRight, FolderOpen, Plus } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardSwitcherIconsProps {
   onOpenAll: () => void;
+  onOpenResources?: () => void;
+  resourcesCount?: number;
   onCreateNew: () => void;
   allowCreate?: boolean;
   className?: string;
@@ -10,6 +12,8 @@ interface BoardSwitcherIconsProps {
 
 export default function BoardSwitcherIcons({
   onOpenAll,
+  onOpenResources,
+  resourcesCount = 0,
   onCreateNew,
   allowCreate = true,
   className,
@@ -36,6 +40,30 @@ export default function BoardSwitcherIcons({
         <ArrowLeftRight className="h-4 w-4 text-indigo-600" />
         <span className="hidden sm:inline">Switch boards</span>
       </button>
+      {onOpenResources && (
+        <button
+          type="button"
+          onClick={onOpenResources}
+          className={cn(
+            'relative inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300/90 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all',
+            'bg-gradient-to-r from-emerald-50 via-white to-teal-50 text-emerald-800',
+            'hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:shadow-md hover:shadow-emerald-200/50',
+            'active:scale-[0.98]',
+          )}
+          title="Board resources"
+          aria-label={resourcesCount > 0 ? `Board resources (${resourcesCount})` : 'Board resources'}
+        >
+          <span className="relative inline-flex shrink-0">
+            <FolderOpen className="h-4 w-4 text-emerald-600" />
+            {resourcesCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                {resourcesCount > 99 ? '99+' : resourcesCount}
+              </span>
+            )}
+          </span>
+          <span className="hidden sm:inline">Resources</span>
+        </button>
+      )}
       {allowCreate && (
         <button
           type="button"

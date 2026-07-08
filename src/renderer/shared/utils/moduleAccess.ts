@@ -77,12 +77,12 @@ export function isBusinessOwner(user: AuthUser | null | undefined): boolean {
 }
 
 function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
-  if (Array.isArray(user.modules)) {
-    return user.modules.filter((m): m is BusinessModuleSlug =>
-      (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
-    );
+  if (!Array.isArray(user.modules)) {
+    return [];
   }
-  return [...BUSINESS_MODULE_SLUGS];
+  return user.modules.filter((m): m is BusinessModuleSlug =>
+    (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
+  );
 }
 
 /** Modules an owner may grant to staff — mirrors owner’s enabled business modules. */

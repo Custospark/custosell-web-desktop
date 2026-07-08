@@ -23,6 +23,7 @@ import {
 import { LayoutGrid, ShieldCheck } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
 
 type ProfileResponse = { data?: AuthUser } | AuthUser;
 
@@ -75,10 +76,15 @@ export default function OwnerModuleAccessForm() {
       const { data } = await axiosInstance.get<ProfileResponse>(AUTH.ME);
       return extractAuthUser(data);
     },
-    onSuccess: (freshUser) => {
+    onSuccess: async (freshUser) => {
       dispatch(setUser(freshUser));
       setModules(resolvedOwnerBusinessModules(freshUser));
       setEstimatesFullAccess(staffHasFullEstimatesModule(freshUser.modules));
+      try {
+        await updateStoredAuthUser(freshUser);
+      } catch (err) {
+        console.warn('[Modules] Failed to persist module access to local session:', err);
+      }
       void queryClient.invalidateQueries({ queryKey: staffKeys.list() });
       showToast('success', 'Module access updated');
     },

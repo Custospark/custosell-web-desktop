@@ -260,8 +260,9 @@ export function useProfile() {
       }
       return userData;
     },
-    initialData: cachedUser ?? undefined,
-    staleTime: 5 * 60 * 1000,
+    placeholderData: cachedUser ?? undefined,
+    staleTime: 0,
+    refetchOnMount: 'always',
     retry: false,
     enabled: isInitialized && Boolean(token) && !isLocalSession,
   });

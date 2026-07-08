@@ -255,7 +255,8 @@ export default function BoardCollaborationDrawer({
               ) : (
                 sortedAnnouncements.map((item) => {
                   const showReadStats = canManage || item.created_by === user?.id;
-                  const canDeleteNotice = item.can_delete ?? (canManage || item.created_by === user?.id);
+                  const canDeleteNotice = item.can_delete ?? false;
+                  const canDismissNotice = item.can_dismiss ?? !canDeleteNotice;
                   return (
                     <li
                       key={item.id}
@@ -290,12 +291,12 @@ export default function BoardCollaborationDrawer({
                             />
                           </div>
                         </div>
-                        {canDeleteNotice && (
+                        {(canDeleteNotice || canDismissNotice) && (
                           <button
                             type="button"
                             onClick={() => void deleteAnnouncement.mutate(item.id)}
                             className="shrink-0 rounded-md bg-red-50 p-2 text-red-600 ring-1 ring-red-200 hover:bg-red-100"
-                            title="Remove notice for everyone"
+                            title={canDeleteNotice ? 'Remove notice for everyone' : 'Remove from my view'}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -444,7 +445,8 @@ export default function BoardCollaborationDrawer({
                   const myVotes = new Set(
                     (poll.votes ?? []).filter((v) => v.user_id === user?.id).map((v) => v.option_id),
                   );
-                  const canManagePoll = poll.can_manage_poll ?? (poll.created_by === user?.id || canManage);
+                  const canManagePoll = poll.can_manage_poll ?? poll.can_delete ?? (poll.created_by === user?.id || canManage);
+                  const canDismissPoll = poll.can_dismiss ?? !canManagePoll;
                   const needsVote = !poll.user_has_voted;
                   const canRemoveOwnVote = poll.can_remove_own_vote ?? poll.user_has_voted;
 
@@ -491,8 +493,19 @@ export default function BoardCollaborationDrawer({
                               type="button"
                               onClick={() => void deletePoll.mutate(poll.id)}
                               className="rounded-md bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-100"
+                              title="Delete poll for everyone"
                             >
-                              Delete poll
+                              Delete for all
+                            </button>
+                          )}
+                          {canDismissPoll && (
+                            <button
+                              type="button"
+                              onClick={() => void deletePoll.mutate(poll.id)}
+                              className="rounded-md bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-600 ring-1 ring-gray-200 hover:bg-gray-100"
+                              title="Remove from my view"
+                            >
+                              Dismiss
                             </button>
                           )}
                         </div>

@@ -84,6 +84,13 @@ export function formatHistoryActivity(
     };
   }
 
+  if (action === 'comment_edited') {
+    return {
+      headline: 'Comment edited',
+      detail: preview ?? activity.body ?? undefined,
+    };
+  }
+
   if (action === 'attachment_added' || action === 'attachment_removed') {
     const fileName = typeof meta.file_name === 'string' ? meta.file_name : preview;
     return {

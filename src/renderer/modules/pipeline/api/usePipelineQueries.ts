@@ -12,6 +12,8 @@ import type {
   PipelineCalendarDateField,
   PipelineChecklist,
   PipelineChecklistItem,
+  CreateChecklistPayload,
+  CreateChecklistItemPayload,
   PipelineAttachment,
   PipelineInsightsSummary,
   PipelineLabel,
@@ -46,10 +48,17 @@ import {
   buildOptimisticHistoryForUpdate,
   buildOptimisticStageChange,
   buildOptimisticSystemEntry,
+  applyLeadChecklistsOptimistic,
+  computeChecklistCounts,
   findKanbanLead,
+  mergeServerChecklist,
+  mergeServerChecklistItem,
   nextOptimisticId,
   patchLeadFieldsOptimistic,
   removeCommentWithHistoryOptimistic,
+  patchLeadActivityOptimistic,
+  replaceChecklistInLead,
+  replaceChecklistItemInLead,
   replaceOptimisticActivity,
 } from './pipelineOptimisticCache';
 
@@ -646,6 +655,49 @@ export function useDeletePipelineActivity() {
   });
 }
 
+export function useUpdatePipelineActivity() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      activityId,
+      body,
+    }: {
+      activityId: number;
+      body: string;
+      leadId: number;
+      boardId?: number;
+    }) => {
+      const { data } = await axiosInstance.patch(PIPELINE.ACTIVITY(activityId), { body });
+      return normalizeItem<PipelineLeadActivity>(data);
+    },
+    onMutate: async ({ activityId, body, leadId, boardId }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      patchLeadActivityOptimistic(qc, leadId, activityId, { body });
+      appendLeadActivitiesOptimistic(qc, leadId, boardId, [
+        buildOptimisticSystemEntry(leadId, 'Comment edited', {
+          action: 'comment_edited',
+          preview: body.slice(0, 120),
+        }),
+      ], { bumpComments: false });
+      return { previousLead };
+    },
+    onSuccess: (activity, vars) => {
+      patchLeadActivityOptimistic(qc, vars.leadId, activity.id, activity);
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(vars.leadId) });
+      showToast('success', 'Comment updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>, _vars, context) => {
+      if (context?.previousLead) {
+        qc.setQueryData(pipelineKeys.lead(_vars.leadId), context.previousLead);
+      }
+      showToast('error', sanitizeErrorMessage(err, 'Could not update comment'));
+    },
+  });
+}
+
 export function usePipelineSources() {
   return useQuery<PipelineSource[]>({
     queryKey: pipelineKeys.sources(),
@@ -996,24 +1048,51 @@ export function useDeletePipelineLabel(boardId: number) {
 export function useCreatePipelineChecklist(leadId: number, boardId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (title?: string) => {
-      const { data } = await axiosInstance.post(PIPELINE.LEAD_CHECKLISTS(leadId), { title: title || 'Checklist' });
+    mutationFn: async (payload: CreateChecklistPayload = {}) => {
+      const { data } = await axiosInstance.post(PIPELINE.LEAD_CHECKLISTS(leadId), {
+        title: payload.title || 'Checklist',
+        description: payload.description ?? null,
+      });
       return normalizeItem<PipelineChecklist>(data);
     },
-    onMutate: async (title) => {
-      const label = title || 'Checklist';
-      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
-      patchLeadFieldsOptimistic(
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const label = payload.title?.trim() || 'Checklist';
+      const tempId = nextOptimisticId();
+      const optimisticChecklist: PipelineChecklist = {
+        id: tempId,
+        lead_id: leadId,
+        title: label,
+        description: payload.description ?? null,
+        sort_order: (previousLead?.checklists?.length ?? 0) + 1,
+        items: [],
+      };
+      const checklists = [...(previousLead?.checklists ?? []), optimisticChecklist];
+      applyLeadChecklistsOptimistic(
         qc,
         leadId,
         boardId,
-        { checklist_total: (lead?.checklist_total ?? 0) + 1 },
+        checklists,
         buildOptimisticSystemEntry(leadId, `Checklist added: ${label}`, { action: 'checklist_added', title: label }),
       );
-      return { previousLead: lead };
+      return { previousLead, tempId };
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+    onSuccess: (serverChecklist, _vars, context) => {
+      qc.setQueryData<PipelineLead>(pipelineKeys.lead(leadId), (existing) => {
+        if (!existing || context?.tempId == null) return existing;
+        const checklists = mergeServerChecklist(existing.checklists ?? [], context.tempId, serverChecklist);
+        return { ...existing, checklists, ...computeChecklistCounts(checklists) };
+      });
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+        if (!lead) return old;
+        return updateLeadOnKanban(old as PipelineBoard, leadId, {
+          checklist_total: lead.checklist_total,
+          checklist_done: lead.checklist_done,
+        });
+      });
     },
     onError: (_err, _vars, context) => {
       if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
@@ -1021,26 +1100,135 @@ export function useCreatePipelineChecklist(leadId: number, boardId: number) {
   });
 }
 
-export function useCreateChecklistItem(leadId: number, boardId: number) {
+export function useUpdatePipelineChecklist(leadId: number, boardId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ checklistId, title }: { checklistId: number; title: string }) => {
-      const { data } = await axiosInstance.post(PIPELINE.CHECKLIST_ITEMS(checklistId), { title });
-      return normalizeItem<PipelineChecklistItem>(data);
+    mutationFn: async ({ id, ...payload }: Partial<PipelineChecklist> & { id: number }) => {
+      const { data } = await axiosInstance.patch(PIPELINE.CHECKLIST(id), payload);
+      return normalizeItem<PipelineChecklist>(data);
     },
-    onMutate: async ({ title }) => {
-      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
-      patchLeadFieldsOptimistic(
+    onMutate: async ({ id, ...payload }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const checklists = (previousLead?.checklists ?? []).map((checklist) =>
+        checklist.id === id ? { ...checklist, ...payload } : checklist,
+      );
+      applyLeadChecklistsOptimistic(qc, leadId, boardId, checklists);
+      return { previousLead };
+    },
+    onSuccess: (serverChecklist) => {
+      qc.setQueryData<PipelineLead>(pipelineKeys.lead(leadId), (existing) => {
+        if (!existing) return existing;
+        const checklists = replaceChecklistInLead(existing.checklists ?? [], serverChecklist.id, {
+          ...serverChecklist,
+          items: serverChecklist.items ?? existing.checklists?.find((c) => c.id === serverChecklist.id)?.items ?? [],
+        });
+        return { ...existing, checklists, ...computeChecklistCounts(checklists) };
+      });
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
+    },
+  });
+}
+
+export function useDeletePipelineChecklist(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (checklistId: number) => {
+      await axiosInstance.delete(PIPELINE.CHECKLIST(checklistId));
+      return checklistId;
+    },
+    onMutate: async (checklistId) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const removed = previousLead?.checklists?.find((checklist) => checklist.id === checklistId);
+      const checklists = (previousLead?.checklists ?? []).filter((checklist) => checklist.id !== checklistId);
+      applyLeadChecklistsOptimistic(
         qc,
         leadId,
         boardId,
-        { checklist_total: (lead?.checklist_total ?? 0) + 1 },
-        buildOptimisticSystemEntry(leadId, `Checklist item added: ${title}`, { action: 'checklist_item_added', title }),
+        checklists,
+        removed
+          ? buildOptimisticSystemEntry(leadId, `Checklist removed: ${removed.title}`, {
+              action: 'checklist_removed',
+              title: removed.title,
+            })
+          : undefined,
       );
-      return { previousLead: lead };
+      return { previousLead };
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+        if (!lead) return old;
+        return updateLeadOnKanban(old as PipelineBoard, leadId, {
+          checklist_total: lead.checklist_total,
+          checklist_done: lead.checklist_done,
+        });
+      });
+    },
+    onError: (err: AxiosError<{ message?: string }>, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete checklist'));
+    },
+  });
+}
+
+export function useCreateChecklistItem(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ checklistId, title, description }: CreateChecklistItemPayload) => {
+      const { data } = await axiosInstance.post(PIPELINE.CHECKLIST_ITEMS(checklistId), {
+        title,
+        description: description ?? null,
+      });
+      return normalizeItem<PipelineChecklistItem>(data);
+    },
+    onMutate: async ({ checklistId, title, description }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const tempId = nextOptimisticId();
+      const checklist = previousLead?.checklists?.find((entry) => entry.id === checklistId);
+      const optimisticItem: PipelineChecklistItem = {
+        id: tempId,
+        checklist_id: checklistId,
+        title,
+        description: description ?? null,
+        is_done: false,
+        sort_order: (checklist?.items?.length ?? 0) + 1,
+      };
+      const checklists = (previousLead?.checklists ?? []).map((entry) =>
+        entry.id === checklistId
+          ? { ...entry, items: [...(entry.items ?? []), optimisticItem] }
+          : entry,
+      );
+      applyLeadChecklistsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        checklists,
+        buildOptimisticSystemEntry(leadId, `Checklist item added: ${title}`, { action: 'checklist_item_added', title }),
+      );
+      return { previousLead, tempId };
+    },
+    onSuccess: (serverItem, _vars, context) => {
+      qc.setQueryData<PipelineLead>(pipelineKeys.lead(leadId), (existing) => {
+        if (!existing || context?.tempId == null) return existing;
+        const checklists = mergeServerChecklistItem(existing.checklists ?? [], context.tempId, serverItem);
+        return { ...existing, checklists, ...computeChecklistCounts(checklists) };
+      });
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+        if (!lead) return old;
+        return updateLeadOnKanban(old as PipelineBoard, leadId, {
+          checklist_total: lead.checklist_total,
+          checklist_done: lead.checklist_done,
+        });
+      });
     },
     onError: (_err, _vars, context) => {
       if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
@@ -1055,34 +1243,102 @@ export function useUpdateChecklistItem(leadId: number, boardId: number) {
       const { data } = await axiosInstance.patch(PIPELINE.CHECKLIST_ITEM(id), payload);
       return normalizeItem<PipelineChecklistItem>(data);
     },
-    onMutate: async ({ id, is_done, title }) => {
-      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+    onMutate: async ({ id, is_done, title, description }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const item = previousLead?.checklists?.flatMap((checklist) => checklist.items ?? []).find((entry) => entry.id === id);
       let historyEntry: PipelineLeadActivity | undefined;
-      let patch: Partial<PipelineLead> = {};
-      if (typeof is_done === 'boolean') {
-        const item = lead?.checklists?.flatMap((c) => c.items ?? []).find((i) => i.id === id);
-        const itemTitle = title ?? item?.title ?? 'Item';
-        if (item && item.is_done !== is_done) {
-          historyEntry = buildOptimisticSystemEntry(
-            leadId,
-            is_done ? `Checklist item completed: ${itemTitle}` : `Checklist item reopened: ${itemTitle}`,
-            { action: is_done ? 'checklist_item_done' : 'checklist_item_reopened', title: itemTitle },
-          );
-          const doneDelta = is_done ? 1 : -1;
-          patch = { checklist_done: Math.max(0, (lead?.checklist_done ?? 0) + doneDelta) };
-        }
+      const patch: Partial<PipelineChecklistItem> = {};
+      if (title !== undefined) patch.title = title;
+      if (description !== undefined) patch.description = description;
+      if (typeof is_done === 'boolean') patch.is_done = is_done;
+
+      const checklists = replaceChecklistItemInLead(
+        previousLead?.checklists ?? [],
+        id,
+        { ...(item ?? { id, checklist_id: 0, title: title ?? '', description: description ?? null, sort_order: 0, is_done: false }), ...patch },
+      );
+
+      if (typeof is_done === 'boolean' && item && item.is_done !== is_done) {
+        const itemTitle = title ?? item.title ?? 'Item';
+        historyEntry = buildOptimisticSystemEntry(
+          leadId,
+          is_done ? `Checklist item completed: ${itemTitle}` : `Checklist item reopened: ${itemTitle}`,
+          { action: is_done ? 'checklist_item_done' : 'checklist_item_reopened', title: itemTitle },
+        );
       }
-      if (historyEntry || Object.keys(patch).length > 0) {
-        patchLeadFieldsOptimistic(qc, leadId, boardId, patch, historyEntry);
-      }
-      return { previousLead: lead };
+
+      applyLeadChecklistsOptimistic(qc, leadId, boardId, checklists, historyEntry);
+      return { previousLead };
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
-      void qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+    onSuccess: (serverItem) => {
+      qc.setQueryData<PipelineLead>(pipelineKeys.lead(leadId), (existing) => {
+        if (!existing) return existing;
+        const checklists = replaceChecklistItemInLead(existing.checklists ?? [], serverItem.id, serverItem);
+        return { ...existing, checklists, ...computeChecklistCounts(checklists) };
+      });
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+        if (!lead) return old;
+        return updateLeadOnKanban(old as PipelineBoard, leadId, {
+          checklist_total: lead.checklist_total,
+          checklist_done: lead.checklist_done,
+        });
+      });
     },
     onError: (_err, _vars, context) => {
       if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
+    },
+  });
+}
+
+export function useDeleteChecklistItem(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (itemId: number) => {
+      await axiosInstance.delete(PIPELINE.CHECKLIST_ITEM(itemId));
+      return itemId;
+    },
+    onMutate: async (itemId) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.lead(leadId) });
+      const previousLead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      const removed = previousLead?.checklists
+        ?.flatMap((checklist) => checklist.items ?? [])
+        .find((item) => item.id === itemId);
+      const checklists = (previousLead?.checklists ?? []).map((checklist) => ({
+        ...checklist,
+        items: (checklist.items ?? []).filter((item) => item.id !== itemId),
+      }));
+      applyLeadChecklistsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        checklists,
+        removed
+          ? buildOptimisticSystemEntry(leadId, `Checklist item removed: ${removed.title}`, {
+              action: 'checklist_item_removed',
+              title: removed.title,
+            })
+          : undefined,
+      );
+      return { previousLead };
+    },
+    onSuccess: () => {
+      qc.setQueryData(pipelineKeys.kanban(boardId), (old) => {
+        if (!old) return old;
+        const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+        if (!lead) return old;
+        return updateLeadOnKanban(old as PipelineBoard, leadId, {
+          checklist_total: lead.checklist_total,
+          checklist_done: lead.checklist_done,
+        });
+      });
+    },
+    onError: (err: AxiosError<{ message?: string }>, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete checklist item'));
     },
   });
 }

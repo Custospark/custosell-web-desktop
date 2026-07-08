@@ -3,9 +3,9 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
-import { CornerDownRight, MessageSquare, Send, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { CornerDownRight, MessageSquare, Pencil, Send, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
 import type { PipelineLeadActivity } from '../api/pipelineTypes';
-import { useAddPipelineActivity, useDeletePipelineActivity } from '../api/usePipelineQueries';
+import { useAddPipelineActivity, useDeletePipelineActivity, useUpdatePipelineActivity } from '../api/usePipelineQueries';
 import { useToggleActivityReaction } from '../api/usePipelineCollaborationQueries';
 import { pipelineInputClass } from './pipelineFormFields';
 import {
@@ -19,7 +19,7 @@ import {
   visibleReplies,
 } from './pipelineCommentThreads';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canDeletePipelineComment } from '../../../shared/utils/moduleAccess';
+import { canDeletePipelineComment, canEditPipelineComment } from '../../../shared/utils/moduleAccess';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 
 interface LeadCommentsPanelProps {
@@ -43,20 +43,36 @@ function CommentBubble({
   activity,
   compact,
   isReply,
+  canEdit,
   canDelete,
+  onEdit,
   onDelete,
   onReply,
   deleting,
+  editing,
+  saving,
+  editBody,
+  onEditBodyChange,
+  onSaveEdit,
+  onCancelEdit,
   onReact,
   reacting,
 }: {
   activity: PipelineLeadActivity;
   compact: boolean;
   isReply?: boolean;
+  canEdit: boolean;
   canDelete: boolean;
+  onEdit?: () => void;
   onDelete: () => void;
   onReply?: () => void;
   deleting: boolean;
+  editing?: boolean;
+  saving?: boolean;
+  editBody?: string;
+  onEditBodyChange?: (value: string) => void;
+  onSaveEdit?: () => void;
+  onCancelEdit?: () => void;
   onReact: (reaction: 'like' | 'dislike') => void;
   reacting: boolean;
 }) {
@@ -90,7 +106,7 @@ function CommentBubble({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {onReply && (
+            {onReply && !editing && (
               <button
                 type="button"
                 onClick={onReply}
@@ -99,7 +115,18 @@ function CommentBubble({
                 Reply
               </button>
             )}
-            {canDelete && (
+            {canEdit && !editing && onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-100"
+                title="Edit comment"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            )}
+            {canDelete && !editing && (
               <button
                 type="button"
                 onClick={onDelete}
@@ -114,41 +141,73 @@ function CommentBubble({
             )}
           </div>
         </div>
-        {activity.body && (
-          <p className="mt-1.5 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words">
-            {activity.body}
-          </p>
+        {editing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              value={editBody ?? ''}
+              onChange={(e) => onEditBodyChange?.(e.target.value)}
+              rows={3}
+              className={cn(pipelineInputClass, 'min-h-[72px] resize-y text-sm')}
+            />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                loading={saving}
+                disabled={!editBody?.trim()}
+                onClick={() => void onSaveEdit?.()}
+              >
+                Save
+              </Button>
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+              >
+                <X className="h-3.5 w-3.5" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          activity.body && (
+            <p className="mt-1.5 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words">
+              {activity.body}
+            </p>
+          )
         )}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            disabled={reacting}
-            onClick={() => onReact('like')}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1 transition-colors',
-              activity.reactions?.user_reaction === 'like'
-                ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
-                : 'bg-emerald-50 text-emerald-600 ring-emerald-100 hover:bg-emerald-100',
-            )}
-          >
-            <ThumbsUp className="h-3.5 w-3.5" />
-            {activity.reactions?.likes ?? 0}
-          </button>
-          <button
-            type="button"
-            disabled={reacting}
-            onClick={() => onReact('dislike')}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1 transition-colors',
-              activity.reactions?.user_reaction === 'dislike'
-                ? 'bg-orange-100 text-orange-700 ring-orange-200'
-                : 'bg-orange-50 text-orange-600 ring-orange-100 hover:bg-orange-100',
-            )}
-          >
-            <ThumbsDown className="h-3.5 w-3.5" />
-            {activity.reactions?.dislikes ?? 0}
-          </button>
-        </div>
+        {!editing && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={reacting}
+              onClick={() => onReact('like')}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1 transition-colors',
+                activity.reactions?.user_reaction === 'like'
+                  ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
+                  : 'bg-emerald-50 text-emerald-600 ring-emerald-100 hover:bg-emerald-100',
+              )}
+            >
+              <ThumbsUp className="h-3.5 w-3.5" />
+              {activity.reactions?.likes ?? 0}
+            </button>
+            <button
+              type="button"
+              disabled={reacting}
+              onClick={() => onReact('dislike')}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ring-1 transition-colors',
+                activity.reactions?.user_reaction === 'dislike'
+                  ? 'bg-orange-100 text-orange-700 ring-orange-200'
+                  : 'bg-orange-50 text-orange-600 ring-orange-100 hover:bg-orange-100',
+              )}
+            >
+              <ThumbsDown className="h-3.5 w-3.5" />
+              {activity.reactions?.dislikes ?? 0}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -165,11 +224,14 @@ export default function LeadCommentsPanel({
   const user = useAppSelector((s) => s.auth.user);
   const { confirm } = useConfirm();
   const addActivity = useAddPipelineActivity();
+  const updateActivity = useUpdatePipelineActivity();
   const deleteActivity = useDeletePipelineActivity();
   const toggleReaction = useToggleActivityReaction(leadId);
   const [note, setNote] = useState('');
   const [activityType, setActivityType] = useState<'comment' | 'call' | 'email' | 'meeting'>('comment');
   const [replyingTo, setReplyingTo] = useState<PipelineLeadActivity | null>(null);
+  const [editingActivity, setEditingActivity] = useState<PipelineLeadActivity | null>(null);
+  const [editBody, setEditBody] = useState('');
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(() => new Set());
 
   const threads = useMemo(() => buildCommentThreads(activities), [activities]);
@@ -206,13 +268,57 @@ export default function LeadCommentsPanel({
     });
   };
 
+  const startEdit = (activity: PipelineLeadActivity) => {
+    setEditingActivity(activity);
+    setEditBody(activity.body ?? '');
+    setReplyingTo(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingActivity(null);
+    setEditBody('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingActivity || !editBody.trim()) return;
+    await updateActivity.mutateAsync({
+      activityId: editingActivity.id,
+      body: editBody.trim(),
+      leadId,
+      boardId,
+    });
+    cancelEdit();
+  };
+
   const canDelete = (activity: PipelineLeadActivity) =>
     canDeletePipelineComment(user, activity, board ?? {}, boardAccess);
+
+  const canEdit = (activity: PipelineLeadActivity) =>
+    canEditPipelineComment(user, activity);
 
   const handleReact = (activity: PipelineLeadActivity, reaction: 'like' | 'dislike') => {
     const next = activity.reactions?.user_reaction === reaction ? null : reaction;
     void toggleReaction.mutateAsync({ activityId: activity.id, reaction: next });
   };
+
+  const commentBubbleProps = (activity: PipelineLeadActivity, isReply?: boolean) => ({
+    activity,
+    compact,
+    isReply,
+    canEdit: canEdit(activity),
+    canDelete: canDelete(activity),
+    editing: editingActivity?.id === activity.id,
+    saving: updateActivity.isPending,
+    editBody: editingActivity?.id === activity.id ? editBody : undefined,
+    onEditBodyChange: setEditBody,
+    onSaveEdit: () => void saveEdit(),
+    onCancelEdit: cancelEdit,
+    onEdit: () => startEdit(activity),
+    deleting: deleteActivity.isPending,
+    onDelete: () => void handleDelete(activity),
+    onReact: (reaction: 'like' | 'dislike') => handleReact(activity, reaction),
+    reacting: toggleReaction.isPending,
+  });
 
   return (
     <div className={cn('space-y-4', compact && 'space-y-3')}>
@@ -300,31 +406,18 @@ export default function LeadCommentsPanel({
             return (
               <li key={root.id} className="space-y-2">
                 <CommentBubble
-                  activity={root}
-                  compact={compact}
-                  canDelete={canDelete(root)}
-                  deleting={deleteActivity.isPending}
-                  onDelete={() => void handleDelete(root)}
+                  {...commentBubbleProps(root)}
                   onReply={() => {
                     setReplyingTo(root);
                     setActivityType('comment');
                   }}
-                  onReact={(reaction) => handleReact(root, reaction)}
-                  reacting={toggleReaction.isPending}
                 />
                 {shown.length > 0 && (
                   <div className="space-y-2">
                     {shown.map((reply) => (
                       <CommentBubble
                         key={reply.id}
-                        activity={reply}
-                        compact={compact}
-                        isReply
-                        canDelete={canDelete(reply)}
-                        deleting={deleteActivity.isPending}
-                        onDelete={() => void handleDelete(reply)}
-                        onReact={(reaction) => handleReact(reply, reaction)}
-                        reacting={toggleReaction.isPending}
+                        {...commentBubbleProps(reply, true)}
                       />
                     ))}
                   </div>

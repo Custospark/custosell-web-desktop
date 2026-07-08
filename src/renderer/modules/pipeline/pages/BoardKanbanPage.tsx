@@ -306,11 +306,12 @@ export default function BoardKanbanPage() {
               onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
               onAddLead={(stageId) => setCreateStageId(stageId)}
               onDropLead={handleDropLead}
-              onDropColumn={handleDropColumn}
-              onEditStage={(s) => setEditStage(s)}
+              onDropColumn={canManageSettings ? handleDropColumn : undefined}
+              onEditStage={canManageSettings ? (s) => setEditStage(s) : undefined}
               isProjectBoard={isTaskBoard}
             />
           ))}
+          {canManageSettings && (
           <button
             type="button"
             onClick={() => setAddStageOpen(true)}
@@ -319,6 +320,7 @@ export default function BoardKanbanPage() {
           >
             <Plus className="h-5 w-5" />
           </button>
+          )}
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">

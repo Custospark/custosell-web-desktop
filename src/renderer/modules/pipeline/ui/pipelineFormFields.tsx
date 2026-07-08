@@ -11,16 +11,20 @@ export const pipelineSelectClass =
 interface PipelineFormSectionProps {
   title: string;
   icon: LucideIcon;
+  description?: string;
   children: React.ReactNode;
   className?: string;
 }
 
-export function PipelineFormSection({ title, icon: Icon, children, className }: PipelineFormSectionProps) {
+export function PipelineFormSection({ title, icon: Icon, description, children, className }: PipelineFormSectionProps) {
   return (
     <div className={cn('overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm', className)}>
-      <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/80 px-4 py-3">
-        <Icon className="h-4 w-4 text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+      <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-gray-500" />
+          <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+        </div>
+        {description ? <p className="mt-1 pl-6 text-xs text-gray-500">{description}</p> : null}
       </div>
       <div className="space-y-4 p-4">{children}</div>
     </div>

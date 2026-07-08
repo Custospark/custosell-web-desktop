@@ -261,6 +261,16 @@ export function canDeletePipelineComment(
   return canManageBoardSettings(user, board, options);
 }
 
+/** Only the comment author may edit their comment. */
+export function canEditPipelineComment(
+  user: AuthUser | null | undefined,
+  activity: { user_id?: number | null; user?: { id: number } | null },
+): boolean {
+  if (!user) return false;
+  const authorId = activity.user_id ?? activity.user?.id;
+  return Boolean(authorId && authorId === user.id);
+}
+
 /** Estimates module, boards-only staff, or invited collaborator routes under /estimates. */
 export function canAccessEstimatesArea(
   user: AuthUser | null | undefined,

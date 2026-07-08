@@ -80,6 +80,7 @@ export interface PipelineChecklistItem {
   id: number;
   checklist_id: number;
   title: string;
+  description: string | null;
   is_done: boolean;
   sort_order: number;
 }
@@ -88,8 +89,20 @@ export interface PipelineChecklist {
   id: number;
   lead_id: number;
   title: string;
+  description: string | null;
   sort_order: number;
   items?: PipelineChecklistItem[];
+}
+
+export interface CreateChecklistPayload {
+  title?: string;
+  description?: string | null;
+}
+
+export interface CreateChecklistItemPayload {
+  checklistId: number;
+  title: string;
+  description?: string | null;
 }
 
 export interface PipelineAttachment {
@@ -188,6 +201,7 @@ export interface PipelineBoardAnnouncement {
   read_count?: number | null;
   team_member_count?: number | null;
   can_delete?: boolean;
+  can_dismiss?: boolean;
 }
 
 export interface PipelinePollParticipant {
@@ -225,6 +239,8 @@ export interface PipelinePoll {
   participants?: PipelinePollParticipant[];
   can_manage_poll?: boolean;
   can_remove_own_vote?: boolean;
+  can_delete?: boolean;
+  can_dismiss?: boolean;
 }
 
 export interface PipelineBoardCollaborationSummary {

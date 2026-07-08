@@ -34,6 +34,7 @@ import {
 interface BoardCollaborationDrawerProps {
   boardId: number;
   canManage: boolean;
+  canContribute?: boolean;
   open: boolean;
   initialTab?: Tab;
   onClose: () => void;
@@ -53,6 +54,7 @@ function CollaborationLoading() {
 export default function BoardCollaborationDrawer({
   boardId,
   canManage,
+  canContribute = true,
   open,
   initialTab = 'notices',
   onClose,
@@ -183,9 +185,15 @@ export default function BoardCollaborationDrawer({
         </button>
       </div>
 
+      {!canContribute && (
+        <p className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+          You have viewer access — board collaboration is read-only. You can browse notices and polls but cannot vote, post, or change anything.
+        </p>
+      )}
+
       {tab === 'notices' && (
         <div className="space-y-4">
-          {unreadNotices.length > 0 && !noticesShowLoading && (
+          {canContribute && unreadNotices.length > 0 && !noticesShowLoading && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
               <p className="text-sm font-medium text-amber-900">
                 {unreadNotices.length} unread notice{unreadNotices.length === 1 ? '' : 's'}
@@ -291,7 +299,7 @@ export default function BoardCollaborationDrawer({
                             />
                           </div>
                         </div>
-                        {(canDeleteNotice || canDismissNotice) && (
+                        {(canContribute && (canDeleteNotice || canDismissNotice)) && (
                           <button
                             type="button"
                             onClick={() => void deleteAnnouncement.mutate(item.id)}
@@ -303,6 +311,7 @@ export default function BoardCollaborationDrawer({
                         )}
                       </div>
 
+                      {canContribute && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         {!item.is_read ? (
                           <Button
@@ -325,6 +334,7 @@ export default function BoardCollaborationDrawer({
                           </button>
                         )}
                       </div>
+                      )}
                     </li>
                   );
                 })
@@ -336,7 +346,7 @@ export default function BoardCollaborationDrawer({
 
       {tab === 'polls' && (
         <div className="space-y-4">
-          {pendingPolls.length > 0 && !pollsShowLoading && (
+          {canContribute && pendingPolls.length > 0 && !pollsShowLoading && (
             <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
               <span className="font-semibold">Tap any option to vote instantly.</span>
               {' '}No extra submit step needed.
@@ -478,17 +488,17 @@ export default function BoardCollaborationDrawer({
                           </div>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5">
-                          {needsVote ? (
+                          {canContribute && needsVote ? (
                             <span className="rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                               Your vote
                             </span>
-                          ) : (
+                          ) : canContribute && !needsVote ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
                               <CheckCircle2 className="h-3 w-3" />
                               Voted
                             </span>
-                          )}
-                          {canManagePoll && (
+                          ) : null}
+                          {canContribute && canManagePoll && (
                             <button
                               type="button"
                               onClick={() => void deletePoll.mutate(poll.id)}
@@ -498,7 +508,7 @@ export default function BoardCollaborationDrawer({
                               Delete for all
                             </button>
                           )}
-                          {canDismissPoll && (
+                          {canContribute && canDismissPoll && (
                             <button
                               type="button"
                               onClick={() => void deletePoll.mutate(poll.id)}
@@ -511,13 +521,13 @@ export default function BoardCollaborationDrawer({
                         </div>
                       </div>
 
-                      {needsVote && (
+                      {canContribute && needsVote && (
                         <p className="mt-2 text-sm font-medium text-violet-800">
                           Choose one option — your vote saves immediately.
                         </p>
                       )}
 
-                      {canRemoveOwnVote && !needsVote && (
+                      {canContribute && canRemoveOwnVote && !needsVote && (
                         <div className="mt-2">
                           <button
                             type="button"
@@ -536,21 +546,16 @@ export default function BoardCollaborationDrawer({
                           const count = option.votes_count ?? (poll.votes ?? []).filter((v) => v.option_id === option.id).length;
                           const pct = canSeeResults && totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                           const voted = myVotes.has(option.id);
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              disabled={votePoll.isPending}
-                              onClick={() => void votePoll.mutateAsync({ pollId: poll.id, optionId: option.id })}
-                              className={cn(
-                                'relative flex min-h-[48px] w-full items-center gap-3 overflow-hidden rounded-xl border-2 px-4 py-3 text-left text-sm font-medium transition-all active:scale-[0.99]',
-                                voted
-                                  ? 'border-violet-500 bg-violet-50 text-violet-900 shadow-sm'
-                                  : needsVote
-                                    ? 'border-violet-200 bg-white text-gray-800 hover:border-violet-400 hover:bg-violet-50'
-                                    : 'border-gray-200 bg-gray-50/50 text-gray-700 hover:border-violet-200 hover:bg-violet-50/40',
-                              )}
-                            >
+                          const optionClassName = cn(
+                            'relative flex min-h-[48px] w-full items-center gap-3 overflow-hidden rounded-xl border-2 px-4 py-3 text-left text-sm font-medium',
+                            voted
+                              ? 'border-violet-500 bg-violet-50 text-violet-900 shadow-sm'
+                              : needsVote && canContribute
+                                ? 'border-violet-200 bg-white text-gray-800 hover:border-violet-400 hover:bg-violet-50'
+                                : 'border-gray-200 bg-gray-50/50 text-gray-700',
+                          );
+                          const optionContent = (
+                            <>
                               {canSeeResults && (
                                 <div
                                   className="absolute inset-y-0 left-0 bg-violet-100/60"
@@ -572,10 +577,28 @@ export default function BoardCollaborationDrawer({
                                   </span>
                                 ) : voted ? (
                                   <span className="shrink-0 text-xs font-semibold text-violet-600">Your pick</span>
-                                ) : needsVote ? (
+                                ) : needsVote && canContribute ? (
                                   <span className="shrink-0 text-xs font-semibold text-violet-500">Tap to vote</span>
                                 ) : null}
                               </span>
+                            </>
+                          );
+                          if (!canContribute) {
+                            return (
+                              <div key={option.id} className={optionClassName}>
+                                {optionContent}
+                              </div>
+                            );
+                          }
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              disabled={votePoll.isPending}
+                              onClick={() => void votePoll.mutateAsync({ pollId: poll.id, optionId: option.id })}
+                              className={cn(optionClassName, 'transition-all active:scale-[0.99]')}
+                            >
+                              {optionContent}
                             </button>
                           );
                         })}

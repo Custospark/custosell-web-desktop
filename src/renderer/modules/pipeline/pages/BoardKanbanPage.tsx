@@ -567,6 +567,7 @@ export default function BoardKanbanPage() {
         key={collaborationOpen ? collaborationInitialTab : 'closed'}
         boardId={boardId}
         canManage={showBoardManagementControls}
+        canContribute={canContribute}
         open={collaborationOpen}
         initialTab={collaborationInitialTab}
         onClose={() => setCollaborationOpen(false)}

@@ -62,6 +62,7 @@ function CommentBubble({
   onCancelEdit,
   onReact,
   reacting,
+  canInteract,
 }: {
   activity: PipelineLeadActivity;
   compact: boolean;
@@ -80,6 +81,7 @@ function CommentBubble({
   onCancelEdit?: () => void;
   onReact: (reaction: 'like' | 'dislike') => void;
   reacting: boolean;
+  canInteract: boolean;
 }) {
   const Icon = ACTIVITY_ICONS[activity.type] ?? MessageSquare;
   const authorName = activity.user?.name ?? 'Unknown user';
@@ -181,7 +183,7 @@ function CommentBubble({
             </p>
           )
         )}
-        {!editing && (
+        {!editing && canInteract && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -317,8 +319,8 @@ export default function LeadCommentsPanel({
     activity,
     compact,
     isReply,
-    canEdit: canEdit(activity),
-    canDelete: canDelete(activity),
+    canEdit: canContribute && canEdit(activity),
+    canDelete: canContribute && canDelete(activity),
     editing: editingActivity?.id === activity.id,
     saving: updateActivity.isPending,
     editBody: editingActivity?.id === activity.id ? editBody : undefined,
@@ -330,6 +332,7 @@ export default function LeadCommentsPanel({
     onDelete: () => void handleDelete(activity),
     onReact: (reaction: 'like' | 'dislike') => handleReact(activity, reaction),
     reacting: toggleReaction.isPending,
+    canInteract: canContribute,
   });
 
   return (

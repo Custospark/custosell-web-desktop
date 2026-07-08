@@ -279,11 +279,26 @@ export function canManageBoardSettings(
   return false;
 }
 
+/** True when the user is an invited viewer on a shared board (read-only). */
+export function isBoardViewer(
+  user: AuthUser | null | undefined,
+  board: {
+    current_member_role?: BoardMemberRole | null;
+    visibility?: string;
+    members?: { user_id: number; role: string }[];
+  },
+): boolean {
+  if (!user || board.visibility !== 'shared') return false;
+  if (board.current_member_role === 'viewer') return true;
+  return getSharedBoardMemberRole(user, board) === 'viewer';
+}
+
 /** Move cards, columns, comment, and add resources — contributors and managers. */
 export function canContributeToBoard(
   user: AuthUser | null | undefined,
   board: {
     can_contribute?: boolean;
+    current_member_role?: BoardMemberRole | null;
     created_by?: number | null;
     project_id?: number | null;
     visibility?: string;
@@ -295,6 +310,7 @@ export function canContributeToBoard(
   },
 ): boolean {
   if (!user) return false;
+  if (isBoardViewer(user, board)) return false;
   if (typeof board.can_contribute === 'boolean') return board.can_contribute;
   if (canManageBoardSettings(user, board, options)) return true;
 

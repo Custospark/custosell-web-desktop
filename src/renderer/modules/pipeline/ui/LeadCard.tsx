@@ -16,6 +16,7 @@ interface LeadCardProps {
   onHistoryClick?: (lead: PipelineLead) => void;
   onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   dragging?: boolean;
+  showDragHandle?: boolean;
   isProjectBoard?: boolean;
 }
 
@@ -42,6 +43,7 @@ export default function LeadCard({
   onHistoryClick,
   onToggleComplete,
   dragging,
+  showDragHandle = false,
   isProjectBoard = false,
 }: LeadCardProps) {
   const displayName = lead.contact_name || lead.title;
@@ -126,7 +128,9 @@ export default function LeadCard({
               <p className="mt-0.5 truncate text-xs text-gray-500">{lead.contact_name}</p>
             )}
           </div>
-          <GripVertical className="h-4 w-4 shrink-0 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" />
+          {showDragHandle && (
+            <GripVertical className="h-4 w-4 shrink-0 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" />
+          )}
           <div className="flex shrink-0 flex-col gap-0.5">
             <button
               type="button"

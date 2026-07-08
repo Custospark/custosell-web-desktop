@@ -210,6 +210,7 @@ export default function KanbanColumn({
                 onCommentsClick={onLeadCommentsClick}
                 onHistoryClick={onLeadHistoryClick}
                 onToggleComplete={onToggleComplete}
+                showDragHandle={canDropLeads}
                 isProjectBoard={isProjectBoard}
               />
             </div>

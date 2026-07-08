@@ -63,8 +63,17 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 **Board conversation (`BoardConversationModal`):**
 
 - Composer (post, reply, attach) gated with `canContribute`
-- Pin/edit/delete still driven by per-message API flags (`can_pin`, `can_edit`, `can_delete`)
+- Viewers: read-only chat — no post, reply, react, edit, or delete on messages
+- Pin/edit/delete still driven by per-message API flags (`can_pin`, `can_edit`, `can_delete`) for contributors/managers
 - Board settings link from automations tab — managers only
+
+**Comments (`LeadCommentsPanel`):**
+
+- Viewers: read-only — no post, reply, react, edit, or delete on card comments
+
+**Board collaboration (`BoardCollaborationDrawer`):**
+
+- Viewers: read-only — browse notices and polls only; no vote, post notices, create polls, mark read, or dismiss
 
 **Shared-board invites (`BoardMemberPicker`):**
 
@@ -76,7 +85,9 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 | Action | Gate |
 |--------|------|
 | View kanban / leads | `assertCanViewBoard` |
-| Move lead, reorder columns, post conversation, add resources, card comments, reminders | `assertCanEditBoard` / `ensureCanEditBoard` → contributor or manager on shared boards |
+| Move lead, reorder columns, post conversation, add resources, card comments, reminders | `assertCanEditBoard` / `ensureCanContributeToBoard` → contributor or manager on shared boards |
+| React on conversation messages or card comments | `ensureCanContributeToBoard` (viewers blocked) |
+| Vote on polls, mark notices read, dismiss collaboration items | `ensureCanContributeToBoard` (viewers blocked) |
 | Board settings, archive board/lead, add/edit/delete stages, automations, upload background, create polls | `userCanManageBoard` / `ensureCanManageBoard` → manager on shared boards |
 
 **Collaboration service fixes (viewers were incorrectly allowed):**

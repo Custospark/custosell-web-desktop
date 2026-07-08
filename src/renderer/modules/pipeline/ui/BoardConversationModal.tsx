@@ -28,6 +28,7 @@ import {
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import {
+  canContributeToBoard,
   canDeleteBoardConversationMessage,
   canEditBoardConversationMessage,
   canManageBoardSettings,
@@ -97,6 +98,7 @@ function MessageBubble({
   onReact,
   onEmojiReact,
   showActions,
+  canInteract,
   canPinMessages,
   canEditMessage,
   canDeleteMessage,
@@ -118,6 +120,7 @@ function MessageBubble({
   onReact: (reaction: 'like' | 'dislike') => void;
   onEmojiReact: (emoji: string) => void;
   showActions: boolean;
+  canInteract: boolean;
   canPinMessages: boolean;
   canEditMessage: boolean;
   canDeleteMessage: boolean;
@@ -188,7 +191,7 @@ function MessageBubble({
             )}
           {showActions && persisted && (
             <div className="flex items-center gap-1">
-              {onReply && !editing && (
+              {canInteract && onReply && !editing && (
                 <button
                   type="button"
                   onClick={onReply}
@@ -270,7 +273,7 @@ function MessageBubble({
             ))}
           </div>
         )}
-        {!editing && persisted && (
+        {!editing && persisted && canInteract && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -362,6 +365,9 @@ export default function BoardConversationModal({
 
   const threads = useMemo(() => buildBoardMessageThreads(messages), [messages]);
   const totalMessages = countBoardMessages(messages);
+  const canContributeResolved = board
+    ? canContributeToBoard(user, board, boardAccess)
+    : canContribute;
   const canModerateConversation = canManageBoardSettings(user, board ?? {}, boardAccess);
   const latestPersistedMessageId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -500,6 +506,11 @@ export default function BoardConversationModal({
 
         {tab === 'chat' && (
           <>
+            {!canContributeResolved && (
+              <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                You have viewer access — conversation is read-only. You cannot post, reply, react, or edit messages.
+              </p>
+            )}
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span className="relative inline-flex">
                 <MessageSquare className="h-4 w-4 text-blue-600" />
@@ -536,10 +547,11 @@ export default function BoardConversationModal({
                     deleting: deleteMessage.isPending,
                     reacting: toggleReaction.isPending,
                     showActions: true,
+                    canInteract: canContributeResolved,
                     canPinMessages: canModerateConversation,
                   };
-                  const canEditRoot = canEditBoardConversationMessage(user, thread.root);
-                  const canDeleteRoot = canDeleteBoardConversationMessage(
+                  const canEditRoot = canContributeResolved && canEditBoardConversationMessage(user, thread.root);
+                  const canDeleteRoot = canContributeResolved && canDeleteBoardConversationMessage(
                     user,
                     thread.root,
                     board ?? {},
@@ -564,7 +576,7 @@ export default function BoardConversationModal({
                           setReplyingTo(null);
                         } : undefined}
                         onDelete={() => void handleDelete(thread.root)}
-                        onReply={canContribute && !thread.root.is_system ? () => {
+                        onReply={canContributeResolved && !thread.root.is_system ? () => {
                           setReplyingTo(thread.root);
                           setEditingMessage(null);
                         } : undefined}
@@ -576,8 +588,8 @@ export default function BoardConversationModal({
                         {...bubbleProps}
                       />
                       {shown.map((reply) => {
-                        const canEditReply = canEditBoardConversationMessage(user, reply);
-                        const canDeleteReply = canDeleteBoardConversationMessage(
+                        const canEditReply = canContributeResolved && canEditBoardConversationMessage(user, reply);
+                        const canDeleteReply = canContributeResolved && canDeleteBoardConversationMessage(
                           user,
                           reply,
                           board ?? {},
@@ -629,7 +641,7 @@ export default function BoardConversationModal({
             </div>
 
             <div className="relative shrink-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3">
-              {!canContribute ? (
+              {!canContributeResolved ? (
                 <p className="text-xs text-blue-900">
                   You have viewer access — you can read board conversation but cannot post messages.
                 </p>

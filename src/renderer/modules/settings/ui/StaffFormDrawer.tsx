@@ -131,7 +131,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const roleDisplayName = currentRole?.name ?? (form.role_id ? `Role #${form.role_id}` : 'No role assigned');
   const roleHelperText = accountRules?.roleChangeBlockedReason
     ?? (currentRoleMissingFromOptions ? 'This role is not available in the editable business role list, so it cannot be changed here.' : null);
-  const modulesLocked = Boolean(accountRules?.isBusinessOwner);
+  const modulesLocked = Boolean(accountRules?.isBusinessOwner && !accountRules?.isCurrentUser);
   const assignableModules = useMemo(
     () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
     [authUser],
@@ -155,7 +155,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   }, [authUser, assignableModules, modulesLocked, open]);
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
-    if (modulesLocked) return;
+    if (modulesLocked || module === 'settings') return;
     setForm((prev) => {
       const removing = prev.modules.includes(module);
       let modules = removing

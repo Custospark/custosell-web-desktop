@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -32,7 +32,8 @@ import LeadDetailModal from '../ui/LeadDetailModal';
 import LeadCommentsModal from '../ui/LeadCommentsModal';
 import LeadHistoryModal from '../ui/LeadHistoryModal';
 import BoardSearchMenu from '../ui/BoardSearchMenu';
-import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
+import BoardSwitcherIcons from '../ui/BoardSwitcherIcons';
+import AllBoardsPickerModal from '../ui/AllBoardsPickerModal';
 import BoardCalendarView from '../ui/BoardCalendarView';
 import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
 import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
@@ -93,6 +94,8 @@ export default function BoardKanbanPage() {
   const [historyLeadId, setHistoryLeadId] = useState<number | null>(null);
   const [collaborationOpen, setCollaborationOpen] = useState(false);
   const [collaborationInitialTab, setCollaborationInitialTab] = useState<'notices' | 'polls'>('notices');
+  const [allBoardsOpen, setAllBoardsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const user = useAppSelector((s) => s.auth.user);
   const isProjectBoard = Boolean(board?.project_id);
@@ -173,6 +176,11 @@ export default function BoardKanbanPage() {
       status: complete ? 'won' : 'open',
       silent: true,
     });
+  };
+
+  const applySearchToken = (token: string) => {
+    setLeadQuery((prev) => (prev.trim() ? `${prev.trim()} ${token}` : token));
+    requestAnimationFrame(() => searchInputRef.current?.focus());
   };
 
   const headerBoard = board ?? switcherBoards.find((b) => b.id === boardId);
@@ -273,6 +281,7 @@ export default function BoardKanbanPage() {
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
               <input
+                ref={searchInputRef}
                 type="search"
                 value={leadQuery}
                 onChange={(e) => setLeadQuery(e.target.value)}
@@ -344,13 +353,12 @@ export default function BoardKanbanPage() {
         {viewMode === 'kanban' && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
             <span>{allLeadsCount} {itemLabel}{allLeadsCount === 1 ? '' : 's'} on board</span>
-            {leadQuery.trim() && (
+            {leadQuery.trim() ? (
               <span className="font-medium text-blue-700">
                 {filteredCount} matching &ldquo;{leadQuery.trim()}&rdquo;
               </span>
-            )}
-            {!leadQuery.trim() && (
-              <LeadSearchHint className="text-xs" />
+            ) : (
+              <LeadSearchHint className="text-xs" onApplyToken={applySearchToken} />
             )}
           </div>
         )}
@@ -390,13 +398,20 @@ export default function BoardKanbanPage() {
         </div>
       )}
 
-      <BoardSwitcherStrip
+      <BoardSwitcherIcons
+        allowCreate={allowCreateBoard}
+        onOpenAll={() => setAllBoardsOpen(true)}
+        onCreateNew={() => setCreateBoardOpen(true)}
+      />
+
+      <AllBoardsPickerModal
+        open={allBoardsOpen}
+        onClose={() => setAllBoardsOpen(false)}
         boards={switcherBoards}
         activeBoardId={boardId}
-        onCreateBoard={() => setCreateBoardOpen(true)}
         boardRoute={boardRoute}
-        allowCreateBoard={allowCreateBoard}
-        workspaceLabel={workspaceLabel}
+        boardsListRoute={boardsListRoute}
+        workspace={workspace}
       />
 
       {createStageId != null && (

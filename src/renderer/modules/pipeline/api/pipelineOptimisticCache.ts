@@ -108,6 +108,8 @@ function makeActivity(
     body,
     metadata: metadata ?? null,
     user,
+    can_edit: true,
+    can_delete: true,
     created_at: new Date().toISOString(),
   };
 }

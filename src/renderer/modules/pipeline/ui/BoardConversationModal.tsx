@@ -25,6 +25,11 @@ import {
   visibleReplies,
 } from './boardConversationThreads';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import {
+  canDeleteBoardConversationMessage,
+  canEditPipelineComment,
+} from '../../../shared/utils/moduleAccess';
 import {
   CONVERSATION_EMOJI_OPTIONS,
   formatMentionToken,
@@ -57,6 +62,19 @@ interface BoardConversationModalProps {
   onClose: () => void;
   canContribute?: boolean;
   onOpenBoardSettings?: () => void;
+  board?: {
+    can_manage_settings?: boolean;
+    can_contribute?: boolean;
+    current_member_role?: 'viewer' | 'contributor' | 'manager' | null;
+    created_by?: number | null;
+    project_id?: number | null;
+    visibility?: string;
+    members?: { user_id: number; role: string }[];
+  };
+  boardAccess?: {
+    projectCreatedBy?: number | null;
+    projectMembers?: { user_id: number; role: string }[];
+  };
 }
 
 function MessageBubble({
@@ -78,6 +96,8 @@ function MessageBubble({
   onReact,
   onEmojiReact,
   showActions,
+  canEditMessage,
+  canDeleteMessage,
 }: {
   message: PipelineBoardMessage;
   isReply?: boolean;
@@ -97,6 +117,8 @@ function MessageBubble({
   onReact: (reaction: 'like' | 'dislike') => void;
   onEmojiReact: (emoji: string) => void;
   showActions: boolean;
+  canEditMessage: boolean;
+  canDeleteMessage: boolean;
 }) {
   const persisted = isPersistedMessageId(message.id);
   const displayBody = renderMessageBody(message.body, message.mentions);
@@ -162,7 +184,7 @@ function MessageBubble({
                   {message.is_pinned ? 'Unpin' : 'Pin'}
                 </button>
               )}
-              {message.can_edit && !editing && onEdit && (
+              {canEditMessage && !editing && onEdit && (
                 <button
                   type="button"
                   onClick={onEdit}
@@ -172,7 +194,7 @@ function MessageBubble({
                   Edit
                 </button>
               )}
-              {message.can_delete && !editing && (
+              {canDeleteMessage && !editing && (
                 <button
                   type="button"
                   onClick={onDelete}
@@ -284,7 +306,10 @@ export default function BoardConversationModal({
   onClose,
   canContribute = false,
   onOpenBoardSettings,
+  board,
+  boardAccess,
 }: BoardConversationModalProps) {
+  const user = useAppSelector((s) => s.auth.user);
   const { confirm } = useConfirm();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -488,6 +513,13 @@ export default function BoardConversationModal({
                     pinning: togglePin.isPending,
                     showActions: true,
                   };
+                  const canEditRoot = canEditPipelineComment(user, thread.root);
+                  const canDeleteRoot = canDeleteBoardConversationMessage(
+                    user,
+                    thread.root,
+                    board ?? {},
+                    boardAccess,
+                  );
                   return (
                     <div key={thread.root.id} className="space-y-2">
                       <MessageBubble
@@ -501,46 +533,60 @@ export default function BoardConversationModal({
                           setEditingMessage(null);
                           setEditBody('');
                         }}
-                        onEdit={() => {
+                        onEdit={canEditRoot ? () => {
                           setEditingMessage(thread.root);
                           setEditBody(thread.root.body);
                           setReplyingTo(null);
-                        }}
+                        } : undefined}
                         onDelete={() => void handleDelete(thread.root)}
                         onReply={canContribute ? () => {
                           setReplyingTo(thread.root);
                           setEditingMessage(null);
                         } : undefined}
-                        onPin={() => handlePin(thread.root)}
+                        onPin={thread.root.can_pin ? () => handlePin(thread.root) : undefined}
                         onReact={(reaction) => handleReact(thread.root, reaction)}
                         onEmojiReact={(emoji) => handleEmojiReact(thread.root, emoji)}
+                        canEditMessage={canEditRoot}
+                        canDeleteMessage={canDeleteRoot}
                         {...bubbleProps}
                       />
-                      {shown.map((reply) => (
-                        <MessageBubble
-                          key={reply.id}
-                          message={reply}
-                          isReply
-                          editing={editingMessage?.id === reply.id}
-                          saving={updateMessage.isPending}
-                          editBody={editingMessage?.id === reply.id ? editBody : undefined}
-                          onEditBodyChange={setEditBody}
-                          onSaveEdit={() => void saveEdit()}
-                          onCancelEdit={() => {
-                            setEditingMessage(null);
-                            setEditBody('');
-                          }}
-                          onEdit={() => {
-                            setEditingMessage(reply);
-                            setEditBody(reply.body);
-                            setReplyingTo(null);
-                          }}
-                          onDelete={() => void handleDelete(reply)}
-                          onReact={(reaction) => handleReact(reply, reaction)}
-                          onEmojiReact={(emoji) => handleEmojiReact(reply, emoji)}
-                          {...bubbleProps}
-                        />
-                      ))}
+                      {shown.map((reply) => {
+                        const canEditReply = canEditPipelineComment(user, reply);
+                        const canDeleteReply = canDeleteBoardConversationMessage(
+                          user,
+                          reply,
+                          board ?? {},
+                          boardAccess,
+                        );
+                        return (
+                          <MessageBubble
+                            key={reply.id}
+                            message={reply}
+                            isReply
+                            editing={editingMessage?.id === reply.id}
+                            saving={updateMessage.isPending}
+                            editBody={editingMessage?.id === reply.id ? editBody : undefined}
+                            onEditBodyChange={setEditBody}
+                            onSaveEdit={() => void saveEdit()}
+                            onCancelEdit={() => {
+                              setEditingMessage(null);
+                              setEditBody('');
+                            }}
+                            onEdit={canEditReply ? () => {
+                              setEditingMessage(reply);
+                              setEditBody(reply.body);
+                              setReplyingTo(null);
+                            } : undefined}
+                            onDelete={() => void handleDelete(reply)}
+                            onPin={reply.can_pin ? () => handlePin(reply) : undefined}
+                            onReact={(reaction) => handleReact(reply, reaction)}
+                            onEmojiReact={(emoji) => handleEmojiReact(reply, emoji)}
+                            canEditMessage={canEditReply}
+                            canDeleteMessage={canDeleteReply}
+                            {...bubbleProps}
+                          />
+                        );
+                      })}
                       {hiddenCount > 0 && (
                         <button
                           type="button"

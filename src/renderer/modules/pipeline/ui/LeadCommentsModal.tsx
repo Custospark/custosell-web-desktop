@@ -3,11 +3,15 @@ import { usePipelineLead } from '../api/usePipelineQueries';
 import type { PipelineLead } from '../api/pipelineTypes';
 import LeadCommentsPanel from './LeadCommentsPanel';
 import { LeadCommentsSkeleton } from './KanbanBoardSkeleton';
+import { countUserComments } from './pipelineCommentThreads';
 
 interface LeadCommentsModalProps {
   leadId: number;
   boardId?: number;
   board?: {
+    can_manage_settings?: boolean;
+    can_contribute?: boolean;
+    current_member_role?: 'viewer' | 'contributor' | 'manager' | null;
     created_by?: number | null;
     project_id?: number | null;
     visibility?: string;
@@ -34,6 +38,9 @@ export default function LeadCommentsModal({
   });
 
   const showSkeleton = !lead && isLoading;
+  const expectedTotalComments = lead?.comments_count ?? initialLead?.comments_count ?? null;
+  const loadedComments = countUserComments(lead?.activities ?? []);
+  const isSyncingComments = Boolean(isFetching && lead && expectedTotalComments != null && loadedComments < expectedTotalComments);
 
   return (
     <Modal
@@ -52,6 +59,8 @@ export default function LeadCommentsModal({
           board={board}
           boardAccess={boardAccess}
           activities={lead.activities}
+          isSyncing={isSyncingComments}
+          expectedTotalComments={expectedTotalComments}
           compact
         />
       ) : (

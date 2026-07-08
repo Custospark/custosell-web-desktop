@@ -98,7 +98,9 @@ function EditBoardModalForm({
 
   const canArchive = isProjectBoard
     ? isBusinessOwner(user) || user?.id === projectOwnerId
-    : isBusinessOwner(user) || user?.id === board.created_by;
+    : board.visibility === 'private'
+      ? user?.id === board.created_by
+      : isBusinessOwner(user) || user?.id === board.created_by;
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);

@@ -584,6 +584,11 @@ export default function BoardKanbanPage() {
         open={conversationOpen}
         onClose={() => setConversationOpen(false)}
         canContribute={canContribute}
+        board={board}
+        boardAccess={{
+          projectCreatedBy: project?.created_by,
+          projectMembers,
+        }}
         onOpenBoardSettings={showBoardManagementControls ? () => {
           setConversationOpen(false);
           setEditBoardOpen(true);

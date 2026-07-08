@@ -192,6 +192,10 @@ export interface PipelineLeadActivity {
   metadata?: Record<string, unknown> | null;
   reactions?: PipelineActivityReactions;
   user?: PipelineUserRef | null;
+  /** Server flag: author only. */
+  can_edit?: boolean;
+  /** Server flag: author or board manager/owner only. Contributors cannot delete others. */
+  can_delete?: boolean;
   created_at?: string;
 }
 

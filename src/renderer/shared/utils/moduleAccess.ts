@@ -255,6 +255,11 @@ export function canManageBoardSettings(
 ): boolean {
   if (!user) return false;
   if (typeof board.can_manage_settings === 'boolean') return board.can_manage_settings;
+
+  if (board.visibility === 'private') {
+    return Number(board.created_by) === user.id;
+  }
+
   if (isBusinessOwner(user)) return true;
 
   const projectCreatedBy = options?.projectCreatedBy ?? null;
@@ -328,27 +333,64 @@ export function getSharedBoardMemberRole(
   return member ? normalizeBoardMemberRole(member.role) : null;
 }
 
-/** Comment author or board manager may delete user comments. */
+/** Comment author or board manager/owner may delete user comments (never contributors moderating others). */
 export function canDeletePipelineComment(
   user: AuthUser | null | undefined,
-  activity: { user_id?: number | null; user?: { id: number } | null },
+  activity: {
+    user_id?: number | null;
+    user?: { id: number } | null;
+    can_delete?: boolean;
+  },
   board: Parameters<typeof canManageBoardSettings>[1],
   options?: Parameters<typeof canManageBoardSettings>[2],
 ): boolean {
   if (!user) return false;
-  const authorId = activity.user_id ?? activity.user?.id;
-  if (authorId && authorId === user.id) return true;
-  return canManageBoardSettings(user, board, options);
+
+  const authorId = Number(activity.user_id ?? activity.user?.id ?? 0);
+  const isAuthor = authorId > 0 && authorId === Number(user.id);
+  if (isAuthor) return true;
+
+  // Shared collaborators (viewer/contributor) never moderate others' comments.
+  if (board.visibility === 'shared') {
+    const role = getSharedBoardMemberRole(user, board);
+    if (role === 'viewer' || role === 'contributor') return false;
+  }
+
+  // Non-authors need true board manage rights (server flag or local manager check).
+  const isManager = canManageBoardSettings(user, board, options);
+  if (!isManager) return false;
+
+  if (typeof activity.can_delete === 'boolean') return activity.can_delete;
+  return true;
 }
 
 /** Only the comment author may edit their comment. */
 export function canEditPipelineComment(
   user: AuthUser | null | undefined,
-  activity: { user_id?: number | null; user?: { id: number } | null },
+  activity: {
+    user_id?: number | null;
+    user?: { id: number } | null;
+    can_edit?: boolean;
+  },
 ): boolean {
   if (!user) return false;
+  if (typeof activity.can_edit === 'boolean') return activity.can_edit;
   const authorId = activity.user_id ?? activity.user?.id;
   return Boolean(authorId && authorId === user.id);
+}
+
+/** Board conversation: author or board manager/owner may delete (never collaborators moderating others). */
+export function canDeleteBoardConversationMessage(
+  user: AuthUser | null | undefined,
+  message: {
+    user_id?: number | null;
+    user?: { id: number } | null;
+    can_delete?: boolean;
+  },
+  board: Parameters<typeof canManageBoardSettings>[1],
+  options?: Parameters<typeof canManageBoardSettings>[2],
+): boolean {
+  return canDeletePipelineComment(user, message, board, options);
 }
 
 /** Estimates module, boards-only staff, or invited collaborator routes under /estimates. */

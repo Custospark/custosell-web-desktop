@@ -3,7 +3,7 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
-import { CornerDownRight, MessageSquare, Pencil, Send, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
+import { CornerDownRight, Loader2, MessageSquare, Pencil, Send, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
 import type { PipelineLeadActivity } from '../api/pipelineTypes';
 import { useAddPipelineActivity, useDeletePipelineActivity, useUpdatePipelineActivity } from '../api/usePipelineQueries';
 import { useToggleActivityReaction } from '../api/usePipelineCollaborationQueries';
@@ -27,7 +27,12 @@ interface LeadCommentsPanelProps {
   boardId?: number;
   activities?: PipelineLeadActivity[];
   compact?: boolean;
+  isSyncing?: boolean;
+  expectedTotalComments?: number | null;
   board?: {
+    can_manage_settings?: boolean;
+    can_contribute?: boolean;
+    current_member_role?: 'viewer' | 'contributor' | 'manager' | null;
     created_by?: number | null;
     project_id?: number | null;
     visibility?: string;
@@ -218,6 +223,8 @@ export default function LeadCommentsPanel({
   boardId,
   activities = [],
   compact = false,
+  isSyncing = false,
+  expectedTotalComments,
   board,
   boardAccess,
 }: LeadCommentsPanelProps) {
@@ -236,7 +243,11 @@ export default function LeadCommentsPanel({
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(() => new Set());
 
   const threads = useMemo(() => buildCommentThreads(activities), [activities]);
-  const totalComments = countUserComments(activities);
+  const loadedComments = countUserComments(activities);
+  const totalComments = expectedTotalComments != null
+    ? Math.max(expectedTotalComments, loadedComments)
+    : loadedComments;
+  const isHydratingComments = isSyncing && totalComments > loadedComments;
 
   const handlePost = async () => {
     if (!canContribute || !note.trim()) return;
@@ -397,17 +408,34 @@ export default function LeadCommentsPanel({
       </div>
 
       <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
-        <span>{totalComments} comment{totalComments === 1 ? '' : 's'}</span>
+        <span>
+          {isHydratingComments
+            ? `Showing ${loadedComments} of ${totalComments} comments`
+            : `${totalComments} comment${totalComments === 1 ? '' : 's'}`}
+        </span>
         <span className="hidden sm:inline">Newest first · Ctrl+Enter to send</span>
       </div>
       </>
       )}
 
+      {isHydratingComments && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Loading latest comments…
+        </div>
+      )}
+
       <ul className="max-h-[min(55vh,420px)] space-y-4 overflow-y-auto pr-1">
         {threads.length === 0 ? (
-          <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-xs text-gray-500">
-            No comments yet — be the first to leave one.
-          </li>
+          isHydratingComments ? (
+            <li className="rounded-lg border border-dashed border-blue-200 bg-blue-50/40 py-8 text-center text-xs text-blue-800">
+              Loading comments…
+            </li>
+          ) : (
+            <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-xs text-gray-500">
+              No comments yet — be the first to leave one.
+            </li>
+          )
         ) : (
           threads.map(({ root, replies }) => {
             const expanded = expandedThreads.has(root.id);

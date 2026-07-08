@@ -34,6 +34,11 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 - Board owner (`created_by`)
 - Project board: project owner, full estimates access, or project `manager` role
 
+**Private-board exception (2026-07-08 update):**
+
+- For non-project private boards, only the board creator can view/manage the board.
+- Business-owner global override does not apply to private boards.
+
 ### Frontend enforcement
 
 | Helper | Purpose |
@@ -53,7 +58,7 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 - Viewer banner when `!canContributeToBoard`
 - All form fields read-only for viewers (title, contact, labels, checklists, attachments, dates, priority)
 - Archive, convert, and proposal actions hidden or blocked unless role allows
-- `LeadRemindersPanel` and `LeadCommentsPanel` — viewers read only; contributors can post
+- Contributors cannot delete other people's comments — only the comment author or a board manager/owner.
 
 **Board conversation (`BoardConversationModal`):**
 

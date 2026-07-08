@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import {
   useConvertPipelineLead,
   useDeletePipelineLead,
@@ -28,6 +27,8 @@ import { cn } from '../../../shared/utils/cn';
 import {
   ArrowRightLeft,
   Bell,
+  Check,
+  CheckCircle2,
   DollarSign,
   FileSpreadsheet,
   History,
@@ -41,11 +42,12 @@ import {
   User,
   UserRound,
 } from 'lucide-react';
-import type { PipelineLeadStatus, UpdateLeadPayload } from '../api/pipelineTypes';
+import type { PipelineLead, PipelineLeadStatus, UpdateLeadPayload } from '../api/pipelineTypes';
 import CardDetailExtras from './CardDetailExtras';
 import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromLeadButton';
 import PipelineColorPicker from './PipelineColorPicker';
 import { CARD_PRESET_COLORS } from './pipelineColorPresets';
+import { LeadDetailSkeleton } from './KanbanBoardSkeleton';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
 
@@ -62,6 +64,7 @@ interface LeadDetailModalProps {
     projectCreatedBy?: number | null;
     projectMembers?: { user_id: number; role: string }[];
   };
+  initialLead?: PipelineLead;
   onClose: () => void;
 }
 
@@ -78,25 +81,37 @@ export default function LeadDetailModal({
   boardId,
   board,
   boardAccess,
+  initialLead,
   onClose,
 }: LeadDetailModalProps) {
   const user = useAppSelector((s) => s.auth.user);
-  const { data: lead, isLoading } = usePipelineLead(leadId, true, { poll: true });
+  const { data: lead, isLoading, isFetching } = usePipelineLead(leadId, true, {
+    poll: true,
+    initialData: initialLead,
+  });
   const { data: sources } = usePipelineSources();
   const updateLead = useUpdatePipelineLead();
   const convertLead = useConvertPipelineLead();
   const deleteLead = useDeletePipelineLead();
   const { confirm } = useConfirm();
 
-  if (isLoading || !lead) {
+  if (!lead && isLoading) {
     return (
       <Modal isOpen onClose={onClose} title="Loading card…" size="xl">
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
+        <LeadDetailSkeleton />
       </Modal>
     );
   }
+
+  if (!lead) {
+    return (
+      <Modal isOpen onClose={onClose} title="Card unavailable" size="md">
+        <p className="py-6 text-center text-sm text-gray-500">This card could not be loaded.</p>
+      </Modal>
+    );
+  }
+
+  const isComplete = lead.status === 'won';
 
   const canConvert = lead.status !== 'converted' && (lead.card_type ?? 'lead') === 'lead';
   const isLead = (lead.card_type ?? 'lead') === 'lead';
@@ -131,7 +146,7 @@ export default function LeadDetailModal({
     <Modal
       isOpen
       title={lead.title}
-      subtitle={lead.stage?.name ?? undefined}
+      subtitle={isFetching ? 'Saving…' : (lead.stage?.name ?? undefined)}
       titleCentered
       onClose={onClose}
       size="xl"
@@ -143,6 +158,20 @@ export default function LeadDetailModal({
           style={{ background: `linear-gradient(135deg, ${stageColor}18, white 60%)` }}
         >
           <div className="flex items-start gap-4 p-4">
+            <button
+              type="button"
+              onClick={() => patchLead({ status: isComplete ? 'open' : 'won' })}
+              className={cn(
+                'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors',
+                isComplete
+                  ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600'
+                  : 'border-gray-300 bg-white text-transparent hover:border-emerald-400 hover:bg-emerald-50',
+              )}
+              title={isComplete ? 'Mark incomplete' : 'Mark complete'}
+              aria-label={isComplete ? 'Mark incomplete' : 'Mark complete'}
+            >
+              <Check className="h-4 w-4" strokeWidth={3} />
+            </button>
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white shadow-md"
               style={{ backgroundColor: stageColor }}

@@ -10,6 +10,8 @@ export const pipelineKeys = {
   calendar: (boardId: number, year: number, month: number, dateField?: string) =>
     [...pipelineKeys.all, 'calendar', boardId, year, month, dateField ?? 'due'] as const,
   labels: (boardId?: number) => [...pipelineKeys.all, 'labels', boardId ?? 'all'] as const,
+  teamMembers: (workspace: 'pipeline' | 'estimates') =>
+    [...pipelineKeys.all, 'team-members', workspace] as const,
 };
 
 export const pipelineCollaborationKeys = {
@@ -20,5 +22,5 @@ export const pipelineCollaborationKeys = {
   reminders: (leadId: number) => [...pipelineKeys.all, 'reminders', leadId] as const,
 };
 
-export const PIPELINE_KANBAN_POLL_MS = 30_000;
-export const PIPELINE_LEAD_POLL_MS = 20_000;
+export const PIPELINE_KANBAN_POLL_MS = 45_000;
+export const PIPELINE_LEAD_POLL_MS = 30_000;

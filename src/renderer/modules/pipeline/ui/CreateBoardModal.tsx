@@ -17,6 +17,7 @@ import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import { AlignLeft, Kanban, Type } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import type { BoardWorkspace } from './boardVisibilityOptions';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 
 interface CreateBoardModalProps {
   open: boolean;
@@ -30,6 +31,7 @@ export default function CreateBoardModal({
   workspace = 'pipeline',
 }: CreateBoardModalProps) {
   const navigate = useNavigate();
+  const user = useAppSelector((s) => s.auth.user);
   const createBoard = useCreatePipelineBoard();
   const updateBoard = useUpdatePipelineBoard();
   const uploadBg = useUploadBoardBackground();
@@ -163,6 +165,7 @@ export default function CreateBoardModal({
           onVisibilityChange={setVisibility}
           members={members}
           onMembersChange={setMembers}
+          excludeUserId={user?.id}
         />
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">

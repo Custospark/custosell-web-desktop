@@ -26,7 +26,7 @@ const VISIBILITY_LABELS = {
 };
 
 export default function PipelineSettingsPage() {
-  const { data: boards, isLoading: boardsLoading } = usePipelineBoards();
+  const { data: boards, isLoading: boardsLoading } = usePipelineBoards({ salesOnly: true });
   const { data: sources, isLoading: sourcesLoading } = usePipelineSources();
   const { data: insights } = usePipelineInsights();
   const createSource = useCreatePipelineSource();

@@ -243,6 +243,58 @@ const UPDATE_FIELD_LABELS: Record<string, string> = {
   source_id: 'Source',
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  open: 'Open',
+  won: 'Won',
+  lost: 'Lost',
+  converted: 'Converted',
+  archived: 'Archived',
+};
+
+function statusHistoryMessage(
+  fromStatus: string,
+  toStatus: string,
+  cardType: string | null | undefined,
+): string {
+  const isTask = (cardType ?? 'lead') === 'card';
+  if (toStatus === 'won') {
+    return isTask ? 'Task marked complete' : 'Lead marked won';
+  }
+  if (toStatus === 'lost') {
+    return isTask ? 'Task marked lost' : 'Lead marked lost';
+  }
+  if (fromStatus === 'won' && toStatus === 'open') {
+    return isTask ? 'Task marked incomplete' : 'Lead reopened';
+  }
+  if (fromStatus === 'lost' && toStatus === 'open') {
+    return isTask ? 'Task reopened' : 'Lead reopened';
+  }
+  const toLabel = STATUS_LABELS[toStatus] ?? toStatus;
+  return isTask ? `Task status changed to ${toLabel}` : `Lead status changed to ${toLabel}`;
+}
+
+export function buildOptimisticStatusChange(
+  lead: PipelineLead,
+  fromStatus: string,
+  toStatus: string,
+  actor?: PipelineUserRef,
+): PipelineLeadActivity | null {
+  if (fromStatus === toStatus) return null;
+  const user = actor ?? getOptimisticActor();
+  return makeActivity(
+    lead.id,
+    'system',
+    statusHistoryMessage(fromStatus, toStatus, lead.card_type),
+    {
+      action: 'status_change',
+      from: fromStatus,
+      to: toStatus,
+      card_type: lead.card_type ?? 'lead',
+    },
+    user,
+  );
+}
+
 export function buildOptimisticHistoryForUpdate(
   before: PipelineLead,
   payload: UpdateLeadPayload,
@@ -250,6 +302,16 @@ export function buildOptimisticHistoryForUpdate(
 ): PipelineLeadActivity[] {
   const entries: PipelineLeadActivity[] = [];
   const user = actor ?? getOptimisticActor();
+
+  if ('status' in payload && payload.status && payload.status !== before.status) {
+    const statusEntry = buildOptimisticStatusChange(
+      before,
+      before.status ?? 'open',
+      payload.status,
+      user,
+    );
+    if (statusEntry) entries.push(statusEntry);
+  }
 
   for (const [field, label] of Object.entries(UPDATE_FIELD_LABELS)) {
     if (!(field in payload)) continue;

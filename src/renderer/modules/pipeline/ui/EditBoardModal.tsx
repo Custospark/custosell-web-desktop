@@ -178,7 +178,13 @@ function EditBoardModalForm({
         <PipelineModalHero
           icon={Kanban}
           tone="indigo"
-          title={isProjectBoard ? 'Edit project board' : 'Edit pipeline board'}
+          title={
+            isProjectBoard
+              ? 'Edit project board'
+              : workspace === 'estimates'
+                ? 'Edit personal board'
+                : 'Edit pipeline board'
+          }
           description={
             isProjectBoard
               ? 'Update board appearance and manage who can view or contribute on this project.'

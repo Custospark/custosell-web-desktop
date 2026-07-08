@@ -17,6 +17,7 @@ interface BoardSearchMenuProps {
   boardRoute?: (id: number) => string;
   boardsListRoute?: string;
   allowCreateBoard?: boolean;
+  workspaceLabel?: string;
 }
 
 export default function BoardSearchMenu({
@@ -26,6 +27,7 @@ export default function BoardSearchMenu({
   boardRoute = ROUTES.PIPELINE.BOARD,
   boardsListRoute = ROUTES.PIPELINE.BOARDS,
   allowCreateBoard = true,
+  workspaceLabel,
 }: BoardSearchMenuProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -98,6 +100,9 @@ export default function BoardSearchMenu({
       style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
     >
       <div className="border-b border-gray-100 p-2">
+        {workspaceLabel && (
+          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{workspaceLabel} boards</p>
+        )}
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -184,17 +189,17 @@ export default function BoardSearchMenu({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex max-w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-black/5"
+          className="flex max-w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-indigo-50/60"
         >
           <span
             className="h-3 w-3 shrink-0 rounded-sm shadow-sm ring-1 ring-black/10"
             style={{ backgroundColor: activeBoard.cover_color ?? '#6366f1' }}
           />
-          <span className="truncate text-base font-semibold text-gray-900">{activeBoard.name}</span>
+          <span className="truncate text-base font-semibold text-slate-900">{activeBoard.name}</span>
           {activeBoard.is_default && (
             <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-label="Default board" />
           )}
-          <ChevronDown className={cn('h-4 w-4 shrink-0 text-gray-500 transition-transform', open && 'rotate-180')} />
+          <ChevronDown className={cn('h-4 w-4 shrink-0 text-indigo-500 transition-transform', open && 'rotate-180')} />
         </button>
       </div>
       {typeof document !== 'undefined' && menu ? createPortal(menu, document.body) : null}

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { usePipelineBoards } from '../api/usePipelineQueries';
 import { filterBoardsForWorkspace } from '../api/pipelineBoardWorkspace';
@@ -27,8 +27,8 @@ export default function BoardsPage() {
 
   if (isLoading || !isFetched) {
     return (
-      <div className="flex justify-center py-16">
-        <LoadingSpinner />
+      <div className="space-y-4 pb-8">
+        <LoadingSkeleton variant="card" className="p-0" />
       </div>
     );
   }

@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   onLeadClick: (lead: PipelineLead) => void;
   onLeadCommentsClick?: (lead: PipelineLead) => void;
   onLeadHistoryClick?: (lead: PipelineLead) => void;
+  onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   onAddLead: (stageId: number) => void;
   onDropLead: (leadId: number, stageId: number, position: number) => void;
   onDropColumn?: (draggedStageId: number, targetStageId: number) => void;
@@ -22,6 +23,7 @@ export default function KanbanColumn({
   onLeadClick,
   onLeadCommentsClick,
   onLeadHistoryClick,
+  onToggleComplete,
   onAddLead,
   onDropLead,
   onDropColumn,
@@ -184,6 +186,8 @@ export default function KanbanColumn({
                 onClick={() => onLeadClick(lead)}
                 onCommentsClick={onLeadCommentsClick}
                 onHistoryClick={onLeadHistoryClick}
+                onToggleComplete={onToggleComplete}
+                isProjectBoard={isProjectBoard}
               />
             </div>
           ))

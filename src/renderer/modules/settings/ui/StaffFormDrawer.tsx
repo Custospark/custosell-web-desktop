@@ -20,6 +20,7 @@ import {
   assignableStaffModuleSlugs,
   buildStaffModulesPayload,
   BUSINESS_MODULE_SLUGS,
+  intersectStaffModulesWithOwner,
   isBusinessOwner,
   MODULE_LABELS,
   staffHasFullEstimatesModule,
@@ -86,7 +87,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         loadedStaffIdRef.current = staff.id;
         const parsedPhone = parseInternationalPhone(staff.phone);
         setCountryCode(parsedPhone.countryCode);
-        const staffModules = staff.modules ?? [];
+        const staffModules = intersectStaffModulesWithOwner(staff.modules, authUser);
         setForm({
           name: staff.name,
           email: staff.email,
@@ -95,9 +96,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           password_confirmation: '',
           role_id: staff.role_id ?? null,
           is_active: staff.is_active ?? true,
-          modules: staffModules.filter((m): m is BusinessModuleSlug =>
-            (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
-          ),
+          modules: staffModules,
           estimatesFullAccess: staffHasFullEstimatesModule(staffModules),
         });
       } else {
@@ -112,7 +111,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
       setShowPassword(false);
       setShowConfirmPassword(false);
     });
-  }, [staff, open, roles]);
+  }, [staff, open, roles, authUser]);
 
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
   const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
@@ -138,6 +137,23 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     [authUser],
   );
   const displayModules = modulesLocked ? assignableModules : form.modules;
+
+  useEffect(() => {
+    if (!open || modulesLocked) return;
+    queueMicrotask(() => {
+      setForm((prev) => {
+        const allowed = intersectStaffModulesWithOwner(prev.modules, authUser);
+        const estimatesFullAccess = prev.estimatesFullAccess && allowed.includes('estimates');
+        if (
+          allowed.length === prev.modules.length
+          && estimatesFullAccess === prev.estimatesFullAccess
+        ) {
+          return prev;
+        }
+        return { ...prev, modules: allowed, estimatesFullAccess };
+      });
+    });
+  }, [authUser, assignableModules, modulesLocked, open]);
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
     if (modulesLocked) return;
@@ -401,7 +417,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {assignableModules.map((module) => {
-              const checked = displayModules.includes(module);
+              const checked = displayModules.includes(module) && form.modules.includes(module);
               return (
                 <label
                   key={module}

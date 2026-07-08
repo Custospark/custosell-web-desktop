@@ -3,7 +3,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
-  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History,
+  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check,
 } from 'lucide-react';
 import LeadAssignmentChain from './LeadAssignmentChain';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -14,7 +14,9 @@ interface LeadCardProps {
   onClick: () => void;
   onCommentsClick?: (lead: PipelineLead) => void;
   onHistoryClick?: (lead: PipelineLead) => void;
+  onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   dragging?: boolean;
+  isProjectBoard?: boolean;
 }
 
 const PRIORITY_COLORS = {
@@ -32,12 +34,22 @@ function isOverdue(dateStr: string | null | undefined): boolean {
   return d < today;
 }
 
-export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, onHistoryClick, dragging }: LeadCardProps) {
+export default function LeadCard({
+  lead,
+  stageColor,
+  onClick,
+  onCommentsClick,
+  onHistoryClick,
+  onToggleComplete,
+  dragging,
+  isProjectBoard = false,
+}: LeadCardProps) {
   const displayName = lead.contact_name || lead.title;
   const accent = stageColor ?? lead.stage?.color ?? '#6366f1';
   const isCard = (lead.card_type ?? 'lead') === 'card';
+  const isComplete = lead.status === 'won';
   const dueDate = lead.due_date ?? lead.expected_close_date;
-  const overdue = isOverdue(dueDate);
+  const overdue = !isComplete && lead.status === 'open' && isOverdue(dueDate);
   const checklistTotal = lead.checklist_total ?? 0;
   const checklistDone = lead.checklist_done ?? 0;
   const attachmentsCount = lead.attachments_count ?? 0;
@@ -55,6 +67,7 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, o
         'hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md',
         dragging && 'rotate-1 opacity-60 shadow-lg',
         overdue && 'border-red-200/80',
+        isComplete && 'opacity-75',
         !lead.background_color && 'bg-white',
       )}
       style={lead.background_color ? { backgroundColor: lead.background_color } : undefined}
@@ -76,6 +89,25 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, o
 
       <div className="p-3 pl-3.5">
         <div className="flex items-start gap-2">
+          {onToggleComplete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleComplete(lead, !isComplete);
+              }}
+              className={cn(
+                'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors',
+                isComplete
+                  ? 'border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600'
+                  : 'border-gray-300 bg-white text-transparent hover:border-emerald-400 hover:bg-emerald-50',
+              )}
+              title={isComplete ? `Mark ${isProjectBoard ? 'task' : 'lead'} incomplete` : `Mark ${isProjectBoard ? 'task' : 'lead'} complete`}
+              aria-label={isComplete ? 'Mark incomplete' : 'Mark complete'}
+            >
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </button>
+          )}
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm"
             style={{ backgroundColor: `${accent}dd` }}
@@ -83,7 +115,10 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, o
             {isCard ? <Kanban className="h-4 w-4" /> : pipelineInitials(displayName)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 pr-5 text-sm font-semibold leading-snug text-gray-900">{lead.title}</p>
+            <p className={cn(
+              'line-clamp-2 pr-5 text-sm font-semibold leading-snug text-gray-900',
+              isComplete && 'text-gray-500 line-through decoration-gray-400',
+            )}>{lead.title}</p>
             {lead.description && (
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">{lead.description}</p>
             )}
@@ -167,10 +202,10 @@ export default function LeadCard({ lead, stageColor, onClick, onCommentsClick, o
           {dueDate && (
             <span className={cn(
               'inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 text-[11px] font-medium ring-1',
-              overdue ? 'bg-red-50 text-red-800 ring-red-100' : 'bg-amber-50 text-amber-800 ring-amber-100',
+              overdue ? 'bg-red-50 text-red-800 ring-red-200' : 'bg-amber-50 text-amber-800 ring-amber-100',
             )}>
               <Calendar className="h-2.5 w-2.5" />
-              {formatShiftDate(dueDate)}
+              {overdue ? 'Overdue · ' : ''}{formatShiftDate(dueDate)}
             </span>
           )}
           {lead.estimated_value != null && lead.estimated_value > 0 && (

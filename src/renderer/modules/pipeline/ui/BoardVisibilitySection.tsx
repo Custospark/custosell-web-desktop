@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { BoardMemberInput, PipelineVisibility } from '../api/pipelineTypes';
+import { useBoardTeamMembers } from '../api/usePipelineQueries';
 import BoardMemberPicker from './BoardMemberPicker';
 import { PipelineFormSection } from './pipelineFormFields';
-import { useStaff } from '../../settings/api/settings/StaffQueries';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { visibilityOptionsForWorkspace, type BoardWorkspace } from './boardVisibilityOptions';
-import { Users } from 'lucide-react';
+import { Users, Loader2 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardVisibilitySectionProps {
@@ -29,14 +30,17 @@ export default function BoardVisibilitySection({
   canManage = true,
 }: BoardVisibilitySectionProps) {
   const options = visibilityOptionsForWorkspace(workspace);
-  const { data: staff = [] } = useStaff();
+  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(workspace);
   const [memberSearch, setMemberSearch] = useState('');
   const teamQuery = memberSearch.trim().toLowerCase();
-  const moduleSlug = workspace === 'estimates' ? 'estimates' : 'pipeline';
+  const staffLoading = isLoading || (isFetching && teamMembers.length === 0);
 
-  const teamMembers = staff
-    .filter((person) => person.id !== excludeUserId && (person.modules ?? []).includes(moduleSlug))
-    .filter((person) => !teamQuery || person.name.toLowerCase().includes(teamQuery));
+  const visibleTeamMembers = useMemo(
+    () => teamMembers
+      .filter((person) => person.id !== excludeUserId)
+      .filter((person) => !teamQuery || person.name.toLowerCase().includes(teamQuery)),
+    [excludeUserId, teamMembers, teamQuery],
+  );
 
   return (
     <>
@@ -52,11 +56,11 @@ export default function BoardVisibilitySection({
                 'rounded-xl border p-3 text-left transition-colors',
                 visibility === value
                   ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
-                  : 'border-gray-200 hover:border-gray-300',
+                  : 'border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30',
                 !canManage && 'cursor-not-allowed opacity-70',
               )}
             >
-              <Icon className="mb-1 h-4 w-4 text-gray-600" />
+              <Icon className={cn('mb-1 h-4 w-4', visibility === value ? 'text-indigo-600' : 'text-gray-500')} />
               <p className="text-sm font-semibold text-gray-900">{label}</p>
               <p className="mt-0.5 text-[11px] text-gray-500">{hint}</p>
             </button>
@@ -65,11 +69,14 @@ export default function BoardVisibilitySection({
       </PipelineFormSection>
 
       {visibility === 'shared' && (
-        <PipelineFormSection title="Team members" icon={Users}>
-          <p className="mb-2 text-xs text-gray-500">
-            Invite specific members and set their permissions for this board.
+        <PipelineFormSection title="Invite collaborators" icon={Users}>
+          <p className="mb-3 text-xs text-gray-500">
+            {workspace === 'estimates'
+              ? 'Invite viewers or contributors to this personal board. Only people you add here get access — team visibility is separate.'
+              : 'Invite viewers or editors to this board. Only people you add here get access — team visibility is separate.'}
           </p>
           <BoardMemberPicker
+            workspace={workspace}
             value={members}
             onChange={onMembersChange}
             excludeUserId={excludeUserId}
@@ -86,26 +93,40 @@ export default function BoardVisibilitySection({
               ? 'Everyone listed here can access this board through Projects & Estimates module access.'
               : 'Everyone listed here can access this board through Pipeline module access.'}
           </p>
-          <input
-            type="search"
-            value={memberSearch}
-            onChange={(e) => setMemberSearch(e.target.value)}
-            placeholder="Search team members..."
-            className="mb-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-          />
-          <ul className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
-            {teamMembers.map((person) => (
-              <li
-                key={person.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/70 px-3 py-2"
-              >
-                <span className="truncate text-sm font-medium text-gray-900">{person.name}</span>
-                <span className="text-xs text-gray-500">{person.email}</span>
-              </li>
-            ))}
-          </ul>
-          {teamMembers.length === 0 && (
-            <p className="text-xs text-gray-500">No team members found for this filter.</p>
+          {staffLoading ? (
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 py-8 text-sm text-blue-700">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" aria-hidden />
+              Loading team members…
+            </div>
+          ) : (
+            <>
+              <input
+                type="search"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Search team members..."
+                className="mb-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <ul className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+                {visibleTeamMembers.map((person) => (
+                  <li
+                    key={person.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2"
+                  >
+                    <UserIdentityChip
+                      name={person.name}
+                      avatar={person.avatar}
+                      size="sm"
+                      nameClassName="text-sm font-medium text-gray-900"
+                    />
+                    <span className="truncate text-xs text-gray-500">{person.email ?? '—'}</span>
+                  </li>
+                ))}
+              </ul>
+              {visibleTeamMembers.length === 0 && (
+                <p className="text-xs text-gray-500">No team members found for this workspace.</p>
+              )}
+            </>
           )}
         </PipelineFormSection>
       )}

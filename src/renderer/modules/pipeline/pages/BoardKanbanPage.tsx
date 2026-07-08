@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   useMovePipelineLead,
   usePipelineBoards,
   usePipelineKanban,
   useReorderPipelineStages,
+  useUpdatePipelineLead,
 } from '../api/usePipelineQueries';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import {
@@ -16,6 +17,10 @@ import {
   boardUsesTaskTerminology,
   filterBoardsForWorkspace,
 } from '../api/pipelineBoardWorkspace';
+import { findKanbanLead } from '../api/pipelineOptimisticCache';
+import { leadMatchesSearchQuery } from '../api/pipelineLeadSearch';
+import LeadSearchHint from '../ui/LeadSearchHint';
+import { pipelineCollaborationKeys } from '../api/usePipelineCollaborationQueries';
 import KanbanColumn from '../ui/KanbanColumn';
 import CreateLeadModal from '../ui/CreateLeadModal';
 import CreateBoardModal from '../ui/CreateBoardModal';
@@ -29,31 +34,19 @@ import LeadHistoryModal from '../ui/LeadHistoryModal';
 import BoardSearchMenu from '../ui/BoardSearchMenu';
 import BoardSwitcherStrip from '../ui/BoardSwitcherStrip';
 import BoardCalendarView from '../ui/BoardCalendarView';
+import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
 import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
 import BoardCollaborationDrawer from '../ui/BoardCollaborationDrawer';
 import BoardCollaborationButton from '../ui/BoardCollaborationButton';
-import { useBoardCollaborationSummary } from '../api/usePipelineCollaborationQueries';
-import { CalendarDays, Columns3, LayoutGrid, Plus, Search, Settings, UserPlus, X } from 'lucide-react';
+import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useProject, useProjectMembers } from '../../estimates/api/useProjectQueries';
 import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
+import type { PipelineBoardCollaborationSummary } from '../api/pipelineTypes';
 
 type BoardViewMode = 'kanban' | 'calendar';
 type BoardWorkspace = 'pipeline' | 'estimates';
-
-function leadMatchesQuery(lead: PipelineLead, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return [
-    lead.title,
-    lead.contact_name,
-    lead.contact_email,
-    lead.contact_phone,
-    lead.assignee?.name,
-    lead.source?.name,
-  ].some((v) => v?.toLowerCase().includes(q));
-}
 
 function workspaceFromPath(pathname: string): BoardWorkspace {
   return pathname.startsWith('/estimates/boards') ? 'estimates' : 'pipeline';
@@ -62,19 +55,29 @@ function workspaceFromPath(pathname: string): BoardWorkspace {
 export default function BoardKanbanPage() {
   const location = useLocation();
   const workspace = workspaceFromPath(location.pathname);
+  const queryClient = useQueryClient();
   const { boardId: boardIdParam } = useParams();
   const boardId = Number(boardIdParam);
 
-  const { data: board, isLoading } = usePipelineKanban(boardId, { poll: true });
-  const { data: collaborationSummary } = useBoardCollaborationSummary(boardId, boardId > 0);
-  const { data: boards = [] } = usePipelineBoards(
-    workspace === 'estimates' ? { estimatesWorkspace: true } : { salesOnly: true },
-  );
+  const boardsQueryOptions = workspace === 'estimates'
+    ? { estimatesWorkspace: true as const }
+    : { salesOnly: true as const };
+
+  const {
+    data: board,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = usePipelineKanban(boardId, { poll: true });
+  const { data: boards = [] } = usePipelineBoards(boardsQueryOptions);
   const switcherBoards = useMemo(
     () => filterBoardsForWorkspace(boards, workspace),
     [boards, workspace],
   );
   const moveLead = useMovePipelineLead();
+  const updateLead = useUpdatePipelineLead();
   const reorderStages = useReorderPipelineStages(boardId);
 
   const [viewMode, setViewMode] = useState<BoardViewMode>('kanban');
@@ -106,10 +109,14 @@ export default function BoardKanbanPage() {
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
   const allowCreateBoard = workspace === 'pipeline' || workspace === 'estimates';
+  const workspaceLabel = workspace === 'estimates' ? 'Projects & Estimates' : 'Pipeline';
 
   const handleOpenCollaboration = () => {
-    const unread = collaborationSummary?.unread_announcements_count ?? 0;
-    const pending = collaborationSummary?.polls_pending_vote_count ?? 0;
+    const summary = queryClient.getQueryData<PipelineBoardCollaborationSummary>(
+      pipelineCollaborationKeys.summary(boardId),
+    );
+    const unread = summary?.unread_announcements_count ?? 0;
+    const pending = summary?.polls_pending_vote_count ?? 0;
     setCollaborationInitialTab(unread > 0 ? 'notices' : pending > 0 ? 'polls' : 'notices');
     setCollaborationOpen(true);
   };
@@ -128,7 +135,7 @@ export default function BoardKanbanPage() {
     if (!leadQuery.trim()) return allStages;
     return allStages.map((stage) => ({
       ...stage,
-      leads: (stage.leads ?? []).filter((lead) => leadMatchesQuery(lead, leadQuery)),
+      leads: (stage.leads ?? []).filter((lead) => leadMatchesSearchQuery(lead, leadQuery)),
     }));
   }, [allStages, leadQuery]);
 
@@ -159,6 +166,20 @@ export default function BoardKanbanPage() {
     });
   };
 
+  const handleToggleComplete = (lead: PipelineLead, complete: boolean) => {
+    updateLead.mutate({
+      id: lead.id,
+      board_id: boardId,
+      status: complete ? 'won' : 'open',
+      silent: true,
+    });
+  };
+
+  const headerBoard = board ?? switcherBoards.find((b) => b.id === boardId);
+  const boardBgStyle = headerBoard ? pipelineBoardBackgroundStyleFromBoard(headerBoard) : undefined;
+  const isTaskBoard = board ? boardUsesTaskTerminology(board) : workspace === 'estimates';
+  const itemLabel = isTaskBoard ? 'task' : 'lead';
+
   if (workspace === 'pipeline' && board && !boardBelongsToPipelineWorkspace(board)) {
     return <Navigate to={ROUTES.ESTIMATES.BOARD(boardId)} replace />;
   }
@@ -167,24 +188,60 @@ export default function BoardKanbanPage() {
     return <Navigate to={ROUTES.PIPELINE.BOARD(boardId)} replace />;
   }
 
-  if (isLoading || !board) {
+  if (isError && !board) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <LoadingSpinner />
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-red-100 bg-red-50/50 p-8 text-center">
+        <p className="text-sm font-medium text-red-800">Could not load this board</p>
+        <p className="max-w-md text-sm text-red-700/80">
+          {(error as Error)?.message ?? 'Check your connection and try again.'}
+        </p>
+        <Button variant="secondary" onClick={() => void refetch()} className="inline-flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Retry
+        </Button>
       </div>
     );
   }
 
-  const isTaskBoard = boardUsesTaskTerminology(board);
-  const itemLabel = isTaskBoard ? 'task' : 'lead';
-  const boardBgStyle = pipelineBoardBackgroundStyleFromBoard(board);
+  if (!board && (isLoading || boardId <= 0)) {
+    return (
+      <div
+        className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm"
+        style={boardBgStyle}
+      >
+        <header className="shrink-0 border-b border-white/40 bg-white/75 px-3 py-3 backdrop-blur-md sm:px-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-indigo-500/80">{workspaceLabel}</span>
+            <div className="h-4 w-32 animate-pulse rounded bg-indigo-100/80" />
+          </div>
+        </header>
+        <KanbanBoardSkeleton />
+      </div>
+    );
+  }
+
+  if (!board) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+        <p className="text-sm font-medium text-gray-800">Board not found</p>
+        <p className="text-sm text-gray-500">It may have been archived or you no longer have access.</p>
+        <Button variant="secondary" onClick={() => window.history.back()}>Go back</Button>
+      </div>
+    );
+  }
 
   return (
     <div
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200/80 shadow-sm"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm transition-opacity duration-200"
       style={boardBgStyle}
     >
-      <header className="relative z-40 shrink-0 border-b border-gray-200/70 bg-white/90 px-3 py-3 backdrop-blur-md sm:px-4">
+      <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/75 px-3 py-3 backdrop-blur-md sm:px-4">
+        <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80">
+          <span>{workspaceLabel}</span>
+          {isFetching && !isLoading && (
+            <span className="normal-case tracking-normal text-blue-600">Refreshing…</span>
+          )}
+        </div>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="flex shrink-0 items-center gap-2 lg:min-w-[200px]">
             <BoardSearchMenu
@@ -194,6 +251,7 @@ export default function BoardKanbanPage() {
               boardRoute={boardRoute}
               boardsListRoute={boardsListRoute}
               allowCreateBoard={allowCreateBoard}
+              workspaceLabel={workspaceLabel}
             />
             <BoardCollaborationButton
               boardId={boardId}
@@ -203,7 +261,7 @@ export default function BoardKanbanPage() {
               <button
                 type="button"
                 onClick={() => setEditBoardOpen(true)}
-                className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+                className="rounded-lg p-2 text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-800"
                 title="Board settings"
               >
                 <Settings className="h-4 w-4" />
@@ -213,19 +271,19 @@ export default function BoardKanbanPage() {
 
           {viewMode === 'kanban' && (
             <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
               <input
                 type="search"
                 value={leadQuery}
                 onChange={(e) => setLeadQuery(e.target.value)}
-                placeholder={isTaskBoard ? "Search tasks by title, assignee…" : "Search leads by name, email, phone, assignee…"}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder={isTaskBoard ? 'Search tasks…' : 'Search leads…'}
+                className="w-full rounded-xl border border-blue-100/80 bg-white/90 py-2.5 pl-10 pr-10 text-sm text-slate-800 shadow-sm transition-shadow placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               {leadQuery && (
                 <button
                   type="button"
                   onClick={() => setLeadQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-blue-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                   aria-label="Clear search"
                 >
                   <X className="h-4 w-4" />
@@ -235,13 +293,13 @@ export default function BoardKanbanPage() {
           )}
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm">
+            <div className="inline-flex rounded-lg border border-blue-100/80 bg-white/90 p-0.5 shadow-sm">
               <button
                 type="button"
                 onClick={() => setViewMode('kanban')}
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  viewMode === 'kanban' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50',
+                  viewMode === 'kanban' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
                 )}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
@@ -252,7 +310,7 @@ export default function BoardKanbanPage() {
                 onClick={() => setViewMode('calendar')}
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  viewMode === 'calendar' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50',
+                  viewMode === 'calendar' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
                 )}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
@@ -284,12 +342,15 @@ export default function BoardKanbanPage() {
         </div>
 
         {viewMode === 'kanban' && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
             <span>{allLeadsCount} {itemLabel}{allLeadsCount === 1 ? '' : 's'} on board</span>
             {leadQuery.trim() && (
               <span className="font-medium text-blue-700">
                 {filteredCount} matching &ldquo;{leadQuery.trim()}&rdquo;
               </span>
+            )}
+            {!leadQuery.trim() && (
+              <LeadSearchHint className="text-xs" />
             )}
           </div>
         )}
@@ -304,6 +365,7 @@ export default function BoardKanbanPage() {
               onLeadClick={(lead: PipelineLead) => setSelectedLeadId(lead.id)}
               onLeadCommentsClick={(lead) => setCommentsLeadId(lead.id)}
               onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
+              onToggleComplete={handleToggleComplete}
               onAddLead={(stageId) => setCreateStageId(stageId)}
               onDropLead={handleDropLead}
               onDropColumn={canManageSettings ? handleDropColumn : undefined}
@@ -334,6 +396,7 @@ export default function BoardKanbanPage() {
         onCreateBoard={() => setCreateBoardOpen(true)}
         boardRoute={boardRoute}
         allowCreateBoard={allowCreateBoard}
+        workspaceLabel={workspaceLabel}
       />
 
       {createStageId != null && (
@@ -343,6 +406,7 @@ export default function BoardKanbanPage() {
           stageId={createStageId}
           onClose={() => setCreateStageId(null)}
           defaultCardType={isTaskBoard ? 'card' : undefined}
+          workspace={workspace}
         />
       )}
 
@@ -396,6 +460,7 @@ export default function BoardKanbanPage() {
             projectCreatedBy: project?.created_by,
             projectMembers,
           }}
+          initialLead={findKanbanLead(board, commentsLeadId)}
           onClose={() => setCommentsLeadId(null)}
         />
       )}
@@ -416,6 +481,7 @@ export default function BoardKanbanPage() {
             projectCreatedBy: project?.created_by,
             projectMembers,
           }}
+          initialLead={findKanbanLead(board, selectedLeadId)}
           onClose={() => setSelectedLeadId(null)}
         />
       )}

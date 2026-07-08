@@ -93,6 +93,18 @@ export function assignableStaffModuleSlugs(owner: AuthUser | null | undefined): 
   return resolvedOwnerBusinessModules(owner);
 }
 
+/** Staff modules intersected with what the owner currently allows — for forms and display. */
+export function intersectStaffModulesWithOwner(
+  staffModules: readonly string[] | null | undefined,
+  owner: AuthUser | null | undefined,
+): BusinessModuleSlug[] {
+  const allowed = new Set(assignableStaffModuleSlugs(owner));
+  const normalized = (staffModules ?? []).filter((m): m is BusinessModuleSlug =>
+    (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
+  );
+  return normalized.filter((m) => allowed.has(m));
+}
+
 /** Owner sidebar/API modules — settings is always included. */
 export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   const stored = storedBusinessModules(user);
@@ -177,6 +189,18 @@ export function hasEstimatesBoardsAccess(user: AuthUser | null | undefined): boo
   return canViewFullEstimates(user)
     || canAccessModule(user, 'estimates')
     || (user.project_member_ids?.length ?? 0) > 0;
+}
+
+/** Staff eligible to be invited or listed for a pipeline/personal board workspace. */
+export function staffHasWorkspaceBoardAccess(
+  modules: string[] | undefined,
+  workspace: 'pipeline' | 'estimates',
+): boolean {
+  const list = modules ?? [];
+  if (workspace === 'estimates') {
+    return list.includes('estimates') || list.includes(ESTIMATES_FULL_MODULE);
+  }
+  return list.includes('pipeline');
 }
 
 /** Staff with Estimates module or invited collaborators — not business owners. */

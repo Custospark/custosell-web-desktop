@@ -89,6 +89,7 @@ export const PROJECTS = {
 
 export const PIPELINE = {
   BOARDS: '/pipeline/boards',
+  TEAM_MEMBERS: '/pipeline/team-members',
   BOARD: (id: number) => `/pipeline/boards/${id}`,
   BOARD_KANBAN: (id: number) => `/pipeline/boards/${id}/kanban`,
   BOARD_CALENDAR: (id: number) => `/pipeline/boards/${id}/calendar`,

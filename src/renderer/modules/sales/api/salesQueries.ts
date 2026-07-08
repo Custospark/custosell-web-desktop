@@ -192,6 +192,10 @@ async function fetchCustomers(): Promise<CustomerListItem[]> {
 
 const salesQueryDefaults = {
   networkMode: 'always' as const,
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
+  refetchOnMount: true,
+  refetchOnWindowFocus: true,
   retry: (failureCount: number, error: unknown) =>
     !isNetworkFailure(error) && failureCount < 1,
 };

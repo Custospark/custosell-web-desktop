@@ -21,6 +21,7 @@ import type {
   PipelineLeadActivity,
   PipelineSource,
   PipelineStage,
+  BoardTeamMember,
   UpdateLeadPayload,
 } from './pipelineTypes';
 import {
@@ -47,6 +48,7 @@ import {
   buildOptimisticComment,
   buildOptimisticHistoryForUpdate,
   buildOptimisticStageChange,
+  buildOptimisticStatusChange,
   buildOptimisticSystemEntry,
   applyLeadChecklistsOptimistic,
   computeChecklistCounts,
@@ -95,20 +97,41 @@ function omitLeadMeta<T extends { silent?: boolean; board_id?: number }>(
   return rest;
 }
 
-const queryDefaults = {
-  staleTime: 0,
-  refetchOnMount: 'always' as const,
+const listQueryDefaults = {
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
+  refetchOnMount: true,
+  refetchOnWindowFocus: true,
 };
 
-function invalidatePipeline(qc: ReturnType<typeof useQueryClient>, boardId?: number): void {
+const kanbanQueryDefaults = {
+  staleTime: PIPELINE_KANBAN_POLL_MS,
+  gcTime: 10 * 60_000,
+  refetchOnMount: true,
+  refetchOnWindowFocus: true,
+};
+
+const leadDetailQueryDefaults = {
+  staleTime: 15_000,
+  gcTime: 5 * 60_000,
+  refetchOnMount: true,
+  refetchOnWindowFocus: false,
+};
+
+function invalidatePipelineBoardsList(qc: ReturnType<typeof useQueryClient>): void {
   qc.invalidateQueries({ queryKey: pipelineKeys.boards() });
-  qc.invalidateQueries({ queryKey: pipelineKeys.leads() });
-  qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
+}
+
+function invalidatePipelineBoardScope(
+  qc: ReturnType<typeof useQueryClient>,
+  boardId?: number,
+): void {
   if (boardId) {
     qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
     qc.invalidateQueries({ queryKey: pipelineKeys.board(boardId) });
     qc.invalidateQueries({ queryKey: [...pipelineKeys.all, 'calendar'] });
   }
+  qc.invalidateQueries({ queryKey: pipelineKeys.insights() });
 }
 
 export function usePipelineBoards(options?: {
@@ -142,7 +165,20 @@ export function usePipelineBoards(options?: {
       return normalizeList<PipelineBoard>(data);
     },
     placeholderData: (previousData) => previousData,
-    ...queryDefaults,
+    ...listQueryDefaults,
+  });
+}
+
+export function useBoardTeamMembers(workspace: 'pipeline' | 'estimates' = 'pipeline') {
+  return useQuery<BoardTeamMember[]>({
+    queryKey: pipelineKeys.teamMembers(workspace),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`${PIPELINE.TEAM_MEMBERS}?workspace=${workspace}`);
+      return normalizeList<BoardTeamMember>(data);
+    },
+    staleTime: 30_000,
+    placeholderData: (previousData) => previousData,
+    ...listQueryDefaults,
   });
 }
 
@@ -154,7 +190,7 @@ export function usePipelineBoard(id: number) {
       return normalizeItem<PipelineBoard>(data);
     },
     enabled: Boolean(id),
-    ...queryDefaults,
+    ...listQueryDefaults,
   });
 }
 
@@ -168,8 +204,8 @@ export function usePipelineKanban(boardId: number, options?: { poll?: boolean })
     enabled: Boolean(boardId),
     refetchInterval: options?.poll !== false && boardId ? PIPELINE_KANBAN_POLL_MS : false,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    ...queryDefaults,
+    placeholderData: (previousData) => previousData,
+    ...kanbanQueryDefaults,
   });
 }
 
@@ -186,8 +222,14 @@ export function useCreatePipelineBoard() {
       qc.setQueryData(pipelineKeys.kanban(board.id), (old) =>
         old ? { ...(old as PipelineBoard), cover_color: board.cover_color, name: board.name } : old,
       );
-      invalidatePipeline(qc, board.id);
-      showToast('success', 'Pipeline board created');
+      invalidatePipelineBoardsList(qc);
+      invalidatePipelineBoardScope(qc, board.id);
+      showToast(
+        'success',
+        board.workspace === 'estimates' && !board.project_id
+          ? 'Personal board created'
+          : 'Pipeline board created',
+      );
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not create board'));
@@ -259,11 +301,15 @@ export function usePipelineLeads(filters?: Record<string, string>) {
       return normalizeList<PipelineLead>(data);
     },
     placeholderData: (prev) => prev ?? [],
-    ...queryDefaults,
+    ...listQueryDefaults,
   });
 }
 
-export function usePipelineLead(id: number, enabled = true, options?: { poll?: boolean }) {
+export function usePipelineLead(
+  id: number,
+  enabled = true,
+  options?: { poll?: boolean; initialData?: PipelineLead },
+) {
   return useQuery<PipelineLead>({
     queryKey: pipelineKeys.lead(id),
     queryFn: async () => {
@@ -271,10 +317,10 @@ export function usePipelineLead(id: number, enabled = true, options?: { poll?: b
       return normalizeItem<PipelineLead>(data);
     },
     enabled: Boolean(id) && enabled,
+    initialData: options?.initialData,
     refetchInterval: options?.poll && enabled && id ? PIPELINE_LEAD_POLL_MS : false,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    ...queryDefaults,
+    ...leadDetailQueryDefaults,
   });
 }
 
@@ -438,9 +484,16 @@ export function useMovePipelineLead() {
           moveLeadOptimistic(previous, id, stage_id, position),
         );
         if (fromLead && toStage && fromLead.stage_id !== stage_id) {
-          appendLeadActivitiesOptimistic(qc, id, board_id, [
+          const activities = [
             buildOptimisticStageChange(fromLead, fromStageName, toStage.name),
-          ]);
+          ];
+          let nextStatus = fromLead.status ?? 'open';
+          if (toStage.is_won) nextStatus = 'won';
+          else if (toStage.is_lost) nextStatus = 'lost';
+          else if (nextStatus !== 'converted') nextStatus = 'open';
+          const statusEntry = buildOptimisticStatusChange(fromLead, fromLead.status ?? 'open', nextStatus);
+          if (statusEntry) activities.push(statusEntry);
+          appendLeadActivitiesOptimistic(qc, id, board_id, activities);
         }
         const updatedLead = findKanbanLead(
           qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(board_id)),
@@ -705,7 +758,7 @@ export function usePipelineSources() {
       const { data } = await axiosInstance.get(PIPELINE.SOURCES);
       return normalizeList<PipelineSource>(data);
     },
-    ...queryDefaults,
+    ...listQueryDefaults,
   });
 }
 
@@ -717,7 +770,7 @@ export function usePipelineInsights(boardId?: number) {
       const { data } = await axiosInstance.get(`${PIPELINE.INSIGHTS}${params}`);
       return normalizeItem<PipelineInsightsSummary>(data);
     },
-    ...queryDefaults,
+    ...listQueryDefaults,
   });
 }
 
@@ -914,7 +967,7 @@ export function usePipelineCalendar(
       return normalizeList<PipelineCalendarDay>(data);
     },
     enabled: Boolean(boardId),
-    ...queryDefaults,
+    ...listQueryDefaults,
   });
 }
 
@@ -983,7 +1036,7 @@ export function usePipelineLabels(boardId?: number) {
       return normalizeList<PipelineLabel>(data);
     },
     enabled: Boolean(boardId),
-    ...queryDefaults,
+    ...listQueryDefaults,
   });
 }
 

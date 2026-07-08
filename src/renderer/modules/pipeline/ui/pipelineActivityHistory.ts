@@ -123,6 +123,31 @@ export function formatHistoryActivity(
     };
   }
 
+  if (action === 'status_change') {
+    const from = typeof meta.from === 'string' ? meta.from : 'open';
+    const to = typeof meta.to === 'string' ? meta.to : 'open';
+    const isTask = meta.card_type === 'card';
+    const fromLabel = from === 'won'
+      ? (isTask ? 'Complete' : 'Won')
+      : from === 'lost'
+        ? 'Lost'
+        : from === 'open'
+          ? (isTask ? 'In progress' : 'Open')
+          : from;
+    const toLabel = to === 'won'
+      ? (isTask ? 'Complete' : 'Won')
+      : to === 'lost'
+        ? 'Lost'
+        : to === 'open'
+          ? (isTask ? 'In progress' : 'Open')
+          : to;
+    return {
+      headline: activity.body ?? (isTask ? 'Task status updated' : 'Lead status updated'),
+      fromLabel,
+      toLabel,
+    };
+  }
+
   if (action === 'archived') {
     return {
       headline: 'Card archived',

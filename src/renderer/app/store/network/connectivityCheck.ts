@@ -23,7 +23,7 @@ export interface ConnectivityProbeResult {
 async function probeApiBackend(): Promise<{ ok: boolean; latency: number | null }> {
   const startTime = performance.now();
   try {
-    await axiosInstance.get('/sales', {
+    await axiosInstance.get('/health', {
       timeout: TIMEOUT_MS,
       skipAuthRedirect: true,
       skipSessionUpgrade: true,

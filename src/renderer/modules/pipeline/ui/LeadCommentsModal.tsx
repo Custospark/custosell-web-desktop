@@ -1,7 +1,8 @@
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { usePipelineLead } from '../api/usePipelineQueries';
+import type { PipelineLead } from '../api/pipelineTypes';
 import LeadCommentsPanel from './LeadCommentsPanel';
+import { LeadCommentsSkeleton } from './KanbanBoardSkeleton';
 
 interface LeadCommentsModalProps {
   leadId: number;
@@ -16,6 +17,7 @@ interface LeadCommentsModalProps {
     projectCreatedBy?: number | null;
     projectMembers?: { user_id: number; role: string }[];
   };
+  initialLead?: PipelineLead;
   onClose: () => void;
 }
 
@@ -24,23 +26,26 @@ export default function LeadCommentsModal({
   boardId,
   board,
   boardAccess,
+  initialLead,
   onClose,
 }: LeadCommentsModalProps) {
-  const { data: lead, isLoading } = usePipelineLead(leadId, true, { poll: true });
+  const { data: lead, isLoading, isFetching } = usePipelineLead(leadId, true, {
+    initialData: initialLead,
+  });
+
+  const showSkeleton = !lead && isLoading;
 
   return (
     <Modal
       isOpen
       onClose={onClose}
-      title={lead?.title ?? 'Comments'}
-      subtitle="Team discussion on this card"
+      title={lead?.title ?? initialLead?.title ?? 'Comments'}
+      subtitle={isFetching && lead ? 'Updating…' : 'Team discussion on this card'}
       size="md"
     >
-      {isLoading || !lead ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
-      ) : (
+      {showSkeleton ? (
+        <LeadCommentsSkeleton />
+      ) : lead ? (
         <LeadCommentsPanel
           leadId={leadId}
           boardId={boardId}
@@ -49,6 +54,8 @@ export default function LeadCommentsModal({
           activities={lead.activities}
           compact
         />
+      ) : (
+        <p className="py-8 text-center text-sm text-gray-500">Could not load comments for this card.</p>
       )}
     </Modal>
   );

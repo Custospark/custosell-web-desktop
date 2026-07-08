@@ -20,7 +20,7 @@ function leadsLink(params: Record<string, string>) {
 
 export default function InsightsPage() {
   const navigate = useNavigate();
-  const { data: boards } = usePipelineBoards();
+  const { data: boards } = usePipelineBoards({ salesOnly: true });
   const { data: business } = useBusiness();
   const [boardId, setBoardId] = useState<number | undefined>(undefined);
   const { data: insights, isLoading, isError, refetch } = usePipelineInsights(boardId);

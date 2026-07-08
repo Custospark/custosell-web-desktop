@@ -14,7 +14,7 @@ import { Plus, Tag, Trash2 } from 'lucide-react';
 const LABEL_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
 export default function BoardLabelsSettings() {
-  const { data: boards = [] } = usePipelineBoards();
+  const { data: boards = [] } = usePipelineBoards({ salesOnly: true });
   const [boardId, setBoardId] = useState<number | ''>('');
   const resolvedBoardId = boardId === '' ? boards[0]?.id : boardId;
   const { data: labels = [] } = usePipelineLabels(resolvedBoardId);

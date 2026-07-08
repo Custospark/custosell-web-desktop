@@ -35,7 +35,7 @@ export default function AllLeadsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: boards } = usePipelineBoards();
+  const { data: boards } = usePipelineBoards({ salesOnly: true });
   const { data: sources } = usePipelineSources();
   const { data: staff } = useStaff();
 

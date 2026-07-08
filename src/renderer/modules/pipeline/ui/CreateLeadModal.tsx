@@ -3,6 +3,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useCreatePipelineLead, usePipelineBoards, usePipelineKanban, usePipelineSources } from '../api/usePipelineQueries';
 import type { PipelineCardType } from '../api/pipelineTypes';
+import { filterBoardsForWorkspace } from '../api/pipelineBoardWorkspace';
 import MultiAssigneeSelect from './MultiAssigneeSelect';
 import {
   PipelineFormSection,
@@ -23,11 +24,26 @@ interface CreateLeadModalProps {
   stageId?: number;
   /** When set, card type selector is hidden and this type is used automatically */
   defaultCardType?: PipelineCardType;
+  workspace?: 'pipeline' | 'estimates';
 }
 
-export default function CreateLeadModal({ open, boardId: fixedBoardId, stageId: fixedStageId, onClose, defaultCardType }: CreateLeadModalProps) {
+export default function CreateLeadModal({
+  open,
+  boardId: fixedBoardId,
+  stageId: fixedStageId,
+  onClose,
+  defaultCardType,
+  workspace = 'pipeline',
+}: CreateLeadModalProps) {
   const createLead = useCreatePipelineLead();
-  const { data: boards = [] } = usePipelineBoards();
+  const boardsQueryOptions = workspace === 'estimates'
+    ? { estimatesWorkspace: true as const }
+    : { salesOnly: true as const };
+  const { data: boardsRaw = [] } = usePipelineBoards(boardsQueryOptions);
+  const boards = useMemo(
+    () => filterBoardsForWorkspace(boardsRaw, workspace),
+    [boardsRaw, workspace],
+  );
   const { data: sources } = usePipelineSources();
 
   const [selectedBoardId, setSelectedBoardId] = useState<number | ''>('');

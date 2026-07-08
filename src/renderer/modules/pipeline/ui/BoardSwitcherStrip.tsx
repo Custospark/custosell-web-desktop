@@ -11,6 +11,7 @@ interface BoardSwitcherStripProps {
   onCreateBoard: () => void;
   boardRoute?: (id: number) => string;
   allowCreateBoard?: boolean;
+  workspaceLabel?: string;
 }
 
 export default function BoardSwitcherStrip({
@@ -19,6 +20,7 @@ export default function BoardSwitcherStrip({
   onCreateBoard,
   boardRoute = ROUTES.PIPELINE.BOARD,
   allowCreateBoard = true,
+  workspaceLabel,
 }: BoardSwitcherStripProps) {
   const navigate = useNavigate();
   const activeRef = useRef<HTMLButtonElement>(null);
@@ -28,7 +30,10 @@ export default function BoardSwitcherStrip({
   }, [activeBoardId]);
 
   return (
-    <div className="relative z-30 shrink-0 border-t border-gray-200/80 bg-white/95 backdrop-blur-sm">
+    <div className="relative z-30 shrink-0 border-t border-white/40 bg-white/75 backdrop-blur-sm">
+      {workspaceLabel && (
+        <p className="px-3 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-500/80">{workspaceLabel}</p>
+      )}
       <div className="flex items-center gap-1 overflow-x-auto px-2 py-1.5 scrollbar-thin">
         {boards.map((board) => {
           const isActive = board.id === activeBoardId;
@@ -41,8 +46,8 @@ export default function BoardSwitcherStrip({
               className={cn(
                 'inline-flex max-w-[200px] shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-100',
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-indigo-50/70 hover:text-indigo-900',
               )}
               title={board.name}
             >
@@ -52,7 +57,7 @@ export default function BoardSwitcherStrip({
               />
               <span className="truncate">{board.name}</span>
               {!isActive && (board.open_leads_count ?? 0) > 0 && (
-                <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">
+                <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
                   {board.open_leads_count}
                 </span>
               )}
@@ -63,7 +68,7 @@ export default function BoardSwitcherStrip({
         <button
           type="button"
           onClick={onCreateBoard}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-indigo-300/80 px-3 py-2 text-sm font-medium text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50/60 hover:text-indigo-900"
         >
           <Plus className="h-4 w-4" />
           New board

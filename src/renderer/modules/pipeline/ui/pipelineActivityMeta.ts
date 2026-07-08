@@ -45,6 +45,12 @@ export function activityTypeLabel(type: string): string {
 
 export function historyIconForActivity(activity: { type: string; metadata?: Record<string, unknown> | null }) {
   const action = activity.metadata?.action;
+  if (action === 'status_change') {
+    const to = activity.metadata?.to;
+    if (to === 'won') return CheckCircle2;
+    if (to === 'lost') return ThumbsDown;
+    return ArrowRightLeft;
+  }
   if (action === 'reaction') {
     return activity.metadata?.reaction === 'dislike' ? ThumbsDown : ThumbsUp;
   }

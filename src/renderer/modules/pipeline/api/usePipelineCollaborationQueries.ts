@@ -62,8 +62,9 @@ export function useBoardCollaborationSummary(boardId: number, enabled = true) {
       return (data as { data: PipelineBoardCollaborationSummary }).data;
     },
     enabled: enabled && boardId > 0,
-    staleTime: 10_000,
-    refetchInterval: 20_000,
+    staleTime: 30_000,
+    refetchInterval: enabled && boardId > 0 ? 45_000 : false,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }

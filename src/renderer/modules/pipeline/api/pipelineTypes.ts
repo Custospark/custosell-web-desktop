@@ -287,6 +287,14 @@ export interface PipelineInsightsSummary {
   }>;
 }
 
+export interface BoardTeamMember {
+  id: number;
+  name: string;
+  email: string | null;
+  avatar?: string | null;
+  modules: string[];
+}
+
 export interface BoardMemberInput {
   user_id: number;
   role: 'editor' | 'viewer';
@@ -347,6 +355,7 @@ export interface UpdateLeadPayload {
   background_color?: string | null;
   lost_reason?: string | null;
   label_ids?: number[];
+  status?: PipelineLeadStatus;
 }
 
 export type PipelineCalendarDateField = 'due' | 'start' | 'close' | 'all';

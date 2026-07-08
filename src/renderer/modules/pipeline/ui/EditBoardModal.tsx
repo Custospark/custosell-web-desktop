@@ -268,7 +268,7 @@ function EditBoardModalForm({
           <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             {isProjectBoard
               ? 'You can view this board&apos;s settings. Only the board owner or project managers can change team access and board options.'
-              : 'You can view this board&apos;s settings. Only the board owner can change visibility, invites, and board options.'}
+              : 'You can view this board&apos;s settings. Only the board owner or invited managers can change visibility, team, and board options.'}
           </p>
         )}
 

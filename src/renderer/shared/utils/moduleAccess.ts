@@ -1,5 +1,6 @@
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
+import { normalizeBoardMemberRole } from '../../modules/pipeline/api/boardRoleUtils';
 
 export const ESTIMATES_FULL_MODULE = 'estimates_full';
 
@@ -265,7 +266,42 @@ export function canManageBoardSettings(
 
   if (board.visibility === 'shared' && board.members?.length) {
     const member = board.members.find((m) => m.user_id === user.id);
-    if (member?.role === 'editor') return true;
+    if (member && normalizeBoardMemberRole(member.role) === 'manager') return true;
+  }
+
+  return false;
+}
+
+/** Move cards, columns, comment, and add resources — contributors and managers. */
+export function canContributeToBoard(
+  user: AuthUser | null | undefined,
+  board: {
+    created_by?: number | null;
+    project_id?: number | null;
+    visibility?: string;
+    members?: { user_id: number; role: string }[];
+  },
+  options?: {
+    projectCreatedBy?: number | null;
+    projectMembers?: { user_id: number; role: string }[];
+  },
+): boolean {
+  if (!user) return false;
+  if (canManageBoardSettings(user, board, options)) return true;
+
+  if (board.project_id && options?.projectMembers) {
+    const member = options.projectMembers.find((m) => m.user_id === user.id);
+    const role = member?.role;
+    return role === 'contributor' || role === 'manager';
+  }
+
+  if (Number(board.created_by) === user.id) return true;
+  if (board.visibility === 'team') return true;
+
+  if (board.visibility === 'shared' && board.members?.length) {
+    const member = board.members.find((m) => m.user_id === user.id);
+    const role = normalizeBoardMemberRole(member?.role);
+    return role === 'contributor' || role === 'manager';
   }
 
   return false;

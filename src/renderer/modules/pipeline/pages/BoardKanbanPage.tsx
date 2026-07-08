@@ -47,7 +47,7 @@ import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, 
 import { cn } from '../../../shared/utils/cn';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useProject, useProjectMembers } from '../../estimates/api/useProjectQueries';
-import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
+import { canContributeToBoard, canManageBoardSettings } from '../../../shared/utils/moduleAccess';
 import type { PipelineBoardCollaborationSummary } from '../api/pipelineTypes';
 
 type BoardViewMode = 'kanban' | 'calendar';
@@ -111,11 +111,20 @@ export default function BoardKanbanPage() {
   const projectId = board?.project_id ?? 0;
   const { data: project } = useProject(isProjectBoard ? projectId : 0);
   const { data: projectMembers = [] } = useProjectMembers(isProjectBoard ? projectId : 0);
+  const boardAccess = useMemo(
+    () => ({
+      projectCreatedBy: project?.created_by,
+      projectMembers,
+    }),
+    [project?.created_by, projectMembers],
+  );
+
   const canManageSettings = board
-    ? canManageBoardSettings(user, board, {
-        projectCreatedBy: project?.created_by,
-        projectMembers,
-      })
+    ? canManageBoardSettings(user, board, boardAccess)
+    : false;
+
+  const canContribute = board
+    ? canContributeToBoard(user, board, boardAccess)
     : false;
 
   const { data: resourcesSummary } = useBoardResourcesSummary(boardId, boardId > 0, true);
@@ -125,18 +134,7 @@ export default function BoardKanbanPage() {
   const conversationMessagesCount = conversationSummary?.messages_count ?? 0;
   const conversationUnreadCount = conversationSummary?.unread_count ?? 0;
 
-  const canContributeResources = useMemo(() => {
-    if (!board || !user) return false;
-    if (user.is_business_owner || canManageSettings) return true;
-    if (Number(board.created_by) === user.id) return true;
-    if (board.visibility === 'team') return true;
-    if (board.visibility === 'shared') {
-      const membership = board.members?.find((member) => member.user_id === user.id);
-      return membership?.role === 'editor';
-    }
-    if (isProjectBoard) return true;
-    return false;
-  }, [board, user, canManageSettings, isProjectBoard]);
+  const canContributeResources = canContribute;
 
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
@@ -365,22 +363,26 @@ export default function BoardKanbanPage() {
 
             {viewMode === 'kanban' && (
               <>
-                <Button
-                  variant="secondary"
-                  onClick={() => setAddStageOpen(true)}
-                  className="inline-flex items-center gap-2"
-                >
-                  <Columns3 className="h-4 w-4" />
-                  Add column
-                </Button>
-                <Button
-                  onClick={() => setCreateStageId(stages[0]?.id ?? allStages[0]?.id ?? null)}
-                  className="inline-flex items-center gap-2 shadow-sm"
-                  disabled={!allStages.length}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  {isTaskBoard ? 'Add task' : 'Add card'}
-                </Button>
+                {canManageSettings && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setAddStageOpen(true)}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <Columns3 className="h-4 w-4" />
+                    Add column
+                  </Button>
+                )}
+                {canContribute && (
+                  <Button
+                    onClick={() => setCreateStageId(stages[0]?.id ?? allStages[0]?.id ?? null)}
+                    className="inline-flex items-center gap-2 shadow-sm"
+                    disabled={!allStages.length}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {isTaskBoard ? 'Add task' : 'Add card'}
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -410,9 +412,9 @@ export default function BoardKanbanPage() {
               onLeadCommentsClick={(lead) => setCommentsLeadId(lead.id)}
               onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
               onToggleComplete={handleToggleComplete}
-              onAddLead={(stageId) => setCreateStageId(stageId)}
-              onDropLead={handleDropLead}
-              onDropColumn={canManageSettings ? handleDropColumn : undefined}
+              onAddLead={canContribute ? (stageId) => setCreateStageId(stageId) : undefined}
+              onDropLead={canContribute ? handleDropLead : undefined}
+              onDropColumn={canContribute ? handleDropColumn : undefined}
               onEditStage={canManageSettings ? (s) => setEditStage(s) : undefined}
               isProjectBoard={isTaskBoard}
             />

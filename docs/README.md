@@ -59,6 +59,13 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [agents-playbook.ipynb](./team/agents-playbook.ipynb) | Custospark team orchestration playbook (`AGENTS.md` companion) |
 
+## Architecture decisions (ADR)
+
+| Document | Contents |
+|----------|----------|
+| [2026-07-04-accounting-module-architecture.md](./adr/2026-07-04-accounting-module-architecture.md) | Double-entry accounting module |
+| [2026-07-08-pipeline-board-member-roles.md](./adr/2026-07-08-pipeline-board-member-roles.md) | Pipeline board viewer / contributor / manager roles |
+
 ## Key source locations
 
 | Area | Path |

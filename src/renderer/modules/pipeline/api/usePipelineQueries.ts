@@ -249,7 +249,7 @@ export function useUpdatePipelineBoard() {
     mutationFn: async (input: Partial<CreateBoardPayload> & {
       id: number;
       is_archived?: boolean;
-      members?: { user_id: number; role: 'editor' | 'viewer' }[];
+      members?: { user_id: number; role: 'viewer' | 'contributor' | 'manager' }[];
       silent?: boolean;
     }) => {
       const { id, ...payload } = omitSilent(input);

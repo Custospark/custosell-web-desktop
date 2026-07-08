@@ -49,7 +49,7 @@ import PipelineColorPicker from './PipelineColorPicker';
 import { CARD_PRESET_COLORS } from './pipelineColorPresets';
 import { LeadDetailSkeleton } from './KanbanBoardSkeleton';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canManageBoardSettings } from '../../../shared/utils/moduleAccess';
+import { canContributeToBoard, canManageBoardSettings } from '../../../shared/utils/moduleAccess';
 
 interface LeadDetailModalProps {
   leadId: number;
@@ -117,14 +117,18 @@ export default function LeadDetailModal({
   const isLead = (lead.card_type ?? 'lead') === 'lead';
   const stageColor = lead.stage?.color ?? '#6366f1';
   const resolvedBoardId = boardId ?? lead.board_id;
-  const patchLead = (payload: UpdateLeadPayload) =>
-    updateLead.mutate({ ...payload, id: lead.id, board_id: resolvedBoardId, silent: true });
+  const canArchive = board ? canManageBoardSettings(user, board, boardAccess) : false;
+  const canEditCard = board ? canContributeToBoard(user, board, boardAccess) : true;
 
-  const handleConvert = async () => {
-    await convertLead.mutateAsync({ id: lead.id, board_id: resolvedBoardId });
+  const patchLead = (payload: UpdateLeadPayload) => {
+    if (!canEditCard) return;
+    updateLead.mutate({ ...payload, id: lead.id, board_id: resolvedBoardId, silent: true });
   };
 
-  const canArchive = board ? canManageBoardSettings(user, board, boardAccess) : false;
+  const handleConvert = async () => {
+    if (!canEditCard) return;
+    await convertLead.mutateAsync({ id: lead.id, board_id: resolvedBoardId });
+  };
 
   const handleArchive = async () => {
     const ok = await confirm({
@@ -152,6 +156,11 @@ export default function LeadDetailModal({
       size="xl"
     >
       <div className="space-y-5 pb-2">
+        {!canEditCard && (
+          <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+            You have viewer access on this board — you can browse cards but cannot edit them.
+          </p>
+        )}
         {/* Hero strip */}
         <div
           className="overflow-hidden rounded-xl border border-gray-200 shadow-sm"
@@ -161,6 +170,7 @@ export default function LeadDetailModal({
             <button
               type="button"
               onClick={() => patchLead({ status: isComplete ? 'open' : 'won' })}
+              disabled={!canEditCard}
               className={cn(
                 'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors',
                 isComplete

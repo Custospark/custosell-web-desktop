@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useBoardTeamMembers } from '../api/usePipelineQueries';
 import type { BoardMemberInput } from '../api/pipelineTypes';
+import type { BoardMemberRole } from '../api/boardRoleUtils';
+import {
+  BOARD_ROLE_BADGE_CLASS,
+  BOARD_ROLE_HINTS,
+  BOARD_ROLE_LABELS,
+  normalizeBoardMemberRole,
+} from '../api/boardRoleUtils';
 import { Button } from '../../../shared/components/buttons/Button';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
@@ -13,22 +20,10 @@ const pickerInputClass =
 const pickerSelectCompactClass =
   'rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20';
 
-const ROLE_BADGE_CLASS: Record<BoardMemberInput['role'], string> = {
-  viewer: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
-  editor: 'bg-violet-50 text-violet-700 ring-1 ring-violet-100',
-};
-
-const ROLE_OPTIONS = (workspace: BoardWorkspace) => [
-  {
-    value: 'viewer' as const,
-    label: 'Viewer',
-    hint: workspace === 'estimates' ? 'View board and tasks' : 'View board and cards',
-  },
-  {
-    value: 'editor' as const,
-    label: workspace === 'estimates' ? 'Contributor' : 'Editor',
-    hint: workspace === 'estimates' ? 'Move cards, edit tasks, and comment' : 'Move cards, edit leads, and comment',
-  },
+const ROLE_OPTIONS: Array<{ value: BoardMemberRole; label: string; hint: string }> = [
+  { value: 'viewer', label: BOARD_ROLE_LABELS.viewer, hint: BOARD_ROLE_HINTS.viewer },
+  { value: 'contributor', label: BOARD_ROLE_LABELS.contributor, hint: BOARD_ROLE_HINTS.contributor },
+  { value: 'manager', label: BOARD_ROLE_LABELS.manager, hint: BOARD_ROLE_HINTS.manager },
 ];
 
 interface BoardMemberPickerProps {
@@ -47,7 +42,7 @@ function memberDisplayName(member: BoardMemberInput, staffName?: string): string
 }
 
 export default function BoardMemberPicker({
-  workspace,
+  workspace: _workspace,
   value,
   onChange,
   excludeUserId,
@@ -56,12 +51,11 @@ export default function BoardMemberPicker({
   className,
   loadTeamMembers = true,
 }: BoardMemberPickerProps) {
-  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(workspace, {
+  const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(_workspace, {
     enabled: loadTeamMembers,
   });
-  const roleOptions = ROLE_OPTIONS(workspace);
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
-  const [selectedRole, setSelectedRole] = useState<BoardMemberInput['role']>('editor');
+  const [selectedRole, setSelectedRole] = useState<BoardMemberRole>('contributor');
   const [search, setSearch] = useState('');
   const [staffSearch, setStaffSearch] = useState('');
 
@@ -96,7 +90,12 @@ export default function BoardMemberPicker({
     const person = teamMembers.find((u) => u.id === selectedUserId);
     onChange([...value, { user_id: Number(selectedUserId), role: selectedRole, name: person?.name }]);
     setSelectedUserId('');
-    setSelectedRole('editor');
+    setSelectedRole('contributor');
+  };
+
+  const roleMeta = (role: string) => {
+    const normalized = normalizeBoardMemberRole(role);
+    return ROLE_OPTIONS.find((r) => r.value === normalized) ?? ROLE_OPTIONS[0];
   };
 
   if (staffLoading) {
@@ -112,7 +111,7 @@ export default function BoardMemberPicker({
     return (
       <div className={cn('space-y-2', className)}>
         <p className="text-xs text-gray-500">
-          You can view the board team. Only the board owner can invite members or change roles.
+          You can view the board team. Only board owners and managers can invite members or change roles.
         </p>
         {value.length === 0 ? (
           <p className="text-xs text-gray-400">No additional members on this board.</p>
@@ -120,7 +119,7 @@ export default function BoardMemberPicker({
           <ul className="max-h-[280px] divide-y divide-indigo-100/80 overflow-y-auto rounded-xl border border-indigo-100 bg-indigo-50/20 pr-1">
             {value.map((member) => {
               const staffMember = teamMembers.find((u) => u.id === member.user_id);
-              const roleMeta = roleOptions.find((r) => r.value === member.role);
+              const meta = roleMeta(member.role);
               return (
                 <li key={member.user_id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
@@ -130,10 +129,10 @@ export default function BoardMemberPicker({
                       size="sm"
                       nameClassName="text-sm font-medium text-gray-900"
                     />
-                    <p className="mt-0.5 pl-9 text-xs text-gray-500">{roleMeta?.hint}</p>
+                    <p className="mt-0.5 pl-9 text-xs text-gray-500">{meta.hint}</p>
                   </div>
-                  <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', ROLE_BADGE_CLASS[member.role])}>
-                    {roleMeta?.label ?? member.role}
+                  <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', BOARD_ROLE_BADGE_CLASS[meta.value])}>
+                    {meta.label}
                   </span>
                 </li>
               );
@@ -174,11 +173,11 @@ export default function BoardMemberPicker({
           <label className="mb-1 block text-xs font-medium text-gray-700">Role</label>
           <select
             value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value as BoardMemberInput['role'])}
+            onChange={(e) => setSelectedRole(e.target.value as BoardMemberRole)}
             className={pickerInputClass}
             aria-label="Member role"
           >
-            {roleOptions.map((opt) => (
+            {ROLE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
@@ -194,6 +193,12 @@ export default function BoardMemberPicker({
           Invite
         </Button>
       </div>
+
+      <p className="text-xs text-gray-500">
+        <span className="font-medium text-gray-700">Viewer</span> — view only ·{' '}
+        <span className="font-medium text-gray-700">Contributor</span> — move cards & columns ·{' '}
+        <span className="font-medium text-gray-700">Manager</span> — settings, archive & delete
+      </p>
 
       {filteredAvailableStaff.length === 0 && staffQuery && (
         <p className="text-xs text-gray-500">No team members match your search.</p>
@@ -222,7 +227,7 @@ export default function BoardMemberPicker({
           <ul className="max-h-[280px] divide-y divide-indigo-100/80 overflow-y-auto rounded-xl border border-indigo-100 bg-indigo-50/20 pr-1">
             {filteredMembers.map((member) => {
               const isLockedOwner = member.user_id === lockedUserId;
-              const roleMeta = roleOptions.find((r) => r.value === member.role);
+              const meta = roleMeta(member.role);
               const displayName = memberDisplayName(member, teamMembers.find((u) => u.id === member.user_id)?.name);
               const staffMember = teamMembers.find((u) => u.id === member.user_id);
               return (
@@ -241,20 +246,20 @@ export default function BoardMemberPicker({
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 pl-9 text-xs text-gray-500">{roleMeta?.hint}</p>
+                    <p className="mt-0.5 pl-9 text-xs text-gray-500">{meta.hint}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <select
-                      value={member.role}
+                      value={normalizeBoardMemberRole(member.role)}
                       onChange={(e) => {
-                        const role = e.target.value as BoardMemberInput['role'];
+                        const role = e.target.value as BoardMemberRole;
                         onChange(value.map((m) => (m.user_id === member.user_id ? { ...m, role } : m)));
                       }}
                       className={pickerSelectCompactClass}
                       disabled={isLockedOwner}
                       aria-label={`Role for ${displayName}`}
                     >
-                      {roleOptions.map((opt) => (
+                      {ROLE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
@@ -280,10 +285,6 @@ export default function BoardMemberPicker({
             {lockedUserId ? ' Board owner cannot be removed or reassigned.' : ''}
           </p>
         </>
-      ) : availableStaff.length > 0 ? (
-        <p className="text-xs text-gray-500">
-          Pick a team member and role, then click Invite. Viewers can see the board; contributors can move and edit cards.
-        </p>
       ) : null}
 
       {value.length > 0 && filteredMembers.length === 0 && (

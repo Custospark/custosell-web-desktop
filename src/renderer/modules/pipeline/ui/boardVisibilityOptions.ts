@@ -16,7 +16,7 @@ export const PIPELINE_VISIBILITY_OPTIONS: {
 
 export const ESTIMATES_VISIBILITY_OPTIONS: typeof PIPELINE_VISIBILITY_OPTIONS = [
   { value: 'private', label: 'Private', hint: 'Only you can see this board', icon: Lock },
-  { value: 'shared', label: 'Shared', hint: 'Invite viewers or contributors', icon: Share2 },
+  { value: 'shared', label: 'Shared', hint: 'Invite viewers, contributors, or managers', icon: Share2 },
   { value: 'team', label: 'Team', hint: 'Everyone with Projects & Estimates access', icon: Users },
 ];
 

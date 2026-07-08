@@ -14,11 +14,13 @@ export interface PipelineUserRef {
   avatar?: string | null;
 }
 
+export type PipelineBoardMemberRole = 'viewer' | 'contributor' | 'manager';
+
 export interface PipelineBoardMember {
   id: number;
   board_id: number;
   user_id: number;
-  role: 'editor' | 'viewer';
+  role: PipelineBoardMemberRole | 'editor';
   user?: PipelineUserRef;
 }
 
@@ -412,7 +414,7 @@ export interface BoardTeamMember {
 
 export interface BoardMemberInput {
   user_id: number;
-  role: 'editor' | 'viewer';
+  role: PipelineBoardMemberRole;
   name?: string;
 }
 

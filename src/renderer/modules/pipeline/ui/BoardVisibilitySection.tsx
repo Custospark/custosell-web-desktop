@@ -76,9 +76,7 @@ export default function BoardVisibilitySection({
       {visibility === 'shared' && (
         <PipelineFormSection title="Invite collaborators" icon={Users}>
           <p className="mb-3 text-xs text-gray-500">
-            {workspace === 'estimates'
-              ? 'Invite viewers or contributors to this personal board. Only people you add here get access — team visibility is separate.'
-              : 'Invite viewers or editors to this board. Only people you add here get access — team visibility is separate.'}
+            Invite viewers, contributors, or managers. Only people you add here get access — team visibility is separate.
           </p>
           <BoardMemberPicker
             workspace={workspace}

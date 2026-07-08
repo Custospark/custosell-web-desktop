@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useCreateStaff, useUpdateStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
@@ -8,7 +9,11 @@ import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/loca
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import RoleFormDrawer from './RoleFormDrawer';
-import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
+import { setUser } from '../../../app/store/slices/authSlice';
+import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
+import { AUTH } from '../../../shared/api/endpoints/endpoints';
+import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { User, Mail, Key, ShieldCheck, ToggleLeft, Plus, LayoutGrid, Eye, EyeOff } from 'lucide-react';
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import {
@@ -66,6 +71,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
   const { data: roles } = useRoles();
   const { data: business } = useBusiness();
   const authUser = useAppSelector((s) => s.auth.user);
+  const dispatch = useAppDispatch();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const businessOwnerId = getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null });
 
@@ -218,7 +224,19 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           payload.password_confirmation = form.password_confirmation.trim();
         }
       }
-      updateMutation.mutate({ id: staff.id, data: payload }, { onSuccess: onClose });
+      updateMutation.mutate({ id: staff.id, data: payload }, {
+        onSuccess: async () => {
+          if (staff.id === authUser?.id) {
+            try {
+              const { data: fresh } = await axiosInstance.get(AUTH.ME);
+              const userData = (fresh && typeof fresh === 'object' && 'data' in fresh ? fresh.data : fresh) as AuthUser;
+              dispatch(setUser(userData));
+              await updateStoredAuthUser(userData);
+            } catch { /* non-critical */ }
+          }
+          onClose();
+        },
+      });
     } else {
       const payload: CreateStaffData = {
         business_id: authUser?.business_id ?? null,

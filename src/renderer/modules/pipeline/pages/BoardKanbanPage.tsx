@@ -96,6 +96,9 @@ export default function BoardKanbanPage() {
 
   const [viewMode, setViewMode] = useState<BoardViewMode>('kanban');
   const [progressPeriod, setProgressPeriod] = useState<ProgressPeriod>('month');
+  const [progressCustomFrom, setProgressCustomFrom] = useState('');
+  const [progressCustomTo, setProgressCustomTo] = useState('');
+  const [selectedProgressStageIds, setSelectedProgressStageIds] = useState<number[]>([]);
   const [leadQuery, setLeadQuery] = useState('');
   const [createStageId, setCreateStageId] = useState<number | null>(null);
   const [createBoardOpen, setCreateBoardOpen] = useState(false);
@@ -143,13 +146,36 @@ export default function BoardKanbanPage() {
   const conversationMessagesCount = conversationSummary?.messages_count ?? 0;
   const conversationUnreadCount = conversationSummary?.unread_count ?? 0;
 
+  const progressStages = useMemo(
+    () => (board?.stages ?? []).map((stage) => ({
+      stage_id: stage.id,
+      stage_name: stage.name,
+      color: stage.color,
+      sort_order: stage.sort_order,
+      is_won: stage.is_won,
+      is_lost: stage.is_lost,
+    })),
+    [board?.stages],
+  );
+
+  const resolvedProgressStageIds = useMemo(() => {
+    if (progressStages.length === 0) return [];
+    if (selectedProgressStageIds.length === 0) {
+      return progressStages.map((s) => s.stage_id);
+    }
+    const valid = selectedProgressStageIds.filter((id) => progressStages.some((s) => s.stage_id === id));
+    return valid.length > 0 ? valid : progressStages.map((s) => s.stage_id);
+  }, [progressStages, selectedProgressStageIds]);
+
   const {
     data: progressSummary,
     isLoading: progressLoading,
-    isFetching: progressFetching,
   } = useBoardProgressSummary(boardId, progressPeriod, {
-    enabled: boardId > 0 && viewMode === 'progress',
-    poll: viewMode === 'progress',
+    enabled: boardId > 0,
+    poll: boardId > 0,
+    stageIds: resolvedProgressStageIds,
+    from: progressPeriod === 'custom' ? progressCustomFrom : undefined,
+    to: progressPeriod === 'custom' ? progressCustomTo : undefined,
   });
 
   const canContributeResources = canContribute;
@@ -469,11 +495,21 @@ export default function BoardKanbanPage() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <BoardProgressView
             boardId={boardId}
+            board={board}
+            canManageTargets={canManageSettings}
             summary={progressSummary}
-            isLoading={progressLoading}
-            isFetching={progressFetching}
+            isInitialLoading={progressLoading && !progressSummary}
             period={progressPeriod}
             onPeriodChange={setProgressPeriod}
+            customFrom={progressCustomFrom}
+            customTo={progressCustomTo}
+            onCustomRangeChange={(from, to) => {
+              setProgressCustomFrom(from);
+              setProgressCustomTo(to);
+            }}
+            stages={progressStages}
+            selectedStageIds={resolvedProgressStageIds}
+            onSelectedStageIdsChange={setSelectedProgressStageIds}
           />
         </div>
       )}

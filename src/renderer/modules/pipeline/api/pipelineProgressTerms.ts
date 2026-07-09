@@ -10,7 +10,44 @@ export const PROGRESS_PERIOD_OPTIONS: { value: ProgressPeriod; label: string }[]
   { value: 'month', label: 'This month' },
   { value: 'quarter', label: 'This quarter' },
   { value: 'year', label: 'This year' },
+  { value: 'custom', label: 'Custom' },
 ];
+
+export type PlanningLevel = 'decade' | 'five_year' | 'year' | 'quarter' | 'month' | 'week' | 'day';
+
+export const PLANNING_LEVEL_OPTIONS: { value: PlanningLevel; label: string; description: string }[] = [
+  { value: 'decade', label: 'Decade', description: '10-year strategic horizon' },
+  { value: 'five_year', label: '5-year', description: 'Medium-term strategic plan' },
+  { value: 'year', label: 'Year', description: '12-month plan with quarterly breakdown' },
+  { value: 'quarter', label: 'Quarter', description: 'Q1–Q4 focus period' },
+  { value: 'month', label: 'Month', description: 'Monthly execution target' },
+  { value: 'week', label: 'Week', description: 'Weekly sprint goal' },
+  { value: 'day', label: 'Day', description: 'Daily contribution target' },
+];
+
+export const COLUMN_METRIC_SUFFIXES = [
+  'count',
+  'open_value',
+  'entries',
+  'exits',
+  'throughput',
+  'avg_dwell_days',
+  'overdue',
+] as const;
+
+export const COLUMN_METRIC_LABELS: Record<string, (ctx: BoardProgressContext) => string> = {
+  count: (ctx) => `${capitalize(ctx.item_plural)} in column`,
+  open_value: (ctx) => ctx.is_pipeline_board ? 'Open value in column' : 'Estimated value in column',
+  entries: () => 'Entries into column',
+  exits: () => 'Exits from column',
+  throughput: (ctx) => `${capitalize(ctx.item_plural)} moved into column`,
+  avg_dwell_days: () => 'Avg days in column',
+  overdue: (ctx) => `Overdue ${ctx.item_plural} in column`,
+};
+
+export function stageMetricKey(stageId: number, suffix: string): string {
+  return `stage:${stageId}:${suffix}`;
+}
 
 export function resolveProgressContext(
   board?: Pick<PipelineBoard, 'project_id' | 'workspace'> | null,
@@ -42,9 +79,9 @@ export function progressBoardSubtitle(ctx: BoardProgressContext): string {
     return 'Measure task throughput, completions, and team performance on this project board.';
   }
   if (ctx.board_kind === 'estimates') {
-    return 'Track task movement, outcomes, and team performance on this board.';
+    return 'Track task movement, outcomes, and team performance on this estimates board.';
   }
-  return 'Track lead flow, wins, pipeline value, and team performance on this sales board.';
+  return 'Track lead flow, wins, pipeline value, and team performance on this pipeline board.';
 }
 
 export const PROGRESS_METRIC_KEYS = [
@@ -82,7 +119,7 @@ export const METRIC_LABELS: Record<string, (ctx: BoardProgressContext) => string
   pipeline_value_open: (ctx) => ctx.is_pipeline_board ? 'Open pipeline value' : 'Open estimated value',
   pipeline_value_won: (ctx) => ctx.is_pipeline_board ? 'Won value' : 'Completed value',
   win_rate: (ctx) => ctx.is_pipeline_board ? 'Win rate' : 'Completion rate',
-  conversion_rate: (ctx) => 'Conversion rate',
+  conversion_rate: () => 'Conversion rate',
   avg_cycle_days: (ctx) => ctx.is_pipeline_board ? 'Avg days to win' : 'Avg days to complete',
   cards_moved: (ctx) => `${capitalize(ctx.item_plural)} moved`,
   comments_posted: () => 'Comments posted',

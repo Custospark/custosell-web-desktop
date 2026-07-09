@@ -145,7 +145,11 @@ export const PIPELINE = {
   BOARD_TEMPLATES: '/pipeline/board-templates',
   BOARD_APPLY_TEMPLATE: (boardId: number) => `/pipeline/boards/${boardId}/apply-template`,
   BOARD_PROGRESS_SUMMARY: (boardId: number) => `/pipeline/boards/${boardId}/progress/summary`,
+  BOARD_PROGRESS_QUERY: (boardId: number) => `/pipeline/boards/${boardId}/progress/query`,
+  BOARD_PROGRESS_MY: (boardId: number) => `/pipeline/boards/${boardId}/progress/my`,
+  BOARD_PROGRESS_CONFIG: (boardId: number) => `/pipeline/boards/${boardId}/progress/config`,
   BOARD_PROGRESS_EXPORT: (boardId: number) => `/pipeline/boards/${boardId}/progress/export`,
+  BOARD_TARGETS_DECOMPOSE_PREVIEW: (boardId: number) => `/pipeline/boards/${boardId}/targets/decompose-preview`,
   BOARD_TARGETS: (boardId: number) => `/pipeline/boards/${boardId}/targets`,
   BOARD_TARGET: (targetId: number) => `/pipeline/targets/${targetId}`,
 };

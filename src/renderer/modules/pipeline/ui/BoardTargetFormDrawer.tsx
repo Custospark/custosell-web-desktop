@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
   BarChart3,
   CalendarDays,
+  Columns3,
   Crosshair,
   FileText,
   Flag,
   Gauge,
   Hash,
+  Layers,
   Plus,
+  RefreshCw,
   Target,
   Trash2,
   Type,
@@ -22,19 +25,26 @@ import { cn } from '../../../shared/utils/cn';
 import type {
   BoardProgressContext,
   BoardProgressMember,
+  BoardProgressStage,
   BoardTarget,
   BoardTargetType,
   CreateBoardTargetPayload,
+  DecompositionMode,
+  GoalTag,
+  PlanningLevel,
+  TargetAllocation,
 } from '../api/boardProgressTypes';
 import {
   METRIC_LABELS,
   PROGRESS_PERIOD_OPTIONS,
   PROGRESS_METRIC_KEYS,
+  PLANNING_LEVEL_OPTIONS,
   TARGET_TYPE_LABELS,
   metricUnitForKey,
   type ProgressPeriod,
 } from '../api/pipelineProgressTerms';
-import { useCreateBoardTarget, useUpdateBoardTarget } from '../api/useBoardProgressQueries';
+import { useCreateBoardTarget, useDecomposeTargetPreview, useUpdateBoardTarget } from '../api/useBoardProgressQueries';
+import DecompositionPreviewTree from './DecompositionPreviewTree';
 import {
   PipelineFormSection,
   PipelineIconField,
@@ -50,6 +60,7 @@ interface BoardTargetFormDrawerProps {
   context: BoardProgressContext;
   period: ProgressPeriod;
   members: BoardProgressMember[];
+  stages: BoardProgressStage[];
   target?: BoardTarget | null;
 }
 
@@ -61,12 +72,16 @@ type KeyResultDraft = {
 
 type FormState = {
   type: BoardTargetType;
+  goal_tag: GoalTag;
   title: string;
   description: string;
   metric_key: string;
   target_value: string;
   scope: 'board' | 'member';
   member_user_id: number | '';
+  planning_level: PlanningLevel;
+  stage_id: number | '';
+  decomposition_mode: DecompositionMode;
 };
 
 const TARGET_TYPE_OPTIONS: {
@@ -103,13 +118,32 @@ const emptyKeyResult = (): KeyResultDraft => ({
 
 const emptyForm = (): FormState => ({
   type: 'kpi',
+  goal_tag: 'kpi',
   title: '',
   description: '',
   metric_key: 'cards_won',
   target_value: '',
   scope: 'board',
   member_user_id: '',
+  planning_level: 'year',
+  stage_id: '',
+  decomposition_mode: 'hybrid',
 });
+
+function periodToPlanningLevel(period: ProgressPeriod): PlanningLevel {
+  if (period === 'day') return 'day';
+  if (period === 'week') return 'week';
+  if (period === 'month') return 'month';
+  if (period === 'quarter') return 'quarter';
+  if (period === 'year') return 'year';
+  return 'month';
+}
+
+function goalTagForType(type: BoardTargetType): GoalTag {
+  if (type === 'objective') return 'objective';
+  if (type === 'goal') return 'goal';
+  return 'kpi';
+}
 
 function metricOptions(ctx: BoardProgressContext) {
   return PROGRESS_METRIC_KEYS.map((key) => ({
@@ -157,19 +191,43 @@ export default function BoardTargetFormDrawer({
   context,
   period,
   members,
+  stages,
   target,
 }: BoardTargetFormDrawerProps) {
   const isEditing = Boolean(target);
   const createTarget = useCreateBoardTarget(boardId);
   const updateTarget = useUpdateBoardTarget(boardId);
+  const decomposePreview = useDecomposeTargetPreview(boardId);
   const isSubmitting = createTarget.isPending || updateTarget.isPending;
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [keyResults, setKeyResults] = useState<KeyResultDraft[]>([emptyKeyResult()]);
+  const [allocationNodes, setAllocationNodes] = useState<TargetAllocation[]>([]);
 
   const metrics = useMemo(() => metricOptions(context), [context]);
   const metricUnit = metricUnitForKey(form.metric_key);
   const periodLabel = PROGRESS_PERIOD_OPTIONS.find((option) => option.value === period)?.label ?? period;
+
+  const canPreviewDecomposition = useMemo(() => {
+    if (isEditing) return false;
+    const value = Number(form.target_value);
+    return Boolean(form.stage_id) && !Number.isNaN(value) && value > 0;
+  }, [form.stage_id, form.target_value, isEditing]);
+
+  const runDecompositionPreview = useCallback(() => {
+    if (!canPreviewDecomposition || !form.stage_id) return;
+    decomposePreview.mutate(
+      {
+        planning_level: form.planning_level,
+        target_value: Number(form.target_value),
+        stage_ids: [Number(form.stage_id)],
+        decomposition_mode: form.decomposition_mode,
+      },
+      {
+        onSuccess: (preview) => setAllocationNodes(preview.nodes),
+      },
+    );
+  }, [canPreviewDecomposition, decomposePreview, form.decomposition_mode, form.planning_level, form.stage_id, form.target_value]);
 
   useEffect(() => {
     if (!open) return;
@@ -177,25 +235,41 @@ export default function BoardTargetFormDrawer({
       if (target) {
         setForm({
           type: target.type === 'key_result' ? 'kpi' : target.type,
+          goal_tag: target.goal_tag ?? goalTagForType(target.type === 'key_result' ? 'kpi' : target.type),
           title: target.title,
           description: target.description ?? '',
           metric_key: target.metric_key,
           target_value: String(target.target_value),
           scope: target.scope,
           member_user_id: target.member_user_id ?? '',
+          planning_level: target.planning_level ?? periodToPlanningLevel(period),
+          stage_id: target.stage_id ?? '',
+          decomposition_mode: target.decomposition_mode ?? 'hybrid',
         });
         setKeyResults([emptyKeyResult()]);
+        setAllocationNodes(target.allocations ?? []);
         return;
       }
-      setForm(emptyForm());
+      const initial = emptyForm();
+      initial.planning_level = periodToPlanningLevel(period);
+      initial.stage_id = stages[0]?.stage_id ?? '';
+      setForm(initial);
       setKeyResults([emptyKeyResult()]);
+      setAllocationNodes([]);
     });
-  }, [open, target]);
+  }, [open, period, stages, target]);
+
+  useEffect(() => {
+    if (!open || isEditing || !canPreviewDecomposition) return;
+    const timer = window.setTimeout(() => runDecompositionPreview(), 400);
+    return () => window.clearTimeout(timer);
+  }, [open, isEditing, canPreviewDecomposition, runDecompositionPreview]);
 
   const canSubmit = useMemo(() => {
     if (!form.title.trim() || !form.target_value.trim()) return false;
     if (Number.isNaN(Number(form.target_value)) || Number(form.target_value) < 0) return false;
     if (form.scope === 'member' && !form.member_user_id) return false;
+    if (!isEditing && !form.stage_id) return false;
     if (!isEditing && form.type === 'objective') {
       const validKrs = keyResults.filter(
         (kr) => kr.title.trim() && kr.target_value.trim() && !Number.isNaN(Number(kr.target_value)),
@@ -211,14 +285,19 @@ export default function BoardTargetFormDrawer({
     const unit = metricUnitForKey(form.metric_key);
     const basePayload: CreateBoardTargetPayload = {
       type: form.type,
+      goal_tag: form.goal_tag,
       title: form.title.trim(),
       description: form.description.trim() || null,
       metric_key: form.metric_key,
       target_value: Number(form.target_value),
       unit,
       period_type: period,
+      planning_level: form.planning_level,
       scope: form.scope,
       member_user_id: form.scope === 'member' ? Number(form.member_user_id) : null,
+      stage_id: Number(form.stage_id),
+      decomposition_mode: form.decomposition_mode,
+      allocations: allocationNodes.length > 0 ? allocationNodes : undefined,
     };
 
     if (isEditing && target) {
@@ -232,8 +311,12 @@ export default function BoardTargetFormDrawer({
             target_value: basePayload.target_value,
             unit: basePayload.unit,
             period_type: basePayload.period_type,
+            planning_level: basePayload.planning_level,
             scope: basePayload.scope,
             member_user_id: basePayload.member_user_id,
+            stage_id: form.stage_id ? Number(form.stage_id) : undefined,
+            decomposition_mode: basePayload.decomposition_mode,
+            allocations: allocationNodes.length > 0 ? allocationNodes : undefined,
           },
         },
         { onSuccess: onClose },
@@ -242,6 +325,7 @@ export default function BoardTargetFormDrawer({
     }
 
     if (form.type === 'objective') {
+      const stageId = Number(form.stage_id);
       basePayload.key_results = keyResults
         .filter((kr) => kr.title.trim() && kr.target_value.trim())
         .map((kr) => ({
@@ -251,6 +335,7 @@ export default function BoardTargetFormDrawer({
           unit: metricUnitForKey(kr.metric_key),
           scope: form.scope,
           member_user_id: form.scope === 'member' ? Number(form.member_user_id) : null,
+          stage_id: stageId,
         }));
     }
 
@@ -318,7 +403,11 @@ export default function BoardTargetFormDrawer({
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, type: option.value }))}
+                    onClick={() => setForm((prev) => ({
+                      ...prev,
+                      type: option.value,
+                      goal_tag: goalTagForType(option.value),
+                    }))}
                     className={cn(
                       'flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all',
                       selected
@@ -349,6 +438,70 @@ export default function BoardTargetFormDrawer({
             )}
           </PipelineFormSection>
         )}
+
+        <PipelineFormSection
+          title="Planning horizon"
+          icon={CalendarDays}
+          description="Choose how far this target spans — expectations decompose down to daily contributions."
+        >
+          <PipelineIconField label="Planning level" icon={Layers} required>
+            <select
+              value={form.planning_level}
+              onChange={(e) => setForm((prev) => ({ ...prev, planning_level: e.target.value as PlanningLevel }))}
+              className={pipelineSelectClass}
+              aria-label="Planning level"
+            >
+              {PLANNING_LEVEL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label} — {option.description}
+                </option>
+              ))}
+            </select>
+          </PipelineIconField>
+          <PipelineIconField label="Decomposition mode" icon={BarChart3} hint="Hybrid uses column velocity when available.">
+            <select
+              value={form.decomposition_mode}
+              onChange={(e) => setForm((prev) => ({ ...prev, decomposition_mode: e.target.value as DecompositionMode }))}
+              className={pipelineSelectClass}
+              aria-label="Decomposition mode"
+            >
+              <option value="hybrid">Hybrid (velocity-weighted)</option>
+              <option value="velocity">Velocity only</option>
+              <option value="equal">Equal split</option>
+            </select>
+          </PipelineIconField>
+        </PipelineFormSection>
+
+        <PipelineFormSection
+          title="Board column"
+          icon={Columns3}
+          description="Every target must track at least one Kanban column."
+        >
+          {stages.length === 0 ? (
+            <p className="text-sm text-amber-700">Add columns to this board before creating targets.</p>
+          ) : (
+            <PipelineIconField label="Column" icon={Columns3} required>
+              <select
+                value={form.stage_id}
+                onChange={(e) => setForm((prev) => ({
+                  ...prev,
+                  stage_id: e.target.value ? Number(e.target.value) : '',
+                }))}
+                className={pipelineSelectClass}
+                aria-label="Board column"
+              >
+                <option value="">Select column…</option>
+                {stages.map((stage) => (
+                  <option key={stage.stage_id} value={stage.stage_id}>
+                    {stage.stage_name}
+                    {stage.is_won ? ' (won)' : ''}
+                    {stage.is_lost ? ' (lost)' : ''}
+                  </option>
+                ))}
+              </select>
+            </PipelineIconField>
+          )}
+        </PipelineFormSection>
 
         <PipelineFormSection
           title="What you're aiming for"
@@ -420,6 +573,38 @@ export default function BoardTargetFormDrawer({
             </div>
           </div>
         </PipelineFormSection>
+
+        {!isEditing && (
+          <PipelineFormSection
+            title="Decomposition preview"
+            icon={Layers}
+            description="Review how this target breaks into sub-periods before saving. Edit values to override."
+          >
+            <div className="mb-3 flex justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="inline-flex items-center gap-2"
+                onClick={runDecompositionPreview}
+                disabled={!canPreviewDecomposition || decomposePreview.isPending}
+                loading={decomposePreview.isPending}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh preview
+              </Button>
+            </div>
+            <DecompositionPreviewTree
+              nodes={allocationNodes}
+              loading={decomposePreview.isPending}
+              onOverride={(flatIndex, value) => {
+                setAllocationNodes((prev) =>
+                  prev.map((node, i) => (i === flatIndex ? { ...node, expected_value: value, is_override: true } : node)),
+                );
+              }}
+            />
+          </PipelineFormSection>
+        )}
 
         <PipelineFormSection
           title="Ownership"

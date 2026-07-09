@@ -39,13 +39,14 @@ export const pipelineConversationKeys = {
 };
 
 export const pipelineProgressKeys = {
-  summary: (boardId: number, period: string, from?: string, to?: string) =>
-    [...pipelineKeys.all, 'progress-summary', boardId, period, from ?? '', to ?? ''] as const,
+  summary: (boardId: number, period: string, from?: string, to?: string, stageIds?: string) =>
+    [...pipelineKeys.all, 'progress-summary', boardId, period, from ?? '', to ?? '', stageIds ?? ''] as const,
   summaryBoard: (boardId: number) => [...pipelineKeys.all, 'progress-summary', boardId] as const,
   targets: (boardId: number) => [...pipelineKeys.all, 'board-targets', boardId] as const,
+  config: (boardId: number) => [...pipelineKeys.all, 'progress-config', boardId] as const,
 };
 
-export const PIPELINE_PROGRESS_POLL_MS = 30_000;
+export const PIPELINE_PROGRESS_POLL_MS = 60_000;
 
 export const pipelineTemplateKeys = {
   list: (workspace: 'pipeline' | 'estimates') => [...pipelineKeys.all, 'board-templates', workspace] as const,

@@ -14,6 +14,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
+import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import type { BoardProgressStage, BoardProgressSummary, BoardTarget } from '../api/boardProgressTypes';
@@ -410,7 +411,7 @@ export default function BoardProgressView({
               <tbody>
                 {members.map((member) => (
                   <tr key={member.user_id} className="border-b border-gray-100">
-                    <td className="px-3 py-2 font-medium text-gray-900">{member.name}</td>
+                    <td className="px-3 py-2 font-medium text-gray-900"><UserIdentityChip name={member.name} avatar={member.avatar} size="xs" /></td>
                     <td className="px-3 py-2">{member.metrics.cards_created ?? 0}</td>
                     <td className="px-3 py-2">{member.metrics.cards_won ?? 0}</td>
                     <td className="px-3 py-2">{member.metrics.cards_lost ?? 0}</td>
@@ -570,6 +571,11 @@ function TargetCard({
             {stats.sliceLabel ? ` · ${stats.sliceLabel}` : ''}
             {!stats.sliceLabel && target.allocations && target.allocations.length > 0 ? ` · ${target.allocations.length} sub-periods` : ''}
           </p>
+          {target.scope === 'member' && target.member ? (
+            <div className="mt-1">
+              <UserIdentityChip name={target.member.name} avatar={target.member.avatar} size="xs" />
+            </div>
+          ) : null}
         </div>
         <div className="text-right">
           {canManage && target.type !== 'key_result' && (
@@ -610,20 +616,44 @@ function TargetCard({
           ) : null}
         </div>
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-        <div
-          className="h-full rounded-full bg-violet-500 transition-all"
-          style={{ width: `${Math.min(100, stats.progress_percent)}%` }}
-        />
+      <div className="mt-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="font-medium text-gray-700">
+            {formatMetricValue(stats.actual, target.unit, ctx.currency)}
+            <span className="text-gray-400"> / </span>
+            {formatMetricValue(stats.expected, target.unit, ctx.currency)}
+          </span>
+          <span className="font-semibold text-gray-900">{stats.progress_percent}%</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+          <div
+            className="h-full rounded-full bg-violet-500 transition-all"
+            style={{ width: `${Math.min(100, stats.progress_percent)}%` }}
+          />
+        </div>
       </div>
       {target.key_results.length > 0 && (
-        <div className="mt-4 space-y-2 border-t border-gray-100 pt-3">
-          {target.key_results.map((kr) => (
-            <div key={kr.id} className="flex items-center justify-between gap-3 text-xs">
-              <span className="font-medium text-gray-700">{kr.title}</span>
-              <span className="text-gray-500">{kr.progress_percent}%</span>
-            </div>
-          ))}
+        <div className="mt-4 space-y-3 border-t border-gray-100 pt-3">
+          {target.key_results.map((kr) => {
+            const krStats = targetDisplayStats(kr);
+            return (
+              <div key={kr.id} className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-gray-700">{kr.title}</span>
+                  <span className="text-gray-500">{krStats.progress_percent}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-violet-400 transition-all"
+                    style={{ width: `${Math.min(100, krStats.progress_percent)}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  {formatMetricValue(krStats.actual, kr.unit, ctx.currency)} / {formatMetricValue(krStats.expected, kr.unit, ctx.currency)}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

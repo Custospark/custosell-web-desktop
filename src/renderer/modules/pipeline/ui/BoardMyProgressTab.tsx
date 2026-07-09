@@ -98,22 +98,36 @@ export default function BoardMyProgressTab({ data }: BoardMyProgressTabProps) {
             {data.targets.map((target) => {
               const stats = targetDisplayStats(target);
               return (
-              <div key={target.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2 backdrop-blur-sm">
-                <div>
-                  <p className={cn('text-sm font-medium', PROGRESS_SURFACE.textTitle)}>{target.title}</p>
-                  <p className={cn('text-xs', PROGRESS_SURFACE.textMuted)}>
-                    {stats.actual} / {stats.expected}
-                    {stats.sliceLabel ? ` · ${stats.sliceLabel}` : ''}
-                  </p>
-                  {stats.overallGoal != null && stats.overallGoal !== stats.expected ? (
-                    <p className={cn('text-[10px]', PROGRESS_SURFACE.textMuted)}>
-                      Overall goal: {stats.overallGoal}
+              <div key={target.id} className="rounded-lg bg-white/70 px-3 py-2.5 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className={cn('text-sm font-medium', PROGRESS_SURFACE.textTitle)}>{target.title}</p>
+                    <p className={cn('text-xs', PROGRESS_SURFACE.textMuted)}>
+                      {stats.actual} / {stats.expected}
+                      {stats.sliceLabel ? ` · ${stats.sliceLabel}` : ''}
                     </p>
-                  ) : null}
+                    {stats.overallGoal != null && stats.overallGoal !== stats.expected ? (
+                      <p className={cn('text-[10px]', PROGRESS_SURFACE.textMuted)}>
+                        Overall goal: {stats.overallGoal}
+                      </p>
+                    ) : null}
+                  </div>
+                  <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase', paceClass(stats.pace_status))}>
+                    {stats.pace_status.replace('_', ' ')}
+                  </span>
                 </div>
-                <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase', paceClass(stats.pace_status))}>
-                  {stats.pace_status.replace('_', ' ')}
-                </span>
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-gray-500">
+                    <span>{stats.actual} of {stats.expected}</span>
+                    <span className="font-semibold text-gray-800">{stats.progress_percent}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-violet-500 transition-all"
+                      style={{ width: `${Math.min(100, stats.progress_percent)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             );})}
           </div>

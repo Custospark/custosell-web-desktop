@@ -51,7 +51,7 @@ import { Download, Plus, Target, TrendingUp, Users, Pencil, Trash2, AlertTriangl
 
 interface BoardProgressViewProps {
   boardId: number;
-  board?: Pick<PipelineBoard, 'project_id' | 'workspace'> | null;
+  board?: Pick<PipelineBoard, 'project_id' | 'workspace' | 'members'> | null;
   canManageTargets?: boolean;
   summary?: BoardProgressSummary;
   period: ProgressPeriod;
@@ -520,6 +520,8 @@ export default function BoardProgressView({
           setEditingTarget(null);
         }}
         boardId={boardId}
+        projectId={board?.project_id ?? 0}
+        board={board}
         context={ctx}
         period={period}
         members={members}

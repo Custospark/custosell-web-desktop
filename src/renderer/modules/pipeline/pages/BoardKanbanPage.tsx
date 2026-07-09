@@ -82,7 +82,7 @@ export default function BoardKanbanPage() {
     error,
     refetch,
   } = usePipelineKanban(boardId, { poll: true });
-  useBoardAccessSync(boardId, boardId > 0);
+  const { data: boardAccessSnapshot } = useBoardAccessSync(boardId, boardId > 0);
   useBoardAnnouncements(boardId, boardId > 0);
   useBoardPolls(boardId, undefined, boardId > 0);
   const { data: boards = [] } = usePipelineBoards(boardsQueryOptions);
@@ -181,6 +181,9 @@ export default function BoardKanbanPage() {
 
   const mySharedBoardRole = board?.visibility === 'shared'
     ? getSharedBoardMemberRole(user, board)
+    : null;
+  const headerMemberRole = board?.visibility === 'shared'
+    ? (boardAccessSnapshot?.current_member_role ?? board?.current_member_role ?? mySharedBoardRole)
     : null;
   const showBoardManagementControls = canManageSettings
     && !(board?.visibility === 'shared' && mySharedBoardRole != null && mySharedBoardRole !== 'manager');
@@ -334,7 +337,7 @@ export default function BoardKanbanPage() {
           {board && (
             <BoardAccessBadges
               visibility={board.visibility}
-              memberRole={mySharedBoardRole}
+              memberRole={headerMemberRole}
               className="normal-case tracking-normal"
             />
           )}

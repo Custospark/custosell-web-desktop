@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
@@ -12,12 +12,12 @@ import {
   Hash,
   Layers,
   Plus,
-  RefreshCw,
   Target,
   Trash2,
   Type,
   User,
   Users,
+  Eye,
 } from 'lucide-react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -44,6 +44,10 @@ import {
   type ProgressPeriod,
 } from '../api/pipelineProgressTerms';
 import { useCreateBoardTarget, useDecomposeTargetPreview, useUpdateBoardTarget } from '../api/useBoardProgressQueries';
+import { useBoardResourceMembers } from '../api/usePipelineResourceQueries';
+import { useProjectMembers } from '../../estimates/api/useProjectQueries';
+import { resolveTargetAssigneeMembers } from '../api/progressMemberUtils';
+import type { PipelineBoard } from '../api/pipelineTypes';
 import DecompositionPreviewTree from './DecompositionPreviewTree';
 import {
   PipelineFormSection,
@@ -57,6 +61,8 @@ interface BoardTargetFormDrawerProps {
   open: boolean;
   onClose: () => void;
   boardId: number;
+  projectId?: number;
+  board?: Pick<PipelineBoard, 'members'> | null;
   context: BoardProgressContext;
   period: ProgressPeriod;
   members: BoardProgressMember[];
@@ -188,6 +194,8 @@ export default function BoardTargetFormDrawer({
   open,
   onClose,
   boardId,
+  projectId = 0,
+  board,
   context,
   period,
   members,
@@ -198,11 +206,24 @@ export default function BoardTargetFormDrawer({
   const createTarget = useCreateBoardTarget(boardId);
   const updateTarget = useUpdateBoardTarget(boardId);
   const decomposePreview = useDecomposeTargetPreview(boardId);
+  const { data: resourceMembers = [] } = useBoardResourceMembers(boardId, open);
+  const { data: projectMembers = [] } = useProjectMembers(context.is_project_board ? projectId : 0);
   const isSubmitting = createTarget.isPending || updateTarget.isPending;
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [keyResults, setKeyResults] = useState<KeyResultDraft[]>([emptyKeyResult()]);
   const [allocationNodes, setAllocationNodes] = useState<TargetAllocation[]>([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+
+  const assigneeMembers = useMemo(
+    () => resolveTargetAssigneeMembers({
+      resourceMembers,
+      board,
+      projectMembers: context.is_project_board ? projectMembers : undefined,
+      progressMembers: members,
+    }),
+    [board, context.is_project_board, members, projectMembers, resourceMembers],
+  );
 
   const metrics = useMemo(() => metricOptions(context), [context]);
   const metricUnit = metricUnitForKey(form.metric_key);
@@ -214,7 +235,7 @@ export default function BoardTargetFormDrawer({
     return Boolean(form.stage_id) && !Number.isNaN(value) && value > 0;
   }, [form.stage_id, form.target_value, isEditing]);
 
-  const runDecompositionPreview = useCallback(() => {
+  const runDecompositionPreview = () => {
     if (!canPreviewDecomposition || !form.stage_id) return;
     decomposePreview.mutate(
       {
@@ -224,10 +245,13 @@ export default function BoardTargetFormDrawer({
         decomposition_mode: form.decomposition_mode,
       },
       {
-        onSuccess: (preview) => setAllocationNodes(preview.nodes),
+        onSuccess: (preview) => {
+          setAllocationNodes(preview.nodes);
+          setPreviewVisible(true);
+        },
       },
     );
-  }, [canPreviewDecomposition, decomposePreview, form.decomposition_mode, form.planning_level, form.stage_id, form.target_value]);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -248,6 +272,7 @@ export default function BoardTargetFormDrawer({
         });
         setKeyResults([emptyKeyResult()]);
         setAllocationNodes(target.allocations ?? []);
+        setPreviewVisible((target.allocations ?? []).length > 0);
         return;
       }
       const initial = emptyForm();
@@ -256,14 +281,17 @@ export default function BoardTargetFormDrawer({
       setForm(initial);
       setKeyResults([emptyKeyResult()]);
       setAllocationNodes([]);
+      setPreviewVisible(false);
     });
   }, [open, period, stages, target]);
 
   useEffect(() => {
-    if (!open || isEditing || !canPreviewDecomposition) return;
-    const timer = window.setTimeout(() => runDecompositionPreview(), 400);
-    return () => window.clearTimeout(timer);
-  }, [open, isEditing, canPreviewDecomposition, runDecompositionPreview]);
+    if (!open || isEditing) return;
+    queueMicrotask(() => {
+      setPreviewVisible(false);
+      setAllocationNodes([]);
+    });
+  }, [form.planning_level, form.target_value, form.stage_id, form.decomposition_mode, open, isEditing]);
 
   const canSubmit = useMemo(() => {
     if (!form.title.trim() || !form.target_value.trim()) return false;
@@ -580,29 +608,53 @@ export default function BoardTargetFormDrawer({
             icon={Layers}
             description="Review how this target breaks into sub-periods before saving. Edit values to override."
           >
-            <div className="mb-3 flex justify-end">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="inline-flex items-center gap-2"
-                onClick={runDecompositionPreview}
-                disabled={!canPreviewDecomposition || decomposePreview.isPending}
-                loading={decomposePreview.isPending}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Refresh preview
-              </Button>
-            </div>
-            <DecompositionPreviewTree
-              nodes={allocationNodes}
-              loading={decomposePreview.isPending}
-              onOverride={(flatIndex, value) => {
-                setAllocationNodes((prev) =>
-                  prev.map((node, i) => (i === flatIndex ? { ...node, expected_value: value, is_override: true } : node)),
-                );
-              }}
-            />
+            {!previewVisible ? (
+              <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center">
+                <p className="text-sm text-gray-600">
+                  Click below to generate a one-time preview from your planning inputs.
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="inline-flex items-center gap-2"
+                  onClick={runDecompositionPreview}
+                  disabled={!canPreviewDecomposition || decomposePreview.isPending}
+                  loading={decomposePreview.isPending}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Show decomposition preview
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="mb-3 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="inline-flex items-center gap-2 text-gray-600"
+                    onClick={runDecompositionPreview}
+                    disabled={!canPreviewDecomposition || decomposePreview.isPending}
+                    loading={decomposePreview.isPending}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Regenerate preview
+                  </Button>
+                </div>
+                <DecompositionPreviewTree
+                  nodes={allocationNodes}
+                  loading={decomposePreview.isPending}
+                  onOverride={(flatIndex, value) => {
+                    setAllocationNodes((prev) =>
+                      prev.map((node, i) =>
+                        i === flatIndex ? { ...node, expected_value: value, is_override: true } : node,
+                      ),
+                    );
+                  }}
+                />
+              </>
+            )}
           </PipelineFormSection>
         )}
 
@@ -654,7 +706,7 @@ export default function BoardTargetFormDrawer({
                 aria-label="Team member"
               >
                 <option value="">Select member…</option>
-                {members.map((member) => (
+                {assigneeMembers.map((member) => (
                   <option key={member.user_id} value={member.user_id}>
                     {member.name}
                   </option>

@@ -91,6 +91,19 @@ export type TargetAllocation = {
   progress_percent?: number;
 };
 
+export type TargetPeriodSlice = {
+  planning_level: PlanningLevel;
+  period_start: string;
+  period_end: string;
+  view_period_type?: string | null;
+  expected_value: number;
+  expected_to_date: number;
+  actual_value: number;
+  progress_percent: number;
+  pace_status: BoardTargetPaceStatus;
+  root_target_value: number;
+};
+
 export type BoardTarget = {
   id: number;
   parent_id: number | null;
@@ -117,6 +130,7 @@ export type BoardTarget = {
   decomposition_mode?: DecompositionMode;
   progress_percent: number;
   pace_status: BoardTargetPaceStatus;
+  period_slice?: TargetPeriodSlice;
   allocations?: TargetAllocation[];
   key_results: BoardTarget[];
 };

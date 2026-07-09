@@ -46,7 +46,7 @@ Global keys (`cards_won`, `win_rate`, etc.) remain board-wide.
 3. On save, allocations persist; read API recomputes **expected_to_date** as time elapses.
 4. Trend chart shows dashed **Expected pace** vs actual `cards_won`.
 
-**Preview API:** `POST /boards/{id}/targets/decompose-preview` with `planning_level`, `target_value`, `stage_ids[]`, optional `decomposition_mode`. Board-scoped targets omit `member_user_ids`; the server returns `nodes[].member_user_id = null`. API failures surface as a toast in the target drawer.
+When the period filter changes (day/week/month/quarter/year), target cards use `period_slice` from the API — decomposed expected vs actual for that window, with the root goal shown for context.
 
 **Assignee roster:** The ownership dropdown prefers board resource members, then project/board roster — not only members with activity in the selected period.
 

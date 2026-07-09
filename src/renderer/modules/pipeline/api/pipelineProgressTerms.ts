@@ -1,4 +1,4 @@
-import type { BoardProgressContext } from './boardProgressTypes';
+import type { BoardProgressContext, BoardTarget, TargetPeriodSlice } from './boardProgressTypes';
 import type { PipelineBoard } from './pipelineTypes';
 import { boardUsesTaskTerminology } from './pipelineBoardWorkspace';
 
@@ -140,6 +140,39 @@ export const PACE_STATUS_LABELS: Record<string, string> = {
   behind: 'Behind',
   achieved: 'Achieved',
 };
+
+export function targetPeriodSliceLabel(slice: TargetPeriodSlice): string {
+  const level = PLANNING_LEVEL_OPTIONS.find((option) => option.value === slice.planning_level)?.label ?? slice.planning_level;
+  if (slice.period_start === slice.period_end) {
+    return `${level} · ${slice.period_start}`;
+  }
+  return `${level} · ${slice.period_start} – ${slice.period_end}`;
+}
+
+export function targetDisplayStats(target: Pick<BoardTarget, 'actual_value' | 'target_value' | 'progress_percent' | 'pace_status' | 'period_slice' | 'unit'>) {
+  const slice = target.period_slice;
+  if (!slice) {
+    return {
+      actual: target.actual_value,
+      expected: target.target_value,
+      progress_percent: target.progress_percent,
+      pace_status: target.pace_status,
+      overallGoal: null as number | null,
+      sliceLabel: null as string | null,
+      expectedToDate: null as number | null,
+    };
+  }
+
+  return {
+    actual: slice.actual_value,
+    expected: slice.expected_value,
+    progress_percent: slice.progress_percent,
+    pace_status: slice.pace_status,
+    overallGoal: slice.root_target_value,
+    sliceLabel: targetPeriodSliceLabel(slice),
+    expectedToDate: slice.expected_to_date,
+  };
+}
 
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);

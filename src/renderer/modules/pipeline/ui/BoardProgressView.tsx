@@ -26,6 +26,7 @@ import {
   progressBoardSubtitle,
   progressBoardTitle,
   resolveProgressContext,
+  targetDisplayStats,
   TARGET_TYPE_LABELS,
   type ProgressPeriod,
 } from '../api/pipelineProgressTerms';
@@ -546,6 +547,7 @@ function TargetCard({
   onArchive?: () => void;
 }) {
   const metricLabel = METRIC_LABELS[target.metric_key]?.(ctx) ?? target.metric_key;
+  const stats = targetDisplayStats(target);
 
   return (
     <div className="rounded-xl border border-white/55 bg-white/85 p-4 shadow-sm backdrop-blur-md">
@@ -555,8 +557,8 @@ function TargetCard({
             <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">
               {TARGET_TYPE_LABELS[target.type] ?? target.type}
             </span>
-            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase', paceBadgeClass(target.pace_status))}>
-              {PACE_STATUS_LABELS[target.pace_status] ?? target.pace_status}
+            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase', paceBadgeClass(stats.pace_status))}>
+              {PACE_STATUS_LABELS[stats.pace_status] ?? stats.pace_status}
             </span>
           </div>
           <h3 className="mt-2 text-sm font-semibold text-gray-900">{target.title}</h3>
@@ -565,7 +567,8 @@ function TargetCard({
             {metricLabel}
             {target.scope === 'member' && target.member ? ` · ${target.member.name}` : ' · Team'}
             {target.planning_level ? ` · ${PLANNING_LEVEL_OPTIONS.find((o) => o.value === target.planning_level)?.label ?? target.planning_level}` : ''}
-            {target.allocations && target.allocations.length > 0 ? ` · ${target.allocations.length} sub-periods` : ''}
+            {stats.sliceLabel ? ` · ${stats.sliceLabel}` : ''}
+            {!stats.sliceLabel && target.allocations && target.allocations.length > 0 ? ` · ${target.allocations.length} sub-periods` : ''}
           </p>
         </div>
         <div className="text-right">
@@ -591,16 +594,26 @@ function TargetCard({
               </button>
             </div>
           )}
-          <p className="text-2xl font-bold text-gray-900">{target.progress_percent}%</p>
+          <p className="text-2xl font-bold text-gray-900">{stats.progress_percent}%</p>
           <p className="text-xs text-gray-500">
-            {formatMetricValue(target.actual_value, target.unit, ctx.currency)} / {formatMetricValue(target.target_value, target.unit, ctx.currency)}
+            {formatMetricValue(stats.actual, target.unit, ctx.currency)} / {formatMetricValue(stats.expected, target.unit, ctx.currency)}
           </p>
+          {stats.overallGoal != null && stats.overallGoal !== stats.expected ? (
+            <p className="mt-1 text-[10px] text-gray-400">
+              Overall goal: {formatMetricValue(stats.overallGoal, target.unit, ctx.currency)}
+            </p>
+          ) : null}
+          {stats.expectedToDate != null && stats.expectedToDate !== stats.expected ? (
+            <p className="mt-0.5 text-[10px] text-gray-400">
+              Expected by now: {formatMetricValue(stats.expectedToDate, target.unit, ctx.currency)}
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
         <div
           className="h-full rounded-full bg-violet-500 transition-all"
-          style={{ width: `${Math.min(100, target.progress_percent)}%` }}
+          style={{ width: `${Math.min(100, stats.progress_percent)}%` }}
         />
       </div>
       {target.key_results.length > 0 && (

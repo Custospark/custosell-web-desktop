@@ -1,5 +1,5 @@
 import type { MyProgressSummary } from '../api/boardProgressTypes';
-import { METRIC_LABELS, resolveProgressContext } from '../api/pipelineProgressTerms';
+import { METRIC_LABELS, resolveProgressContext, targetDisplayStats } from '../api/pipelineProgressTerms';
 import { Target, TrendingUp, User } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { PROGRESS_SURFACE } from './progressSurface';
@@ -95,19 +95,27 @@ export default function BoardMyProgressTab({ data }: BoardMyProgressTabProps) {
           </p>
         ) : (
           <div className="space-y-2">
-            {data.targets.map((target) => (
+            {data.targets.map((target) => {
+              const stats = targetDisplayStats(target);
+              return (
               <div key={target.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2 backdrop-blur-sm">
                 <div>
                   <p className={cn('text-sm font-medium', PROGRESS_SURFACE.textTitle)}>{target.title}</p>
                   <p className={cn('text-xs', PROGRESS_SURFACE.textMuted)}>
-                    {target.actual_value} / {target.target_value}
+                    {stats.actual} / {stats.expected}
+                    {stats.sliceLabel ? ` · ${stats.sliceLabel}` : ''}
                   </p>
+                  {stats.overallGoal != null && stats.overallGoal !== stats.expected ? (
+                    <p className={cn('text-[10px]', PROGRESS_SURFACE.textMuted)}>
+                      Overall goal: {stats.overallGoal}
+                    </p>
+                  ) : null}
                 </div>
-                <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase', paceClass(target.pace_status))}>
-                  {target.pace_status.replace('_', ' ')}
+                <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase', paceClass(stats.pace_status))}>
+                  {stats.pace_status.replace('_', ' ')}
                 </span>
               </div>
-            ))}
+            );})}
           </div>
         )}
       </div>

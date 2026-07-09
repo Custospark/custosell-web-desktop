@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Button } from '../../../shared/components/buttons/Button';
+import { useToast } from '../../../app/contexts/useToast';
+import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { cn } from '../../../shared/utils/cn';
 import type {
   BoardProgressContext,
@@ -206,6 +208,7 @@ export default function BoardTargetFormDrawer({
   const createTarget = useCreateBoardTarget(boardId);
   const updateTarget = useUpdateBoardTarget(boardId);
   const decomposePreview = useDecomposeTargetPreview(boardId);
+  const { showToast } = useToast();
   const { data: resourceMembers = [] } = useBoardResourceMembers(boardId, open);
   const { data: projectMembers = [] } = useProjectMembers(context.is_project_board ? projectId : 0);
   const isSubmitting = createTarget.isPending || updateTarget.isPending;
@@ -248,6 +251,11 @@ export default function BoardTargetFormDrawer({
         onSuccess: (preview) => {
           setAllocationNodes(preview.nodes);
           setPreviewVisible(true);
+        },
+        onError: (err) => {
+          setPreviewVisible(false);
+          setAllocationNodes([]);
+          showToast('error', sanitizeErrorMessage(err, 'Could not generate decomposition preview'));
         },
       },
     );

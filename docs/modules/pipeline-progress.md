@@ -42,9 +42,13 @@ Global keys (`cards_won`, `win_rate`, etc.) remain board-wide.
 **Goal:** Win 120 leads in calendar year 2026 on column “Negotiation” (`stage_id=4`).
 
 1. Manager sets type **Goal**, planning level **Year**, target **120**, column **Negotiation**.
-2. Preview shows quarterly allocations weighted by 90-day column throughput (hybrid mode).
+2. Click **Show decomposition preview** (one API call per click — no auto/debounced preview).
 3. On save, allocations persist; read API recomputes **expected_to_date** as time elapses.
 4. Trend chart shows dashed **Expected pace** vs actual `cards_won`.
+
+**Preview API:** `POST /boards/{id}/targets/decompose-preview` with `planning_level`, `target_value`, `stage_ids[]`, optional `decomposition_mode`. Board-scoped targets omit `member_user_ids`; the server returns `nodes[].member_user_id = null`. API failures surface as a toast in the target drawer.
+
+**Assignee roster:** The ownership dropdown prefers board resource members, then project/board roster — not only members with activity in the selected period.
 
 Manual edits to child periods set `is_override=true` and are recorded in `pipeline_board_target_events`.
 

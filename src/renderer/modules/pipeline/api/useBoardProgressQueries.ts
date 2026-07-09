@@ -77,6 +77,7 @@ export function useBoardProgressSummary(
   if (period === 'custom' && options?.from) params.set('from', options.from);
   if (period === 'custom' && options?.to) params.set('to', options.to);
   (options?.stageIds ?? []).forEach((id) => params.append('stage_ids[]', String(id)));
+  const stageKey = sortedStageKey(options?.stageIds);
 
   return useQuery<BoardProgressSummary>({
     queryKey: pipelineProgressKeys.summary(
@@ -84,19 +85,44 @@ export function useBoardProgressSummary(
       period,
       options?.from,
       options?.to,
-      options?.stageIds?.join(',') ?? '',
+      stageKey,
     ),
     queryFn: async () => {
       const { data } = await axiosInstance.get(`${PIPELINE.BOARD_PROGRESS_SUMMARY(boardId)}?${params}`);
-      return normalizeProgressSummary(data);
+      const summary = normalizeProgressSummary(data);
+      writeCachedTeamProgress(boardId, summary);
+      return summary;
     },
     enabled,
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData,
     structuralSharing: progressStructuralSharing,
     refetchInterval: options?.poll && enabled ? PIPELINE_PROGRESS_POLL_MS : false,
     refetchIntervalInBackground: true,
+    notifyOnChangeProps: ['data', 'error'],
     ...progressQueryDefaults,
   });
+}
+
+/** Team progress with session cache — UI never blanks while filters refetch in the background. */
+export function useBoardProgressSummaryDisplay(
+  boardId: number,
+  period: ProgressPeriod,
+  options?: {
+    from?: string;
+    to?: string;
+    stageIds?: number[];
+    enabled?: boolean;
+    poll?: boolean;
+  },
+) {
+  const query = useBoardProgressSummary(boardId, period, options);
+  const displaySummary = query.data ?? readCachedTeamProgress(boardId);
+
+  return {
+    ...query,
+    displaySummary,
+    isBackgroundLoading: query.isFetching && Boolean(displaySummary),
+  };
 }
 
 export function useMyBoardProgress(
@@ -110,15 +136,33 @@ export function useMyBoardProgress(
     queryKey: [...pipelineProgressKeys.summaryBoard(boardId), 'my', period],
     queryFn: async () => {
       const { data } = await axiosInstance.get(`${PIPELINE.BOARD_PROGRESS_MY(boardId)}?period=${period}`);
-      return normalizeItem<MyProgressSummary>(data);
+      const summary = normalizeItem<MyProgressSummary>(data);
+      writeCachedMyProgress(boardId, summary);
+      return summary;
     },
     enabled,
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData,
     structuralSharing: progressStructuralSharing,
     refetchInterval: options?.poll && enabled ? PIPELINE_PROGRESS_POLL_MS : false,
     refetchIntervalInBackground: true,
+    notifyOnChangeProps: ['data', 'error'],
     ...progressQueryDefaults,
   });
+}
+
+export function useMyBoardProgressDisplay(
+  boardId: number,
+  period: ProgressPeriod,
+  options?: { enabled?: boolean; poll?: boolean },
+) {
+  const query = useMyBoardProgress(boardId, period, options);
+  const displayData = query.data ?? readCachedMyProgress(boardId);
+
+  return {
+    ...query,
+    displayData,
+    isBackgroundLoading: query.isFetching && Boolean(displayData),
+  };
 }
 
 export function useBoardProgressConfig(boardId: number, enabled = true) {

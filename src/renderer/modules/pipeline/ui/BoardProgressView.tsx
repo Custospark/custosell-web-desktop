@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   Bar,
   BarChart,
@@ -32,7 +32,7 @@ import {
 import {
   useExportBoardProgress,
   useArchiveBoardTarget,
-  useMyBoardProgress,
+  useMyBoardProgressDisplay,
 } from '../api/useBoardProgressQueries';
 import BoardTargetFormDrawer from './BoardTargetFormDrawer';
 import ProgressColumnSelector from './ProgressColumnSelector';
@@ -48,14 +48,12 @@ import {
   progressTeamTabLabel,
 } from './progressSurface';
 import { Download, Plus, Target, TrendingUp, Users, Pencil, Trash2, AlertTriangle } from 'lucide-react';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 
 interface BoardProgressViewProps {
   boardId: number;
   board?: Pick<PipelineBoard, 'project_id' | 'workspace'> | null;
   canManageTargets?: boolean;
   summary?: BoardProgressSummary;
-  isInitialLoading?: boolean;
   period: ProgressPeriod;
   onPeriodChange: (period: ProgressPeriod) => void;
   customFrom?: string;
@@ -88,7 +86,6 @@ export default function BoardProgressView({
   board,
   canManageTargets = false,
   summary,
-  isInitialLoading = false,
   period,
   onPeriodChange,
   customFrom = '',
@@ -104,16 +101,9 @@ export default function BoardProgressView({
   const [funnelMode, setFunnelMode] = useState<'count' | 'value'>('count');
   const exportProgress = useExportBoardProgress(boardId);
   const archiveTarget = useArchiveBoardTarget(boardId);
+  const displaySummary = summary;
 
-  const cachedSummaryRef = useRef<BoardProgressSummary | undefined>();
-  if (summary) cachedSummaryRef.current = summary;
-  const displaySummary = summary ?? cachedSummaryRef.current;
-
-  useEffect(() => {
-    cachedSummaryRef.current = undefined;
-  }, [boardId]);
-
-  const { data: myProgress, isLoading: myLoading } = useMyBoardProgress(boardId, period, {
+  const { displayData: myProgress } = useMyBoardProgressDisplay(boardId, period, {
     enabled: progressTab === 'my',
     poll: progressTab === 'my',
   });
@@ -171,14 +161,6 @@ export default function BoardProgressView({
       isPercent: key === 'win_rate',
     }));
   }, [ctx, displaySummary?.team]);
-
-  if (!displaySummary && isInitialLoading) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 p-3 pb-8 sm:p-4">
@@ -292,11 +274,7 @@ export default function BoardProgressView({
       </div>
 
       {progressTab === 'my' ? (
-        <BoardMyProgressTab
-          boardId={boardId}
-          data={myProgress}
-          isInitialLoading={myLoading && !myProgress}
-        />
+        <BoardMyProgressTab data={myProgress} />
       ) : (
       <>
       <ProgressWalkthrough boardId={boardId} />

@@ -1,14 +1,11 @@
-import { useEffect, useRef } from 'react';
 import type { MyProgressSummary } from '../api/boardProgressTypes';
 import { METRIC_LABELS, resolveProgressContext } from '../api/pipelineProgressTerms';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { Target, TrendingUp, User } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { PROGRESS_SURFACE } from './progressSurface';
 
 interface BoardMyProgressTabProps {
   data?: MyProgressSummary;
-  isInitialLoading?: boolean;
   boardId?: number;
 }
 
@@ -27,31 +24,19 @@ function paceClass(status: string): string {
   }
 }
 
-export default function BoardMyProgressTab({ data, isInitialLoading = false, boardId }: BoardMyProgressTabProps) {
-  const cachedDataRef = useRef<MyProgressSummary | undefined>();
-  if (data) cachedDataRef.current = data;
-  const displayData = data ?? cachedDataRef.current;
-
-  useEffect(() => {
-    cachedDataRef.current = undefined;
-  }, [boardId]);
-
-  if (!displayData && isInitialLoading) {
+export default function BoardMyProgressTab({ data }: BoardMyProgressTabProps) {
+  if (!data) {
     return (
-      <div className="flex min-h-[240px] items-center justify-center">
-        <LoadingSpinner />
+      <div className={cn(PROGRESS_SURFACE.panel, 'text-sm', PROGRESS_SURFACE.textMuted)}>
+        Your personal progress will appear here once data is available.
       </div>
     );
   }
 
-  if (!displayData) {
-    return <p className={cn('p-6 text-sm', PROGRESS_SURFACE.textMuted)}>Your personal progress will appear here.</p>;
-  }
-
-  const ctx = resolveProgressContext(undefined, displayData.context);
-  const metrics = displayData.metrics ?? {};
+  const ctx = resolveProgressContext(undefined, data.context);
+  const metrics = data.metrics ?? {};
   const myWon = metrics.cards_won ?? 0;
-  const teamAvg = displayData.team_average?.cards_won ?? 0;
+  const teamAvg = data.team_average?.cards_won ?? 0;
 
   const intro = ctx.is_project_board
     ? 'Your task contribution toward project targets in the selected period.'
@@ -71,11 +56,11 @@ export default function BoardMyProgressTab({ data, isInitialLoading = false, boa
         </div>
       </div>
 
-      {(displayData.pace_alerts ?? []).length > 0 && (
+      {(data.pace_alerts ?? []).length > 0 && (
         <div className="rounded-xl border border-amber-300/60 bg-amber-50/90 p-3 shadow-sm backdrop-blur-md">
           <p className="text-xs font-semibold text-amber-900">Pace alerts</p>
           <ul className="mt-2 space-y-1">
-            {displayData.pace_alerts.map((alert) => (
+            {data.pace_alerts.map((alert) => (
               <li key={alert.target_id} className="text-xs text-amber-800">
                 {alert.title} — {alert.pace_status.replace('_', ' ')} ({alert.progress_percent}%)
               </li>
@@ -104,13 +89,13 @@ export default function BoardMyProgressTab({ data, isInitialLoading = false, boa
           <Target className="h-4 w-4 text-violet-600" />
           <h4 className={cn('text-sm font-semibold', PROGRESS_SURFACE.textTitle)}>My targets</h4>
         </div>
-        {displayData.targets.length === 0 ? (
+        {data.targets.length === 0 ? (
           <p className={cn('text-sm', PROGRESS_SURFACE.textMuted)}>
             No member-scoped targets assigned to you for this period.
           </p>
         ) : (
           <div className="space-y-2">
-            {displayData.targets.map((target) => (
+            {data.targets.map((target) => (
               <div key={target.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2 backdrop-blur-sm">
                 <div>
                   <p className={cn('text-sm font-medium', PROGRESS_SURFACE.textTitle)}>{target.title}</p>
@@ -127,14 +112,14 @@ export default function BoardMyProgressTab({ data, isInitialLoading = false, boa
         )}
       </div>
 
-      {(displayData.column_metrics ?? []).length > 0 && (
+      {(data.column_metrics ?? []).length > 0 && (
         <div className={PROGRESS_SURFACE.panel}>
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-violet-600" />
             <h4 className={cn('text-sm font-semibold', PROGRESS_SURFACE.textTitle)}>My column activity</h4>
           </div>
           <div className="space-y-2">
-            {displayData.column_metrics.map((row) => (
+            {data.column_metrics.map((row) => (
               <div key={row.stage_id} className={cn('flex items-center justify-between text-sm', PROGRESS_SURFACE.textBody)}>
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full ring-1 ring-black/10" style={{ backgroundColor: row.color ?? '#8b5cf6' }} />

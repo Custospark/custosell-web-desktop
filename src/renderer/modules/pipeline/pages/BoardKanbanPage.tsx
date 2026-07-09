@@ -45,7 +45,7 @@ import BoardResourcesModal from '../ui/BoardResourcesModal';
 import BoardConversationModal from '../ui/BoardConversationModal';
 import { useBoardResourcesSummary } from '../api/usePipelineResourceQueries';
 import { useBoardConversationSummary } from '../api/usePipelineConversationQueries';
-import { useBoardProgressSummary } from '../api/useBoardProgressQueries';
+import { useBoardProgressSummaryDisplay } from '../api/useBoardProgressQueries';
 import type { ProgressPeriod } from '../api/pipelineProgressTerms';
 import { CalendarDays, Columns3, LayoutGrid, Plus, RefreshCw, Search, Settings, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -168,9 +168,8 @@ export default function BoardKanbanPage() {
   }, [progressStages, selectedProgressStageIds]);
 
   const {
-    data: progressSummary,
-    isLoading: progressLoading,
-  } = useBoardProgressSummary(boardId, progressPeriod, {
+    displaySummary: progressSummary,
+  } = useBoardProgressSummaryDisplay(boardId, progressPeriod, {
     enabled: boardId > 0,
     poll: boardId > 0,
     stageIds: resolvedProgressStageIds,
@@ -491,28 +490,33 @@ export default function BoardKanbanPage() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} />
         </div>
-      ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <BoardProgressView
-            boardId={boardId}
-            board={board}
-            canManageTargets={canManageSettings}
-            summary={progressSummary}
-            isInitialLoading={progressLoading && !progressSummary}
-            period={progressPeriod}
-            onPeriodChange={setProgressPeriod}
-            customFrom={progressCustomFrom}
-            customTo={progressCustomTo}
-            onCustomRangeChange={(from, to) => {
-              setProgressCustomFrom(from);
-              setProgressCustomTo(to);
-            }}
-            stages={progressStages}
-            selectedStageIds={resolvedProgressStageIds}
-            onSelectedStageIdsChange={setSelectedProgressStageIds}
-          />
-        </div>
-      )}
+      ) : null}
+
+      <div
+        className={cn(
+          'min-h-0 flex-1 overflow-y-auto',
+          viewMode !== 'progress' && 'hidden',
+        )}
+        aria-hidden={viewMode !== 'progress'}
+      >
+        <BoardProgressView
+          boardId={boardId}
+          board={board}
+          canManageTargets={canManageSettings}
+          summary={progressSummary}
+          period={progressPeriod}
+          onPeriodChange={setProgressPeriod}
+          customFrom={progressCustomFrom}
+          customTo={progressCustomTo}
+          onCustomRangeChange={(from, to) => {
+            setProgressCustomFrom(from);
+            setProgressCustomTo(to);
+          }}
+          stages={progressStages}
+          selectedStageIds={resolvedProgressStageIds}
+          onSelectedStageIdsChange={setSelectedProgressStageIds}
+        />
+      </div>
 
       <BoardSwitcherIcons
         allowCreate={allowCreateBoard}

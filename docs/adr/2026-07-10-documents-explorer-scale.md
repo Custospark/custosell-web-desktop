@@ -19,7 +19,7 @@ We ship incremental enterprise features now (access editing, activity feed, fold
 | Root file list | `root_only` + pagination on `GET /documents` |
 | Search | Server-side `q` + `tag` filters — preferred path for large vaults |
 | ACL | Per-folder/file visibility with inheritance |
-| Activity | `document_activity_logs` + `GET /documents/activity` (paginated) |
+| Activity | `document_activity_logs.cabinet_id` + `GET /documents/activity?cabinet_id=` (paginated, per cabinet) |
 
 ## Limits at very large scale (millions)
 

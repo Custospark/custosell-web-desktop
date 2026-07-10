@@ -100,14 +100,16 @@ export function useUpdateDocumentsVaultAppearance() {
   });
 }
 
-export function useDocumentActivity(enabled = true, page = 1) {
+export function useDocumentActivity(cabinetId: number, enabled = true, page = 1) {
   return useQuery({
-    queryKey: documentKeys.activity(page),
+    queryKey: documentKeys.activity(cabinetId, page),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(DOCUMENTS.ACTIVITY, { params: { page, per_page: 30 } });
+      const { data } = await axiosInstance.get(DOCUMENTS.ACTIVITY, {
+        params: { cabinet_id: cabinetId, page, per_page: 30 },
+      });
       return unwrapPaginated<DocumentActivityItem>(data);
     },
-    enabled,
+    enabled: enabled && cabinetId > 0,
     staleTime: 15_000,
     refetchInterval: enabled ? 30_000 : false,
   });

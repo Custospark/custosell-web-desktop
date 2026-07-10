@@ -26,7 +26,7 @@ const STEPS = [
   },
   {
     title: 'Cabinet settings',
-    body: 'Managers can rename cabinets, control who has access, and customize the canvas background from Settings.',
+    body: 'Use Settings in the bottom toolbar to rename the cabinet, manage access, and customize the canvas background.',
     icon: Settings,
     tone: 'sky',
   },

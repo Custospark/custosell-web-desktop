@@ -67,19 +67,28 @@ import { RenameItemModal } from './RenameItemModal';
 import { DocumentsVaultAppearanceModal } from './DocumentsVaultAppearanceModal';
 import { DocumentFolderColorModal } from './DocumentFolderColorModal';
 import { DocumentAccessModal } from './DocumentAccessModal';
+import {
+  DocumentFormSection,
+  DocumentIconField,
+  DocumentModalFooter,
+  DocumentModalHero,
+  documentInputClass,
+} from './documentFormFields';
 import SendVaultEmailModal from '../../../shared/components/email/SendVaultEmailModal';
 import { surfaceAppearanceStyle, DEFAULT_VAULT_APPEARANCE } from '../../../shared/utils/surfaceStyles';
 import { isBusinessOwner } from '../../../shared/utils/moduleAccess';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../app/store/store';
 import {
-  ChevronRight,
   Folder,
   FolderPlus,
   Grid3X3,
   LayoutList,
   Link2,
   Search,
+  Shield,
+  Tag,
+  Type,
   Upload,
   WifiOff,
 } from 'lucide-react';
@@ -93,7 +102,6 @@ interface DocumentsPanelProps {
   title?: string;
   compact?: boolean;
   fullBleed?: boolean;
-  onOpenCabinetSettings?: (tab?: 'details' | 'access' | 'canvas') => void;
 }
 
 type ViewMode = 'list' | 'grid';
@@ -137,7 +145,6 @@ export default function DocumentsPanel({
   title = 'Documents',
   compact = false,
   fullBleed = false,
-  onOpenCabinetSettings,
 }: DocumentsPanelProps) {
   const qc = useQueryClient();
   const { showToast } = useToast();
@@ -193,7 +200,6 @@ export default function DocumentsPanel({
   const [importTargetFolderId, setImportTargetFolderId] = useState<number | null>(null);
   const user = useSelector((state: RootState) => state.auth.user);
   const canCustomizeVault = isBusinessOwner(user);
-  const canCustomizeCabinetCanvas = Boolean(cabinet?.can_manage && onOpenCabinetSettings);
 
   const showSidebar = fullBleed && !customerId && !projectId;
   const { data: fallbackCabinets } = useDocumentCabinets(undefined, !cabinetId);
@@ -854,21 +860,6 @@ export default function DocumentsPanel({
               <WifiOff className="h-3.5 w-3.5" /> Documents requires an internet connection
             </p>
           )}
-          {showSidebar && activeFolderId && breadcrumbs.length > 0 && (
-            <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-500">
-              <button type="button" className="font-medium text-indigo-600 hover:underline" onClick={() => setActiveFolderId(null)}>
-                All files
-              </button>
-              {breadcrumbs.map((crumb) => (
-                <span key={crumb.id} className="flex items-center gap-1">
-                  <ChevronRight className="h-3 w-3" />
-                  <button type="button" className="font-medium text-indigo-600 hover:underline" onClick={() => setActiveFolderId(crumb.id)}>
-                    {crumb.name}
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-gray-200 p-0.5">
@@ -1096,101 +1087,157 @@ export default function DocumentsPanel({
         onChange={(e) => void handleImportFolderFiles(e.target.files)}
       />
 
-      <Modal isOpen={showCreateFolder} onClose={() => setShowCreateFolder(false)} title="Create folder">
-        <div className="space-y-4">
-          <input
-            value={folderName}
-            onChange={(e) => setFolderName(e.target.value)}
-            placeholder="Folder name"
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+      <Modal isOpen={showCreateFolder} onClose={() => setShowCreateFolder(false)} title="Create folder" size="lg">
+        <div className="space-y-5">
+          <DocumentModalHero
+            icon={FolderPlus}
+            title="New folder"
+            description="Organize files inside this cabinet with optional access rules."
+            tone="indigo"
           />
-          <DocumentAccessSection
-            visibility={folderVisibility}
-            onVisibilityChange={(value) => setFolderVisibility(value as FolderVisibility)}
-            selectedMembers={folderMembers}
-            onSelectedMembersChange={setFolderMembers}
-            allowInherit={Boolean(createFolderParentId)}
-          />
-          <div className="flex justify-end gap-2">
+          <DocumentFormSection title="Folder details" icon={Type}>
+            <DocumentIconField label="Folder name" icon={Type} required>
+              <input
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="Folder name"
+                className={documentInputClass}
+                autoFocus
+              />
+            </DocumentIconField>
+          </DocumentFormSection>
+          <DocumentFormSection title="Who can access" icon={Shield}>
+            <DocumentAccessSection
+              visibility={folderVisibility}
+              onVisibilityChange={(value) => setFolderVisibility(value as FolderVisibility)}
+              selectedMembers={folderMembers}
+              onSelectedMembersChange={setFolderMembers}
+              allowInherit={Boolean(createFolderParentId)}
+            />
+          </DocumentFormSection>
+          <DocumentModalFooter>
             <Button type="button" variant="secondary" onClick={() => {
               setShowCreateFolder(false);
               setCreateFolderParentId(null);
             }}>Cancel</Button>
-            <Button type="button" loading={createFolder.isPending} onClick={() => void handleCreateFolder()}>Create</Button>
-          </div>
+            <Button type="button" loading={createFolder.isPending} onClick={() => void handleCreateFolder()}>Create folder</Button>
+          </DocumentModalFooter>
         </div>
       </Modal>
 
       <Modal isOpen={showUpload} onClose={() => {
         setShowUpload(false);
         setActionTargetFolderId(null);
-      }} title="Upload files">
-        <div className="space-y-4">
-          <div
-            className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              void uploadFiles(e.dataTransfer.files, { closeModal: true });
-            }}
-          >
-            <Upload className="mx-auto h-8 w-8 text-gray-400" />
-            <p className="mt-2 text-sm text-gray-600">Drag and drop files here, or browse</p>
-            <Button type="button" className="mt-3" variant="secondary" onClick={() => fileInputRef.current?.click()}>
-              Choose files
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => void uploadFiles(e.target.files, { closeModal: true })}
+      }} title="Upload files" size="lg">
+        <div className="space-y-5">
+          <DocumentModalHero
+            icon={Upload}
+            title="Upload files"
+            description="Drag files here or browse from your computer."
+            tone="blue"
+          />
+          <DocumentFormSection title="Files" icon={Upload}>
+            <div
+              className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                void uploadFiles(e.dataTransfer.files, { closeModal: true });
+              }}
+            >
+              <Upload className="mx-auto h-8 w-8 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-600">Drag and drop files here, or browse</p>
+              <Button type="button" className="mt-3" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                Choose files
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => void uploadFiles(e.target.files, { closeModal: true })}
+              />
+            </div>
+          </DocumentFormSection>
+          <DocumentFormSection title="Tags & access" icon={Tag}>
+            <DocumentIconField label="Tags" icon={Tag} hint="Comma-separated labels for search.">
+              <input
+                value={uploadTags}
+                onChange={(e) => setUploadTags(e.target.value)}
+                placeholder="Tags (comma separated)"
+                className={documentInputClass}
+              />
+            </DocumentIconField>
+            <DocumentAccessSection
+              visibility={uploadVisibility}
+              onVisibilityChange={(value) => setUploadVisibility(value as DocumentVisibility)}
+              selectedMembers={uploadMembers}
+              onSelectedMembersChange={setUploadMembers}
+              allowInherit={Boolean(actionTargetFolderId ?? activeFolderId)}
             />
-          </div>
-          <input
-            value={uploadTags}
-            onChange={(e) => setUploadTags(e.target.value)}
-            placeholder="Tags (comma separated)"
-            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-          />
-          <DocumentAccessSection
-            visibility={uploadVisibility}
-            onVisibilityChange={(value) => setUploadVisibility(value as DocumentVisibility)}
-            selectedMembers={uploadMembers}
-            onSelectedMembersChange={setUploadMembers}
-            allowInherit={Boolean(actionTargetFolderId ?? activeFolderId)}
-          />
-          <div className="flex justify-end gap-2">
+          </DocumentFormSection>
+          <DocumentModalFooter>
             <Button type="button" variant="secondary" onClick={() => {
               setShowUpload(false);
               setActionTargetFolderId(null);
             }}>Close</Button>
-          </div>
+          </DocumentModalFooter>
         </div>
       </Modal>
 
       <Modal isOpen={showLink} onClose={() => {
         setShowLink(false);
         setActionTargetFolderId(null);
-      }} title="Add link">
-        <div className="space-y-4">
-          <input value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Title" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />
-          <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />
-          <input value={uploadTags} onChange={(e) => setUploadTags(e.target.value)} placeholder="Tags (comma separated)" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />
-          <DocumentAccessSection
-            visibility={uploadVisibility}
-            onVisibilityChange={(value) => setUploadVisibility(value as DocumentVisibility)}
-            selectedMembers={uploadMembers}
-            onSelectedMembersChange={setUploadMembers}
-            allowInherit={Boolean(actionTargetFolderId ?? activeFolderId)}
+      }} title="Add link" size="lg">
+        <div className="space-y-5">
+          <DocumentModalHero
+            icon={Link2}
+            title="Save a link"
+            description="Store a website or shared URL alongside your files."
+            tone="emerald"
           />
-          <div className="flex justify-end gap-2">
+          <DocumentFormSection title="Link details" icon={Link2}>
+            <DocumentIconField label="Title" icon={Type} required>
+              <input
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                placeholder="Title"
+                className={documentInputClass}
+              />
+            </DocumentIconField>
+            <DocumentIconField label="URL" icon={Link2} required>
+              <input
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://…"
+                className={documentInputClass}
+              />
+            </DocumentIconField>
+            <DocumentIconField label="Tags" icon={Tag} hint="Comma-separated labels for search.">
+              <input
+                value={uploadTags}
+                onChange={(e) => setUploadTags(e.target.value)}
+                placeholder="Tags (comma separated)"
+                className={documentInputClass}
+              />
+            </DocumentIconField>
+          </DocumentFormSection>
+          <DocumentFormSection title="Who can access" icon={Shield}>
+            <DocumentAccessSection
+              visibility={uploadVisibility}
+              onVisibilityChange={(value) => setUploadVisibility(value as DocumentVisibility)}
+              selectedMembers={uploadMembers}
+              onSelectedMembersChange={setUploadMembers}
+              allowInherit={Boolean(actionTargetFolderId ?? activeFolderId)}
+            />
+          </DocumentFormSection>
+          <DocumentModalFooter>
             <Button type="button" variant="secondary" onClick={() => {
               setShowLink(false);
               setActionTargetFolderId(null);
             }}>Cancel</Button>
             <Button type="button" loading={createLink.isPending} onClick={() => void handleCreateLink()}>Add link</Button>
-          </div>
+          </DocumentModalFooter>
         </div>
       </Modal>
 
@@ -1303,11 +1350,11 @@ export default function DocumentsPanel({
         <aside className="flex h-[min(50vh,28rem)] w-full shrink-0 flex-col p-1.5 sm:p-2 lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96">
           <DocumentExplorer
             cabinetId={effectiveCabinetId}
-            cabinetName={title}
+            cabinetVisibility={cabinet?.visibility}
+            cabinetMemberRole={cabinet?.current_member_role}
             activeFolderId={activeFolderId}
             selectedDocumentId={activeTabId}
             openDocumentIds={openDocumentIds}
-            breadcrumbs={breadcrumbs}
             expandFolderIds={breadcrumbs.map((crumb) => crumb.id)}
             searchQuery={search}
             tagFilter={tagFilter}
@@ -1342,9 +1389,7 @@ export default function DocumentsPanel({
               e.dataTransfer.effectAllowed = 'move';
             }}
             onCustomizeCanvas={
-              canCustomizeCabinetCanvas
-                ? () => onOpenCabinetSettings?.('canvas')
-                : (canCustomizeVault && !cabinetId ? () => setShowVaultAppearance(true) : undefined)
+              canCustomizeVault && !cabinetId ? () => setShowVaultAppearance(true) : undefined
             }
           />
         </aside>
@@ -1386,14 +1431,9 @@ export default function DocumentsPanel({
             document={activeDocument}
             folder={activeFolder}
             folderName={folderLabel}
-            breadcrumbs={breadcrumbs}
             loading={Boolean(activeFolderId && contentsLoading && !activeTabId)}
             online={online}
             canContribute={canContribute}
-            onGoHome={() => {
-              setActiveFolderId(null);
-              setActiveTabId(null);
-            }}
             onUpload={() => openUploadModal(activeFolderId)}
             onCreateLink={() => openLinkModal(activeFolderId)}
             onCreateFolder={() => openCreateFolderModal(null)}
@@ -1449,10 +1489,6 @@ export default function DocumentsPanel({
               allowInherit: doc.folder_id != null,
             })}
             onRecordView={handleRecordView}
-            onSelectFolder={(folderId) => {
-              setActiveFolderId(folderId);
-              setActiveTabId(null);
-            }}
           />
           </div>
           {transfers.length > 0 && (

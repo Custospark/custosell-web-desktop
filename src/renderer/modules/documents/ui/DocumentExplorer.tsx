@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import { truncateDisplayName, documentIconLabel } from '../api/documentDisplayUtils';
-import type { DocumentFolder, DocumentItem } from '../api/documentTypes';
+import type { CabinetVisibility, DocumentFolder, DocumentItem, DocumentMemberRole } from '../api/documentTypes';
 import {
   useDocumentFolderChildren,
   useDocumentFolderContents,
@@ -13,6 +13,7 @@ import { ExplorerRowOwner } from './ExplorerRowOwner';
 import { DocumentTagStrip } from './DocumentTagStrip';
 import { ExplorerFolderCount } from './ExplorerFolderCount';
 import { DocumentExplorerActivity } from './DocumentExplorerActivity';
+import CabinetAccessBadges from './CabinetAccessBadges';
 import { canCreateSubfolderAtDepth } from '../api/documentConstants';
 import { formatDocumentHoverPath } from '../api/documentFolderPathUtils';
 import { resolveFolderColor } from '../api/documentColorUtils';
@@ -63,11 +64,11 @@ export interface DocumentExplorerActions {
 
 interface DocumentExplorerProps {
   cabinetId: number;
-  cabinetName?: string;
+  cabinetVisibility?: CabinetVisibility;
+  cabinetMemberRole?: DocumentMemberRole | null;
   activeFolderId: number | null;
   selectedDocumentId: number | null;
   openDocumentIds?: number[];
-  breadcrumbs?: { id: number; name: string }[];
   expandFolderIds?: number[];
   searchQuery: string;
   tagFilter: string;
@@ -471,11 +472,11 @@ function ExplorerFolderNode({
 
 export function DocumentExplorer({
   cabinetId,
-  cabinetName = 'Cabinet',
+  cabinetVisibility,
+  cabinetMemberRole,
   activeFolderId,
   selectedDocumentId,
   openDocumentIds = [],
-  breadcrumbs = [],
   expandFolderIds = [],
   searchQuery,
   tagFilter,
@@ -576,46 +577,14 @@ export function DocumentExplorer({
   return (
     <div className={cn('h-full min-h-0 text-gray-900', DOCUMENT_SURFACE.explorer)}>
       <div className={cn('shrink-0 px-3 py-2.5', DOCUMENT_SURFACE.toolbar)}>
-        <div className="mb-2 flex flex-wrap items-center gap-1 text-xs text-gray-500">
-          <button
-            type="button"
-            onClick={() => onSelectFolder(null)}
-            onDragOver={(e) => onFolderDragOver(null, e)}
-            onDragLeave={onFolderDragLeave}
-            onDrop={(e) => onFolderDrop(null, e)}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium transition-colors',
-              atRoot ? 'bg-indigo-50 text-indigo-700' : 'text-indigo-600 hover:bg-gray-100',
-              dropTargetFolderId === 'root' && 'ring-1 ring-indigo-400',
-            )}
-          >
-            <Home className="h-3.5 w-3.5" />
-            {cabinetName}
-          </button>
-          {breadcrumbs.map((crumb) => (
-            <span key={crumb.id} className="flex items-center gap-1">
-              <ChevronRight className="h-3 w-3 text-gray-400" />
-              <button
-                type="button"
-                onClick={() => onSelectFolder(crumb.id)}
-                onDragOver={(e) => onFolderDragOver(crumb.id, e)}
-                onDragLeave={onFolderDragLeave}
-                onDrop={(e) => onFolderDrop(crumb.id, e)}
-                className={cn(
-                  'max-w-[8rem] truncate rounded-md px-1.5 py-0.5 font-medium transition-colors',
-                  activeFolderId === crumb.id && selectedDocumentId == null
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-indigo-600 hover:bg-gray-100',
-                  dropTargetFolderId === crumb.id && 'ring-1 ring-indigo-400',
-                )}
-                title={crumb.name}
-              >
-                {crumb.name}
-              </button>
-            </span>
-          ))}
-        </div>
-
+        {cabinetVisibility && (
+          <div className="mb-2">
+            <CabinetAccessBadges
+              visibility={cabinetVisibility}
+              memberRole={cabinetMemberRole}
+            />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
           <Button
             type="button"
@@ -828,7 +797,7 @@ export function DocumentExplorer({
         )}
       </div>
 
-      <DocumentExplorerActivity enabled={online} />
+      <DocumentExplorerActivity cabinetId={cabinetId} enabled={online} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Image, Palette } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import {
@@ -9,7 +10,7 @@ import {
 } from '../../../shared/utils/surfaceStyles';
 import type { DocumentsVaultAppearance } from '../api/documentTypes';
 import { cn } from '../../../shared/utils/cn';
-import { Image, Palette } from 'lucide-react';
+import { DocumentFormSection, DocumentModalFooter, DocumentModalHero } from './documentFormFields';
 
 interface DocumentsVaultAppearanceModalProps {
   open: boolean;
@@ -69,13 +70,21 @@ function VaultAppearanceForm({
 
   return (
     <div className="space-y-5">
-      <div
-        className="h-36 overflow-hidden rounded-2xl border border-white/60 shadow-inner"
-        style={previewStyle}
+      <DocumentModalHero
+        icon={Palette}
+        title="Vault canvas"
+        description="Default background for document workspaces across your business."
+        tone="indigo"
       />
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-gray-900">Accent color</p>
+      <DocumentFormSection title="Preview" icon={Palette}>
+        <div
+          className="h-36 overflow-hidden rounded-2xl border border-white/60 shadow-inner"
+          style={previewStyle}
+        />
+      </DocumentFormSection>
+
+      <DocumentFormSection title="Accent color" icon={Palette}>
         <div className="flex flex-wrap gap-2">
           {FOLDER_PRESET_COLORS.map((color) => (
             <button
@@ -91,10 +100,9 @@ function VaultAppearanceForm({
             />
           ))}
         </div>
-      </div>
+      </DocumentFormSection>
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-gray-900">Canvas style</p>
+      <DocumentFormSection title="Canvas style" icon={Image}>
         <div className="grid grid-cols-3 gap-2">
           {([
             { id: 'gradient', label: 'Gradient', icon: Palette },
@@ -117,50 +125,50 @@ function VaultAppearanceForm({
             </button>
           ))}
         </div>
-      </div>
 
-      {mode === 'color' && (
-        <div>
-          <p className="mb-2 text-xs font-medium text-gray-700">Solid background</p>
-          <div className="flex flex-wrap gap-2">
-            {['#eef2ff', '#f0fdf4', '#fff7ed', '#fdf2f8', '#f8fafc', '#ffffff'].map((color) => (
+        {mode === 'color' && (
+          <div className="pt-2">
+            <p className="mb-2 text-xs font-medium text-gray-700">Solid background</p>
+            <div className="flex flex-wrap gap-2">
+              {['#eef2ff', '#f0fdf4', '#fff7ed', '#fdf2f8', '#f8fafc', '#ffffff'].map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setBackgroundValue(color)}
+                  className={cn(
+                    'h-8 w-8 rounded-lg border ring-2 ring-offset-1',
+                    backgroundValue === color ? 'ring-indigo-500' : 'ring-transparent',
+                  )}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {mode === 'gallery' && (
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {VAULT_GALLERY_IMAGES.map((image) => (
               <button
-                key={color}
+                key={image.id}
                 type="button"
-                onClick={() => setBackgroundValue(color)}
+                onClick={() => setBackgroundValue(image.url)}
                 className={cn(
-                  'h-8 w-8 rounded-lg border ring-2 ring-offset-1',
-                  backgroundValue === color ? 'ring-indigo-500' : 'ring-transparent',
+                  'aspect-[4/3] overflow-hidden rounded-lg border-2 transition',
+                  backgroundValue === image.url ? 'border-indigo-500' : 'border-transparent',
                 )}
-                style={{ backgroundColor: color }}
-              />
+              >
+                <img src={image.thumb} alt="" className="h-full w-full object-cover" />
+              </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </DocumentFormSection>
 
-      {mode === 'gallery' && (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {VAULT_GALLERY_IMAGES.map((image) => (
-            <button
-              key={image.id}
-              type="button"
-              onClick={() => setBackgroundValue(image.url)}
-              className={cn(
-                'aspect-[4/3] overflow-hidden rounded-lg border-2 transition',
-                backgroundValue === image.url ? 'border-indigo-500' : 'border-transparent',
-              )}
-            >
-              <img src={image.thumb} alt="" className="h-full w-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="flex justify-end gap-2">
+      <DocumentModalFooter>
         <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
         <Button type="button" loading={saving} onClick={handleSave}>Save canvas</Button>
-      </div>
+      </DocumentModalFooter>
     </div>
   );
 }
@@ -175,7 +183,13 @@ export function DocumentsVaultAppearanceModal({
   const formKey = `${appearance.cover_color ?? ''}-${appearance.background_type ?? ''}-${appearance.background_value ?? ''}`;
 
   return (
-    <Modal isOpen={open} onClose={onClose} title="Customize vault canvas">
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Customize vault canvas"
+      subtitle="Business-wide default for document workspaces."
+      size="lg"
+    >
       {open && (
         <VaultAppearanceForm
           key={formKey}

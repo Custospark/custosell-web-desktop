@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Archive, ChevronRight, FileText, FolderOpen, Star } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentCabinet } from '../api/documentTypes';
-import { CABINET_VISIBILITY_META, cabinetCardHeroStyle, cabinetColorAlpha } from './cabinetMeta';
+import { cabinetCardHeroStyle, cabinetColorAlpha } from './cabinetMeta';
+import CabinetAccessBadges from './CabinetAccessBadges';
 
 export interface CabinetListCardProps {
   cabinet: DocumentCabinet;
@@ -29,7 +30,6 @@ function CabinetListCardContent({
   const folderCount = cabinet.folder_count ?? 0;
   const documentCount = cabinet.document_count ?? 0;
   const isGeneral = cabinet.name === 'General';
-  const vis = showVisibility ? CABINET_VISIBILITY_META[cabinet.visibility] : null;
 
   if (variant === 'compact') {
     return (
@@ -57,11 +57,11 @@ function CabinetListCardContent({
             )}
           </h3>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500">
-            {vis && (
-              <span className={cn('inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-medium', vis.className)}>
-                <vis.icon className="h-2.5 w-2.5" />
-                {vis.label}
-              </span>
+            {showVisibility && (
+              <CabinetAccessBadges
+                visibility={cabinet.visibility}
+                memberRole={cabinet.current_member_role}
+              />
             )}
             <span className="inline-flex items-center gap-1">
               <FolderOpen className="h-3 w-3 opacity-70" />
@@ -110,11 +110,11 @@ function CabinetListCardContent({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-          {vis && (
-            <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium', vis.className)}>
-              <vis.icon className="h-3 w-3" />
-              {vis.label}
-            </span>
+          {showVisibility && (
+            <CabinetAccessBadges
+              visibility={cabinet.visibility}
+              memberRole={cabinet.current_member_role}
+            />
           )}
           <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2 py-0.5 font-medium text-gray-600 ring-1 ring-gray-100">
             <FolderOpen className="h-3 w-3 text-gray-400" />

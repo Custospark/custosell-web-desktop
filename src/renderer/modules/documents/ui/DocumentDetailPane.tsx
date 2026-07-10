@@ -21,12 +21,10 @@ import { DocumentTagChips } from './DocumentTagStrip';
 import { resolveFolderColor } from '../api/documentColorUtils';
 import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
 import {
-  ChevronRight,
   Download,
   ExternalLink,
   FolderInput,
   FolderPlus,
-  Home,
   Link2,
   Mail,
   Pencil,
@@ -127,11 +125,9 @@ interface DocumentDetailPaneProps {
   document: DocumentItem | null;
   folder?: DocumentFolder | null;
   folderName?: string | null;
-  breadcrumbs?: { id: number; name: string }[];
   loading?: boolean;
   online: boolean;
   canContribute?: boolean;
-  onGoHome?: () => void;
   onUpload?: () => void;
   onCreateLink?: () => void;
   onCreateFolder?: () => void;
@@ -150,59 +146,15 @@ interface DocumentDetailPaneProps {
   onEmailDocument?: (doc: DocumentItem) => void;
   onClose?: () => void;
   onRecordView?: (doc: DocumentItem) => void;
-  onSelectFolder?: (folderId: number | null) => void;
-}
-
-function BreadcrumbTrail({
-  breadcrumbs,
-  activeFolderId,
-  onGoHome,
-  onSelectFolder,
-}: {
-  breadcrumbs: { id: number; name: string }[];
-  activeFolderId?: number | null;
-  onGoHome?: () => void;
-  onSelectFolder?: (folderId: number | null) => void;
-}) {
-  return (
-    <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-gray-100 bg-white px-4 py-2 text-xs text-gray-500">
-      <button
-        type="button"
-        onClick={() => (onGoHome ? onGoHome() : onSelectFolder?.(null))}
-        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-indigo-600 hover:bg-indigo-50"
-      >
-        <Home className="h-3.5 w-3.5" />
-        All documents
-      </button>
-      {breadcrumbs.map((crumb) => (
-        <span key={crumb.id} className="flex items-center gap-1">
-          <ChevronRight className="h-3 w-3 text-gray-400" />
-          <button
-            type="button"
-            onClick={() => onSelectFolder?.(crumb.id)}
-            className={cn(
-              'max-w-[10rem] truncate rounded-md px-1.5 py-0.5 font-medium',
-              activeFolderId === crumb.id ? 'bg-indigo-50 text-indigo-700' : 'text-indigo-600 hover:bg-indigo-50',
-            )}
-            title={crumb.name}
-          >
-            {crumb.name}
-          </button>
-        </span>
-      ))}
-    </div>
-  );
 }
 
 export function DocumentDetailPane({
   document,
   folder,
   folderName,
-  breadcrumbs = [],
   loading = false,
   online,
   canContribute = true,
-  onGoHome,
   onUpload,
   onCreateLink,
   onCreateFolder,
@@ -221,7 +173,6 @@ export function DocumentDetailPane({
   onEmailDocument,
   onClose,
   onRecordView,
-  onSelectFolder,
 }: DocumentDetailPaneProps) {
   const lastRecordedViewId = useRef<number | null>(null);
 
@@ -249,15 +200,8 @@ export function DocumentDetailPane({
 
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
-        <BreadcrumbTrail
-          breadcrumbs={breadcrumbs}
-          activeFolderId={folder?.id ?? null}
-          onGoHome={onGoHome}
-          onSelectFolder={onSelectFolder}
-        />
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="flex flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
-            <div className={cn('w-full max-w-lg p-6 sm:p-8', DOCUMENT_SURFACE.panel)}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
+          <div className={cn('w-full p-5 sm:p-6', DOCUMENT_SURFACE.panel)}>
             <div className="flex items-center gap-3">
               <DocumentFolderIcon open size="md" className="!h-8 !w-8" tint={folder ? resolveFolderColor(folder) : undefined} />
               <div className="min-w-0">
@@ -276,7 +220,7 @@ export function DocumentDetailPane({
                 : 'Browse folders on the left, or start by uploading a file or creating a folder.'}
             </p>
 
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {onUpload && (
                 <DocumentActionButton
                   icon={<Upload className="h-4 w-4" />}
@@ -318,7 +262,7 @@ export function DocumentDetailPane({
             {folder && (folder.can_manage || folder.can_delete) && (
               <div className="mt-6 border-t border-gray-100 pt-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Folder actions</p>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {onRenameFolder && folder.can_manage && (
                     <DocumentActionButton
                       icon={<Pencil className="h-4 w-4" />}
@@ -375,7 +319,6 @@ export function DocumentDetailPane({
                 </div>
               </div>
             )}
-            </div>
           </div>
         </div>
       </div>
@@ -387,13 +330,6 @@ export function DocumentDetailPane({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white/80 backdrop-blur-md">
-      <BreadcrumbTrail
-        breadcrumbs={breadcrumbs}
-        activeFolderId={document.folder_id}
-        onGoHome={onGoHome}
-        onSelectFolder={onSelectFolder}
-      />
-
       <div className="flex shrink-0 flex-col gap-3 border-b border-white/50 bg-white/75 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <DocumentItemIcon doc={document} size="md" />

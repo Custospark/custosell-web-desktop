@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Shield } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import type { DocumentMemberRole, DocumentUserRef, DocumentVisibility, FolderVisibility } from '../api/documentTypes';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import type { AccessVisibilityValue } from '../api/documentAccessLabels';
+import { DocumentFormSection, DocumentModalFooter, DocumentModalHero } from './documentFormFields';
 
 interface DocumentAccessModalProps {
   open: boolean;
@@ -30,25 +32,25 @@ function toMemberPayload(members: DocumentUserRef[]) {
   return { member_user_ids, member_roles };
 }
 
-export function DocumentAccessModal({
-  open,
-  title,
+function DocumentAccessForm({
   itemLabel,
-  visibility: initialVisibility,
-  members: initialMembers,
-  allowInherit = true,
-  loading = false,
+  initialVisibility,
+  initialMembers,
+  allowInherit,
+  loading,
   onClose,
   onSave,
-}: DocumentAccessModalProps) {
+}: {
+  itemLabel: string;
+  initialVisibility: DocumentVisibility | FolderVisibility;
+  initialMembers: DocumentUserRef[];
+  allowInherit: boolean;
+  loading: boolean;
+  onClose: () => void;
+  onSave: DocumentAccessModalProps['onSave'];
+}) {
   const [visibility, setVisibility] = useState<AccessVisibilityValue>(initialVisibility);
   const [members, setMembers] = useState<DocumentUserRef[]>(initialMembers);
-
-  useEffect(() => {
-    if (!open) return;
-    setVisibility(initialVisibility);
-    setMembers(initialMembers);
-  }, [initialMembers, initialVisibility, open]);
 
   const handleSave = () => {
     const payload = toMemberPayload(members);
@@ -60,11 +62,15 @@ export function DocumentAccessModal({
   };
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={title}>
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">
-          Choose who can access <span className="font-medium text-gray-900">{itemLabel}</span>.
-        </p>
+    <div className="space-y-5">
+      <DocumentModalHero
+        icon={Shield}
+        title="Manage access"
+        description={`Choose visibility and collaborators for ${itemLabel}.`}
+        tone="blue"
+      />
+
+      <DocumentFormSection title="Visibility & members" icon={Shield}>
         <DocumentAccessSection
           visibility={visibility}
           onVisibilityChange={setVisibility}
@@ -72,11 +78,41 @@ export function DocumentAccessModal({
           onSelectedMembersChange={setMembers}
           allowInherit={allowInherit}
         />
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="button" loading={loading} onClick={handleSave}>Save access</Button>
-        </div>
-      </div>
+      </DocumentFormSection>
+
+      <DocumentModalFooter>
+        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button type="button" loading={loading} onClick={handleSave}>Save access</Button>
+      </DocumentModalFooter>
+    </div>
+  );
+}
+
+export function DocumentAccessModal({
+  open,
+  title,
+  itemLabel,
+  visibility: initialVisibility,
+  members: initialMembers,
+  allowInherit = true,
+  loading = false,
+  onClose,
+  onSave,
+}: DocumentAccessModalProps) {
+  return (
+    <Modal isOpen={open} onClose={onClose} title={title} subtitle={`Control who can access ${itemLabel}.`} size="lg">
+      {open && (
+        <DocumentAccessForm
+          key={`${itemLabel}-${initialVisibility}-${initialMembers.map((member) => member.id).join(',')}`}
+          itemLabel={itemLabel}
+          initialVisibility={initialVisibility}
+          initialMembers={initialMembers}
+          allowInherit={allowInherit}
+          loading={loading}
+          onClose={onClose}
+          onSave={onSave}
+        />
+      )}
     </Modal>
   );
 }

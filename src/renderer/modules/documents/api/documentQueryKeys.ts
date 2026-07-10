@@ -8,7 +8,7 @@ export const documentKeys = {
   folderChildren: (cabinetId: number, parentId: number | null, page = 1) => [...documentKeys.all, 'folder-children', cabinetId, parentId, page] as const,
   members: () => [...documentKeys.all, 'members'] as const,
   vaultAppearance: () => [...documentKeys.all, 'vault-appearance'] as const,
-  activity: (page = 1) => [...documentKeys.all, 'activity', page] as const,
+  activity: (cabinetId: number, page = 1) => [...documentKeys.all, 'activity', cabinetId, page] as const,
   tags: (q?: string) => [...documentKeys.all, 'tags', q ?? ''] as const,
   folder: (id: number) => [...documentKeys.all, 'folder', id] as const,
   contents: (id: number, page = 1) => [...documentKeys.all, 'contents', id, page] as const,

@@ -7,10 +7,9 @@ import DocumentsPanel from '../ui/DocumentsPanel';
 import AllCabinetsPickerModal from '../ui/AllCabinetsPickerModal';
 import CreateCabinetModal from '../ui/CreateCabinetModal';
 import CabinetSettingsModal from '../ui/CabinetSettingsModal';
+import CabinetSwitcherIcons from '../ui/CabinetSwitcherIcons';
 import { useDocumentCabinet } from '../api/useDocumentCabinetQueries';
-import { Archive, ChevronDown, LayoutGrid, Plus, Settings } from 'lucide-react';
-
-type SettingsTab = 'details' | 'access' | 'canvas';
+import { cabinetCardHeroStyle } from '../ui/cabinetMeta';
 
 export default function DocumentsCabinetPage() {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ export default function DocumentsCabinetPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<SettingsTab>('details');
 
   const folderId = useMemo(() => {
     const raw = params.get('folder_id');
@@ -56,57 +54,13 @@ export default function DocumentsCabinetPage() {
     );
   }
 
-  return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-4 sm:gap-4 sm:p-6">
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 pb-3">
-        <button
-          type="button"
-          onClick={() => navigate(ROUTES.DOCUMENTS.INDEX)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
-          title="All cabinets"
-        >
-          <LayoutGrid className="h-3.5 w-3.5" />
-          Cabinets
-        </button>
-        <span className="text-gray-300">/</span>
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
-        >
-          <Archive className="h-4 w-4" />
-          {cabinet.name}
-          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-        </button>
-        <div className="ml-auto flex items-center gap-2">
-          {cabinet.can_manage && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="inline-flex items-center gap-1.5"
-              onClick={() => {
-                setSettingsTab('details');
-                setSettingsOpen(true);
-              }}
-            >
-              <Settings className="h-3.5 w-3.5" />
-              Settings
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="inline-flex items-center gap-1.5"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New cabinet
-          </Button>
-        </div>
-      </header>
+  const cabinetBgStyle = cabinetCardHeroStyle(cabinet);
 
+  return (
+    <div
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm"
+      style={cabinetBgStyle}
+    >
       <div className="min-h-0 flex-1">
         <DocumentsPanel
           cabinetId={cabinetId}
@@ -114,12 +68,15 @@ export default function DocumentsCabinetPage() {
           folderId={folderId}
           title={cabinet.name}
           fullBleed
-          onOpenCabinetSettings={(tab = 'details') => {
-            setSettingsTab(tab);
-            setSettingsOpen(true);
-          }}
         />
       </div>
+
+      <CabinetSwitcherIcons
+        allowSettings={cabinet.can_manage}
+        onOpenAll={() => setPickerOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onCreateNew={() => setCreateOpen(true)}
+      />
 
       <AllCabinetsPickerModal
         open={pickerOpen}
@@ -134,7 +91,6 @@ export default function DocumentsCabinetPage() {
         <CabinetSettingsModal
           open={settingsOpen}
           cabinet={cabinet}
-          initialTab={settingsTab}
           onClose={() => setSettingsOpen(false)}
         />
       )}

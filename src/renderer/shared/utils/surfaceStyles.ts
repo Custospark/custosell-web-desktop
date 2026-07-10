@@ -72,7 +72,7 @@ export function surfaceAppearanceStyle(appearance: SurfaceAppearance): CSSProper
 }
 
 export const DOCUMENT_SURFACE = {
-  explorer: 'flex h-full min-h-0 flex-col border-white/40 bg-white/82 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl backdrop-saturate-150',
+  explorer: 'flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-white/50 bg-white/82 shadow-sm backdrop-blur-xl backdrop-saturate-150 sm:rounded-2xl',
   panel: 'rounded-2xl border border-white/55 bg-white/85 shadow-md backdrop-blur-lg',
   toolbar: 'border-b border-white/40 bg-white/75 backdrop-blur-md',
   chip: 'rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset',

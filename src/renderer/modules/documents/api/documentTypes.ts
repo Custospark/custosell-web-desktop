@@ -27,6 +27,7 @@ export interface DocumentsVaultAppearance {
 
 export interface DocumentActivityItem {
   id: number;
+  cabinet_id?: number | null;
   action: string;
   message: string;
   subject_type: 'folder' | 'document';

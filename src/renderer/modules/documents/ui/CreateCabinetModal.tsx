@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Archive, Palette, Shield, Type } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { CABINET_ACCESS_OPTIONS } from './cabinetMeta';
+import {
+  DocumentFormSection,
+  DocumentIconField,
+  DocumentModalFooter,
+  DocumentModalHero,
+  documentInputClass,
+} from './documentFormFields';
 import type { CabinetVisibility, DocumentUserRef } from '../api/documentTypes';
 import {
   cabinetMemberPayload,
   useCreateDocumentCabinet,
 } from '../api/useDocumentCabinetQueries';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { Archive } from 'lucide-react';
 
 interface CreateCabinetModalProps {
   open: boolean;
@@ -66,59 +73,63 @@ export default function CreateCabinetModal({ open, onClose, onCreated }: CreateC
   };
 
   return (
-    <Modal isOpen={open} onClose={handleClose} title="New cabinet">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg text-white" style={{ backgroundColor: coverColor }}>
-            <Archive className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="text-sm font-medium text-gray-900">Document cabinet</p>
-            <p className="text-xs text-gray-600">A scoped vault for folders and files with its own access rules.</p>
-          </div>
-        </div>
-
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-gray-700">Name</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Finance, HR, Projects"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            autoFocus
-          />
-        </label>
-
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-gray-700">Description (optional)</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </label>
-
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-gray-700">Accent color</span>
-          <input
-            type="color"
-            value={coverColor}
-            onChange={(e) => setCoverColor(e.target.value)}
-            className="h-10 w-full cursor-pointer rounded-lg border border-gray-300"
-          />
-        </label>
-
-        <DocumentAccessSection
-          visibility={visibility}
-          onVisibilityChange={(value) => setVisibility(value as CabinetVisibility)}
-          selectedMembers={members}
-          onSelectedMembersChange={setMembers}
-          allowInherit={false}
-          visibilityOptions={CABINET_ACCESS_OPTIONS}
+    <Modal
+      isOpen={open}
+      onClose={handleClose}
+      title="New cabinet"
+      subtitle="A scoped workspace for folders and files with its own access rules."
+      size="lg"
+    >
+      <div className="space-y-5">
+        <DocumentModalHero
+          icon={Archive}
+          title="Document cabinet"
+          description="Group files by team or function — like HR, Finance, or client projects."
+          tone="indigo"
         />
 
-        <div className="flex justify-end gap-2 pt-2">
+        <DocumentFormSection title="Cabinet details" icon={Type}>
+          <DocumentIconField label="Name" icon={Type} required>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Finance, HR, Projects"
+              className={documentInputClass}
+              autoFocus
+            />
+          </DocumentIconField>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium text-gray-700">Description (optional)</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="Short note for your team"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          </label>
+          <DocumentIconField label="Accent color" icon={Palette} hint="Used on the cabinet card and canvas accent.">
+            <input
+              type="color"
+              value={coverColor}
+              onChange={(e) => setCoverColor(e.target.value)}
+              className="h-10 w-full cursor-pointer rounded-lg border border-gray-200 bg-white px-1 py-1 shadow-sm"
+            />
+          </DocumentIconField>
+        </DocumentFormSection>
+
+        <DocumentFormSection title="Who can access" icon={Shield}>
+          <DocumentAccessSection
+            visibility={visibility}
+            onVisibilityChange={(value) => setVisibility(value as CabinetVisibility)}
+            selectedMembers={members}
+            onSelectedMembersChange={setMembers}
+            allowInherit={false}
+            visibilityOptions={CABINET_ACCESS_OPTIONS}
+          />
+        </DocumentFormSection>
+
+        <DocumentModalFooter>
           <Button type="button" variant="secondary" onClick={handleClose}>Cancel</Button>
           <Button
             type="button"
@@ -127,7 +138,7 @@ export default function CreateCabinetModal({ open, onClose, onCreated }: CreateC
           >
             Create cabinet
           </Button>
-        </div>
+        </DocumentModalFooter>
       </div>
     </Modal>
   );

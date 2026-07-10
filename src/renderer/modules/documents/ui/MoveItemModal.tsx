@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
+import { ChevronRight, Folder, FolderInput } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentFolder } from '../api/documentTypes';
 import { collectFolderDescendantIds, flattenDocumentFolders } from '../api/documentFolderPathUtils';
-import { ChevronRight, Folder } from 'lucide-react';
+import { DocumentFormSection, DocumentModalFooter, DocumentModalHero } from './documentFormFields';
 
 interface MoveItemModalProps {
   open: boolean;
@@ -38,45 +39,52 @@ export function MoveItemModal({
   }, [flat, blockedIds]);
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={title}>
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">Choose a destination folder. Root level moves the item outside any folder.</p>
+    <Modal isOpen={open} onClose={onClose} title={title} subtitle="Choose where to move this item." size="lg">
+      <div className="space-y-5">
+        <DocumentModalHero
+          icon={FolderInput}
+          title="Move to folder"
+          description="Root level places the item outside any folder in this cabinet."
+          tone="slate"
+        />
 
-        <button
-          type="button"
-          onClick={() => setTargetId(null)}
-          className={cn(
-            'flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm',
-            targetId === null ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300',
-          )}
-        >
-          <Folder className="h-4 w-4 text-gray-500" />
-          Root level
-        </button>
+        <DocumentFormSection title="Destination" icon={Folder}>
+          <button
+            type="button"
+            onClick={() => setTargetId(null)}
+            className={cn(
+              'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+              targetId === null ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-gray-200 hover:border-gray-300',
+            )}
+          >
+            <Folder className="h-4 w-4 text-gray-500" />
+            Root level
+          </button>
 
-        <div className="max-h-64 space-y-1 overflow-y-auto">
-          {options.map((folder) => (
-            <button
-              key={folder.id}
-              type="button"
-              onClick={() => setTargetId(folder.id)}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm',
-                targetId === folder.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300',
-              )}
-              style={{ paddingLeft: `${12 + (folder.depth - 1) * 14}px` }}
-            >
-              {folder.depth > 1 && <ChevronRight className="h-3 w-3 shrink-0 text-gray-400" />}
-              <Folder className="h-4 w-4 shrink-0 text-amber-600" />
-              <span className="truncate">{folder.name}</span>
-            </button>
-          ))}
-        </div>
+          <div className="max-h-64 space-y-1 overflow-y-auto">
+            {options.map((folder) => (
+              <button
+                key={folder.id}
+                type="button"
+                onClick={() => setTargetId(folder.id)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+                  targetId === folder.id ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-gray-200 hover:border-gray-300',
+                )}
+                style={{ paddingLeft: `${12 + (folder.depth - 1) * 14}px` }}
+              >
+                {folder.depth > 1 && <ChevronRight className="h-3 w-3 shrink-0 text-gray-400" />}
+                <Folder className="h-4 w-4 shrink-0 text-amber-600" />
+                <span className="truncate">{folder.name}</span>
+              </button>
+            ))}
+          </div>
+        </DocumentFormSection>
 
-        <div className="flex justify-end gap-2">
+        <DocumentModalFooter>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" loading={loading} onClick={() => onConfirm(targetId)}>Move here</Button>
-        </div>
+        </DocumentModalFooter>
       </div>
     </Modal>
   );

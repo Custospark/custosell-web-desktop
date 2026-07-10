@@ -31,7 +31,7 @@ Explorer uses frosted-glass panels and pipeline-style gradient canvas (see `shar
 
 **Scale:** See [ADR: Documents explorer scale](./adr/2026-07-10-documents-explorer-scale.md) — lazy tree + search work well to ~tens of thousands of items; millions require virtualization and cursor pagination (roadmap).
 
-**Activity:** `GET /documents/activity` — vault-wide feed shown in collapsible explorer footer (VS Code–style).
+**Activity:** `GET /documents/activity?cabinet_id=&page=` — per-cabinet feed in the explorer sidebar footer (VS Code–style). **`cabinet_id` required**; events are stored with `cabinet_id` on `document_activity_logs`.
 
 **Access editing:** Context menu / detail pane → **Manage access** updates folder or file visibility and members via existing PATCH endpoints.
 
@@ -60,6 +60,7 @@ See `Backend/routes/api/v1/documents.php`. Middleware: `auth:sanctum`, `business
 - `GET /documents/{id}/content` — inline text/CSV/Word preview payload
 - `PUT /documents/{id}/content` — save editable text file content
 - `GET /documents/folders/tree?cabinet_id=` — tree for move modal (optional cabinet filter)
+- `GET /documents/activity?cabinet_id=&page=` — recent activity for the open cabinet (**`cabinet_id` required**)
 
 Staff with the `documents` module can create cabinets, root folders, and root links/files inside a cabinet (visibility cannot be `inherit` at root).
 

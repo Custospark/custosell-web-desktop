@@ -45,7 +45,7 @@ export default function AllCabinetsPickerModal({
   };
 
   return (
-    <Modal isOpen={open} onClose={onClose} title="Switch cabinet" size="lg">
+    <Modal isOpen={open} onClose={onClose} title="Switch cabinets" size="lg">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[180px] flex-1">

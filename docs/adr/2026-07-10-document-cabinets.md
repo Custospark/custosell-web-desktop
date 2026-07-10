@@ -34,6 +34,7 @@ Introduce **Cabinets** as the top-level container for folders and files.
 - `GET /documents/folders/children` — **`cabinet_id` required**
 - `GET /documents`, uploads, links, root folder create — accept `cabinet_id` for root-level writes
 - `GET /documents/folders/tree?cabinet_id=` — optional cabinet filter for move tree
+- `GET /documents/activity?cabinet_id=` — **`cabinet_id` required**; scoped activity feed per cabinet explorer
 
 New businesses receive a **General** cabinet via `Business::created` → `DocumentCabinetService::ensureGeneralCabinet()`.
 
@@ -41,6 +42,7 @@ New businesses receive a **General** cabinet via `Business::created` → `Docume
 
 - `CabinetsPage` — gallery + search + create modal
 - `DocumentsCabinetPage` — header switcher + `DocumentsPanel` scoped to `cabinetId`
+- `DocumentExplorerActivity` — activity query keyed by `cabinetId` (not vault-wide)
 - All explorer/list/upload/folder mutations pass `cabinet_id` at cabinet root
 
 ## Consequences

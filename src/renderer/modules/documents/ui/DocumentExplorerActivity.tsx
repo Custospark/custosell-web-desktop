@@ -34,13 +34,14 @@ function ActivityRow({ entry }: { entry: DocumentActivityItem }) {
 }
 
 interface DocumentExplorerActivityProps {
+  cabinetId: number;
   enabled?: boolean;
   className?: string;
 }
 
-export function DocumentExplorerActivity({ enabled = true, className }: DocumentExplorerActivityProps) {
+export function DocumentExplorerActivity({ cabinetId, enabled = true, className }: DocumentExplorerActivityProps) {
   const [expanded, setExpanded] = useState(true);
-  const { data, isLoading, isError, refetch, isFetching } = useDocumentActivity(enabled);
+  const { data, isLoading, isError, refetch, isFetching } = useDocumentActivity(cabinetId, enabled);
 
   const entries = useMemo(() => data?.data ?? [], [data?.data]);
 

@@ -14,6 +14,13 @@ export interface DocumentTag {
   id: number;
   name: string;
   slug: string;
+  color?: string | null;
+}
+
+export interface DocumentsVaultAppearance {
+  cover_color?: string | null;
+  background_type?: 'color' | 'gallery' | null;
+  background_value?: string | null;
 }
 
 export interface DocumentFolder {
@@ -22,6 +29,7 @@ export interface DocumentFolder {
   name: string;
   description?: string | null;
   visibility: FolderVisibility;
+  cover_color?: string | null;
   depth: number;
   sort_order: number;
   created_at?: string;

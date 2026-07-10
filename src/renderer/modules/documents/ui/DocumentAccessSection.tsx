@@ -7,7 +7,9 @@ import {
   DOCUMENT_ACCESS_OPTIONS,
   type AccessVisibilityValue,
 } from '../api/documentAccessLabels';
-import { useDocumentAccessibleMembers } from '../api/useDocumentQueries';
+import { useDocumentStaffPicker } from '../api/useDocumentStaffPicker';
+import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { Button } from '../../../shared/components/buttons/Button';
 
 interface DocumentAccessSectionProps {
   visibility: AccessVisibilityValue;
@@ -26,7 +28,7 @@ export function DocumentAccessSection({
   allowInherit = true,
   disabled = false,
 }: DocumentAccessSectionProps) {
-  const { data: staff = [] } = useDocumentAccessibleMembers();
+  const { data: staff = [], isLoading, isError, refetch } = useDocumentStaffPicker(!disabled);
   const [query, setQuery] = useState('');
 
   const options = useMemo(
@@ -85,6 +87,23 @@ export function DocumentAccessSection({
       {visibility === 'selected_staff' && (
         <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3">
           <p className="mb-2 text-xs font-medium text-gray-700">Team members</p>
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <LoadingSpinner />
+            </div>
+          ) : isError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-4 text-center">
+              <p className="text-sm text-red-700">Could not load team members.</p>
+              <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => void refetch()}>
+                Try again
+              </Button>
+            </div>
+          ) : staff.length === 0 ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-800">
+              No active staff found for this business. Add team members in Settings → Staff.
+            </p>
+          ) : (
+            <>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -129,6 +148,8 @@ export function DocumentAccessSection({
               );
             })}
           </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -61,10 +61,18 @@ export function DocumentFolderIcon({
   open = false,
   className,
   size = 'sm',
+  tint,
 }: {
   open?: boolean;
   className?: string;
   size?: 'sm' | 'md';
+  tint?: string;
 }) {
+  if (tint) {
+    const spec = ICONS[open ? 'folder-open' : 'folder'];
+    const sizeClass = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
+    const { Icon } = spec;
+    return <Icon className={cn(sizeClass, 'shrink-0', className)} style={{ color: tint }} aria-hidden />;
+  }
   return <DocumentFileIcon kind={open ? 'folder-open' : 'folder'} className={className} size={size} />;
 }

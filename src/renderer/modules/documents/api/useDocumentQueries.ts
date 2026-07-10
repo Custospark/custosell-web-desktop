@@ -12,6 +12,7 @@ import type {
   DocumentListFilters,
   DocumentMemberRole,
   DocumentPaginationMeta,
+  DocumentsVaultAppearance,
   DocumentTag,
   DocumentUserRef,
   DocumentVisibility,
@@ -65,6 +66,36 @@ export function useDocumentAccessibleMembers(enabled = true) {
     },
     enabled,
     staleTime: 60_000,
+  });
+}
+
+export function useDocumentsVaultAppearance(enabled = true) {
+  return useQuery({
+    queryKey: documentKeys.vaultAppearance(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(DOCUMENTS.VAULT_APPEARANCE);
+      return unwrapEntity<DocumentsVaultAppearance>(data);
+    },
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateDocumentsVaultAppearance() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (payload: Partial<DocumentsVaultAppearance>) => {
+      const { data } = await axiosInstance.patch(DOCUMENTS.VAULT_APPEARANCE, payload);
+      return unwrapEntity<DocumentsVaultAppearance>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: documentKeys.vaultAppearance() });
+      showToast('success', 'Vault appearance updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not update vault appearance'));
+    },
   });
 }
 
@@ -165,6 +196,7 @@ type FolderPayload = {
   parent_id?: number | null;
   member_user_ids?: number[];
   member_roles?: Record<number, DocumentMemberRole>;
+  cover_color?: string | null;
 };
 
 export function useCreateDocumentFolder() {

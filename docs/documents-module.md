@@ -17,6 +17,18 @@ Business-wide file vault for Custosell — nested folders, live ACL inheritance,
 | `selected_staff` | Explicit members with viewer / contributor / manager roles |
 | `owner_only` | Only me (visible only to you) |
 
+Staff pickers load **all active business staff** via `GET /documents/accessible-members` (or Settings `useStaff()` when the user has Settings access). Inactive staff are excluded.
+
+## Appearance
+
+Vault canvas (gradient, solid color, or gallery photo) is stored per business:
+
+- `GET/PATCH /documents/vault-appearance` — `cover_color`, `background_type`, `background_value`
+- Folder accents: `cover_color` on `document_folders` (context menu → Folder color)
+- Tag labels: `color` on `document_tags` (auto-assigned on create; shown as colored stripes/chips in explorer)
+
+Explorer uses frosted-glass panels and pipeline-style gradient canvas (see `shared/utils/surfaceStyles.ts`).
+
 Business owner always has manager access. Live inheritance: changing a folder’s visibility or members immediately affects inheriting children.
 
 ## API (`/api/v1`)
@@ -40,8 +52,7 @@ Staff with the `documents` module can create root folders and add links/files at
 - **Views:** list / grid toggle
 - **Preview:** PDF and images in modal
 - **Move:** modal picker + drag-and-drop onto folders / current folder
-- **Explorer:** VS Code-style two-pane layout — labeled toolbar actions (Upload, Folder, Link), breadcrumb navigation, row context menus (rename, move, delete, upload to folder), and action tiles in empty folder states
-- **Access copy:** `owner_only` displays as **Only me** in all document/folder access pickers
+- **Explorer:** VS Code-style two-pane layout with pipeline-inspired canvas (gradient/photo), frosted explorer, folder color accents, colored tag stripes, labeled actions, breadcrumbs, and row context menus
 - **Long names:** middle-ellipsis display with full name on hover
 - **Pagination:** load-more for document lists; sidebar loads folders on expand
 - **Progress:** upload (axios) and download (XHR blob) progress bars

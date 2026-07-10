@@ -8,6 +8,9 @@ import { formatDocumentBytes, isImageDocument, isPdfDocument } from '../api/docu
 import { DocumentActionButton } from './DocumentActionButton';
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
 import { DocumentUserAttribution } from './DocumentUserAttribution';
+import { DocumentTagChips } from './DocumentTagStrip';
+import { resolveFolderColor } from '../api/documentColorUtils';
+import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
 import {
   ChevronRight,
   Download,
@@ -180,7 +183,7 @@ export function DocumentDetailPane({
     const accessLabel = visibilityLabel ? ACCESS_VISIBILITY_LABEL[visibilityLabel] : null;
 
     return (
-      <div className="flex h-full min-h-0 flex-col bg-[#fafafa]">
+      <div className="flex h-full min-h-0 flex-col bg-transparent">
         <BreadcrumbTrail
           breadcrumbs={breadcrumbs}
           activeFolderId={folder?.id ?? null}
@@ -188,9 +191,9 @@ export function DocumentDetailPane({
           onSelectFolder={onSelectFolder}
         />
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
-          <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+          <div className={cn('w-full max-w-lg p-8', DOCUMENT_SURFACE.panel)}>
             <div className="flex items-center gap-3">
-              <DocumentFolderIcon open size="md" className="!h-8 !w-8" />
+              <DocumentFolderIcon open size="md" className="!h-8 !w-8" tint={folder ? resolveFolderColor(folder) : undefined} />
               <div className="min-w-0">
                 <p className="truncate text-lg font-semibold text-gray-900">
                   {folderName ?? 'All documents'}
@@ -288,7 +291,7 @@ export function DocumentDetailPane({
   const label = documentPrimaryLabel(document);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white">
+    <div className="flex h-full min-h-0 flex-col bg-white/80 backdrop-blur-md">
       <BreadcrumbTrail
         breadcrumbs={breadcrumbs}
         activeFolderId={document.folder_id}
@@ -296,7 +299,7 @@ export function DocumentDetailPane({
         onSelectFolder={onSelectFolder}
       />
 
-      <div className="flex shrink-0 flex-col gap-3 border-b border-gray-200 bg-[#f8f9fb] px-4 py-3 sm:flex-row sm:items-center">
+      <div className="flex shrink-0 flex-col gap-3 border-b border-white/50 bg-white/75 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <DocumentItemIcon doc={document} size="md" />
           <div className="min-w-0">
@@ -337,14 +340,12 @@ export function DocumentDetailPane({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <DocumentPreviewContent document={document} className="min-h-[420px]" />
-        <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+        <div className={cn('mt-4 px-4 py-3', DOCUMENT_SURFACE.panel)}>
           <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
+          <DocumentTagChips tags={document.tags} className="mt-3" />
           <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
             <span>{formatDocumentBytes(document.file_size)}</span>
             {document.mime_type && <span>{document.mime_type}</span>}
-            {document.tags?.map((tag) => (
-              <span key={tag.id} className="rounded-full bg-white px-2 py-0.5 ring-1 ring-gray-200">#{tag.name}</span>
-            ))}
           </div>
         </div>
       </div>

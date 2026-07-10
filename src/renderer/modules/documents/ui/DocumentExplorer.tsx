@@ -9,6 +9,9 @@ import {
 } from '../api/useDocumentQueries';
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
 import { ExplorerRowMenu, type ExplorerMenuItem } from './ExplorerRowMenu';
+import { DocumentTagStrip } from './DocumentTagStrip';
+import { resolveFolderColor } from '../api/documentColorUtils';
+import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { Button } from '../../../shared/components/buttons/Button';
 import {
@@ -20,6 +23,7 @@ import {
   FolderPlus,
   Home,
   Link2,
+  Palette,
   Pencil,
   RefreshCw,
   Search,
@@ -39,6 +43,7 @@ export interface DocumentExplorerActions {
   onRenameDocument?: (doc: DocumentItem) => void;
   onDeleteDocument?: (doc: DocumentItem) => void;
   onMoveDocument?: (doc: DocumentItem) => void;
+  onSetFolderColor?: (folder: DocumentFolder) => void;
 }
 
 interface DocumentExplorerProps {
@@ -65,6 +70,7 @@ interface DocumentExplorerProps {
   onFolderDrop: (folderId: number, e: React.DragEvent) => void;
   onDocumentDragStart: (doc: DocumentItem, e: React.DragEvent) => void;
   onFolderDragStart: (folder: DocumentFolder, e: React.DragEvent) => void;
+  onCustomizeCanvas?: () => void;
 }
 
 function folderMenuItems(folder: DocumentFolder, actions: DocumentExplorerActions | undefined, online: boolean): ExplorerMenuItem[] {
@@ -96,6 +102,15 @@ function folderMenuItems(folder: DocumentFolder, actions: DocumentExplorerAction
       icon: <FolderPlus className="h-3.5 w-3.5" />,
       disabled: !online,
       onClick: () => actions.onCreateSubfolder?.(folder),
+    });
+  }
+  if (actions.onSetFolderColor && folder.can_manage) {
+    items.push({
+      id: 'color',
+      label: 'Folder color',
+      icon: <Palette className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onSetFolderColor?.(folder),
     });
   }
   if (actions.onRenameFolder && folder.can_manage) {
@@ -186,8 +201,8 @@ function ExplorerFileRow({
   return (
     <div
       className={cn(
-        'group flex items-center gap-0.5 pr-1',
-        selected && 'bg-[#0060c0]/12',
+        'group relative flex items-center gap-0.5 pr-1',
+        selected && DOCUMENT_SURFACE.rowSelected,
       )}
     >
       <button
@@ -197,14 +212,17 @@ function ExplorerFileRow({
         onClick={onSelect}
         title={documentIconLabel(doc)}
         className={cn(
-          'flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left text-[13px] leading-5',
-          selected ? 'text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+          'flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 text-left text-[13px] leading-5',
+          selected ? 'font-medium text-indigo-700' : cn('text-gray-800', DOCUMENT_SURFACE.rowHover),
         )}
         style={{ paddingLeft: `${8 + depth * INDENT}px` }}
       >
-        <span className="inline-block h-4 w-4 shrink-0" />
-        <DocumentItemIcon doc={doc} />
-        <span className="truncate">{label}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="inline-block h-4 w-4 shrink-0" />
+          <DocumentItemIcon doc={doc} />
+          <span className="truncate">{label}</span>
+        </span>
+        <DocumentTagStrip tags={doc.tags} className="pl-6" />
       </button>
       <ExplorerRowMenu items={menuItems} className="mr-1" />
     </div>
@@ -262,13 +280,15 @@ function ExplorerFolderNode({
     if (!expanded) toggleExpanded(folder.id);
   };
 
+  const folderColor = resolveFolderColor(folder);
+
   return (
     <div>
       <div
         className={cn(
-          'group flex items-center gap-0.5 pr-1',
+          'group relative flex items-center gap-0.5 pr-1',
           isDropTarget && 'bg-indigo-50 ring-1 ring-indigo-300 ring-inset',
-          folderSelected && 'bg-[#0060c0]/12',
+          folderSelected && DOCUMENT_SURFACE.rowSelected,
         )}
         onDragOver={(e) => onFolderDragOver(folder.id, e)}
         onDragLeave={onFolderDragLeave}
@@ -292,12 +312,16 @@ function ExplorerFolderNode({
           onClick={handleRowClick}
           title={folder.name}
           className={cn(
-            'flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left text-[13px] leading-5',
-            folderSelected ? 'font-medium text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+            'relative flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left text-[13px] leading-5',
+            folderSelected ? 'font-medium text-indigo-700' : cn('text-gray-800', DOCUMENT_SURFACE.rowHover),
           )}
           style={{ paddingLeft: `${4 + depth * INDENT}px` }}
         >
-          <DocumentFolderIcon open={expanded && folderSelected} />
+          <span
+            className="absolute bottom-1 top-1 w-1 rounded-full"
+            style={{ left: `${depth * INDENT}px`, backgroundColor: folderColor }}
+          />
+          <DocumentFolderIcon open={expanded && folderSelected} tint={folderColor} />
           <span className="truncate">{truncateDisplayName(folder.name, 40)}</span>
         </button>
         <ExplorerRowMenu items={menuItems} className="mr-1" />
@@ -376,6 +400,7 @@ export function DocumentExplorer({
   onFolderDrop,
   onDocumentDragStart,
   onFolderDragStart,
+  onCustomizeCanvas,
 }: DocumentExplorerProps) {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const expandSet = useMemo(() => new Set(expandFolderIds), [expandFolderIds]);
@@ -415,8 +440,8 @@ export function DocumentExplorer({
   const loading = searching ? searchLoading : (rootFoldersLoading || rootDocsLoading);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f6f7f9] text-gray-900">
-      <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2.5">
+    <div className={cn('h-full min-h-0 text-gray-900', DOCUMENT_SURFACE.explorer)}>
+      <div className={cn('shrink-0 px-3 py-2.5', DOCUMENT_SURFACE.toolbar)}>
         <div className="mb-2 flex flex-wrap items-center gap-1 text-xs text-gray-500">
           <button
             type="button"
@@ -488,11 +513,21 @@ export function DocumentExplorer({
         </div>
 
         <div className="mt-2 flex items-center justify-end gap-1">
+          {onCustomizeCanvas && (
+            <button
+              type="button"
+              title="Customize canvas"
+              onClick={onCustomizeCanvas}
+              className="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-indigo-600"
+            >
+              <Palette className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button
             type="button"
             title="Refresh"
             onClick={onRefresh}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            className="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-gray-800"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
@@ -500,28 +535,28 @@ export function DocumentExplorer({
             type="button"
             title="Collapse all folders"
             onClick={collapseAll}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            className="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-gray-800"
           >
             <ChevronsDownUp className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="shrink-0 space-y-1.5 border-b border-gray-200 bg-white px-2 py-2">
+      <div className={cn('shrink-0 space-y-1.5 px-2 py-2', DOCUMENT_SURFACE.toolbar)}>
         <div className="relative">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by name or tag…"
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-7 pr-2 text-xs outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
+            className="w-full rounded-lg border border-white/60 bg-white/70 py-2 pl-7 pr-2 text-xs outline-none backdrop-blur-sm focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
           />
         </div>
         <input
           value={tagFilter}
           onChange={(e) => onTagFilterChange(e.target.value)}
           placeholder="Filter by tag (optional)"
-          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 text-xs outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
+          className="w-full rounded-lg border border-white/60 bg-white/70 px-2 py-2 text-xs outline-none backdrop-blur-sm focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
         />
       </div>
 
@@ -564,7 +599,7 @@ export function DocumentExplorer({
               onClick={() => onSelectFolder(null)}
               className={cn(
                 'mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px]',
-                atRoot ? 'bg-[#0060c0]/12 font-medium text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+                atRoot ? 'bg-indigo-500/12 font-medium text-indigo-700' : cn('text-gray-800', DOCUMENT_SURFACE.rowHover),
               )}
             >
               <Home className="h-4 w-4 shrink-0 text-indigo-500" />
@@ -610,7 +645,7 @@ export function DocumentExplorer({
             ))}
 
             {rootFolders.length === 0 && rootDocuments.length === 0 && (
-              <div className="mx-2 mt-4 rounded-xl border border-dashed border-gray-300 bg-white px-4 py-8 text-center">
+              <div className={cn('mx-2 mt-4 px-4 py-8 text-center', DOCUMENT_SURFACE.panel)}>
                 <FilePlus className="mx-auto h-8 w-8 text-gray-300" />
                 <p className="mt-3 text-sm font-medium text-gray-800">Your vault is empty</p>
                 <p className="mt-1 text-xs text-gray-500">Upload a file, create a folder, or add a link to get started.</p>

@@ -36,6 +36,8 @@ import {
   useRecordDocumentView,
   useUpdateDocument,
   useUpdateDocumentFolder,
+  useDocumentsVaultAppearance,
+  useUpdateDocumentsVaultAppearance,
 } from '../api/useDocumentQueries';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { DocumentFolderCard, DocumentItemCard } from './DocumentItemViews';
@@ -45,6 +47,12 @@ import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentProgressBar } from './DocumentProgressBar';
 import { MoveItemModal } from './MoveItemModal';
 import { RenameItemModal } from './RenameItemModal';
+import { DocumentsVaultAppearanceModal } from './DocumentsVaultAppearanceModal';
+import { DocumentFolderColorModal } from './DocumentFolderColorModal';
+import { surfaceAppearanceStyle } from '../../../shared/utils/surfaceStyles';
+import { isBusinessOwner } from '../../../shared/utils/moduleAccess';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../../app/store/store';
 import {
   ChevronRight,
   Folder,
@@ -150,7 +158,11 @@ export default function DocumentsPanel({
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [createFolderParentId, setCreateFolderParentId] = useState<number | null>(null);
   const [actionTargetFolderId, setActionTargetFolderId] = useState<number | null>(null);
+  const [showVaultAppearance, setShowVaultAppearance] = useState(false);
+  const [folderColorTarget, setFolderColorTarget] = useState<DocumentFolder | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const canCustomizeVault = isBusinessOwner(user);
 
   const showSidebar = fullBleed && !customerId && !projectId;
   const searching = Boolean(debouncedSearch || tagFilter);
@@ -211,6 +223,8 @@ export default function DocumentsPanel({
   const updateDocument = useUpdateDocument();
   const recordDownload = useRecordDocumentDownload();
   const recordView = useRecordDocumentView();
+  const { data: vaultAppearance } = useDocumentsVaultAppearance(showSidebar);
+  const updateVaultAppearance = useUpdateDocumentsVaultAppearance();
 
   const flatFolders = useMemo(() => flattenTree(moveTree), [moveTree]);
   const searchResults = useMemo(
@@ -452,6 +466,7 @@ export default function DocumentsPanel({
     onRenameDocument: (doc) => setRenameTarget({ kind: 'document', id: doc.id, name: doc.title }),
     onDeleteDocument: (doc) => { void handleDeleteDocument(doc); },
     onMoveDocument: (doc) => setMoveTarget({ kind: 'document', id: doc.id }),
+    onSetFolderColor: (folder) => setFolderColorTarget(folder),
   }), [handleDeleteDocument, handleDeleteFolder, openCreateFolderModal, openLinkModal, openUploadModal]);
 
   const loadMoreDocuments = () => {
@@ -904,6 +919,27 @@ export default function DocumentsPanel({
           </div>
         </div>
       </Modal>
+
+      <DocumentsVaultAppearanceModal
+        open={showVaultAppearance}
+        appearance={vaultAppearance ?? {}}
+        saving={updateVaultAppearance.isPending}
+        onClose={() => setShowVaultAppearance(false)}
+        onSave={(appearance) => {
+          void updateVaultAppearance.mutateAsync(appearance).then(() => setShowVaultAppearance(false));
+        }}
+      />
+
+      <DocumentFolderColorModal
+        folder={folderColorTarget}
+        saving={updateFolder.isPending}
+        onClose={() => setFolderColorTarget(null)}
+        onSave={(color) => {
+          if (!folderColorTarget) return;
+          void updateFolder.mutateAsync({ id: folderColorTarget.id, cover_color: color })
+            .then(() => setFolderColorTarget(null));
+        }}
+      />
     </>
   );
 
@@ -912,8 +948,11 @@ export default function DocumentsPanel({
     const activeFolder = contents?.folder ?? null;
 
     return (
-      <div className="flex h-full min-h-0 w-full flex-col bg-gray-100 lg:flex-row">
-        <aside className="flex h-auto max-h-64 w-full shrink-0 flex-col border-b border-gray-300 lg:h-full lg:max-h-none lg:w-80 lg:border-b-0 lg:border-r xl:w-96">
+      <div
+        className="flex h-full min-h-0 w-full flex-col lg:flex-row"
+        style={surfaceAppearanceStyle(vaultAppearance ?? {})}
+      >
+        <aside className="flex h-auto max-h-64 w-full shrink-0 flex-col p-2 lg:h-full lg:max-h-none lg:w-80 xl:w-96">
           <DocumentExplorer
             activeFolderId={activeFolderId}
             selectedDocumentId={selectedDocument?.id ?? null}
@@ -950,12 +989,13 @@ export default function DocumentsPanel({
               e.dataTransfer.setData('text/document-folder-id', String(folder.id));
               e.dataTransfer.effectAllowed = 'move';
             }}
+            onCustomizeCanvas={canCustomizeVault ? () => setShowVaultAppearance(true) : undefined}
           />
         </aside>
 
         <div
           className={cn(
-            'flex min-h-0 min-w-0 flex-1 flex-col',
+            'm-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/50 shadow-sm',
             panelDragActive && canContribute && 'ring-2 ring-inset ring-indigo-300',
           )}
           onDragOver={(e) => {

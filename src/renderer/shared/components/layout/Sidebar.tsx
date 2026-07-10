@@ -10,6 +10,7 @@ import {
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
+  IdCard, CalendarDays, Wallet, ClipboardCheck, Building,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -174,6 +175,20 @@ const baseNavGroups: NavGroup[] = [
     label: 'Documents',
     subItems: [
       { to: ROUTES.DOCUMENTS.INDEX, label: 'Business files', icon: Files },
+    ],
+  },
+  {
+    icon: IdCard,
+    label: 'HR & Payroll',
+    subItems: [
+      { to: ROUTES.HR.PEOPLE, label: 'People', icon: Users },
+      { to: ROUTES.HR.DEPARTMENTS, label: 'Departments', icon: Building },
+      { to: ROUTES.HR.ATTENDANCE, label: 'Attendance', icon: Clock },
+      { to: ROUTES.HR.LEAVE, label: 'Leave', icon: CalendarDays },
+      { to: ROUTES.HR.PAYROLL, label: 'Payroll', icon: Wallet },
+      { to: ROUTES.HR.TALENT, label: 'Talent', icon: ClipboardCheck },
+      { to: ROUTES.HR.REPORTS, label: 'Reports', icon: BarChart3 },
+      { to: ROUTES.HR.SETTINGS, label: 'HR settings', icon: SlidersHorizontal },
     ],
   },
   {

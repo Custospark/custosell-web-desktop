@@ -40,6 +40,19 @@ export const ROUTES = {
     /** @deprecated Use CABINET + folder_id query param */
     FOLDER: (id: number) => `/documents?folder_id=${id}`,
   },
+  HR: {
+    INDEX: '/hr',
+    PEOPLE: '/hr/people',
+    EMPLOYEE: (id: number) => `/hr/people/${id}`,
+    DEPARTMENTS: '/hr/departments',
+    ATTENDANCE: '/hr/attendance',
+    LEAVE: '/hr/leave',
+    PAYROLL: '/hr/payroll',
+    PAY_RUN: (id: number) => `/hr/payroll/runs/${id}`,
+    TALENT: '/hr/talent',
+    REPORTS: '/hr/reports',
+    SETTINGS: '/hr/settings',
+  },
   ACCOUNT: {
     INDEX: '/account',
     NOTIFICATIONS: '/account/notifications',

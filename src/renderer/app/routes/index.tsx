@@ -85,6 +85,18 @@ const ProjectBoardPage = lazy(() => import('../../modules/estimates/pages/Projec
 const EstimatesInsightsPage = lazy(() => import('../../modules/estimates/pages/EstimatesInsightsPage'));
 const EstimateTemplatesPage = lazy(() => import('../../modules/estimates/pages/EstimateTemplatesPage'));
 
+const HrLayout = lazy(() => import('../../modules/hr/pages/HrLayout'));
+const HrPeoplePage = lazy(() => import('../../modules/hr/pages/HrPeoplePage'));
+const HrEmployeeDetailPage = lazy(() => import('../../modules/hr/pages/HrEmployeeDetailPage'));
+const HrDepartmentsPage = lazy(() => import('../../modules/hr/pages/HrDepartmentsPage'));
+const HrAttendancePage = lazy(() => import('../../modules/hr/pages/HrAttendancePage'));
+const HrLeavePage = lazy(() => import('../../modules/hr/pages/HrLeavePage'));
+const HrPayrollPage = lazy(() => import('../../modules/hr/pages/HrPayrollPage'));
+const HrPayRunDetailPage = lazy(() => import('../../modules/hr/pages/HrPayRunDetailPage'));
+const HrTalentPage = lazy(() => import('../../modules/hr/pages/HrTalentPage'));
+const HrReportsPage = lazy(() => import('../../modules/hr/pages/HrReportsPage'));
+const HrSettingsPage = lazy(() => import('../../modules/hr/pages/HrSettingsPage'));
+
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
@@ -177,6 +189,21 @@ export function AppRoutes() {
             <Route path={ROUTES.DOCUMENTS.INDEX} element={<SuspenseWrapper><DocumentsLayout /></SuspenseWrapper>}>
               <Route index element={<SuspenseWrapper><CabinetsPage /></SuspenseWrapper>} />
               <Route path="cabinets/:cabinetId" element={<SuspenseWrapper><DocumentsCabinetPage /></SuspenseWrapper>} />
+            </Route>
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="hr" />}>
+            <Route path="/hr" element={<SuspenseWrapper><HrLayout /></SuspenseWrapper>}>
+              <Route index element={<Navigate to={ROUTES.HR.PEOPLE} replace />} />
+              <Route path="people" element={<SuspenseWrapper><HrPeoplePage /></SuspenseWrapper>} />
+              <Route path="people/:employeeId" element={<SuspenseWrapper><HrEmployeeDetailPage /></SuspenseWrapper>} />
+              <Route path="departments" element={<SuspenseWrapper><HrDepartmentsPage /></SuspenseWrapper>} />
+              <Route path="attendance" element={<SuspenseWrapper><HrAttendancePage /></SuspenseWrapper>} />
+              <Route path="leave" element={<SuspenseWrapper><HrLeavePage /></SuspenseWrapper>} />
+              <Route path="payroll" element={<SuspenseWrapper><HrPayrollPage /></SuspenseWrapper>} />
+              <Route path="payroll/runs/:payRunId" element={<SuspenseWrapper><HrPayRunDetailPage /></SuspenseWrapper>} />
+              <Route path="talent" element={<SuspenseWrapper><HrTalentPage /></SuspenseWrapper>} />
+              <Route path="reports" element={<SuspenseWrapper><HrReportsPage /></SuspenseWrapper>} />
+              <Route path="settings" element={<SuspenseWrapper><HrSettingsPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="accounting" />}>

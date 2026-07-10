@@ -14,6 +14,7 @@ export const BUSINESS_MODULE_SLUGS = [
   'expenses',
   'accounting',
   'documents',
+  'hr',
   'settings',
 ] as const;
 
@@ -29,6 +30,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   expenses: 'Expenses',
   accounting: 'Accounting',
   documents: 'Documents',
+  hr: 'HR & Payroll',
   settings: 'Settings',
 };
 
@@ -42,17 +44,18 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   expenses: ROUTES.EXPENSES.LIST,
   accounting: ROUTES.ACCOUNTING.RATIOS,
   documents: ROUTES.DOCUMENTS.INDEX,
+  hr: ROUTES.HR.INDEX,
   settings: ROUTES.SETTINGS.BUSINESS,
   account: ROUTES.ACCOUNT.NOTIFICATIONS,
   guide: ROUTES.GUIDE.TUTORIALS,
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'settings',
+  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'hr', 'settings',
 ];
 
 const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'settings',
+  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'hr', 'settings',
 ];
 
 /** Nav group label → module slug for business-scoped sidebar groups. */
@@ -67,6 +70,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Expenses: 'expenses',
   Accounting: 'accounting',
   Documents: 'documents',
+  'HR & Payroll': 'hr',
   Settings: 'settings',
   Account: 'account',
   'Custosell Guide': 'guide',
@@ -508,6 +512,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/expenses')) return 'expenses';
   if (pathname.startsWith('/accounting')) return 'accounting';
   if (pathname.startsWith('/documents')) return 'documents';
+  if (pathname.startsWith('/hr')) return 'hr';
   return null;
 }
 

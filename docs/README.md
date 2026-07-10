@@ -72,12 +72,14 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-10-documents-acl-and-folder-model.md](./adr/2026-07-10-documents-acl-and-folder-model.md) | Documents module ACL, live inheritance, folder tree |
 | [2026-07-10-documents-explorer-scale.md](./adr/2026-07-10-documents-explorer-scale.md) | Explorer scale limits and enterprise roadmap |
 | [2026-07-10-document-cabinets.md](./adr/2026-07-10-document-cabinets.md) | Document cabinets — gallery, scoped explorer, cabinet ACL |
+| [2026-07-10-hr-payroll-module.md](./adr/2026-07-10-hr-payroll-module.md) | HR & Payroll module — people, leave, Uganda payroll |
 
 ## Modules
 
 | Document | Contents |
 |----------|----------|
 | [modules/pipeline-progress.md](./modules/pipeline-progress.md) | Board Progress v2 — columns, decomposition, My progress, export |
+| [modules/hr.md](./modules/hr.md) | HR & Payroll — routes, API layer, payroll flow, failure states |
 
 ## Key source locations
 

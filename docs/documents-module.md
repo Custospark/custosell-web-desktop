@@ -45,8 +45,9 @@ See `Backend/routes/api/v1/documents.php`. Middleware: `auth:sanctum`, `business
 
 - `GET/POST /documents/cabinets` — list (paginated) / create
 - `GET/PATCH/DELETE /documents/cabinets/{id}` — show / update / delete (delete blocked if contents exist)
-- Each business has a default **General** cabinet (`all_staff`); migration and `Business::created` ensure it exists
+- Each business receives starter cabinets (**General**, **HR**, **Finance**, **Legal & Compliance**, **Sales & Marketing**, **Operations**) on create; users can rename them
 - Root folders, root uploads, and root links require `cabinet_id`
+- Per-cabinet canvas: `cover_color`, `background_type`, `background_value` on cabinet settings
 
 ### Scalability (large vaults)
 
@@ -64,7 +65,7 @@ Staff with the `documents` module can create cabinets, root folders, and root li
 
 ## Frontend
 
-- Routes: `/documents` (cabinet gallery), `/documents/cabinets/:cabinetId` (explorer)
+- Routes: `/documents` (cabinet gallery + first-visit walkthrough), `/documents/cabinets/:cabinetId` (explorer + cabinet settings)
 - Module path: `src/renderer/modules/documents/`
 - Embedded panels: Project detail → Documents tab; Customer list → Documents link
 - **Views:** list / grid toggle

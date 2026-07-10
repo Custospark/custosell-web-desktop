@@ -6,6 +6,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useDocumentCabinets } from '../api/useDocumentCabinetQueries';
 import CreateCabinetModal from '../ui/CreateCabinetModal';
 import CabinetListCard from '../ui/CabinetListCard';
+import DocumentsWalkthrough from '../ui/DocumentsWalkthrough';
 import { Plus, Search } from 'lucide-react';
 
 export default function CabinetsPage() {
@@ -34,6 +35,8 @@ export default function CabinetsPage() {
 
   return (
     <div className="space-y-4 pb-8">
+      <DocumentsWalkthrough />
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1 sm:max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -71,7 +74,7 @@ export default function CabinetsPage() {
         <Card className="py-12 text-center text-sm text-gray-500">
           {search.trim()
             ? 'No cabinets match your search. Try a different term or create a new cabinet.'
-            : 'No cabinets yet. Create your first cabinet to organize business files.'}
+            : 'No cabinets yet. Starter cabinets are being prepared — refresh in a moment or create your own.'}
         </Card>
       )}
 

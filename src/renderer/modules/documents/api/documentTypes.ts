@@ -72,6 +72,8 @@ export interface DocumentCabinet {
   description?: string | null;
   visibility: CabinetVisibility;
   cover_color?: string | null;
+  background_type?: 'color' | 'gallery' | null;
+  background_value?: string | null;
   sort_order: number;
   folder_count?: number;
   document_count?: number;

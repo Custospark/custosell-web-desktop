@@ -60,19 +60,26 @@ export function useDocumentCabinet(id: number, enabled = true) {
 }
 
 type CabinetPayload = {
-  name: string;
+  name?: string;
   description?: string | null;
-  visibility: CabinetVisibility;
+  visibility?: CabinetVisibility;
   cover_color?: string | null;
+  background_type?: string | null;
+  background_value?: string | null;
   member_user_ids?: number[];
   member_roles?: Record<number, DocumentMemberRole>;
+};
+
+type CreateCabinetPayload = CabinetPayload & {
+  name: string;
+  visibility: CabinetVisibility;
 };
 
 export function useCreateDocumentCabinet() {
   const qc = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
-    mutationFn: async (payload: CabinetPayload) => {
+    mutationFn: async (payload: CreateCabinetPayload) => {
       const { data } = await axiosInstance.post(DOCUMENTS.CABINETS, payload);
       return unwrapEntity<DocumentCabinet>(data);
     },

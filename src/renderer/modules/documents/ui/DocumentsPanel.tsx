@@ -8,6 +8,7 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import type {
+  DocumentCabinet,
   DocumentFolder,
   DocumentItem,
   DocumentMemberRole,
@@ -85,12 +86,14 @@ import {
 
 interface DocumentsPanelProps {
   cabinetId?: number;
+  cabinet?: DocumentCabinet | null;
   folderId?: number | null;
   customerId?: number;
   projectId?: number;
   title?: string;
   compact?: boolean;
   fullBleed?: boolean;
+  onOpenCabinetSettings?: (tab?: 'details' | 'access' | 'canvas') => void;
 }
 
 type ViewMode = 'list' | 'grid';
@@ -127,12 +130,14 @@ function validateAccessSelection(
 
 export default function DocumentsPanel({
   cabinetId,
+  cabinet = null,
   folderId = null,
   customerId,
   projectId,
   title = 'Documents',
   compact = false,
   fullBleed = false,
+  onOpenCabinetSettings,
 }: DocumentsPanelProps) {
   const qc = useQueryClient();
   const { showToast } = useToast();
@@ -188,6 +193,7 @@ export default function DocumentsPanel({
   const [importTargetFolderId, setImportTargetFolderId] = useState<number | null>(null);
   const user = useSelector((state: RootState) => state.auth.user);
   const canCustomizeVault = isBusinessOwner(user);
+  const canCustomizeCabinetCanvas = Boolean(cabinet?.can_manage && onOpenCabinetSettings);
 
   const showSidebar = fullBleed && !customerId && !projectId;
   const { data: fallbackCabinets } = useDocumentCabinets(undefined, !cabinetId);
@@ -1277,9 +1283,17 @@ export default function DocumentsPanel({
     const folderLabel = activeFolderId ? contents?.folder?.name ?? null : null;
     const activeFolder = contents?.folder ?? null;
 
-    const resolvedAppearance = vaultAppearance?.cover_color || vaultAppearance?.background_type || vaultAppearance?.background_value
-      ? vaultAppearance
-      : DEFAULT_VAULT_APPEARANCE;
+    const cabinetAppearance = cabinet?.cover_color || cabinet?.background_type || cabinet?.background_value
+      ? {
+        cover_color: cabinet.cover_color,
+        background_type: cabinet.background_type ?? null,
+        background_value: cabinet.background_value ?? null,
+      }
+      : null;
+    const resolvedAppearance = cabinetAppearance
+      ?? (vaultAppearance?.cover_color || vaultAppearance?.background_type || vaultAppearance?.background_value
+        ? vaultAppearance
+        : DEFAULT_VAULT_APPEARANCE);
 
     return (
       <div
@@ -1327,7 +1341,11 @@ export default function DocumentsPanel({
               e.dataTransfer.setData('text/document-folder-id', String(folder.id));
               e.dataTransfer.effectAllowed = 'move';
             }}
-            onCustomizeCanvas={canCustomizeVault ? () => setShowVaultAppearance(true) : undefined}
+            onCustomizeCanvas={
+              canCustomizeCabinetCanvas
+                ? () => onOpenCabinetSettings?.('canvas')
+                : (canCustomizeVault && !cabinetId ? () => setShowVaultAppearance(true) : undefined)
+            }
           />
         </aside>
 

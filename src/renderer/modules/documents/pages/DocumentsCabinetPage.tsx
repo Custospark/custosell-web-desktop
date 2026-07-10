@@ -6,8 +6,11 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import DocumentsPanel from '../ui/DocumentsPanel';
 import AllCabinetsPickerModal from '../ui/AllCabinetsPickerModal';
 import CreateCabinetModal from '../ui/CreateCabinetModal';
+import CabinetSettingsModal from '../ui/CabinetSettingsModal';
 import { useDocumentCabinet } from '../api/useDocumentCabinetQueries';
-import { Archive, ChevronDown, LayoutGrid, Plus } from 'lucide-react';
+import { Archive, ChevronDown, LayoutGrid, Plus, Settings } from 'lucide-react';
+
+type SettingsTab = 'details' | 'access' | 'canvas';
 
 export default function DocumentsCabinetPage() {
   const navigate = useNavigate();
@@ -16,6 +19,8 @@ export default function DocumentsCabinetPage() {
   const [params] = useSearchParams();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('details');
 
   const folderId = useMemo(() => {
     const raw = params.get('folder_id');
@@ -74,6 +79,21 @@ export default function DocumentsCabinetPage() {
           <ChevronDown className="h-3.5 w-3.5 opacity-70" />
         </button>
         <div className="ml-auto flex items-center gap-2">
+          {cabinet.can_manage && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="inline-flex items-center gap-1.5"
+              onClick={() => {
+                setSettingsTab('details');
+                setSettingsOpen(true);
+              }}
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Settings
+            </Button>
+          )}
           <Button
             type="button"
             variant="secondary"
@@ -90,9 +110,14 @@ export default function DocumentsCabinetPage() {
       <div className="min-h-0 flex-1">
         <DocumentsPanel
           cabinetId={cabinetId}
+          cabinet={cabinet}
           folderId={folderId}
           title={cabinet.name}
           fullBleed
+          onOpenCabinetSettings={(tab = 'details') => {
+            setSettingsTab(tab);
+            setSettingsOpen(true);
+          }}
         />
       </div>
 
@@ -104,6 +129,15 @@ export default function DocumentsCabinetPage() {
       />
 
       <CreateCabinetModal open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      {cabinet.can_manage && (
+        <CabinetSettingsModal
+          open={settingsOpen}
+          cabinet={cabinet}
+          initialTab={settingsTab}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }

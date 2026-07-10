@@ -20,8 +20,24 @@ export const CABINET_ACCESS_OPTIONS: {
   { value: 'owner_only', label: 'Only me', hint: 'Visible only to you' },
 ];
 
-export function cabinetCardHeroStyle(cabinet: { cover_color?: string | null }) {
+export function cabinetCardHeroStyle(cabinet: {
+  cover_color?: string | null;
+  background_type?: string | null;
+  background_value?: string | null;
+}) {
   const accent = cabinet.cover_color ?? '#6366f1';
+  if (cabinet.background_type === 'gallery' && cabinet.background_value) {
+    return {
+      backgroundImage: `linear-gradient(135deg, ${accent}88 0%, rgba(15,23,42,0.55) 100%), url(${cabinet.background_value})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    } as const;
+  }
+  if (cabinet.background_type === 'color' && cabinet.background_value) {
+    return {
+      background: `linear-gradient(135deg, ${accent} 0%, ${cabinet.background_value} 100%)`,
+    } as const;
+  }
   return {
     background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 45%, #1e293b 100%)`,
   } as const;

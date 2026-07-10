@@ -247,7 +247,7 @@ function ExplorerFileRow({
         </span>
         <DocumentTagStrip tags={doc.tags} className="pl-6" />
       </button>
-      <ExplorerRowMenu items={menuItems} className="mr-1" />
+      <ExplorerRowMenu items={menuItems} className="mr-1" pinnedVisible={selected} />
     </div>
   );
 }
@@ -341,10 +341,10 @@ function ExplorerFolderNode({
           style={{ paddingLeft: `${4 + depth * INDENT}px` }}
         >
           <DocumentFolderIcon open={expanded || folderSelected} tint={folderColor} />
-          <span className="min-w-0 truncate">{truncateDisplayName(folder.name, 36)}</span>
-          <ExplorerFolderCount folder={folder} />
+          <span className="min-w-0 flex-1 truncate">{truncateDisplayName(folder.name, 32)}</span>
         </button>
-        <ExplorerRowMenu items={menuItems} className="mr-1" />
+        <ExplorerFolderCount folder={folder} />
+        <ExplorerRowMenu items={menuItems} className="mr-1" pinnedVisible={folderSelected} />
       </div>
 
       {expanded && (
@@ -395,6 +395,9 @@ function ExplorerFolderNode({
     </div>
   );
 }
+
+const EXPLORER_FIELD_CLASS =
+  'w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200';
 
 export function DocumentExplorer({
   activeFolderId,
@@ -494,11 +497,11 @@ export function DocumentExplorer({
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           <Button
             type="button"
             size="sm"
-            className="h-8 justify-center px-2 text-xs"
+            className="h-8 justify-center px-1.5 text-[11px] sm:px-2 sm:text-xs"
             disabled={!online || !canContribute}
             onClick={onUpload}
             title="Upload a file"
@@ -510,7 +513,7 @@ export function DocumentExplorer({
             type="button"
             variant="secondary"
             size="sm"
-            className="h-8 justify-center px-2 text-xs"
+            className="h-8 justify-center px-1.5 text-[11px] sm:px-2 sm:text-xs"
             disabled={!online}
             onClick={onCreateFolder}
             title="Create a new folder"
@@ -522,7 +525,7 @@ export function DocumentExplorer({
             type="button"
             variant="secondary"
             size="sm"
-            className="h-8 justify-center px-2 text-xs"
+            className="h-8 justify-center px-1.5 text-[11px] sm:px-2 sm:text-xs"
             disabled={!online || !canContribute}
             onClick={onCreateLink}
             title="Add a web link"
@@ -569,14 +572,14 @@ export function DocumentExplorer({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by name or tag…"
-            className="w-full rounded-lg border border-white/60 bg-white/70 py-2 pl-7 pr-2 text-xs outline-none backdrop-blur-sm focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
+            className="w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 pl-7 pr-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
           />
         </div>
         <input
           value={tagFilter}
           onChange={(e) => onTagFilterChange(e.target.value)}
           placeholder="Filter by tag (optional)"
-          className="w-full rounded-lg border border-white/60 bg-white/70 px-2 py-2 text-xs outline-none backdrop-blur-sm focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
+          className={EXPLORER_FIELD_CLASS}
         />
       </div>
 

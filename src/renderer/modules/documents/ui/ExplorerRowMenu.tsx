@@ -14,12 +14,16 @@ export interface ExplorerMenuItem {
 interface ExplorerRowMenuProps {
   items: ExplorerMenuItem[];
   className?: string;
+  /** Keep the ⋯ button visible (e.g. when the row is selected). */
+  pinnedVisible?: boolean;
 }
 
-export function ExplorerRowMenu({ items, className }: ExplorerRowMenuProps) {
+export function ExplorerRowMenu({ items, className, pinnedVisible = false }: ExplorerRowMenuProps) {
   const [open, setOpen] = useState(false);
 
   if (items.length === 0) return null;
+
+  const showButton = pinnedVisible || open;
 
   return (
     <div className={cn('relative shrink-0', className)}>
@@ -30,15 +34,17 @@ export function ExplorerRowMenu({ items, className }: ExplorerRowMenuProps) {
           setOpen((value) => !value);
         }}
         className={cn(
-          'flex h-6 w-6 items-center justify-center rounded text-gray-500 transition-opacity',
-          'opacity-0 hover:bg-gray-200/90 hover:text-gray-900 group-hover:opacity-100 group-focus-within:opacity-100',
-          open && 'opacity-100 bg-gray-200/90 text-gray-900',
+          'flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-all',
+          showButton
+            ? 'opacity-100 bg-white/80 text-gray-800 shadow-sm ring-1 ring-gray-200/80'
+            : 'opacity-0 hover:bg-white/80 hover:text-gray-900 group-hover:opacity-100 group-focus-within:opacity-100',
+          open && 'bg-white text-gray-900 ring-indigo-200',
         )}
         title="More actions"
         aria-label="More actions"
         aria-expanded={open}
       >
-        <MoreHorizontal className="h-3.5 w-3.5" />
+        <MoreHorizontal className="h-4 w-4" />
       </button>
       {open && (
         <>

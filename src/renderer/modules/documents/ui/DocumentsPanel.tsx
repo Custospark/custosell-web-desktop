@@ -50,7 +50,7 @@ import { RenameItemModal } from './RenameItemModal';
 import { DocumentsVaultAppearanceModal } from './DocumentsVaultAppearanceModal';
 import { DocumentFolderColorModal } from './DocumentFolderColorModal';
 import { DocumentAccessModal } from './DocumentAccessModal';
-import { surfaceAppearanceStyle } from '../../../shared/utils/surfaceStyles';
+import { surfaceAppearanceStyle, DEFAULT_VAULT_APPEARANCE } from '../../../shared/utils/surfaceStyles';
 import { isBusinessOwner } from '../../../shared/utils/moduleAccess';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../app/store/store';
@@ -1012,12 +1012,16 @@ export default function DocumentsPanel({
     const folderLabel = activeFolderId ? contents?.folder?.name ?? null : null;
     const activeFolder = contents?.folder ?? null;
 
+    const resolvedAppearance = vaultAppearance?.cover_color || vaultAppearance?.background_type || vaultAppearance?.background_value
+      ? vaultAppearance
+      : DEFAULT_VAULT_APPEARANCE;
+
     return (
       <div
         className="flex h-full min-h-0 w-full flex-col lg:flex-row"
-        style={surfaceAppearanceStyle(vaultAppearance ?? {})}
+        style={surfaceAppearanceStyle(resolvedAppearance)}
       >
-        <aside className="flex h-auto max-h-64 w-full shrink-0 flex-col p-2 lg:h-full lg:max-h-none lg:w-80 xl:w-96">
+        <aside className="flex h-[min(50vh,28rem)] w-full shrink-0 flex-col p-1.5 sm:p-2 lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96">
           <DocumentExplorer
             activeFolderId={activeFolderId}
             selectedDocumentId={selectedDocument?.id ?? null}
@@ -1060,7 +1064,7 @@ export default function DocumentsPanel({
 
         <div
           className={cn(
-            'm-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/50 shadow-sm',
+            'm-1.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/50 shadow-sm sm:m-2',
             panelDragActive && canContribute && 'ring-2 ring-inset ring-indigo-300',
           )}
           onDragOver={(e) => {

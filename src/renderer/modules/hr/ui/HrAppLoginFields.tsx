@@ -7,14 +7,7 @@ import {
   type BusinessModuleSlug,
 } from '../../../shared/utils/moduleAccess';
 import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from './hrFormFields';
-
-export interface HrAppLoginFormState {
-  email: string;
-  password: string;
-  password_confirmation: string;
-  role_id: string;
-  modules: BusinessModuleSlug[];
-}
+import type { HrAppLoginFormState } from './hrAppLoginForm';
 
 interface HrAppLoginFieldsProps {
   value: HrAppLoginFormState;
@@ -23,14 +16,6 @@ interface HrAppLoginFieldsProps {
   emailRequired?: boolean;
   description?: string;
 }
-
-export const emptyAppLoginForm = (): HrAppLoginFormState => ({
-  email: '',
-  password: '',
-  password_confirmation: '',
-  role_id: '',
-  modules: ['sales'],
-});
 
 export function HrAppLoginFields({
   value,
@@ -45,7 +30,12 @@ export function HrAppLoginFields({
   function toggleModule(slug: BusinessModuleSlug) {
     const has = value.modules.includes(slug);
     const next = has ? value.modules.filter((m) => m !== slug) : [...value.modules, slug];
-    onChange({ ...value, modules: next });
+    onChange({
+      ...value,
+      modules: next,
+      // Removing HR clears full access; enabling HR does not auto-enable full.
+      hrFullAccess: slug === 'hr' && has ? false : value.hrFullAccess,
+    });
   }
 
   return (
@@ -143,6 +133,24 @@ export function HrAppLoginFields({
             </label>
           ))}
         </div>
+        {value.modules.includes('hr') && (
+          <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={value.hrFullAccess}
+                onChange={(e) => onChange({ ...value, hrFullAccess: e.target.checked })}
+                className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span>
+                <span className="block text-sm font-medium text-gray-800">Full HR &amp; Payroll workspace</span>
+                <span className="mt-0.5 block text-xs text-gray-600">
+                  Optional. Leave unchecked for attendance, leave requests, and talent tasks only.
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
       </HrFormSection>
     </div>
   );

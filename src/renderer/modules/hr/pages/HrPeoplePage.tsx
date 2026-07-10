@@ -19,6 +19,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
+import { buildStaffModulesPayload } from '../../../shared/utils/moduleAccess';
 import {
   useCreateHrEmployee,
   useCreateHrEmployeeWithAccount,
@@ -39,7 +40,8 @@ import {
   hrInputClass,
   hrSelectClass,
 } from '../ui/hrFormFields';
-import { emptyAppLoginForm, HrAppLoginFields, type HrAppLoginFormState } from '../ui/HrAppLoginFields';
+import { emptyAppLoginForm, type HrAppLoginFormState } from '../ui/hrAppLoginForm';
+import { HrAppLoginFields } from '../ui/HrAppLoginFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
 const employmentOptions: { value: EmploymentType; label: string }[] = [
@@ -113,7 +115,7 @@ export default function HrPeoplePage() {
         password: loginForm.password,
         password_confirmation: loginForm.password_confirmation,
         role_id: loginForm.role_id ? Number(loginForm.role_id) : null,
-        modules: loginForm.modules,
+        modules: buildStaffModulesPayload(loginForm.modules, false, loginForm.hrFullAccess),
       });
     } else {
       await createEmployee.mutateAsync(base);

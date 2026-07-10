@@ -6,6 +6,7 @@ import type { HrNssfReportRow, HrPayeReportRow } from '../api/hrTypes';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
+import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 
 function formatMoney(n: number | undefined | null) {
   if (n == null) return '—';
@@ -50,7 +51,7 @@ export default function HrReportsPage() {
                 <option value="">Any — use dates below</option>
                 {payRuns.map((run) => (
                   <option key={run.id} value={run.id}>
-                    {run.period_start} → {run.period_end} ({run.status})
+                    {formatShiftDateRange(run.period_start, run.period_end)} ({run.status})
                   </option>
                 ))}
               </select>

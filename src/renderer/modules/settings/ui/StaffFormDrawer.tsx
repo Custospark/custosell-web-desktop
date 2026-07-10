@@ -29,6 +29,7 @@ import {
   isBusinessOwner,
   MODULE_LABELS,
   staffHasFullEstimatesModule,
+  staffHasFullHrModule,
   type BusinessModuleSlug,
 } from '../../../shared/utils/moduleAccess';
 
@@ -48,6 +49,7 @@ interface FormState {
   is_active: boolean;
   modules: BusinessModuleSlug[];
   estimatesFullAccess: boolean;
+  hrFullAccess: boolean;
 }
 
 const emptyForm: FormState = {
@@ -60,6 +62,7 @@ const emptyForm: FormState = {
   is_active: true,
   modules: ['sales'],
   estimatesFullAccess: false,
+  hrFullAccess: false,
 };
 
 export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawerProps) {
@@ -108,7 +111,8 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           role_id: staff.role_id ?? null,
           is_active: staff.is_active ?? true,
           modules: staffModules,
-          estimatesFullAccess: staffHasFullEstimatesModule(staffModules),
+          estimatesFullAccess: staffHasFullEstimatesModule(staff.modules),
+          hrFullAccess: staffHasFullHrModule(staff.modules),
         });
       } else {
         loadedStaffIdRef.current = null;
@@ -159,14 +163,16 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
           allowed = [...allowed, 'settings'];
         }
         const estimatesFullAccess = prev.estimatesFullAccess && allowed.includes('estimates');
+        const hrFullAccess = prev.hrFullAccess && allowed.includes('hr');
         if (
           allowed.length === prev.modules.length
           && allowed.every((m, i) => m === prev.modules[i])
           && estimatesFullAccess === prev.estimatesFullAccess
+          && hrFullAccess === prev.hrFullAccess
         ) {
           return prev;
         }
-        return { ...prev, modules: allowed, estimatesFullAccess };
+        return { ...prev, modules: allowed, estimatesFullAccess, hrFullAccess };
       });
     });
   }, [authUser, assignableModules, modulesLocked, open, settingsRequired]);
@@ -192,6 +198,7 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
         ...prev,
         modules,
         estimatesFullAccess: module === 'estimates' && removing ? false : prev.estimatesFullAccess,
+        hrFullAccess: module === 'hr' && removing ? false : prev.hrFullAccess,
       };
     });
   }, [modulesLocked, settingsRequired]);
@@ -205,8 +212,9 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
     return buildStaffModulesPayload(
       filteredModules,
       form.estimatesFullAccess && filteredModules.includes('estimates'),
+      form.hrFullAccess && filteredModules.includes('hr'),
     );
-  }, [assignableModules, form.estimatesFullAccess, form.modules, settingsRequired]);
+  }, [assignableModules, form.estimatesFullAccess, form.hrFullAccess, form.modules, settingsRequired]);
 
   const passwordsMatch = form.password === form.password_confirmation;
   const passwordValid = passwordRequired
@@ -534,6 +542,24 @@ export default function StaffFormDrawer({ open, onClose, staff }: StaffFormDrawe
                   <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
                   <span className="mt-0.5 block text-xs text-gray-600">
                     Grants full access to estimates, projects, insights, templates, project boards, and costing reports — not just project boards.
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
+          {!modulesLocked && form.modules.includes('hr') && (
+            <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={form.hrFullAccess}
+                  onChange={(e) => update('hrFullAccess', e.target.checked)}
+                  className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-800">Full HR &amp; Payroll workspace</span>
+                  <span className="mt-0.5 block text-xs text-gray-600">
+                    Grants people admin, departments, payroll, reports, and leave approval — not just attendance, leave requests, and talent tasks.
                   </span>
                 </span>
               </label>

@@ -6,19 +6,49 @@ Frontend module for people operations, time & leave, Uganda-first payroll, talen
 
 | UI | Path |
 |----|------|
-| Module shell | `/hr` → redirects to People |
+| Module shell | `/hr` → People (full) or Attendance (limited) |
 | People directory | `/hr/people` |
 | Employee detail | `/hr/people/:employeeId` |
 | Departments | `/hr/departments` |
-| Attendance | `/hr/attendance` |
+| Attendance | `/hr/attendance` — clock capture + hours/presence charts over 7/30 days |
 | Leave | `/hr/leave` |
 | Payroll | `/hr/payroll` |
 | Pay run detail | `/hr/payroll/runs/:payRunId` |
-| Talent | `/hr/talent` |
+| Talent | `/hr/talent` (`?employee_id=` / `?user_id=` deep links) |
 | Reports | `/hr/reports` |
 | HR settings | `/hr/settings` |
 
-Access is gated by `ModuleAccessMiddleware` with slug `hr` (same pattern as Documents / Accounting).
+Access is gated by `ModuleAccessMiddleware` with slug `hr`, plus `HrAccessMiddleware` for the optional `hr_full` addon:
+
+| Access | Modules | UI routes | Typical API |
+|--------|---------|-----------|-------------|
+| **Full** | `hr` + `hr_full` | All `/hr/*` | Org, people admin, payroll, reports, leave approve |
+| **Limited** | `hr` only | Attendance, Leave, Talent | Clock self, leave request/cancel, talent task update, own work performance |
+
+Owners follow the same rule as staff: without `hr_full`, the Sidebar shows only Attendance / Leave / Talent and admin HR APIs return 403. Saving Module access (or editing your own staff modules) refreshes the auth user so the Sidebar updates immediately.
+
+See [ADR: HR full vs limited module access](../adr/2026-07-10-hr-full-module-access.md) and [ADR: Work performance from Pipeline/Projects](../adr/2026-07-10-hr-work-performance-from-pipeline.md).
+
+## Work performance (Pipeline / Projects → Talent)
+
+Evaluates whether linked staff are meeting goals using live work data (no separate HR goals table):
+
+| Signal | Source |
+|--------|--------|
+| Board goals | Member-scoped `pipeline_board_targets` (actual vs target + pace) |
+| Pipeline cards/leads | Assigned via `assigned_to` or multi-assignee pivot |
+| Project tasks | `project_tasks.assigned_to` on business projects |
+
+| API | Access |
+|-----|--------|
+| `GET /hr/talent/performance` | Roster (full) or self (limited) |
+| `GET /hr/talent/performance/employees/{id}` | Full any; limited self only |
+| `GET /hr/talent/performance/by-user/{userId}` | Deep link from board assignees |
+| `POST …/seed-review` | Full HR — draft review from snapshot |
+
+**UI:** Talent → Work performance; People → employee detail; Pipeline lead detail + Project task assignee → **Evaluate performance**.
+
+**Failure states:** unlinked employee → `unlinked` verdict + CTA to link login; API error → retry; limited user viewing another → 403; seed without link → 422.
 
 ## Architecture
 
@@ -33,7 +63,7 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Query keys | `api/hrQueryKeys.ts` |
 | Hooks | `api/useHrQueries.ts` |
 | Shell | `pages/HrLayout.tsx` — outlet-only; navigation lives in the main app Sidebar (HR & Payroll group) |
-| Shared UI | `ui/HrSurface.tsx`, `ui/hrFormFields.tsx`, `ui/HrAppLoginFields.tsx`, `ui/HrStatusBadges.tsx` |
+| Shared UI | `ui/HrSurface.tsx`, `ui/hrFormFields.tsx`, `ui/HrAppLoginFields.tsx`, `ui/HrStatusBadges.tsx`, `ui/HrWorkPerformancePanel.tsx`, `ui/EvaluateStaffPerformanceLink.tsx`, `ui/talentSurface.ts` (Progress-style frosted canvas) |
 
 ## Identity model
 
@@ -75,6 +105,8 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Empty lists | Guided empty states with primary CTA |
 | Missing report filter | Reports page waits until pay run or date range is set |
 | No HR module access | Middleware redirects / blocks like other modules |
+| Limited HR on admin route | `HrAccessMiddleware` redirects to Attendance |
+| Clock/leave for another employee (limited) | API 403 — forced to linked employee |
 | Offline HR account create | Online-first — use Settings staff create (queued) if offline |
 
 ## Related docs

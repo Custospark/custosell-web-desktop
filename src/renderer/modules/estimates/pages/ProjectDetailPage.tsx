@@ -32,6 +32,7 @@ import type { CreateCostAllocationPayload, AllocationType, ProjectStatus } from 
 import { BudgetProgressBar, PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
 import ProjectMemberPicker from '../ui/ProjectMemberPicker';
 import DocumentsPanel from '../../documents/ui/DocumentsPanel';
+import { EvaluateStaffPerformanceLink } from '../../hr/ui/EvaluateStaffPerformanceLink';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
@@ -492,7 +493,14 @@ export default function ProjectDetailPage() {
                       <td className="py-2.5 pr-4 tabular-nums text-gray-500">
                         {task.due_date ? formatShiftDate(task.due_date) : '—'}
                       </td>
-                      <td className="py-2.5 text-gray-600">{task.assignee?.name ?? '—'}</td>
+                      <td className="py-2.5 text-gray-600">
+                        <div className="flex flex-col gap-1">
+                          <span>{task.assignee?.name ?? '—'}</span>
+                          {task.assigned_to ? (
+                            <EvaluateStaffPerformanceLink userId={task.assigned_to} />
+                          ) : null}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

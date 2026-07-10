@@ -37,6 +37,8 @@ import type {
   HrPayeReportRow,
   HrPayRun,
   HrPayslip,
+  HrPerformanceRosterRow,
+  HrPerformanceSnapshot,
   HrPosition,
   HrReview,
   HrSalaryStructure,
@@ -941,6 +943,107 @@ export function useUpdateHrReview() {
       showToast('success', 'Review updated');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not update review'),
+  });
+}
+
+export type HrPerformancePeriodFilters = {
+  period?: string;
+  from?: string;
+  to?: string;
+};
+
+export function useHrPerformanceRoster(filters?: HrPerformancePeriodFilters, enabled = true) {
+  const params = {
+    period: filters?.period,
+    from: filters?.from,
+    to: filters?.to,
+  };
+  return useQuery({
+    queryKey: hrKeys.performanceRoster(params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(HR.PERFORMANCE, { params: cleanParams(params) });
+      return unwrapList<HrPerformanceRosterRow>(data);
+    },
+    enabled,
+    ...listDefaults,
+  });
+}
+
+export function useHrPerformanceEmployee(
+  employeeId: number | null | undefined,
+  filters?: HrPerformancePeriodFilters,
+  enabled = true,
+) {
+  const params = {
+    period: filters?.period,
+    from: filters?.from,
+    to: filters?.to,
+  };
+  return useQuery({
+    queryKey: hrKeys.performanceEmployee(employeeId ?? 0, params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(HR.PERFORMANCE_EMPLOYEE(employeeId!), {
+        params: cleanParams(params),
+      });
+      return unwrapEntity<HrPerformanceSnapshot>(data);
+    },
+    enabled: enabled && !!employeeId,
+    ...listDefaults,
+  });
+}
+
+export function useHrPerformanceByUser(
+  userId: number | null | undefined,
+  filters?: HrPerformancePeriodFilters,
+  enabled = true,
+) {
+  const params = {
+    period: filters?.period,
+    from: filters?.from,
+    to: filters?.to,
+  };
+  return useQuery({
+    queryKey: hrKeys.performanceByUser(userId ?? 0, params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(HR.PERFORMANCE_BY_USER(userId!), {
+        params: cleanParams(params),
+      });
+      return unwrapEntity<HrPerformanceSnapshot>(data);
+    },
+    enabled: enabled && !!userId,
+    ...listDefaults,
+  });
+}
+
+export function useSeedHrPerformanceReview() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({
+      employeeId,
+      period,
+      from,
+      to,
+    }: {
+      employeeId: number;
+      period?: string;
+      from?: string;
+      to?: string;
+    }) => {
+      const { data } = await axiosInstance.post(
+        HR.PERFORMANCE_SEED_REVIEW(employeeId),
+        null,
+        { params: cleanParams({ period, from, to }) },
+      );
+      return unwrapEntity<{ review: HrReview; snapshot: HrPerformanceSnapshot }>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'reviews'] });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'performance'] });
+      showToast('success', 'Draft review seeded from Pipeline/Projects work');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not seed review from work data'),
   });
 }
 

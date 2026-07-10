@@ -36,8 +36,13 @@ import {
   hrSelectClass,
 } from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
+import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { canViewFullHr } from '../../../shared/utils/moduleAccess';
 
 export default function HrLeavePage() {
+  const user = useAppSelector((s) => s.auth.user);
+  const isFullHr = canViewFullHr(user);
   const year = new Date().getFullYear();
   const { data: leaveTypes = [], isLoading: loadingTypes } = useHrLeaveTypes();
   const { data: balances = [], isLoading: loadingBalances } = useHrLeaveBalances({ year });
@@ -47,6 +52,8 @@ export default function HrLeavePage() {
   const createRequest = useCreateHrLeaveRequest();
   const approve = useApproveHrLeaveRequest();
   const reject = useRejectHrLeaveRequest();
+
+  const selfEmployee = employees.find((e) => e.user_id != null && user?.id != null && e.user_id === user.id) ?? null;
 
   const [typeOpen, setTypeOpen] = useState(false);
   const [reqOpen, setReqOpen] = useState(false);
@@ -61,6 +68,7 @@ export default function HrLeavePage() {
 
   async function handleCreateType(e: React.FormEvent) {
     e.preventDefault();
+    if (!isFullHr) return;
     await createType.mutateAsync(typeForm);
     setTypeOpen(false);
     setTypeForm({ name: '', code: '', days_per_year: 21, paid: true, requires_approval: true });
@@ -68,8 +76,10 @@ export default function HrLeavePage() {
 
   async function handleCreateRequest(e: React.FormEvent) {
     e.preventDefault();
+    const employeeId = isFullHr ? Number(reqForm.employee_id) : selfEmployee?.id;
+    if (!employeeId) return;
     await createRequest.mutateAsync({
-      employee_id: Number(reqForm.employee_id),
+      employee_id: employeeId,
       leave_type_id: Number(reqForm.leave_type_id),
       start_date: reqForm.start_date,
       end_date: reqForm.end_date,
@@ -79,18 +89,41 @@ export default function HrLeavePage() {
     setReqForm({ employee_id: '', leave_type_id: '', start_date: '', end_date: '', reason: '' });
   }
 
+  const visibleRequests = isFullHr || !selfEmployee
+    ? requests
+    : requests.filter((r) => r.employee_id === selfEmployee.id);
+  const visibleBalances = isFullHr || !selfEmployee
+    ? balances
+    : balances.filter((b) => b.employee_id === selfEmployee.id);
+
   return (
     <div className="space-y-5">
       <HrPageHeader
         icon={CalendarDays}
         title="Leave"
-        description="Set up leave types, track balances, and approve time off — so your team knows where they stand."
+        description={
+          isFullHr
+            ? 'Set up leave types, track balances, and approve time off — so your team knows where they stand.'
+            : 'Request time off and track your balances. Approvals are handled by HR.'
+        }
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Leave type
-            </Button>
-            <Button size="sm" onClick={() => setReqOpen(true)} className="inline-flex items-center gap-1.5">
+            {isFullHr ? (
+              <Button variant="outline" size="sm" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Leave type
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              onClick={() => {
+                if (!isFullHr && selfEmployee) {
+                  setReqForm((f) => ({ ...f, employee_id: String(selfEmployee.id) }));
+                }
+                setReqOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5"
+              disabled={!isFullHr && !selfEmployee}
+            >
               <Plus className="h-3.5 w-3.5" /> Request leave
             </Button>
           </>
@@ -108,9 +141,11 @@ export default function HrLeavePage() {
               title="No leave types yet"
               description="Add Annual, Sick, or Unpaid leave so balances and requests have something to attach to."
               action={
-                <Button size="sm" variant="outline" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
-                  <Plus className="h-3.5 w-3.5" /> Add leave type
-                </Button>
+                isFullHr ? (
+                  <Button size="sm" variant="outline" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> Add leave type
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
@@ -133,17 +168,20 @@ export default function HrLeavePage() {
           )}
         </HrSectionCard>
 
-        <HrSectionCard title={`Balances (${year})`} description="Used, pending, and entitled days per person.">
+        <HrSectionCard
+          title={`Balances (${year})`}
+          description={isFullHr ? 'Used, pending, and entitled days per person.' : 'Your leave balances for this year.'}
+        >
           {loadingBalances ? (
             <div className="flex justify-center py-8"><LoadingSpinner /></div>
-          ) : balances.length === 0 ? (
+          ) : visibleBalances.length === 0 ? (
             <p className="text-sm text-gray-500">
               Balances appear once leave types exist and people start requesting time off.
             </p>
           ) : (
             <div className={HR_SURFACE.tableWrap}>
               <table className="min-w-full text-sm">
-                <thead className="bg-white/60 text-left text-xs font-semibold uppercase text-gray-500">
+                <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                   <tr>
                     <th className="px-3 py-2">Employee</th>
                     <th className="px-3 py-2">Type</th>
@@ -153,7 +191,7 @@ export default function HrLeavePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {balances.map((b) => (
+                  {visibleBalances.map((b) => (
                     <tr key={b.id}>
                       <td className="px-3 py-2">{b.employee ? employeeDisplayName(b.employee) : `#${b.employee_id}`}</td>
                       <td className="px-3 py-2">{b.leave_type?.name ?? b.leave_type_id}</td>
@@ -169,17 +207,25 @@ export default function HrLeavePage() {
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Requests" description="Pending requests need your approval — approved days sync to attendance.">
+      <HrSectionCard
+        title="Requests"
+        description={isFullHr ? 'Pending requests need your approval — approved days sync to attendance.' : 'Your leave requests and their status.'}
+      >
         {loadingRequests ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
-        ) : requests.length === 0 ? (
+        ) : visibleRequests.length === 0 ? (
           <HrEmptyState
             className="border-0 bg-transparent shadow-none"
             icon={<Calendar className="h-5 w-5" />}
             title="No leave requests yet"
-            description="When someone needs time off, submit a request here — you can approve or reject in one click."
+            description={isFullHr ? 'When someone needs time off, submit a request here for approval.' : 'Submit a request when you need time off.'}
             action={
-              <Button size="sm" onClick={() => setReqOpen(true)} className="inline-flex items-center gap-1.5">
+              <Button
+                size="sm"
+                onClick={() => setReqOpen(true)}
+                className="inline-flex items-center gap-1.5"
+                disabled={!isFullHr && !selfEmployee}
+              >
                 <Plus className="h-3.5 w-3.5" /> Submit a request
               </Button>
             }
@@ -187,48 +233,50 @@ export default function HrLeavePage() {
         ) : (
           <div className={HR_SURFACE.tableWrap}>
             <table className="min-w-full text-sm">
-              <thead className="bg-white/60 text-left text-xs font-semibold uppercase text-gray-500">
+              <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
                   <th className="px-3 py-2">Employee</th>
                   <th className="px-3 py-2">Type</th>
                   <th className="px-3 py-2">Dates</th>
                   <th className="px-3 py-2">Days</th>
                   <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2" />
+                  {isFullHr ? <th className="px-3 py-2" /> : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {requests.map((r) => (
+                {visibleRequests.map((r) => (
                   <tr key={r.id}>
                     <td className="px-3 py-2">{r.employee ? employeeDisplayName(r.employee) : `#${r.employee_id}`}</td>
                     <td className="px-3 py-2">{r.leave_type?.name ?? r.leave_type_id}</td>
-                    <td className="px-3 py-2 text-gray-600">{r.start_date} → {r.end_date}</td>
+                    <td className="px-3 py-2 text-gray-600">{formatShiftDateRange(r.start_date, r.end_date)}</td>
                     <td className="px-3 py-2">{r.days}</td>
                     <td className="px-3 py-2"><LeaveStatusBadge status={r.status} /></td>
-                    <td className="px-3 py-2 text-right">
-                      {r.status === 'pending' ? (
-                        <div className="inline-flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            loading={approve.isPending}
-                            onClick={() => approve.mutate({ id: r.id })}
-                            className="inline-flex items-center gap-1"
-                          >
-                            <Check className="h-3.5 w-3.5" /> Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            loading={reject.isPending}
-                            onClick={() => reject.mutate({ id: r.id })}
-                            className="inline-flex items-center gap-1"
-                          >
-                            <X className="h-3.5 w-3.5" /> Reject
-                          </Button>
-                        </div>
-                      ) : null}
-                    </td>
+                    {isFullHr ? (
+                      <td className="px-3 py-2 text-right">
+                        {r.status === 'pending' ? (
+                          <div className="inline-flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              loading={approve.isPending}
+                              onClick={() => approve.mutate({ id: r.id })}
+                              className="inline-flex items-center gap-1"
+                            >
+                              <Check className="h-3.5 w-3.5" /> Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              loading={reject.isPending}
+                              onClick={() => reject.mutate({ id: r.id })}
+                              className="inline-flex items-center gap-1"
+                            >
+                              <X className="h-3.5 w-3.5" /> Reject
+                            </Button>
+                          </div>
+                        ) : null}
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -238,7 +286,7 @@ export default function HrLeavePage() {
       </HrSectionCard>
 
       <Modal
-        isOpen={typeOpen}
+        isOpen={typeOpen && isFullHr}
         onClose={() => setTypeOpen(false)}
         title="Add leave type"
         subtitle="Define how this kind of time off works for your business."
@@ -318,20 +366,29 @@ export default function HrLeavePage() {
             description="We'll hold the days as pending until you approve — balances update automatically."
             tone="indigo"
           />
-          <HrFormSection title="Who & when" icon={User} description="Pick the person, leave type, and date range.">
-            <HrIconField label="Employee" icon={Users} required>
-              <select
-                required
-                value={reqForm.employee_id}
-                onChange={(e) => setReqForm((f) => ({ ...f, employee_id: e.target.value }))}
-                className={hrSelectClass}
-              >
-                <option value="">Select someone…</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
-                ))}
-              </select>
-            </HrIconField>
+          <HrFormSection title="Who & when" icon={User} description={isFullHr ? 'Pick the person, leave type, and date range.' : 'Choose leave type and dates for your request.'}>
+            {isFullHr ? (
+              <HrIconField label="Employee" icon={Users} required>
+                <select
+                  required
+                  value={reqForm.employee_id}
+                  onChange={(e) => setReqForm((f) => ({ ...f, employee_id: e.target.value }))}
+                  className={hrSelectClass}
+                >
+                  <option value="">Select someone…</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
+                  ))}
+                </select>
+              </HrIconField>
+            ) : (
+              <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                Requesting as{' '}
+                <span className="font-medium">
+                  {selfEmployee ? employeeDisplayName(selfEmployee) : 'your linked profile'}
+                </span>
+              </p>
+            )}
             <HrIconField label="Leave type" icon={Tag} required>
               <select
                 required

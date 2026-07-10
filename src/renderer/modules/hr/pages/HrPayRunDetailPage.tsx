@@ -14,6 +14,7 @@ import { employeeDisplayName } from '../api/hrTypes';
 import { PayRunStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
+import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 
 function formatMoney(n: number | undefined | null) {
   if (n == null) return '—';
@@ -75,7 +76,7 @@ export default function HrPayRunDetailPage() {
 
       <HrPageHeader
         icon={Calculator}
-        title={`Pay run · ${payRun.period_start} → ${payRun.period_end}`}
+        title={`Pay run · ${formatShiftDateRange(payRun.period_start, payRun.period_end)}`}
         description={description}
         actions={
           <div className="flex flex-wrap items-center gap-2">

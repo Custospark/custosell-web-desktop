@@ -142,11 +142,36 @@ export const PACE_STATUS_LABELS: Record<string, string> = {
 };
 
 export function targetPeriodSliceLabel(slice: TargetPeriodSlice): string {
+  const viewLabel = slice.view_period_type
+    ? PROGRESS_PERIOD_OPTIONS.find((option) => option.value === slice.view_period_type)?.label
+    : null;
   const level = PLANNING_LEVEL_OPTIONS.find((option) => option.value === slice.planning_level)?.label ?? slice.planning_level;
-  if (slice.period_start === slice.period_end) {
-    return `${level} · ${slice.period_start}`;
+  const range =
+    slice.period_start === slice.period_end
+      ? slice.period_start
+      : `${slice.period_start} – ${slice.period_end}`;
+  if (viewLabel) {
+    return `${viewLabel} · ${range}`;
   }
-  return `${level} · ${slice.period_start} – ${slice.period_end}`;
+  return `${level} · ${range}`;
+}
+
+/** Display count goals as clean x/y (e.g. 1/2), not 1/2.0001. */
+export function formatAchievementRatio(
+  actual: number,
+  expected: number,
+  formatPart: (value: number) => string,
+): string {
+  return `${formatPart(actual)}/${formatPart(expected)}`;
+}
+
+export function roundDisplayNumber(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const nearest = Math.round(value * 1000) / 1000;
+  if (Math.abs(nearest - Math.round(nearest)) < 0.0005) {
+    return Math.round(nearest);
+  }
+  return nearest;
 }
 
 export function targetDisplayStats(target: Pick<BoardTarget, 'actual_value' | 'target_value' | 'progress_percent' | 'pace_status' | 'period_slice' | 'unit'>) {

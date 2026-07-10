@@ -4,6 +4,8 @@ import { normalizeBoardMemberRole, type BoardMemberRole } from '../../modules/pi
 
 export const ESTIMATES_FULL_MODULE = 'estimates_full';
 
+export const HR_FULL_MODULE = 'hr_full';
+
 export const BUSINESS_MODULE_SLUGS = [
   'dashboard',
   'sales',
@@ -184,22 +186,42 @@ export function staffHasFullEstimatesModule(modules: string[] | undefined): bool
   return (modules ?? []).includes(ESTIMATES_FULL_MODULE);
 }
 
-/** Persisted staff modules: business slugs plus optional `estimates_full` grant. */
+/** Full HR & Payroll workspace (people admin, departments, payroll, reports). Same as estimates: requires `hr_full`. */
+export function canViewFullHr(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  return staffHasFullHrModule(user.modules);
+}
+
+export function staffHasFullHrModule(modules: string[] | undefined): boolean {
+  return (modules ?? []).includes(HR_FULL_MODULE);
+}
+
+export function ownerInitialHrFullAccess(user: AuthUser | null | undefined): boolean {
+  return staffHasFullHrModule(user?.modules);
+}
+
+/** Persisted staff modules: business slugs plus optional `estimates_full` / `hr_full` grants. */
 export function buildStaffModulesPayload(
   businessModules: BusinessModuleSlug[],
   estimatesFullAccess: boolean,
+  hrFullAccess = false,
 ): string[] {
   const normalized = [...businessModules];
   if (normalized.includes('customers') && !normalized.includes('sales')) {
     normalized.push('sales');
   }
-  if (!normalized.includes('estimates')) {
-    return [...normalized];
+
+  const result = [...normalized];
+
+  if (normalized.includes('estimates') && estimatesFullAccess) {
+    result.push(ESTIMATES_FULL_MODULE);
   }
-  if (estimatesFullAccess) {
-    return [...normalized, ESTIMATES_FULL_MODULE];
+
+  if (normalized.includes('hr') && hrFullAccess) {
+    result.push(HR_FULL_MODULE);
   }
-  return [...normalized];
+
+  return result;
 }
 
 /** Project boards (+ member project detail) without full Estimates admin. */
@@ -227,6 +249,12 @@ export function isLimitedEstimatesUser(user: AuthUser | null | undefined): boole
   return hasEstimatesBoardsAccess(user) && !canViewFullEstimates(user);
 }
 
+/** Users with base `hr` but not `hr_full` — sidebar and routes stay self-service only. */
+export function isLimitedHrUser(user: AuthUser | null | undefined): boolean {
+  if (!user) return false;
+  return canAccessModule(user, 'hr') && !canViewFullHr(user);
+}
+
 export function canViewProjectCosting(user: AuthUser | null | undefined): boolean {
   return canViewFullEstimates(user);
 }
@@ -239,6 +267,18 @@ export function getEstimatesModuleDefaultRoute(user: AuthUser | null | undefined
 export function getEstimatesFallbackRoute(user: AuthUser | null | undefined): string {
   if (hasEstimatesBoardsAccess(user)) {
     return getEstimatesModuleDefaultRoute(user);
+  }
+  return getDefaultRoute(user);
+}
+
+export function getHrModuleDefaultRoute(user: AuthUser | null | undefined): string {
+  if (canViewFullHr(user)) return ROUTES.HR.PEOPLE;
+  return ROUTES.HR.ATTENDANCE;
+}
+
+export function getHrFallbackRoute(user: AuthUser | null | undefined): string {
+  if (canAccessModule(user, 'hr')) {
+    return getHrModuleDefaultRoute(user);
   }
   return getDefaultRoute(user);
 }
@@ -470,6 +510,23 @@ export function canAccessEstimatesArea(
   return false;
 }
 
+/** HR routes: full workspace vs limited self-service (attendance, leave, talent). */
+export function canAccessHrArea(
+  user: AuthUser | null | undefined,
+  pathname: string,
+): boolean {
+  if (!user || !canAccessModule(user, 'hr')) return false;
+  if (canViewFullHr(user)) return true;
+
+  if (pathname === '/hr' || pathname === '/hr/') return true;
+
+  return (
+    pathname.startsWith('/hr/attendance')
+    || pathname.startsWith('/hr/leave')
+    || pathname.startsWith('/hr/talent')
+  );
+}
+
 export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (!user) return ROUTES.LOGIN;
 
@@ -480,6 +537,9 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
     if (accessible.has(mod)) {
       if (mod === 'estimates') {
         return getEstimatesModuleDefaultRoute(user);
+      }
+      if (mod === 'hr') {
+        return getHrModuleDefaultRoute(user);
       }
       return MODULE_DEFAULT_ROUTES[mod];
     }

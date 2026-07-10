@@ -16,8 +16,10 @@ import {
   isBusinessOwner,
   MODULE_LABELS,
   ownerInitialEstimatesFullAccess,
+  ownerInitialHrFullAccess,
   resolvedOwnerBusinessModules,
   staffHasFullEstimatesModule,
+  staffHasFullHrModule,
   type BusinessModuleSlug,
 } from '../../../shared/utils/moduleAccess';
 import { LayoutGrid, ShieldCheck } from 'lucide-react';
@@ -41,18 +43,20 @@ export default function OwnerModuleAccessForm() {
   const user = useAppSelector((s) => s.auth.user);
   const [modules, setModules] = useState<BusinessModuleSlug[]>([]);
   const [estimatesFullAccess, setEstimatesFullAccess] = useState(false);
+  const [hrFullAccess, setHrFullAccess] = useState(false);
 
   useEffect(() => {
     if (!user || !isBusinessOwner(user)) return;
     queueMicrotask(() => {
       setModules(resolvedOwnerBusinessModules(user));
       setEstimatesFullAccess(ownerInitialEstimatesFullAccess(user));
+      setHrFullAccess(ownerInitialHrFullAccess(user));
     });
   }, [user]);
 
   const resolvedModules = useMemo(
-    () => buildStaffModulesPayload(modules, estimatesFullAccess),
-    [estimatesFullAccess, modules],
+    () => buildStaffModulesPayload(modules, estimatesFullAccess, hrFullAccess),
+    [estimatesFullAccess, hrFullAccess, modules],
   );
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
@@ -61,6 +65,9 @@ export default function OwnerModuleAccessForm() {
       const removing = prev.includes(module);
       if (module === 'estimates' && removing) {
         setEstimatesFullAccess(false);
+      }
+      if (module === 'hr' && removing) {
+        setHrFullAccess(false);
       }
       return removing ? prev.filter((m) => m !== module) : [...prev, module];
     });
@@ -80,6 +87,7 @@ export default function OwnerModuleAccessForm() {
       dispatch(setUser(freshUser));
       setModules(resolvedOwnerBusinessModules(freshUser));
       setEstimatesFullAccess(staffHasFullEstimatesModule(freshUser.modules));
+      setHrFullAccess(staffHasFullHrModule(freshUser.modules));
       try {
         await updateStoredAuthUser(freshUser);
       } catch (err) {
@@ -108,7 +116,7 @@ export default function OwnerModuleAccessForm() {
           <h1 className="text-2xl font-bold text-gray-900">Module access</h1>
           <p className="mt-1 text-sm text-gray-500">
             Controls which sections appear in the app. Sales includes My Shift, where staff can record shift expenses.
-            Projects &amp; Estimates can be project boards only, or full workspace access when you enable it below.
+            Projects &amp; Estimates and HR &amp; Payroll can be limited self-service, or full workspace access when you enable the options below.
             Account and Custosell Guide remain available to everyone.
           </p>
         </div>
@@ -161,6 +169,26 @@ export default function OwnerModuleAccessForm() {
                   <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
                   <span className="mt-0.5 block text-xs text-gray-600">
                     Grants full access to estimates, projects, insights, templates, project boards, and costing reports — not just project boards.
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
+
+          {modules.includes('hr') && (
+            <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={hrFullAccess}
+                  onChange={(e) => setHrFullAccess(e.target.checked)}
+                  disabled={saveMutation.isPending}
+                  className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-800">Full HR &amp; Payroll workspace</span>
+                  <span className="mt-0.5 block text-xs text-gray-600">
+                    Grants people admin, departments, payroll, reports, and leave approval — not just attendance, leave requests, and talent tasks.
                   </span>
                 </span>
               </label>

@@ -5,6 +5,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useHrAuditLogs } from '../api/useHrQueries';
 import { HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
+import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 
 export default function HrSettingsPage() {
   const { data: logs = [], isLoading } = useHrAuditLogs();
@@ -86,7 +87,7 @@ export default function HrSettingsPage() {
                 {logs.slice(0, 50).map((log) => (
                   <tr key={log.id}>
                     <td className="px-3 py-2 text-xs text-gray-500">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
+                      {log.created_at ? formatShiftDateTime(log.created_at) : '—'}
                     </td>
                     <td className="px-3 py-2">{log.actor?.name ?? (log.actor_user_id ? `#${log.actor_user_id}` : '—')}</td>
                     <td className="px-3 py-2 font-medium text-gray-900">{log.action}</td>

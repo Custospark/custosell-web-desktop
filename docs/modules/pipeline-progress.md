@@ -46,7 +46,7 @@ Global keys (`cards_won`, `win_rate`, etc.) remain board-wide.
 3. On save, allocations persist; read API recomputes **expected_to_date** as time elapses.
 4. Trend chart shows dashed **Expected pace** vs actual `cards_won`.
 
-When the period filter changes (day/week/month/quarter/year), target cards use `period_slice` from the API — decomposed expected vs actual for that window, with the root goal shown for context.
+When the period filter changes (day/week/month/quarter/year), target cards use `period_slice` from the API and show achievement as **x/y** for that window (e.g. Today with a 2/day pace → `1/2`). Coarser goals (month/year) are prorated into the selected view so the denominator matches the period. Percent and overall goal stay as secondary context.
 
 **Assignee roster:** The ownership dropdown prefers board resource members, then project/board roster — not only members with activity in the selected period.
 

@@ -7,6 +7,7 @@ import { PublicRoute } from './PublicRoute';
 import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
 import { ModuleAccessMiddleware } from './middleware/ModuleAccessMiddleware';
 import { EstimatesAccessMiddleware } from './middleware/EstimatesAccessMiddleware';
+import { HrAccessMiddleware, HrIndexRedirect } from './middleware/HrAccessMiddleware';
 import { ModuleLandingRedirect } from './middleware/ModuleLandingRedirect';
 import { AppChrome } from '../../shared/components/layout/AppChrome';
 import { Layout } from '../../shared/components/layout/Layout';
@@ -192,18 +193,20 @@ export function AppRoutes() {
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="hr" />}>
-            <Route path="/hr" element={<SuspenseWrapper><HrLayout /></SuspenseWrapper>}>
-              <Route index element={<Navigate to={ROUTES.HR.PEOPLE} replace />} />
-              <Route path="people" element={<SuspenseWrapper><HrPeoplePage /></SuspenseWrapper>} />
-              <Route path="people/:employeeId" element={<SuspenseWrapper><HrEmployeeDetailPage /></SuspenseWrapper>} />
-              <Route path="departments" element={<SuspenseWrapper><HrDepartmentsPage /></SuspenseWrapper>} />
-              <Route path="attendance" element={<SuspenseWrapper><HrAttendancePage /></SuspenseWrapper>} />
-              <Route path="leave" element={<SuspenseWrapper><HrLeavePage /></SuspenseWrapper>} />
-              <Route path="payroll" element={<SuspenseWrapper><HrPayrollPage /></SuspenseWrapper>} />
-              <Route path="payroll/runs/:payRunId" element={<SuspenseWrapper><HrPayRunDetailPage /></SuspenseWrapper>} />
-              <Route path="talent" element={<SuspenseWrapper><HrTalentPage /></SuspenseWrapper>} />
-              <Route path="reports" element={<SuspenseWrapper><HrReportsPage /></SuspenseWrapper>} />
-              <Route path="settings" element={<SuspenseWrapper><HrSettingsPage /></SuspenseWrapper>} />
+            <Route element={<HrAccessMiddleware />}>
+              <Route path="/hr" element={<SuspenseWrapper><HrLayout /></SuspenseWrapper>}>
+                <Route index element={<HrIndexRedirect />} />
+                <Route path="people" element={<SuspenseWrapper><HrPeoplePage /></SuspenseWrapper>} />
+                <Route path="people/:employeeId" element={<SuspenseWrapper><HrEmployeeDetailPage /></SuspenseWrapper>} />
+                <Route path="departments" element={<SuspenseWrapper><HrDepartmentsPage /></SuspenseWrapper>} />
+                <Route path="attendance" element={<SuspenseWrapper><HrAttendancePage /></SuspenseWrapper>} />
+                <Route path="leave" element={<SuspenseWrapper><HrLeavePage /></SuspenseWrapper>} />
+                <Route path="payroll" element={<SuspenseWrapper><HrPayrollPage /></SuspenseWrapper>} />
+                <Route path="payroll/runs/:payRunId" element={<SuspenseWrapper><HrPayRunDetailPage /></SuspenseWrapper>} />
+                <Route path="talent" element={<SuspenseWrapper><HrTalentPage /></SuspenseWrapper>} />
+                <Route path="reports" element={<SuspenseWrapper><HrReportsPage /></SuspenseWrapper>} />
+                <Route path="settings" element={<SuspenseWrapper><HrSettingsPage /></SuspenseWrapper>} />
+              </Route>
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="accounting" />}>

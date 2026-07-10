@@ -48,6 +48,7 @@ import CreateEstimateFromLeadButton from '../../estimates/ui/CreateEstimateFromL
 import PipelineColorPicker from './PipelineColorPicker';
 import { CARD_PRESET_COLORS } from './pipelineColorPresets';
 import { LeadDetailSkeleton } from './KanbanBoardSkeleton';
+import { EvaluateStaffPerformanceLink } from '../../hr/ui/EvaluateStaffPerformanceLink';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { canContributeToBoard, canManageBoardSettings, canViewFullEstimates } from '../../../shared/utils/moduleAccess';
 
@@ -336,6 +337,16 @@ export default function LeadDetailModal({
                   });
                 }}
               />
+              {(lead.assignees?.length
+                ? lead.assignees.map((a) => a.id)
+                : lead.assigned_to
+                  ? [lead.assigned_to]
+                  : []
+              ).map((assigneeId) => (
+                <div key={assigneeId} className="mt-2">
+                  <EvaluateStaffPerformanceLink userId={assigneeId} />
+                </div>
+              ))}
             </PipelineIconField>
           </div>
           {isLead && lead.estimated_value != null && (

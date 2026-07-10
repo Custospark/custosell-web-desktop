@@ -21,6 +21,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { buildStaffModulesPayload } from '../../../shared/utils/moduleAccess';
 import {
   useCreateHrEmployeeAccount,
   useDeleteHrEmployee,
@@ -46,7 +47,11 @@ import {
   hrInputClass,
   hrSelectClass,
 } from '../ui/hrFormFields';
-import { emptyAppLoginForm, HrAppLoginFields, type HrAppLoginFormState } from '../ui/HrAppLoginFields';
+import { emptyAppLoginForm, type HrAppLoginFormState } from '../ui/hrAppLoginForm';
+import { HrAppLoginFields } from '../ui/HrAppLoginFields';
+import { HrEmployeePerformanceCard } from '../ui/HrWorkPerformancePanel';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { canViewFullHr } from '../../../shared/utils/moduleAccess';
 
 function toForm(employee: HrEmployee): UpdateEmployeePayload {
   return {
@@ -96,6 +101,8 @@ export default function HrEmployeeDetailPage() {
 function EmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
   const navigate = useNavigate();
   const { confirm } = useConfirm();
+  const user = useAppSelector((s) => s.auth.user);
+  const isFullHr = canViewFullHr(user);
   const id = employee.id;
 
   const [form, setForm] = useState<UpdateEmployeePayload>(() => toForm(employee));
@@ -170,7 +177,7 @@ function EmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
       password: loginForm.password,
       password_confirmation: loginForm.password_confirmation,
       role_id: loginForm.role_id ? Number(loginForm.role_id) : null,
-      modules: loginForm.modules,
+      modules: buildStaffModulesPayload(loginForm.modules, false, loginForm.hrFullAccess),
       phone: form.phone || null,
       account_name: `${form.first_name ?? ''} ${form.last_name ?? ''}`.trim(),
     });
@@ -224,6 +231,23 @@ function EmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
           </div>
         }
       />
+
+      {employee.user_id ? (
+        <div className="relative overflow-hidden rounded-2xl border border-white/55 bg-gradient-to-br from-violet-50/90 via-white/90 to-blue-50/80 p-4 shadow-md backdrop-blur-md sm:p-5">
+          <div className="mb-4 border-b border-white/50 pb-3">
+            <h2 className="text-sm font-semibold text-slate-900">Work performance</h2>
+            <p className="mt-0.5 text-xs text-slate-600">Goals and delivery from Pipeline cards/leads and Project tasks — Progress-style pulse.</p>
+          </div>
+          <HrEmployeePerformanceCard employeeId={employee.id} isFullHr={isFullHr} />
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/55 bg-white/85 p-4 shadow-sm backdrop-blur-md sm:p-5">
+          <h2 className="text-sm font-semibold text-slate-900">Work performance</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            No staff login linked yet — assignees on boards and project tasks use the app account, so link one to unlock evaluation.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={(e) => void handleSave(e)} className="space-y-4">
         <HrFormSection title="Identity" icon={User} description="How they appear across HR — name, number, and status.">

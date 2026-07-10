@@ -14,9 +14,9 @@ interface HrPageHeaderProps {
 export function HrPageHeader({ icon: Icon, title, description, actions, className }: HrPageHeaderProps) {
   return (
     <div className={cn('flex flex-wrap items-start justify-between gap-4', className)}>
-      <div className="flex min-w-0 items-start gap-3.5">
-        <div className="shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 p-3 shadow-sm">
-          <Icon className="h-5 w-5 text-white" aria-hidden />
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="shrink-0 rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-gray-700">
+          <Icon className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 pt-0.5">
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{title}</h1>
@@ -41,11 +41,13 @@ export function HrEmptyState({ icon, title, description, action, className }: Hr
     <div
       className={cn(
         HR_SURFACE.panel,
-        'flex flex-col items-center justify-center gap-3 px-6 py-16 text-center',
+        'flex flex-col items-center justify-center gap-3 px-6 py-14 text-center',
         className,
       )}
     >
-      {icon ? <div className="rounded-2xl bg-indigo-50 p-3.5 text-indigo-600">{icon}</div> : null}
+      {icon ? (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-600">{icon}</div>
+      ) : null}
       <div>
         <h3 className="text-base font-semibold text-gray-900">{title}</h3>
         <p className="mt-1.5 max-w-md text-sm leading-relaxed text-gray-500">{description}</p>
@@ -67,7 +69,7 @@ export function HrSectionCard({ title, description, actions, children, className
   return (
     <section className={cn(HR_SURFACE.panel, 'p-4 sm:p-5', className)}>
       {(title || actions) && (
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 pb-3">
           <div className="min-w-0">
             {title ? <h2 className="text-sm font-semibold text-gray-900">{title}</h2> : null}
             {description ? <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{description}</p> : null}

@@ -28,6 +28,8 @@ import {
   progressBoardTitle,
   resolveProgressContext,
   targetDisplayStats,
+  formatAchievementRatio,
+  roundDisplayNumber,
   TARGET_TYPE_LABELS,
   type ProgressPeriod,
 } from '../api/pipelineProgressTerms';
@@ -338,29 +340,40 @@ export default function BoardProgressView({
         <ProgressPanel
           title={`${capitalize(ctx.item_plural)} over time`}
           subtitle={`Created, ${ctx.won_label}, and ${ctx.lost_label} by day`}
+          glassy
         >
           {trendData.length === 0 ? (
             <EmptyChart message={`No ${ctx.item_plural} activity in this period yet.`} />
           ) : (
-            <ChartContainer className="h-72">
-              {({ width, height }) => (
-                <LineChart width={width} height={height} data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="cards_created" name="Created" stroke="#6366f1" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="cards_won" name={capitalize(ctx.won_label)} stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="cards_lost" name={capitalize(ctx.lost_label)} stroke="#ef4444" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="expected" name="Expected pace" stroke="#a78bfa" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                </LineChart>
-              )}
-            </ChartContainer>
+            <div className={PROGRESS_SURFACE.chartWell}>
+              <ChartContainer className="h-72">
+                {({ width, height }) => (
+                  <LineChart width={width} height={height} data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" strokeOpacity={0.45} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#475569' }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#475569' }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'rgba(255,255,255,0.88)',
+                        border: '1px solid rgba(255,255,255,0.7)',
+                        borderRadius: 12,
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
+                      }}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="cards_created" name="Created" stroke="#6366f1" strokeWidth={2.5} dot={false} />
+                    <Line type="monotone" dataKey="cards_won" name={capitalize(ctx.won_label)} stroke="#10b981" strokeWidth={2.5} dot={false} />
+                    <Line type="monotone" dataKey="cards_lost" name={capitalize(ctx.lost_label)} stroke="#ef4444" strokeWidth={2.5} dot={false} />
+                    <Line type="monotone" dataKey="expected" name="Expected pace" stroke="#a78bfa" strokeWidth={2.5} strokeDasharray="5 5" dot={false} />
+                  </LineChart>
+                )}
+              </ChartContainer>
+            </div>
           )}
         </ProgressPanel>
 
-        <ProgressPanel title="Stage funnel" subtitle={`Where ${ctx.item_plural} sit on selected columns`}>
+        <ProgressPanel title="Stage funnel" subtitle={`Where ${ctx.item_plural} sit on selected columns`} glassy>
           <div className="mb-3 inline-flex rounded-lg border border-gray-200 p-0.5">
             <button type="button" onClick={() => setFunnelMode('count')} className={cn('rounded-md px-2 py-1 text-xs', funnelMode === 'count' ? 'bg-violet-600 text-white' : 'text-gray-600')}>Count</button>
             <button type="button" onClick={() => setFunnelMode('value')} className={cn('rounded-md px-2 py-1 text-xs', funnelMode === 'value' ? 'bg-violet-600 text-white' : 'text-gray-600')}>Value</button>
@@ -368,21 +381,31 @@ export default function BoardProgressView({
           {funnelData.length === 0 ? (
             <EmptyChart message="No stage data yet." />
           ) : (
-            <ChartContainer className="h-72">
-              {({ width, height }) => (
-                <BarChart width={width} height={height} data={funnelData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="stage_name" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="display" name={funnelMode === 'value' ? 'Value' : 'Count'} radius={[6, 6, 0, 0]}>
-                    {funnelData.map((entry) => (
-                      <Cell key={entry.stage_id} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              )}
-            </ChartContainer>
+            <div className={PROGRESS_SURFACE.chartWell}>
+              <ChartContainer className="h-72">
+                {({ width, height }) => (
+                  <BarChart width={width} height={height} data={funnelData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" strokeOpacity={0.45} />
+                    <XAxis dataKey="stage_name" tick={{ fontSize: 11, fill: '#475569' }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#475569' }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'rgba(255,255,255,0.88)',
+                        border: '1px solid rgba(255,255,255,0.7)',
+                        borderRadius: 12,
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
+                      }}
+                    />
+                    <Bar dataKey="display" name={funnelMode === 'value' ? 'Value' : 'Count'} radius={[6, 6, 0, 0]} fillOpacity={0.92}>
+                      {funnelData.map((entry) => (
+                        <Cell key={entry.stage_id} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                )}
+              </ChartContainer>
+            </div>
           )}
         </ProgressPanel>
       </div>
@@ -600,9 +623,14 @@ function TargetCard({
               </button>
             </div>
           )}
-          <p className="text-2xl font-bold text-gray-900">{stats.progress_percent}%</p>
+          <p className="text-2xl font-bold tabular-nums text-gray-900">
+            {formatAchievementRatio(stats.actual, stats.expected, (value) =>
+              formatMetricValue(value, target.unit, ctx.currency),
+            )}
+          </p>
           <p className="text-xs text-gray-500">
-            {formatMetricValue(stats.actual, target.unit, ctx.currency)} / {formatMetricValue(stats.expected, target.unit, ctx.currency)}
+            {stats.sliceLabel ? `${stats.sliceLabel} · ` : ''}
+            {stats.progress_percent}% of period goal
           </p>
           {stats.overallGoal != null && stats.overallGoal !== stats.expected ? (
             <p className="mt-1 text-[10px] text-gray-400">
@@ -618,10 +646,10 @@ function TargetCard({
       </div>
       <div className="mt-3 space-y-1.5">
         <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="font-medium text-gray-700">
-            {formatMetricValue(stats.actual, target.unit, ctx.currency)}
-            <span className="text-gray-400"> / </span>
-            {formatMetricValue(stats.expected, target.unit, ctx.currency)}
+          <span className="font-medium tabular-nums text-gray-700">
+            {formatAchievementRatio(stats.actual, stats.expected, (value) =>
+              formatMetricValue(value, target.unit, ctx.currency),
+            )}
           </span>
           <span className="font-semibold text-gray-900">{stats.progress_percent}%</span>
         </div>
@@ -640,7 +668,11 @@ function TargetCard({
               <div key={kr.id} className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium text-gray-700">{kr.title}</span>
-                  <span className="text-gray-500">{krStats.progress_percent}%</span>
+                  <span className="tabular-nums text-gray-700">
+                    {formatAchievementRatio(krStats.actual, krStats.expected, (value) =>
+                      formatMetricValue(value, kr.unit, ctx.currency),
+                    )}
+                  </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
                   <div
@@ -649,7 +681,8 @@ function TargetCard({
                   />
                 </div>
                 <p className="text-[11px] text-gray-500">
-                  {formatMetricValue(krStats.actual, kr.unit, ctx.currency)} / {formatMetricValue(krStats.expected, kr.unit, ctx.currency)}
+                  {krStats.sliceLabel ? `${krStats.sliceLabel} · ` : ''}
+                  {krStats.progress_percent}% of period goal
                 </p>
               </div>
             );
@@ -661,10 +694,11 @@ function TargetCard({
 }
 
 function formatMetricValue(value: number, unit: string, currency: string): string {
-  if (unit === 'currency') return formatCurrency(value, currency);
-  if (unit === 'percent') return `${value}%`;
-  if (unit === 'days') return `${value}d`;
-  return String(value);
+  const rounded = roundDisplayNumber(value);
+  if (unit === 'currency') return formatCurrency(rounded, currency);
+  if (unit === 'percent') return `${rounded}%`;
+  if (unit === 'days') return `${rounded}d`;
+  return String(rounded);
 }
 
 function capitalize(value: string): string {
@@ -690,15 +724,18 @@ function ProgressPanel({
   icon: Icon,
   action,
   children,
+  glassy = false,
 }: {
   title: string;
   subtitle?: string;
   icon?: LucideIcon;
   action?: ReactNode;
   children: ReactNode;
+  /** Stronger frosted glass for chart-heavy panels */
+  glassy?: boolean;
 }) {
   return (
-    <section className={PROGRESS_SURFACE.panel}>
+    <section className={glassy ? PROGRESS_SURFACE.chartPanel : PROGRESS_SURFACE.panel}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
           {Icon && <Icon className="mt-0.5 h-4 w-4 text-violet-600" />}

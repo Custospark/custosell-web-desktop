@@ -73,6 +73,8 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-10-documents-explorer-scale.md](./adr/2026-07-10-documents-explorer-scale.md) | Explorer scale limits and enterprise roadmap |
 | [2026-07-10-document-cabinets.md](./adr/2026-07-10-document-cabinets.md) | Document cabinets — gallery, scoped explorer, cabinet ACL |
 | [2026-07-10-hr-payroll-module.md](./adr/2026-07-10-hr-payroll-module.md) | HR & Payroll module — people, leave, Uganda payroll |
+| [2026-07-10-hr-full-module-access.md](./adr/2026-07-10-hr-full-module-access.md) | `hr_full` addon — limited vs full HR workspace |
+| [2026-07-10-hr-work-performance-from-pipeline.md](./adr/2026-07-10-hr-work-performance-from-pipeline.md) | Evaluate employees from Pipeline/Projects goals & tasks |
 
 ## Modules
 

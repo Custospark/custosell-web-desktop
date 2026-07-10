@@ -16,7 +16,7 @@ import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import LogoImage from '../../assets/LogoImage';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
-import { canAccessModule, hasEstimatesBoardsAccess, isBusinessOwner, isLimitedEstimatesUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
+import { canAccessModule, hasEstimatesBoardsAccess, isBusinessOwner, isLimitedEstimatesUser, isLimitedHrUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
 
@@ -263,6 +263,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ...group,
           subItems: [
             { to: ROUTES.ESTIMATES.BOARDS, label: 'Project boards', icon: Kanban },
+          ],
+        };
+      }
+      if (group.label === 'HR & Payroll' && isLimitedHrUser(user)) {
+        return {
+          ...group,
+          subItems: [
+            { to: ROUTES.HR.ATTENDANCE, label: 'Attendance', icon: Clock },
+            { to: ROUTES.HR.LEAVE, label: 'Leave', icon: CalendarDays },
+            { to: ROUTES.HR.TALENT, label: 'Talent', icon: ClipboardCheck },
           ],
         };
       }

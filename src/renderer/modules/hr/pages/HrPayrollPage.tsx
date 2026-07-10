@@ -26,6 +26,7 @@ import {
 import { employeeDisplayName } from '../api/hrTypes';
 import { PayRunStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import { formatShiftDate, formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 import {
   HrFormSection,
   HrIconField,
@@ -167,7 +168,7 @@ export default function HrPayrollPage() {
                     <tr key={c.id}>
                       <td className="px-3 py-2">{c.employee ? employeeDisplayName(c.employee) : `#${c.employee_id}`}</td>
                       <td className="px-3 py-2 font-mono text-xs">{formatMoney(c.basic_salary)}</td>
-                      <td className="px-3 py-2 text-gray-600">{c.effective_from}</td>
+                      <td className="px-3 py-2 text-gray-600">{formatShiftDate(c.effective_from)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -207,7 +208,7 @@ export default function HrPayrollPage() {
                 {payRuns.map((run) => (
                   <tr key={run.id} className="hover:bg-indigo-50/40">
                     <td className="px-3 py-2 font-medium text-gray-900">
-                      {run.period_start} → {run.period_end}
+                      {formatShiftDateRange(run.period_start, run.period_end)}
                     </td>
                     <td className="px-3 py-2"><PayRunStatusBadge status={run.status} /></td>
                     <td className="px-3 py-2 font-mono text-xs">{formatMoney(run.total_gross)}</td>

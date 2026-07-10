@@ -1,5 +1,11 @@
 import type { MyProgressSummary } from '../api/boardProgressTypes';
-import { METRIC_LABELS, resolveProgressContext, targetDisplayStats } from '../api/pipelineProgressTerms';
+import {
+  formatAchievementRatio,
+  METRIC_LABELS,
+  resolveProgressContext,
+  roundDisplayNumber,
+  targetDisplayStats,
+} from '../api/pipelineProgressTerms';
 import { Target, TrendingUp, User } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { PROGRESS_SURFACE } from './progressSurface';
@@ -102,13 +108,18 @@ export default function BoardMyProgressTab({ data }: BoardMyProgressTabProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className={cn('text-sm font-medium', PROGRESS_SURFACE.textTitle)}>{target.title}</p>
+                    <p className={cn('text-lg font-bold tabular-nums', PROGRESS_SURFACE.textTitle)}>
+                      {formatAchievementRatio(stats.actual, stats.expected, (value) =>
+                        String(roundDisplayNumber(value)),
+                      )}
+                    </p>
                     <p className={cn('text-xs', PROGRESS_SURFACE.textMuted)}>
-                      {stats.actual} / {stats.expected}
-                      {stats.sliceLabel ? ` · ${stats.sliceLabel}` : ''}
+                      {stats.sliceLabel ? `${stats.sliceLabel} · ` : ''}
+                      {stats.progress_percent}% of period goal
                     </p>
                     {stats.overallGoal != null && stats.overallGoal !== stats.expected ? (
                       <p className={cn('text-[10px]', PROGRESS_SURFACE.textMuted)}>
-                        Overall goal: {stats.overallGoal}
+                        Overall goal: {roundDisplayNumber(stats.overallGoal)}
                       </p>
                     ) : null}
                   </div>
@@ -118,7 +129,11 @@ export default function BoardMyProgressTab({ data }: BoardMyProgressTabProps) {
                 </div>
                 <div className="mt-2 space-y-1">
                   <div className="flex items-center justify-between text-[11px] text-gray-500">
-                    <span>{stats.actual} of {stats.expected}</span>
+                    <span className="tabular-nums">
+                      {formatAchievementRatio(stats.actual, stats.expected, (value) =>
+                        String(roundDisplayNumber(value)),
+                      )}
+                    </span>
                     <span className="font-semibold text-gray-800">{stats.progress_percent}%</span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">

@@ -26,6 +26,12 @@ export const hrKeys = {
     [...hrKeys.all, 'onboarding-tasks', filters ?? {}] as const,
   reviews: (filters?: Record<string, string | number | undefined>) =>
     [...hrKeys.all, 'reviews', filters ?? {}] as const,
+  performanceRoster: (period?: Record<string, string | undefined>) =>
+    [...hrKeys.all, 'performance', 'roster', period ?? {}] as const,
+  performanceEmployee: (employeeId: number, period?: Record<string, string | undefined>) =>
+    [...hrKeys.all, 'performance', 'employee', employeeId, period ?? {}] as const,
+  performanceByUser: (userId: number, period?: Record<string, string | undefined>) =>
+    [...hrKeys.all, 'performance', 'user', userId, period ?? {}] as const,
   reportPaye: (filters?: Record<string, string | number | undefined>) =>
     [...hrKeys.all, 'reports', 'paye', filters ?? {}] as const,
   reportNssf: (filters?: Record<string, string | number | undefined>) =>

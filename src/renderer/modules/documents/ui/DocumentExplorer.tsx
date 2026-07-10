@@ -711,19 +711,19 @@ export function DocumentExplorer({
 
       <div className={cn('shrink-0 space-y-1.5 px-2 py-2', DOCUMENT_SURFACE.toolbar)}>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search files in this cabinet…"
-            className="w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 pl-7 pr-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
+            className="w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 pl-9 pr-3 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
           />
         </div>
         <input
           value={tagFilter}
           onChange={(e) => onTagFilterChange(e.target.value)}
           placeholder="Filter by tag (optional)"
-          className="w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
+          className="w-full rounded-lg border border-gray-300/90 bg-white/90 px-3 py-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
         />
       </div>
 

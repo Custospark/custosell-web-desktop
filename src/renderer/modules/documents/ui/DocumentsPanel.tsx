@@ -29,6 +29,7 @@ import {
   useDocumentFolderContents,
   useDocumentFolderChildren,
   useDocumentFolderTree,
+  useDocument,
   useDocuments,
   useRecordDocumentDownload,
   useRecordDocumentView,
@@ -37,11 +38,12 @@ import {
 } from '../api/useDocumentQueries';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { DocumentFolderCard, DocumentItemCard } from './DocumentItemViews';
+import { DocumentDetailPane } from './DocumentDetailPane';
+import { DocumentExplorer } from './DocumentExplorer';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentProgressBar } from './DocumentProgressBar';
 import { MoveItemModal } from './MoveItemModal';
 import { RenameItemModal } from './RenameItemModal';
-import { DocumentFolderTreeSidebar } from './DocumentFolderTreeSidebar';
 import {
   ChevronRight,
   Folder,
@@ -136,6 +138,7 @@ export default function DocumentsPanel({
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ kind: 'folder' | 'document'; id: number } | null>(null);
   const [renameTarget, setRenameTarget] = useState<{ kind: 'folder' | 'document'; id: number; name: string } | null>(null);
   const [contentsPage, setContentsPage] = useState(1);
@@ -163,16 +166,19 @@ export default function DocumentsPanel({
   }, [search]);
 
   useEffect(() => {
+    if (showSidebar) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginated folder list on folder change (card view)
     setContentsPage(1);
     setAccumulatedDocs([]);
-  }, [activeFolderId]);
+  }, [activeFolderId, showSidebar]);
 
   useEffect(() => {
-    if (!contents?.documents) return;
+    if (showSidebar || !contents?.documents) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- merge paginated folder file pages in card view
     setAccumulatedDocs((current) => (
       contentsPage === 1 ? contents.documents : [...current, ...contents.documents]
     ));
-  }, [contents?.documents, contentsPage]);
+  }, [contents?.documents, contentsPage, showSidebar]);
 
   const listFilters = useMemo(() => ({
     q: debouncedSearch || undefined,
@@ -182,7 +188,7 @@ export default function DocumentsPanel({
     folder_id: customerId || projectId ? undefined : (activeFolderId ?? undefined),
   }), [debouncedSearch, tagFilter, customerId, projectId, activeFolderId]);
 
-  const needsDocumentList = searching || activeFolderId == null || customerId != null || projectId != null;
+  const needsDocumentList = !showSidebar && (searching || activeFolderId == null || customerId != null || projectId != null);
   const {
     data: documentPages,
     isLoading: searchLoading,
@@ -191,6 +197,8 @@ export default function DocumentsPanel({
     hasNextPage,
   } = useDocuments(listFilters, needsDocumentList);
 
+  const { data: freshSelectedDoc } = useDocument(selectedDocument?.id ?? 0, Boolean(selectedDocument?.id && showSidebar));
+  const activeDocument = showSidebar ? (freshSelectedDoc ?? selectedDocument) : previewDoc;
   const createFolder = useCreateDocumentFolder();
   const updateFolder = useUpdateDocumentFolder();
   const deleteFolder = useDeleteDocumentFolder();
@@ -394,6 +402,10 @@ export default function DocumentsPanel({
       setContentsPage((page) => page + 1);
     }
   };
+
+  const handleRecordView = useCallback((doc: DocumentItem) => {
+    recordView.mutate(doc.id);
+  }, [recordView]);
 
   const handleDownload = async (doc: DocumentItem) => {
     const transferId = createTransferId(`download-${doc.id}`);
@@ -709,13 +721,15 @@ export default function DocumentsPanel({
 
   const modals = (
     <>
-      <DocumentPreviewModal
-        document={previewDoc}
-        open={Boolean(previewDoc)}
-        onClose={() => setPreviewDoc(null)}
-        onDownload={(doc) => void handleDownload(doc)}
-        onRecordView={(doc) => { void recordView.mutateAsync(doc.id); }}
-      />
+      {!showSidebar && (
+        <DocumentPreviewModal
+          document={previewDoc}
+          open={Boolean(previewDoc)}
+          onClose={() => setPreviewDoc(null)}
+          onDownload={(doc) => void handleDownload(doc)}
+          onRecordView={(doc) => { void recordView.mutateAsync(doc.id); }}
+        />
+      )}
 
       <MoveItemModal
         open={Boolean(moveTarget)}
@@ -822,25 +836,104 @@ export default function DocumentsPanel({
   );
 
   if (showSidebar) {
+    const folderLabel = activeFolderId ? contents?.folder?.name ?? null : null;
+
     return (
-      <div className="flex h-full min-h-0 w-full flex-col bg-gray-50 lg:flex-row">
-        <aside className="flex h-auto max-h-48 w-full shrink-0 flex-col border-b border-gray-200 bg-white lg:h-full lg:max-h-none lg:w-60 lg:border-b-0 lg:border-r xl:w-72">
-          <DocumentFolderTreeSidebar
+      <div className="flex h-full min-h-0 w-full flex-col bg-gray-100 lg:flex-row">
+        <aside className="flex h-auto max-h-64 w-full shrink-0 flex-col border-b border-gray-300 lg:h-full lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r xl:w-80">
+          <DocumentExplorer
             activeFolderId={activeFolderId}
+            selectedDocumentId={selectedDocument?.id ?? null}
             expandFolderIds={breadcrumbs.map((crumb) => crumb.id)}
+            searchQuery={search}
+            tagFilter={tagFilter}
             dropTargetFolderId={dropTargetFolderId}
-            onSelectFolder={setActiveFolderId}
+            online={online}
+            canContribute={canContribute}
+            onSearchChange={setSearch}
+            onTagFilterChange={setTagFilter}
+            onSelectFolder={(folderId) => {
+              setActiveFolderId(folderId);
+              setSelectedDocument(null);
+            }}
+            onSelectDocument={setSelectedDocument}
+            onCreateFolder={openCreateFolderModal}
+            onUpload={() => setShowUpload(true)}
+            onCreateLink={() => setShowLink(true)}
+            onRefresh={() => { void invalidateDocuments(); }}
             onFolderDragOver={(folderId, e) => {
               e.preventDefault();
               setDropTargetFolderId(folderId);
             }}
             onFolderDragLeave={() => setDropTargetFolderId(null)}
             onFolderDrop={(folderId, e) => void handleFolderDrop(folderId, e)}
+            onDocumentDragStart={(doc, e) => {
+              e.dataTransfer.setData('text/document-id', String(doc.id));
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onFolderDragStart={(folder, e) => {
+              e.dataTransfer.setData('text/document-folder-id', String(folder.id));
+              e.dataTransfer.effectAllowed = 'move';
+            }}
           />
         </aside>
-        <div className="flex min-w-0 flex-1 flex-col bg-gray-50/50">
-          {toolbar}
-          {fileArea}
+
+        <div
+          className={cn(
+            'flex min-h-0 min-w-0 flex-1 flex-col',
+            panelDragActive && canContribute && 'ring-2 ring-inset ring-indigo-300',
+          )}
+          onDragOver={(e) => {
+            if (!canContribute || !online) return;
+            e.preventDefault();
+            setPanelDragActive(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setPanelDragActive(false);
+          }}
+          onDrop={(e) => void handlePanelDrop(e)}
+        >
+          {!online && (
+            <div className="flex shrink-0 items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800">
+              <WifiOff className="h-3.5 w-3.5" /> Documents requires an internet connection
+            </div>
+          )}
+          {panelDragActive && canContribute && (
+            <div className="shrink-0 border-b border-indigo-200 bg-indigo-50 px-4 py-2 text-center text-xs font-medium text-indigo-700">
+              Drop files to upload to {folderLabel ?? 'root'}
+            </div>
+          )}
+          <DocumentDetailPane
+            document={activeDocument}
+            folderName={folderLabel}
+            breadcrumbs={breadcrumbs}
+            loading={Boolean(activeFolderId && contentsLoading && !selectedDocument)}
+            online={online}
+            onDownload={(doc) => void handleDownload(doc)}
+            onRename={(doc) => setRenameTarget({ kind: 'document', id: doc.id, name: doc.title })}
+            onMove={(doc) => setMoveTarget({ kind: 'document', id: doc.id })}
+            onDelete={(doc) => {
+              if (window.confirm(`Delete "${doc.title}"?`)) {
+                void deleteDocument.mutateAsync(doc.id).then(() => setSelectedDocument(null));
+              }
+            }}
+            onRecordView={handleRecordView}
+            onSelectFolder={setActiveFolderId}
+          />
+          {transfers.length > 0 && (
+            <div className="shrink-0 border-t border-gray-200 bg-white px-4 py-3">
+              <div className="space-y-2">
+                {transfers.map((transfer) => (
+                  <DocumentProgressBar
+                    key={transfer.id}
+                    label={`${transfer.kind === 'upload' ? 'Uploading' : 'Downloading'} ${transfer.name}`}
+                    percent={transfer.percent}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         {modals}
       </div>

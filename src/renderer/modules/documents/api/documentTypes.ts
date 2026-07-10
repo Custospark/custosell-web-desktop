@@ -99,6 +99,7 @@ export interface DocumentListFilters {
   project_id?: number;
   type?: DocumentItemType;
   uploaded_by?: number;
+  root_only?: boolean;
   page?: number;
   per_page?: number;
 }

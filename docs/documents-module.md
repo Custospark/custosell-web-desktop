@@ -25,7 +25,7 @@ See `Backend/routes/api/v1/documents.php`. Middleware: `auth:sanctum`, `business
 
 ### Scalability (large vaults)
 
-- `GET /documents?page=&per_page=` — paginated document list (default 50, max 200)
+- `GET /documents?page=&per_page=&root_only=` — paginated document list (default 50, max 200); `root_only=true` returns only root-level files (no folder)
 - `GET /documents/folders/children?parent_id=&page=` — lazy-load folder tree nodes (default 100)
 - `GET /documents/folders/{id}/contents?page=` — folder contents with paginated documents
 - `GET /documents/folders/tree` — full tree (kept for move modal / small vaults)
@@ -40,7 +40,7 @@ Staff with the `documents` module can create root folders and add links/files at
 - **Views:** list / grid toggle
 - **Preview:** PDF and images in modal
 - **Move:** modal picker + drag-and-drop onto folders / current folder
-- **Rename:** files and folders via pencil action
+- **Explorer:** VS Code-style tree (folders + files), typed icons, File+/Folder+/Link toolbar actions; files open in the right preview pane
 - **Long names:** middle-ellipsis display with full name on hover
 - **Pagination:** load-more for document lists; sidebar loads folders on expand
 - **Progress:** upload (axios) and download (XHR blob) progress bars

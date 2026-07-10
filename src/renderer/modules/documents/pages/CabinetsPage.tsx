@@ -14,8 +14,9 @@ export default function CabinetsPage() {
   const [search, setSearch] = useState('');
   const { data: cabinetsPage, isLoading, isFetched } = useDocumentCabinets();
 
+  const cabinets = useMemo(() => cabinetsPage?.data ?? [], [cabinetsPage?.data]);
+
   const filtered = useMemo(() => {
-    const cabinets = cabinetsPage?.data ?? [];
     const q = search.trim().toLowerCase();
     if (!q) return cabinets;
     return cabinets.filter(
@@ -23,7 +24,7 @@ export default function CabinetsPage() {
         cabinet.name.toLowerCase().includes(q)
         || (cabinet.description?.toLowerCase().includes(q) ?? false),
     );
-  }, [cabinetsPage, search]);
+  }, [cabinets, search]);
 
   if (isLoading || !isFetched) {
     return (
@@ -74,7 +75,7 @@ export default function CabinetsPage() {
         <Card className="py-12 text-center text-sm text-gray-500">
           {search.trim()
             ? 'No cabinets match your search. Try a different term or create a new cabinet.'
-            : 'No cabinets yet. Starter cabinets are being prepared — refresh in a moment or create your own.'}
+            : 'No cabinets yet. Create your first cabinet to organize business files.'}
         </Card>
       )}
 

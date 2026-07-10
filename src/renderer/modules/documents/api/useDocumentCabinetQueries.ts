@@ -20,9 +20,9 @@ function unwrapEntity<T>(payload: unknown): T {
   return payload as T;
 }
 
-function unwrapPaginated<T>(payload: unknown): PaginatedDocumentCabinets & { data: T[] } {
+function unwrapPaginated(payload: unknown): PaginatedDocumentCabinets {
   if (payload && typeof payload === 'object') {
-    const body = payload as { data?: T[]; meta?: PaginatedDocumentCabinets['meta'] };
+    const body = payload as { data?: DocumentCabinet[]; meta?: PaginatedDocumentCabinets['meta'] };
     if (Array.isArray(body.data)) {
       return {
         data: body.data,
@@ -40,7 +40,7 @@ export function useDocumentCabinets(query?: string, enabled = true) {
       const { data } = await axiosInstance.get(DOCUMENTS.CABINETS, {
         params: query ? { q: query, per_page: 200 } : { per_page: 200 },
       });
-      return unwrapPaginated<DocumentCabinet>(data);
+      return unwrapPaginated(data);
     },
     enabled,
     staleTime: 15_000,

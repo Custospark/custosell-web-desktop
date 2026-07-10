@@ -18,7 +18,6 @@ import type {
   DocumentUserRef,
   DocumentVisibility,
   FolderVisibility,
-  PaginatedDocuments,
 } from './documentTypes';
 
 const DEFAULT_META: DocumentPaginationMeta = {
@@ -36,7 +35,7 @@ function normalizeList<T>(payload: unknown): T[] {
   return [];
 }
 
-function unwrapPaginated<T>(payload: unknown): PaginatedDocuments & { data: T[] } {
+function unwrapPaginated<T>(payload: unknown): { data: T[]; meta: DocumentPaginationMeta } {
   if (payload && typeof payload === 'object') {
     const body = payload as { data?: T[]; meta?: DocumentPaginationMeta };
     if (Array.isArray(body.data)) {

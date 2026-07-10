@@ -165,7 +165,7 @@ function BreadcrumbTrail({
   onSelectFolder?: (folderId: number | null) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-gray-100 bg-white px-4 py-2 text-xs text-gray-500">
+    <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-gray-100 bg-white px-4 py-2 text-xs text-gray-500">
       <button
         type="button"
         onClick={() => (onGoHome ? onGoHome() : onSelectFolder?.(null))}
@@ -237,7 +237,7 @@ export function DocumentDetailPane({
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-white text-sm text-gray-500">
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-white text-sm text-gray-500">
         Loading…
       </div>
     );
@@ -248,15 +248,16 @@ export function DocumentDetailPane({
     const accessLabel = visibilityLabel ? ACCESS_VISIBILITY_LABEL[visibilityLabel] : null;
 
     return (
-      <div className="flex h-full min-h-0 flex-col bg-transparent">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
         <BreadcrumbTrail
           breadcrumbs={breadcrumbs}
           activeFolderId={folder?.id ?? null}
           onGoHome={onGoHome}
           onSelectFolder={onSelectFolder}
         />
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
-          <div className={cn('w-full max-w-lg p-8', DOCUMENT_SURFACE.panel)}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex flex-col items-center px-4 py-6 sm:px-6 sm:py-10">
+            <div className={cn('w-full max-w-lg p-6 sm:p-8', DOCUMENT_SURFACE.panel)}>
             <div className="flex items-center gap-3">
               <DocumentFolderIcon open size="md" className="!h-8 !w-8" tint={folder ? resolveFolderColor(folder) : undefined} />
               <div className="min-w-0">
@@ -315,7 +316,7 @@ export function DocumentDetailPane({
             </div>
 
             {folder && (folder.can_manage || folder.can_delete) && (
-              <div className="mb-6 mt-6 border-t border-gray-100 pt-4">
+              <div className="mt-6 border-t border-gray-100 pt-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Folder actions</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {onRenameFolder && folder.can_manage && (
@@ -374,6 +375,7 @@ export function DocumentDetailPane({
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -384,7 +386,7 @@ export function DocumentDetailPane({
   const showInlinePreview = document.type === 'link' || canInlineViewDocument(document);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white/80 backdrop-blur-md">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white/80 backdrop-blur-md">
       <BreadcrumbTrail
         breadcrumbs={breadcrumbs}
         activeFolderId={document.folder_id}

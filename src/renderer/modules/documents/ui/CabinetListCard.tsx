@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Archive, Star } from 'lucide-react';
+import { Archive, ChevronRight, FileText, FolderOpen, Star } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentCabinet } from '../api/documentTypes';
 import { CABINET_VISIBILITY_META, cabinetCardHeroStyle, cabinetColorAlpha } from './cabinetMeta';
@@ -63,7 +63,15 @@ function CabinetListCardContent({
                 {vis.label}
               </span>
             )}
-            <span>{folderCount} folders · {documentCount} files</span>
+            <span className="inline-flex items-center gap-1">
+              <FolderOpen className="h-3 w-3 opacity-70" />
+              {folderCount}
+            </span>
+            <span className="text-gray-300">·</span>
+            <span className="inline-flex items-center gap-1">
+              <FileText className="h-3 w-3 opacity-70" />
+              {documentCount}
+            </span>
           </div>
         </div>
       </article>
@@ -73,9 +81,9 @@ function CabinetListCardContent({
   return (
     <article
       className={cn(
-        'flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm',
+        'relative flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm',
         'transition-all duration-200 ease-out',
-        'group-hover:-translate-y-0.5 group-hover:shadow-lg',
+        'group-hover:-translate-y-0.5 group-hover:border-indigo-200 group-hover:shadow-lg',
         isActive && 'ring-2 ring-indigo-500 ring-offset-2',
       )}
       style={{ borderColor: cabinetColorAlpha(accent, isActive ? 0.5 : 0.28) }}
@@ -108,10 +116,18 @@ function CabinetListCardContent({
               {vis.label}
             </span>
           )}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2 py-0.5 font-medium text-gray-600">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: accent }} aria-hidden />
-            {folderCount} folders · {documentCount} files
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2 py-0.5 font-medium text-gray-600 ring-1 ring-gray-100">
+            <FolderOpen className="h-3 w-3 text-gray-400" />
+            {folderCount}
+            <span className="text-gray-300">·</span>
+            <FileText className="h-3 w-3 text-gray-400" />
+            {documentCount}
           </span>
+        </div>
+
+        <div className="mt-3 flex items-center justify-end border-t border-gray-100 pt-3 text-xs font-medium text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
+          Open cabinet
+          <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
         </div>
       </div>
     </article>

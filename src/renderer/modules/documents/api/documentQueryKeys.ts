@@ -1,3 +1,5 @@
+import type { DocumentListFilters } from './documentTypes';
+
 export const documentKeys = {
   all: ['documents'] as const,
   cabinets: (q?: string) => [...documentKeys.all, 'cabinets', q ?? ''] as const,
@@ -10,6 +12,6 @@ export const documentKeys = {
   tags: (q?: string) => [...documentKeys.all, 'tags', q ?? ''] as const,
   folder: (id: number) => [...documentKeys.all, 'folder', id] as const,
   contents: (id: number, page = 1) => [...documentKeys.all, 'contents', id, page] as const,
-  list: (filters: Record<string, unknown>) => [...documentKeys.all, 'list', filters] as const,
+  list: (filters: DocumentListFilters) => [...documentKeys.all, 'list', filters] as const,
   detail: (id: number) => [...documentKeys.all, 'detail', id] as const,
 };

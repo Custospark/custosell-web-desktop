@@ -31,7 +31,7 @@ export default function DocumentsCabinetPage() {
 
   if (!cabinetId || cabinetId <= 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center sm:p-6">
         <p className="text-sm font-medium text-gray-800">Invalid cabinet</p>
         <Button variant="secondary" onClick={() => navigate(ROUTES.DOCUMENTS.INDEX)}>Back to cabinets</Button>
       </div>
@@ -40,7 +40,7 @@ export default function DocumentsCabinetPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-[12rem] items-center justify-center">
+      <div className="flex h-full min-h-[12rem] items-center justify-center p-4 sm:p-6">
         <LoadingSpinner />
       </div>
     );
@@ -48,7 +48,7 @@ export default function DocumentsCabinetPage() {
 
   if (isError || !cabinet) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center sm:p-6">
         <p className="text-sm font-medium text-gray-800">Cabinet not found</p>
         <p className="text-sm text-gray-500">It may have been removed or you no longer have access.</p>
         <Button variant="secondary" onClick={() => navigate(ROUTES.DOCUMENTS.INDEX)}>Back to cabinets</Button>
@@ -57,8 +57,8 @@ export default function DocumentsCabinetPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
-      <header className="mb-2 flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200/80 pb-2">
+    <div className="flex h-full min-h-0 flex-col gap-3 p-4 sm:gap-4 sm:p-6">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 pb-3">
         <button
           type="button"
           onClick={() => navigate(ROUTES.DOCUMENTS.INDEX)}

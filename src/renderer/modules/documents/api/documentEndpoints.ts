@@ -1,5 +1,6 @@
 export const DOCUMENTS = {
   VAULT_APPEARANCE: '/documents/vault-appearance',
+  ACTIVITY: '/documents/activity',
   ACCESSIBLE_MEMBERS: '/documents/accessible-members',
   TAGS: '/documents/tags',
   FOLDERS_TREE: '/documents/folders/tree',

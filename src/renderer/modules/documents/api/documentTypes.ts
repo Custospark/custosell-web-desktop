@@ -23,6 +23,18 @@ export interface DocumentsVaultAppearance {
   background_value?: string | null;
 }
 
+export interface DocumentActivityItem {
+  id: number;
+  action: string;
+  message: string;
+  subject_type: 'folder' | 'document';
+  subject_id?: number | null;
+  subject_name?: string | null;
+  folder_id?: number | null;
+  created_at?: string;
+  actor?: DocumentUserRef | null;
+}
+
 export interface DocumentFolder {
   id: number;
   parent_id: number | null;

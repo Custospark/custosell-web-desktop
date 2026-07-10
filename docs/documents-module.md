@@ -29,6 +29,12 @@ Vault canvas (gradient, solid color, or gallery photo) is stored per business:
 
 Explorer uses frosted-glass panels and pipeline-style gradient canvas (see `shared/utils/surfaceStyles.ts`).
 
+**Scale:** See [ADR: Documents explorer scale](./adr/2026-07-10-documents-explorer-scale.md) — lazy tree + search work well to ~tens of thousands of items; millions require virtualization and cursor pagination (roadmap).
+
+**Activity:** `GET /documents/activity` — vault-wide feed shown in collapsible explorer footer (VS Code–style).
+
+**Access editing:** Context menu / detail pane → **Manage access** updates folder or file visibility and members via existing PATCH endpoints.
+
 Business owner always has manager access. Live inheritance: changing a folder’s visibility or members immediately affects inheriting children.
 
 ## API (`/api/v1`)

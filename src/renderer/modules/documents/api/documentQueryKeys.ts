@@ -4,6 +4,7 @@ export const documentKeys = {
   folderChildren: (parentId: number | null, page = 1) => [...documentKeys.all, 'folder-children', parentId, page] as const,
   members: () => [...documentKeys.all, 'members'] as const,
   vaultAppearance: () => [...documentKeys.all, 'vault-appearance'] as const,
+  activity: (page = 1) => [...documentKeys.all, 'activity', page] as const,
   tags: (q?: string) => [...documentKeys.all, 'tags', q ?? ''] as const,
   folder: (id: number) => [...documentKeys.all, 'folder', id] as const,
   contents: (id: number, page = 1) => [...documentKeys.all, 'contents', id, page] as const,

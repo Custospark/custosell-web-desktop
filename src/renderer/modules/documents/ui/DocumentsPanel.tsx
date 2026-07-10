@@ -49,6 +49,7 @@ import { MoveItemModal } from './MoveItemModal';
 import { RenameItemModal } from './RenameItemModal';
 import { DocumentsVaultAppearanceModal } from './DocumentsVaultAppearanceModal';
 import { DocumentFolderColorModal } from './DocumentFolderColorModal';
+import { DocumentAccessModal } from './DocumentAccessModal';
 import { surfaceAppearanceStyle } from '../../../shared/utils/surfaceStyles';
 import { isBusinessOwner } from '../../../shared/utils/moduleAccess';
 import { useSelector } from 'react-redux';
@@ -160,6 +161,14 @@ export default function DocumentsPanel({
   const [actionTargetFolderId, setActionTargetFolderId] = useState<number | null>(null);
   const [showVaultAppearance, setShowVaultAppearance] = useState(false);
   const [folderColorTarget, setFolderColorTarget] = useState<DocumentFolder | null>(null);
+  const [accessTarget, setAccessTarget] = useState<{
+    kind: 'folder' | 'document';
+    id: number;
+    name: string;
+    visibility: DocumentVisibility | FolderVisibility;
+    members: DocumentUserRef[];
+    allowInherit: boolean;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = useSelector((state: RootState) => state.auth.user);
   const canCustomizeVault = isBusinessOwner(user);
@@ -467,6 +476,22 @@ export default function DocumentsPanel({
     onDeleteDocument: (doc) => { void handleDeleteDocument(doc); },
     onMoveDocument: (doc) => setMoveTarget({ kind: 'document', id: doc.id }),
     onSetFolderColor: (folder) => setFolderColorTarget(folder),
+    onManageFolderAccess: (folder) => setAccessTarget({
+      kind: 'folder',
+      id: folder.id,
+      name: folder.name,
+      visibility: folder.visibility,
+      members: folder.members ?? [],
+      allowInherit: folder.parent_id != null,
+    }),
+    onManageDocumentAccess: (doc) => setAccessTarget({
+      kind: 'document',
+      id: doc.id,
+      name: doc.title,
+      visibility: doc.visibility,
+      members: doc.members ?? [],
+      allowInherit: doc.folder_id != null,
+    }),
   }), [handleDeleteDocument, handleDeleteFolder, openCreateFolderModal, openLinkModal, openUploadModal]);
 
   const loadMoreDocuments = () => {
@@ -940,6 +965,46 @@ export default function DocumentsPanel({
             .then(() => setFolderColorTarget(null));
         }}
       />
+
+      <DocumentAccessModal
+        open={Boolean(accessTarget)}
+        title={accessTarget?.kind === 'folder' ? 'Folder access' : 'File access'}
+        itemLabel={accessTarget?.name ?? ''}
+        visibility={accessTarget?.visibility ?? 'all_staff'}
+        members={accessTarget?.members ?? []}
+        allowInherit={accessTarget?.allowInherit ?? false}
+        loading={updateFolder.isPending || updateDocument.isPending}
+        onClose={() => setAccessTarget(null)}
+        onSave={(payload) => {
+          if (!accessTarget) return;
+          const accessError = validateAccessSelection(payload.visibility, payload.members);
+          if (accessError) {
+            showToast('error', accessError);
+            return;
+          }
+          if (accessTarget.kind === 'folder') {
+            void updateFolder.mutateAsync({
+              id: accessTarget.id,
+              visibility: payload.visibility as FolderVisibility,
+              member_user_ids: payload.member_user_ids,
+              member_roles: payload.member_roles,
+            }).then(() => {
+              setAccessTarget(null);
+              void invalidateDocuments();
+            });
+            return;
+          }
+          void updateDocument.mutateAsync({
+            id: accessTarget.id,
+            visibility: payload.visibility as DocumentVisibility,
+            member_user_ids: payload.member_user_ids,
+            member_roles: payload.member_roles,
+          }).then(() => {
+            setAccessTarget(null);
+            void invalidateDocuments();
+          });
+        }}
+      />
     </>
   );
 
@@ -1051,6 +1116,25 @@ export default function DocumentsPanel({
               if (!activeFolder) return;
               void handleDeleteFolder(activeFolder);
             }}
+            onManageFolderAccess={() => {
+              if (!activeFolder) return;
+              setAccessTarget({
+                kind: 'folder',
+                id: activeFolder.id,
+                name: activeFolder.name,
+                visibility: activeFolder.visibility,
+                members: activeFolder.members ?? [],
+                allowInherit: activeFolder.parent_id != null,
+              });
+            }}
+            onManageDocumentAccess={(doc) => setAccessTarget({
+              kind: 'document',
+              id: doc.id,
+              name: doc.title,
+              visibility: doc.visibility,
+              members: doc.members ?? [],
+              allowInherit: doc.folder_id != null,
+            })}
             onRecordView={handleRecordView}
             onSelectFolder={(folderId) => {
               setActiveFolderId(folderId);

@@ -13,6 +13,7 @@ import type {
   DocumentMemberRole,
   DocumentPaginationMeta,
   DocumentsVaultAppearance,
+  DocumentActivityItem,
   DocumentTag,
   DocumentUserRef,
   DocumentVisibility,
@@ -91,11 +92,25 @@ export function useUpdateDocumentsVaultAppearance() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: documentKeys.vaultAppearance() });
+      void qc.invalidateQueries({ queryKey: documentKeys.all });
       showToast('success', 'Vault appearance updated');
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       showToast('error', sanitizeErrorMessage(err, 'Could not update vault appearance'));
     },
+  });
+}
+
+export function useDocumentActivity(enabled = true, page = 1) {
+  return useQuery({
+    queryKey: documentKeys.activity(page),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(DOCUMENTS.ACTIVITY, { params: { page, per_page: 30 } });
+      return unwrapPaginated<DocumentActivityItem>(data);
+    },
+    enabled,
+    staleTime: 15_000,
+    refetchInterval: enabled ? 30_000 : false,
   });
 }
 

@@ -20,6 +20,7 @@ import {
   Home,
   Link2,
   Pencil,
+  Shield,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -90,6 +91,8 @@ interface DocumentDetailPaneProps {
   onRenameFolder?: () => void;
   onMoveFolder?: () => void;
   onDeleteFolder?: () => void;
+  onManageFolderAccess?: () => void;
+  onManageDocumentAccess?: (doc: DocumentItem) => void;
   onRecordView?: (doc: DocumentItem) => void;
   onSelectFolder?: (folderId: number | null) => void;
 }
@@ -155,6 +158,8 @@ export function DocumentDetailPane({
   onRenameFolder,
   onMoveFolder,
   onDeleteFolder,
+  onManageFolderAccess,
+  onManageDocumentAccess,
   onRecordView,
   onSelectFolder,
 }: DocumentDetailPaneProps) {
@@ -261,6 +266,15 @@ export function DocumentDetailPane({
                       disabled={!online}
                     />
                   )}
+                  {onManageFolderAccess && folder.can_manage && (
+                    <DocumentActionButton
+                      icon={<Shield className="h-4 w-4" />}
+                      label="Manage access"
+                      description="Control who can view and edit"
+                      onClick={onManageFolderAccess}
+                      disabled={!online}
+                    />
+                  )}
                   {onMoveFolder && folder.can_manage && (
                     <DocumentActionButton
                       icon={<FolderInput className="h-4 w-4" />}
@@ -328,6 +342,11 @@ export function DocumentDetailPane({
           {(document.can_edit || document.can_manage) && onMove && (
             <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => onMove(document)}>
               <FolderInput className="h-4 w-4" /> Move
+            </Button>
+          )}
+          {document.can_manage && onManageDocumentAccess && (
+            <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => onManageDocumentAccess(document)}>
+              <Shield className="h-4 w-4" /> Access
             </Button>
           )}
           {document.can_delete && onDelete && (

@@ -10,6 +10,8 @@ import {
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
 import { ExplorerRowMenu, type ExplorerMenuItem } from './ExplorerRowMenu';
 import { DocumentTagStrip } from './DocumentTagStrip';
+import { ExplorerFolderCount } from './ExplorerFolderCount';
+import { DocumentExplorerActivity } from './DocumentExplorerActivity';
 import { resolveFolderColor } from '../api/documentColorUtils';
 import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -27,6 +29,7 @@ import {
   Pencil,
   RefreshCw,
   Search,
+  Shield,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -44,6 +47,8 @@ export interface DocumentExplorerActions {
   onDeleteDocument?: (doc: DocumentItem) => void;
   onMoveDocument?: (doc: DocumentItem) => void;
   onSetFolderColor?: (folder: DocumentFolder) => void;
+  onManageFolderAccess?: (folder: DocumentFolder) => void;
+  onManageDocumentAccess?: (doc: DocumentItem) => void;
 }
 
 interface DocumentExplorerProps {
@@ -104,6 +109,15 @@ function folderMenuItems(folder: DocumentFolder, actions: DocumentExplorerAction
       onClick: () => actions.onCreateSubfolder?.(folder),
     });
   }
+  if (actions.onManageFolderAccess && folder.can_manage) {
+    items.push({
+      id: 'access',
+      label: 'Manage access',
+      icon: <Shield className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onManageFolderAccess?.(folder),
+    });
+  }
   if (actions.onSetFolderColor && folder.can_manage) {
     items.push({
       id: 'color',
@@ -149,6 +163,15 @@ function documentMenuItems(doc: DocumentItem, actions: DocumentExplorerActions |
   if (!actions) return [];
   const items: ExplorerMenuItem[] = [];
 
+  if (actions.onManageDocumentAccess && doc.can_manage) {
+    items.push({
+      id: 'access',
+      label: 'Manage access',
+      icon: <Shield className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onManageDocumentAccess?.(doc),
+    });
+  }
   if (actions.onRenameDocument && (doc.can_edit || doc.can_manage)) {
     items.push({
       id: 'rename',
@@ -312,17 +335,14 @@ function ExplorerFolderNode({
           onClick={handleRowClick}
           title={folder.name}
           className={cn(
-            'relative flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left text-[13px] leading-5',
+            'flex min-w-0 flex-1 items-center gap-1.5 py-1.5 pr-1 text-left text-[13px] leading-5',
             folderSelected ? 'font-medium text-indigo-700' : cn('text-gray-800', DOCUMENT_SURFACE.rowHover),
           )}
           style={{ paddingLeft: `${4 + depth * INDENT}px` }}
         >
-          <span
-            className="absolute bottom-1 top-1 w-1 rounded-full"
-            style={{ left: `${depth * INDENT}px`, backgroundColor: folderColor }}
-          />
-          <DocumentFolderIcon open={expanded && folderSelected} tint={folderColor} />
-          <span className="truncate">{truncateDisplayName(folder.name, 40)}</span>
+          <DocumentFolderIcon open={expanded || folderSelected} tint={folderColor} />
+          <span className="min-w-0 truncate">{truncateDisplayName(folder.name, 36)}</span>
+          <ExplorerFolderCount folder={folder} />
         </button>
         <ExplorerRowMenu items={menuItems} className="mr-1" />
       </div>
@@ -662,6 +682,8 @@ export function DocumentExplorer({
           </div>
         )}
       </div>
+
+      <DocumentExplorerActivity enabled={online} />
     </div>
   );
 }

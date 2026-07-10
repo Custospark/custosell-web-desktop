@@ -22,9 +22,11 @@ Introduce **Cabinets** as the top-level container for folders and files.
 | Folder/file ACL | Unchanged — `inherit` walks folder chain, then **cabinet ACL** |
 | Precedence | Module gate → owner override → resource ACL (if not inherit) → folder chain → cabinet |
 | Migration | Auto-create **General** (`all_staff`) per business; assign existing folders/files |
+| Starter canvases | Seeded with remote gallery images + solid `cover_color` fallback |
 | Root files | Must belong to a cabinet (no loose business root) |
 | Create cabinets | Any user with `documents` module |
 | Delete cabinet | Block when folders or documents remain |
+| Member roles | `viewer` / `contributor` / `manager` on `selected_staff`; creator + business owner always manager |
 | Vault appearance | Business-wide (not per-cabinet in v1) |
 
 ## API

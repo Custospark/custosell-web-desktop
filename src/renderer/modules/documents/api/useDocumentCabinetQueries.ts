@@ -118,9 +118,26 @@ export function useDeleteDocumentCabinet() {
   return useMutation({
     mutationFn: async (id: number) => {
       await axiosInstance.delete(DOCUMENTS.CABINET(id));
+      return id;
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: documentKeys.all });
+    onSuccess: async (id) => {
+      qc.setQueriesData<PaginatedDocumentCabinets>(
+        { queryKey: [...documentKeys.all, 'cabinets'] },
+        (current) => {
+          if (!current?.data) return current;
+          const data = current.data.filter((cabinet) => cabinet.id !== id);
+          return {
+            ...current,
+            data,
+            meta: {
+              ...current.meta,
+              total: data.length,
+            },
+          };
+        },
+      );
+      qc.removeQueries({ queryKey: documentKeys.cabinet(id) });
+      await qc.invalidateQueries({ queryKey: documentKeys.all });
       showToast('success', 'Cabinet deleted');
     },
     onError: (err: AxiosError<{ message?: string }>) => {

@@ -56,6 +56,8 @@ export interface SurfaceAppearance {
 }
 
 export function surfaceAppearanceStyle(appearance: SurfaceAppearance): CSSProperties {
+  const solidFallback = appearance.cover_color ?? '#6366f1';
+
   if (appearance.background_type === 'color' && appearance.background_value) {
     return { backgroundColor: appearance.background_value };
   }
@@ -64,8 +66,11 @@ export function surfaceAppearanceStyle(appearance: SurfaceAppearance): CSSProper
     appearance.background_type ?? undefined,
     appearance.background_value,
   );
-  if (imageUrl && appearance.background_type === 'gallery') {
-    return surfaceImageBackgroundStyle(imageUrl);
+  if (imageUrl && (appearance.background_type === 'gallery' || appearance.background_type === 'upload')) {
+    return {
+      backgroundColor: solidFallback,
+      ...surfaceImageBackgroundStyle(imageUrl),
+    };
   }
 
   return surfaceGradientStyle(appearance.cover_color);

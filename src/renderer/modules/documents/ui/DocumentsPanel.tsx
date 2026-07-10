@@ -328,8 +328,9 @@ export default function DocumentsPanel({
     : Boolean(documentsMeta && documentsMeta.current_page < documentsMeta.last_page);
 
   const canContribute = activeFolderId
-    ? (contents?.folder ? contents.folder.can_contribute : true)
-    : true;
+    ? (contents?.folder ? contents.folder.can_contribute : Boolean(cabinet?.can_contribute))
+    : Boolean(cabinet?.can_contribute ?? true);
+  const isViewerOnly = Boolean(cabinet) && !canContribute && !cabinet?.can_manage;
 
   const invalidateDocuments = useCallback(async () => {
     await qc.invalidateQueries({ queryKey: documentKeys.all });
@@ -880,7 +881,7 @@ export default function DocumentsPanel({
               <Grid3X3 className="h-4 w-4" />
             </button>
           </div>
-          <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => openCreateFolderModal(activeFolderId)}>
+          <Button type="button" variant="secondary" size="sm" disabled={!online || !canContribute} onClick={() => openCreateFolderModal(activeFolderId)}>
             <FolderPlus className="h-4 w-4" /> Folder
           </Button>
           <Button type="button" size="sm" disabled={!online || !canContribute} onClick={() => openUploadModal(activeFolderId)}>
@@ -1064,6 +1065,7 @@ export default function DocumentsPanel({
         title={moveTarget?.kind === 'folder' ? 'Move folder' : 'Move document'}
         tree={moveTree}
         movingFolderId={moveTarget?.kind === 'folder' ? moveTarget.id : null}
+        allowRoot={moveTarget?.kind === 'folder' ? Boolean(cabinet?.can_manage ?? true) : canContribute}
         loading={updateFolder.isPending || updateDocument.isPending}
         onConfirm={(targetFolderId) => void handleMoveConfirm(targetFolderId)}
       />
@@ -1350,6 +1352,7 @@ export default function DocumentsPanel({
         <aside className="flex h-[min(50vh,28rem)] w-full shrink-0 flex-col p-1.5 sm:p-2 lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96">
           <DocumentExplorer
             cabinetId={effectiveCabinetId}
+            cabinetName={cabinet?.name ?? title}
             cabinetVisibility={cabinet?.visibility}
             cabinetMemberRole={cabinet?.current_member_role}
             activeFolderId={activeFolderId}
@@ -1361,6 +1364,7 @@ export default function DocumentsPanel({
             dropTargetFolderId={dropTargetFolderId}
             online={online}
             canContribute={canContribute}
+            isViewerOnly={isViewerOnly}
             actions={explorerActions}
             onSearchChange={setSearch}
             onTagFilterChange={setTagFilter}
@@ -1524,7 +1528,7 @@ export default function DocumentsPanel({
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => openCreateFolderModal(activeFolderId)}>
+              <Button type="button" variant="secondary" size="sm" disabled={!online || !canContribute} onClick={() => openCreateFolderModal(activeFolderId)}>
                 <FolderPlus className="h-4 w-4" /> Folder
               </Button>
               <Button type="button" size="sm" disabled={!online || !canContribute} onClick={() => openUploadModal(activeFolderId)}>

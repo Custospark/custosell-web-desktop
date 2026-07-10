@@ -66,7 +66,7 @@ function DocumentAccessForm({
       <DocumentModalHero
         icon={Shield}
         title="Manage access"
-        description={`Choose visibility and collaborators for ${itemLabel}.`}
+        description={`Choose visibility and people for ${itemLabel}.`}
         tone="blue"
       />
 

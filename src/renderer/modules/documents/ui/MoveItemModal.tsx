@@ -13,6 +13,7 @@ interface MoveItemModalProps {
   title: string;
   tree: DocumentFolder[];
   movingFolderId?: number | null;
+  allowRoot?: boolean;
   onConfirm: (targetFolderId: number | null) => void;
   loading?: boolean;
 }
@@ -23,6 +24,7 @@ export function MoveItemModal({
   title,
   tree,
   movingFolderId = null,
+  allowRoot = true,
   onConfirm,
   loading = false,
 }: MoveItemModalProps) {
@@ -35,8 +37,13 @@ export function MoveItemModal({
   );
 
   const options = useMemo(() => {
-    return flat.filter((folder) => !blockedIds.has(folder.id) && folder.can_manage !== false);
-  }, [flat, blockedIds]);
+    // Folder moves require manage on the destination; document moves need contribute.
+    return flat.filter((folder) => {
+      if (blockedIds.has(folder.id)) return false;
+      if (movingFolderId != null) return folder.can_manage !== false;
+      return folder.can_contribute !== false;
+    });
+  }, [flat, blockedIds, movingFolderId]);
 
   return (
     <Modal isOpen={open} onClose={onClose} title={title} subtitle="Choose where to move this item." size="lg">
@@ -49,17 +56,19 @@ export function MoveItemModal({
         />
 
         <DocumentFormSection title="Destination" icon={Folder}>
-          <button
-            type="button"
-            onClick={() => setTargetId(null)}
-            className={cn(
-              'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
-              targetId === null ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-gray-200 hover:border-gray-300',
-            )}
-          >
-            <Folder className="h-4 w-4 text-gray-500" />
-            Root level
-          </button>
+          {allowRoot && (
+            <button
+              type="button"
+              onClick={() => setTargetId(null)}
+              className={cn(
+                'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+                targetId === null ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-gray-200 hover:border-gray-300',
+              )}
+            >
+              <Folder className="h-4 w-4 text-gray-500" />
+              Root level
+            </button>
+          )}
 
           <div className="max-h-64 space-y-1 overflow-y-auto">
             {options.map((folder) => (
@@ -83,7 +92,14 @@ export function MoveItemModal({
 
         <DocumentModalFooter>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="button" loading={loading} onClick={() => onConfirm(targetId)}>Move here</Button>
+          <Button
+            type="button"
+            loading={loading}
+            disabled={!allowRoot && targetId === null}
+            onClick={() => onConfirm(targetId)}
+          >
+            Move here
+          </Button>
         </DocumentModalFooter>
       </div>
     </Modal>

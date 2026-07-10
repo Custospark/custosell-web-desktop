@@ -14,9 +14,9 @@ export const DOCUMENT_ACCESS_OPTIONS: {
 ];
 
 export const ACCESS_ROLE_OPTIONS: { value: 'viewer' | 'contributor' | 'manager'; label: string; hint: string }[] = [
-  { value: 'viewer', label: 'Can view', hint: 'Open and download only' },
-  { value: 'contributor', label: 'Can add & edit', hint: 'Upload, rename, and move files' },
-  { value: 'manager', label: 'Full control', hint: 'Manage access, folders, and deletions' },
+  { value: 'viewer', label: 'Viewer', hint: 'Open and download only' },
+  { value: 'contributor', label: 'Contributor', hint: 'Upload and manage your own files' },
+  { value: 'manager', label: 'Manager', hint: 'Full control — access, folders, and deletions' },
 ];
 
 export const ACCESS_VISIBILITY_LABEL: Record<AccessVisibilityValue, string> = {

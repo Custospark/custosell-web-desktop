@@ -28,6 +28,7 @@ export function cabinetCardHeroStyle(cabinet: {
   const accent = cabinet.cover_color ?? '#6366f1';
   if (cabinet.background_type === 'gallery' && cabinet.background_value) {
     return {
+      backgroundColor: accent,
       backgroundImage: `linear-gradient(135deg, ${accent}88 0%, rgba(15,23,42,0.55) 100%), url(${cabinet.background_value})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',

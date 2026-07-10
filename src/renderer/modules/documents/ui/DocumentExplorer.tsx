@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import { truncateDisplayName, documentIconLabel } from '../api/documentDisplayUtils';
 import type { CabinetVisibility, DocumentFolder, DocumentItem, DocumentMemberRole } from '../api/documentTypes';
@@ -64,6 +64,7 @@ export interface DocumentExplorerActions {
 
 interface DocumentExplorerProps {
   cabinetId: number;
+  cabinetName?: string;
   cabinetVisibility?: CabinetVisibility;
   cabinetMemberRole?: DocumentMemberRole | null;
   activeFolderId: number | null;
@@ -75,6 +76,7 @@ interface DocumentExplorerProps {
   dropTargetFolderId: number | 'panel' | 'root' | null;
   online: boolean;
   canContribute: boolean;
+  isViewerOnly?: boolean;
   actions?: DocumentExplorerActions;
   onSearchChange: (value: string) => void;
   onTagFilterChange: (value: string) => void;
@@ -472,6 +474,7 @@ function ExplorerFolderNode({
 
 export function DocumentExplorer({
   cabinetId,
+  cabinetName,
   cabinetVisibility,
   cabinetMemberRole,
   activeFolderId,
@@ -483,6 +486,7 @@ export function DocumentExplorer({
   dropTargetFolderId,
   online,
   canContribute,
+  isViewerOnly = false,
   actions,
   onSearchChange,
   onTagFilterChange,
@@ -517,19 +521,43 @@ export function DocumentExplorer({
     { root_only: true, cabinet_id: cabinetId, per_page: 100 },
     !searching && cabinetId > 0,
   );
-  const { data: searchPages, isLoading: searchLoading } = useDocuments(
-    {
-      q: searchQuery.trim() || undefined,
-      tag: tagFilter.trim() || undefined,
-      cabinet_id: cabinetId,
-      per_page: 50,
-    },
+  const {
+    data: cabinetDocsPages,
+    isLoading: cabinetDocsLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useDocuments(
+    { cabinet_id: cabinetId, per_page: 200 },
     searching && cabinetId > 0,
   );
 
+  useEffect(() => {
+    if (!searching || !hasNextPage || isFetchingNextPage) return;
+    void fetchNextPage();
+  }, [searching, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const rootFolders = rootFoldersPage?.data ?? [];
   const rootDocuments = rootDocsPage?.pages[0]?.data ?? [];
-  const searchResults = searchPages?.pages.flatMap((page) => page.data) ?? [];
+  const cabinetDocuments = useMemo(
+    () => cabinetDocsPages?.pages.flatMap((page) => page.data) ?? [],
+    [cabinetDocsPages],
+  );
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const tag = tagFilter.trim().toLowerCase();
+    return cabinetDocuments.filter((doc) => {
+      const haystack = [
+        doc.title,
+        doc.file_name ?? '',
+        doc.folder_path ?? '',
+        doc.description ?? '',
+      ].join(' ').toLowerCase();
+      const nameMatch = !q || haystack.includes(q);
+      const tagMatch = !tag || doc.tags.some((item) => item.name.toLowerCase().includes(tag));
+      return nameMatch && tagMatch;
+    });
+  }, [cabinetDocuments, searchQuery, tagFilter]);
 
   const isFolderExpanded = useCallback((id: number) => (
     (expandedIds.has(id) || expandSet.has(id)) && !collapsedIds.has(id)
@@ -572,7 +600,9 @@ export function DocumentExplorer({
       return next;
     });
   };
-  const loading = searching ? searchLoading : (rootFoldersLoading || rootDocsLoading);
+  const loading = searching
+    ? (cabinetDocsLoading || (hasNextPage && isFetchingNextPage && cabinetDocuments.length === 0))
+    : (rootFoldersLoading || rootDocsLoading);
 
   return (
     <div className={cn('h-full min-h-0 text-gray-900', DOCUMENT_SURFACE.explorer)}>
@@ -584,6 +614,11 @@ export function DocumentExplorer({
               memberRole={cabinetMemberRole}
             />
           </div>
+        )}
+        {isViewerOnly && (
+          <p className="mb-2 rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-snug text-amber-900">
+            You have viewer access on this cabinet — you can browse and download, but cannot add or change files.
+          </p>
         )}
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
           <Button
@@ -616,7 +651,7 @@ export function DocumentExplorer({
             variant="secondary"
             size="sm"
             className="h-8 justify-center px-1.5 text-[11px] sm:px-2 sm:text-xs"
-            disabled={!online}
+            disabled={!online || !canContribute}
             onClick={onCreateFolder}
             title="Create a new folder"
           >
@@ -637,13 +672,20 @@ export function DocumentExplorer({
           </Button>
         </div>
 
-        <div className="mt-2 flex items-center justify-end gap-1">
+        <div className="mt-2 flex items-center gap-1">
+          {cabinetName ? (
+            <p className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-800" title={cabinetName}>
+              {cabinetName}
+            </p>
+          ) : (
+            <span className="flex-1" />
+          )}
           {onCustomizeCanvas && (
             <button
               type="button"
               title="Customize canvas"
               onClick={onCustomizeCanvas}
-              className="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-indigo-600"
+              className="shrink-0 rounded p-1 text-gray-500 hover:bg-white/70 hover:text-indigo-600"
             >
               <Palette className="h-3.5 w-3.5" />
             </button>
@@ -652,7 +694,7 @@ export function DocumentExplorer({
             type="button"
             title="Refresh"
             onClick={onRefresh}
-            className="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-gray-800"
+            className="shrink-0 rounded p-1 text-gray-500 hover:bg-white/70 hover:text-gray-800"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
@@ -660,7 +702,7 @@ export function DocumentExplorer({
             type="button"
             title="Collapse all folders"
             onClick={collapseAll}
-            className="rounded p-1 text-gray-500 hover:bg-white/70 hover:text-gray-800"
+            className="shrink-0 rounded p-1 text-gray-500 hover:bg-white/70 hover:text-gray-800"
           >
             <ChevronsDownUp className="h-3.5 w-3.5" />
           </button>
@@ -673,7 +715,7 @@ export function DocumentExplorer({
           <input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by name or tag…"
+            placeholder="Search files in this cabinet…"
             className="w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 pl-7 pr-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
           />
         </div>

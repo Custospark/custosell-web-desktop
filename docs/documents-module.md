@@ -14,8 +14,16 @@ Business-wide file vault for Custosell — nested folders, live ACL inheritance,
 |------------|---------|
 | `inherit` | Use parent folder ACL (files + subfolders) |
 | `all_staff` | All staff with `documents` module (contributor-level) |
-| `selected_staff` | Explicit members with viewer / contributor / manager roles |
-| `owner_only` | Only me (visible only to you) |
+| `selected_staff` | Explicit members with **viewer** / **contributor** / **manager** roles |
+| `owner_only` | Only me (creator/uploader + business owner) |
+
+### Member roles (selected staff)
+
+| Role | Can do |
+|------|--------|
+| **Viewer** | Browse and download only |
+| **Contributor** | Upload; edit/delete **own** files |
+| **Manager** | Full control — folders, others’ files, access, cabinet settings |
 
 Staff pickers load **all active business staff** via `GET /documents/accessible-members` (or Settings `useStaff()` when the user has Settings access). Inactive staff are excluded.
 
@@ -29,7 +37,9 @@ Vault canvas (gradient, solid color, or gallery photo) is stored per business:
 
 Explorer uses frosted-glass panels and pipeline-style gradient canvas (see `shared/utils/surfaceStyles.ts`).
 
-**Scale:** See [ADR: Documents explorer scale](./adr/2026-07-10-documents-explorer-scale.md) — lazy tree + search work well to ~tens of thousands of items; millions require virtualization and cursor pagination (roadmap).
+**Scale:** See [ADR: Documents explorer scale](./adr/2026-07-10-documents-explorer-scale.md) — lazy tree + client-side file search work well to ~tens of thousands of items; millions require virtualization and cursor pagination (roadmap).
+
+**Explorer file search:** Loads cabinet files once, then filters by name/path/tags in the browser (no per-keystroke API search).
 
 **Activity:** `GET /documents/activity?cabinet_id=&page=` — per-cabinet feed in the explorer sidebar footer (VS Code–style). **`cabinet_id` required**; events are stored with `cabinet_id` on `document_activity_logs`.
 
@@ -46,6 +56,7 @@ See `Backend/routes/api/v1/documents.php`. Middleware: `auth:sanctum`, `business
 - `GET/POST /documents/cabinets` — list (paginated) / create
 - `GET/PATCH/DELETE /documents/cabinets/{id}` — show / update / delete (delete blocked if contents exist)
 - Each business receives starter cabinets (**General**, **HR**, **Finance**, **Legal & Compliance**, **Sales & Marketing**, **Operations**) on create; users can rename them
+- Starter cabinets ship with a remote gallery photo (`background_type: gallery`) and a solid `cover_color` fallback if the image cannot load
 - Root folders, root uploads, and root links require `cabinet_id`
 - Per-cabinet canvas: `cover_color`, `background_type`, `background_value` on cabinet settings
 

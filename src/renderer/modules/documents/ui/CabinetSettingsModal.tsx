@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Archive, Palette, Shield, Type } from 'lucide-react';
+import { Archive, Palette, Shield, Trash2, Type } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { SurfaceAppearancePicker } from './SurfaceAppearancePicker';
 import { CABINET_ACCESS_OPTIONS } from './cabinetMeta';
@@ -18,6 +19,7 @@ import type {
 } from '../api/documentTypes';
 import {
   cabinetMemberPayload,
+  useDeleteDocumentCabinet,
   useUpdateDocumentCabinet,
 } from '../api/useDocumentCabinetQueries';
 
@@ -26,6 +28,7 @@ interface CabinetSettingsModalProps {
   cabinet: DocumentCabinet;
   onClose: () => void;
   onSaved?: (cabinet: DocumentCabinet) => void;
+  onDeleted?: () => void;
 }
 
 function cabinetAppearance(cabinet: DocumentCabinet): DocumentsVaultAppearance {
@@ -40,17 +43,25 @@ function CabinetSettingsForm({
   cabinet,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   cabinet: DocumentCabinet;
   onClose: () => void;
   onSaved?: (cabinet: DocumentCabinet) => void;
+  onDeleted?: () => void;
 }) {
+  const { confirm } = useConfirm();
   const updateCabinet = useUpdateDocumentCabinet();
+  const deleteCabinet = useDeleteDocumentCabinet();
   const [name, setName] = useState(cabinet.name);
   const [description, setDescription] = useState(cabinet.description ?? '');
   const [visibility, setVisibility] = useState<CabinetVisibility>(cabinet.visibility);
   const [members, setMembers] = useState<DocumentUserRef[]>(cabinet.members ?? []);
   const [appearance, setAppearance] = useState<DocumentsVaultAppearance>(() => cabinetAppearance(cabinet));
+
+  const folderCount = cabinet.folder_count ?? 0;
+  const documentCount = cabinet.document_count ?? 0;
+  const hasContents = folderCount > 0 || documentCount > 0;
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -69,6 +80,26 @@ function CabinetSettingsForm({
       });
       onSaved?.(updated);
       onClose();
+    } catch {
+      // Toast handled by mutation
+    }
+  };
+
+  const handleDelete = async () => {
+    if (hasContents) return;
+
+    const accepted = await confirm({
+      title: `Delete "${cabinet.name}"?`,
+      message: 'This permanently removes the empty cabinet. You cannot undo this.',
+      confirmText: 'Delete cabinet',
+      variant: 'danger',
+    });
+    if (!accepted) return;
+
+    try {
+      await deleteCabinet.mutateAsync(cabinet.id);
+      onClose();
+      onDeleted?.();
     } catch {
       // Toast handled by mutation
     }
@@ -135,6 +166,29 @@ function CabinetSettingsForm({
         />
       </DocumentFormSection>
 
+      {cabinet.can_manage && (
+        <DocumentFormSection
+          title="Danger zone"
+          icon={Trash2}
+          description={
+            hasContents
+              ? `This cabinet has ${folderCount} folder${folderCount === 1 ? '' : 's'} and ${documentCount} file${documentCount === 1 ? '' : 's'}. Empty it before deleting.`
+              : 'Delete this empty cabinet permanently.'
+          }
+        >
+          <Button
+            type="button"
+            variant="danger"
+            loading={deleteCabinet.isPending}
+            disabled={hasContents || deleteCabinet.isPending}
+            onClick={() => void handleDelete()}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete cabinet
+          </Button>
+        </DocumentFormSection>
+      )}
+
       <DocumentModalFooter>
         <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
         <Button
@@ -155,13 +209,14 @@ export default function CabinetSettingsModal({
   cabinet,
   onClose,
   onSaved,
+  onDeleted,
 }: CabinetSettingsModalProps) {
   return (
     <Modal
       isOpen={open}
       onClose={onClose}
       title="Cabinet settings"
-      subtitle="Rename, control access, and customize the workspace canvas."
+      subtitle="Rename, control access, customize the canvas, or delete an empty cabinet."
       size="xl"
     >
       {open && (
@@ -170,6 +225,7 @@ export default function CabinetSettingsModal({
           cabinet={cabinet}
           onClose={onClose}
           onSaved={onSaved}
+          onDeleted={onDeleted}
         />
       )}
     </Modal>

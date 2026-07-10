@@ -92,6 +92,7 @@ export default function DocumentsCabinetPage() {
           open={settingsOpen}
           cabinet={cabinet}
           onClose={() => setSettingsOpen(false)}
+          onDeleted={() => navigate(ROUTES.DOCUMENTS.INDEX)}
         />
       )}
     </div>

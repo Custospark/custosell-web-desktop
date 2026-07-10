@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { DOCUMENTS } from './documentEndpoints';
 import type { DocumentItem, DocumentMemberRole, DocumentVisibility } from './documentTypes';
+import { canInlineViewDocument } from './documentFileViewUtils';
 
 function unwrapEntity<T>(payload: unknown): T {
   if (payload && typeof payload === 'object' && 'data' in (payload as object)) {
@@ -93,21 +94,24 @@ export async function downloadFileWithProgress(
   });
 }
 
-export function isPdfDocument(doc: Pick<DocumentItem, 'mime_type' | 'file_name'>): boolean {
-  if (doc.mime_type === 'application/pdf') return true;
-  return doc.file_name?.toLowerCase().endsWith('.pdf') ?? false;
-}
-
-export function isImageDocument(doc: Pick<DocumentItem, 'mime_type' | 'type'>): boolean {
-  if (doc.type === 'image') return true;
-  return doc.mime_type?.startsWith('image/') ?? false;
-}
+export {
+  isPdfDocument,
+  isImageDocument,
+  canInlineViewDocument,
+  isAudioDocument,
+  isVideoDocument,
+  DOCUMENT_MEDIA_MAX_BYTES,
+} from './documentFileViewUtils';
 
 export function formatDocumentBytes(size?: number | null): string {
   if (!size || size <= 0) return '—';
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function canPreviewDocument(doc: DocumentItem): boolean {
+  return canInlineViewDocument(doc);
 }
 
 export function createTransferId(prefix: string): string {
@@ -138,9 +142,4 @@ export async function downloadFolderExportWithProgress(
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(objectUrl);
-}
-
-export function canPreviewDocument(doc: DocumentItem): boolean {
-  if (doc.type === 'link' || !doc.file_url) return false;
-  return isPdfDocument(doc) || isImageDocument(doc);
 }

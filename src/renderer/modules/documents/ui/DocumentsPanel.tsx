@@ -22,7 +22,12 @@ import {
   downloadFolderExportWithProgress,
   uploadDocumentWithProgress,
   createTransferId,
+  formatDocumentBytes,
 } from '../api/documentTransferUtils';
+import {
+  DOCUMENT_MEDIA_MAX_BYTES,
+  isMediaFile,
+} from '../api/documentFileViewUtils';
 import { importFolderTree } from '../api/documentFolderImport';
 import { canCreateSubfolderAtDepth, DOCUMENTS_MAX_FOLDER_DEPTH } from '../api/documentConstants';
 import { axiosInstance } from '../../../app/api/axiosConfig';
@@ -332,6 +337,13 @@ export default function DocumentsPanel({
     const targetFolderId = actionTargetFolderId ?? activeFolderId;
     const fileArray = Array.from(files);
     for (const file of fileArray) {
+      if (isMediaFile(file) && file.size > DOCUMENT_MEDIA_MAX_BYTES) {
+        showToast(
+          'error',
+          `${file.name} exceeds the 10 MB limit for audio/video (${formatDocumentBytes(file.size)}).`,
+        );
+        continue;
+      }
       const transferId = createTransferId(`upload-${file.name}`);
       upsertTransfer(transferId, { name: file.name, kind: 'upload', percent: 0 });
       try {
@@ -565,6 +577,9 @@ export default function DocumentsPanel({
           return created;
         },
         uploadFile: async (file, folderId) => {
+          if (isMediaFile(file) && file.size > DOCUMENT_MEDIA_MAX_BYTES) {
+            throw new Error(`${file.name} exceeds the 10 MB audio/video limit.`);
+          }
           await uploadDocumentWithProgress({
             file,
             title: file.name,

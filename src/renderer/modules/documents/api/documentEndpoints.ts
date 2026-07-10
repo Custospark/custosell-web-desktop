@@ -17,4 +17,5 @@ export const DOCUMENTS = {
   DOWNLOAD: (id: number) => `/documents/${id}/download`,
   EMAIL: (id: number) => `/documents/${id}/email`,
   FOLDER_EMAIL: (id: number) => `/documents/folders/${id}/email`,
+  CONTENT: (id: number) => `/documents/${id}/content`,
 };

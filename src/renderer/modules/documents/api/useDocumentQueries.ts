@@ -388,3 +388,43 @@ export function useRecordDocumentDownload() {
     },
   });
 }
+
+export type DocumentFileContent = {
+  content: string;
+  content_type: 'text' | 'csv' | 'word';
+  encoding: string;
+  editable: boolean;
+  truncated: boolean;
+};
+
+export function useDocumentContent(id: number, enabled = true) {
+  return useQuery({
+    queryKey: [...documentKeys.detail(id), 'content'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(DOCUMENTS.CONTENT(id));
+      return unwrapEntity<DocumentFileContent>(data);
+    },
+    enabled: enabled && id > 0,
+    staleTime: 5_000,
+  });
+}
+
+export function useUpdateDocumentContent() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, content }: { id: number; content: string }) => {
+      const { data } = await axiosInstance.put(DOCUMENTS.CONTENT(id), { content });
+      return unwrapEntity<DocumentItem>(data);
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: documentKeys.detail(vars.id) });
+      void qc.invalidateQueries({ queryKey: [...documentKeys.detail(vars.id), 'content'] });
+      void qc.invalidateQueries({ queryKey: documentKeys.all });
+      showToast('success', 'File saved');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not save file'));
+    },
+  });
+}

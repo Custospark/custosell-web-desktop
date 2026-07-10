@@ -4,7 +4,16 @@ import { cn } from '../../../shared/utils/cn';
 import type { DocumentFolder, DocumentItem } from '../api/documentTypes';
 import { ACCESS_VISIBILITY_LABEL } from '../api/documentAccessLabels';
 import { documentPrimaryLabel, documentSecondaryLabel } from '../api/documentDisplayUtils';
-import { canPreviewDocument, formatDocumentBytes, isImageDocument, isPdfDocument } from '../api/documentTransferUtils';
+import {
+  canInlineViewDocument,
+  isAudioDocument,
+  isImageDocument,
+  isPdfDocument,
+  isTextViewableDocument,
+  isVideoDocument,
+} from '../api/documentFileViewUtils';
+import { formatDocumentBytes } from '../api/documentTransferUtils';
+import { DocumentRichFileViewer } from './DocumentRichFileViewer';
 import { DocumentActionButton } from './DocumentActionButton';
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
 import { DocumentUserAttribution } from './DocumentUserAttribution';
@@ -30,12 +39,17 @@ import {
 interface DocumentPreviewContentProps {
   document: DocumentItem;
   className?: string;
+  online?: boolean;
 }
 
-export function DocumentPreviewContent({ document, className }: DocumentPreviewContentProps) {
+export function DocumentPreviewContent({ document, className, online = true }: DocumentPreviewContentProps) {
   const pdf = isPdfDocument(document);
   const image = isImageDocument(document);
+  const audio = isAudioDocument(document);
+  const video = isVideoDocument(document);
+  const textViewable = isTextViewableDocument(document);
   const previewUrl = document.file_url;
+  const richMediaOrText = audio || video || textViewable;
 
   return (
     <div className={cn('overflow-hidden rounded-xl border border-gray-200 bg-gray-50', className)}>
@@ -51,6 +65,9 @@ export function DocumentPreviewContent({ document, className }: DocumentPreviewC
           <img src={previewUrl} alt={document.title} className="max-h-[70vh] max-w-full object-contain" />
         </div>
       )}
+      {richMediaOrText && (
+        <DocumentRichFileViewer document={document} online={online} />
+      )}
       {document.type === 'link' && (
         <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
           <DocumentItemIcon doc={document} size="md" />
@@ -62,7 +79,7 @@ export function DocumentPreviewContent({ document, className }: DocumentPreviewC
           )}
         </div>
       )}
-      {!pdf && !image && document.type !== 'link' && null}
+      {!pdf && !image && !richMediaOrText && document.type !== 'link' && null}
     </div>
   );
 }
@@ -364,7 +381,7 @@ export function DocumentDetailPane({
   }
 
   const label = documentPrimaryLabel(document);
-  const showInlinePreview = document.type === 'link' || canPreviewDocument(document);
+  const showInlinePreview = document.type === 'link' || canInlineViewDocument(document);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white/80 backdrop-blur-md">
@@ -432,7 +449,7 @@ export function DocumentDetailPane({
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {showInlinePreview ? (
           <>
-            <DocumentPreviewContent document={document} className="min-h-[420px]" />
+            <DocumentPreviewContent document={document} className="min-h-[420px]" online={online} />
             <div className={cn('mt-4 px-4 py-3', DOCUMENT_SURFACE.panel)}>
               <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
               <DocumentTagChips tags={document.tags} className="mt-3" />

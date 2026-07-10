@@ -3,7 +3,10 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Download, ExternalLink } from 'lucide-react';
 import type { DocumentItem } from '../api/documentTypes';
-import { isImageDocument, isPdfDocument } from '../api/documentTransferUtils';
+import {
+  canInlineViewDocument,
+} from '../api/documentFileViewUtils';
+import { DocumentPreviewContent } from './DocumentDetailPane';
 import { DocumentUserAttribution } from './DocumentUserAttribution';
 
 interface DocumentPreviewModalProps {
@@ -12,6 +15,7 @@ interface DocumentPreviewModalProps {
   onClose: () => void;
   onDownload?: (doc: DocumentItem) => void;
   onRecordView?: (doc: DocumentItem) => void;
+  online?: boolean;
 }
 
 export function DocumentPreviewModal({
@@ -20,6 +24,7 @@ export function DocumentPreviewModal({
   onClose,
   onDownload,
   onRecordView,
+  online = true,
 }: DocumentPreviewModalProps) {
   useEffect(() => {
     if (open && document && onRecordView) {
@@ -29,34 +34,20 @@ export function DocumentPreviewModal({
 
   if (!document) return null;
 
-  const pdf = isPdfDocument(document);
-  const image = isImageDocument(document);
-  const previewUrl = document.file_url;
+  const canPreview = canInlineViewDocument(document);
 
   return (
     <Modal isOpen={open} onClose={onClose} title={document.title} size="xl">
       <div className="space-y-4">
         <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-          {pdf && previewUrl && (
-            <iframe
-              title={document.title}
-              src={previewUrl}
-              className="h-[min(70vh,640px)] w-full bg-white"
-            />
-          )}
-          {image && previewUrl && (
-            <div className="flex max-h-[min(70vh,640px)] items-center justify-center p-4">
-              <img src={previewUrl} alt={document.title} className="max-h-full max-w-full object-contain" />
-            </div>
-          )}
-          {!pdf && !image && (
-            <div className="px-6 py-12 text-center text-sm text-gray-500">
-              Preview is not available for this file type.
-            </div>
-          )}
-        </div>
+        {canPreview ? (
+          <DocumentPreviewContent document={document} className="min-h-[min(70vh,640px)]" online={online} />
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+            Preview is not available for this file type.
+          </div>
+        )}
 
         <div className="flex flex-wrap justify-end gap-2">
           {document.url && (

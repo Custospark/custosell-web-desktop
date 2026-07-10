@@ -49,6 +49,8 @@ See `Backend/routes/api/v1/documents.php`. Middleware: `auth:sanctum`, `business
 - `GET /documents/folders/{id}/export` — zip download of folder + nested subfolders/files (links saved as `.url` shortcuts)
 - `POST /documents/folders/{id}/email` — email zipped folder attachment
 - `POST /documents/{id}/email` — email file attachment
+- `GET /documents/{id}/content` — inline text/CSV/Word preview payload
+- `PUT /documents/{id}/content` — save editable text file content
 - `GET /documents/folders/tree` — full tree (kept for move modal / small vaults)
 
 Staff with the `documents` module can create root folders and add links/files at root level (visibility cannot be `inherit` at root).
@@ -59,7 +61,7 @@ Staff with the `documents` module can create root folders and add links/files at
 - Module path: `src/renderer/modules/documents/`
 - Embedded panels: Project detail → Documents tab; Customer list → Documents link
 - **Views:** list / grid toggle
-- **Preview:** PDF and images in modal
+- **Preview:** PDF, images, audio/video (≤10 MB), text/code, CSV tables, and Word (.docx) text preview in detail pane and modal; inline edit for UTF-8 text/code/CSV (≤2 MB) via `GET/PUT /documents/{id}/content`
 - **Move:** modal picker + drag-and-drop onto folders / current folder
 - **Explorer:** VS Code-style two-pane layout with pipeline-inspired canvas (gradient/photo), frosted explorer, folder color accents, colored tag stripes, labeled actions, breadcrumbs, row context menus, **multi-tab file preview**, **Close file**, and **Import folder** (preserves directory tree via `webkitdirectory`)
 - **Folder export:** context menu / detail pane → **Download folder** (zip)
@@ -70,7 +72,7 @@ Staff with the `documents` module can create root folders and add links/files at
 
 ## Storage
 
-Files stored on Laravel `public` disk under `business-documents/{business_id}/`. Max file size default: 100 MB. Max folder depth: **10** (`DOCUMENTS_MAX_DEPTH` / `DOCUMENTS_MAX_FOLDER_DEPTH` on frontend).
+Files stored on Laravel `public` disk under `business-documents/{business_id}/`. Max file size default: 100 MB. **Audio/video max: 10 MB** (`DOCUMENTS_MAX_MEDIA_FILE_SIZE_KB`). Inline text view/edit max: 2 MB (`DOCUMENTS_MAX_TEXT_CONTENT_SIZE_KB`). Max folder depth: **10** (`DOCUMENTS_MAX_DEPTH` / `DOCUMENTS_MAX_FOLDER_DEPTH` on frontend).
 
 ## Related ADR
 

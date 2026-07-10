@@ -16,6 +16,7 @@ export type UploadDocumentPayload = {
   description?: string | null;
   visibility?: DocumentVisibility;
   folder_id?: number | null;
+  cabinet_id?: number | null;
   member_user_ids?: number[];
   member_roles?: Record<number, DocumentMemberRole>;
   customer_id?: number | null;
@@ -33,6 +34,7 @@ export async function uploadDocumentWithProgress(
   if (payload.description) form.append('description', payload.description);
   if (payload.visibility) form.append('visibility', payload.visibility);
   if (payload.folder_id != null) form.append('folder_id', String(payload.folder_id));
+  if (payload.cabinet_id != null) form.append('cabinet_id', String(payload.cabinet_id));
   if (payload.customer_id != null) form.append('customer_id', String(payload.customer_id));
   if (payload.project_id != null) form.append('project_id', String(payload.project_id));
   payload.member_user_ids?.forEach((id) => form.append('member_user_ids[]', String(id)));

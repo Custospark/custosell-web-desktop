@@ -1,7 +1,9 @@
 export const documentKeys = {
   all: ['documents'] as const,
-  tree: () => [...documentKeys.all, 'tree'] as const,
-  folderChildren: (parentId: number | null, page = 1) => [...documentKeys.all, 'folder-children', parentId, page] as const,
+  cabinets: (q?: string) => [...documentKeys.all, 'cabinets', q ?? ''] as const,
+  cabinet: (id: number) => [...documentKeys.all, 'cabinet', id] as const,
+  tree: (cabinetId?: number) => [...documentKeys.all, 'tree', cabinetId ?? 'all'] as const,
+  folderChildren: (cabinetId: number, parentId: number | null, page = 1) => [...documentKeys.all, 'folder-children', cabinetId, parentId, page] as const,
   members: () => [...documentKeys.all, 'members'] as const,
   vaultAppearance: () => [...documentKeys.all, 'vault-appearance'] as const,
   activity: (page = 1) => [...documentKeys.all, 'activity', page] as const,

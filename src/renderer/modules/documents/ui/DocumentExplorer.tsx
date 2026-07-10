@@ -62,6 +62,8 @@ export interface DocumentExplorerActions {
 }
 
 interface DocumentExplorerProps {
+  cabinetId: number;
+  cabinetName?: string;
   activeFolderId: number | null;
   selectedDocumentId: number | null;
   openDocumentIds?: number[];
@@ -468,6 +470,8 @@ function ExplorerFolderNode({
 }
 
 export function DocumentExplorer({
+  cabinetId,
+  cabinetName = 'Cabinet',
   activeFolderId,
   selectedDocumentId,
   openDocumentIds = [],
@@ -502,14 +506,24 @@ export function DocumentExplorer({
   const searching = Boolean(searchQuery.trim() || tagFilter.trim());
   const atRoot = activeFolderId == null && selectedDocumentId == null;
 
-  const { data: rootFoldersPage, isLoading: rootFoldersLoading } = useDocumentFolderChildren(null, 1, !searching);
+  const { data: rootFoldersPage, isLoading: rootFoldersLoading } = useDocumentFolderChildren(
+    cabinetId,
+    null,
+    1,
+    !searching && cabinetId > 0,
+  );
   const { data: rootDocsPage, isLoading: rootDocsLoading } = useDocuments(
-    { root_only: true, per_page: 100 },
-    !searching,
+    { root_only: true, cabinet_id: cabinetId, per_page: 100 },
+    !searching && cabinetId > 0,
   );
   const { data: searchPages, isLoading: searchLoading } = useDocuments(
-    { q: searchQuery.trim() || undefined, tag: tagFilter.trim() || undefined, per_page: 50 },
-    searching,
+    {
+      q: searchQuery.trim() || undefined,
+      tag: tagFilter.trim() || undefined,
+      cabinet_id: cabinetId,
+      per_page: 50,
+    },
+    searching && cabinetId > 0,
   );
 
   const rootFolders = rootFoldersPage?.data ?? [];
@@ -576,7 +590,7 @@ export function DocumentExplorer({
             )}
           >
             <Home className="h-3.5 w-3.5" />
-            All documents
+            {cabinetName}
           </button>
           {breadcrumbs.map((crumb) => (
             <span key={crumb.id} className="flex items-center gap-1">

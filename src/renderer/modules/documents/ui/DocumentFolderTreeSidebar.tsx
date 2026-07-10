@@ -6,6 +6,7 @@ import { useDocumentFolderChildren } from '../api/useDocumentQueries';
 import { ChevronDown, ChevronRight, Folder, FolderOpen, HardDrive } from 'lucide-react';
 
 interface DocumentFolderTreeSidebarProps {
+  cabinetId: number;
   activeFolderId: number | null;
   expandFolderIds?: number[];
   dropTargetFolderId: number | 'panel' | null;
@@ -16,6 +17,7 @@ interface DocumentFolderTreeSidebarProps {
 }
 
 function LazyTreeNode({
+  cabinetId,
   folder,
   depth,
   activeFolderId,
@@ -28,6 +30,7 @@ function LazyTreeNode({
   onFolderDragLeave,
   onFolderDrop,
 }: {
+  cabinetId: number;
   folder: DocumentFolder;
   depth: number;
   activeFolderId: number | null;
@@ -46,7 +49,7 @@ function LazyTreeNode({
   const isDropTarget = dropTargetFolderId === folder.id;
   const displayName = truncateDisplayName(folder.name, 36);
 
-  const { data: childrenPage } = useDocumentFolderChildren(folder.id, 1, expanded && hasChildren);
+  const { data: childrenPage } = useDocumentFolderChildren(cabinetId, folder.id, 1, expanded && hasChildren && cabinetId > 0);
   const children = childrenPage?.data ?? [];
 
   return (
@@ -96,6 +99,7 @@ function LazyTreeNode({
           {children.map((child) => (
             <LazyTreeNode
               key={child.id}
+              cabinetId={cabinetId}
               folder={child}
               depth={depth + 1}
               activeFolderId={activeFolderId}
@@ -116,6 +120,7 @@ function LazyTreeNode({
 }
 
 export function DocumentFolderTreeSidebar({
+  cabinetId,
   activeFolderId,
   expandFolderIds = [],
   dropTargetFolderId,
@@ -127,7 +132,7 @@ export function DocumentFolderTreeSidebar({
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const expandSet = useMemo(() => new Set(expandFolderIds), [expandFolderIds]);
 
-  const { data: rootPage, isLoading } = useDocumentFolderChildren(null, 1, true);
+  const { data: rootPage, isLoading } = useDocumentFolderChildren(cabinetId, null, 1, cabinetId > 0);
   const rootFolders = rootPage?.data ?? [];
 
   const toggleExpanded = (id: number) => {
@@ -168,6 +173,7 @@ export function DocumentFolderTreeSidebar({
         {rootFolders.map((folder) => (
           <LazyTreeNode
             key={folder.id}
+            cabinetId={cabinetId}
             folder={folder}
             depth={0}
             activeFolderId={activeFolderId}

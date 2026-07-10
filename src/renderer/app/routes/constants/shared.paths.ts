@@ -36,6 +36,8 @@ export const ROUTES = {
   EXPENSES: { INDEX: '/expenses', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
   DOCUMENTS: {
     INDEX: '/documents',
+    CABINET: (id: number) => `/documents/cabinets/${id}`,
+    /** @deprecated Use CABINET + folder_id query param */
     FOLDER: (id: number) => `/documents?folder_id=${id}`,
   },
   ACCOUNT: {

@@ -71,6 +71,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-08-progress-decomposition-engine.md](./adr/2026-07-08-progress-decomposition-engine.md) | Column-aware metrics, hybrid goal decomposition, planning hierarchy |
 | [2026-07-10-documents-acl-and-folder-model.md](./adr/2026-07-10-documents-acl-and-folder-model.md) | Documents module ACL, live inheritance, folder tree |
 | [2026-07-10-documents-explorer-scale.md](./adr/2026-07-10-documents-explorer-scale.md) | Explorer scale limits and enterprise roadmap |
+| [2026-07-10-document-cabinets.md](./adr/2026-07-10-document-cabinets.md) | Document cabinets — gallery, scoped explorer, cabinet ACL |
 
 ## Modules
 

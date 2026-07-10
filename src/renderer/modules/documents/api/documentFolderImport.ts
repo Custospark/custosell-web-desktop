@@ -7,6 +7,7 @@ export type FolderImportPayload = {
   name: string;
   visibility: FolderVisibility;
   parent_id: number | null;
+  cabinet_id?: number | null;
 };
 
 export type ImportFolderTreeOptions = {

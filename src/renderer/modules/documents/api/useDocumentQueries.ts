@@ -126,11 +126,13 @@ export function useDocumentTags(query?: string, enabled = true) {
   });
 }
 
-export function useDocumentFolderTree(enabled = true) {
+export function useDocumentFolderTree(cabinetId?: number, enabled = true) {
   return useQuery({
-    queryKey: documentKeys.tree(),
+    queryKey: documentKeys.tree(cabinetId),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(DOCUMENTS.FOLDERS_TREE);
+      const { data } = await axiosInstance.get(DOCUMENTS.FOLDERS_TREE, {
+        params: cabinetId ? { cabinet_id: cabinetId } : undefined,
+      });
       return normalizeList<DocumentFolder>(data);
     },
     enabled,
@@ -139,22 +141,24 @@ export function useDocumentFolderTree(enabled = true) {
 }
 
 export function useDocumentFolderChildren(
+  cabinetId: number,
   parentId: number | null,
   page = 1,
   enabled = true,
 ) {
   return useQuery({
-    queryKey: documentKeys.folderChildren(parentId, page),
+    queryKey: documentKeys.folderChildren(cabinetId, parentId, page),
     queryFn: async () => {
       const { data } = await axiosInstance.get(DOCUMENTS.FOLDERS_CHILDREN, {
         params: {
+          cabinet_id: cabinetId,
           ...(parentId != null ? { parent_id: parentId } : {}),
           page,
         },
       });
       return unwrapPaginated<DocumentFolder>(data);
     },
-    enabled,
+    enabled: enabled && cabinetId > 0,
     staleTime: 15_000,
   });
 }
@@ -209,6 +213,7 @@ type FolderPayload = {
   description?: string | null;
   visibility: FolderVisibility;
   parent_id?: number | null;
+  cabinet_id?: number | null;
   member_user_ids?: number[];
   member_roles?: Record<number, DocumentMemberRole>;
   cover_color?: string | null;
@@ -272,6 +277,7 @@ type DocumentPayload = {
   description?: string | null;
   visibility?: DocumentVisibility;
   folder_id?: number | null;
+  cabinet_id?: number | null;
   member_user_ids?: number[];
   member_roles?: Record<number, DocumentMemberRole>;
   customer_id?: number | null;
@@ -293,6 +299,7 @@ export function useUploadDocument() {
       if (payload.description) form.append('description', payload.description);
       if (payload.visibility) form.append('visibility', payload.visibility);
       if (payload.folder_id != null) form.append('folder_id', String(payload.folder_id));
+      if (payload.cabinet_id != null) form.append('cabinet_id', String(payload.cabinet_id));
       if (payload.customer_id != null) form.append('customer_id', String(payload.customer_id));
       if (payload.project_id != null) form.append('project_id', String(payload.project_id));
       payload.member_user_ids?.forEach((id) => form.append('member_user_ids[]', String(id)));

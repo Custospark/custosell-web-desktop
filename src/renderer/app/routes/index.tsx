@@ -66,7 +66,8 @@ import AllLeadsPage from '../../modules/pipeline/pages/AllLeadsPage';
 import InsightsPage from '../../modules/pipeline/pages/InsightsPage';
 import PipelineSettingsPage from '../../modules/pipeline/pages/PipelineSettingsPage';
 import DocumentsLayout from '../../modules/documents/pages/DocumentsLayout';
-import DocumentsBrowserPage from '../../modules/documents/pages/DocumentsBrowserPage';
+import CabinetsPage from '../../modules/documents/pages/CabinetsPage';
+import DocumentsCabinetPage from '../../modules/documents/pages/DocumentsCabinetPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
@@ -174,7 +175,8 @@ export function AppRoutes() {
           <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
           <Route element={<ModuleAccessMiddleware module="documents" />}>
             <Route path={ROUTES.DOCUMENTS.INDEX} element={<SuspenseWrapper><DocumentsLayout /></SuspenseWrapper>}>
-              <Route index element={<SuspenseWrapper><DocumentsBrowserPage /></SuspenseWrapper>} />
+              <Route index element={<SuspenseWrapper><CabinetsPage /></SuspenseWrapper>} />
+              <Route path="cabinets/:cabinetId" element={<SuspenseWrapper><DocumentsCabinetPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="accounting" />}>

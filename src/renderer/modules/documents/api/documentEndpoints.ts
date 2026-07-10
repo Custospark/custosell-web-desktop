@@ -3,6 +3,8 @@ export const DOCUMENTS = {
   ACTIVITY: '/documents/activity',
   ACCESSIBLE_MEMBERS: '/documents/accessible-members',
   TAGS: '/documents/tags',
+  CABINETS: '/documents/cabinets',
+  CABINET: (id: number) => `/documents/cabinets/${id}`,
   FOLDERS_TREE: '/documents/folders/tree',
   FOLDERS_CHILDREN: '/documents/folders/children',
   FOLDERS: '/documents/folders',

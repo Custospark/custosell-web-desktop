@@ -17,6 +17,7 @@ interface DocumentAccessSectionProps {
   selectedMembers: DocumentUserRef[];
   onSelectedMembersChange: (members: DocumentUserRef[]) => void;
   allowInherit?: boolean;
+  visibilityOptions?: { value: AccessVisibilityValue; label: string; hint: string }[];
   disabled?: boolean;
 }
 
@@ -26,14 +27,15 @@ export function DocumentAccessSection({
   selectedMembers,
   onSelectedMembersChange,
   allowInherit = true,
+  visibilityOptions,
   disabled = false,
 }: DocumentAccessSectionProps) {
   const { data: staff = [], isLoading, isError, refetch } = useDocumentStaffPicker(!disabled);
   const [query, setQuery] = useState('');
 
   const options = useMemo(
-    () => DOCUMENT_ACCESS_OPTIONS.filter((option) => allowInherit || option.value !== 'inherit'),
-    [allowInherit],
+    () => (visibilityOptions ?? DOCUMENT_ACCESS_OPTIONS).filter((option) => allowInherit || option.value !== 'inherit'),
+    [allowInherit, visibilityOptions],
   );
 
   const filteredStaff = useMemo(() => {

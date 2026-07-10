@@ -53,6 +53,7 @@ import {
   useDocumentsVaultAppearance,
   useUpdateDocumentsVaultAppearance,
 } from '../api/useDocumentQueries';
+import { useDocumentCabinets } from '../api/useDocumentCabinetQueries';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { DocumentFolderCard, DocumentItemCard } from './DocumentItemViews';
 import { DocumentDetailPane } from './DocumentDetailPane';
@@ -83,6 +84,7 @@ import {
 } from 'lucide-react';
 
 interface DocumentsPanelProps {
+  cabinetId?: number;
   folderId?: number | null;
   customerId?: number;
   projectId?: number;
@@ -124,6 +126,7 @@ function validateAccessSelection(
 }
 
 export default function DocumentsPanel({
+  cabinetId,
   folderId = null,
   customerId,
   projectId,
@@ -187,10 +190,15 @@ export default function DocumentsPanel({
   const canCustomizeVault = isBusinessOwner(user);
 
   const showSidebar = fullBleed && !customerId && !projectId;
+  const { data: fallbackCabinets } = useDocumentCabinets(undefined, !cabinetId);
+  const effectiveCabinetId = cabinetId ?? fallbackCabinets?.data[0]?.id ?? 0;
   const searching = Boolean(debouncedSearch || tagFilter);
-  const { data: moveTree = [] } = useDocumentFolderTree(showSidebar || Boolean(moveTarget));
-  const needsRootFolders = !showSidebar && !customerId && !projectId && !activeFolderId && !searching;
-  const { data: rootFoldersPage } = useDocumentFolderChildren(null, 1, needsRootFolders);
+  const { data: moveTree = [] } = useDocumentFolderTree(
+    effectiveCabinetId > 0 ? effectiveCabinetId : undefined,
+    showSidebar || Boolean(moveTarget),
+  );
+  const needsRootFolders = !showSidebar && !customerId && !projectId && !activeFolderId && !searching && effectiveCabinetId > 0;
+  const { data: rootFoldersPage } = useDocumentFolderChildren(effectiveCabinetId, null, 1, needsRootFolders);
   const rootFolders = rootFoldersPage?.data ?? [];
   const { data: contents, isLoading: contentsLoading, isFetching: contentsFetching } = useDocumentFolderContents(
     activeFolderId ?? 0,
@@ -223,8 +231,9 @@ export default function DocumentsPanel({
     tag: tagFilter || undefined,
     customer_id: customerId,
     project_id: projectId,
+    cabinet_id: customerId || projectId ? undefined : (effectiveCabinetId > 0 ? effectiveCabinetId : undefined),
     folder_id: customerId || projectId ? undefined : (activeFolderId ?? undefined),
-  }), [debouncedSearch, tagFilter, customerId, projectId, activeFolderId]);
+  }), [debouncedSearch, tagFilter, customerId, projectId, activeFolderId, effectiveCabinetId]);
 
   const needsDocumentList = !showSidebar && (searching || activeFolderId == null || customerId != null || projectId != null);
   const {
@@ -355,6 +364,7 @@ export default function DocumentsPanel({
             file,
             title: file.name,
             folder_id: targetFolderId,
+            cabinet_id: targetFolderId == null && effectiveCabinetId > 0 ? effectiveCabinetId : undefined,
             visibility: visibilityForRoot(uploadVisibility, targetFolderId == null),
             customer_id: customerId,
             project_id: projectId,
@@ -393,6 +403,7 @@ export default function DocumentsPanel({
     uploadTags,
     uploadVisibility,
     upsertTransfer,
+    effectiveCabinetId,
   ]);
 
   const handleCreateFolder = async () => {
@@ -418,6 +429,7 @@ export default function DocumentsPanel({
         name: folderName.trim(),
         visibility: visibilityForRoot(folderVisibility, parentId == null),
         parent_id: parentId,
+        cabinet_id: parentId == null && effectiveCabinetId > 0 ? effectiveCabinetId : undefined,
         ...memberPayload(folderMembers),
       });
       setShowCreateFolder(false);
@@ -446,6 +458,7 @@ export default function DocumentsPanel({
         title: linkTitle.trim(),
         url: linkUrl.trim(),
         folder_id: targetFolderId,
+        cabinet_id: targetFolderId == null && effectiveCabinetId > 0 ? effectiveCabinetId : undefined,
         visibility: visibilityForRoot(uploadVisibility, targetFolderId == null),
         customer_id: customerId,
         project_id: projectId,
@@ -573,7 +586,10 @@ export default function DocumentsPanel({
         parentDepth,
         visibility,
         createFolder: async (payload) => {
-          const { data } = await axiosInstance.post(DOCUMENTS.FOLDERS, payload);
+          const { data } = await axiosInstance.post(DOCUMENTS.FOLDERS, {
+            ...payload,
+            cabinet_id: payload.parent_id == null && effectiveCabinetId > 0 ? effectiveCabinetId : payload.cabinet_id,
+          });
           const created = (data && typeof data === 'object' && 'data' in data)
             ? (data as { data: DocumentFolder }).data
             : data as DocumentFolder;
@@ -587,6 +603,7 @@ export default function DocumentsPanel({
             file,
             title: file.name,
             folder_id: folderId,
+            cabinet_id: folderId == null && effectiveCabinetId > 0 ? effectiveCabinetId : undefined,
             visibility: visibilityForRoot(uploadVisibility, folderId == null),
             customer_id: customerId,
             project_id: projectId,
@@ -639,6 +656,7 @@ export default function DocumentsPanel({
     uploadTags,
     uploadVisibility,
     upsertTransfer,
+    effectiveCabinetId,
   ]);
 
   const handleExportFolder = useCallback(async (folder: DocumentFolder) => {
@@ -1270,6 +1288,8 @@ export default function DocumentsPanel({
       >
         <aside className="flex h-[min(50vh,28rem)] w-full shrink-0 flex-col p-1.5 sm:p-2 lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96">
           <DocumentExplorer
+            cabinetId={effectiveCabinetId}
+            cabinetName={title}
             activeFolderId={activeFolderId}
             selectedDocumentId={activeTabId}
             openDocumentIds={openDocumentIds}

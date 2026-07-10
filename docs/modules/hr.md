@@ -35,7 +35,7 @@ Evaluates whether linked staff are meeting goals using live work data (no separa
 
 | Signal | Source |
 |--------|--------|
-| Board goals | Member-scoped `pipeline_board_targets` (actual vs target + pace) |
+| Board goals | Member-scoped `pipeline_board_targets` — Talent period chips show **x/y** vs period `expected_value` (e.g. Today `1/2`), not only the overall target |
 | Pipeline cards/leads | Assigned via `assigned_to` or multi-assignee pivot |
 | Project tasks | `project_tasks.assigned_to` on business projects |
 
@@ -82,17 +82,29 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | **Settings Staff** | Create staff → auto HR employee; delete staff → HR profile remains (No login); soft-sync name/email/phone onto linked employee on staff update |
 | **Estimates timesheets** | Attendance → “Import approved timesheets” mirrors approved hours into HR day minutes (project costing stays on timesheets) |
 | **POS Shifts** | Attendance shows read-only sales-floor shifts for linked users (not merged with HR clock) |
-| **Accounting** | Pay-run post debits 6101 / credits 2103 when available; otherwise stores intended lines in `posting_note` |
+| **Accounting** | Pay-run **Post** creates accrual JE (Dr 6101 / Cr 2110–2112). **Settle** and **Remit statutory** clear liabilities vs Bank. **Void** reverses linked journals. Fail-hard: no journal → stay `approved` + `posting_note`. See [ADR: payroll accounting bridge](../adr/2026-07-10-hr-payroll-accounting-bridge.md) |
 | **Documents** | Seeded HR cabinet remains the file home for contracts/policies |
 
 ## Payroll flow
 
-1. Create salary structure (currency default UGX).
-2. Assign compensation (basic salary + effective date).
-3. Create pay run for a period.
+1. Create salary structure (currency default UGX) — full HR can edit/delete structures.
+2. Assign compensation (basic salary + effective date) — soft-delete removes it from future calculations (`latestCompensation` skips soft-deleted rows); past pay lines stay.
+3. Create pay run for a period — draft period can be patched; draft/calculated runs can be deleted (lines + payslips hard-deleted).
 4. **Calculate** → lines with gross, PAYE, NSSF employee/employer, net.
-5. **Approve** → **Post** (idempotent; may create accounting journal when backend supports it).
-6. View PAYE / NSSF schedules under Reports.
+5. **Approve** → **Post** (fail-hard accrual journal; retry if legacy soft-fail).
+6. **Mark net paid** (optional) → settlement journal vs Bank.
+7. **Remit PAYE & NSSF** (optional) → statutory remittance journal vs Bank.
+8. **Void** (if needed) → reverse linked journals, status `void`.
+9. View PAYE / NSSF schedules under Reports.
+
+## Leave edit / cancel
+
+| Action | Who |
+|--------|-----|
+| Create / edit / delete leave types | Full HR (`hr_full`) |
+| Approve / reject requests | Full HR |
+| Cancel pending or approved request | Full HR (any) or limited HR (own linked employee only) |
+| Request leave | Full HR (any employee) or limited HR (self) |
 
 ## Failure states
 
@@ -101,15 +113,20 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Validation / API error | Toast via `sanitizeErrorMessage` on mutation `onError` |
 | Duplicate email on with-account | Field/API error; no orphan employee (transaction) |
 | Remove login for business owner | Blocked by UserService delete guards |
-| Destructive delete | `useConfirm` before department, position, employee, or pay-run post; employee delete asks about login |
+| Destructive delete | `useConfirm` before department, position, employee, leave type, structure, compensation, pay-run delete/post; employee delete asks about login |
 | Empty lists | Guided empty states with primary CTA |
 | Missing report filter | Reports page waits until pay run or date range is set |
 | No HR module access | Middleware redirects / blocks like other modules |
 | Limited HR on admin route | `HrAccessMiddleware` redirects to Attendance |
 | Clock/leave for another employee (limited) | API 403 — forced to linked employee |
+| Cancel another employee's leave (limited) | API 403 |
 | Offline HR account create | Online-first — use Settings staff create (queued) if offline |
+| Payroll post without open period / COA | 422; run stays `approved`; `posting_note` explains; Retry post |
+| Void with closed period | 422; journals unchanged; toast shows accounting error |
+| Delete non-draft/calculated pay run | 422 |
 
 ## Related docs
 
 - ADR: [2026-07-10-hr-payroll-module.md](../adr/2026-07-10-hr-payroll-module.md)
+- ADR: [2026-07-10-hr-payroll-accounting-bridge.md](../adr/2026-07-10-hr-payroll-accounting-bridge.md)
 - Module access: `src/renderer/shared/utils/moduleAccess.ts` (`hr` slug)

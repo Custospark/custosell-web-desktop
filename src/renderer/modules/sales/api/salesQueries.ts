@@ -30,6 +30,7 @@ import { inventoryKeys } from '../../inventory/api/products/ProductQueries';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';
 import type { Product } from '../../inventory/api/products/ProductTypes';
+import { tracksStock } from '../../inventory/api/products/ProductTypes';
 import type { Sale, CreateSalePayload, RefundData } from './salesTypes';
 
 export const salesKeys = {
@@ -322,7 +323,7 @@ function applySaleOptimisticUpdates(
   qc.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
     (old ?? []).map((p) => {
       const item = payload.items.find((i) => i.product_id === p.id);
-      if (!item) return p;
+      if (!item || !tracksStock(p)) return p;
       return { ...p, stock_quantity: Math.max(0, p.stock_quantity - item.quantity) };
     }),
   );
@@ -348,6 +349,7 @@ function applyRefundOptimisticUpdates(
 
   qc.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
     (old ?? []).map((p) => {
+      if (!tracksStock(p)) return p;
       const refundItem = refundData.items.find((item) => {
         const saleItem = originalSale.sale_items?.find((si) => si.id === item.id);
         return saleItem?.product_id === p.id;

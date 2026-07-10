@@ -1,5 +1,6 @@
 import { Package, Box, TrendingUp, AlertTriangle } from 'lucide-react';
 import type { Product } from '../../api/products/ProductTypes';
+import { tracksStock } from '../../api/products/ProductTypes';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 interface Props {
@@ -14,10 +15,11 @@ const cardStyles: Record<string, { border: string; shadow: string; iconBg: strin
 };
 
 export function ProductStatsCards({ products }: Props) {
+  const stocked = products.filter((p) => tracksStock(p));
   const total = products.length;
   const active = products.filter((p) => p.is_active).length;
-  const totalValue = products.reduce((sum, p) => sum + parseFloat(p.unit_price) * p.stock_quantity, 0);
-  const lowStock = products.filter((p) => p.stock_quantity <= p.low_stock_threshold).length;
+  const totalValue = stocked.reduce((sum, p) => sum + parseFloat(p.unit_price) * p.stock_quantity, 0);
+  const lowStock = stocked.filter((p) => p.stock_quantity <= p.low_stock_threshold).length;
 
   const cards = [
     { label: 'Total Products', value: total.toLocaleString(), sub: 'All products in inventory', icon: Box, color: 'blue', badge: 'Total' },

@@ -186,7 +186,13 @@ export interface HrPayRun {
   period_end: string;
   status: PayRunStatus;
   posted_journal_entry_id?: number | null;
+  settlement_journal_entry_id?: number | null;
+  statutory_journal_entry_id?: number | null;
   posted_at?: string | null;
+  net_settled_at?: string | null;
+  statutory_remitted_at?: string | null;
+  voided_at?: string | null;
+  posting_note?: string | null;
   lines?: HrPayRunLine[];
   lines_count?: number;
   total_gross?: number;
@@ -368,6 +374,8 @@ export type CreateLeaveTypePayload = {
   requires_approval?: boolean;
 };
 
+export type UpdateLeaveTypePayload = Partial<CreateLeaveTypePayload>;
+
 export type CreateLeaveRequestPayload = {
   employee_id: number;
   leave_type_id: number;
@@ -386,6 +394,8 @@ export type CreateSalaryStructurePayload = {
   currency?: string;
 };
 
+export type UpdateSalaryStructurePayload = Partial<CreateSalaryStructurePayload>;
+
 export type CreateCompensationPayload = {
   employee_id: number;
   structure_id?: number | null;
@@ -395,11 +405,14 @@ export type CreateCompensationPayload = {
   effective_from: string;
 };
 
-export type UpdateCompensationPayload = Partial<Omit<CreateCompensationPayload, 'employee_id'>>;
-
 export type CreatePayRunPayload = {
   period_start: string;
   period_end: string;
+};
+
+export type UpdatePayRunPayload = {
+  period_start?: string;
+  period_end?: string;
 };
 
 export type CreateOnboardingTemplatePayload = {
@@ -442,13 +455,29 @@ export interface HrPerformanceGoalItem {
   board_name?: string | null;
   workspace?: string | null;
   metric_key: string;
+  /** Overall / root goal (e.g. month = 60). */
   target_value: number;
+  /** Expected for the selected Talent period (e.g. day = 2). */
+  expected_value: number;
   actual_value: number;
   unit?: string | null;
   progress_percent: number;
   pace_status: string;
   period_start?: string | null;
   period_end?: string | null;
+  view_period_type?: string | null;
+  period_slice?: {
+    planning_level?: string;
+    period_start?: string;
+    period_end?: string;
+    view_period_type?: string | null;
+    expected_value: number;
+    expected_to_date?: number;
+    actual_value: number;
+    progress_percent: number;
+    pace_status: string;
+    root_target_value: number;
+  } | null;
 }
 
 export interface HrPerformancePeriod {

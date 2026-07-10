@@ -18,6 +18,7 @@ import { cn } from '../../../../shared/utils/cn';
 import { matchesProductSearch } from '../../../../shared/utils/productSearch';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
+import { isServiceItem, tracksStock } from '../../api/products/ProductTypes';
 import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square } from 'lucide-react';
 import ProductFormDrawer from './ProductFormDrawer';
 import StockAdjustDrawer from './StockAdjustDrawer';
@@ -181,6 +182,9 @@ export default function ProductList() {
             { key: 'unit_price', header: 'Unit Price', render: (item) => formatCurrency(item.unit_price) },
             { key: 'wholesale_price', header: 'Wholesale', render: (item) => item.wholesale_price ? formatCurrency(item.wholesale_price) : <span className="text-gray-400">—</span> },
             { key: 'stock_quantity', header: 'Stock Qty', render: (item) => {
+                if (isServiceItem(item)) {
+                  return <span className="text-xs font-medium text-blue-600">Service</span>;
+                }
                 const isLow = item.stock_quantity <= item.low_stock_threshold;
                 return <span className={cn(isLow && 'text-amber-600 font-semibold')}>{item.stock_quantity}{isLow && <span className="ml-1 text-xs text-amber-500">(low)</span>}</span>;
               },
@@ -190,7 +194,7 @@ export default function ProductList() {
                 <div className="flex items-center justify-center gap-1">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryProduct(item); }} title="View History"><Eye className="w-4 h-4 text-gray-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  {!item._pendingSync && (
+                  {!item._pendingSync && tracksStock(item) && (
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-blue-600" /></Button>
                   )}
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete" disabled={item._pendingSync}><Trash className="w-4 h-4 text-red-500" /></Button>

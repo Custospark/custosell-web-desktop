@@ -14,12 +14,14 @@ export function buildLocalProduct(payload: CreateProductData): ProductWithSyncMe
   const localIdNum = -Date.now();
   const authUser = store.getState().auth.user;
 
+  const isService = (payload.type ?? 'product') === 'service';
   const product: Product = {
     id: localIdNum,
     business_id: authUser?.business_id ?? 0,
     category_id: payload.category_id ?? null,
     category: null,
     name: payload.name,
+    type: payload.type ?? 'product',
     unit: payload.unit ?? null,
     description: payload.description ?? null,
     sku: payload.sku ?? null,
@@ -27,9 +29,10 @@ export function buildLocalProduct(payload: CreateProductData): ProductWithSyncMe
     unit_price: String(payload.unit_price),
     wholesale_price: payload.wholesale_price != null ? String(payload.wholesale_price) : null,
     cost_price: payload.cost_price != null ? String(payload.cost_price) : null,
-    stock_quantity: payload.stock_quantity ?? 0,
-    low_stock_threshold: payload.low_stock_threshold ?? 5,
+    stock_quantity: isService ? 0 : (payload.stock_quantity ?? 0),
+    low_stock_threshold: isService ? 0 : (payload.low_stock_threshold ?? 5),
     tax_percentage: String(payload.tax_percentage ?? 0),
+    tax_class: payload.tax_class,
     is_active: payload.is_active ?? true,
     created_at: now,
     updated_at: now,
@@ -39,9 +42,12 @@ export function buildLocalProduct(payload: CreateProductData): ProductWithSyncMe
 }
 
 function applyProductPayload(product: Product, payload: UpdateProductData): Product {
+  const nextType = payload.type ?? product.type ?? 'product';
+  const isService = nextType === 'service';
   return {
     ...product,
     ...payload,
+    type: nextType,
     category_id: 'category_id' in payload ? payload.category_id ?? null : product.category_id,
     unit: 'unit' in payload ? payload.unit ?? null : product.unit,
     description: 'description' in payload ? payload.description ?? null : product.description,
@@ -50,17 +56,20 @@ function applyProductPayload(product: Product, payload: UpdateProductData): Prod
     unit_price: payload.unit_price != null ? String(payload.unit_price) : product.unit_price,
     wholesale_price: payload.wholesale_price != null ? String(payload.wholesale_price) : product.wholesale_price,
     cost_price: payload.cost_price != null ? String(payload.cost_price) : product.cost_price,
-    stock_quantity: payload.stock_quantity ?? product.stock_quantity,
-    low_stock_threshold: payload.low_stock_threshold ?? product.low_stock_threshold,
+    stock_quantity: isService ? 0 : (payload.stock_quantity ?? product.stock_quantity),
+    low_stock_threshold: isService ? 0 : (payload.low_stock_threshold ?? product.low_stock_threshold),
     tax_percentage: payload.tax_percentage != null ? String(payload.tax_percentage) : product.tax_percentage,
+    tax_class: payload.tax_class ?? product.tax_class,
     is_active: payload.is_active ?? product.is_active,
     updated_at: new Date().toISOString(),
   };
 }
 
 function buildCreatePayloadFromProduct(product: Product): CreateProductData {
+  const isService = (product.type ?? 'product') === 'service';
   return {
     name: product.name,
+    type: product.type ?? 'product',
     unit: product.unit,
     category_id: product.category_id,
     description: product.description,
@@ -69,9 +78,10 @@ function buildCreatePayloadFromProduct(product: Product): CreateProductData {
     unit_price: Number(product.unit_price),
     wholesale_price: product.wholesale_price != null ? Number(product.wholesale_price) : null,
     cost_price: product.cost_price != null ? Number(product.cost_price) : null,
-    stock_quantity: product.stock_quantity,
-    low_stock_threshold: product.low_stock_threshold,
+    stock_quantity: isService ? 0 : product.stock_quantity,
+    low_stock_threshold: isService ? 0 : product.low_stock_threshold,
     tax_percentage: Number(product.tax_percentage),
+    tax_class: product.tax_class as CreateProductData['tax_class'],
     is_active: product.is_active,
   };
 }

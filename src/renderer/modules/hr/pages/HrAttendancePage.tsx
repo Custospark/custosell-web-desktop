@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -84,6 +84,19 @@ function shortDayLabel(iso: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function startOfMonthIso(d = new Date()) {
+  return toIsoDate(new Date(d.getFullYear(), d.getMonth(), 1));
+}
+
+function endOfMonthIso(d = new Date()) {
+  return toIsoDate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+}
+
+function monthLabel(iso: string) {
+  const d = new Date(`${iso}T12:00:00`);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
 export default function HrAttendancePage() {
   const user = useAppSelector((s) => s.auth.user);
   const isFullHr = canViewFullHr(user);
@@ -96,17 +109,26 @@ export default function HrAttendancePage() {
 
   const rangeFrom = historyRange === 'week' ? addDays(workDate, -6) : addDays(workDate, -29);
   const rangeTo = workDate;
+  const monthFrom = startOfMonthIso();
+  const monthTo = endOfMonthIso();
 
   const { data: employees = [] } = useHrEmployees({ status: 'active' });
   const selfEmployee = employees.find((e) => e.user_id != null && user?.id != null && e.user_id === user.id) ?? null;
+  const selfEmployeeId = selfEmployee?.id;
 
   const historyEmployeeId = isFullHr
     ? (chartEmployeeId ? Number(chartEmployeeId) : undefined)
-    : selfEmployee?.id;
+    : selfEmployeeId;
 
   const { data: history, isLoading: loadingHistory } = useHrAttendance({
     from: rangeFrom,
     to: rangeTo,
+    employee_id: historyEmployeeId,
+  });
+  /** Clock events panel always shows the current calendar month. */
+  const { data: monthAttendance, isLoading: loadingMonthEvents } = useHrAttendance({
+    from: monthFrom,
+    to: monthTo,
     employee_id: historyEmployeeId,
   });
   const { data: posShifts = [] } = useHrPosShifts({ work_date: workDate }, isFullHr);
@@ -114,28 +136,29 @@ export default function HrAttendancePage() {
   const updateDay = useUpdateHrAttendanceDay();
   const importTimesheets = useImportHrTimesheets();
 
-  const historyDays = useMemo(() => {
-    const all = history?.days ?? [];
-    if (isFullHr || !selfEmployee) return all;
-    return all.filter((d) => d.employee_id === selfEmployee.id);
-  }, [history, isFullHr, selfEmployee]);
+  const historyDaysRaw = history?.days ?? [];
+  const historyDays = isFullHr || selfEmployeeId == null
+    ? historyDaysRaw
+    : historyDaysRaw.filter((d) => d.employee_id === selfEmployeeId);
 
-  const historyEvents = useMemo(() => {
-    const all = history?.events ?? [];
-    if (isFullHr || !selfEmployee) return all;
-    return all.filter((e) => e.employee_id === selfEmployee.id);
-  }, [history, isFullHr, selfEmployee]);
+  const historyEventsRaw = history?.events ?? [];
+  const historyEvents = isFullHr || selfEmployeeId == null
+    ? historyEventsRaw
+    : historyEventsRaw.filter((e) => e.employee_id === selfEmployeeId);
 
-  const dayDays = useMemo(
-    () => historyDays.filter((d) => d.work_date.slice(0, 10) === workDate),
-    [historyDays, workDate],
-  );
-  const dayEvents = useMemo(
-    () => historyEvents.filter((e) => (e.occurred_at ?? '').slice(0, 10) === workDate),
-    [historyEvents, workDate],
-  );
+  const monthEventsRaw = monthAttendance?.events ?? [];
+  const monthEventsScoped = isFullHr || selfEmployeeId == null
+    ? monthEventsRaw
+    : monthEventsRaw.filter((e) => e.employee_id === selfEmployeeId);
+  const monthEvents = [...monthEventsScoped].sort((a, b) => {
+    const aAt = a.occurred_at ?? '';
+    const bAt = b.occurred_at ?? '';
+    return bAt.localeCompare(aAt);
+  });
 
-  const hoursTrend = useMemo(() => {
+  const dayDays = historyDays.filter((d) => d.work_date.slice(0, 10) === workDate);
+
+  const hoursTrend = (() => {
     const byDate = new Map<string, number>();
     for (let cursor = rangeFrom; cursor <= rangeTo; cursor = addDays(cursor, 1)) {
       byDate.set(cursor, 0);
@@ -151,9 +174,9 @@ export default function HrAttendancePage() {
       hours: Math.round((minutes / 60) * 10) / 10,
       minutes,
     }));
-  }, [historyDays, rangeFrom, rangeTo]);
+  })();
 
-  const statusBreakdown = useMemo(() => {
+  const statusBreakdown = (() => {
     const counts: Record<AttendanceDayStatus, number> = {
       present: 0,
       absent: 0,
@@ -166,9 +189,9 @@ export default function HrAttendancePage() {
     return (Object.keys(counts) as AttendanceDayStatus[])
       .map((status) => ({ status, label: status, value: counts[status] }))
       .filter((row) => row.value > 0);
-  }, [historyDays]);
+  })();
 
-  const presenceTrend = useMemo(() => {
+  const presenceTrend = (() => {
     const byDate = new Map<string, { present: number; absent: number; leave: number; holiday: number }>();
     for (let cursor = rangeFrom; cursor <= rangeTo; cursor = addDays(cursor, 1)) {
       byDate.set(cursor, { present: 0, absent: 0, leave: 0, holiday: 0 });
@@ -184,7 +207,7 @@ export default function HrAttendancePage() {
       label: shortDayLabel(date),
       ...counts,
     }));
-  }, [historyDays, rangeFrom, rangeTo]);
+  })();
 
   const totalMinutes = historyDays.reduce((sum, d) => sum + (d.minutes_worked ?? 0), 0);
   const presentDays = historyDays.filter((d) => d.status === 'present').length;
@@ -557,14 +580,20 @@ export default function HrAttendancePage() {
                 <div className="mb-3">
                   <h3 className={cn('text-sm font-semibold', TALENT_SURFACE.textTitle)}>Clock events</h3>
                   <p className={cn('text-xs', TALENT_SURFACE.textMuted)}>
-                    Punches on {formatShiftDate(workDate)}
+                    Punches this month · {monthLabel(monthFrom)}
                   </p>
                 </div>
-                {dayEvents.length === 0 ? (
-                  <p className={cn('text-sm', TALENT_SURFACE.textMuted)}>No punch events for this date yet.</p>
+                {loadingMonthEvents ? (
+                  <div className="flex justify-center py-8">
+                    <LoadingSpinner />
+                  </div>
+                ) : monthEvents.length === 0 ? (
+                  <p className={cn('text-sm', TALENT_SURFACE.textMuted)}>
+                    No punch events this month yet.
+                  </p>
                 ) : (
-                  <ul className="space-y-2">
-                    {dayEvents.map((ev) => (
+                  <ul className="max-h-80 space-y-2 overflow-y-auto overscroll-contain pr-1">
+                    {monthEvents.map((ev) => (
                       <li key={ev.id} className={cn(TALENT_SURFACE.rowCard, 'flex items-center justify-between gap-3')}>
                         <div>
                           <p className={cn('text-sm font-medium', TALENT_SURFACE.textTitle)}>
@@ -574,7 +603,7 @@ export default function HrAttendancePage() {
                             {ev.type.replace(/_/g, ' ')}
                           </p>
                         </div>
-                        <time className={cn('text-xs', TALENT_SURFACE.textMuted)}>
+                        <time className={cn('shrink-0 text-xs', TALENT_SURFACE.textMuted)}>
                           {formatShiftDateTime(ev.occurred_at)}
                         </time>
                       </li>

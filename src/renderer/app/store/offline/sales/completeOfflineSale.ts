@@ -11,6 +11,7 @@ import { resolveBusinessForTax } from '../../../../modules/settings/api/settings
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
 import type { CreateSalePayload, Sale } from '../../../../modules/sales/api/salesTypes';
 import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
+import { tracksStock } from '../../../../modules/inventory/api/products/ProductTypes';
 
 /** True when completely offline — complete sale locally. */
 export function shouldCompleteSaleLocally(): boolean {
@@ -108,11 +109,16 @@ export async function persistOfflineSaleInBackground(
   const products = queryClient.getQueryData<Product[]>(inventoryKeys.products());
   const seedMap = products ? await buildStockSeedMap(products) : undefined;
 
-  await stockLedger.batchAdjust(
-    payload.items.map((item) => ({ productId: item.product_id, delta: -item.quantity })),
-    'sale',
-    seedMap,
-  );
+  const stockItems = payload.items
+    .filter((item) => {
+      const product = products?.find((p) => p.id === item.product_id);
+      return !product || tracksStock(product);
+    })
+    .map((item) => ({ productId: item.product_id, delta: -item.quantity }));
+
+  if (stockItems.length > 0) {
+    await stockLedger.batchAdjust(stockItems, 'sale', seedMap);
+  }
 
   let mutationId = '';
   try {

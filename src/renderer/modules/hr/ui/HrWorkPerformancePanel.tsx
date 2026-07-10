@@ -14,6 +14,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import type {
+  HrPerformanceGoalItem,
   HrPerformanceRosterRow,
   HrPerformanceSnapshot,
 } from '../api/hrTypes';
@@ -25,6 +26,39 @@ import {
   type HrPerformancePeriodFilters,
 } from '../api/useHrQueries';
 import { TALENT_SURFACE, talentPaceClass } from './talentSurface';
+
+function roundGoalNumber(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const nearest = Math.round(value * 1000) / 1000;
+  if (Math.abs(nearest - Math.round(nearest)) < 0.0005) {
+    return Math.round(nearest);
+  }
+  return nearest;
+}
+
+/** Period achievement as x/y — e.g. day target 2 → 1/2. */
+function goalRatioLabel(actual: number, expected: number): string {
+  return `${roundGoalNumber(actual)}/${roundGoalNumber(expected)}`;
+}
+
+function goalPeriodCaption(goal: HrPerformanceGoalItem): string {
+  const period = goal.view_period_type;
+  const label =
+    period === 'day' ? 'Today'
+      : period === 'week' ? 'This week'
+        : period === 'month' ? 'This month'
+          : period === 'quarter' ? 'This quarter'
+            : period === 'year' ? 'This year'
+              : period === 'custom' ? 'Custom range'
+                : null;
+  if (goal.period_start && goal.period_end) {
+    const range = goal.period_start === goal.period_end
+      ? goal.period_start
+      : `${goal.period_start} – ${goal.period_end}`;
+    return label ? `${label} · ${range}` : range;
+  }
+  return label ?? 'Selected period';
+}
 
 function PaceBadge({ status, label }: { status: string; label: string }) {
   return (
@@ -234,7 +268,9 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
                 {paceAlerts.length > 0 ? (
                   paceAlerts.map((goal) => (
                     <li key={goal.id} className="text-xs text-amber-800">
-                      {goal.title} — {goal.pace_status.replace('_', ' ')} ({goal.progress_percent}%)
+                      {goal.title} — {goal.pace_status.replace('_', ' ')} ·{' '}
+                      {goalRatioLabel(goal.actual_value, goal.expected_value ?? goal.target_value)}{' '}
+                      ({goal.progress_percent}%)
                     </li>
                   ))
                 ) : (
@@ -294,15 +330,27 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
           </p>
         ) : (
           <div className="space-y-2">
-            {snapshot.goals.items.map((goal) => (
+            {snapshot.goals.items.map((goal) => {
+              const expected = goal.expected_value ?? goal.target_value;
+              const ratio = goalRatioLabel(goal.actual_value, expected);
+              const showOverall = roundGoalNumber(goal.target_value) !== roundGoalNumber(expected);
+              return (
               <div key={goal.id} className={TALENT_SURFACE.rowCard}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className={cn('text-sm font-medium', TALENT_SURFACE.textTitle)}>{goal.title}</p>
-                    <p className={cn('text-xs', TALENT_SURFACE.textMuted)}>
-                      {goal.board_name ?? 'Board'} · {goal.actual_value} / {goal.target_value}
-                      {goal.unit ? ` ${goal.unit}` : ''}
+                    <p className={cn('mt-1 text-lg font-bold tabular-nums', TALENT_SURFACE.textTitle)}>
+                      {ratio}
                     </p>
+                    <p className={cn('text-xs', TALENT_SURFACE.textMuted)}>
+                      {goal.board_name ?? 'Board'} · {goalPeriodCaption(goal)}
+                      {goal.unit && goal.unit !== 'count' ? ` · ${goal.unit}` : ''}
+                    </p>
+                    {showOverall ? (
+                      <p className={cn('mt-0.5 text-[10px]', TALENT_SURFACE.textMuted)}>
+                        Overall goal: {roundGoalNumber(goal.target_value)}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <PaceBadge status={goal.pace_status} label={goal.pace_status.replace('_', ' ')} />
@@ -322,7 +370,7 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
                 </div>
                 <div className="mt-2 space-y-1">
                   <div className="flex items-center justify-between text-[11px] text-gray-500">
-                    <span>{goal.actual_value} of {goal.target_value}</span>
+                    <span className="tabular-nums">{ratio} of period goal</span>
                     <span className="font-semibold text-gray-800">{goal.progress_percent}%</span>
                   </div>
                   <div className={TALENT_SURFACE.barTrack}>
@@ -330,7 +378,8 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

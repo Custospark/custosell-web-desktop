@@ -32,7 +32,7 @@ Ship a first-class **`hr`** module labeled **HR & Payroll** with:
 ### Negative
 
 - Payroll rules are jurisdiction-sensitive; non-UG locales need future rate packs.
-- Posting to Accounting depends on COA liability accounts existing; backend may soft-fail journal creation while still marking the run posted.
+- Posting to Accounting **fails hard** if the journal cannot be created (run stays approved); see [ADR: payroll accounting bridge](./2026-07-10-hr-payroll-accounting-bridge.md).
 - Offline-first mutation queue for HR is deferred — HR is online-primary in v1.
 
 ## Alternatives considered

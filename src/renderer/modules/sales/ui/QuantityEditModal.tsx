@@ -22,7 +22,11 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) { setQty(String(currentQty)); setTimeout(() => inputRef.current?.select(), 100); }
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset qty when modal opens
+      setQty(String(currentQty));
+      setTimeout(() => inputRef.current?.select(), 100);
+    }
   }, [open, currentQty]);
 
   const handleSave = () => {
@@ -50,8 +54,11 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1.5">New Quantity</label>
-          {maxQty > 0 && (
+          {maxQty > 0 && maxQty < 9999 && (
             <p className="text-xs text-gray-400 mb-1.5">In stock: {maxQty}</p>
+          )}
+          {maxQty >= 9999 && (
+            <p className="text-xs text-gray-400 mb-1.5">Service — no stock limit</p>
           )}
           <div className="relative">
             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

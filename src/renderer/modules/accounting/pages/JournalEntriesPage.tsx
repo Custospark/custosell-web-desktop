@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
@@ -16,6 +17,8 @@ import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 const PAGE_SIZE = 20;
 
 export default function JournalEntriesPage() {
+  const [searchParams] = useSearchParams();
+  const highlightEntryId = Number(searchParams.get('entry_id') || 0) || null;
   const [formOpen, setFormOpen] = useState(false);
   const { periodFilter, setPeriodFilter, startYear, endYear, periods } = useAccountingPeriodSelection();
   const [search, setSearch] = useState('');
@@ -42,14 +45,21 @@ export default function JournalEntriesPage() {
     const q = search.toLowerCase();
     return entries
       .filter((e) => {
+        if (highlightEntryId && e.id === highlightEntryId) return true;
         // Period filter
         if (activePeriodIds && !activePeriodIds.has(e.period_id)) return false;
         // Search filter
         if (q && !e.entry_number.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q)) return false;
         return true;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [entries, search, activePeriodIds]);
+      .sort((a, b) => {
+        if (highlightEntryId) {
+          if (a.id === highlightEntryId) return -1;
+          if (b.id === highlightEntryId) return 1;
+        }
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+  }, [entries, search, activePeriodIds, highlightEntryId]);
 
   // Build a set of entry numbers that have been reversed (by finding reversal descriptions)
   const reversedEntryNumbers = useMemo(() => {
@@ -67,7 +77,16 @@ export default function JournalEntriesPage() {
   const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
   const columns = [
-    { key: 'entry_number', header: 'Entry #', sortable: true },
+    {
+      key: 'entry_number',
+      header: 'Entry #',
+      sortable: true,
+      render: (item: JournalEntry) => (
+        <span className={cn(highlightEntryId === item.id && 'rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-900')}>
+          {item.entry_number}
+        </span>
+      ),
+    },
     {
       key: 'date',
       header: 'Date',

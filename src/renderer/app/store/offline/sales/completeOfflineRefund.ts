@@ -7,6 +7,7 @@ import { buildStockSeedMap } from '../inventory/offlineStockOverlay';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
 import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
+import { tracksStock } from '../../../../modules/inventory/api/products/ProductTypes';
 import type { RefundData, Sale } from '../../../../modules/sales/api/salesTypes';
 import { computeLineTaxRefund } from '../../../../shared/utils/taxEngine';
 
@@ -78,6 +79,8 @@ async function persistOfflineRefundInBackground(
     .map((refundItem) => {
       const saleItem = originalSale.sale_items?.find((i) => i.id === refundItem.id);
       if (!saleItem?.product_id) return null;
+      const product = products?.find((p) => p.id === saleItem.product_id);
+      if (product && !tracksStock(product)) return null;
       return { productId: saleItem.product_id, delta: refundItem.quantity };
     })
     .filter((item): item is { productId: number; delta: number } => item !== null);

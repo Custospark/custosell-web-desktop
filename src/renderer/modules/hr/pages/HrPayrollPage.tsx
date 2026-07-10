@@ -5,7 +5,9 @@ import {
   Calendar,
   Coins,
   Layers,
+  Pencil,
   Plus,
+  Trash2,
   User,
   Users,
   Wallet,
@@ -13,17 +15,22 @@ import {
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
   useCreateHrCompensation,
   useCreateHrPayRun,
   useCreateHrSalaryStructure,
+  useDeleteHrCompensation,
+  useDeleteHrPayRun,
+  useDeleteHrSalaryStructure,
   useHrCompensations,
   useHrEmployees,
   useHrPayRuns,
   useHrSalaryStructures,
+  useUpdateHrSalaryStructure,
 } from '../api/useHrQueries';
-import { employeeDisplayName } from '../api/hrTypes';
+import { employeeDisplayName, type HrSalaryStructure } from '../api/hrTypes';
 import { PayRunStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { formatShiftDate, formatShiftDateRange } from '../../../shared/utils/formatDateTime';
@@ -43,15 +50,21 @@ function formatMoney(n: number | undefined | null) {
 }
 
 export default function HrPayrollPage() {
+  const { confirm } = useConfirm();
   const { data: structures = [], isLoading: loadingStructures } = useHrSalaryStructures();
   const { data: compensations = [], isLoading: loadingComp } = useHrCompensations();
   const { data: payRuns = [], isLoading: loadingRuns } = useHrPayRuns();
   const { data: employees = [] } = useHrEmployees({ status: 'active' });
   const createStructure = useCreateHrSalaryStructure();
+  const updateStructure = useUpdateHrSalaryStructure();
+  const deleteStructure = useDeleteHrSalaryStructure();
   const createComp = useCreateHrCompensation();
+  const deleteComp = useDeleteHrCompensation();
   const createRun = useCreateHrPayRun();
+  const deleteRun = useDeleteHrPayRun();
 
   const [structureOpen, setStructureOpen] = useState(false);
+  const [editingStructure, setEditingStructure] = useState<HrSalaryStructure | null>(null);
   const [compOpen, setCompOpen] = useState(false);
   const [runOpen, setRunOpen] = useState(false);
   const [structureName, setStructureName] = useState('');
@@ -66,11 +79,59 @@ export default function HrPayrollPage() {
     period_end: '',
   });
 
+  function openCreateStructure() {
+    setEditingStructure(null);
+    setStructureName('');
+    setStructureOpen(true);
+  }
+
+  function openEditStructure(s: HrSalaryStructure) {
+    setEditingStructure(s);
+    setStructureName(s.name);
+    setStructureOpen(true);
+  }
+
   async function handleStructure(e: React.FormEvent) {
     e.preventDefault();
-    await createStructure.mutateAsync({ name: structureName.trim(), currency: 'UGX' });
+    const name = structureName.trim();
+    if (editingStructure) {
+      await updateStructure.mutateAsync({ id: editingStructure.id, name, currency: editingStructure.currency });
+    } else {
+      await createStructure.mutateAsync({ name, currency: 'UGX' });
+    }
     setStructureOpen(false);
+    setEditingStructure(null);
     setStructureName('');
+  }
+
+  async function handleDeleteStructure(s: HrSalaryStructure) {
+    const ok = await confirm({
+      title: 'Delete salary structure?',
+      message: `Remove “${s.name}”? Compensations that referenced it keep their salary amounts.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (ok) await deleteStructure.mutateAsync(s.id);
+  }
+
+  async function handleDeleteComp(id: number, label: string) {
+    const ok = await confirm({
+      title: 'Delete compensation?',
+      message: `Remove salary assignment for ${label}? Future pay runs will skip this row; past pay lines stay intact.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (ok) await deleteComp.mutateAsync(id);
+  }
+
+  async function handleDeleteRun(id: number, period: string) {
+    const ok = await confirm({
+      title: 'Delete pay run?',
+      message: `Remove the ${period} pay run? Calculated lines and payslips for this run will be removed.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (ok) await deleteRun.mutateAsync(id);
   }
 
   async function handleComp(e: React.FormEvent) {
@@ -115,7 +176,7 @@ export default function HrPayrollPage() {
           title="Salary structures"
           description="Templates for how you pay — currency defaults to UGX."
           actions={
-            <Button size="sm" variant="outline" onClick={() => setStructureOpen(true)} className="inline-flex items-center gap-1.5">
+            <Button size="sm" variant="outline" onClick={openCreateStructure} className="inline-flex items-center gap-1.5">
               <Plus className="h-3.5 w-3.5" /> Add structure
             </Button>
           }
@@ -129,9 +190,30 @@ export default function HrPayrollPage() {
           ) : (
             <ul className="divide-y divide-gray-100 text-sm">
               {structures.map((s) => (
-                <li key={s.id} className="flex justify-between py-2.5">
-                  <span className="font-medium text-gray-900">{s.name}</span>
-                  <span className="text-xs text-gray-500">{s.currency}</span>
+                <li key={s.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div>
+                    <span className="font-medium text-gray-900">{s.name}</span>
+                    <span className="ml-2 text-xs text-gray-500">{s.currency}</span>
+                  </div>
+                  <div className="inline-flex shrink-0 gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditStructure(s)}
+                      className="inline-flex items-center gap-1"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={deleteStructure.isPending}
+                      onClick={() => void handleDeleteStructure(s)}
+                      className="inline-flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -161,16 +243,31 @@ export default function HrPayrollPage() {
                     <th className="px-3 py-2">Employee</th>
                     <th className="px-3 py-2">Basic</th>
                     <th className="px-3 py-2">From</th>
+                    <th className="px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {compensations.map((c) => (
-                    <tr key={c.id}>
-                      <td className="px-3 py-2">{c.employee ? employeeDisplayName(c.employee) : `#${c.employee_id}`}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{formatMoney(c.basic_salary)}</td>
-                      <td className="px-3 py-2 text-gray-600">{formatShiftDate(c.effective_from)}</td>
-                    </tr>
-                  ))}
+                  {compensations.map((c) => {
+                    const label = c.employee ? employeeDisplayName(c.employee) : `#${c.employee_id}`;
+                    return (
+                      <tr key={c.id}>
+                        <td className="px-3 py-2">{label}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{formatMoney(c.basic_salary)}</td>
+                        <td className="px-3 py-2 text-gray-600">{formatShiftDate(c.effective_from)}</td>
+                        <td className="px-3 py-2 text-right">
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            loading={deleteComp.isPending}
+                            onClick={() => void handleDeleteComp(c.id, label)}
+                            className="inline-flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -205,21 +302,34 @@ export default function HrPayrollPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {payRuns.map((run) => (
-                  <tr key={run.id} className="hover:bg-indigo-50/40">
-                    <td className="px-3 py-2 font-medium text-gray-900">
-                      {formatShiftDateRange(run.period_start, run.period_end)}
-                    </td>
-                    <td className="px-3 py-2"><PayRunStatusBadge status={run.status} /></td>
-                    <td className="px-3 py-2 font-mono text-xs">{formatMoney(run.total_gross)}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{formatMoney(run.total_net)}</td>
-                    <td className="px-3 py-2 text-right">
-                      <Link to={ROUTES.HR.PAY_RUN(run.id)} className="text-indigo-600 hover:underline">
-                        Open
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {payRuns.map((run) => {
+                  const period = formatShiftDateRange(run.period_start, run.period_end);
+                  const canDelete = run.status === 'draft' || run.status === 'calculated';
+                  return (
+                    <tr key={run.id} className="hover:bg-indigo-50/40">
+                      <td className="px-3 py-2 font-medium text-gray-900">{period}</td>
+                      <td className="px-3 py-2"><PayRunStatusBadge status={run.status} /></td>
+                      <td className="px-3 py-2 font-mono text-xs">{formatMoney(run.total_gross)}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{formatMoney(run.total_net)}</td>
+                      <td className="px-3 py-2 text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <Link to={ROUTES.HR.PAY_RUN(run.id)} className="text-indigo-600 hover:underline">
+                            Open
+                          </Link>
+                          {canDelete ? (
+                            <button
+                              type="button"
+                              className="text-sm text-red-600 hover:underline"
+                              onClick={() => void handleDeleteRun(run.id, period)}
+                            >
+                              Delete
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -228,14 +338,17 @@ export default function HrPayrollPage() {
 
       <Modal
         isOpen={structureOpen}
-        onClose={() => setStructureOpen(false)}
-        title="Salary structure"
+        onClose={() => {
+          setStructureOpen(false);
+          setEditingStructure(null);
+        }}
+        title={editingStructure ? 'Edit salary structure' : 'Salary structure'}
         subtitle="A reusable template for how you pay people."
       >
         <form onSubmit={handleStructure} className="space-y-5">
           <HrModalHero
             icon={Layers}
-            title="New salary structure"
+            title={editingStructure ? 'Edit salary structure' : 'New salary structure'}
             description="Currency defaults to UGX for Uganda-first payroll — you can assign it when setting compensation."
             tone="blue"
           />
@@ -252,8 +365,19 @@ export default function HrPayrollPage() {
             </HrIconField>
           </HrFormSection>
           <HrModalFooter>
-            <Button type="button" variant="outline" onClick={() => setStructureOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createStructure.isPending}>Create structure</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setStructureOpen(false);
+                setEditingStructure(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={createStructure.isPending || updateStructure.isPending}>
+              {editingStructure ? 'Save changes' : 'Create structure'}
+            </Button>
           </HrModalFooter>
         </form>
       </Modal>

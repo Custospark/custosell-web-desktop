@@ -47,9 +47,12 @@ import type {
   UpdateAttendanceDayPayload,
   UpdateDepartmentPayload,
   UpdateEmployeePayload,
+  UpdateLeaveTypePayload,
   UpdateOnboardingTaskPayload,
+  UpdatePayRunPayload,
   UpdatePositionPayload,
   UpdateReviewPayload,
+  UpdateSalaryStructurePayload,
 } from './hrTypes';
 
 function unwrapEntity<T>(payload: unknown): T {
@@ -554,6 +557,39 @@ export function useCreateHrLeaveType() {
   });
 }
 
+export function useUpdateHrLeaveType() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: UpdateLeaveTypePayload & { id: number }) => {
+      const { data } = await axiosInstance.patch(HR.LEAVE_TYPE(id), payload);
+      return unwrapEntity<HrLeaveType>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: hrKeys.leaveTypes() });
+      showToast('success', 'Leave type updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not update leave type'),
+  });
+}
+
+export function useDeleteHrLeaveType() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(HR.LEAVE_TYPE(id));
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: hrKeys.leaveTypes() });
+      showToast('success', 'Leave type deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not delete leave type'),
+  });
+}
+
 export function useHrLeaveBalances(
   filters?: { employee_id?: number; year?: number },
   enabled = true,
@@ -638,6 +674,24 @@ export function useRejectHrLeaveRequest() {
   });
 }
 
+export function useCancelHrLeaveRequest() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await axiosInstance.post(HR.LEAVE_REQUEST_CANCEL(id));
+      return unwrapEntity<HrLeaveRequest>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'leave-requests'] });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'leave-balances'] });
+      showToast('success', 'Leave request cancelled');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not cancel leave request'),
+  });
+}
+
 /* ─── Payroll ─── */
 
 export function useHrSalaryStructures(enabled = true) {
@@ -666,6 +720,40 @@ export function useCreateHrSalaryStructure() {
       showToast('success', 'Salary structure created');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not create salary structure'),
+  });
+}
+
+export function useUpdateHrSalaryStructure() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: UpdateSalaryStructurePayload & { id: number }) => {
+      const { data } = await axiosInstance.patch(HR.SALARY_STRUCTURE(id), payload);
+      return unwrapEntity<HrSalaryStructure>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: hrKeys.salaryStructures() });
+      showToast('success', 'Salary structure updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not update salary structure'),
+  });
+}
+
+export function useDeleteHrSalaryStructure() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(HR.SALARY_STRUCTURE(id));
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: hrKeys.salaryStructures() });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'compensations'] });
+      showToast('success', 'Salary structure deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not delete salary structure'),
   });
 }
 
@@ -698,20 +786,19 @@ export function useCreateHrCompensation() {
   });
 }
 
-export function useUpdateHrCompensation() {
+export function useDeleteHrCompensation() {
   const qc = useQueryClient();
   const { showToast } = useToast();
   const onError = useHrErrorToast();
   return useMutation({
-    mutationFn: async (payload: CreateCompensationPayload) => {
-      const { data } = await axiosInstance.post(HR.COMPENSATIONS, payload);
-      return unwrapEntity<HrCompensation>(data);
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(HR.COMPENSATION(id));
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'compensations'] });
-      showToast('success', 'Compensation updated');
+      showToast('success', 'Compensation deleted');
     },
-    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not update compensation'),
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not delete compensation'),
   });
 }
 
@@ -753,6 +840,41 @@ export function useCreateHrPayRun() {
       showToast('success', 'Pay run created');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not create pay run'),
+  });
+}
+
+export function useUpdateHrPayRun() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: UpdatePayRunPayload & { id: number }) => {
+      const { data } = await axiosInstance.patch(HR.PAY_RUN(id), payload);
+      return unwrapEntity<HrPayRun>(data);
+    },
+    onSuccess: (payRun) => {
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'pay-runs'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.payRun(payRun.id) });
+      showToast('success', 'Pay run period updated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not update pay run'),
+  });
+}
+
+export function useDeleteHrPayRun() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(HR.PAY_RUN(id));
+    },
+    onSuccess: (_data, id) => {
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'pay-runs'] });
+      void qc.removeQueries({ queryKey: hrKeys.payRun(id) });
+      showToast('success', 'Pay run deleted');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not delete pay run'),
   });
 }
 
@@ -805,9 +927,80 @@ export function usePostHrPayRun() {
       void qc.invalidateQueries({ queryKey: hrKeys.payRun(id) });
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'pay-runs'] });
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'reports'] });
-      showToast('success', 'Pay run posted');
+      showToast('success', 'Pay run posted to accounting');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not post pay run'),
+  });
+}
+
+export function useSettleHrPayRun() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      funding_account_code,
+    }: {
+      id: number;
+      funding_account_code?: string;
+    }) => {
+      const { data } = await axiosInstance.post(HR.PAY_RUN_SETTLE(id), {
+        funding_account_code,
+      });
+      return unwrapEntity<HrPayRun>(data);
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: hrKeys.payRun(vars.id) });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'pay-runs'] });
+      showToast('success', 'Net pay settled in accounting');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not settle pay run'),
+  });
+}
+
+export function useRemitHrStatutory() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      funding_account_code,
+    }: {
+      id: number;
+      funding_account_code?: string;
+    }) => {
+      const { data } = await axiosInstance.post(HR.PAY_RUN_REMIT_STATUTORY(id), {
+        funding_account_code,
+      });
+      return unwrapEntity<HrPayRun>(data);
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: hrKeys.payRun(vars.id) });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'pay-runs'] });
+      showToast('success', 'PAYE & NSSF remitted in accounting');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not remit statutory amounts'),
+  });
+}
+
+export function useVoidHrPayRun() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await axiosInstance.post(HR.PAY_RUN_VOID(id));
+      return unwrapEntity<HrPayRun>(data);
+    },
+    onSuccess: (_data, id) => {
+      void qc.invalidateQueries({ queryKey: hrKeys.payRun(id) });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'pay-runs'] });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'reports'] });
+      showToast('success', 'Pay run voided and journals reversed');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not void pay run'),
   });
 }
 

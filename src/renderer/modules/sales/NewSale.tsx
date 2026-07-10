@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useProducts } from '../inventory/api/products/ProductQueries';
 import type { Product } from '../inventory/api/products/ProductTypes';
+import { isSellable, isServiceItem, SERVICE_QTY_SOFT_CAP, tracksStock } from '../inventory/api/products/ProductTypes';
 import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
@@ -35,7 +36,7 @@ function inventorySnapshot(products: Product[] | undefined): string {
   if (!products?.length) return '';
   return [...products]
     .sort((a, b) => a.id - b.id)
-    .map((p) => `${p.id}:${p.stock_quantity}:${p.is_active ? 1 : 0}`)
+    .map((p) => `${p.id}:${p.stock_quantity}:${p.is_active ? 1 : 0}:${p.type ?? 'product'}`)
     .join('|');
 }
 
@@ -548,7 +549,7 @@ export default function NewSale() {
   useEffect(() => {
     if (!products || !search.trim()) return;
     const match = findProductByBarcode(products, search);
-    if (!match || !match.is_active || match.stock_quantity <= 0) return;
+    if (!match || !isSellable(match)) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- barcode scanner adds product on scan
     addItem(
       match.id,
@@ -620,12 +621,12 @@ export default function NewSale() {
                         const barcodeMatch = findProductByBarcode(products, search);
                         const exact = barcodeMatch
                           ?? products.find((p) =>
-                            p.is_active && p.stock_quantity > 0
+                            isSellable(p)
                             && (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q)),
                           );
                         if (exact) {
                           addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class);
-                        } else if (results.length > 0 && results[0].stock_quantity > 0) {
+                        } else if (results.length > 0 && isSellable(results[0])) {
                           addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit, results[0].tax_percentage, results[0].tax_class);
                         }
                       }
@@ -664,17 +665,26 @@ export default function NewSale() {
                           <tbody className="divide-y divide-gray-100">
                             {results.map((p) => (
                               <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors"
-                                onMouseDown={() => p.stock_quantity > 0 && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class)}>
+                                onMouseDown={() => isSellable(p) && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class)}>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                                   <div className="flex items-center gap-2 sm:gap-3">
                                     <div className="p-1 sm:p-1.5 rounded-lg bg-gray-100 text-gray-500 shrink-0"><Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></div>
-                                    <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
+                                    <div className="min-w-0">
+                                      <span className="text-sm font-medium text-gray-800 truncate block">{p.name}</span>
+                                      {isServiceItem(p) && (
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-blue-600">Service</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3 hidden sm:table-cell">
-                                  <span className={`text-xs ${p.stock_quantity > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                    {p.stock_quantity > 0 ? `${p.stock_quantity} in stock` : 'Out of stock'}
-                                  </span>
+                                  {isServiceItem(p) ? (
+                                    <span className="text-xs text-blue-600">Service</span>
+                                  ) : (
+                                    <span className={`text-xs ${p.stock_quantity > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                      {p.stock_quantity > 0 ? `${p.stock_quantity} in stock` : 'Out of stock'}
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-right">
                                   <span className="text-sm font-semibold text-blue-600">{formatCurrency(p.unit_price)}</span>
@@ -760,7 +770,8 @@ export default function NewSale() {
                             <span title="Click to edit quantity" className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-0.5"
                               onClick={() => {
                                 const p = products?.find(p => p.id === item.product_id);
-                                setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity, maxQty: p?.stock_quantity ?? 0 });
+                                const maxQty = p && tracksStock(p) ? p.stock_quantity : SERVICE_QTY_SOFT_CAP;
+                                setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity, maxQty });
                               }}>
                               {item.quantity}<Pencil className="w-3 h-3 text-blue-400" />
                             </span>
@@ -768,10 +779,10 @@ export default function NewSale() {
                             {/* PLUS BUTTON - Circular with bright green ring + shadow */}
                             {(() => {
                               const product = products?.find(p => p.id === item.product_id);
-                              const maxStock = product?.stock_quantity ?? 0;
+                              const maxStock = product && tracksStock(product) ? product.stock_quantity : SERVICE_QTY_SOFT_CAP;
                               const atMax = item.quantity >= maxStock;
                               return (
-                                <button title={atMax ? `Only ${maxStock} in stock` : 'Increase quantity'}
+                                <button title={atMax && product && tracksStock(product) ? `Only ${maxStock} in stock` : 'Increase quantity'}
                                   onClick={() => !atMax && dispatch(updateQuantity({ product_id: item.product_id, quantity: item.quantity + 1 }))}
                                   className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center shadow-sm ${
                                     atMax

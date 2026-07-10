@@ -5,8 +5,10 @@ import {
   Check,
   Hash,
   MessageSquare,
+  Pencil,
   Plus,
   Tag,
+  Trash2,
   User,
   Users,
   X,
@@ -14,17 +16,21 @@ import {
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import {
   useApproveHrLeaveRequest,
+  useCancelHrLeaveRequest,
   useCreateHrLeaveRequest,
   useCreateHrLeaveType,
+  useDeleteHrLeaveType,
   useHrEmployees,
   useHrLeaveBalances,
   useHrLeaveRequests,
   useHrLeaveTypes,
   useRejectHrLeaveRequest,
+  useUpdateHrLeaveType,
 } from '../api/useHrQueries';
-import { employeeDisplayName } from '../api/hrTypes';
+import { employeeDisplayName, type HrLeaveType } from '../api/hrTypes';
 import { LeaveStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import {
@@ -40,7 +46,16 @@ import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { canViewFullHr } from '../../../shared/utils/moduleAccess';
 
+const emptyTypeForm = {
+  name: '',
+  code: '',
+  days_per_year: 21,
+  paid: true,
+  requires_approval: true,
+};
+
 export default function HrLeavePage() {
+  const { confirm } = useConfirm();
   const user = useAppSelector((s) => s.auth.user);
   const isFullHr = canViewFullHr(user);
   const year = new Date().getFullYear();
@@ -49,15 +64,19 @@ export default function HrLeavePage() {
   const { data: requests = [], isLoading: loadingRequests } = useHrLeaveRequests();
   const { data: employees = [] } = useHrEmployees();
   const createType = useCreateHrLeaveType();
+  const updateType = useUpdateHrLeaveType();
+  const deleteType = useDeleteHrLeaveType();
   const createRequest = useCreateHrLeaveRequest();
   const approve = useApproveHrLeaveRequest();
   const reject = useRejectHrLeaveRequest();
+  const cancelRequest = useCancelHrLeaveRequest();
 
   const selfEmployee = employees.find((e) => e.user_id != null && user?.id != null && e.user_id === user.id) ?? null;
 
   const [typeOpen, setTypeOpen] = useState(false);
+  const [editingType, setEditingType] = useState<HrLeaveType | null>(null);
   const [reqOpen, setReqOpen] = useState(false);
-  const [typeForm, setTypeForm] = useState({ name: '', code: '', days_per_year: 21, paid: true, requires_approval: true });
+  const [typeForm, setTypeForm] = useState(emptyTypeForm);
   const [reqForm, setReqForm] = useState({
     employee_id: '',
     leave_type_id: '',
@@ -66,12 +85,55 @@ export default function HrLeavePage() {
     reason: '',
   });
 
-  async function handleCreateType(e: React.FormEvent) {
+  function openCreateType() {
+    setEditingType(null);
+    setTypeForm(emptyTypeForm);
+    setTypeOpen(true);
+  }
+
+  function openEditType(t: HrLeaveType) {
+    setEditingType(t);
+    setTypeForm({
+      name: t.name,
+      code: t.code,
+      days_per_year: t.days_per_year,
+      paid: t.paid,
+      requires_approval: t.requires_approval,
+    });
+    setTypeOpen(true);
+  }
+
+  async function handleSaveType(e: React.FormEvent) {
     e.preventDefault();
     if (!isFullHr) return;
-    await createType.mutateAsync(typeForm);
+    if (editingType) {
+      await updateType.mutateAsync({ id: editingType.id, ...typeForm });
+    } else {
+      await createType.mutateAsync(typeForm);
+    }
     setTypeOpen(false);
-    setTypeForm({ name: '', code: '', days_per_year: 21, paid: true, requires_approval: true });
+    setEditingType(null);
+    setTypeForm(emptyTypeForm);
+  }
+
+  async function handleDeleteType(t: HrLeaveType) {
+    const ok = await confirm({
+      title: 'Delete leave type?',
+      message: `Remove “${t.name}”? Existing balances and requests that used it may need review.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (ok) await deleteType.mutateAsync(t.id);
+  }
+
+  async function handleCancelRequest(id: number, label: string) {
+    const ok = await confirm({
+      title: 'Cancel leave request?',
+      message: `Cancel ${label}? Days held as pending or used will be returned to the balance.`,
+      confirmText: 'Cancel leave',
+      variant: 'danger',
+    });
+    if (ok) await cancelRequest.mutateAsync(id);
   }
 
   async function handleCreateRequest(e: React.FormEvent) {
@@ -96,6 +158,12 @@ export default function HrLeavePage() {
     ? balances
     : balances.filter((b) => b.employee_id === selfEmployee.id);
 
+  function canCancelRequest(employeeId: number, status: string) {
+    if (!['pending', 'approved'].includes(status)) return false;
+    if (isFullHr) return true;
+    return selfEmployee != null && selfEmployee.id === employeeId;
+  }
+
   return (
     <div className="space-y-5">
       <HrPageHeader
@@ -109,7 +177,7 @@ export default function HrLeavePage() {
         actions={
           <>
             {isFullHr ? (
-              <Button variant="outline" size="sm" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
+              <Button variant="outline" size="sm" onClick={openCreateType} className="inline-flex items-center gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> Leave type
               </Button>
             ) : null}
@@ -142,7 +210,7 @@ export default function HrLeavePage() {
               description="Add Annual, Sick, or Unpaid leave so balances and requests have something to attach to."
               action={
                 isFullHr ? (
-                  <Button size="sm" variant="outline" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
+                  <Button size="sm" variant="outline" onClick={openCreateType} className="inline-flex items-center gap-1.5">
                     <Plus className="h-3.5 w-3.5" /> Add leave type
                   </Button>
                 ) : undefined
@@ -162,6 +230,27 @@ export default function HrLeavePage() {
                       {t.requires_approval ? ' · Approval required' : ''}
                     </p>
                   </div>
+                  {isFullHr ? (
+                    <div className="inline-flex shrink-0 gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEditType(t)}
+                        className="inline-flex items-center gap-1"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={deleteType.isPending}
+                        onClick={() => void handleDeleteType(t)}
+                        className="inline-flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </Button>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -240,45 +329,61 @@ export default function HrLeavePage() {
                   <th className="px-3 py-2">Dates</th>
                   <th className="px-3 py-2">Days</th>
                   <th className="px-3 py-2">Status</th>
-                  {isFullHr ? <th className="px-3 py-2" /> : null}
+                  <th className="px-3 py-2" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {visibleRequests.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-3 py-2">{r.employee ? employeeDisplayName(r.employee) : `#${r.employee_id}`}</td>
-                    <td className="px-3 py-2">{r.leave_type?.name ?? r.leave_type_id}</td>
-                    <td className="px-3 py-2 text-gray-600">{formatShiftDateRange(r.start_date, r.end_date)}</td>
-                    <td className="px-3 py-2">{r.days}</td>
-                    <td className="px-3 py-2"><LeaveStatusBadge status={r.status} /></td>
-                    {isFullHr ? (
+                {visibleRequests.map((r) => {
+                  const label = r.employee
+                    ? `${employeeDisplayName(r.employee)} · ${formatShiftDateRange(r.start_date, r.end_date)}`
+                    : formatShiftDateRange(r.start_date, r.end_date);
+                  return (
+                    <tr key={r.id}>
+                      <td className="px-3 py-2">{r.employee ? employeeDisplayName(r.employee) : `#${r.employee_id}`}</td>
+                      <td className="px-3 py-2">{r.leave_type?.name ?? r.leave_type_id}</td>
+                      <td className="px-3 py-2 text-gray-600">{formatShiftDateRange(r.start_date, r.end_date)}</td>
+                      <td className="px-3 py-2">{r.days}</td>
+                      <td className="px-3 py-2"><LeaveStatusBadge status={r.status} /></td>
                       <td className="px-3 py-2 text-right">
-                        {r.status === 'pending' ? (
-                          <div className="inline-flex gap-1">
+                        <div className="inline-flex flex-wrap justify-end gap-1">
+                          {isFullHr && r.status === 'pending' ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                loading={approve.isPending}
+                                onClick={() => approve.mutate({ id: r.id })}
+                                className="inline-flex items-center gap-1"
+                              >
+                                <Check className="h-3.5 w-3.5" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                loading={reject.isPending}
+                                onClick={() => reject.mutate({ id: r.id })}
+                                className="inline-flex items-center gap-1"
+                              >
+                                <X className="h-3.5 w-3.5" /> Reject
+                              </Button>
+                            </>
+                          ) : null}
+                          {canCancelRequest(r.employee_id, r.status) ? (
                             <Button
                               size="sm"
                               variant="outline"
-                              loading={approve.isPending}
-                              onClick={() => approve.mutate({ id: r.id })}
+                              loading={cancelRequest.isPending}
+                              onClick={() => void handleCancelRequest(r.id, label)}
                               className="inline-flex items-center gap-1"
                             >
-                              <Check className="h-3.5 w-3.5" /> Approve
+                              Cancel
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              loading={reject.isPending}
-                              onClick={() => reject.mutate({ id: r.id })}
-                              className="inline-flex items-center gap-1"
-                            >
-                              <X className="h-3.5 w-3.5" /> Reject
-                            </Button>
-                          </div>
-                        ) : null}
+                          ) : null}
+                        </div>
                       </td>
-                    ) : null}
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -287,14 +392,17 @@ export default function HrLeavePage() {
 
       <Modal
         isOpen={typeOpen && isFullHr}
-        onClose={() => setTypeOpen(false)}
-        title="Add leave type"
-        subtitle="Define how this kind of time off works for your business."
+        onClose={() => {
+          setTypeOpen(false);
+          setEditingType(null);
+        }}
+        title={editingType ? 'Edit leave type' : 'Add leave type'}
+        subtitle={editingType ? 'Update how this kind of time off works.' : 'Define how this kind of time off works for your business.'}
       >
-        <form onSubmit={handleCreateType} className="space-y-5">
+        <form onSubmit={handleSaveType} className="space-y-5">
           <HrModalHero
             icon={Tag}
-            title="New leave type"
+            title={editingType ? 'Edit leave type' : 'New leave type'}
             description="Annual, sick, maternity — set the rules once and they apply to everyone."
             tone="emerald"
           />
@@ -346,8 +454,19 @@ export default function HrLeavePage() {
             </div>
           </HrFormSection>
           <HrModalFooter>
-            <Button type="button" variant="outline" onClick={() => setTypeOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createType.isPending}>Create leave type</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setTypeOpen(false);
+                setEditingType(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={createType.isPending || updateType.isPending}>
+              {editingType ? 'Save changes' : 'Create leave type'}
+            </Button>
           </HrModalFooter>
         </form>
       </Modal>

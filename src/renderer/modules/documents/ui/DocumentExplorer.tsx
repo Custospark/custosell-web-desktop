@@ -8,29 +8,50 @@ import {
   useDocuments,
 } from '../api/useDocumentQueries';
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
+import { ExplorerRowMenu, type ExplorerMenuItem } from './ExplorerRowMenu';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { Button } from '../../../shared/components/buttons/Button';
 import {
   ChevronDown,
   ChevronRight,
   ChevronsDownUp,
   FilePlus,
+  FolderInput,
   FolderPlus,
+  Home,
   Link2,
+  Pencil,
   RefreshCw,
   Search,
+  Trash2,
+  Upload,
 } from 'lucide-react';
 
 const INDENT = 14;
 
+export interface DocumentExplorerActions {
+  onRenameFolder?: (folder: DocumentFolder) => void;
+  onDeleteFolder?: (folder: DocumentFolder) => void;
+  onMoveFolder?: (folder: DocumentFolder) => void;
+  onCreateSubfolder?: (folder: DocumentFolder) => void;
+  onUploadToFolder?: (folderId: number | null) => void;
+  onAddLinkToFolder?: (folderId: number | null) => void;
+  onRenameDocument?: (doc: DocumentItem) => void;
+  onDeleteDocument?: (doc: DocumentItem) => void;
+  onMoveDocument?: (doc: DocumentItem) => void;
+}
+
 interface DocumentExplorerProps {
   activeFolderId: number | null;
   selectedDocumentId: number | null;
+  breadcrumbs?: { id: number; name: string }[];
   expandFolderIds?: number[];
   searchQuery: string;
   tagFilter: string;
   dropTargetFolderId: number | 'panel' | null;
   online: boolean;
   canContribute: boolean;
+  actions?: DocumentExplorerActions;
   onSearchChange: (value: string) => void;
   onTagFilterChange: (value: string) => void;
   onSelectFolder: (folderId: number | null) => void;
@@ -46,65 +67,147 @@ interface DocumentExplorerProps {
   onFolderDragStart: (folder: DocumentFolder, e: React.DragEvent) => void;
 }
 
-function ExplorerIconButton({
-  title,
-  disabled,
-  onClick,
-  children,
-}: {
-  title: string;
-  disabled?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        'flex h-7 w-7 items-center justify-center rounded text-gray-600 transition-colors',
-        'hover:bg-gray-200/80 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40',
-      )}
-    >
-      {children}
-    </button>
-  );
+function folderMenuItems(folder: DocumentFolder, actions: DocumentExplorerActions | undefined, online: boolean): ExplorerMenuItem[] {
+  if (!actions) return [];
+  const items: ExplorerMenuItem[] = [];
+
+  if (actions.onUploadToFolder) {
+    items.push({
+      id: 'upload',
+      label: 'Upload file here',
+      icon: <Upload className="h-3.5 w-3.5" />,
+      disabled: !online || !folder.can_contribute,
+      onClick: () => actions.onUploadToFolder?.(folder.id),
+    });
+  }
+  if (actions.onAddLinkToFolder) {
+    items.push({
+      id: 'link',
+      label: 'Add link here',
+      icon: <Link2 className="h-3.5 w-3.5" />,
+      disabled: !online || !folder.can_contribute,
+      onClick: () => actions.onAddLinkToFolder?.(folder.id),
+    });
+  }
+  if (actions.onCreateSubfolder) {
+    items.push({
+      id: 'subfolder',
+      label: 'New subfolder',
+      icon: <FolderPlus className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onCreateSubfolder?.(folder),
+    });
+  }
+  if (actions.onRenameFolder && folder.can_manage) {
+    items.push({
+      id: 'rename',
+      label: 'Rename folder',
+      icon: <Pencil className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onRenameFolder?.(folder),
+    });
+  }
+  if (actions.onMoveFolder && folder.can_manage) {
+    items.push({
+      id: 'move',
+      label: 'Move folder',
+      icon: <FolderInput className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onMoveFolder?.(folder),
+    });
+  }
+  if (actions.onDeleteFolder && folder.can_delete) {
+    items.push({
+      id: 'delete',
+      label: 'Delete folder',
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      disabled: !online,
+      danger: true,
+      onClick: () => actions.onDeleteFolder?.(folder),
+    });
+  }
+
+  return items;
+}
+
+function documentMenuItems(doc: DocumentItem, actions: DocumentExplorerActions | undefined, online: boolean): ExplorerMenuItem[] {
+  if (!actions) return [];
+  const items: ExplorerMenuItem[] = [];
+
+  if (actions.onRenameDocument && (doc.can_edit || doc.can_manage)) {
+    items.push({
+      id: 'rename',
+      label: 'Rename',
+      icon: <Pencil className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onRenameDocument?.(doc),
+    });
+  }
+  if (actions.onMoveDocument && (doc.can_edit || doc.can_manage)) {
+    items.push({
+      id: 'move',
+      label: 'Move to folder',
+      icon: <FolderInput className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onMoveDocument?.(doc),
+    });
+  }
+  if (actions.onDeleteDocument && doc.can_delete) {
+    items.push({
+      id: 'delete',
+      label: 'Delete',
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      disabled: !online,
+      danger: true,
+      onClick: () => actions.onDeleteDocument?.(doc),
+    });
+  }
+
+  return items;
 }
 
 function ExplorerFileRow({
   doc,
   depth,
   selected,
+  menuItems,
   onSelect,
   onDragStart,
 }: {
   doc: DocumentItem;
   depth: number;
   selected: boolean;
+  menuItems: ExplorerMenuItem[];
   onSelect: () => void;
   onDragStart: (e: React.DragEvent) => void;
 }) {
   const label = truncateDisplayName(documentIconLabel(doc), 40);
 
   return (
-    <button
-      type="button"
-      draggable={doc.can_edit || doc.can_manage}
-      onDragStart={onDragStart}
-      onClick={onSelect}
-      title={documentIconLabel(doc)}
+    <div
       className={cn(
-        'flex w-full items-center gap-1.5 py-1 pr-2 text-left text-[13px] leading-5',
-        selected ? 'bg-[#0060c0]/15 text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+        'group flex items-center gap-0.5 pr-1',
+        selected && 'bg-[#0060c0]/12',
       )}
-      style={{ paddingLeft: `${8 + depth * INDENT}px` }}
     >
-      <span className="inline-block h-4 w-4 shrink-0" />
-      <DocumentItemIcon doc={doc} />
-      <span className="truncate">{label}</span>
-    </button>
+      <button
+        type="button"
+        draggable={doc.can_edit || doc.can_manage}
+        onDragStart={onDragStart}
+        onClick={onSelect}
+        title={documentIconLabel(doc)}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left text-[13px] leading-5',
+          selected ? 'text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+        )}
+        style={{ paddingLeft: `${8 + depth * INDENT}px` }}
+      >
+        <span className="inline-block h-4 w-4 shrink-0" />
+        <DocumentItemIcon doc={doc} />
+        <span className="truncate">{label}</span>
+      </button>
+      <ExplorerRowMenu items={menuItems} className="mr-1" />
+    </div>
   );
 }
 
@@ -117,6 +220,8 @@ function ExplorerFolderNode({
   expandedIds,
   toggleExpanded,
   dropTargetFolderId,
+  actions,
+  online,
   onSelectFolder,
   onSelectDocument,
   onFolderDragOver,
@@ -133,6 +238,8 @@ function ExplorerFolderNode({
   expandedIds: Set<number>;
   toggleExpanded: (id: number) => void;
   dropTargetFolderId: number | 'panel' | null;
+  actions?: DocumentExplorerActions;
+  online: boolean;
   onSelectFolder: (folderId: number | null) => void;
   onSelectDocument: (doc: DocumentItem) => void;
   onFolderDragOver: (folderId: number, e: React.DragEvent) => void;
@@ -144,6 +251,7 @@ function ExplorerFolderNode({
   const expanded = expandedIds.has(folder.id) || expandFolderIds.has(folder.id);
   const folderSelected = activeFolderId === folder.id && selectedDocumentId == null;
   const isDropTarget = dropTargetFolderId === folder.id;
+  const menuItems = folderMenuItems(folder, actions, online);
 
   const { data: contents, isLoading } = useDocumentFolderContents(folder.id, 1, expanded);
   const subfolders = contents?.folders ?? [];
@@ -160,6 +268,7 @@ function ExplorerFolderNode({
         className={cn(
           'group flex items-center gap-0.5 pr-1',
           isDropTarget && 'bg-indigo-50 ring-1 ring-indigo-300 ring-inset',
+          folderSelected && 'bg-[#0060c0]/12',
         )}
         onDragOver={(e) => onFolderDragOver(folder.id, e)}
         onDragLeave={onFolderDragLeave}
@@ -167,12 +276,12 @@ function ExplorerFolderNode({
       >
         <button
           type="button"
-          className="flex h-6 w-5 shrink-0 items-center justify-center text-gray-500 hover:text-gray-800"
+          className="flex h-7 w-5 shrink-0 items-center justify-center text-gray-500 hover:text-gray-800"
           onClick={(e) => {
             e.stopPropagation();
             toggleExpanded(folder.id);
           }}
-          aria-label={expanded ? 'Collapse' : 'Expand'}
+          aria-label={expanded ? 'Collapse folder' : 'Expand folder'}
         >
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </button>
@@ -183,14 +292,15 @@ function ExplorerFolderNode({
           onClick={handleRowClick}
           title={folder.name}
           className={cn(
-            'flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left text-[13px] leading-5',
-            folderSelected ? 'bg-[#0060c0]/15 text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+            'flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left text-[13px] leading-5',
+            folderSelected ? 'font-medium text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
           )}
           style={{ paddingLeft: `${4 + depth * INDENT}px` }}
         >
           <DocumentFolderIcon open={expanded && folderSelected} />
-          <span className="truncate font-normal">{truncateDisplayName(folder.name, 40)}</span>
+          <span className="truncate">{truncateDisplayName(folder.name, 40)}</span>
         </button>
+        <ExplorerRowMenu items={menuItems} className="mr-1" />
       </div>
 
       {expanded && (
@@ -211,6 +321,8 @@ function ExplorerFolderNode({
               expandedIds={expandedIds}
               toggleExpanded={toggleExpanded}
               dropTargetFolderId={dropTargetFolderId}
+              actions={actions}
+              online={online}
               onSelectFolder={onSelectFolder}
               onSelectDocument={onSelectDocument}
               onFolderDragOver={onFolderDragOver}
@@ -226,6 +338,7 @@ function ExplorerFolderNode({
               doc={doc}
               depth={depth + 1}
               selected={selectedDocumentId === doc.id}
+              menuItems={documentMenuItems(doc, actions, online)}
               onSelect={() => {
                 onSelectFolder(folder.id);
                 onSelectDocument(doc);
@@ -242,12 +355,14 @@ function ExplorerFolderNode({
 export function DocumentExplorer({
   activeFolderId,
   selectedDocumentId,
+  breadcrumbs = [],
   expandFolderIds = [],
   searchQuery,
   tagFilter,
   dropTargetFolderId,
   online,
   canContribute,
+  actions,
   onSearchChange,
   onTagFilterChange,
   onSelectFolder,
@@ -265,6 +380,7 @@ export function DocumentExplorer({
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const expandSet = useMemo(() => new Set(expandFolderIds), [expandFolderIds]);
   const searching = Boolean(searchQuery.trim() || tagFilter.trim());
+  const atRoot = activeFolderId == null && selectedDocumentId == null;
 
   const { data: rootFoldersPage, isLoading: rootFoldersLoading } = useDocumentFolderChildren(null, 1, !searching);
   const { data: rootDocsPage, isLoading: rootDocsLoading } = useDocuments(
@@ -296,47 +412,116 @@ export function DocumentExplorer({
   };
 
   const collapseAll = () => setExpandedIds(new Set());
-
   const loading = searching ? searchLoading : (rootFoldersLoading || rootDocsLoading);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f3f3f3] text-gray-900">
-      <div className="flex shrink-0 items-center justify-between border-b border-gray-300/80 px-3 py-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">Explorer</span>
-        <div className="flex items-center gap-0.5">
-          <ExplorerIconButton title="New file (upload)" disabled={!online || !canContribute} onClick={onUpload}>
-            <FilePlus className="h-4 w-4" />
-          </ExplorerIconButton>
-          <ExplorerIconButton title="New folder" disabled={!online} onClick={onCreateFolder}>
-            <FolderPlus className="h-4 w-4" />
-          </ExplorerIconButton>
-          <ExplorerIconButton title="New link" disabled={!online || !canContribute} onClick={onCreateLink}>
-            <Link2 className="h-4 w-4" />
-          </ExplorerIconButton>
-          <ExplorerIconButton title="Refresh" onClick={onRefresh}>
-            <RefreshCw className="h-4 w-4" />
-          </ExplorerIconButton>
-          <ExplorerIconButton title="Collapse all" onClick={collapseAll}>
-            <ChevronsDownUp className="h-4 w-4" />
-          </ExplorerIconButton>
+    <div className="flex h-full min-h-0 flex-col bg-[#f6f7f9] text-gray-900">
+      <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2.5">
+        <div className="mb-2 flex flex-wrap items-center gap-1 text-xs text-gray-500">
+          <button
+            type="button"
+            onClick={() => onSelectFolder(null)}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium transition-colors',
+              atRoot ? 'bg-indigo-50 text-indigo-700' : 'text-indigo-600 hover:bg-gray-100',
+            )}
+          >
+            <Home className="h-3.5 w-3.5" />
+            All documents
+          </button>
+          {breadcrumbs.map((crumb) => (
+            <span key={crumb.id} className="flex items-center gap-1">
+              <ChevronRight className="h-3 w-3 text-gray-400" />
+              <button
+                type="button"
+                onClick={() => onSelectFolder(crumb.id)}
+                className={cn(
+                  'max-w-[8rem] truncate rounded-md px-1.5 py-0.5 font-medium transition-colors',
+                  activeFolderId === crumb.id && selectedDocumentId == null
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-indigo-600 hover:bg-gray-100',
+                )}
+                title={crumb.name}
+              >
+                {crumb.name}
+              </button>
+            </span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 justify-center px-2 text-xs"
+            disabled={!online || !canContribute}
+            onClick={onUpload}
+            title="Upload a file"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Upload
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-8 justify-center px-2 text-xs"
+            disabled={!online}
+            onClick={onCreateFolder}
+            title="Create a new folder"
+          >
+            <FolderPlus className="h-3.5 w-3.5" />
+            Folder
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-8 justify-center px-2 text-xs"
+            disabled={!online || !canContribute}
+            onClick={onCreateLink}
+            title="Add a web link"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            Link
+          </Button>
+        </div>
+
+        <div className="mt-2 flex items-center justify-end gap-1">
+          <button
+            type="button"
+            title="Refresh"
+            onClick={onRefresh}
+            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Collapse all folders"
+            onClick={collapseAll}
+            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          >
+            <ChevronsDownUp className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
-      <div className="shrink-0 space-y-1.5 border-b border-gray-300/80 px-2 py-2">
+      <div className="shrink-0 space-y-1.5 border-b border-gray-200 bg-white px-2 py-2">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search files…"
-            className="w-full rounded border border-gray-300 bg-white py-1.5 pl-7 pr-2 text-xs outline-none focus:border-[#0060c0] focus:ring-1 focus:ring-[#0060c0]/30"
+            placeholder="Search by name or tag…"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-7 pr-2 text-xs outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
           />
         </div>
         <input
           value={tagFilter}
           onChange={(e) => onTagFilterChange(e.target.value)}
-          placeholder="Filter by tag"
-          className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-[#0060c0] focus:ring-1 focus:ring-[#0060c0]/30"
+          placeholder="Filter by tag (optional)"
+          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 text-xs outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-200"
         />
       </div>
 
@@ -350,7 +535,10 @@ export function DocumentExplorer({
         {!loading && searching && (
           <div className="px-1">
             {searchResults.length === 0 && (
-              <p className="px-3 py-4 text-xs text-gray-500">No matching files</p>
+              <div className="px-3 py-8 text-center">
+                <p className="text-sm font-medium text-gray-700">No matches</p>
+                <p className="mt-1 text-xs text-gray-500">Try a different name or tag.</p>
+              </div>
             )}
             {searchResults.map((doc) => (
               <ExplorerFileRow
@@ -358,6 +546,7 @@ export function DocumentExplorer({
                 doc={doc}
                 depth={0}
                 selected={selectedDocumentId === doc.id}
+                menuItems={documentMenuItems(doc, actions, online)}
                 onSelect={() => {
                   if (doc.folder_id != null) onSelectFolder(doc.folder_id);
                   onSelectDocument(doc);
@@ -370,6 +559,18 @@ export function DocumentExplorer({
 
         {!loading && !searching && (
           <div className="px-1">
+            <button
+              type="button"
+              onClick={() => onSelectFolder(null)}
+              className={cn(
+                'mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px]',
+                atRoot ? 'bg-[#0060c0]/12 font-medium text-[#0060c0]' : 'text-gray-800 hover:bg-gray-200/70',
+              )}
+            >
+              <Home className="h-4 w-4 shrink-0 text-indigo-500" />
+              <span>All documents</span>
+            </button>
+
             {rootFolders.map((folder) => (
               <ExplorerFolderNode
                 key={`root-folder-${folder.id}`}
@@ -381,6 +582,8 @@ export function DocumentExplorer({
                 expandedIds={mergedExpanded}
                 toggleExpanded={toggleExpanded}
                 dropTargetFolderId={dropTargetFolderId}
+                actions={actions}
+                online={online}
                 onSelectFolder={onSelectFolder}
                 onSelectDocument={onSelectDocument}
                 onFolderDragOver={onFolderDragOver}
@@ -397,6 +600,7 @@ export function DocumentExplorer({
                 doc={doc}
                 depth={0}
                 selected={selectedDocumentId === doc.id}
+                menuItems={documentMenuItems(doc, actions, online)}
                 onSelect={() => {
                   onSelectFolder(null);
                   onSelectDocument(doc);
@@ -406,9 +610,19 @@ export function DocumentExplorer({
             ))}
 
             {rootFolders.length === 0 && rootDocuments.length === 0 && (
-              <p className="px-3 py-6 text-center text-xs text-gray-500">
-                No files yet. Use the upload or folder icons above to get started.
-              </p>
+              <div className="mx-2 mt-4 rounded-xl border border-dashed border-gray-300 bg-white px-4 py-8 text-center">
+                <FilePlus className="mx-auto h-8 w-8 text-gray-300" />
+                <p className="mt-3 text-sm font-medium text-gray-800">Your vault is empty</p>
+                <p className="mt-1 text-xs text-gray-500">Upload a file, create a folder, or add a link to get started.</p>
+                <div className="mt-4 flex flex-col gap-2">
+                  <Button type="button" size="sm" disabled={!online || !canContribute} onClick={onUpload}>
+                    <Upload className="h-4 w-4" /> Upload file
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={onCreateFolder}>
+                    <FolderPlus className="h-4 w-4" /> New folder
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         )}

@@ -4,6 +4,7 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useToast } from '../../../app/contexts/useToast';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import type {
@@ -39,7 +40,7 @@ import {
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { DocumentFolderCard, DocumentItemCard } from './DocumentItemViews';
 import { DocumentDetailPane } from './DocumentDetailPane';
-import { DocumentExplorer } from './DocumentExplorer';
+import { DocumentExplorer, type DocumentExplorerActions } from './DocumentExplorer';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentProgressBar } from './DocumentProgressBar';
 import { MoveItemModal } from './MoveItemModal';
@@ -119,6 +120,7 @@ export default function DocumentsPanel({
 }: DocumentsPanelProps) {
   const qc = useQueryClient();
   const { showToast } = useToast();
+  const confirm = useConfirm();
   const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
   const [activeFolderId, setActiveFolderId] = useState<number | null>(folderId);
@@ -146,6 +148,8 @@ export default function DocumentsPanel({
   const [dropTargetFolderId, setDropTargetFolderId] = useState<number | 'panel' | null>(null);
   const [panelDragActive, setPanelDragActive] = useState(false);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
+  const [createFolderParentId, setCreateFolderParentId] = useState<number | null>(null);
+  const [actionTargetFolderId, setActionTargetFolderId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showSidebar = fullBleed && !customerId && !projectId;
@@ -259,6 +263,7 @@ export default function DocumentsPanel({
       return;
     }
 
+    const targetFolderId = actionTargetFolderId ?? activeFolderId;
     const fileArray = Array.from(files);
     for (const file of fileArray) {
       const transferId = createTransferId(`upload-${file.name}`);
@@ -268,8 +273,8 @@ export default function DocumentsPanel({
           {
             file,
             title: file.name,
-            folder_id: activeFolderId,
-            visibility: visibilityForRoot(uploadVisibility, activeFolderId == null),
+            folder_id: targetFolderId,
+            visibility: visibilityForRoot(uploadVisibility, targetFolderId == null),
             customer_id: customerId,
             project_id: projectId,
             tags: uploadTags.split(',').map((tag) => tag.trim()).filter(Boolean),
@@ -291,8 +296,10 @@ export default function DocumentsPanel({
       setShowUpload(false);
       setUploadTags('');
       setUploadMembers([]);
+      setActionTargetFolderId(null);
     }
   }, [
+    actionTargetFolderId,
     activeFolderId,
     canContribute,
     customerId,
@@ -315,17 +322,18 @@ export default function DocumentsPanel({
       return;
     }
 
-    const atRoot = activeFolderId == null;
+    const parentId = createFolderParentId ?? activeFolderId;
     try {
       const folder = await createFolder.mutateAsync({
         name: folderName.trim(),
-        visibility: visibilityForRoot(folderVisibility, atRoot),
-        parent_id: activeFolderId,
+        visibility: visibilityForRoot(folderVisibility, parentId == null),
+        parent_id: parentId,
         ...memberPayload(folderMembers),
       });
       setShowCreateFolder(false);
       setFolderName('');
       setFolderMembers([]);
+      setCreateFolderParentId(null);
       setFolderVisibility(activeFolderId ? 'inherit' : 'all_staff');
       setActiveFolderId(folder.id);
       await invalidateDocuments();
@@ -342,13 +350,13 @@ export default function DocumentsPanel({
       return;
     }
 
-    const atRoot = activeFolderId == null;
+    const targetFolderId = actionTargetFolderId ?? activeFolderId;
     try {
       await createLink.mutateAsync({
         title: linkTitle.trim(),
         url: linkUrl.trim(),
-        folder_id: activeFolderId,
-        visibility: visibilityForRoot(uploadVisibility, atRoot),
+        folder_id: targetFolderId,
+        visibility: visibilityForRoot(uploadVisibility, targetFolderId == null),
         customer_id: customerId,
         project_id: projectId,
         tags: uploadTags.split(',').map((tag) => tag.trim()).filter(Boolean),
@@ -359,6 +367,7 @@ export default function DocumentsPanel({
       setLinkUrl('');
       setUploadTags('');
       setUploadMembers([]);
+      setActionTargetFolderId(null);
       await invalidateDocuments();
     } catch {
       // Toast handled by mutation
@@ -386,12 +395,64 @@ export default function DocumentsPanel({
     }
   };
 
-  const openCreateFolderModal = () => {
-    setFolderVisibility(activeFolderId ? 'inherit' : 'all_staff');
+  const openCreateFolderModal = useCallback((parentId: number | null = activeFolderId) => {
+    setCreateFolderParentId(parentId);
+    setFolderVisibility(parentId ? 'inherit' : 'all_staff');
     setFolderMembers([]);
     setFolderName('');
     setShowCreateFolder(true);
-  };
+  }, [activeFolderId]);
+
+  const openUploadModal = useCallback((folderId: number | null = activeFolderId) => {
+    setActionTargetFolderId(folderId);
+    setShowUpload(true);
+  }, [activeFolderId]);
+
+  const openLinkModal = useCallback((folderId: number | null = activeFolderId) => {
+    setActionTargetFolderId(folderId);
+    setShowLink(true);
+  }, [activeFolderId]);
+
+  const handleDeleteFolder = useCallback(async (folder: DocumentFolder) => {
+    const accepted = await confirm({
+      title: `Delete "${folder.name}"?`,
+      message: 'This permanently removes the folder and everything inside it.',
+      confirmText: 'Delete folder',
+      variant: 'danger',
+    });
+    if (!accepted) return;
+    await deleteFolder.mutateAsync(folder.id);
+    if (activeFolderId === folder.id) {
+      setActiveFolderId(folder.parent_id);
+      setSelectedDocument(null);
+    }
+    await invalidateDocuments();
+  }, [activeFolderId, confirm, deleteFolder, invalidateDocuments]);
+
+  const handleDeleteDocument = useCallback(async (doc: DocumentItem) => {
+    const accepted = await confirm({
+      title: `Delete "${doc.title}"?`,
+      message: 'This file will be permanently removed from your vault.',
+      confirmText: 'Delete file',
+      variant: 'danger',
+    });
+    if (!accepted) return;
+    await deleteDocument.mutateAsync(doc.id);
+    if (selectedDocument?.id === doc.id) setSelectedDocument(null);
+    await invalidateDocuments();
+  }, [confirm, deleteDocument, invalidateDocuments, selectedDocument?.id]);
+
+  const explorerActions = useMemo<DocumentExplorerActions>(() => ({
+    onRenameFolder: (folder) => setRenameTarget({ kind: 'folder', id: folder.id, name: folder.name }),
+    onDeleteFolder: (folder) => { void handleDeleteFolder(folder); },
+    onMoveFolder: (folder) => setMoveTarget({ kind: 'folder', id: folder.id }),
+    onCreateSubfolder: (folder) => openCreateFolderModal(folder.id),
+    onUploadToFolder: (folderId) => openUploadModal(folderId),
+    onAddLinkToFolder: (folderId) => openLinkModal(folderId),
+    onRenameDocument: (doc) => setRenameTarget({ kind: 'document', id: doc.id, name: doc.title }),
+    onDeleteDocument: (doc) => { void handleDeleteDocument(doc); },
+    onMoveDocument: (doc) => setMoveTarget({ kind: 'document', id: doc.id }),
+  }), [handleDeleteDocument, handleDeleteFolder, openCreateFolderModal, openLinkModal, openUploadModal]);
 
   const loadMoreDocuments = () => {
     if (searching || customerId || projectId || activeFolderId == null) {
@@ -551,13 +612,13 @@ export default function DocumentsPanel({
               <Grid3X3 className="h-4 w-4" />
             </button>
           </div>
-          <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={openCreateFolderModal}>
+          <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => openCreateFolderModal(activeFolderId)}>
             <FolderPlus className="h-4 w-4" /> Folder
           </Button>
-          <Button type="button" size="sm" disabled={!online || !canContribute} onClick={() => setShowUpload(true)}>
+          <Button type="button" size="sm" disabled={!online || !canContribute} onClick={() => openUploadModal(activeFolderId)}>
             <Upload className="h-4 w-4" /> Upload
           </Button>
-          <Button type="button" variant="secondary" size="sm" disabled={!online || !canContribute} onClick={() => setShowLink(true)}>
+          <Button type="button" variant="secondary" size="sm" disabled={!online || !canContribute} onClick={() => openLinkModal(activeFolderId)}>
             <Link2 className="h-4 w-4" /> Link
           </Button>
         </div>
@@ -619,11 +680,7 @@ export default function DocumentsPanel({
               viewMode={viewMode}
               isDropTarget={dropTargetFolderId === folder.id}
               onOpen={() => setActiveFolderId(folder.id)}
-              onDelete={() => {
-                if (window.confirm(`Delete folder "${folder.name}" and all contents?`)) {
-                  void deleteFolder.mutateAsync(folder.id);
-                }
-              }}
+              onDelete={() => { void handleDeleteFolder(folder); }}
               onMove={() => setMoveTarget({ kind: 'folder', id: folder.id })}
               onRename={folder.can_manage ? () => setRenameTarget({ kind: 'folder', id: folder.id, name: folder.name }) : undefined}
               onDragStart={() => undefined}
@@ -659,7 +716,7 @@ export default function DocumentsPanel({
               viewMode={viewMode}
               onPreview={() => setPreviewDoc(doc)}
               onDownload={() => void handleDownload(doc)}
-              onDelete={() => void deleteDocument.mutateAsync(doc.id)}
+              onDelete={() => { void handleDeleteDocument(doc); }}
               onMove={() => setMoveTarget({ kind: 'document', id: doc.id })}
               onRename={(doc.can_edit || doc.can_manage)
                 ? () => setRenameTarget({ kind: 'document', id: doc.id, name: doc.title })
@@ -763,16 +820,22 @@ export default function DocumentsPanel({
             onVisibilityChange={(value) => setFolderVisibility(value as FolderVisibility)}
             selectedMembers={folderMembers}
             onSelectedMembersChange={setFolderMembers}
-            allowInherit={Boolean(activeFolderId)}
+            allowInherit={Boolean(createFolderParentId)}
           />
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowCreateFolder(false)}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={() => {
+              setShowCreateFolder(false);
+              setCreateFolderParentId(null);
+            }}>Cancel</Button>
             <Button type="button" loading={createFolder.isPending} onClick={() => void handleCreateFolder()}>Create</Button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={showUpload} onClose={() => setShowUpload(false)} title="Upload files">
+      <Modal isOpen={showUpload} onClose={() => {
+        setShowUpload(false);
+        setActionTargetFolderId(null);
+      }} title="Upload files">
         <div className="space-y-4">
           <div
             className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center"
@@ -806,15 +869,21 @@ export default function DocumentsPanel({
             onVisibilityChange={(value) => setUploadVisibility(value as DocumentVisibility)}
             selectedMembers={uploadMembers}
             onSelectedMembersChange={setUploadMembers}
-            allowInherit={Boolean(activeFolderId)}
+            allowInherit={Boolean(actionTargetFolderId ?? activeFolderId)}
           />
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowUpload(false)}>Close</Button>
+            <Button type="button" variant="secondary" onClick={() => {
+              setShowUpload(false);
+              setActionTargetFolderId(null);
+            }}>Close</Button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={showLink} onClose={() => setShowLink(false)} title="Add link">
+      <Modal isOpen={showLink} onClose={() => {
+        setShowLink(false);
+        setActionTargetFolderId(null);
+      }} title="Add link">
         <div className="space-y-4">
           <input value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Title" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />
           <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />
@@ -824,10 +893,13 @@ export default function DocumentsPanel({
             onVisibilityChange={(value) => setUploadVisibility(value as DocumentVisibility)}
             selectedMembers={uploadMembers}
             onSelectedMembersChange={setUploadMembers}
-            allowInherit={Boolean(activeFolderId)}
+            allowInherit={Boolean(actionTargetFolderId ?? activeFolderId)}
           />
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowLink(false)}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={() => {
+              setShowLink(false);
+              setActionTargetFolderId(null);
+            }}>Cancel</Button>
             <Button type="button" loading={createLink.isPending} onClick={() => void handleCreateLink()}>Add link</Button>
           </div>
         </div>
@@ -837,19 +909,22 @@ export default function DocumentsPanel({
 
   if (showSidebar) {
     const folderLabel = activeFolderId ? contents?.folder?.name ?? null : null;
+    const activeFolder = contents?.folder ?? null;
 
     return (
       <div className="flex h-full min-h-0 w-full flex-col bg-gray-100 lg:flex-row">
-        <aside className="flex h-auto max-h-64 w-full shrink-0 flex-col border-b border-gray-300 lg:h-full lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r xl:w-80">
+        <aside className="flex h-auto max-h-64 w-full shrink-0 flex-col border-b border-gray-300 lg:h-full lg:max-h-none lg:w-80 lg:border-b-0 lg:border-r xl:w-96">
           <DocumentExplorer
             activeFolderId={activeFolderId}
             selectedDocumentId={selectedDocument?.id ?? null}
+            breadcrumbs={breadcrumbs}
             expandFolderIds={breadcrumbs.map((crumb) => crumb.id)}
             searchQuery={search}
             tagFilter={tagFilter}
             dropTargetFolderId={dropTargetFolderId}
             online={online}
             canContribute={canContribute}
+            actions={explorerActions}
             onSearchChange={setSearch}
             onTagFilterChange={setTagFilter}
             onSelectFolder={(folderId) => {
@@ -857,9 +932,9 @@ export default function DocumentsPanel({
               setSelectedDocument(null);
             }}
             onSelectDocument={setSelectedDocument}
-            onCreateFolder={openCreateFolderModal}
-            onUpload={() => setShowUpload(true)}
-            onCreateLink={() => setShowLink(true)}
+            onCreateFolder={() => openCreateFolderModal(activeFolderId)}
+            onUpload={() => openUploadModal(activeFolderId)}
+            onCreateLink={() => openLinkModal(activeFolderId)}
             onRefresh={() => { void invalidateDocuments(); }}
             onFolderDragOver={(folderId, e) => {
               e.preventDefault();
@@ -906,20 +981,41 @@ export default function DocumentsPanel({
           )}
           <DocumentDetailPane
             document={activeDocument}
+            folder={activeFolder}
             folderName={folderLabel}
             breadcrumbs={breadcrumbs}
             loading={Boolean(activeFolderId && contentsLoading && !selectedDocument)}
             online={online}
+            canContribute={canContribute}
+            onGoHome={() => {
+              setActiveFolderId(null);
+              setSelectedDocument(null);
+            }}
+            onUpload={() => openUploadModal(activeFolderId)}
+            onCreateLink={() => openLinkModal(activeFolderId)}
+            onCreateFolder={() => openCreateFolderModal(null)}
+            onCreateSubfolder={() => activeFolderId && openCreateFolderModal(activeFolderId)}
             onDownload={(doc) => void handleDownload(doc)}
             onRename={(doc) => setRenameTarget({ kind: 'document', id: doc.id, name: doc.title })}
             onMove={(doc) => setMoveTarget({ kind: 'document', id: doc.id })}
-            onDelete={(doc) => {
-              if (window.confirm(`Delete "${doc.title}"?`)) {
-                void deleteDocument.mutateAsync(doc.id).then(() => setSelectedDocument(null));
-              }
+            onDelete={(doc) => { void handleDeleteDocument(doc); }}
+            onRenameFolder={() => {
+              if (!activeFolder) return;
+              setRenameTarget({ kind: 'folder', id: activeFolder.id, name: activeFolder.name });
+            }}
+            onMoveFolder={() => {
+              if (!activeFolder) return;
+              setMoveTarget({ kind: 'folder', id: activeFolder.id });
+            }}
+            onDeleteFolder={() => {
+              if (!activeFolder) return;
+              void handleDeleteFolder(activeFolder);
             }}
             onRecordView={handleRecordView}
-            onSelectFolder={setActiveFolderId}
+            onSelectFolder={(folderId) => {
+              setActiveFolderId(folderId);
+              setSelectedDocument(null);
+            }}
           />
           {transfers.length > 0 && (
             <div className="shrink-0 border-t border-gray-200 bg-white px-4 py-3">
@@ -954,10 +1050,10 @@ export default function DocumentsPanel({
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={openCreateFolderModal}>
+              <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => openCreateFolderModal(activeFolderId)}>
                 <FolderPlus className="h-4 w-4" /> Folder
               </Button>
-              <Button type="button" size="sm" disabled={!online || !canContribute} onClick={() => setShowUpload(true)}>
+              <Button type="button" size="sm" disabled={!online || !canContribute} onClick={() => openUploadModal(activeFolderId)}>
                 <Upload className="h-4 w-4" /> Upload
               </Button>
             </div>

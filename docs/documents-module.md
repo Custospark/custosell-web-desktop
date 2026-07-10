@@ -15,7 +15,7 @@ Business-wide file vault for Custosell — nested folders, live ACL inheritance,
 | `inherit` | Use parent folder ACL (files + subfolders) |
 | `all_staff` | All staff with `documents` module (contributor-level) |
 | `selected_staff` | Explicit members with viewer / contributor / manager roles |
-| `owner_only` | Business owner only |
+| `owner_only` | Only me (visible only to you) |
 
 Business owner always has manager access. Live inheritance: changing a folder’s visibility or members immediately affects inheriting children.
 
@@ -40,7 +40,8 @@ Staff with the `documents` module can create root folders and add links/files at
 - **Views:** list / grid toggle
 - **Preview:** PDF and images in modal
 - **Move:** modal picker + drag-and-drop onto folders / current folder
-- **Explorer:** VS Code-style tree (folders + files), typed icons, File+/Folder+/Link toolbar actions; files open in the right preview pane
+- **Explorer:** VS Code-style two-pane layout — labeled toolbar actions (Upload, Folder, Link), breadcrumb navigation, row context menus (rename, move, delete, upload to folder), and action tiles in empty folder states
+- **Access copy:** `owner_only` displays as **Only me** in all document/folder access pickers
 - **Long names:** middle-ellipsis display with full name on hover
 - **Pagination:** load-more for document lists; sidebar loads folders on expand
 - **Progress:** upload (axios) and download (XHR blob) progress bars

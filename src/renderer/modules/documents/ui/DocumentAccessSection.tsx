@@ -1,27 +1,17 @@
 import { useMemo, useState } from 'react';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { cn } from '../../../shared/utils/cn';
-import type { DocumentMemberRole, DocumentUserRef, DocumentVisibility, FolderVisibility } from '../api/documentTypes';
+import type { DocumentMemberRole, DocumentUserRef } from '../api/documentTypes';
+import {
+  ACCESS_ROLE_OPTIONS,
+  DOCUMENT_ACCESS_OPTIONS,
+  type AccessVisibilityValue,
+} from '../api/documentAccessLabels';
 import { useDocumentAccessibleMembers } from '../api/useDocumentQueries';
 
-type VisibilityValue = DocumentVisibility | FolderVisibility;
-
-const VISIBILITY_OPTIONS: { value: VisibilityValue; label: string; hint: string }[] = [
-  { value: 'inherit', label: 'Inherit', hint: 'Use folder permissions' },
-  { value: 'all_staff', label: 'All staff', hint: 'Everyone with Documents can view and upload' },
-  { value: 'selected_staff', label: 'Selected staff', hint: 'Pick team members and roles below' },
-  { value: 'owner_only', label: 'Only owner', hint: 'Business owner only' },
-];
-
-const ROLE_OPTIONS: { value: DocumentMemberRole; label: string }[] = [
-  { value: 'viewer', label: 'Viewer' },
-  { value: 'contributor', label: 'Contributor' },
-  { value: 'manager', label: 'Manager' },
-];
-
 interface DocumentAccessSectionProps {
-  visibility: VisibilityValue;
-  onVisibilityChange: (value: VisibilityValue) => void;
+  visibility: AccessVisibilityValue;
+  onVisibilityChange: (value: AccessVisibilityValue) => void;
   selectedMembers: DocumentUserRef[];
   onSelectedMembersChange: (members: DocumentUserRef[]) => void;
   allowInherit?: boolean;
@@ -40,7 +30,7 @@ export function DocumentAccessSection({
   const [query, setQuery] = useState('');
 
   const options = useMemo(
-    () => VISIBILITY_OPTIONS.filter((option) => allowInherit || option.value !== 'inherit'),
+    () => DOCUMENT_ACCESS_OPTIONS.filter((option) => allowInherit || option.value !== 'inherit'),
     [allowInherit],
   );
 
@@ -68,7 +58,8 @@ export function DocumentAccessSection({
   return (
     <div className="space-y-3">
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Access</p>
+        <p className="mb-1 text-sm font-medium text-gray-900">Who can access this?</p>
+        <p className="mb-3 text-xs text-gray-500">Choose who can see and work with this item.</p>
         <div className="grid gap-2 sm:grid-cols-2">
           {options.map((option) => (
             <button
@@ -77,9 +68,9 @@ export function DocumentAccessSection({
               disabled={disabled}
               onClick={() => onVisibilityChange(option.value)}
               className={cn(
-                'rounded-xl border px-3 py-2 text-left transition',
+                'rounded-xl border px-3 py-2.5 text-left transition',
                 visibility === option.value
-                  ? 'border-indigo-500 bg-indigo-50'
+                  ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200'
                   : 'border-gray-200 bg-white hover:border-gray-300',
                 disabled && 'cursor-not-allowed opacity-60',
               )}
@@ -93,10 +84,11 @@ export function DocumentAccessSection({
 
       {visibility === 'selected_staff' && (
         <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3">
+          <p className="mb-2 text-xs font-medium text-gray-700">Team members</p>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search staff…"
+            placeholder="Search by name…"
             disabled={disabled}
             className="mb-3 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
           />
@@ -125,9 +117,10 @@ export function DocumentAccessSection({
                       value={selected.role ?? 'viewer'}
                       disabled={disabled}
                       onChange={(e) => setMemberRole(member.id, e.target.value as DocumentMemberRole)}
-                      className="rounded-md border border-gray-200 px-2 py-1 text-xs"
+                      className="max-w-[9rem] rounded-md border border-gray-200 px-2 py-1 text-xs"
+                      title="Access level"
                     >
-                      {ROLE_OPTIONS.map((role) => (
+                      {ACCESS_ROLE_OPTIONS.map((role) => (
                         <option key={role.value} value={role.value}>{role.label}</option>
                       ))}
                     </select>

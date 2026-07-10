@@ -391,7 +391,7 @@ export function useRecordDocumentDownload() {
 
 export type DocumentFileContent = {
   content: string;
-  content_type: 'text' | 'csv' | 'word' | 'word-html';
+  content_type: 'text' | 'csv' | 'word';
   encoding: string;
   editable: boolean;
   truncated: boolean;

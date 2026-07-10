@@ -84,7 +84,7 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
   }
 
   const csv = data.content_type === 'csv' || isCsvDocument(document);
-  const word = data.content_type === 'word-html' || data.content_type === 'word' || isWordDocument(document);
+  const word = data.content_type === 'word' || isWordDocument(document);
   const canEdit = data.editable && online && !word;
 
   const handleSave = async () => {
@@ -94,11 +94,11 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
 
   return (
     <div className={cn('flex min-h-[320px] flex-col', className)}>
-      {(canEdit || data.truncated) && (
+      {(canEdit || data.truncated || word) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 py-2">
           <div className="text-xs text-gray-500">
             {data.truncated && 'Preview truncated — download for the full file.'}
-            {word && 'Word document preview (read-only).'}
+            {word && 'Word document — text preview (read-only).'}
           </div>
           {canEdit && (
             <div className="flex gap-2">
@@ -147,11 +147,6 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
         />
       ) : csv ? (
         <DocumentCsvTable content={data.content} />
-      ) : word ? (
-        <div
-          className="document-word-preview max-h-[70vh] flex-1 overflow-auto bg-white px-8 py-6 text-sm leading-relaxed text-gray-900 [&_em]:italic [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_u]:underline"
-          dangerouslySetInnerHTML={{ __html: data.content }}
-        />
       ) : (
         <pre className="max-h-[70vh] flex-1 overflow-auto whitespace-pre-wrap break-words bg-gray-950 p-4 font-mono text-sm leading-relaxed text-gray-100">
           {data.content}

@@ -9,6 +9,7 @@ import {
 } from '../api/useDocumentQueries';
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
 import { ExplorerRowMenu, type ExplorerMenuItem } from './ExplorerRowMenu';
+import { ExplorerRowOwner } from './ExplorerRowOwner';
 import { DocumentTagStrip } from './DocumentTagStrip';
 import { ExplorerFolderCount } from './ExplorerFolderCount';
 import { DocumentExplorerActivity } from './DocumentExplorerActivity';
@@ -296,7 +297,8 @@ function ExplorerFileRow({
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="inline-block h-4 w-4 shrink-0" />
           <DocumentItemIcon doc={doc} />
-          <span className="truncate">{label}</span>
+          <span className="min-w-0 truncate">{label}</span>
+          <ExplorerRowOwner user={doc.uploader} />
         </span>
         <DocumentTagStrip tags={doc.tags} className="pl-6" />
       </button>
@@ -404,7 +406,8 @@ function ExplorerFolderNode({
           style={{ paddingLeft: `${4 + depth * INDENT}px` }}
         >
           <DocumentFolderIcon open={expanded || folderSelected} tint={folderColor} />
-          <span className="min-w-0 flex-1 truncate">{truncateDisplayName(folder.name, 32)}</span>
+          <span className="min-w-0 truncate">{truncateDisplayName(folder.name, 28)}</span>
+          <ExplorerRowOwner user={folder.creator} />
         </button>
         <ExplorerFolderCount folder={folder} />
         <ExplorerRowMenu items={menuItems} className="mr-1" pinnedVisible={folderSelected} />

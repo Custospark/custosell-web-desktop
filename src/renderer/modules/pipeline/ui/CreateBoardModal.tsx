@@ -150,7 +150,7 @@ function CreateBoardModalForm({
         <div className="space-y-5">
           <PipelineModalHero
             icon={Kanban}
-            tone="violet"
+            tone="indigo"
             title="Set up column alerts"
             description={`Choose which columns on “${name.trim()}” should post to the board discussion. You can change these anytime in board settings.`}
           />

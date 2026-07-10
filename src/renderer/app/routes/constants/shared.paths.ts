@@ -34,6 +34,10 @@ export const ROUTES = {
     TEMPLATES: '/estimates/templates',
   },
   EXPENSES: { INDEX: '/expenses', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
+  DOCUMENTS: {
+    INDEX: '/documents',
+    FOLDER: (id: number) => `/documents?folder_id=${id}`,
+  },
   ACCOUNT: {
     INDEX: '/account',
     NOTIFICATIONS: '/account/notifications',

@@ -354,7 +354,20 @@ export default function EstimateDetailPage() {
                     onChange={(e) => {
                       void updateEstimate.mutateAsync({
                         id: estimate.id,
-                        payload: { valid_until: e.target.value || null },
+                        payload: {
+                          title: estimate.title,
+                          line_items: estimate.line_items.map((li) => ({
+                            description: li.description,
+                            quantity: li.quantity,
+                            unit_cost: li.unit_cost,
+                            markup_type: li.markup_type,
+                            markup_value: li.markup_value,
+                            unit_price: li.unit_price,
+                            type: li.type,
+                            is_billable: li.is_billable,
+                          })),
+                          valid_until: e.target.value || null,
+                        },
                       });
                     }}
                     disabled={updateEstimate.isPending || estimate.status === 'converted'}

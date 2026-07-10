@@ -200,7 +200,6 @@ export function useBoardTeamMembers(
       );
       return normalizeList<BoardTeamMember>(data);
     },
-    staleTime: 30_000,
     placeholderData: (previousData) => previousData,
     enabled: options?.enabled ?? true,
     ...listQueryDefaults,

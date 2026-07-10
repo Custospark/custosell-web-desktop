@@ -44,6 +44,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [desktop-release.md](./platform/desktop-release.md) | Electron desktop builds |
 | [estimates-module.md](./estimates-module.md) | Project estimates, costing, projects, job delivery |
+| [documents-module.md](./documents-module.md) | Business file vault — folders, ACL, tags, cross-module links |
 | [design-system.md](./product/design-system.md) | Colors, typography, UI patterns |
 | [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
 
@@ -68,6 +69,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-08-staff-drawer-module-access-parity.md](./adr/2026-07-08-staff-drawer-module-access-parity.md) | Staff drawer module access matches Module Access; owner email read-only |
 | [2026-07-08-board-progress-targets.md](./adr/2026-07-08-board-progress-targets.md) | Board Progress canvas, targets/OKRs, pipeline vs project language |
 | [2026-07-08-progress-decomposition-engine.md](./adr/2026-07-08-progress-decomposition-engine.md) | Column-aware metrics, hybrid goal decomposition, planning hierarchy |
+| [2026-07-10-documents-acl-and-folder-model.md](./adr/2026-07-10-documents-acl-and-folder-model.md) | Documents module ACL, live inheritance, folder tree |
 
 ## Modules
 

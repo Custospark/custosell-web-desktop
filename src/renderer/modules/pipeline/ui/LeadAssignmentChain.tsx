@@ -60,7 +60,6 @@ export default function LeadAssignmentChain({
         avatar={primary.avatar}
         size="xs"
         className="max-w-[120px] rounded-full bg-gray-50 py-0.5 pl-0.5 pr-2 ring-1 ring-gray-100"
-        title={primary.name}
       />
     );
   }

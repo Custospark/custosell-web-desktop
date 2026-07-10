@@ -65,6 +65,8 @@ import MyWorkPage from '../../modules/pipeline/pages/MyWorkPage';
 import AllLeadsPage from '../../modules/pipeline/pages/AllLeadsPage';
 import InsightsPage from '../../modules/pipeline/pages/InsightsPage';
 import PipelineSettingsPage from '../../modules/pipeline/pages/PipelineSettingsPage';
+import DocumentsLayout from '../../modules/documents/pages/DocumentsLayout';
+import DocumentsBrowserPage from '../../modules/documents/pages/DocumentsBrowserPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import LandingLayout from '../../modules/landing/LandingLayout';
@@ -170,6 +172,11 @@ export function AppRoutes() {
           <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
           <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
           <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+          <Route element={<ModuleAccessMiddleware module="documents" />}>
+            <Route path={ROUTES.DOCUMENTS.INDEX} element={<SuspenseWrapper><DocumentsLayout /></SuspenseWrapper>}>
+              <Route index element={<SuspenseWrapper><DocumentsBrowserPage /></SuspenseWrapper>} />
+            </Route>
+          </Route>
           <Route element={<ModuleAccessMiddleware module="accounting" />}>
             <Route path={ROUTES.ACCOUNTING.INDEX} element={<Navigate to={ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS} replace />} />
             <Route path={ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS} element={<SuspenseWrapper><ChartOfAccountsPage /></SuspenseWrapper>} />

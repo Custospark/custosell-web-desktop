@@ -13,6 +13,7 @@ import {
   canManageProjectTeam,
   canViewProjectCosting,
   isLimitedEstimatesUser,
+  canAccessModule,
 } from '../../../shared/utils/moduleAccess';
 import {
   useProject,
@@ -30,6 +31,7 @@ import {
 import type { CreateCostAllocationPayload, AllocationType, ProjectStatus } from '../api/projectTypes';
 import { BudgetProgressBar, PipelineModalHero, PipelineFormSection } from '../ui/estimatesShared';
 import ProjectMemberPicker from '../ui/ProjectMemberPicker';
+import DocumentsPanel from '../../documents/ui/DocumentsPanel';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
@@ -38,10 +40,10 @@ const n = (v: unknown): number => Number(v) || 0;
 import {
   ArrowLeft, CheckSquare, Clock, DollarSign, Target, TrendingUp, Percent,
   FolderKanban, BarChart3, Info, Plus, Trash2, AlertTriangle, Wallet,
-  Users,
+  Users, Files,
 } from 'lucide-react';
 
-type ProjectTab = 'overview' | 'tasks' | 'timesheets' | 'costs' | 'board';
+type ProjectTab = 'overview' | 'tasks' | 'timesheets' | 'costs' | 'board' | 'documents';
 
 const cardStyles = {
   blue: { border: 'border-blue-500', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', glow: 'bg-blue-500/10' },
@@ -97,6 +99,7 @@ export default function ProjectDetailPage() {
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
   const canCosting = canViewProjectCosting(user);
+  const canDocuments = canAccessModule(user, 'documents');
   const limitedUser = isLimitedEstimatesUser(user);
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
 
@@ -183,6 +186,7 @@ export default function ProjectDetailPage() {
     { key: 'tasks' as const, label: 'Tasks', icon: CheckSquare },
     ...(canCosting ? [{ key: 'timesheets' as const, label: 'Timesheets', icon: Clock }] : []),
     { key: 'board' as const, label: 'Board', icon: FolderKanban },
+    ...(canDocuments ? [{ key: 'documents' as const, label: 'Documents', icon: Files }] : []),
     ...(canCosting ? [{ key: 'costs' as const, label: 'Cost allocations', icon: DollarSign }] : []),
   ];
 
@@ -579,6 +583,10 @@ export default function ProjectDetailPage() {
             </div>
           )}
         </Card>
+      )}
+
+      {activeTab === 'documents' && (
+        <DocumentsPanel projectId={projectId} title="Project documents" compact />
       )}
 
       {activeTab === 'costs' && (

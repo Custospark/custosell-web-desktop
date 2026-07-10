@@ -239,7 +239,6 @@ function ResourceFormFields({
   setMemberSearch,
   pendingFile,
   onPickFile,
-  fileInputRef,
 }: {
   addMode: AddMode;
   title: string;

@@ -4,7 +4,7 @@ export function isPersistedMessageId(id: number | null | undefined): id is numbe
 }
 
 /** Insert mention token for user id into message body. */
-export function formatMentionToken(userId: number, name: string): string {
+export function formatMentionToken(userId: number, _name: string): string {
   return `@[${userId}]`;
 }
 

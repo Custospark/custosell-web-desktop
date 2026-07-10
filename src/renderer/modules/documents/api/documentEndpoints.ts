@@ -1,0 +1,15 @@
+export const DOCUMENTS = {
+  ACCESSIBLE_MEMBERS: '/documents/accessible-members',
+  TAGS: '/documents/tags',
+  FOLDERS_TREE: '/documents/folders/tree',
+  FOLDERS_CHILDREN: '/documents/folders/children',
+  FOLDERS: '/documents/folders',
+  FOLDER: (id: number) => `/documents/folders/${id}`,
+  FOLDER_CONTENTS: (id: number) => `/documents/folders/${id}/contents`,
+  LIST: '/documents',
+  UPLOAD: '/documents/upload',
+  LINK: '/documents/link',
+  BY_ID: (id: number) => `/documents/${id}`,
+  VIEW: (id: number) => `/documents/${id}/view`,
+  DOWNLOAD: (id: number) => `/documents/${id}/download`,
+};

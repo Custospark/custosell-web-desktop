@@ -13,6 +13,7 @@ export const BUSINESS_MODULE_SLUGS = [
   'estimates',
   'expenses',
   'accounting',
+  'documents',
   'settings',
 ] as const;
 
@@ -27,6 +28,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   estimates: 'Projects & Estimates',
   expenses: 'Expenses',
   accounting: 'Accounting',
+  documents: 'Documents',
   settings: 'Settings',
 };
 
@@ -39,17 +41,18 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   estimates: ROUTES.ESTIMATES.INDEX,
   expenses: ROUTES.EXPENSES.LIST,
   accounting: ROUTES.ACCOUNTING.RATIOS,
+  documents: ROUTES.DOCUMENTS.INDEX,
   settings: ROUTES.SETTINGS.BUSINESS,
   account: ROUTES.ACCOUNT.NOTIFICATIONS,
   guide: ROUTES.GUIDE.TUTORIALS,
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'settings',
+  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'settings',
 ];
 
 const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'settings',
+  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'settings',
 ];
 
 /** Nav group label → module slug for business-scoped sidebar groups. */
@@ -63,6 +66,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Estimates: 'estimates',
   Expenses: 'expenses',
   Accounting: 'accounting',
+  Documents: 'documents',
   Settings: 'settings',
   Account: 'account',
   'Custosell Guide': 'guide',
@@ -503,6 +507,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/estimates')) return 'estimates';
   if (pathname.startsWith('/expenses')) return 'expenses';
   if (pathname.startsWith('/accounting')) return 'accounting';
+  if (pathname.startsWith('/documents')) return 'documents';
   return null;
 }
 

@@ -298,7 +298,7 @@ export default function BusinessSettingsForm() {
   }, []);
 
   const currentSnapshot = useMemo<BusinessFormSnapshot>(
-    () => ({ form, localPhone, countryCode, localBusinessPhone, businessPhoneCountryCode }),
+    () => ({ form, localPhone, countryCode, localBusinessPhone, businessPhoneCountryCode, logoPath: null }),
     [countryCode, form, localPhone, localBusinessPhone, businessPhoneCountryCode],
   );
 

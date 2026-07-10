@@ -9,7 +9,7 @@ import {
   UserCog, Shield, Building2, ListOrdered, Clock, Bell, Scale,
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
-  Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid,
+  Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -65,6 +65,7 @@ const baseSubRoutes = [
   ROUTES.ESTIMATES.INSIGHTS, ROUTES.ESTIMATES.TEMPLATES,
   ROUTES.INVOICES.INDEX,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
+  ROUTES.DOCUMENTS.INDEX,
   ROUTES.ACCOUNTING.RATIOS, ROUTES.ACCOUNTING.STATEMENTS,
   ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, ROUTES.ACCOUNTING.JOURNAL_ENTRIES,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
@@ -166,6 +167,13 @@ const baseNavGroups: NavGroup[] = [
     subItems: [
       { to: ROUTES.EXPENSES.CATEGORIES, label: 'Expense Categories', icon: Receipt },
       { to: ROUTES.EXPENSES.LIST, label: 'Expense List', icon: ListOrdered },
+    ],
+  },
+  {
+    icon: Files,
+    label: 'Documents',
+    subItems: [
+      { to: ROUTES.DOCUMENTS.INDEX, label: 'Business files', icon: Files },
     ],
   },
   {

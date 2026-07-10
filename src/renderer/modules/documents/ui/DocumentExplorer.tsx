@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import { truncateDisplayName, documentIconLabel } from '../api/documentDisplayUtils';
 import type { DocumentFolder, DocumentItem } from '../api/documentTypes';
@@ -12,6 +12,7 @@ import { ExplorerRowMenu, type ExplorerMenuItem } from './ExplorerRowMenu';
 import { DocumentTagStrip } from './DocumentTagStrip';
 import { ExplorerFolderCount } from './ExplorerFolderCount';
 import { DocumentExplorerActivity } from './DocumentExplorerActivity';
+import { canCreateSubfolderAtDepth } from '../api/documentConstants';
 import { resolveFolderColor } from '../api/documentColorUtils';
 import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -20,12 +21,15 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronsDownUp,
+  Download,
   FilePlus,
   FolderInput,
   FolderPlus,
+  FolderUp,
   Home,
   Link2,
   Palette,
+  Mail,
   Pencil,
   RefreshCw,
   Search,
@@ -49,11 +53,16 @@ export interface DocumentExplorerActions {
   onSetFolderColor?: (folder: DocumentFolder) => void;
   onManageFolderAccess?: (folder: DocumentFolder) => void;
   onManageDocumentAccess?: (doc: DocumentItem) => void;
+  onImportFolder?: (folderId: number | null) => void;
+  onExportFolder?: (folder: DocumentFolder) => void;
+  onEmailFolder?: (folder: DocumentFolder) => void;
+  onEmailDocument?: (doc: DocumentItem) => void;
 }
 
 interface DocumentExplorerProps {
   activeFolderId: number | null;
   selectedDocumentId: number | null;
+  openDocumentIds?: number[];
   breadcrumbs?: { id: number; name: string }[];
   expandFolderIds?: number[];
   searchQuery: string;
@@ -69,6 +78,7 @@ interface DocumentExplorerProps {
   onCreateFolder: () => void;
   onUpload: () => void;
   onCreateLink: () => void;
+  onImportFolder?: () => void;
   onRefresh: () => void;
   onFolderDragOver: (folderId: number, e: React.DragEvent) => void;
   onFolderDragLeave: () => void;
@@ -100,13 +110,40 @@ function folderMenuItems(folder: DocumentFolder, actions: DocumentExplorerAction
       onClick: () => actions.onAddLinkToFolder?.(folder.id),
     });
   }
-  if (actions.onCreateSubfolder) {
+  if (actions.onCreateSubfolder && canCreateSubfolderAtDepth(folder.depth)) {
     items.push({
       id: 'subfolder',
       label: 'New subfolder',
       icon: <FolderPlus className="h-3.5 w-3.5" />,
       disabled: !online,
       onClick: () => actions.onCreateSubfolder?.(folder),
+    });
+  }
+  if (actions.onImportFolder) {
+    items.push({
+      id: 'import',
+      label: 'Import folder here',
+      icon: <FolderUp className="h-3.5 w-3.5" />,
+      disabled: !online || !folder.can_contribute,
+      onClick: () => actions.onImportFolder?.(folder.id),
+    });
+  }
+  if (actions.onExportFolder && folder.can_view) {
+    items.push({
+      id: 'export',
+      label: 'Download folder',
+      icon: <Download className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onExportFolder?.(folder),
+    });
+  }
+  if (actions.onEmailFolder && folder.can_view) {
+    items.push({
+      id: 'email',
+      label: 'Email folder',
+      icon: <Mail className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onEmailFolder?.(folder),
     });
   }
   if (actions.onManageFolderAccess && folder.can_manage) {
@@ -200,6 +237,15 @@ function documentMenuItems(doc: DocumentItem, actions: DocumentExplorerActions |
       onClick: () => actions.onDeleteDocument?.(doc),
     });
   }
+  if (actions.onEmailDocument && doc.can_view && doc.type !== 'link') {
+    items.push({
+      id: 'email',
+      label: 'Email file',
+      icon: <Mail className="h-3.5 w-3.5" />,
+      disabled: !online,
+      onClick: () => actions.onEmailDocument?.(doc),
+    });
+  }
 
   return items;
 }
@@ -208,6 +254,7 @@ function ExplorerFileRow({
   doc,
   depth,
   selected,
+  isOpen,
   menuItems,
   onSelect,
   onDragStart,
@@ -215,6 +262,7 @@ function ExplorerFileRow({
   doc: DocumentItem;
   depth: number;
   selected: boolean;
+  isOpen: boolean;
   menuItems: ExplorerMenuItem[];
   onSelect: () => void;
   onDragStart: (e: React.DragEvent) => void;
@@ -226,6 +274,7 @@ function ExplorerFileRow({
       className={cn(
         'group relative flex items-center gap-0.5 pr-1',
         selected && DOCUMENT_SURFACE.rowSelected,
+        !selected && isOpen && 'bg-indigo-500/8',
       )}
     >
       <button
@@ -259,6 +308,7 @@ function ExplorerFolderNode({
   selectedDocumentId,
   expandFolderIds,
   expandedIds,
+  collapsedIds,
   toggleExpanded,
   dropTargetFolderId,
   actions,
@@ -269,14 +319,17 @@ function ExplorerFolderNode({
   onFolderDragLeave,
   onFolderDrop,
   onDocumentDragStart,
+  openDocumentIds,
   onFolderDragStart,
 }: {
   folder: DocumentFolder;
   depth: number;
   activeFolderId: number | null;
   selectedDocumentId: number | null;
+  openDocumentIds: Set<number>;
   expandFolderIds: Set<number>;
   expandedIds: Set<number>;
+  collapsedIds: Set<number>;
   toggleExpanded: (id: number) => void;
   dropTargetFolderId: number | 'panel' | null;
   actions?: DocumentExplorerActions;
@@ -289,7 +342,7 @@ function ExplorerFolderNode({
   onDocumentDragStart: (doc: DocumentItem, e: React.DragEvent) => void;
   onFolderDragStart: (folder: DocumentFolder, e: React.DragEvent) => void;
 }) {
-  const expanded = expandedIds.has(folder.id) || expandFolderIds.has(folder.id);
+  const expanded = (expandedIds.has(folder.id) || expandFolderIds.has(folder.id)) && !collapsedIds.has(folder.id);
   const folderSelected = activeFolderId === folder.id && selectedDocumentId == null;
   const isDropTarget = dropTargetFolderId === folder.id;
   const menuItems = folderMenuItems(folder, actions, online);
@@ -361,8 +414,10 @@ function ExplorerFolderNode({
               depth={depth + 1}
               activeFolderId={activeFolderId}
               selectedDocumentId={selectedDocumentId}
+              openDocumentIds={openDocumentIds}
               expandFolderIds={expandFolderIds}
               expandedIds={expandedIds}
+              collapsedIds={collapsedIds}
               toggleExpanded={toggleExpanded}
               dropTargetFolderId={dropTargetFolderId}
               actions={actions}
@@ -382,6 +437,7 @@ function ExplorerFolderNode({
               doc={doc}
               depth={depth + 1}
               selected={selectedDocumentId === doc.id}
+              isOpen={openDocumentIds.has(doc.id)}
               menuItems={documentMenuItems(doc, actions, online)}
               onSelect={() => {
                 onSelectFolder(folder.id);
@@ -396,12 +452,10 @@ function ExplorerFolderNode({
   );
 }
 
-const EXPLORER_FIELD_CLASS =
-  'w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200';
-
 export function DocumentExplorer({
   activeFolderId,
   selectedDocumentId,
+  openDocumentIds = [],
   breadcrumbs = [],
   expandFolderIds = [],
   searchQuery,
@@ -417,6 +471,7 @@ export function DocumentExplorer({
   onCreateFolder,
   onUpload,
   onCreateLink,
+  onImportFolder,
   onRefresh,
   onFolderDragOver,
   onFolderDragLeave,
@@ -426,7 +481,9 @@ export function DocumentExplorer({
   onCustomizeCanvas,
 }: DocumentExplorerProps) {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(() => new Set());
   const expandSet = useMemo(() => new Set(expandFolderIds), [expandFolderIds]);
+  const openDocSet = useMemo(() => new Set(openDocumentIds), [openDocumentIds]);
   const searching = Boolean(searchQuery.trim() || tagFilter.trim());
   const atRoot = activeFolderId == null && selectedDocumentId == null;
 
@@ -444,22 +501,47 @@ export function DocumentExplorer({
   const rootDocuments = rootDocsPage?.pages[0]?.data ?? [];
   const searchResults = searchPages?.pages.flatMap((page) => page.data) ?? [];
 
-  const mergedExpanded = useMemo(() => {
-    const merged = new Set(expandedIds);
-    expandSet.forEach((id) => merged.add(id));
-    return merged;
-  }, [expandSet, expandedIds]);
+  const isFolderExpanded = useCallback((id: number) => (
+    (expandedIds.has(id) || expandSet.has(id)) && !collapsedIds.has(id)
+  ), [collapsedIds, expandSet, expandedIds]);
 
   const toggleExpanded = (id: number) => {
+    const currentlyExpanded = isFolderExpanded(id);
+    if (currentlyExpanded) {
+      setCollapsedIds((current) => {
+        const next = new Set(current);
+        next.add(id);
+        return next;
+      });
+      setExpandedIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+      return;
+    }
+
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
     setExpandedIds((current) => {
       const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.add(id);
       return next;
     });
   };
 
-  const collapseAll = () => setExpandedIds(new Set());
+  const collapseAll = () => {
+    setExpandedIds(new Set());
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      expandSet.forEach((id) => next.add(id));
+      expandedIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
   const loading = searching ? searchLoading : (rootFoldersLoading || rootDocsLoading);
 
   return (
@@ -497,7 +579,7 @@ export function DocumentExplorer({
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
           <Button
             type="button"
             size="sm"
@@ -509,6 +591,20 @@ export function DocumentExplorer({
             <Upload className="h-3.5 w-3.5" />
             Upload
           </Button>
+          {onImportFolder && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="h-8 justify-center px-1.5 text-[11px] sm:px-2 sm:text-xs"
+              disabled={!online || !canContribute}
+              onClick={onImportFolder}
+              title="Import a folder with files"
+            >
+              <FolderUp className="h-3.5 w-3.5" />
+              Import
+            </Button>
+          )}
           <Button
             type="button"
             variant="secondary"
@@ -579,7 +675,7 @@ export function DocumentExplorer({
           value={tagFilter}
           onChange={(e) => onTagFilterChange(e.target.value)}
           placeholder="Filter by tag (optional)"
-          className={EXPLORER_FIELD_CLASS}
+          className="w-full rounded-lg border border-gray-300/90 bg-white/90 py-2 text-xs text-gray-900 shadow-sm outline-none backdrop-blur-sm placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-200"
         />
       </div>
 
@@ -604,6 +700,7 @@ export function DocumentExplorer({
                 doc={doc}
                 depth={0}
                 selected={selectedDocumentId === doc.id}
+                isOpen={openDocSet.has(doc.id)}
                 menuItems={documentMenuItems(doc, actions, online)}
                 onSelect={() => {
                   if (doc.folder_id != null) onSelectFolder(doc.folder_id);
@@ -636,8 +733,10 @@ export function DocumentExplorer({
                 depth={0}
                 activeFolderId={activeFolderId}
                 selectedDocumentId={selectedDocumentId}
+                openDocumentIds={openDocSet}
                 expandFolderIds={expandSet}
-                expandedIds={mergedExpanded}
+                expandedIds={expandedIds}
+                collapsedIds={collapsedIds}
                 toggleExpanded={toggleExpanded}
                 dropTargetFolderId={dropTargetFolderId}
                 actions={actions}
@@ -658,6 +757,7 @@ export function DocumentExplorer({
                 doc={doc}
                 depth={0}
                 selected={selectedDocumentId === doc.id}
+                isOpen={openDocSet.has(doc.id)}
                 menuItems={documentMenuItems(doc, actions, online)}
                 onSelect={() => {
                   onSelectFolder(null);

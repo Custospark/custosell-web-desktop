@@ -6,13 +6,14 @@ import { useStaff } from '../../settings/api/settings/StaffQueries';
 import type { DocumentUserRef } from './documentTypes';
 import { useDocumentAccessibleMembers } from './useDocumentQueries';
 
-function mapStaffToDocumentRefs(staff: { id: number; name: string; avatar?: string | null; is_active?: boolean }[]): DocumentUserRef[] {
+function mapStaffToDocumentRefs(staff: { id: number; name: string; avatar?: string | null; email?: string; is_active?: boolean }[]): DocumentUserRef[] {
   return staff
     .filter((member) => member.is_active !== false)
     .map((member) => ({
       id: member.id,
       name: member.name,
       avatar: member.avatar ?? null,
+      email: member.email ?? null,
     }));
 }
 

@@ -8,10 +8,13 @@ export const DOCUMENTS = {
   FOLDERS: '/documents/folders',
   FOLDER: (id: number) => `/documents/folders/${id}`,
   FOLDER_CONTENTS: (id: number) => `/documents/folders/${id}/contents`,
+  FOLDER_EXPORT: (id: number) => `/documents/folders/${id}/export`,
   LIST: '/documents',
   UPLOAD: '/documents/upload',
   LINK: '/documents/link',
   BY_ID: (id: number) => `/documents/${id}`,
   VIEW: (id: number) => `/documents/${id}/view`,
   DOWNLOAD: (id: number) => `/documents/${id}/download`,
+  EMAIL: (id: number) => `/documents/${id}/email`,
+  FOLDER_EMAIL: (id: number) => `/documents/folders/${id}/email`,
 };

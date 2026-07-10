@@ -7,6 +7,7 @@ export interface DocumentUserRef {
   id: number;
   name: string;
   avatar?: string | null;
+  email?: string | null;
   role?: DocumentMemberRole;
 }
 
@@ -77,6 +78,8 @@ export interface DocumentItem {
   file_size?: number | null;
   views_count: number;
   downloads_count: number;
+  email_sent_count?: number;
+  last_emailed_at?: string | null;
   customer_id?: number | null;
   project_id?: number | null;
   customer?: { id: number; name: string } | null;

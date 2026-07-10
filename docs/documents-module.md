@@ -46,6 +46,9 @@ See `Backend/routes/api/v1/documents.php`. Middleware: `auth:sanctum`, `business
 - `GET /documents?page=&per_page=&root_only=` — paginated document list (default 50, max 200); `root_only=true` returns only root-level files (no folder)
 - `GET /documents/folders/children?parent_id=&page=` — lazy-load folder tree nodes (default 100)
 - `GET /documents/folders/{id}/contents?page=` — folder contents with paginated documents
+- `GET /documents/folders/{id}/export` — zip download of folder + nested subfolders/files (links saved as `.url` shortcuts)
+- `POST /documents/folders/{id}/email` — email zipped folder attachment
+- `POST /documents/{id}/email` — email file attachment
 - `GET /documents/folders/tree` — full tree (kept for move modal / small vaults)
 
 Staff with the `documents` module can create root folders and add links/files at root level (visibility cannot be `inherit` at root).
@@ -58,14 +61,16 @@ Staff with the `documents` module can create root folders and add links/files at
 - **Views:** list / grid toggle
 - **Preview:** PDF and images in modal
 - **Move:** modal picker + drag-and-drop onto folders / current folder
-- **Explorer:** VS Code-style two-pane layout with pipeline-inspired canvas (gradient/photo), frosted explorer, folder color accents, colored tag stripes, labeled actions, breadcrumbs, and row context menus
+- **Explorer:** VS Code-style two-pane layout with pipeline-inspired canvas (gradient/photo), frosted explorer, folder color accents, colored tag stripes, labeled actions, breadcrumbs, row context menus, **multi-tab file preview**, **Close file**, and **Import folder** (preserves directory tree via `webkitdirectory`)
+- **Folder export:** context menu / detail pane → **Download folder** (zip)
+- **Email share:** context menu / detail pane → **Email file** or **Email folder** (staff picker or external address; mirrors invoice email flow)
 - **Long names:** middle-ellipsis display with full name on hover
 - **Pagination:** load-more for document lists; sidebar loads folders on expand
 - **Progress:** upload (axios) and download (XHR blob) progress bars
 
 ## Storage
 
-Files stored on Laravel `public` disk under `business-documents/{business_id}/`. Max file size default: 100 MB. Max folder depth: 5.
+Files stored on Laravel `public` disk under `business-documents/{business_id}/`. Max file size default: 100 MB. Max folder depth: **10** (`DOCUMENTS_MAX_DEPTH` / `DOCUMENTS_MAX_FOLDER_DEPTH` on frontend).
 
 ## Related ADR
 

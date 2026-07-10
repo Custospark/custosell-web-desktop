@@ -19,9 +19,14 @@ import { documentKeys } from '../api/documentQueryKeys';
 import { truncateDisplayName } from '../api/documentDisplayUtils';
 import {
   downloadFileWithProgress,
+  downloadFolderExportWithProgress,
   uploadDocumentWithProgress,
   createTransferId,
 } from '../api/documentTransferUtils';
+import { importFolderTree } from '../api/documentFolderImport';
+import { canCreateSubfolderAtDepth, DOCUMENTS_MAX_FOLDER_DEPTH } from '../api/documentConstants';
+import { axiosInstance } from '../../../app/api/axiosConfig';
+import { DOCUMENTS } from '../api/documentEndpoints';
 import {
   useCreateDocumentFolder,
   useCreateDocumentLink,
@@ -42,6 +47,7 @@ import {
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { DocumentFolderCard, DocumentItemCard } from './DocumentItemViews';
 import { DocumentDetailPane } from './DocumentDetailPane';
+import { DocumentOpenTabs } from './DocumentOpenTabs';
 import { DocumentExplorer, type DocumentExplorerActions } from './DocumentExplorer';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentProgressBar } from './DocumentProgressBar';
@@ -50,6 +56,7 @@ import { RenameItemModal } from './RenameItemModal';
 import { DocumentsVaultAppearanceModal } from './DocumentsVaultAppearanceModal';
 import { DocumentFolderColorModal } from './DocumentFolderColorModal';
 import { DocumentAccessModal } from './DocumentAccessModal';
+import SendVaultEmailModal from '../../../shared/components/email/SendVaultEmailModal';
 import { surfaceAppearanceStyle, DEFAULT_VAULT_APPEARANCE } from '../../../shared/utils/surfaceStyles';
 import { isBusinessOwner } from '../../../shared/utils/moduleAccess';
 import { useSelector } from 'react-redux';
@@ -129,7 +136,7 @@ export default function DocumentsPanel({
 }: DocumentsPanelProps) {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  const confirm = useConfirm();
+  const { confirm } = useConfirm();
   const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
   const [activeFolderId, setActiveFolderId] = useState<number | null>(folderId);
@@ -149,7 +156,14 @@ export default function DocumentsPanel({
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
+  const [openTabs, setOpenTabs] = useState<DocumentItem[]>([]);
+  const [activeTabId, setActiveTabId] = useState<number | null>(null);
+  const [emailTarget, setEmailTarget] = useState<{
+    kind: 'vault_file' | 'vault_folder';
+    id: number;
+    label: string;
+    emailSentCount?: number;
+  } | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ kind: 'folder' | 'document'; id: number } | null>(null);
   const [renameTarget, setRenameTarget] = useState<{ kind: 'folder' | 'document'; id: number; name: string } | null>(null);
   const [contentsPage, setContentsPage] = useState(1);
@@ -170,6 +184,8 @@ export default function DocumentsPanel({
     allowInherit: boolean;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderImportInputRef = useRef<HTMLInputElement>(null);
+  const [importTargetFolderId, setImportTargetFolderId] = useState<number | null>(null);
   const user = useSelector((state: RootState) => state.auth.user);
   const canCustomizeVault = isBusinessOwner(user);
 
@@ -222,8 +238,35 @@ export default function DocumentsPanel({
     hasNextPage,
   } = useDocuments(listFilters, needsDocumentList);
 
-  const { data: freshSelectedDoc } = useDocument(selectedDocument?.id ?? 0, Boolean(selectedDocument?.id && showSidebar));
-  const activeDocument = showSidebar ? (freshSelectedDoc ?? selectedDocument) : previewDoc;
+  const { data: freshActiveDoc } = useDocument(activeTabId ?? 0, Boolean(activeTabId && showSidebar));
+  const activeTab = openTabs.find((tab) => tab.id === activeTabId) ?? null;
+  const activeDocument = showSidebar ? (activeTabId ? (freshActiveDoc ?? activeTab) : null) : previewDoc;
+  const openDocumentIds = useMemo(() => openTabs.map((tab) => tab.id), [openTabs]);
+
+  const openDocumentTab = useCallback((doc: DocumentItem) => {
+    setOpenTabs((tabs) => (tabs.some((tab) => tab.id === doc.id) ? tabs : [...tabs, doc]));
+    setActiveTabId(doc.id);
+    if (doc.folder_id != null) setActiveFolderId(doc.folder_id);
+  }, []);
+
+  const closeDocumentTab = useCallback((id: number) => {
+    setOpenTabs((tabs) => {
+      const index = tabs.findIndex((tab) => tab.id === id);
+      const next = tabs.filter((tab) => tab.id !== id);
+      if (activeTabId === id) {
+        const replacement = next[index] ?? next[index - 1] ?? null;
+        setActiveTabId(replacement?.id ?? null);
+        if (replacement?.folder_id != null) setActiveFolderId(replacement.folder_id);
+      }
+      return next;
+    });
+  }, [activeTabId]);
+
+  const selectDocumentTab = useCallback((id: number) => {
+    setActiveTabId(id);
+    const tab = openTabs.find((item) => item.id === id);
+    if (tab?.folder_id != null) setActiveFolderId(tab.folder_id);
+  }, [openTabs]);
   const createFolder = useCreateDocumentFolder();
   const updateFolder = useUpdateDocumentFolder();
   const deleteFolder = useDeleteDocumentFolder();
@@ -346,6 +389,15 @@ export default function DocumentsPanel({
     }
 
     const parentId = createFolderParentId ?? activeFolderId;
+    const parentFolder = parentId
+      ? [...subfolders, ...flatFolders, ...(contents?.folder ? [contents.folder] : [])].find((item) => item.id === parentId)
+      : null;
+    const parentDepth = parentFolder?.depth ?? 0;
+    if (!canCreateSubfolderAtDepth(parentDepth)) {
+      showToast('error', `Folders can only be nested up to ${DOCUMENTS_MAX_FOLDER_DEPTH} levels.`);
+      return;
+    }
+
     try {
       const folder = await createFolder.mutateAsync({
         name: folderName.trim(),
@@ -401,15 +453,12 @@ export default function DocumentsPanel({
     if (!renameTarget) return;
     try {
       if (renameTarget.kind === 'folder') {
-        const folder = [...subfolders, ...flatFolders].find((item) => item.id === renameTarget.id);
-        if (!folder) return;
-        await updateFolder.mutateAsync({
-          id: renameTarget.id,
-          name,
-          visibility: folder.visibility,
-        });
+        await updateFolder.mutateAsync({ id: renameTarget.id, name });
       } else {
         await updateDocument.mutateAsync({ id: renameTarget.id, title: name });
+        setOpenTabs((tabs) => tabs.map((tab) => (
+          tab.id === renameTarget.id ? { ...tab, title: name } : tab
+        )));
       }
       setRenameTarget(null);
       await invalidateDocuments();
@@ -447,7 +496,7 @@ export default function DocumentsPanel({
     await deleteFolder.mutateAsync(folder.id);
     if (activeFolderId === folder.id) {
       setActiveFolderId(folder.parent_id);
-      setSelectedDocument(null);
+      setActiveTabId(null);
     }
     await invalidateDocuments();
   }, [activeFolderId, confirm, deleteFolder, invalidateDocuments]);
@@ -461,9 +510,137 @@ export default function DocumentsPanel({
     });
     if (!accepted) return;
     await deleteDocument.mutateAsync(doc.id);
-    if (selectedDocument?.id === doc.id) setSelectedDocument(null);
+    setOpenTabs((tabs) => tabs.filter((tab) => tab.id !== doc.id));
+    if (activeTabId === doc.id) {
+      const remaining = openTabs.filter((tab) => tab.id !== doc.id);
+      const replacement = remaining[0] ?? null;
+      setActiveTabId(replacement?.id ?? null);
+      if (replacement?.folder_id != null) setActiveFolderId(replacement.folder_id);
+    }
     await invalidateDocuments();
-  }, [confirm, deleteDocument, invalidateDocuments, selectedDocument?.id]);
+  }, [activeTabId, confirm, deleteDocument, invalidateDocuments, openTabs]);
+
+  const triggerImportFolder = useCallback((folderId: number | null = activeFolderId) => {
+    if (!online || !canContribute) {
+      showToast('error', 'You cannot import into this folder.');
+      return;
+    }
+    setImportTargetFolderId(folderId);
+    folderImportInputRef.current?.click();
+  }, [activeFolderId, canContribute, online, showToast]);
+
+  const handleImportFolderFiles = useCallback(async (files: FileList | null) => {
+    if (!files?.length || !online) return;
+
+    const targetFolderId = importTargetFolderId ?? activeFolderId;
+    const parentFolder = targetFolderId
+      ? [...subfolders, ...flatFolders, ...(contents?.folder ? [contents.folder] : [])].find((item) => item.id === targetFolderId)
+      : null;
+    const parentDepth = parentFolder?.depth ?? 0;
+
+    const fileCount = files.length;
+    const accepted = await confirm({
+      title: `Import ${fileCount} file${fileCount === 1 ? '' : 's'}?`,
+      message: 'The folder structure from your computer will be recreated in the vault.',
+      confirmText: 'Import folder',
+      variant: 'warning',
+    });
+    if (!accepted) return;
+
+    const transferId = createTransferId('folder-import');
+    upsertTransfer(transferId, { name: 'Folder import', kind: 'upload', percent: 0 });
+
+    try {
+      const visibility = visibilityForRoot(folderVisibility, targetFolderId == null) as FolderVisibility;
+      const result = await importFolderTree({
+        files,
+        parentFolderId: targetFolderId,
+        parentDepth,
+        visibility,
+        createFolder: async (payload) => {
+          const { data } = await axiosInstance.post(DOCUMENTS.FOLDERS, payload);
+          const created = (data && typeof data === 'object' && 'data' in data)
+            ? (data as { data: DocumentFolder }).data
+            : data as DocumentFolder;
+          return created;
+        },
+        uploadFile: async (file, folderId) => {
+          await uploadDocumentWithProgress({
+            file,
+            title: file.name,
+            folder_id: folderId,
+            visibility: visibilityForRoot(uploadVisibility, folderId == null),
+            customer_id: customerId,
+            project_id: projectId,
+            tags: uploadTags.split(',').map((tag) => tag.trim()).filter(Boolean),
+            ...memberPayload(uploadMembers),
+          });
+        },
+        onProgress: (_label, done, total) => {
+          upsertTransfer(transferId, {
+            name: 'Folder import',
+            kind: 'upload',
+            percent: Math.min(99, Math.round((done / Math.max(total, 1)) * 100)),
+          });
+        },
+      });
+
+      await invalidateDocuments();
+      const skipped = result.skippedFiles + result.skippedFolders;
+      if (skipped > 0) {
+        showToast(
+          'warning',
+          `Imported ${result.filesUploaded} files and ${result.foldersCreated} folders. ${skipped} item(s) skipped (depth limit).`,
+        );
+      } else {
+        showToast('success', `Imported ${result.filesUploaded} files in ${result.foldersCreated} folders.`);
+      }
+    } catch (err) {
+      showToast('error', sanitizeErrorMessage(err, 'Folder import failed'));
+    } finally {
+      upsertTransfer(transferId, { name: 'Folder import', kind: 'upload', percent: 100 });
+      removeTransfer(transferId);
+      setImportTargetFolderId(null);
+      if (folderImportInputRef.current) folderImportInputRef.current.value = '';
+    }
+  }, [
+    activeFolderId,
+    confirm,
+    contents?.folder,
+    customerId,
+    flatFolders,
+    folderVisibility,
+    importTargetFolderId,
+    invalidateDocuments,
+    online,
+    projectId,
+    removeTransfer,
+    showToast,
+    subfolders,
+    uploadMembers,
+    uploadTags,
+    uploadVisibility,
+    upsertTransfer,
+  ]);
+
+  const handleExportFolder = useCallback(async (folder: DocumentFolder) => {
+    if (!online) return;
+    const transferId = createTransferId(`export-${folder.id}`);
+    const fileName = `${folder.name}.zip`;
+    upsertTransfer(transferId, { name: fileName, kind: 'download', percent: 0 });
+
+    try {
+      await downloadFolderExportWithProgress(folder.id, fileName, (percent) => {
+        upsertTransfer(transferId, { name: fileName, kind: 'download', percent });
+      });
+      showToast('success', `${folder.name} downloaded`);
+    } catch (err) {
+      showToast('error', sanitizeErrorMessage(err, 'Folder download failed'));
+    } finally {
+      upsertTransfer(transferId, { name: fileName, kind: 'download', percent: 100 });
+      removeTransfer(transferId);
+    }
+  }, [online, removeTransfer, showToast, upsertTransfer]);
 
   const explorerActions = useMemo<DocumentExplorerActions>(() => ({
     onRenameFolder: (folder) => setRenameTarget({ kind: 'folder', id: folder.id, name: folder.name }),
@@ -492,7 +669,20 @@ export default function DocumentsPanel({
       members: doc.members ?? [],
       allowInherit: doc.folder_id != null,
     }),
-  }), [handleDeleteDocument, handleDeleteFolder, openCreateFolderModal, openLinkModal, openUploadModal]);
+    onImportFolder: (folderId) => triggerImportFolder(folderId),
+    onExportFolder: (folder) => { void handleExportFolder(folder); },
+    onEmailFolder: (folder) => setEmailTarget({
+      kind: 'vault_folder',
+      id: folder.id,
+      label: folder.name,
+    }),
+    onEmailDocument: (doc) => setEmailTarget({
+      kind: 'vault_file',
+      id: doc.id,
+      label: doc.title,
+      emailSentCount: doc.email_sent_count,
+    }),
+  }), [handleDeleteDocument, handleDeleteFolder, handleExportFolder, openCreateFolderModal, openLinkModal, openUploadModal, triggerImportFolder]);
 
   const loadMoreDocuments = () => {
     if (searching || customerId || projectId || activeFolderId == null) {
@@ -674,12 +864,14 @@ export default function DocumentsPanel({
             className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <input
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          placeholder="Filter by tag"
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm sm:w-auto sm:min-w-[160px]"
-        />
+        <div className="ml-2 w-full sm:w-auto sm:min-w-[160px]">
+          <input
+            value={tagFilter}
+            onChange={(e) => setTagFilter(e.target.value)}
+            placeholder="Filter by tag"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+          />
+        </div>
       </div>
     </>
   );
@@ -847,6 +1039,16 @@ export default function DocumentsPanel({
         onConfirm={(name) => void handleRenameConfirm(name)}
       />
 
+      <input
+        ref={folderImportInputRef}
+        type="file"
+        className="hidden"
+        // @ts-expect-error webkitdirectory is supported in Chromium/Electron
+        webkitdirectory=""
+        multiple
+        onChange={(e) => void handleImportFolderFiles(e.target.files)}
+      />
+
       <Modal isOpen={showCreateFolder} onClose={() => setShowCreateFolder(false)} title="Create folder">
         <div className="space-y-4">
           <input
@@ -1005,6 +1207,28 @@ export default function DocumentsPanel({
           });
         }}
       />
+
+      {emailTarget && (
+        <SendVaultEmailModal
+          open
+          onClose={() => setEmailTarget(null)}
+          kind={emailTarget.kind}
+          targetId={emailTarget.id}
+          targetLabel={emailTarget.label}
+          emailSentCount={emailTarget.emailSentCount}
+          onSent={(result) => {
+            if (emailTarget.kind === 'vault_file') {
+              setOpenTabs((tabs) => tabs.map((tab) => (
+                tab.id === emailTarget.id
+                  ? { ...tab, email_sent_count: result.email_sent_count, last_emailed_at: result.last_emailed_at ?? null }
+                  : tab
+              )));
+            }
+            setEmailTarget(null);
+            void invalidateDocuments();
+          }}
+        />
+      )}
     </>
   );
 
@@ -1024,7 +1248,8 @@ export default function DocumentsPanel({
         <aside className="flex h-[min(50vh,28rem)] w-full shrink-0 flex-col p-1.5 sm:p-2 lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96">
           <DocumentExplorer
             activeFolderId={activeFolderId}
-            selectedDocumentId={selectedDocument?.id ?? null}
+            selectedDocumentId={activeTabId}
+            openDocumentIds={openDocumentIds}
             breadcrumbs={breadcrumbs}
             expandFolderIds={breadcrumbs.map((crumb) => crumb.id)}
             searchQuery={search}
@@ -1037,12 +1262,13 @@ export default function DocumentsPanel({
             onTagFilterChange={setTagFilter}
             onSelectFolder={(folderId) => {
               setActiveFolderId(folderId);
-              setSelectedDocument(null);
+              setActiveTabId(null);
             }}
-            onSelectDocument={setSelectedDocument}
+            onSelectDocument={openDocumentTab}
             onCreateFolder={() => openCreateFolderModal(activeFolderId)}
             onUpload={() => openUploadModal(activeFolderId)}
             onCreateLink={() => openLinkModal(activeFolderId)}
+            onImportFolder={() => triggerImportFolder(activeFolderId)}
             onRefresh={() => { void invalidateDocuments(); }}
             onFolderDragOver={(folderId, e) => {
               e.preventDefault();
@@ -1088,17 +1314,23 @@ export default function DocumentsPanel({
               Drop files to upload to {folderLabel ?? 'root'}
             </div>
           )}
+          <DocumentOpenTabs
+            tabs={openTabs}
+            activeTabId={activeTabId}
+            onSelectTab={selectDocumentTab}
+            onCloseTab={closeDocumentTab}
+          />
           <DocumentDetailPane
             document={activeDocument}
             folder={activeFolder}
             folderName={folderLabel}
             breadcrumbs={breadcrumbs}
-            loading={Boolean(activeFolderId && contentsLoading && !selectedDocument)}
+            loading={Boolean(activeFolderId && contentsLoading && !activeTabId)}
             online={online}
             canContribute={canContribute}
             onGoHome={() => {
               setActiveFolderId(null);
-              setSelectedDocument(null);
+              setActiveTabId(null);
             }}
             onUpload={() => openUploadModal(activeFolderId)}
             onCreateLink={() => openLinkModal(activeFolderId)}
@@ -1120,6 +1352,21 @@ export default function DocumentsPanel({
               if (!activeFolder) return;
               void handleDeleteFolder(activeFolder);
             }}
+            onExportFolder={() => {
+              if (!activeFolder) return;
+              void handleExportFolder(activeFolder);
+            }}
+            onEmailFolder={() => {
+              if (!activeFolder) return;
+              setEmailTarget({ kind: 'vault_folder', id: activeFolder.id, label: activeFolder.name });
+            }}
+            onEmailDocument={(doc) => setEmailTarget({
+              kind: 'vault_file',
+              id: doc.id,
+              label: doc.title,
+              emailSentCount: doc.email_sent_count,
+            })}
+            onClose={() => activeTabId && closeDocumentTab(activeTabId)}
             onManageFolderAccess={() => {
               if (!activeFolder) return;
               setAccessTarget({
@@ -1142,7 +1389,7 @@ export default function DocumentsPanel({
             onRecordView={handleRecordView}
             onSelectFolder={(folderId) => {
               setActiveFolderId(folderId);
-              setSelectedDocument(null);
+              setActiveTabId(null);
             }}
           />
           {transfers.length > 0 && (

@@ -98,6 +98,16 @@ export const VAULT_GALLERY_IMAGES = [
   { id: 57, url: 'https://picsum.photos/id/57/1200/800', thumb: 'https://picsum.photos/id/57/400/300' },
   { id: 63, url: 'https://picsum.photos/id/63/1200/800', thumb: 'https://picsum.photos/id/63/400/300' },
   { id: 68, url: 'https://picsum.photos/id/68/1200/800', thumb: 'https://picsum.photos/id/68/400/300' },
+  { id: 70, url: 'https://picsum.photos/id/70/1200/800', thumb: 'https://picsum.photos/id/70/400/300' },
+  { id: 82, url: 'https://picsum.photos/id/82/1200/800', thumb: 'https://picsum.photos/id/82/400/300' },
+  { id: 88, url: 'https://picsum.photos/id/88/1200/800', thumb: 'https://picsum.photos/id/88/400/300' },
+  { id: 91, url: 'https://picsum.photos/id/91/1200/800', thumb: 'https://picsum.photos/id/91/400/300' },
+  { id: 96, url: 'https://picsum.photos/id/96/1200/800', thumb: 'https://picsum.photos/id/96/400/300' },
+  { id: 101, url: 'https://picsum.photos/id/101/1200/800', thumb: 'https://picsum.photos/id/101/400/300' },
+  { id: 102, url: 'https://picsum.photos/id/102/1200/800', thumb: 'https://picsum.photos/id/102/400/300' },
+  { id: 103, url: 'https://picsum.photos/id/103/1200/800', thumb: 'https://picsum.photos/id/103/400/300' },
+  { id: 104, url: 'https://picsum.photos/id/104/1200/800', thumb: 'https://picsum.photos/id/104/400/300' },
+  { id: 106, url: 'https://picsum.photos/id/106/1200/800', thumb: 'https://picsum.photos/id/106/400/300' },
 ];
 
 export const DEFAULT_VAULT_APPEARANCE = {

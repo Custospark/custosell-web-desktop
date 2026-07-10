@@ -19,10 +19,12 @@ import {
   FolderPlus,
   Home,
   Link2,
+  Mail,
   Pencil,
   Shield,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react';
 
 interface DocumentPreviewContentProps {
@@ -93,6 +95,10 @@ interface DocumentDetailPaneProps {
   onDeleteFolder?: () => void;
   onManageFolderAccess?: () => void;
   onManageDocumentAccess?: (doc: DocumentItem) => void;
+  onExportFolder?: () => void;
+  onEmailFolder?: () => void;
+  onEmailDocument?: (doc: DocumentItem) => void;
+  onClose?: () => void;
   onRecordView?: (doc: DocumentItem) => void;
   onSelectFolder?: (folderId: number | null) => void;
 }
@@ -160,6 +166,10 @@ export function DocumentDetailPane({
   onDeleteFolder,
   onManageFolderAccess,
   onManageDocumentAccess,
+  onExportFolder,
+  onEmailFolder,
+  onEmailDocument,
+  onClose,
   onRecordView,
   onSelectFolder,
 }: DocumentDetailPaneProps) {
@@ -255,7 +265,7 @@ export function DocumentDetailPane({
             </div>
 
             {folder && (folder.can_manage || folder.can_delete) && (
-              <div className="mt-6 border-t border-gray-100 pt-4">
+              <div className="mb-6 mt-6 border-t border-gray-100 pt-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Folder actions</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {onRenameFolder && folder.can_manage && (
@@ -280,6 +290,24 @@ export function DocumentDetailPane({
                       icon={<FolderInput className="h-4 w-4" />}
                       label="Move folder"
                       onClick={onMoveFolder}
+                      disabled={!online}
+                    />
+                  )}
+                  {onExportFolder && folder.can_view && (
+                    <DocumentActionButton
+                      icon={<Download className="h-4 w-4" />}
+                      label="Download folder"
+                      description="Zip this folder and all nested files"
+                      onClick={onExportFolder}
+                      disabled={!online}
+                    />
+                  )}
+                  {onEmailFolder && folder.can_view && (
+                    <DocumentActionButton
+                      icon={<Mail className="h-4 w-4" />}
+                      label="Email folder"
+                      description="Send zipped folder to staff or external recipient"
+                      onClick={onEmailFolder}
                       disabled={!online}
                     />
                   )}
@@ -324,6 +352,11 @@ export function DocumentDetailPane({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {onClose && (
+            <Button type="button" variant="secondary" size="sm" onClick={onClose} title="Close file">
+              <X className="h-4 w-4" /> Close
+            </Button>
+          )}
           {document.url && (
             <Button type="button" variant="secondary" size="sm" onClick={() => window.open(document.url!, '_blank', 'noopener,noreferrer')}>
               <ExternalLink className="h-4 w-4" /> Open link
@@ -332,6 +365,11 @@ export function DocumentDetailPane({
           {document.file_url && onDownload && (
             <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => onDownload(document)}>
               <Download className="h-4 w-4" /> Download
+            </Button>
+          )}
+          {document.can_view && onEmailDocument && document.type !== 'link' && (
+            <Button type="button" variant="secondary" size="sm" disabled={!online} onClick={() => onEmailDocument(document)}>
+              <Mail className="h-4 w-4" /> Email
             </Button>
           )}
           {(document.can_edit || document.can_manage) && onRename && (

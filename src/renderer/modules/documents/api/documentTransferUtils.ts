@@ -114,6 +114,32 @@ export function createTransferId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export async function downloadFolderExportWithProgress(
+  folderId: number,
+  fileName: string,
+  onProgress?: (percent: number) => void,
+): Promise<void> {
+  const { data } = await axiosInstance.get(DOCUMENTS.FOLDER_EXPORT(folderId), {
+    responseType: 'blob',
+    timeout: 600_000,
+    onDownloadProgress: (event) => {
+      if (!event.total || !onProgress) return;
+      onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    },
+  });
+
+  onProgress?.(100);
+  const blob = data as Blob;
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = fileName.endsWith('.zip') ? fileName : `${fileName}.zip`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(objectUrl);
+}
+
 export function canPreviewDocument(doc: DocumentItem): boolean {
   if (doc.type === 'link' || !doc.file_url) return false;
   return isPdfDocument(doc) || isImageDocument(doc);

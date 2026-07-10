@@ -3,39 +3,8 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentFolder } from '../api/documentTypes';
+import { collectFolderDescendantIds, flattenDocumentFolders } from '../api/documentFolderPathUtils';
 import { ChevronRight, Folder } from 'lucide-react';
-
-function flattenFolders(folders: DocumentFolder[]): DocumentFolder[] {
-  const out: DocumentFolder[] = [];
-  const walk = (nodes: DocumentFolder[]) => {
-    nodes.forEach((node) => {
-      out.push(node);
-      if (node.children?.length) walk(node.children);
-    });
-  };
-  walk(folders);
-  return out;
-}
-
-function collectDescendantIds(folderId: number, flat: DocumentFolder[]): Set<number> {
-  const byParent = new Map<number | null, DocumentFolder[]>();
-  flat.forEach((folder) => {
-    const key = folder.parent_id ?? null;
-    const list = byParent.get(key) ?? [];
-    list.push(folder);
-    byParent.set(key, list);
-  });
-
-  const blocked = new Set<number>([folderId]);
-  const walk = (id: number) => {
-    (byParent.get(id) ?? []).forEach((child) => {
-      blocked.add(child.id);
-      walk(child.id);
-    });
-  };
-  walk(folderId);
-  return blocked;
-}
 
 interface MoveItemModalProps {
   open: boolean;
@@ -58,9 +27,9 @@ export function MoveItemModal({
 }: MoveItemModalProps) {
   const [targetId, setTargetId] = useState<number | null>(null);
 
-  const flat = useMemo(() => flattenFolders(tree), [tree]);
+  const flat = useMemo(() => flattenDocumentFolders(tree), [tree]);
   const blockedIds = useMemo(
-    () => (movingFolderId ? collectDescendantIds(movingFolderId, flat) : new Set<number>()),
+    () => (movingFolderId ? collectFolderDescendantIds(movingFolderId, flat) : new Set<number>()),
     [movingFolderId, flat],
   );
 

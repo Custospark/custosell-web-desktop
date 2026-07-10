@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentItem } from '../api/documentTypes';
 import { truncateDisplayName, documentIconLabel } from '../api/documentDisplayUtils';
+import { formatDocumentHoverPath } from '../api/documentFolderPathUtils';
 import { DocumentItemIcon } from './documentFileIcons';
 
 interface DocumentOpenTabsProps {
@@ -20,6 +21,7 @@ export function DocumentOpenTabs({ tabs, activeTabId, onSelectTab, onCloseTab }:
         {tabs.map((tab) => {
           const active = tab.id === activeTabId;
           const label = truncateDisplayName(documentIconLabel(tab), 28);
+          const hoverPath = formatDocumentHoverPath(tab);
 
           return (
             <div
@@ -32,7 +34,7 @@ export function DocumentOpenTabs({ tabs, activeTabId, onSelectTab, onCloseTab }:
               <button
                 type="button"
                 onClick={() => onSelectTab(tab.id)}
-                title={documentIconLabel(tab)}
+                title={hoverPath}
                 className={cn(
                   'flex min-w-0 flex-1 items-center gap-1.5 px-2.5 py-2 text-left text-xs',
                   active ? 'font-medium text-indigo-700' : 'text-gray-700',

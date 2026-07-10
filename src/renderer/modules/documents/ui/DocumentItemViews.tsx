@@ -5,6 +5,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { DocumentFolder, DocumentItem } from '../api/documentTypes';
 import { documentPrimaryLabel, documentSecondaryLabel, truncateDisplayName } from '../api/documentDisplayUtils';
 import { canPreviewDocument, formatDocumentBytes } from '../api/documentTransferUtils';
+import { formatDocumentHoverPath } from '../api/documentFolderPathUtils';
 import { DocumentMemberStack } from './DocumentMemberStack';
 import { DocumentUserAttribution } from './DocumentUserAttribution';
 import {
@@ -165,6 +166,7 @@ export function DocumentItemCard({
   const primaryLabel = documentPrimaryLabel(doc);
   const secondaryLabel = documentSecondaryLabel(doc);
   const displayTitle = truncateDisplayName(primaryLabel);
+  const hoverPath = formatDocumentHoverPath(doc);
 
   return (
     <div
@@ -174,6 +176,7 @@ export function DocumentItemCard({
         e.dataTransfer.effectAllowed = 'move';
         onDragStart();
       }}
+      title={hoverPath}
       className={cn(
         'rounded-xl border border-gray-200 bg-white',
         viewMode === 'grid' ? 'flex h-full flex-col p-4' : 'px-4 py-3',
@@ -186,7 +189,7 @@ export function DocumentItemCard({
             <button
               type="button"
               className="block max-w-full truncate text-left font-medium text-gray-900 hover:text-indigo-700"
-              title={primaryLabel}
+              title={hoverPath}
               onClick={previewable ? onPreview : onDownload}
             >
               {displayTitle}

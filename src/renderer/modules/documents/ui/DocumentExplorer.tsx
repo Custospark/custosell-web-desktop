@@ -13,6 +13,7 @@ import { DocumentTagStrip } from './DocumentTagStrip';
 import { ExplorerFolderCount } from './ExplorerFolderCount';
 import { DocumentExplorerActivity } from './DocumentExplorerActivity';
 import { canCreateSubfolderAtDepth } from '../api/documentConstants';
+import { formatDocumentHoverPath } from '../api/documentFolderPathUtils';
 import { resolveFolderColor } from '../api/documentColorUtils';
 import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -67,7 +68,7 @@ interface DocumentExplorerProps {
   expandFolderIds?: number[];
   searchQuery: string;
   tagFilter: string;
-  dropTargetFolderId: number | 'panel' | null;
+  dropTargetFolderId: number | 'panel' | 'root' | null;
   online: boolean;
   canContribute: boolean;
   actions?: DocumentExplorerActions;
@@ -80,9 +81,9 @@ interface DocumentExplorerProps {
   onCreateLink: () => void;
   onImportFolder?: () => void;
   onRefresh: () => void;
-  onFolderDragOver: (folderId: number, e: React.DragEvent) => void;
+  onFolderDragOver: (folderId: number | null, e: React.DragEvent) => void;
   onFolderDragLeave: () => void;
-  onFolderDrop: (folderId: number, e: React.DragEvent) => void;
+  onFolderDrop: (folderId: number | null, e: React.DragEvent) => void;
   onDocumentDragStart: (doc: DocumentItem, e: React.DragEvent) => void;
   onFolderDragStart: (folder: DocumentFolder, e: React.DragEvent) => void;
   onCustomizeCanvas?: () => void;
@@ -258,6 +259,7 @@ function ExplorerFileRow({
   menuItems,
   onSelect,
   onDragStart,
+  folderPath,
 }: {
   doc: DocumentItem;
   depth: number;
@@ -266,8 +268,10 @@ function ExplorerFileRow({
   menuItems: ExplorerMenuItem[];
   onSelect: () => void;
   onDragStart: (e: React.DragEvent) => void;
+  folderPath?: string | null;
 }) {
   const label = truncateDisplayName(documentIconLabel(doc), 40);
+  const hoverPath = formatDocumentHoverPath(doc, folderPath);
 
   return (
     <div
@@ -282,7 +286,7 @@ function ExplorerFileRow({
         draggable={doc.can_edit || doc.can_manage}
         onDragStart={onDragStart}
         onClick={onSelect}
-        title={documentIconLabel(doc)}
+        title={hoverPath}
         className={cn(
           'flex min-w-0 flex-1 flex-col gap-0.5 py-1.5 text-left text-[13px] leading-5',
           selected ? 'font-medium text-indigo-700' : cn('text-gray-800', DOCUMENT_SURFACE.rowHover),
@@ -304,6 +308,7 @@ function ExplorerFileRow({
 function ExplorerFolderNode({
   folder,
   depth,
+  folderPathPrefix = '',
   activeFolderId,
   selectedDocumentId,
   expandFolderIds,
@@ -324,6 +329,7 @@ function ExplorerFolderNode({
 }: {
   folder: DocumentFolder;
   depth: number;
+  folderPathPrefix?: string;
   activeFolderId: number | null;
   selectedDocumentId: number | null;
   openDocumentIds: Set<number>;
@@ -331,18 +337,19 @@ function ExplorerFolderNode({
   expandedIds: Set<number>;
   collapsedIds: Set<number>;
   toggleExpanded: (id: number) => void;
-  dropTargetFolderId: number | 'panel' | null;
+  dropTargetFolderId: number | 'panel' | 'root' | null;
   actions?: DocumentExplorerActions;
   online: boolean;
   onSelectFolder: (folderId: number | null) => void;
   onSelectDocument: (doc: DocumentItem) => void;
-  onFolderDragOver: (folderId: number, e: React.DragEvent) => void;
+  onFolderDragOver: (folderId: number | null, e: React.DragEvent) => void;
   onFolderDragLeave: () => void;
-  onFolderDrop: (folderId: number, e: React.DragEvent) => void;
+  onFolderDrop: (folderId: number | null, e: React.DragEvent) => void;
   onDocumentDragStart: (doc: DocumentItem, e: React.DragEvent) => void;
   onFolderDragStart: (folder: DocumentFolder, e: React.DragEvent) => void;
 }) {
   const expanded = (expandedIds.has(folder.id) || expandFolderIds.has(folder.id)) && !collapsedIds.has(folder.id);
+  const folderPath = folderPathPrefix ? `${folderPathPrefix}/${folder.name}` : folder.name;
   const folderSelected = activeFolderId === folder.id && selectedDocumentId == null;
   const isDropTarget = dropTargetFolderId === folder.id;
   const menuItems = folderMenuItems(folder, actions, online);
@@ -366,7 +373,10 @@ function ExplorerFolderNode({
           isDropTarget && 'bg-indigo-50 ring-1 ring-indigo-300 ring-inset',
           folderSelected && DOCUMENT_SURFACE.rowSelected,
         )}
-        onDragOver={(e) => onFolderDragOver(folder.id, e)}
+        onDragOver={(e) => {
+          if (!expanded) toggleExpanded(folder.id);
+          onFolderDragOver(folder.id, e);
+        }}
         onDragLeave={onFolderDragLeave}
         onDrop={(e) => onFolderDrop(folder.id, e)}
       >
@@ -412,6 +422,7 @@ function ExplorerFolderNode({
               key={`folder-${child.id}`}
               folder={child}
               depth={depth + 1}
+              folderPathPrefix={folderPath}
               activeFolderId={activeFolderId}
               selectedDocumentId={selectedDocumentId}
               openDocumentIds={openDocumentIds}
@@ -436,6 +447,7 @@ function ExplorerFolderNode({
               key={`doc-${doc.id}`}
               doc={doc}
               depth={depth + 1}
+              folderPath={folderPath}
               selected={selectedDocumentId === doc.id}
               isOpen={openDocumentIds.has(doc.id)}
               menuItems={documentMenuItems(doc, actions, online)}
@@ -551,9 +563,13 @@ export function DocumentExplorer({
           <button
             type="button"
             onClick={() => onSelectFolder(null)}
+            onDragOver={(e) => onFolderDragOver(null, e)}
+            onDragLeave={onFolderDragLeave}
+            onDrop={(e) => onFolderDrop(null, e)}
             className={cn(
               'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium transition-colors',
               atRoot ? 'bg-indigo-50 text-indigo-700' : 'text-indigo-600 hover:bg-gray-100',
+              dropTargetFolderId === 'root' && 'ring-1 ring-indigo-400',
             )}
           >
             <Home className="h-3.5 w-3.5" />
@@ -565,11 +581,15 @@ export function DocumentExplorer({
               <button
                 type="button"
                 onClick={() => onSelectFolder(crumb.id)}
+                onDragOver={(e) => onFolderDragOver(crumb.id, e)}
+                onDragLeave={onFolderDragLeave}
+                onDrop={(e) => onFolderDrop(crumb.id, e)}
                 className={cn(
                   'max-w-[8rem] truncate rounded-md px-1.5 py-0.5 font-medium transition-colors',
                   activeFolderId === crumb.id && selectedDocumentId == null
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-indigo-600 hover:bg-gray-100',
+                  dropTargetFolderId === crumb.id && 'ring-1 ring-indigo-400',
                 )}
                 title={crumb.name}
               >
@@ -699,6 +719,7 @@ export function DocumentExplorer({
                 key={`search-${doc.id}`}
                 doc={doc}
                 depth={0}
+                folderPath={doc.folder_path}
                 selected={selectedDocumentId === doc.id}
                 isOpen={openDocSet.has(doc.id)}
                 menuItems={documentMenuItems(doc, actions, online)}
@@ -717,9 +738,13 @@ export function DocumentExplorer({
             <button
               type="button"
               onClick={() => onSelectFolder(null)}
+              onDragOver={(e) => onFolderDragOver(null, e)}
+              onDragLeave={onFolderDragLeave}
+              onDrop={(e) => onFolderDrop(null, e)}
               className={cn(
                 'mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px]',
                 atRoot ? 'bg-indigo-500/12 font-medium text-indigo-700' : cn('text-gray-800', DOCUMENT_SURFACE.rowHover),
+                dropTargetFolderId === 'root' && 'bg-indigo-50 ring-1 ring-indigo-300 ring-inset',
               )}
             >
               <Home className="h-4 w-4 shrink-0 text-indigo-500" />

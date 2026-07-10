@@ -28,6 +28,10 @@ import {
   DOCUMENT_MEDIA_MAX_BYTES,
   isMediaFile,
 } from '../api/documentFileViewUtils';
+import {
+  canMoveFolderInto,
+  flattenDocumentFolders,
+} from '../api/documentFolderPathUtils';
 import { importFolderTree } from '../api/documentFolderImport';
 import { canCreateSubfolderAtDepth, DOCUMENTS_MAX_FOLDER_DEPTH } from '../api/documentConstants';
 import { axiosInstance } from '../../../app/api/axiosConfig';
@@ -96,18 +100,6 @@ type TransferItem = {
   percent: number;
 };
 
-function flattenTree(folders: DocumentFolder[]): DocumentFolder[] {
-  const out: DocumentFolder[] = [];
-  const walk = (nodes: DocumentFolder[]) => {
-    nodes.forEach((node) => {
-      out.push(node);
-      if (node.children?.length) walk(node.children);
-    });
-  };
-  walk(folders);
-  return out;
-}
-
 function memberPayload(members: DocumentUserRef[]) {
   const member_user_ids = members.map((member) => member.id);
   const member_roles = Object.fromEntries(
@@ -173,7 +165,7 @@ export default function DocumentsPanel({
   const [renameTarget, setRenameTarget] = useState<{ kind: 'folder' | 'document'; id: number; name: string } | null>(null);
   const [contentsPage, setContentsPage] = useState(1);
   const [accumulatedDocs, setAccumulatedDocs] = useState<DocumentItem[]>([]);
-  const [dropTargetFolderId, setDropTargetFolderId] = useState<number | 'panel' | null>(null);
+  const [dropTargetFolderId, setDropTargetFolderId] = useState<number | 'panel' | 'root' | null>(null);
   const [panelDragActive, setPanelDragActive] = useState(false);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [createFolderParentId, setCreateFolderParentId] = useState<number | null>(null);
@@ -196,7 +188,7 @@ export default function DocumentsPanel({
 
   const showSidebar = fullBleed && !customerId && !projectId;
   const searching = Boolean(debouncedSearch || tagFilter);
-  const { data: moveTree = [] } = useDocumentFolderTree(Boolean(moveTarget));
+  const { data: moveTree = [] } = useDocumentFolderTree(showSidebar || Boolean(moveTarget));
   const needsRootFolders = !showSidebar && !customerId && !projectId && !activeFolderId && !searching;
   const { data: rootFoldersPage } = useDocumentFolderChildren(null, 1, needsRootFolders);
   const rootFolders = rootFoldersPage?.data ?? [];
@@ -283,7 +275,7 @@ export default function DocumentsPanel({
   const { data: vaultAppearance } = useDocumentsVaultAppearance(showSidebar);
   const updateVaultAppearance = useUpdateDocumentsVaultAppearance();
 
-  const flatFolders = useMemo(() => flattenTree(moveTree), [moveTree]);
+  const flatFolders = useMemo(() => flattenDocumentFolders(moveTree), [moveTree]);
   const searchResults = useMemo(
     () => documentPages?.pages.flatMap((page) => page.data) ?? [],
     [documentPages],
@@ -291,6 +283,17 @@ export default function DocumentsPanel({
   const subfolders = showSidebar
     ? (activeFolderId ? contents?.folders ?? [] : [])
     : (searching ? [] : (activeFolderId ? contents?.folders ?? [] : rootFolders));
+  const allKnownFolders = useMemo(() => {
+    const byId = new Map<number, DocumentFolder>();
+    const add = (folder: DocumentFolder) => {
+      if (!byId.has(folder.id)) byId.set(folder.id, folder);
+    };
+    flatFolders.forEach(add);
+    rootFolders.forEach(add);
+    subfolders.forEach(add);
+    if (contents?.folder) add(contents.folder);
+    return [...byId.values()];
+  }, [flatFolders, rootFolders, subfolders, contents]);
   const documents = searching || customerId || projectId || activeFolderId == null
     ? searchResults
     : accumulatedDocs;
@@ -754,28 +757,50 @@ export default function DocumentsPanel({
     setMoveTarget(null);
   };
 
-  const handleFolderDrop = async (folderId: number, e: React.DragEvent) => {
+  const handleExplorerDrop = async (targetFolderId: number | null, e: React.DragEvent) => {
     e.preventDefault();
     setDropTargetFolderId(null);
+    setPanelDragActive(false);
 
     const docId = Number(e.dataTransfer.getData('text/document-id'));
     const draggedFolderId = Number(e.dataTransfer.getData('text/document-folder-id'));
 
-    if (docId) {
-      await updateDocument.mutateAsync({ id: docId, folder_id: folderId });
-      return;
-    }
+    try {
+      if (docId) {
+        await updateDocument.mutateAsync({ id: docId, folder_id: targetFolderId });
+        showToast('success', 'File moved');
+        return;
+      }
 
-    if (draggedFolderId && draggedFolderId !== folderId) {
-      const draggedFolder = flatFolders.find((item) => item.id === draggedFolderId);
-      if (!draggedFolder) return;
-      await updateFolder.mutateAsync({
-        id: draggedFolderId,
-        name: draggedFolder.name,
-        visibility: draggedFolder.visibility,
-        parent_id: folderId,
-      });
+      if (draggedFolderId) {
+        if (!canMoveFolderInto(draggedFolderId, targetFolderId, allKnownFolders)) {
+          showToast('error', 'Cannot move a folder into itself or its subfolders.');
+          return;
+        }
+
+        const draggedFolder = allKnownFolders.find((item) => item.id === draggedFolderId);
+        if (draggedFolder) {
+          await updateFolder.mutateAsync({
+            id: draggedFolderId,
+            name: draggedFolder.name,
+            visibility: draggedFolder.visibility,
+            parent_id: targetFolderId,
+          });
+        } else {
+          await updateFolder.mutateAsync({
+            id: draggedFolderId,
+            parent_id: targetFolderId,
+          });
+        }
+        showToast('success', 'Folder moved');
+      }
+    } catch (err) {
+      showToast('error', sanitizeErrorMessage(err, 'Move failed'));
     }
+  };
+
+  const handleFolderDrop = async (folderId: number, e: React.DragEvent) => {
+    await handleExplorerDrop(folderId, e);
   };
 
   const handlePanelDrop = async (e: React.DragEvent) => {
@@ -788,24 +813,7 @@ export default function DocumentsPanel({
       return;
     }
 
-    const docId = Number(e.dataTransfer.getData('text/document-id'));
-    const draggedFolderId = Number(e.dataTransfer.getData('text/document-folder-id'));
-
-    if (docId) {
-      await updateDocument.mutateAsync({ id: docId, folder_id: activeFolderId });
-      return;
-    }
-
-    if (draggedFolderId) {
-      const draggedFolder = flatFolders.find((item) => item.id === draggedFolderId);
-      if (!draggedFolder) return;
-      await updateFolder.mutateAsync({
-        id: draggedFolderId,
-        name: draggedFolder.name,
-        visibility: draggedFolder.visibility,
-        parent_id: activeFolderId,
-      });
-    }
+    await handleExplorerDrop(activeFolderId, e);
   };
 
   const contentLayoutClass = viewMode === 'grid'
@@ -1287,10 +1295,10 @@ export default function DocumentsPanel({
             onRefresh={() => { void invalidateDocuments(); }}
             onFolderDragOver={(folderId, e) => {
               e.preventDefault();
-              setDropTargetFolderId(folderId);
+              setDropTargetFolderId(folderId ?? 'root');
             }}
             onFolderDragLeave={() => setDropTargetFolderId(null)}
-            onFolderDrop={(folderId, e) => void handleFolderDrop(folderId, e)}
+            onFolderDrop={(folderId, e) => void handleExplorerDrop(folderId, e)}
             onDocumentDragStart={(doc, e) => {
               e.dataTransfer.setData('text/document-id', String(doc.id));
               e.dataTransfer.effectAllowed = 'move';

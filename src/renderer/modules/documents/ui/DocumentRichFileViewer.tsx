@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentItem } from '../api/documentTypes';
@@ -46,7 +46,7 @@ export function DocumentRichFileViewer({ document, className, online = true }: D
   }
 
   if (textViewable) {
-    return <DocumentTextContentViewer document={document} className={className} online={online} />;
+    return <DocumentTextContentViewer key={document.id} document={document} className={className} online={online} />;
   }
 
   return null;
@@ -63,17 +63,6 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
   const saveContent = useUpdateDocumentContent();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
-
-  useEffect(() => {
-    setEditing(false);
-    setDraft('');
-  }, [document.id]);
-
-  useEffect(() => {
-    if (data?.content != null && !editing) {
-      setDraft(data.content);
-    }
-  }, [data?.content, editing]);
 
   if (isLoading) {
     return (
@@ -95,7 +84,7 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
   }
 
   const csv = data.content_type === 'csv' || isCsvDocument(document);
-  const word = data.content_type === 'word' || isWordDocument(document);
+  const word = data.content_type === 'word-html' || data.content_type === 'word' || isWordDocument(document);
   const canEdit = data.editable && online && !word;
 
   const handleSave = async () => {
@@ -109,7 +98,7 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 py-2">
           <div className="text-xs text-gray-500">
             {data.truncated && 'Preview truncated — download for the full file.'}
-            {word && 'Word document — text preview (read-only).'}
+            {word && 'Word document preview (read-only).'}
           </div>
           {canEdit && (
             <div className="flex gap-2">
@@ -137,7 +126,10 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
                   </Button>
                 </>
               ) : (
-                <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                <Button type="button" variant="secondary" size="sm" onClick={() => {
+                  setDraft(data.content);
+                  setEditing(true);
+                }}>
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </Button>
               )}
@@ -155,6 +147,11 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
         />
       ) : csv ? (
         <DocumentCsvTable content={data.content} />
+      ) : word ? (
+        <div
+          className="document-word-preview max-h-[70vh] flex-1 overflow-auto bg-white px-8 py-6 text-sm leading-relaxed text-gray-900 [&_em]:italic [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_u]:underline"
+          dangerouslySetInnerHTML={{ __html: data.content }}
+        />
       ) : (
         <pre className="max-h-[70vh] flex-1 overflow-auto whitespace-pre-wrap break-words bg-gray-950 p-4 font-mono text-sm leading-relaxed text-gray-100">
           {data.content}

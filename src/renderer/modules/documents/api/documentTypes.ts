@@ -96,6 +96,7 @@ export interface DocumentItem {
   can_manage: boolean;
   effective_visibility?: DocumentVisibility;
   inherited_from_folder_id?: number | null;
+  folder_path?: string | null;
 }
 
 export interface DocumentPaginationMeta {

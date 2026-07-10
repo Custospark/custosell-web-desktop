@@ -61,7 +61,9 @@ Staff with the `documents` module can create root folders and add links/files at
 - Module path: `src/renderer/modules/documents/`
 - Embedded panels: Project detail → Documents tab; Customer list → Documents link
 - **Views:** list / grid toggle
-- **Preview:** PDF, images, audio/video (≤10 MB), text/code, CSV tables, and Word (.docx) text preview in detail pane and modal; inline edit for UTF-8 text/code/CSV (≤2 MB) via `GET/PUT /documents/{id}/content`
+- **Preview:** PDF, images, audio/video (≤10 MB), text/code, CSV tables, and formatted Word (.docx) preview; inline edit for UTF-8 text/code/CSV (≤2 MB) via `GET/PUT /documents/{id}/content`
+- **Drag to move:** Drag files and folders onto folder rows, breadcrumbs, or “All documents” to move (with cycle prevention); folders auto-expand on drag-over
+- **Path tooltips:** Hover a file in the explorer, tabs, or cards to see its full folder path (VS Code–style)
 - **Move:** modal picker + drag-and-drop onto folders / current folder
 - **Explorer:** VS Code-style two-pane layout with pipeline-inspired canvas (gradient/photo), frosted explorer, folder color accents, colored tag stripes, labeled actions, breadcrumbs, row context menus, **multi-tab file preview**, **Close file**, and **Import folder** (preserves directory tree via `webkitdirectory`)
 - **Folder export:** context menu / detail pane → **Download folder** (zip)

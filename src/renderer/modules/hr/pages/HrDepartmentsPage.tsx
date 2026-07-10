@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Briefcase, Plus, Trash2 } from 'lucide-react';
+import { AlignLeft, Briefcase, Building2, FileText, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -13,10 +13,15 @@ import {
   useHrPositions,
 } from '../api/useHrQueries';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import {
+  HrFormSection,
+  HrIconField,
+  HrModalFooter,
+  HrModalHero,
+  hrInputClass,
+  hrSelectClass,
+} from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 export default function HrDepartmentsPage() {
   const { confirm } = useConfirm();
@@ -59,7 +64,7 @@ export default function HrDepartmentsPage() {
   async function handleDeleteDept(id: number, name: string) {
     const ok = await confirm({
       title: 'Delete department?',
-      message: `Delete “${name}”? Positions linked to it may need reassignment.`,
+      message: `Remove “${name}”? Positions linked to it may need reassignment first.`,
       confirmText: 'Delete',
       variant: 'danger',
     });
@@ -69,7 +74,7 @@ export default function HrDepartmentsPage() {
   async function handleDeletePos(id: number, title: string) {
     const ok = await confirm({
       title: 'Delete position?',
-      message: `Delete “${title}”?`,
+      message: `Remove “${title}”? Employees assigned to this role will need a new position.`,
       confirmText: 'Delete',
       variant: 'danger',
     });
@@ -77,18 +82,20 @@ export default function HrDepartmentsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={Building2}
         title="Departments & positions"
-        description="Organize your org chart before assigning employees."
+        description="Shape your org chart before assigning people — departments group teams, positions define roles."
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HrSectionCard
           title="Departments"
+          description="Teams like Sales, Operations, or Finance"
           actions={
             <Button size="sm" onClick={() => setDeptOpen(true)} className="inline-flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Add
+              <Plus className="h-3.5 w-3.5" /> Add department
             </Button>
           }
         >
@@ -98,8 +105,13 @@ export default function HrDepartmentsPage() {
             <HrEmptyState
               className="border-0 bg-transparent shadow-none backdrop-blur-none"
               icon={<Building2 className="h-5 w-5" />}
-              title="No departments"
-              description="Create departments like Sales, Operations, or Finance."
+              title="No departments yet"
+              description="Start with one team — you can always add more as you grow."
+              action={
+                <Button size="sm" onClick={() => setDeptOpen(true)} className="inline-flex items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Add your first department
+                </Button>
+              }
             />
           ) : (
             <ul className="divide-y divide-gray-100">
@@ -113,7 +125,7 @@ export default function HrDepartmentsPage() {
                     type="button"
                     onClick={() => handleDeleteDept(d.id, d.name)}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                    title="Delete"
+                    title="Delete department"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -125,9 +137,10 @@ export default function HrDepartmentsPage() {
 
         <HrSectionCard
           title="Positions"
+          description="Job titles you can assign to employees"
           actions={
             <Button size="sm" onClick={() => setPosOpen(true)} className="inline-flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Add
+              <Plus className="h-3.5 w-3.5" /> Add position
             </Button>
           }
         >
@@ -137,8 +150,13 @@ export default function HrDepartmentsPage() {
             <HrEmptyState
               className="border-0 bg-transparent shadow-none backdrop-blur-none"
               icon={<Briefcase className="h-5 w-5" />}
-              title="No positions"
-              description="Add job titles and optionally attach them to a department."
+              title="No positions yet"
+              description="Add titles like Cashier, Store Manager, or Accountant — optionally tie them to a department."
+              action={
+                <Button size="sm" onClick={() => setPosOpen(true)} className="inline-flex items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Add your first position
+                </Button>
+              }
             />
           ) : (
             <div className={HR_SURFACE.tableWrap}>
@@ -160,6 +178,7 @@ export default function HrDepartmentsPage() {
                           type="button"
                           onClick={() => handleDeletePos(p.id, p.title)}
                           className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                          title="Delete position"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -173,46 +192,93 @@ export default function HrDepartmentsPage() {
         </HrSectionCard>
       </div>
 
-      <Modal isOpen={deptOpen} onClose={() => setDeptOpen(false)} title="Add department">
-        <form onSubmit={handleCreateDept} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Name</span>
-            <input required value={deptName} onChange={(e) => setDeptName(e.target.value)} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Description</span>
-            <textarea value={deptDesc} onChange={(e) => setDeptDesc(e.target.value)} rows={2} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={deptOpen}
+        onClose={() => setDeptOpen(false)}
+        title="Add department"
+        subtitle="Group your team by function or location."
+      >
+        <form onSubmit={handleCreateDept} className="space-y-5">
+          <HrModalHero
+            icon={Building2}
+            title="New department"
+            description="Departments help you organize people before assigning roles and payroll."
+            tone="indigo"
+          />
+          <HrFormSection title="Details" icon={Building2} description="Give it a clear name your team will recognize.">
+            <HrIconField label="Name" icon={Building2} required>
+              <input
+                required
+                value={deptName}
+                onChange={(e) => setDeptName(e.target.value)}
+                placeholder="Operations"
+                className={hrInputClass}
+                autoFocus
+              />
+            </HrIconField>
+            <HrIconField label="Description" icon={AlignLeft}>
+              <textarea
+                value={deptDesc}
+                onChange={(e) => setDeptDesc(e.target.value)}
+                rows={2}
+                placeholder="Optional — what this team is responsible for"
+                className={hrInputClass}
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setDeptOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createDept.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createDept.isPending}>Create department</Button>
+          </HrModalFooter>
         </form>
       </Modal>
 
-      <Modal isOpen={posOpen} onClose={() => setPosOpen(false)} title="Add position">
-        <form onSubmit={handleCreatePos} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Title</span>
-            <input required value={posTitle} onChange={(e) => setPosTitle(e.target.value)} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Department</span>
-            <select value={posDeptId} onChange={(e) => setPosDeptId(e.target.value)} className={inputClass}>
-              <option value="">None</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Description</span>
-            <textarea value={posDesc} onChange={(e) => setPosDesc(e.target.value)} rows={2} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={posOpen}
+        onClose={() => setPosOpen(false)}
+        title="Add position"
+        subtitle="Define a job title for your org chart."
+      >
+        <form onSubmit={handleCreatePos} className="space-y-5">
+          <HrModalHero
+            icon={Briefcase}
+            title="New position"
+            description="Positions appear on employee profiles and help you track who does what."
+            tone="blue"
+          />
+          <HrFormSection title="Role details" icon={Briefcase} description="Link to a department when the role belongs to one team.">
+            <HrIconField label="Title" icon={Briefcase} required>
+              <input
+                required
+                value={posTitle}
+                onChange={(e) => setPosTitle(e.target.value)}
+                placeholder="Store Manager"
+                className={hrInputClass}
+                autoFocus
+              />
+            </HrIconField>
+            <HrIconField label="Department" icon={Building2}>
+              <select value={posDeptId} onChange={(e) => setPosDeptId(e.target.value)} className={hrSelectClass}>
+                <option value="">No department</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <HrIconField label="Description" icon={FileText}>
+              <textarea
+                value={posDesc}
+                onChange={(e) => setPosDesc(e.target.value)}
+                rows={2}
+                placeholder="Optional — responsibilities or requirements"
+                className={hrInputClass}
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setPosOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createPos.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createPos.isPending}>Create position</Button>
+          </HrModalFooter>
         </form>
       </Modal>
     </div>

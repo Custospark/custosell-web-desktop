@@ -1,5 +1,17 @@
 import { useState } from 'react';
-import { ClipboardCheck, Plus, Star } from 'lucide-react';
+import {
+  Calendar,
+  ClipboardCheck,
+  ClipboardList,
+  ListChecks,
+  MessageSquare,
+  Plus,
+  Sparkles,
+  Star,
+  ThumbsUp,
+  User,
+  Users,
+} from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -18,10 +30,15 @@ import type { OnboardingTaskStatus, ReviewStatus } from '../api/hrTypes';
 import { employeeDisplayName } from '../api/hrTypes';
 import { OnboardingTaskStatusBadge, ReviewStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import {
+  HrFormSection,
+  HrIconField,
+  HrModalFooter,
+  HrModalHero,
+  hrInputClass,
+  hrSelectClass,
+} from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 export default function HrTalentPage() {
   const { data: templates = [] } = useHrOnboardingTemplates();
@@ -87,10 +104,11 @@ export default function HrTalentPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={Sparkles}
         title="Talent"
-        description="Onboarding checklists and performance reviews."
+        description="Onboarding checklists and performance reviews — help new hires settle in and celebrate growth."
         actions={
           <>
             <Button size="sm" variant="outline" onClick={() => setTemplateOpen(true)} className="inline-flex items-center gap-1.5">
@@ -106,9 +124,11 @@ export default function HrTalentPage() {
         }
       />
 
-      <HrSectionCard title="Onboarding templates">
+      <HrSectionCard title="Onboarding templates" description="Reusable checklists — one line per task when you create a template.">
         {templates.length === 0 ? (
-          <p className="text-sm text-gray-500">No templates yet. Create a reusable checklist for new hires.</p>
+          <p className="text-sm text-gray-500">
+            No templates yet — create a reusable checklist so every new hire gets the same warm welcome.
+          </p>
         ) : (
           <ul className="divide-y divide-gray-100 text-sm">
             {templates.map((t) => (
@@ -123,15 +143,20 @@ export default function HrTalentPage() {
         )}
       </HrSectionCard>
 
-      <HrSectionCard title="Onboarding tasks">
+      <HrSectionCard title="Onboarding tasks" description="Track what each person still needs to complete.">
         {loadingTasks ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
         ) : tasks.length === 0 ? (
           <HrEmptyState
             className="border-0 bg-transparent shadow-none"
             icon={<ClipboardCheck className="h-5 w-5" />}
-            title="No onboarding tasks"
-            description="Assign tasks to employees in onboarding status."
+            title="No onboarding tasks yet"
+            description="Assign tasks to employees in onboarding status — mark them done as each step is completed."
+            action={
+              <Button size="sm" variant="outline" onClick={() => setTaskOpen(true)} className="inline-flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Add a task
+              </Button>
+            }
           />
         ) : (
           <div className={HR_SURFACE.tableWrap}>
@@ -178,7 +203,7 @@ export default function HrTalentPage() {
         )}
       </HrSectionCard>
 
-      <HrSectionCard title="Performance reviews">
+      <HrSectionCard title="Performance reviews" description="Draft, submit, and complete reviews for your team.">
         {loadingReviews ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
         ) : reviews.length === 0 ? (
@@ -186,7 +211,12 @@ export default function HrTalentPage() {
             className="border-0 bg-transparent shadow-none"
             icon={<Star className="h-5 w-5" />}
             title="No reviews yet"
-            description="Create a draft review, then mark it submitted or completed."
+            description="Start with a draft review — capture strengths and areas to grow, then mark it submitted when ready."
+            action={
+              <Button size="sm" onClick={() => setReviewOpen(true)} className="inline-flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Create a review
+              </Button>
+            }
           />
         ) : (
           <div className={HR_SURFACE.tableWrap}>
@@ -229,91 +259,185 @@ export default function HrTalentPage() {
         )}
       </HrSectionCard>
 
-      <Modal isOpen={templateOpen} onClose={() => setTemplateOpen(false)} title="Onboarding template">
-        <form onSubmit={handleTemplate} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Name</span>
-            <input required value={templateName} onChange={(e) => setTemplateName(e.target.value)} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Tasks (one per line)</span>
-            <textarea required rows={5} value={templateTasks} onChange={(e) => setTemplateTasks(e.target.value)} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        title="Onboarding template"
+        subtitle="A reusable checklist for new hires."
+      >
+        <form onSubmit={handleTemplate} className="space-y-5">
+          <HrModalHero
+            icon={ClipboardList}
+            title="New onboarding template"
+            description="List each task on its own line — you can apply this template when assigning tasks to someone."
+            tone="blue"
+          />
+          <HrFormSection title="Checklist" icon={ListChecks} description="Keep tasks short and actionable.">
+            <HrIconField label="Template name" icon={ClipboardList} required>
+              <input
+                required
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Standard new hire"
+                className={hrInputClass}
+                autoFocus
+              />
+            </HrIconField>
+            <HrIconField label="Tasks (one per line)" icon={ListChecks} required>
+              <textarea
+                required
+                rows={5}
+                value={templateTasks}
+                onChange={(e) => setTemplateTasks(e.target.value)}
+                className={hrInputClass}
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setTemplateOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createTemplate.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createTemplate.isPending}>Create template</Button>
+          </HrModalFooter>
         </form>
       </Modal>
 
-      <Modal isOpen={taskOpen} onClose={() => setTaskOpen(false)} title="Onboarding task">
-        <form onSubmit={handleTask} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Employee</span>
-            <select required value={taskForm.employee_id} onChange={(e) => setTaskForm((f) => ({ ...f, employee_id: e.target.value }))} className={inputClass}>
-              <option value="">Select…</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Template (optional)</span>
-            <select value={taskForm.template_id} onChange={(e) => setTaskForm((f) => ({ ...f, template_id: e.target.value }))} className={inputClass}>
-              <option value="">None</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Title</span>
-            <input required value={taskForm.title} onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Due date</span>
-            <input type="date" value={taskForm.due_date} onChange={(e) => setTaskForm((f) => ({ ...f, due_date: e.target.value }))} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={taskOpen}
+        onClose={() => setTaskOpen(false)}
+        title="Onboarding task"
+        subtitle="Assign a step for someone to complete."
+      >
+        <form onSubmit={handleTask} className="space-y-5">
+          <HrModalHero
+            icon={ClipboardCheck}
+            title="New onboarding task"
+            description="Great for one-off steps — or pick a template to stay consistent across hires."
+            tone="emerald"
+          />
+          <HrFormSection title="Assignment" icon={User}>
+            <HrIconField label="Employee" icon={Users} required>
+              <select
+                required
+                value={taskForm.employee_id}
+                onChange={(e) => setTaskForm((f) => ({ ...f, employee_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">Select someone…</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <HrIconField label="Template (optional)" icon={ClipboardList}>
+              <select
+                value={taskForm.template_id}
+                onChange={(e) => setTaskForm((f) => ({ ...f, template_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">None</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <HrIconField label="Task title" icon={ListChecks} required>
+              <input
+                required
+                value={taskForm.title}
+                onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="Complete HR paperwork"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Due date" icon={Calendar}>
+              <input
+                type="date"
+                value={taskForm.due_date}
+                onChange={(e) => setTaskForm((f) => ({ ...f, due_date: e.target.value }))}
+                className={hrInputClass}
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setTaskOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createTask.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createTask.isPending}>Create task</Button>
+          </HrModalFooter>
         </form>
       </Modal>
 
-      <Modal isOpen={reviewOpen} onClose={() => setReviewOpen(false)} title="Performance review" size="lg">
-        <form onSubmit={handleReview} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Employee</span>
-            <select required value={reviewForm.employee_id} onChange={(e) => setReviewForm((f) => ({ ...f, employee_id: e.target.value }))} className={inputClass}>
-              <option value="">Select…</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">Period label</span>
-              <input required placeholder="Q1 2026" value={reviewForm.period_label} onChange={(e) => setReviewForm((f) => ({ ...f, period_label: e.target.value }))} className={inputClass} />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">Rating (1–5)</span>
-              <input type="number" min={1} max={5} value={reviewForm.rating} onChange={(e) => setReviewForm((f) => ({ ...f, rating: e.target.value }))} className={inputClass} />
-            </label>
-          </div>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Strengths</span>
-            <textarea rows={2} value={reviewForm.strengths} onChange={(e) => setReviewForm((f) => ({ ...f, strengths: e.target.value }))} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Improvements</span>
-            <textarea rows={2} value={reviewForm.improvements} onChange={(e) => setReviewForm((f) => ({ ...f, improvements: e.target.value }))} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        title="Performance review"
+        subtitle="Start as a draft — submit when you're ready to share."
+        size="lg"
+      >
+        <form onSubmit={handleReview} className="space-y-5">
+          <HrModalHero
+            icon={Star}
+            title="New performance review"
+            description="Capture what went well and where to grow — ratings are optional but helpful for trends."
+            tone="indigo"
+          />
+          <HrFormSection title="Review period" icon={User}>
+            <HrIconField label="Employee" icon={Users} required>
+              <select
+                required
+                value={reviewForm.employee_id}
+                onChange={(e) => setReviewForm((f) => ({ ...f, employee_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">Select someone…</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <HrIconField label="Period label" icon={Calendar} required>
+                <input
+                  required
+                  placeholder="Q1 2026"
+                  value={reviewForm.period_label}
+                  onChange={(e) => setReviewForm((f) => ({ ...f, period_label: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+              <HrIconField label="Rating (1–5)" icon={Star}>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={reviewForm.rating}
+                  onChange={(e) => setReviewForm((f) => ({ ...f, rating: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+            </div>
+          </HrFormSection>
+          <HrFormSection title="Feedback" icon={MessageSquare} description="Be specific — it helps the conversation feel constructive.">
+            <HrIconField label="Strengths" icon={ThumbsUp}>
+              <textarea
+                rows={2}
+                value={reviewForm.strengths}
+                onChange={(e) => setReviewForm((f) => ({ ...f, strengths: e.target.value }))}
+                placeholder="What they did exceptionally well…"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Areas to improve" icon={MessageSquare}>
+              <textarea
+                rows={2}
+                value={reviewForm.improvements}
+                onChange={(e) => setReviewForm((f) => ({ ...f, improvements: e.target.value }))}
+                placeholder="Growth opportunities for next period…"
+                className={hrInputClass}
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setReviewOpen(false)}>Cancel</Button>
             <Button type="submit" loading={createReview.isPending}>Create draft</Button>
-          </div>
+          </HrModalFooter>
         </form>
       </Modal>
     </div>

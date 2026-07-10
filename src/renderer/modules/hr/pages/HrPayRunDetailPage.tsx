@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Calculator, CheckCircle2, Send } from 'lucide-react';
+import { ArrowLeft, Calculator, CheckCircle2, Receipt, Send } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
@@ -12,7 +12,7 @@ import {
 } from '../api/useHrQueries';
 import { employeeDisplayName } from '../api/hrTypes';
 import { PayRunStatusBadge } from '../ui/HrStatusBadges';
-import { HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
 function formatMoney(n: number | undefined | null) {
@@ -41,9 +41,9 @@ export default function HrPayRunDetailPage() {
     return (
       <div className="space-y-3">
         <Link to={ROUTES.HR.PAYROLL} className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Payroll
+          <ArrowLeft className="h-4 w-4" /> Back to payroll
         </Link>
-        <p className="text-sm text-gray-500">Pay run not found.</p>
+        <p className="text-sm text-gray-500">We couldn&apos;t find this pay run — it may have been removed.</p>
       </div>
     );
   }
@@ -63,19 +63,20 @@ export default function HrPayRunDetailPage() {
     if (ok) await post.mutateAsync(id);
   }
 
+  const description = payRun.posted_journal_entry_id
+    ? `Posted to accounting · journal #${payRun.posted_journal_entry_id}`
+    : 'Review the lines below, then calculate → approve → post when you\'re confident.';
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <Link to={ROUTES.HR.PAYROLL} className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Payroll
+        <ArrowLeft className="h-4 w-4" /> Back to payroll
       </Link>
 
       <HrPageHeader
-        title={`Pay run ${payRun.period_start} → ${payRun.period_end}`}
-        description={
-          payRun.posted_journal_entry_id
-            ? `Posted · journal #${payRun.posted_journal_entry_id}`
-            : 'Calculate → approve → post'
-        }
+        icon={Calculator}
+        title={`Pay run · ${payRun.period_start} → ${payRun.period_end}`}
+        description={description}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <PayRunStatusBadge status={payRun.status} />
@@ -124,16 +125,31 @@ export default function HrPayRunDetailPage() {
           <p className="mt-1 text-xl font-semibold text-gray-900">{formatMoney(payRun.total_net)}</p>
         </HrSectionCard>
         <HrSectionCard>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Lines</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Employee lines</p>
           <p className="mt-1 text-xl font-semibold text-gray-900">{payRun.lines_count ?? lines.length}</p>
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Pay lines" description="Gross, PAYE, NSSF, and net per employee">
+      <HrSectionCard title="Pay lines" description="Gross, PAYE, NSSF, and net per employee — calculated from assigned compensation.">
         {lines.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No lines yet. Click Calculate once compensations are assigned for active employees.
-          </p>
+          <HrEmptyState
+            className="border-0 bg-transparent shadow-none backdrop-blur-none py-10"
+            icon={<Receipt className="h-6 w-6" />}
+            title="No pay lines yet"
+            description="Assign compensation to active employees, then click Calculate — we'll compute PAYE and NSSF for each person."
+            action={
+              canCalculate ? (
+                <Button
+                  variant="outline"
+                  loading={calculate.isPending}
+                  onClick={() => calculate.mutate(id)}
+                  className="inline-flex items-center gap-2"
+                >
+                  <Calculator className="h-4 w-4" /> Calculate now
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className={HR_SURFACE.tableWrap}>
             <table className="min-w-full text-sm">

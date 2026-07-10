@@ -9,7 +9,9 @@ import type {
   ClockPayload,
   CreateCompensationPayload,
   CreateDepartmentPayload,
+  CreateEmployeeAccountPayload,
   CreateEmployeePayload,
+  CreateEmployeeWithAccountPayload,
   CreateLeaveRequestPayload,
   CreateLeaveTypePayload,
   CreateOnboardingTaskPayload,
@@ -18,6 +20,7 @@ import type {
   CreatePositionPayload,
   CreateReviewPayload,
   CreateSalaryStructurePayload,
+  HrAccountOptions,
   HrAttendanceDay,
   HrAttendanceEvent,
   HrAttendanceRegister,
@@ -259,9 +262,40 @@ export function useCreateHrEmployee() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
       showToast('success', 'Employee created');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not create employee'),
+  });
+}
+
+export function useCreateHrEmployeeWithAccount() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (payload: CreateEmployeeWithAccountPayload) => {
+      const { data } = await axiosInstance.post(HR.EMPLOYEES_WITH_ACCOUNT, payload);
+      return unwrapEntity<HrEmployee>(data);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
+      showToast('success', 'Employee and app login created');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not create employee with login'),
+  });
+}
+
+export function useHrAccountOptions(enabled = true) {
+  return useQuery({
+    queryKey: hrKeys.accountOptions(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(HR.ACCOUNT_OPTIONS);
+      return unwrapEntity<HrAccountOptions>(data);
+    },
+    enabled,
+    ...listDefaults,
   });
 }
 
@@ -288,11 +322,14 @@ export function useDeleteHrEmployee() {
   const { showToast } = useToast();
   const onError = useHrErrorToast();
   return useMutation({
-    mutationFn: async (id: number) => {
-      await axiosInstance.delete(HR.EMPLOYEE(id));
+    mutationFn: async ({ id, remove_account }: { id: number; remove_account?: boolean }) => {
+      await axiosInstance.delete(HR.EMPLOYEE(id), {
+        params: remove_account ? { remove_account: true } : undefined,
+      });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
       showToast('success', 'Employee deleted');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not delete employee'),
@@ -304,16 +341,74 @@ export function useLinkHrEmployeeUser() {
   const { showToast } = useToast();
   const onError = useHrErrorToast();
   return useMutation({
-    mutationFn: async ({ id, user_id }: { id: number; user_id: number | null }) => {
+    mutationFn: async ({ id, user_id }: { id: number; user_id: number }) => {
       const { data } = await axiosInstance.post(HR.EMPLOYEE_LINK_USER(id), { user_id });
       return unwrapEntity<HrEmployee>(data);
     },
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: hrKeys.employee(vars.id) });
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
-      showToast('success', vars.user_id ? 'Staff user linked' : 'Staff user unlinked');
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
+      showToast('success', 'Staff user linked');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not link staff user'),
+  });
+}
+
+export function useUnlinkHrEmployeeUser() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await axiosInstance.post(HR.EMPLOYEE_UNLINK_USER(id));
+      return unwrapEntity<HrEmployee>(data);
+    },
+    onSuccess: (_data, id) => {
+      void qc.invalidateQueries({ queryKey: hrKeys.employee(id) });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
+      showToast('success', 'Login disconnected — staff account kept');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not unlink staff user'),
+  });
+}
+
+export function useCreateHrEmployeeAccount() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: CreateEmployeeAccountPayload & { id: number }) => {
+      const { data } = await axiosInstance.post(HR.EMPLOYEE_CREATE_ACCOUNT(id), payload);
+      return unwrapEntity<HrEmployee>(data);
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: hrKeys.employee(vars.id) });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
+      showToast('success', 'App login created');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not create app login'),
+  });
+}
+
+export function useRemoveHrEmployeeAccount() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await axiosInstance.post(HR.EMPLOYEE_REMOVE_ACCOUNT(id));
+      return unwrapEntity<HrEmployee>(data);
+    },
+    onSuccess: (_data, id) => {
+      void qc.invalidateQueries({ queryKey: hrKeys.employee(id) });
+      void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
+      void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
+      showToast('success', 'App login removed');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not remove app login'),
   });
 }
 
@@ -714,14 +809,14 @@ export function usePostHrPayRun() {
   });
 }
 
-export function useHrPayslip(id: number, enabled = true) {
+export function useHrPayslip(id: number) {
   return useQuery({
     queryKey: hrKeys.payslip(id),
     queryFn: async () => {
       // Payslips are embedded on pay-run lines; dedicated fetch is reserved for a future endpoint.
       return null as HrPayslip | null;
     },
-    enabled: false && enabled && id > 0,
+    enabled: false, // Payslip endpoint not shipped yet; keep hook for future use.
     ...listDefaults,
   });
 }

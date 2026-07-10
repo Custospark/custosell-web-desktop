@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Shield, Users, Wallet } from 'lucide-react';
+import { Compass, Shield, Users, Wallet } from 'lucide-react';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useHrAuditLogs } from '../api/useHrQueries';
@@ -10,10 +10,11 @@ export default function HrSettingsPage() {
   const { data: logs = [], isLoading } = useHrAuditLogs();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={Shield}
         title="HR settings"
-        description="Defaults, guidance, and recent HR audit activity for this business."
+        description="Guidance, setup order, and audit activity. Use the main app sidebar to jump between People, Payroll, Leave, and the rest — no separate HR menu here."
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -27,9 +28,9 @@ export default function HrSettingsPage() {
               </span>
             </li>
             <li className="flex gap-3">
-              <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+              <Compass className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
               <span>
-                Departments and positions organize the org chart before you assign employees.
+                Departments and positions organize your org chart before you assign employees — find them in the main sidebar under HR & Payroll.
               </span>
             </li>
             <li className="flex gap-3">
@@ -41,7 +42,8 @@ export default function HrSettingsPage() {
             <li className="flex gap-3">
               <Shield className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
               <span>
-                Module access is controlled like Documents and Accounting. Staff without the <code className="rounded bg-gray-100 px-1 text-xs">hr</code> module cannot open these pages.
+                Module access is controlled like Documents and Accounting. Staff without the{' '}
+                <code className="rounded bg-gray-100 px-1 text-xs">hr</code> module cannot open these pages.
               </span>
             </li>
           </ul>
@@ -59,11 +61,16 @@ export default function HrSettingsPage() {
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Recent audit log" description="Sensitive HR actions recorded by the API">
+      <HrSectionCard
+        title="Recent audit log"
+        description="Sensitive HR actions recorded by the API — helpful when you need to trace who changed what."
+      >
         {isLoading ? (
           <div className="flex justify-center py-10"><LoadingSpinner /></div>
         ) : logs.length === 0 ? (
-          <p className="text-sm text-gray-500">No audit entries yet. Creating employees and posting pay runs will appear here.</p>
+          <p className="text-sm text-gray-500">
+            No audit entries yet. Creating employees and posting pay runs will show up here as your team uses HR.
+          </p>
         ) : (
           <div className={HR_SURFACE.tableWrap}>
             <table className="min-w-full text-sm">

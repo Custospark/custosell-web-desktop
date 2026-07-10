@@ -1,5 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Clock, LogIn, LogOut } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Download,
+  LogIn,
+  LogOut,
+  User,
+  Users,
+} from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import {
@@ -14,10 +22,8 @@ import type { AttendanceDayStatus, AttendanceEventType } from '../api/hrTypes';
 import { employeeDisplayName } from '../api/hrTypes';
 import { AttendanceStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -64,64 +70,70 @@ export default function HrAttendancePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={Clock}
         title="Attendance"
-        description="Clock in/out and review the daily register. Correct day status when needed."
+        description="Record punches, review the daily register, and correct status when someone was on leave or absent."
       />
 
-      <HrSectionCard title="Clock" description="Record a punch for an employee">
-        <form onSubmit={handleClock} className="flex flex-wrap items-end gap-3">
-          <label className="block min-w-[200px] flex-1 text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Employee</span>
-            <select
-              required
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Select…</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block min-w-[160px] text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Event</span>
-            <select
-              value={clockType}
-              onChange={(e) => setClockType(e.target.value as AttendanceEventType)}
-              className={inputClass}
-            >
-              <option value="clock_in">Clock in</option>
-              <option value="clock_out">Clock out</option>
-              <option value="break_start">Break start</option>
-              <option value="break_end">Break end</option>
-            </select>
-          </label>
-          <Button type="submit" loading={clock.isPending} className="inline-flex items-center gap-2">
-            {clockType === 'clock_out' ? <LogOut className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-            Record
-          </Button>
+      <HrSectionCard title="Record a punch" description="Clock someone in or out — the time stamp is captured now.">
+        <form onSubmit={handleClock} className="space-y-4">
+          <HrFormSection title="Who & what" icon={User} description="Pick the employee and the type of punch.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <HrIconField label="Employee" icon={Users} required>
+                <select
+                  required
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  className={hrSelectClass}
+                >
+                  <option value="">Select someone…</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
+                  ))}
+                </select>
+              </HrIconField>
+              <HrIconField label="Event type" icon={clockType === 'clock_out' ? LogOut : LogIn}>
+                <select
+                  value={clockType}
+                  onChange={(e) => setClockType(e.target.value as AttendanceEventType)}
+                  className={hrSelectClass}
+                >
+                  <option value="clock_in">Clock in</option>
+                  <option value="clock_out">Clock out</option>
+                  <option value="break_start">Break start</option>
+                  <option value="break_end">Break end</option>
+                </select>
+              </HrIconField>
+            </div>
+            <div className="flex justify-end pt-1">
+              <Button type="submit" loading={clock.isPending} className="inline-flex items-center gap-2">
+                {clockType === 'clock_out' ? <LogOut className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+                Record punch
+              </Button>
+            </div>
+          </HrFormSection>
         </form>
       </HrSectionCard>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-gray-700">
-          Work date
+      <div className={HR_SURFACE.toolbar}>
+        <HrIconField label="Work date" icon={Calendar}>
           <input
             type="date"
             value={workDate}
             onChange={(e) => setWorkDate(e.target.value)}
-            className={inputClass}
+            className={hrInputClass}
           />
-        </label>
+        </HrIconField>
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
           loading={importTimesheets.isPending}
           onClick={() => void handleImportTimesheets()}
+          className="inline-flex items-center gap-2 self-end"
         >
+          <Download className="h-4 w-4" />
           Import approved timesheets
         </Button>
       </div>
@@ -131,14 +143,14 @@ export default function HrAttendancePage() {
       ) : days.length === 0 && events.length === 0 ? (
         <HrEmptyState
           icon={<Clock className="h-6 w-6" />}
-          title="No attendance for this day"
-          description="Clock an employee in, or pick another date to review the register."
+          title="Quiet day so far"
+          description="No punches recorded for this date. Clock someone in above, or pick another day to review history."
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <HrSectionCard title="Daily register">
+          <HrSectionCard title="Daily register" description="Summary per employee — adjust status if needed.">
             {days.length === 0 ? (
-              <p className="text-sm text-gray-500">No day summaries yet — events may still appear on the right.</p>
+              <p className="text-sm text-gray-500">No day summaries yet — individual punch events may still appear on the right.</p>
             ) : (
               <div className={HR_SURFACE.tableWrap}>
                 <table className="min-w-full text-sm">
@@ -180,9 +192,9 @@ export default function HrAttendancePage() {
             )}
           </HrSectionCard>
 
-          <HrSectionCard title="Clock events">
+          <HrSectionCard title="Clock events" description="Every punch in chronological order.">
             {events.length === 0 ? (
-              <p className="text-sm text-gray-500">No punch events for this filter.</p>
+              <p className="text-sm text-gray-500">No punch events for this date yet.</p>
             ) : (
               <ul className="divide-y divide-gray-100 text-sm">
                 {events.map((ev) => (
@@ -203,11 +215,12 @@ export default function HrAttendancePage() {
           </HrSectionCard>
 
           <HrSectionCard
-            title="POS shifts (read-only)"
-            description="Sales-floor clock-in from Shifts — not the same as HR attendance."
+            title="POS shifts"
+            description="Sales-floor clock-ins from Shifts — separate from HR attendance punches."
+            className="lg:col-span-2"
           >
             {posShifts.length === 0 ? (
-              <p className="text-sm text-gray-500">No POS shifts for this date.</p>
+              <p className="text-sm text-gray-500">No POS shifts for this date — that&apos;s normal if nobody opened a sales shift.</p>
             ) : (
               <ul className="divide-y divide-gray-100 text-sm">
                 {posShifts.map((shift) => (
@@ -216,11 +229,11 @@ export default function HrAttendancePage() {
                       <p className="font-medium text-gray-900">
                         {shift.employee_name ?? `User #${shift.user_id}`}
                       </p>
-                      <p className="text-xs text-gray-500 capitalize">{shift.status}</p>
+                      <p className="text-xs capitalize text-gray-500">{shift.status}</p>
                     </div>
                     <div className="text-right text-xs text-gray-500">
                       <p>{shift.clock_in ? new Date(shift.clock_in).toLocaleTimeString() : '—'}</p>
-                      <p>{shift.clock_out ? new Date(shift.clock_out).toLocaleTimeString() : 'open'}</p>
+                      <p>{shift.clock_out ? new Date(shift.clock_out).toLocaleTimeString() : 'still open'}</p>
                     </div>
                   </li>
                 ))}

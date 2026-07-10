@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Calendar, FileSpreadsheet, Filter } from 'lucide-react';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useHrNssfReport, useHrPayeReport, useHrPayRuns } from '../api/useHrQueries';
 import type { HrNssfReportRow, HrPayeReportRow } from '../api/hrTypes';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-
-const inputClass =
-  'rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 function formatMoney(n: number | undefined | null) {
   if (n == null) return '—';
@@ -37,52 +35,54 @@ export default function HrReportsPage() {
   const nssfRows = (nssf?.rows ?? []) as HrNssfReportRow[];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={BarChart3}
         title="Statutory reports"
-        description="PAYE and NSSF schedules for a pay run or date range (Uganda)."
+        description="PAYE and NSSF schedules for URA and NSSF filings — pull from calculated or posted pay runs."
       />
 
-      <HrSectionCard title="Filters">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Pay run</span>
-            <select value={payRunId} onChange={(e) => setPayRunId(e.target.value)} className={inputClass}>
-              <option value="">Any / use dates</option>
-              {payRuns.map((run) => (
-                <option key={run.id} value={run.id}>
-                  {run.period_start} → {run.period_end} ({run.status})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Period start</span>
-            <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Period end</span>
-            <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className={inputClass} />
-          </label>
-        </div>
+      <HrSectionCard title="Report filters" description="Pick a pay run or enter a date range to load schedules.">
+        <HrFormSection title="Period" icon={Filter} description="Posted runs give the most accurate final numbers.">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <HrIconField label="Pay run" icon={FileSpreadsheet}>
+              <select value={payRunId} onChange={(e) => setPayRunId(e.target.value)} className={hrSelectClass}>
+                <option value="">Any — use dates below</option>
+                {payRuns.map((run) => (
+                  <option key={run.id} value={run.id}>
+                    {run.period_start} → {run.period_end} ({run.status})
+                  </option>
+                ))}
+              </select>
+            </HrIconField>
+            <HrIconField label="Period start" icon={Calendar}>
+              <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className={hrInputClass} />
+            </HrIconField>
+            <HrIconField label="Period end" icon={Calendar}>
+              <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className={hrInputClass} />
+            </HrIconField>
+          </div>
+        </HrFormSection>
         {!hasFilter ? (
-          <p className="mt-3 text-sm text-amber-700">Select a pay run or both period dates to load reports.</p>
+          <p className="mt-3 text-sm text-amber-700">
+            Select a pay run or both period dates — we&apos;ll load PAYE and NSSF schedules when you do.
+          </p>
         ) : null}
       </HrSectionCard>
 
       {!hasFilter ? (
         <HrEmptyState
           icon={<BarChart3 className="h-6 w-6" />}
-          title="Choose a period"
-          description="Reports pull from calculated or posted pay runs. Post a run first for final schedules."
+          title="Choose a period to get started"
+          description="Reports pull from calculated or posted pay runs. Post a run first when you need final numbers for filing."
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <HrSectionCard title="PAYE schedule">
+          <HrSectionCard title="PAYE schedule" description="Income tax withheld per employee for URA.">
             {loadingPaye || fetchingPaye ? (
               <div className="flex justify-center py-10"><LoadingSpinner /></div>
             ) : payeRows.length === 0 ? (
-              <p className="text-sm text-gray-500">No PAYE rows for this filter.</p>
+              <p className="text-sm text-gray-500">No PAYE rows for this filter — try a calculated or posted pay run.</p>
             ) : (
               <div className={HR_SURFACE.tableWrap}>
                 <table className="min-w-full text-sm">
@@ -112,11 +112,11 @@ export default function HrReportsPage() {
             )}
           </HrSectionCard>
 
-          <HrSectionCard title="NSSF schedule">
+          <HrSectionCard title="NSSF schedule" description="Employee and employer contributions per person.">
             {loadingNssf || fetchingNssf ? (
               <div className="flex justify-center py-10"><LoadingSpinner /></div>
             ) : nssfRows.length === 0 ? (
-              <p className="text-sm text-gray-500">No NSSF rows for this filter.</p>
+              <p className="text-sm text-gray-500">No NSSF rows for this filter — try a calculated or posted pay run.</p>
             ) : (
               <div className={HR_SURFACE.tableWrap}>
                 <table className="min-w-full text-sm">

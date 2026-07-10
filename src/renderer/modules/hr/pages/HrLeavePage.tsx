@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { CalendarDays, Check, Plus, X } from 'lucide-react';
+import {
+  Calendar,
+  CalendarDays,
+  Check,
+  Hash,
+  MessageSquare,
+  Plus,
+  Tag,
+  User,
+  Users,
+  X,
+} from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -16,10 +27,15 @@ import {
 import { employeeDisplayName } from '../api/hrTypes';
 import { LeaveStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import {
+  HrFormSection,
+  HrIconField,
+  HrModalFooter,
+  HrModalHero,
+  hrInputClass,
+  hrSelectClass,
+} from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 export default function HrLeavePage() {
   const year = new Date().getFullYear();
@@ -64,10 +80,11 @@ export default function HrLeavePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={CalendarDays}
         title="Leave"
-        description="Configure leave types, track balances, and approve requests."
+        description="Set up leave types, track balances, and approve time off — so your team knows where they stand."
         actions={
           <>
             <Button variant="outline" size="sm" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
@@ -81,22 +98,30 @@ export default function HrLeavePage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <HrSectionCard title="Leave types">
+        <HrSectionCard title="Leave types" description="Annual, sick, unpaid — whatever your policy allows.">
           {loadingTypes ? (
             <div className="flex justify-center py-8"><LoadingSpinner /></div>
           ) : leaveTypes.length === 0 ? (
             <HrEmptyState
               className="border-0 bg-transparent shadow-none"
               icon={<CalendarDays className="h-5 w-5" />}
-              title="No leave types"
-              description="Add Annual, Sick, or Unpaid leave types to get started."
+              title="No leave types yet"
+              description="Add Annual, Sick, or Unpaid leave so balances and requests have something to attach to."
+              action={
+                <Button size="sm" variant="outline" onClick={() => setTypeOpen(true)} className="inline-flex items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Add leave type
+                </Button>
+              }
             />
           ) : (
             <ul className="divide-y divide-gray-100 text-sm">
               {leaveTypes.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div>
-                    <p className="font-medium text-gray-900">{t.name} <span className="font-mono text-xs text-gray-400">({t.code})</span></p>
+                    <p className="font-medium text-gray-900">
+                      {t.name}{' '}
+                      <span className="font-mono text-xs text-gray-400">({t.code})</span>
+                    </p>
                     <p className="text-xs text-gray-500">
                       {t.days_per_year} days/year · {t.paid ? 'Paid' : 'Unpaid'}
                       {t.requires_approval ? ' · Approval required' : ''}
@@ -108,11 +133,13 @@ export default function HrLeavePage() {
           )}
         </HrSectionCard>
 
-        <HrSectionCard title={`Balances (${year})`}>
+        <HrSectionCard title={`Balances (${year})`} description="Used, pending, and entitled days per person.">
           {loadingBalances ? (
             <div className="flex justify-center py-8"><LoadingSpinner /></div>
           ) : balances.length === 0 ? (
-            <p className="text-sm text-gray-500">No balances yet. They appear after leave types exist and employees request leave.</p>
+            <p className="text-sm text-gray-500">
+              Balances appear once leave types exist and people start requesting time off.
+            </p>
           ) : (
             <div className={HR_SURFACE.tableWrap}>
               <table className="min-w-full text-sm">
@@ -142,14 +169,20 @@ export default function HrLeavePage() {
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Requests">
+      <HrSectionCard title="Requests" description="Pending requests need your approval — approved days sync to attendance.">
         {loadingRequests ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
         ) : requests.length === 0 ? (
           <HrEmptyState
             className="border-0 bg-transparent shadow-none"
-            title="No leave requests"
-            description="Submit a request for an employee, then approve or reject from this list."
+            icon={<Calendar className="h-5 w-5" />}
+            title="No leave requests yet"
+            description="When someone needs time off, submit a request here — you can approve or reject in one click."
+            action={
+              <Button size="sm" onClick={() => setReqOpen(true)} className="inline-flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Submit a request
+              </Button>
+            }
           />
         ) : (
           <div className={HR_SURFACE.tableWrap}>
@@ -204,80 +237,150 @@ export default function HrLeavePage() {
         )}
       </HrSectionCard>
 
-      <Modal isOpen={typeOpen} onClose={() => setTypeOpen(false)} title="Add leave type">
-        <form onSubmit={handleCreateType} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Name</span>
-            <input required value={typeForm.name} onChange={(e) => setTypeForm((f) => ({ ...f, name: e.target.value }))} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Code</span>
-            <input required value={typeForm.code} onChange={(e) => setTypeForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Days per year</span>
-            <input
-              type="number"
-              min={0}
-              required
-              value={typeForm.days_per_year}
-              onChange={(e) => setTypeForm((f) => ({ ...f, days_per_year: Number(e.target.value) }))}
-              className={inputClass}
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={typeForm.paid} onChange={(e) => setTypeForm((f) => ({ ...f, paid: e.target.checked }))} />
-            Paid leave
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={typeForm.requires_approval} onChange={(e) => setTypeForm((f) => ({ ...f, requires_approval: e.target.checked }))} />
-            Requires approval
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={typeOpen}
+        onClose={() => setTypeOpen(false)}
+        title="Add leave type"
+        subtitle="Define how this kind of time off works for your business."
+      >
+        <form onSubmit={handleCreateType} className="space-y-5">
+          <HrModalHero
+            icon={Tag}
+            title="New leave type"
+            description="Annual, sick, maternity — set the rules once and they apply to everyone."
+            tone="emerald"
+          />
+          <HrFormSection title="Policy" icon={CalendarDays} description="Name and code appear on requests and balances.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <HrIconField label="Name" icon={Tag} required>
+                <input
+                  required
+                  value={typeForm.name}
+                  onChange={(e) => setTypeForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Annual leave"
+                  className={hrInputClass}
+                  autoFocus
+                />
+              </HrIconField>
+              <HrIconField label="Code" icon={Hash} required hint="Short code, e.g. ANNUAL">
+                <input
+                  required
+                  value={typeForm.code}
+                  onChange={(e) => setTypeForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  placeholder="ANNUAL"
+                  className={hrInputClass}
+                />
+              </HrIconField>
+            </div>
+            <HrIconField label="Days per year" icon={Calendar} required>
+              <input
+                type="number"
+                min={0}
+                required
+                value={typeForm.days_per_year}
+                onChange={(e) => setTypeForm((f) => ({ ...f, days_per_year: Number(e.target.value) }))}
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked={typeForm.paid} onChange={(e) => setTypeForm((f) => ({ ...f, paid: e.target.checked }))} />
+                Paid leave
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={typeForm.requires_approval}
+                  onChange={(e) => setTypeForm((f) => ({ ...f, requires_approval: e.target.checked }))}
+                />
+                Requires manager approval
+              </label>
+            </div>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setTypeOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createType.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createType.isPending}>Create leave type</Button>
+          </HrModalFooter>
         </form>
       </Modal>
 
-      <Modal isOpen={reqOpen} onClose={() => setReqOpen(false)} title="Request leave" size="lg">
-        <form onSubmit={handleCreateRequest} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Employee</span>
-            <select required value={reqForm.employee_id} onChange={(e) => setReqForm((f) => ({ ...f, employee_id: e.target.value }))} className={inputClass}>
-              <option value="">Select…</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Leave type</span>
-            <select required value={reqForm.leave_type_id} onChange={(e) => setReqForm((f) => ({ ...f, leave_type_id: e.target.value }))} className={inputClass}>
-              <option value="">Select…</option>
-              {leaveTypes.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">Start</span>
-              <input type="date" required value={reqForm.start_date} onChange={(e) => setReqForm((f) => ({ ...f, start_date: e.target.value }))} className={inputClass} />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">End</span>
-              <input type="date" required value={reqForm.end_date} onChange={(e) => setReqForm((f) => ({ ...f, end_date: e.target.value }))} className={inputClass} />
-            </label>
-          </div>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Reason</span>
-            <textarea value={reqForm.reason} onChange={(e) => setReqForm((f) => ({ ...f, reason: e.target.value }))} rows={2} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={reqOpen}
+        onClose={() => setReqOpen(false)}
+        title="Request leave"
+        subtitle="Submit time off on behalf of an employee."
+        size="lg"
+      >
+        <form onSubmit={handleCreateRequest} className="space-y-5">
+          <HrModalHero
+            icon={CalendarDays}
+            title="Time off request"
+            description="We'll hold the days as pending until you approve — balances update automatically."
+            tone="indigo"
+          />
+          <HrFormSection title="Who & when" icon={User} description="Pick the person, leave type, and date range.">
+            <HrIconField label="Employee" icon={Users} required>
+              <select
+                required
+                value={reqForm.employee_id}
+                onChange={(e) => setReqForm((f) => ({ ...f, employee_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">Select someone…</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <HrIconField label="Leave type" icon={Tag} required>
+              <select
+                required
+                value={reqForm.leave_type_id}
+                onChange={(e) => setReqForm((f) => ({ ...f, leave_type_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">Select type…</option>
+                {leaveTypes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <HrIconField label="Start date" icon={Calendar} required>
+                <input
+                  type="date"
+                  required
+                  value={reqForm.start_date}
+                  onChange={(e) => setReqForm((f) => ({ ...f, start_date: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+              <HrIconField label="End date" icon={Calendar} required>
+                <input
+                  type="date"
+                  required
+                  value={reqForm.end_date}
+                  onChange={(e) => setReqForm((f) => ({ ...f, end_date: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+            </div>
+          </HrFormSection>
+          <HrFormSection title="Context" icon={MessageSquare} description="Optional — helpful when reviewing the request.">
+            <HrIconField label="Reason" icon={MessageSquare}>
+              <textarea
+                value={reqForm.reason}
+                onChange={(e) => setReqForm((f) => ({ ...f, reason: e.target.value }))}
+                rows={2}
+                placeholder="Family event, medical appointment, etc."
+                className={hrInputClass}
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setReqOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createRequest.isPending}>Submit</Button>
-          </div>
+            <Button type="submit" loading={createRequest.isPending}>Submit request</Button>
+          </HrModalFooter>
         </form>
       </Modal>
     </div>

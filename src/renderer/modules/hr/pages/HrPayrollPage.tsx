@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Wallet } from 'lucide-react';
+import {
+  Banknote,
+  Calendar,
+  Coins,
+  Layers,
+  Plus,
+  User,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
@@ -17,10 +26,15 @@ import {
 import { employeeDisplayName } from '../api/hrTypes';
 import { PayRunStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
+import {
+  HrFormSection,
+  HrIconField,
+  HrModalFooter,
+  HrModalHero,
+  hrInputClass,
+  hrSelectClass,
+} from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 function formatMoney(n: number | undefined | null) {
   if (n == null) return '—';
@@ -83,10 +97,11 @@ export default function HrPayrollPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <HrPageHeader
+        icon={Wallet}
         title="Payroll"
-        description="Salary structures, employee compensation, and pay runs (Uganda PAYE / NSSF)."
+        description="Salary structures, compensation, and pay runs — Uganda-first with PAYE and NSSF built in."
         actions={
           <Button size="sm" onClick={() => setRunOpen(true)} className="inline-flex items-center gap-1.5">
             <Plus className="h-3.5 w-3.5" /> New pay run
@@ -97,16 +112,19 @@ export default function HrPayrollPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <HrSectionCard
           title="Salary structures"
+          description="Templates for how you pay — currency defaults to UGX."
           actions={
             <Button size="sm" variant="outline" onClick={() => setStructureOpen(true)} className="inline-flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Add
+              <Plus className="h-3.5 w-3.5" /> Add structure
             </Button>
           }
         >
           {loadingStructures ? (
             <div className="flex justify-center py-8"><LoadingSpinner /></div>
           ) : structures.length === 0 ? (
-            <p className="text-sm text-gray-500">No structures yet. Create one (e.g. “Standard UGX”).</p>
+            <p className="text-sm text-gray-500">
+              No structures yet — create one like &ldquo;Standard UGX&rdquo; to organize compensation.
+            </p>
           ) : (
             <ul className="divide-y divide-gray-100 text-sm">
               {structures.map((s) => (
@@ -121,16 +139,19 @@ export default function HrPayrollPage() {
 
         <HrSectionCard
           title="Compensations"
+          description="Basic salary per employee — required before calculating a pay run."
           actions={
             <Button size="sm" variant="outline" onClick={() => setCompOpen(true)} className="inline-flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Assign
+              <Plus className="h-3.5 w-3.5" /> Assign salary
             </Button>
           }
         >
           {loadingComp ? (
             <div className="flex justify-center py-8"><LoadingSpinner /></div>
           ) : compensations.length === 0 ? (
-            <p className="text-sm text-gray-500">Assign basic salary to employees before calculating a pay run.</p>
+            <p className="text-sm text-gray-500">
+              Assign basic salary to active employees — then you can run payroll for a period.
+            </p>
           ) : (
             <div className={HR_SURFACE.tableWrap}>
               <table className="min-w-full text-sm">
@@ -156,17 +177,17 @@ export default function HrPayrollPage() {
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Pay runs">
+      <HrSectionCard title="Pay runs" description="Calculate → approve → post — each step locks in the numbers.">
         {loadingRuns ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
         ) : payRuns.length === 0 ? (
           <HrEmptyState
             icon={<Wallet className="h-6 w-6" />}
-            title="No pay runs"
-            description="Create a pay period, then calculate, approve, and post."
+            title="No pay runs yet"
+            description="Create a pay period when you're ready — we'll calculate PAYE and NSSF from assigned salaries."
             action={
               <Button onClick={() => setRunOpen(true)} className="inline-flex items-center gap-2">
-                <Plus className="h-4 w-4" /> New pay run
+                <Plus className="h-4 w-4" /> Start your first pay run
               </Button>
             }
           />
@@ -204,84 +225,147 @@ export default function HrPayrollPage() {
         )}
       </HrSectionCard>
 
-      <Modal isOpen={structureOpen} onClose={() => setStructureOpen(false)} title="Salary structure">
-        <form onSubmit={handleStructure} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Name</span>
-            <input required value={structureName} onChange={(e) => setStructureName(e.target.value)} className={inputClass} />
-          </label>
-          <p className="text-xs text-gray-500">Currency defaults to UGX for Uganda-first payroll.</p>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={structureOpen}
+        onClose={() => setStructureOpen(false)}
+        title="Salary structure"
+        subtitle="A reusable template for how you pay people."
+      >
+        <form onSubmit={handleStructure} className="space-y-5">
+          <HrModalHero
+            icon={Layers}
+            title="New salary structure"
+            description="Currency defaults to UGX for Uganda-first payroll — you can assign it when setting compensation."
+            tone="blue"
+          />
+          <HrFormSection title="Structure" icon={Layers}>
+            <HrIconField label="Name" icon={Layers} required>
+              <input
+                required
+                value={structureName}
+                onChange={(e) => setStructureName(e.target.value)}
+                placeholder="Standard UGX"
+                className={hrInputClass}
+                autoFocus
+              />
+            </HrIconField>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setStructureOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createStructure.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createStructure.isPending}>Create structure</Button>
+          </HrModalFooter>
         </form>
       </Modal>
 
-      <Modal isOpen={compOpen} onClose={() => setCompOpen(false)} title="Assign compensation" size="lg">
-        <form onSubmit={handleComp} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Employee</span>
-            <select required value={compForm.employee_id} onChange={(e) => setCompForm((f) => ({ ...f, employee_id: e.target.value }))} className={inputClass}>
-              <option value="">Select…</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Structure</span>
-            <select value={compForm.structure_id} onChange={(e) => setCompForm((f) => ({ ...f, structure_id: e.target.value }))} className={inputClass}>
-              <option value="">None</option>
-              {structures.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">Basic salary (UGX)</span>
-              <input
-                type="number"
-                min={0}
+      <Modal
+        isOpen={compOpen}
+        onClose={() => setCompOpen(false)}
+        title="Assign compensation"
+        subtitle="Set basic salary for an active employee."
+        size="lg"
+      >
+        <form onSubmit={handleComp} className="space-y-5">
+          <HrModalHero
+            icon={Banknote}
+            title="Employee compensation"
+            description="This basic salary drives gross pay — PAYE and NSSF are calculated from it during a pay run."
+            tone="emerald"
+          />
+          <HrFormSection title="Assignment" icon={User} description="Pick the employee and their pay details.">
+            <HrIconField label="Employee" icon={Users} required>
+              <select
                 required
-                value={compForm.basic_salary}
-                onChange={(e) => setCompForm((f) => ({ ...f, basic_salary: e.target.value }))}
-                className={inputClass}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">Effective from</span>
-              <input
-                type="date"
-                required
-                value={compForm.effective_from}
-                onChange={(e) => setCompForm((f) => ({ ...f, effective_from: e.target.value }))}
-                className={inputClass}
-              />
-            </label>
-          </div>
-          <div className="flex justify-end gap-2">
+                value={compForm.employee_id}
+                onChange={(e) => setCompForm((f) => ({ ...f, employee_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">Select someone…</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{employeeDisplayName(emp)}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <HrIconField label="Salary structure" icon={Layers}>
+              <select
+                value={compForm.structure_id}
+                onChange={(e) => setCompForm((f) => ({ ...f, structure_id: e.target.value }))}
+                className={hrSelectClass}
+              >
+                <option value="">None</option>
+                {structures.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </HrIconField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <HrIconField label="Basic salary (UGX)" icon={Coins} required>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  value={compForm.basic_salary}
+                  onChange={(e) => setCompForm((f) => ({ ...f, basic_salary: e.target.value }))}
+                  placeholder="1500000"
+                  className={hrInputClass}
+                />
+              </HrIconField>
+              <HrIconField label="Effective from" icon={Calendar} required>
+                <input
+                  type="date"
+                  required
+                  value={compForm.effective_from}
+                  onChange={(e) => setCompForm((f) => ({ ...f, effective_from: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+            </div>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setCompOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createComp.isPending}>Save</Button>
-          </div>
+            <Button type="submit" loading={createComp.isPending}>Save compensation</Button>
+          </HrModalFooter>
         </form>
       </Modal>
 
-      <Modal isOpen={runOpen} onClose={() => setRunOpen(false)} title="New pay run">
-        <form onSubmit={handleRun} className="space-y-3">
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Period start</span>
-            <input type="date" required value={runForm.period_start} onChange={(e) => setRunForm((f) => ({ ...f, period_start: e.target.value }))} className={inputClass} />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium text-gray-700">Period end</span>
-            <input type="date" required value={runForm.period_end} onChange={(e) => setRunForm((f) => ({ ...f, period_end: e.target.value }))} className={inputClass} />
-          </label>
-          <div className="flex justify-end gap-2">
+      <Modal
+        isOpen={runOpen}
+        onClose={() => setRunOpen(false)}
+        title="New pay run"
+        subtitle="Define the period — you'll calculate and review before posting."
+      >
+        <form onSubmit={handleRun} className="space-y-5">
+          <HrModalHero
+            icon={Wallet}
+            title="Pay period"
+            description="After creating, open the run to calculate lines for every compensated employee."
+            tone="indigo"
+          />
+          <HrFormSection title="Period" icon={Calendar} description="Usually matches your monthly or bi-weekly cycle.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <HrIconField label="Period start" icon={Calendar} required>
+                <input
+                  type="date"
+                  required
+                  value={runForm.period_start}
+                  onChange={(e) => setRunForm((f) => ({ ...f, period_start: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+              <HrIconField label="Period end" icon={Calendar} required>
+                <input
+                  type="date"
+                  required
+                  value={runForm.period_end}
+                  onChange={(e) => setRunForm((f) => ({ ...f, period_end: e.target.value }))}
+                  className={hrInputClass}
+                />
+              </HrIconField>
+            </div>
+          </HrFormSection>
+          <HrModalFooter>
             <Button type="button" variant="outline" onClick={() => setRunOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createRun.isPending}>Create</Button>
-          </div>
+            <Button type="submit" loading={createRun.isPending}>Create pay run</Button>
+          </HrModalFooter>
         </form>
       </Modal>
     </div>

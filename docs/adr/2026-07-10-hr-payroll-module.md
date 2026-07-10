@@ -14,10 +14,10 @@ Custosell businesses need people operations beyond Settings → Staff: org struc
 
 Ship a first-class **`hr`** module labeled **HR & Payroll** with:
 
-1. **Frontend** under `src/renderer/modules/hr/` — layout with left frosted sidenav, React Query API layer against `/api/v1/hr/*`, pages for People, Departments, Attendance, Leave, Payroll, Talent, Reports, and Settings.
-2. **Identity** — `hr_employees.user_id` optionally links to existing Staff users; HR profiles can exist without login.
+1. **Frontend** under `src/renderer/modules/hr/` — outlet-only `HrLayout` (no in-module sidenav), React Query API layer against `/api/v1/hr/*`, pages for People, Departments, Attendance, Leave, Payroll, Talent, Reports, and Settings.
+2. **Identity** — `hr_employees.user_id` optionally links to Staff users. **Auto-mirror:** every staff `User` gets a linked HR employee (on Settings create + People list backfill). Admin/HR may create logins from HR (`with-account` / `create-account`) with an admin-set password (no invite email in v1). Unlink keeps the User; remove-account soft-deletes the User.
 3. **Payroll locale** — Uganda-first (UGX, progressive PAYE, NSSF 5%/10%) with extensible statutory rate sets on the backend.
-4. **UI shell** — App Sidebar group (already registered) plus in-module `HrLayout` sidenav matching Documents/Pipeline surface quality (`surfaceStyles`, status badges, empty states, Confirm + Toast).
+4. **UI shell** — App Sidebar group (already registered) is the sole HR navigation; `HrLayout` renders `<Outlet />` only. Pages match Documents/Pipeline surface quality (`HrSurface`, `hrFormFields`, status badges, empty states, Confirm + Toast).
 5. **Module access** — same `ModuleAccessMiddleware` / `BUSINESS_MODULE_SLUGS` pattern as Documents and Accounting.
 
 ## Consequences

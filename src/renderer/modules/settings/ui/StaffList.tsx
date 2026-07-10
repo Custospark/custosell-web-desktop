@@ -60,7 +60,7 @@ export default function StaffList() {
 
     const confirmed = await confirm({
       title: 'Delete Staff',
-      message: `Are you sure you want to delete "${s.name}"? This cannot be undone.`,
+      message: `Remove login for "${s.name}"? Their HR profile stays in People (shown as No login). This cannot be undone.`,
       confirmText: 'Delete', variant: 'danger',
     });
     if (confirmed) deleteMutation.mutate(s.id);

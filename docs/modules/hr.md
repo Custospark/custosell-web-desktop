@@ -32,20 +32,24 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Types | `api/hrTypes.ts` |
 | Query keys | `api/hrQueryKeys.ts` |
 | Hooks | `api/useHrQueries.ts` |
-| Shell | `pages/HrLayout.tsx` — frosted left sidenav (~240px) |
-| Shared UI | `ui/HrSurface.tsx`, `ui/HrStatusBadges.tsx` |
+| Shell | `pages/HrLayout.tsx` — outlet-only; navigation lives in the main app Sidebar (HR & Payroll group) |
+| Shared UI | `ui/HrSurface.tsx`, `ui/hrFormFields.tsx`, `ui/HrAppLoginFields.tsx`, `ui/HrStatusBadges.tsx` |
 
 ## Identity model
 
 - **HR employee** is the payroll/people record (`hr_employees`).
-- Optional **`user_id`** links to Settings → Staff (`User`) for app login — no duplicate accounts.
-- Link/unlink from the employee detail page via `POST /hr/employees/{id}/link-user`.
+- Optional **`user_id`** links to Settings → Staff (`User`) for app login — one person, one account.
+- **Auto-mirror:** Creating staff in Settings creates a linked HR employee (`STF-{userId}`). Opening People (`GET /hr/employees`) backfills any staff still missing a profile. Artisan: `hr:backfill-staff-employees`.
+- **Create from HR:** People → Add employee can create an HR-only profile **or** `POST /hr/employees/with-account` (admin/HR sets password, role, modules).
+- **Existing employee login:** `POST /hr/employees/{id}/create-account`, link via `link-user`, disconnect via `unlink-user` (keeps User), or `remove-account` (soft-deletes User).
+- **Delete employee:** optional `remove_account=1` also removes the staff login.
+- **Password:** Admin/HR sets password on create (same as Settings staff drawer). No invite email in v1. HR with-account is online-first.
 
 ## Integrations
 
 | System | Behavior |
 |--------|----------|
-| **Settings Staff** | Link/unlink `user_id` on employee profile |
+| **Settings Staff** | Create staff → auto HR employee; delete staff → HR profile remains (No login); soft-sync name/email/phone onto linked employee on staff update |
 | **Estimates timesheets** | Attendance → “Import approved timesheets” mirrors approved hours into HR day minutes (project costing stays on timesheets) |
 | **POS Shifts** | Attendance shows read-only sales-floor shifts for linked users (not merged with HR clock) |
 | **Accounting** | Pay-run post debits 6101 / credits 2103 when available; otherwise stores intended lines in `posting_note` |
@@ -65,10 +69,13 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Situation | UX |
 |-----------|-----|
 | Validation / API error | Toast via `sanitizeErrorMessage` on mutation `onError` |
-| Destructive delete | `useConfirm` before department, position, employee, or pay-run post |
+| Duplicate email on with-account | Field/API error; no orphan employee (transaction) |
+| Remove login for business owner | Blocked by UserService delete guards |
+| Destructive delete | `useConfirm` before department, position, employee, or pay-run post; employee delete asks about login |
 | Empty lists | Guided empty states with primary CTA |
 | Missing report filter | Reports page waits until pay run or date range is set |
 | No HR module access | Middleware redirects / blocks like other modules |
+| Offline HR account create | Online-first — use Settings staff create (queued) if offline |
 
 ## Related docs
 

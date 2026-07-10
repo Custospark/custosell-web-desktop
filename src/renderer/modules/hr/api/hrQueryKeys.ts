@@ -6,6 +6,7 @@ export const hrKeys = {
   employees: (filters?: Record<string, string | number | undefined>) =>
     [...hrKeys.all, 'employees', filters ?? {}] as const,
   employee: (id: number) => [...hrKeys.all, 'employee', id] as const,
+  accountOptions: () => [...hrKeys.all, 'account-options'] as const,
   attendance: (filters?: Record<string, string | number | undefined>) =>
     [...hrKeys.all, 'attendance', filters ?? {}] as const,
   leaveTypes: () => [...hrKeys.all, 'leave-types'] as const,

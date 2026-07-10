@@ -316,6 +316,31 @@ export type CreateEmployeePayload = {
   user_id?: number | null;
 };
 
+export type CreateEmployeeWithAccountPayload = CreateEmployeePayload & {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  role_id?: number | null;
+  modules?: string[];
+  account_name?: string;
+};
+
+export type CreateEmployeeAccountPayload = {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  role_id?: number | null;
+  modules?: string[];
+  phone?: string | null;
+  account_name?: string;
+};
+
+export type HrAccountOptions = {
+  roles: Array<{ id: number; name: string; slug?: string | null }>;
+  unlinked_users: Array<{ id: number; name: string; email: string; phone?: string | null }>;
+  assignable_modules: string[];
+};
+
 export type UpdateEmployeePayload = Partial<CreateEmployeePayload> & {
   termination_date?: string | null;
 };

@@ -69,7 +69,7 @@ export function MoveItemModal({
   }, [flat, blockedIds]);
 
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal isOpen={open} onClose={onClose} title={title}>
       <div className="space-y-4">
         <p className="text-sm text-gray-600">Choose a destination folder. Root level moves the item outside any folder.</p>
 

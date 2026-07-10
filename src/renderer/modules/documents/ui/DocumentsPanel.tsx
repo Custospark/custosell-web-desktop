@@ -146,6 +146,7 @@ export default function DocumentsPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showSidebar = fullBleed && !customerId && !projectId;
+  const searching = Boolean(debouncedSearch || tagFilter);
   const { data: moveTree = [] } = useDocumentFolderTree(Boolean(moveTarget));
   const needsRootFolders = !showSidebar && !customerId && !projectId && !activeFolderId && !searching;
   const { data: rootFoldersPage } = useDocumentFolderChildren(null, 1, needsRootFolders);
@@ -181,7 +182,6 @@ export default function DocumentsPanel({
     folder_id: customerId || projectId ? undefined : (activeFolderId ?? undefined),
   }), [debouncedSearch, tagFilter, customerId, projectId, activeFolderId]);
 
-  const searching = Boolean(debouncedSearch || tagFilter);
   const needsDocumentList = searching || activeFolderId == null || customerId != null || projectId != null;
   const {
     data: documentPages,
@@ -221,7 +221,7 @@ export default function DocumentsPanel({
     : Boolean(documentsMeta && documentsMeta.current_page < documentsMeta.last_page);
 
   const canContribute = activeFolderId
-    ? (contents?.folder?.can_contribute ?? false)
+    ? (contents?.folder ? contents.folder.can_contribute : true)
     : true;
 
   const invalidateDocuments = useCallback(async () => {
@@ -736,7 +736,7 @@ export default function DocumentsPanel({
         onConfirm={(name) => void handleRenameConfirm(name)}
       />
 
-      <Modal open={showCreateFolder} onClose={() => setShowCreateFolder(false)} title="Create folder">
+      <Modal isOpen={showCreateFolder} onClose={() => setShowCreateFolder(false)} title="Create folder">
         <div className="space-y-4">
           <input
             value={folderName}
@@ -758,7 +758,7 @@ export default function DocumentsPanel({
         </div>
       </Modal>
 
-      <Modal open={showUpload} onClose={() => setShowUpload(false)} title="Upload files">
+      <Modal isOpen={showUpload} onClose={() => setShowUpload(false)} title="Upload files">
         <div className="space-y-4">
           <div
             className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center"
@@ -800,7 +800,7 @@ export default function DocumentsPanel({
         </div>
       </Modal>
 
-      <Modal open={showLink} onClose={() => setShowLink(false)} title="Add link">
+      <Modal isOpen={showLink} onClose={() => setShowLink(false)} title="Add link">
         <div className="space-y-4">
           <input value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Title" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />
           <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm" />

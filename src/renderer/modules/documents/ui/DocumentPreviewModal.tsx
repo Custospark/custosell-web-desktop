@@ -34,7 +34,7 @@ export function DocumentPreviewModal({
   const previewUrl = document.file_url;
 
   return (
-    <Modal open={open} onClose={onClose} title={document.title} size="xl">
+    <Modal isOpen={open} onClose={onClose} title={document.title} size="xl">
       <div className="space-y-4">
         <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
 

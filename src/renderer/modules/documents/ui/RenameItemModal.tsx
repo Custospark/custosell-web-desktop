@@ -64,7 +64,7 @@ export function RenameItemModal({
   onConfirm,
 }: RenameItemModalProps) {
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal isOpen={open} onClose={onClose} title={title}>
       {open && (
         <RenameForm
           key={`${title}-${initialName}`}

@@ -3,8 +3,8 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentFolder, DocumentItem } from '../api/documentTypes';
 import { ACCESS_VISIBILITY_LABEL } from '../api/documentAccessLabels';
-import { documentPrimaryLabel } from '../api/documentDisplayUtils';
-import { formatDocumentBytes, isImageDocument, isPdfDocument } from '../api/documentTransferUtils';
+import { documentPrimaryLabel, documentSecondaryLabel } from '../api/documentDisplayUtils';
+import { canPreviewDocument, formatDocumentBytes, isImageDocument, isPdfDocument } from '../api/documentTransferUtils';
 import { DocumentActionButton } from './DocumentActionButton';
 import { DocumentFolderIcon, DocumentItemIcon } from './documentFileIcons';
 import { DocumentUserAttribution } from './DocumentUserAttribution';
@@ -62,13 +62,46 @@ export function DocumentPreviewContent({ document, className }: DocumentPreviewC
           )}
         </div>
       )}
-      {!pdf && !image && document.type !== 'link' && (
-        <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-          <DocumentItemIcon doc={document} size="md" />
-          <p className="text-sm font-medium text-gray-700">Preview not available for this file type</p>
-          <p className="text-xs text-gray-500">{formatDocumentBytes(document.file_size)}</p>
+      {!pdf && !image && document.type !== 'link' && null}
+    </div>
+  );
+}
+
+interface DocumentFileDetailViewProps {
+  document: DocumentItem;
+  className?: string;
+}
+
+/** File metadata panel for types without inline preview (matches list/card file display). */
+export function DocumentFileDetailView({ document, className }: DocumentFileDetailViewProps) {
+  const label = documentPrimaryLabel(document);
+  const secondary = documentSecondaryLabel(document);
+
+  return (
+    <div className={cn('rounded-xl border border-gray-200 bg-white p-6 sm:p-8', className)}>
+      <div className="flex items-start gap-4">
+        <div className="rounded-xl bg-slate-100 p-3">
+          <DocumentItemIcon doc={document} size="md" className="!h-10 !w-10" />
         </div>
-      )}
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-semibold text-gray-900" title={label}>{label}</p>
+          {secondary && (
+            <p className="mt-0.5 truncate text-sm text-gray-500" title={secondary}>{secondary}</p>
+          )}
+          {document.description && (
+            <p className="mt-3 text-sm text-gray-600">{document.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-gray-100 pt-4">
+        <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
+        <DocumentTagChips tags={document.tags} className="mt-3" />
+        <div className="mt-3 flex flex-wrap gap-3 text-sm text-gray-500">
+          <span>{formatDocumentBytes(document.file_size)}</span>
+          {document.mime_type && <span>{document.mime_type}</span>}
+        </div>
+      </div>
     </div>
   );
 }
@@ -331,6 +364,7 @@ export function DocumentDetailPane({
   }
 
   const label = documentPrimaryLabel(document);
+  const showInlinePreview = document.type === 'link' || canPreviewDocument(document);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white/80 backdrop-blur-md">
@@ -396,15 +430,21 @@ export function DocumentDetailPane({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <DocumentPreviewContent document={document} className="min-h-[420px]" />
-        <div className={cn('mt-4 px-4 py-3', DOCUMENT_SURFACE.panel)}>
-          <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
-          <DocumentTagChips tags={document.tags} className="mt-3" />
-          <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
-            <span>{formatDocumentBytes(document.file_size)}</span>
-            {document.mime_type && <span>{document.mime_type}</span>}
-          </div>
-        </div>
+        {showInlinePreview ? (
+          <>
+            <DocumentPreviewContent document={document} className="min-h-[420px]" />
+            <div className={cn('mt-4 px-4 py-3', DOCUMENT_SURFACE.panel)}>
+              <DocumentUserAttribution user={document.uploader} timestamp={document.updated_at ?? document.created_at} />
+              <DocumentTagChips tags={document.tags} className="mt-3" />
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                <span>{formatDocumentBytes(document.file_size)}</span>
+                {document.mime_type && <span>{document.mime_type}</span>}
+              </div>
+            </div>
+          </>
+        ) : (
+          <DocumentFileDetailView document={document} />
+        )}
       </div>
     </div>
   );

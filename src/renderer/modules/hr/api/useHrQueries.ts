@@ -35,6 +35,8 @@ import type {
   HrOnboardingTask,
   HrOnboardingTemplate,
   HrPayeReportRow,
+  HrPayrollAffordability,
+  HrPayrollAffordabilityRequest,
   HrPayRun,
   HrPayslip,
   HrPerformanceRosterRow,
@@ -1277,6 +1279,44 @@ export function useHrNssfReport(
     },
     enabled,
     ...listDefaults,
+  });
+}
+
+function buildAffordabilityBody(filters?: HrPayrollAffordabilityRequest) {
+  const body: Record<string, unknown> = {
+    horizon_months: filters?.horizon_months ?? 3,
+    period_id: filters?.period_id ?? null,
+  };
+  if (filters?.as_of_date) body.as_of_date = filters.as_of_date;
+  if (filters?.hire) body.hire = filters.hire;
+  return body;
+}
+
+/** POST report fetch keyed by as-of, horizon, and optional hire scenario. */
+export function useHrPayrollAffordability(
+  filters?: HrPayrollAffordabilityRequest,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: hrKeys.reportAffordability(filters ?? { horizon_months: 3 }),
+    queryFn: async () => {
+      const { data } = await axiosInstance.post(HR.REPORTS_AFFORDABILITY, buildAffordabilityBody(filters));
+      return unwrapEntity<HrPayrollAffordability>(data);
+    },
+    enabled,
+    ...listDefaults,
+  });
+}
+
+/** One-shot recalculate (e.g. hire what-if) without changing the baseline query cache key. */
+export function useHrPayrollAffordabilityMutation() {
+  const onError = useHrErrorToast();
+  return useMutation({
+    mutationFn: async (payload?: HrPayrollAffordabilityRequest) => {
+      const { data } = await axiosInstance.post(HR.REPORTS_AFFORDABILITY, buildAffordabilityBody(payload));
+      return unwrapEntity<HrPayrollAffordability>(data);
+    },
+    onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not load payroll affordability'),
   });
 }
 

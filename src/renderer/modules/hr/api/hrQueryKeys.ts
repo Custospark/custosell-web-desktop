@@ -36,6 +36,8 @@ export const hrKeys = {
     [...hrKeys.all, 'reports', 'paye', filters ?? {}] as const,
   reportNssf: (filters?: Record<string, string | number | undefined>) =>
     [...hrKeys.all, 'reports', 'nssf', filters ?? {}] as const,
+  reportAffordability: (filters?: Record<string, unknown>) =>
+    [...hrKeys.all, 'reports', 'affordability', filters ?? {}] as const,
   auditLogs: (filters?: Record<string, string | number | undefined>) =>
     [...hrKeys.all, 'audit-logs', filters ?? {}] as const,
 };

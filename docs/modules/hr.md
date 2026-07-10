@@ -96,6 +96,7 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 7. **Remit PAYE & NSSF** (optional) → statutory remittance journal vs Bank.
 8. **Void** (if needed) → reverse linked journals, status `void`.
 9. View PAYE / NSSF schedules under Reports.
+10. Check **Payroll cash runway** on Reports (cash vs unpaid 2110–2112 vs monthly burn; hire what-if).
 
 ## Leave edit / cancel
 
@@ -115,7 +116,11 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Remove login for business owner | Blocked by UserService delete guards |
 | Destructive delete | `useConfirm` before department, position, employee, leave type, structure, compensation, pay-run delete/post; employee delete asks about login |
 | Empty lists | Guided empty states with primary CTA |
-| Missing report filter | Reports page waits until pay run or date range is set |
+| Missing report filter | Statutory PAYE/NSSF waits until pay run or date range is set |
+| No accounting period for runway | API 422; panel shows create-period guidance |
+| Employees without compensation | Runway warning; burn excludes them; count in `employees_missing_compensation` |
+| Zero burn / unknown status | Coverage status `unknown` — cannot project months |
+| Hire what-if invalid salary | Client + API validation (salary &gt; 0) |
 | No HR module access | Middleware redirects / blocks like other modules |
 | Limited HR on admin route | `HrAccessMiddleware` redirects to Attendance |
 | Clock/leave for another employee (limited) | API 403 — forced to linked employee |
@@ -129,4 +134,5 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 
 - ADR: [2026-07-10-hr-payroll-module.md](../adr/2026-07-10-hr-payroll-module.md)
 - ADR: [2026-07-10-hr-payroll-accounting-bridge.md](../adr/2026-07-10-hr-payroll-accounting-bridge.md)
+- ADR: [2026-07-10-payroll-affordability-cash-runway.md](../adr/2026-07-10-payroll-affordability-cash-runway.md)
 - Module access: `src/renderer/shared/utils/moduleAccess.ts` (`hr` slug)

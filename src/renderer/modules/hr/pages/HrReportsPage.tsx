@@ -6,6 +6,7 @@ import type { HrNssfReportRow, HrPayeReportRow } from '../api/hrTypes';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from '../ui/hrFormFields';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
+import { HrPayrollAffordabilityPanel } from '../ui/HrPayrollAffordabilityPanel';
 import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 
 function formatMoney(n: number | undefined | null) {
@@ -39,11 +40,13 @@ export default function HrReportsPage() {
     <div className="space-y-5">
       <HrPageHeader
         icon={BarChart3}
-        title="Statutory reports"
-        description="PAYE and NSSF schedules for URA and NSSF filings — pull from calculated or posted pay runs."
+        title="HR reports"
+        description="Payroll cash runway plus PAYE and NSSF schedules for URA and NSSF filings."
       />
 
-      <HrSectionCard title="Report filters" description="Pick a pay run or enter a date range to load schedules.">
+      <HrPayrollAffordabilityPanel />
+
+      <HrSectionCard title="Statutory report filters" description="Pick a pay run or enter a date range to load schedules.">
         <HrFormSection title="Period" icon={Filter} description="Posted runs give the most accurate final numbers.">
           <div className="grid gap-4 sm:grid-cols-3">
             <HrIconField label="Pay run" icon={FileSpreadsheet}>
@@ -74,8 +77,8 @@ export default function HrReportsPage() {
       {!hasFilter ? (
         <HrEmptyState
           icon={<BarChart3 className="h-6 w-6" />}
-          title="Choose a period to get started"
-          description="Reports pull from calculated or posted pay runs. Post a run first when you need final numbers for filing."
+          title="Choose a period for statutory schedules"
+          description="PAYE and NSSF pull from calculated or posted pay runs. Cash runway above loads without a pay-run filter."
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">

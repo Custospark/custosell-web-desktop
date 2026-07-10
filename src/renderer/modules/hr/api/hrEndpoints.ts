@@ -51,5 +51,6 @@ export const HR = {
   PERFORMANCE_SEED_REVIEW: (employeeId: number) => `/hr/talent/performance/employees/${employeeId}/seed-review`,
   REPORTS_PAYE: '/hr/reports/paye-schedule',
   REPORTS_NSSF: '/hr/reports/nssf-schedule',
+  REPORTS_AFFORDABILITY: '/hr/reports/payroll-affordability',
   AUDIT_LOGS: '/hr/audit-logs',
 } as const;

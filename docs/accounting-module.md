@@ -16,6 +16,8 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | **Auto-generate entries from POS events** | Sales and expenses automatically create journal entries via `AutomationService`. This ensures no transaction is missed and maintains data integrity. |
 | **Product vs service revenue** | Catalog `type` splits sale/invoice revenue: products → 4100 (`sales_revenue`), services → 4200 (`service_revenue`). Services skip stock and COGS. See [ADR: product vs service](./adr/2026-07-10-product-vs-service-sales.md). |
 | **HR payroll journals** | Pay-run Post / Settle / Remit / Void create or reverse journals (`hr_pay_run*`). Liabilities use 2110–2112. See [ADR: payroll accounting bridge](./adr/2026-07-10-hr-payroll-accounting-bridge.md). |
+| **Payroll liabilities in ratios/CFS** | Liquidity current liabilities and Cash Flow WC changes include 2110–2112 (not only 2101–2104). |
+| **Payroll cash runway** | HR Reports affordability uses GL **closing** cash (1101/1102) vs unpaid payroll vs live compensation burn. See [ADR: cash runway](./adr/2026-07-10-payroll-affordability-cash-runway.md). |
 | **Straight-line depreciation only** | Simplest method, most predictable, URA-accepted. Accelerated/mileage methods can be added later. |
 | **Single currency per business** | Business settings define the functional currency. No multi-currency support in v1. FX features deferred. |
 | **Strict period closing** | Closed periods reject new/pending entries. Reopening requires explicit action and logs the event. Prevents accidental post-dating. |

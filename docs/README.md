@@ -77,6 +77,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-10-hr-work-performance-from-pipeline.md](./adr/2026-07-10-hr-work-performance-from-pipeline.md) | Evaluate employees from Pipeline/Projects goals & tasks |
 | [2026-07-10-hr-payroll-accounting-bridge.md](./adr/2026-07-10-hr-payroll-accounting-bridge.md) | Fail-hard payroll post, split liabilities, settle/remit/void |
 | [2026-07-10-product-vs-service-sales.md](./adr/2026-07-10-product-vs-service-sales.md) | Product vs service catalog — stock skip, revenue 4100/4200 |
+| [2026-07-10-payroll-affordability-cash-runway.md](./adr/2026-07-10-payroll-affordability-cash-runway.md) | Payroll cash check, N-month runway, hire what-if |
 
 ## Modules
 

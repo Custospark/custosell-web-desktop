@@ -34,6 +34,12 @@ Module launcher catalog: `moduleLauncherCatalog.ts`. Visibility = staff/owner dr
 
 `Sidebar.tsx` uses absolute positioning; removed offline-banner `top` offset hack after banners moved above layout.
 
+When completely offline, online-only modules and subnavs (Pipeline, Estimates, Documents, Forecasting, HR, Accounting, Platform, Marketplace / POs / Incoming / Supplier invoices) render as disabled controls (`cursor-not-allowed`, opacity, native `title` hover). Sales invoices stay enabled. Registry: `onlineOnlyNav.ts`.
+
+## Main content
+
+If the user is already on an online-only route while offline, `Main.tsx` shows `OnlineOnlyModuleBanner` (no redirect).
+
 ## Dashboard charts
 
 `DashboardCharts.tsx` uses My Shift–style area chart for 7-day net sales trend. Graph subtitles use uppercase tracking-wide styling (`chartPrimitives.tsx`).

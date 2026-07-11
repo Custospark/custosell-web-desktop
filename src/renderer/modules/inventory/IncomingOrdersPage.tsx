@@ -20,7 +20,6 @@ import {
   useIncomingPurchaseOrders,
 } from './api/purchaseOrders/usePurchaseOrderQueries';
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
-import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
 import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
 import { sellerPoActions } from './ui/supply/sellerPoActions';
@@ -138,8 +137,6 @@ export default function IncomingOrdersPage() {
           Refresh
         </Button>
       </div>
-
-      {isOffline ? <SupplyOfflineBanner /> : null}
 
       <SupplyStatusTabs
         tabs={STATUS_TABS}

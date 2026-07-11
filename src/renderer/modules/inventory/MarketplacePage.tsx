@@ -37,7 +37,6 @@ import {
   usePurchaseOrders,
   useSubmitPurchaseOrder,
 } from './api/purchaseOrders/usePurchaseOrderQueries';
-import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { BrowseSuppliersModal } from './ui/marketplace/BrowseSuppliersModal';
 import { MarketplaceActionStrip } from './ui/marketplace/MarketplaceActionStrip';
 import { MarketplaceCartSheet } from './ui/marketplace/MarketplaceCartSheet';
@@ -242,11 +241,7 @@ export default function MarketplacePage() {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-2.5 sm:p-4">
-          {isOffline ? (
-            <div className="mb-3">
-              <SupplyOfflineBanner />
-            </div>
-          ) : null}
+
 
           {!selected ? (
             <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-xl flex-col items-center px-5 py-10 text-center sm:px-6 sm:py-14')}>

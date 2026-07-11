@@ -22,7 +22,6 @@ import {
   useSubmitPurchaseOrder,
 } from './api/purchaseOrders/usePurchaseOrderQueries';
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
-import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
 import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
 import { buyerPoActions } from './ui/supply/buyerPoActions';
@@ -165,8 +164,6 @@ export default function PurchaseOrdersPage() {
           </Button>
         </div>
       </div>
-
-      {isOffline ? <SupplyOfflineBanner /> : null}
 
       <SupplyStatusTabs
         tabs={STATUS_TABS}

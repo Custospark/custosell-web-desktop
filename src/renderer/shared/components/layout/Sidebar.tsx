@@ -7,11 +7,14 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import LogoImage from '../../assets/LogoImage';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { canAccessModule, hasEstimatesBoardsAccess, isBusinessOwner, isLimitedEstimatesUser, isLimitedHrUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
+import { OfflineDisabledNav } from './OfflineDisabledNav';
+import { isOnlineOnlyNavTarget, onlineOnlyHoverMessage } from './onlineOnlyNav';
 import {
   baseNavGroups,
   baseSubRoutes,
@@ -123,6 +126,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
   const { state } = useAppContext();
   const collapsed = state.sidebarCollapsed;
   const location = useLocation();
+  const { isCompletelyOffline } = useNetworkStatus();
 
   return (
     <aside
@@ -155,11 +159,22 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           const groupOpen = openGroup === groupIndex;
           const Icon = group.icon;
           const isSingle = group.subItems.length === 1;
+          const allSubsOffline = group.subItems.every((item) => isOnlineOnlyNavTarget(item.to));
+          const groupOfflineBlocked = isCompletelyOffline && allSubsOffline;
+          const groupOfflineTitle = groupOfflineBlocked
+            ? onlineOnlyHoverMessage(group.subItems[0]?.to ?? '')
+            : group.label;
 
           if (collapsed) {
             return (
               <div key={group.label} className="space-y-1">
-                <div className="flex justify-center py-2.5 text-gray-400" title={group.label}>
+                <div
+                  className={cn(
+                    'flex justify-center py-2.5',
+                    groupOfflineBlocked ? 'cursor-not-allowed text-gray-300 opacity-50' : 'text-gray-400',
+                  )}
+                  title={groupOfflineTitle}
+                >
                   <Icon className="w-5 h-5" />
                 </div>
               </div>
@@ -168,6 +183,19 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
 
           if (isSingle) {
             const item = group.subItems[0];
+            const itemBlocked = isCompletelyOffline && isOnlineOnlyNavTarget(item.to);
+            if (itemBlocked) {
+              return (
+                <OfflineDisabledNav
+                  key={group.label}
+                  title={onlineOnlyHoverMessage(item.to)}
+                  className="gap-3 rounded-lg px-4 py-2.5 text-sm text-gray-500"
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span>{group.label}</span>
+                </OfflineDisabledNav>
+              );
+            }
             return (
               <NavLink
                 key={group.label}
@@ -192,12 +220,16 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           return (
             <div key={group.label}>
               <button
+                type="button"
                 onClick={() => setOpenGroup(groupOpen ? null : groupIndex)}
-                className={`flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                title={groupOfflineBlocked ? groupOfflineTitle : undefined}
+                className={cn(
+                  'flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors',
+                  groupOfflineBlocked && 'cursor-not-allowed opacity-50',
                   groupOpen || hasActiveChild
                     ? 'bg-gray-100 text-gray-900 font-medium'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                )}
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 <span className="flex-1 text-left">{group.label}</span>
@@ -207,6 +239,19 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                 <div className="ml-2 mt-1 space-y-0.5 border-l border-gray-200 pl-3">
                   {group.subItems.map((item) => {
                     const isChildActive = isSidebarSubItemActive(location.pathname, item.to);
+                    const childBlocked = isCompletelyOffline && isOnlineOnlyNavTarget(item.to);
+                    if (childBlocked) {
+                      return (
+                        <OfflineDisabledNav
+                          key={item.to}
+                          title={onlineOnlyHoverMessage(item.to)}
+                          className="gap-3 rounded-lg px-3 py-2 text-sm text-gray-400"
+                        >
+                          <item.icon className="w-4 h-4 shrink-0" />
+                          <span>{item.label}</span>
+                        </OfflineDisabledNav>
+                      );
+                    }
                     return (
                       <NavLink
                         key={item.to}

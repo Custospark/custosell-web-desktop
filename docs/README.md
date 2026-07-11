@@ -90,6 +90,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-buyer-ap-supplier-invoice-automation.md](./adr/2026-07-11-buyer-ap-supplier-invoice-automation.md) | Buyer AP + inventory/expense JEs mirrored from shared B2B invoices |
 | [2026-07-11-supplier-party-receive-create-payment-counts.md](./adr/2026-07-11-supplier-party-receive-create-payment-counts.md) | Supplier party labels; receive create-product; PO payment counts |
 | [2026-07-11-document-letterhead-issuer-not-viewer.md](./adr/2026-07-11-document-letterhead-issuer-not-viewer.md) | Invoice/receipt letterhead = seller issuer; Customer = buyer |
+| [2026-07-11-offline-disable-online-only-modules.md](./adr/2026-07-11-offline-disable-online-only-modules.md) | Grey out online-only nav when offline; banner if already on page |
 | [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
 

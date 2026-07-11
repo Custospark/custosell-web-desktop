@@ -8,13 +8,15 @@ function getChangedFiles() {
   const commands = [
     'git diff --name-only --diff-filter=ACMRTUXB HEAD',
     'git diff --cached --name-only --diff-filter=ACMRTUXB',
+    // Untracked new files (otherwise Vite/import breaks miss Vera)
+    'git ls-files --others --exclude-standard',
   ];
   const files = new Set();
   for (const cmd of commands) {
     try {
       const out = execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
       for (const line of out.split('\n')) {
-        const trimmed = line.trim();
+        const trimmed = line.trim().replace(/\\/g, '/');
         if (trimmed && (trimmed.endsWith('.ts') || trimmed.endsWith('.tsx'))) {
           files.add(trimmed);
         }

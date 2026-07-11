@@ -29,6 +29,7 @@ function getChangedTsFiles() {
   const commands = [
     'git diff --name-only --diff-filter=ACMRTUXB HEAD',
     'git diff --cached --name-only --diff-filter=ACMRTUXB',
+    'git ls-files --others --exclude-standard',
   ];
   const files = new Set();
   for (const cmd of commands) {
@@ -49,6 +50,67 @@ function getChangedTsFiles() {
     }
   }
   return [...files];
+}
+
+/** Resolve a relative import specifier to an existing file under ROOT. */
+function relativeImportExists(fromFile, specifier) {
+  const clean = specifier.split('?')[0];
+  if (!clean.startsWith('.')) return true;
+  const fromDir = path.dirname(path.join(ROOT, fromFile));
+  const base = path.resolve(fromDir, clean);
+  const candidates = [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.js`,
+    `${base}.jsx`,
+    `${base}.css`,
+    `${base}.json`,
+    path.join(base, 'index.ts'),
+    path.join(base, 'index.tsx'),
+    path.join(base, 'index.js'),
+  ];
+  return candidates.some((candidate) => fs.existsSync(candidate));
+}
+
+/**
+ * Catch broken relative imports (same class of error as Vite import-analysis).
+ * @returns {RuleResult}
+ */
+function checkRelativeImports(changedFiles) {
+  // import/export ... from './x'  |  import('./x')
+  const importRe = /(?:from\s+|import\s*\(\s*)['"](\.[^'"]+)['"]/g;
+  const broken = [];
+
+  for (const file of changedFiles) {
+    const text = read(file);
+    if (text == null) continue;
+    importRe.lastIndex = 0;
+    let match;
+    while ((match = importRe.exec(text)) !== null) {
+      const spec = match[1];
+      if (!spec) continue;
+      if (!relativeImportExists(file, spec)) {
+        broken.push(`${file} → ${spec}`);
+      }
+    }
+  }
+
+  if (broken.length) {
+    return {
+      id: 'relative-imports',
+      ok: false,
+      detail: `Unresolved relative import(s): ${broken.slice(0, 8).join('; ')}${broken.length > 8 ? ` (+${broken.length - 8} more)` : ''}`,
+    };
+  }
+
+  return {
+    id: 'relative-imports',
+    ok: true,
+    detail: changedFiles.length
+      ? `Relative imports resolve for ${changedFiles.length} changed file(s)`
+      : 'No changed TS/TSX under src/ — import check skipped',
+  };
 }
 
 /** @returns {RuleResult[]} */
@@ -183,6 +245,7 @@ function checkViewInvoiceModalExists() {
 const changed = getChangedTsFiles();
 const results = [
   ...checkFileSizeLimit(changed),
+  checkRelativeImports(changed),
   checkSupplierInvoicesRoute(),
   checkSidebarInvoiceLabels(),
   checkBuyerCannotRecordPaymentUi(),

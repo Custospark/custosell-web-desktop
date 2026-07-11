@@ -10,6 +10,8 @@ import {
   sortLauncherModules,
   type ModuleLauncherItem,
 } from './moduleLauncherCatalog';
+import { isOnlineOnlyLauncherSlug, launcherOfflineMessage } from './onlineOnlyNav';
+import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 
 interface ModuleLauncherModalProps {
   open: boolean;
@@ -43,10 +45,14 @@ function SectionHeading({
 function ModuleTile({
   item,
   isActive,
+  disabled,
+  disabledReason,
   onSelect,
 }: {
   item: ModuleLauncherItem;
   isActive: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
   onSelect: () => void;
 }) {
   const Icon = item.icon;
@@ -54,15 +60,19 @@ function ModuleTile({
   return (
     <button
       type="button"
+      disabled={disabled}
+      title={disabled ? disabledReason : undefined}
       onClick={onSelect}
       className={cn(
         'group flex w-full items-center gap-2.5 overflow-hidden rounded-lg border bg-white px-2.5 py-2 text-left shadow-sm',
         'transition-all duration-150 ease-out',
-        'hover:border-indigo-200 hover:shadow',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40',
-        isActive
+        disabled
+          ? 'cursor-not-allowed opacity-50 border-gray-200/90'
+          : 'hover:border-indigo-200 hover:shadow',
+        !disabled && isActive
           ? 'border-indigo-400 bg-indigo-50/80 ring-1 ring-indigo-300/60'
-          : 'border-gray-200/90',
+          : !disabled && 'border-gray-200/90',
       )}
     >
       <span
@@ -74,11 +84,15 @@ function ModuleTile({
         <Icon className="h-4 w-4" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-gray-900 group-hover:text-indigo-800">
+        <span className={cn(
+          'block truncate text-sm font-medium',
+          disabled ? 'text-gray-500' : 'text-gray-900 group-hover:text-indigo-800',
+        )}
+        >
           {item.label}
         </span>
         <span className="mt-0.5 block truncate text-[11px] text-gray-500">
-          {item.description}
+          {disabled ? 'Requires connection' : item.description}
         </span>
       </span>
     </button>
@@ -88,22 +102,31 @@ function ModuleTile({
 function ModuleGrid({
   items,
   activeSlug,
+  offline,
   onSelect,
 }: {
   items: ModuleLauncherItem[];
   activeSlug: string | null;
+  offline: boolean;
   onSelect: (item: ModuleLauncherItem) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((item) => (
-        <ModuleTile
-          key={item.slug}
-          item={item}
-          isActive={activeSlug === item.slug}
-          onSelect={() => onSelect(item)}
-        />
-      ))}
+      {items.map((item) => {
+        const blocked = offline && isOnlineOnlyLauncherSlug(item.slug);
+        return (
+          <ModuleTile
+            key={item.slug}
+            item={item}
+            isActive={activeSlug === item.slug}
+            disabled={blocked}
+            disabledReason={blocked ? launcherOfflineMessage(item.slug) : undefined}
+            onSelect={() => {
+              if (!blocked) onSelect(item);
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -112,6 +135,7 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
+  const { isCompletelyOffline } = useNetworkStatus();
   const [query, setQuery] = useState('');
 
   const accessible = useMemo(
@@ -149,6 +173,7 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
   };
 
   const handleSelect = (item: ModuleLauncherItem) => {
+    if (isCompletelyOffline && isOnlineOnlyLauncherSlug(item.slug)) return;
     const to = item.getRoute(user);
     setQuery('');
     onClose();
@@ -162,7 +187,11 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
       isOpen={open}
       onClose={handleClose}
       title="Switch modules"
-      subtitle="Pick a module you can access"
+      subtitle={
+        isCompletelyOffline
+          ? 'Some modules need a connection — hover a greyed tile for details'
+          : 'Pick a module you can access'
+      }
       titleCentered
       size="xl"
       bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4"
@@ -200,6 +229,7 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
                   <ModuleGrid
                     items={workspaceItems}
                     activeSlug={activeSlug}
+                    offline={isCompletelyOffline}
                     onSelect={handleSelect}
                   />
                 </section>
@@ -210,6 +240,7 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
                   <ModuleGrid
                     items={platformItems}
                     activeSlug={activeSlug}
+                    offline={isCompletelyOffline}
                     onSelect={handleSelect}
                   />
                 </section>

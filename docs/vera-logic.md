@@ -5,11 +5,14 @@
 
 Static checks that lint/syntax alone cannot express. Fail the handoff if any rule fails.
 
+Changed-file collection includes **untracked new files** (`git ls-files --others`) so brand-new modules are checked before commit.
+
 ## Frontend rules (`scripts/vera-logic.mjs`)
 
 | ID | What it enforces |
 |----|------------------|
 | `file-size-500` | Changed `src/**/*.ts(x)` files must be ≤ 500 lines |
+| `relative-imports` | Relative `from './…'` / `import('./…')` paths resolve on disk (catches Vite import-analysis breaks) |
 | `supplier-invoices-route` | `/invoices/supplier` exists and mounts `InvoicesPage mode="supplier"` |
 | `sidebar-invoice-labels` | Sidebar has **Sales invoices** and **Supplier invoices** |
 | `buyer-record-payment-gate` | `RecordPaymentModal` gates `canRecord` via received / viewOnly |
@@ -21,6 +24,7 @@ Static checks that lint/syntax alone cannot express. Fail the handoff if any rul
 | ID | What it enforces |
 |----|------------------|
 | `file-size-500` | Changed `app/**` / `tests/**` PHP ≤ 500 lines |
+| `php-imports` | `use App\…` / `use Tests\…` map to existing PSR-4 files |
 | `owner-only-payments` | `InvoiceService::canManagePayments` uses `isOwnedByBusiness` |
 | `buyer-ap-automation` | `SupplierInvoiceAccountingService` wired on send + payment listeners |
 | `buyer-ap-accounts` | Buyer AP path references AP + inventory |

@@ -26,6 +26,10 @@ function unwrapList<T>(payload: unknown): T[] {
   if (payload && typeof payload === 'object') {
     const body = payload as { data?: unknown };
     if (Array.isArray(body.data)) return body.data as T[];
+    if (body.data && typeof body.data === 'object') {
+      const nested = (body.data as { data?: unknown }).data;
+      if (Array.isArray(nested)) return nested as T[];
+    }
   }
   return [];
 }
@@ -64,6 +68,11 @@ export type CreateCompanyAssetPayload = {
 
 export type UpdateCompanyAssetCustodyPayload = {
   id: number;
+  name?: string;
+  cost?: number;
+  salvage_value?: number;
+  useful_life_months?: number;
+  purchase_date?: string;
   asset_tag?: string | null;
   serial_number?: string | null;
   category?: AssetCategory | null;
@@ -97,13 +106,26 @@ function useCompanyAssetErrorToast() {
   };
 }
 
-function invalidateAssetCaches(qc: ReturnType<typeof useQueryClient>, assetId?: number) {
-  qc.invalidateQueries({ queryKey: hrCompanyAssetsKeys.all });
-  qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
-  if (assetId) {
-    qc.invalidateQueries({ queryKey: hrCompanyAssetsKeys.detail(assetId) });
-    qc.invalidateQueries({ queryKey: hrCompanyAssetsKeys.assignments(assetId) });
-    qc.invalidateQueries({ queryKey: accountingKeys.fixedAsset(assetId) });
+function patchAssetLists(qc: ReturnType<typeof useQueryClient>, asset: FixedAsset) {
+  const updater = (old: FixedAsset[] | undefined) => {
+    if (!old) return [asset];
+    const exists = old.some((a) => a.id === asset.id);
+    if (!exists) return [asset, ...old];
+    return old.map((a) => (a.id === asset.id ? { ...a, ...asset } : a));
+  };
+  qc.setQueriesData<FixedAsset[]>({ queryKey: hrCompanyAssetsKeys.all }, updater);
+  qc.setQueriesData<FixedAsset[]>({ queryKey: accountingKeys.fixedAssets() }, updater);
+  qc.setQueryData(hrCompanyAssetsKeys.detail(asset.id), asset);
+}
+
+function invalidateAssetCaches(qc: ReturnType<typeof useQueryClient>, asset?: FixedAsset) {
+  if (asset) patchAssetLists(qc, asset);
+  void qc.invalidateQueries({ queryKey: hrCompanyAssetsKeys.all });
+  void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+  if (asset?.id) {
+    void qc.invalidateQueries({ queryKey: hrCompanyAssetsKeys.detail(asset.id) });
+    void qc.invalidateQueries({ queryKey: hrCompanyAssetsKeys.assignments(asset.id) });
+    void qc.invalidateQueries({ queryKey: accountingKeys.fixedAsset(asset.id) });
   }
 }
 
@@ -140,8 +162,8 @@ export function useCreateHrCompanyAsset() {
       const { data } = await axiosInstance.post(HR_COMPANY_ASSETS_API.LIST, payload);
       return unwrapEntity<FixedAsset>(data);
     },
-    onSuccess: () => {
-      invalidateAssetCaches(qc);
+    onSuccess: (asset) => {
+      invalidateAssetCaches(qc, asset);
       showToast('success', 'Company asset created');
     },
     onError: (err) => onError(err, 'Failed to create company asset'),
@@ -158,7 +180,7 @@ export function useUpdateHrCompanyAssetCustody() {
       return unwrapEntity<FixedAsset>(data);
     },
     onSuccess: (asset) => {
-      invalidateAssetCaches(qc, asset.id);
+      invalidateAssetCaches(qc, asset);
       showToast('success', 'Asset details updated');
     },
     onError: (err) => onError(err, 'Failed to update asset'),
@@ -175,7 +197,7 @@ export function useAssignHrCompanyAsset() {
       return unwrapEntity<FixedAsset>(data);
     },
     onSuccess: (asset) => {
-      invalidateAssetCaches(qc, asset.id);
+      invalidateAssetCaches(qc, asset);
       showToast('success', 'Asset assigned');
     },
     onError: (err) => onError(err, 'Failed to assign asset'),
@@ -192,7 +214,7 @@ export function useTransferHrCompanyAsset() {
       return unwrapEntity<FixedAsset>(data);
     },
     onSuccess: (asset) => {
-      invalidateAssetCaches(qc, asset.id);
+      invalidateAssetCaches(qc, asset);
       showToast('success', 'Asset transferred');
     },
     onError: (err) => onError(err, 'Failed to transfer asset'),
@@ -209,7 +231,7 @@ export function useReturnHrCompanyAsset() {
       return unwrapEntity<FixedAsset>(data);
     },
     onSuccess: (asset) => {
-      invalidateAssetCaches(qc, asset.id);
+      invalidateAssetCaches(qc, asset);
       showToast('success', 'Asset returned');
     },
     onError: (err) => onError(err, 'Failed to return asset'),

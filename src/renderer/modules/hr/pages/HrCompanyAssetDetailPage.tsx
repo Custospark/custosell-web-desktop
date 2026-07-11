@@ -1,5 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Package, Wrench } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Package, Pencil, Wrench } from 'lucide-react';
+import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
@@ -8,6 +10,7 @@ import {
   useHrCompanyAssetAssignments,
   useHrCompanyAssetMaintenanceExpenses,
 } from '../api/useHrCompanyAssetsQueries';
+import { EditCompanyAssetModal } from '../ui/HrCompanyAssetModals';
 import { HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
@@ -18,6 +21,7 @@ function personName(p?: { first_name: string; last_name: string } | null) {
 export default function HrCompanyAssetDetailPage() {
   const { assetId } = useParams();
   const id = Number(assetId);
+  const [editing, setEditing] = useState(false);
   const { data: asset, isLoading, isError } = useHrCompanyAsset(id);
   const { data: assignments = [], isLoading: loadingHistory } = useHrCompanyAssetAssignments(id);
   const { data: expenses = [], isLoading: loadingExpenses } = useHrCompanyAssetMaintenanceExpenses(id);
@@ -55,6 +59,12 @@ export default function HrCompanyAssetDetailPage() {
           asset.category ? asset.category : null,
           asset.condition ? `Condition: ${asset.condition}` : null,
         ].filter(Boolean).join(' · ') || 'Company asset detail'}
+        actions={
+          <Button onClick={() => setEditing(true)} className="inline-flex items-center gap-2" variant="outline">
+            <Pencil className="h-4 w-4" />
+            Edit asset
+          </Button>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,6 +145,10 @@ export default function HrCompanyAssetDetailPage() {
           </ul>
         )}
       </HrSectionCard>
+
+      {editing ? (
+        <EditCompanyAssetModal key={asset.id} asset={asset} onClose={() => setEditing(false)} />
+      ) : null}
     </div>
   );
 }

@@ -1,14 +1,45 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CalendarRange, CheckCircle2, CircleAlert, Play, SkipForward } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { Input } from '../../../shared/components/inputs/Input';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { cn } from '../../../shared/utils/cn';
+import {
+  PipelineFormSection,
+  PipelineIconField,
+  PipelineModalHero,
+  pipelineSelectClass,
+} from '../../pipeline/ui/pipelineFormFields';
 import {
   useAccountingPeriods,
-  useChartOfAccounts,
   useFixedAssetSchedule,
   useRunDepreciation,
 } from '../api/AccountingQueries';
 import type { DepreciationEntry, DepreciationRunResult, FixedAsset } from '../api/AccountingTypes';
+
+function FormModalFooter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t border-gray-100 bg-white/95 px-1 pt-4 backdrop-blur-sm">
+      {children}
+    </div>
+  );
+}
+
+function resultTone(status: string) {
+  if (status === 'depreciated' || status === 'posted' || status === 'success') {
+    return 'bg-emerald-50 text-emerald-800 border-emerald-100';
+  }
+  if (status === 'failed') return 'bg-red-50 text-red-800 border-red-100';
+  return 'bg-slate-50 text-slate-700 border-slate-100';
+}
+
+function ResultIcon({ status }: { status: string }) {
+  if (status === 'depreciated' || status === 'posted' || status === 'success') {
+    return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
+  }
+  if (status === 'failed') return <CircleAlert className="h-4 w-4 text-red-600" />;
+  return <SkipForward className="h-4 w-4 text-slate-500" />;
+}
 
 export function RunDepreciationModal({
   open,
@@ -27,6 +58,11 @@ export function RunDepreciationModal({
     [periods],
   );
 
+  const selectedPeriod = useMemo(
+    () => periods.find((p) => String(p.id) === periodId),
+    [periods, periodId],
+  );
+
   useEffect(() => {
     if (!open) return;
     queueMicrotask(() => {
@@ -36,8 +72,6 @@ export function RunDepreciationModal({
     });
   }, [open, openPeriods, periods]);
 
-  if (!open) return null;
-
   async function handleRun(e: React.FormEvent) {
     e.preventDefault();
     if (!periodId) return;
@@ -45,51 +79,122 @@ export function RunDepreciationModal({
     setResults(data);
   }
 
+  const depreciatedCount = results?.filter((r) => r.status === 'depreciated' || r.status === 'posted' || r.status === 'success').length ?? 0;
+  const skippedCount = results?.filter((r) => r.status === 'skipped').length ?? 0;
+  const failedCount = results?.filter((r) => r.status === 'failed').length ?? 0;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900">Run depreciation</h2>
-        <p className="text-sm text-gray-500">Posts straight-line depreciation for active assets in the selected period.</p>
-        {isLoading ? (
-          <div className="flex justify-center py-6"><LoadingSpinner /></div>
-        ) : (
-          <form onSubmit={(e) => void handleRun(e)} className="space-y-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Accounting period
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Run depreciation"
+      subtitle="Post this period’s wear-and-tear expense to the books."
+      size="lg"
+    >
+      {isLoading ? (
+        <div className="flex justify-center py-10"><LoadingSpinner /></div>
+      ) : (
+        <form onSubmit={(e) => void handleRun(e)} className="space-y-4">
+          <PipelineModalHero
+            icon={Play}
+            title="Straight-line depreciation"
+            description="For each active asset still above salvage value, posts one month of expense and lowers book value. Already-run assets in this period are skipped."
+            tone="indigo"
+          />
+
+          <PipelineFormSection
+            title="What this does"
+            icon={CalendarRange}
+            description="Accounting effect for the selected open period."
+          >
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                <span><span className="font-medium text-gray-800">Debit</span> Depreciation Expense (6300) — expense hits the income statement.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                <span><span className="font-medium text-gray-800">Credit</span> Accumulated Depreciation (1205) — reduces net book value on the balance sheet.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                <span>Amount per asset = (cost − salvage) ÷ useful life in months, capped so book value never falls below salvage.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                <span>Does not move cash, change who holds the asset in HR, or create an expense record under Expenses.</span>
+              </li>
+            </ul>
+          </PipelineFormSection>
+
+          <PipelineFormSection title="Period" icon={CalendarRange}>
+            <PipelineIconField
+              label="Accounting period"
+              icon={CalendarRange}
+              required
+              hint={selectedPeriod?.is_closed ? 'Closed periods cannot receive new depreciation posts.' : 'Prefer an open period that covers the month you are closing.'}
+            >
               <select
-                value={periodId}
-                onChange={(e) => setPeriodId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 required
+                value={periodId}
+                onChange={(e) => {
+                  setPeriodId(e.target.value);
+                  setResults(null);
+                }}
+                className={pipelineSelectClass}
               >
                 <option value="">Select period…</option>
                 {periods.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.id} disabled={p.is_closed}>
                     {p.name}{p.is_closed ? ' (closed)' : ' (open)'}
                   </option>
                 ))}
               </select>
-            </label>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>Close</Button>
-              <Button type="submit" loading={runDepreciation.isPending} disabled={!periodId}>Run</Button>
-            </div>
-          </form>
-        )}
-        {results ? (
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-100 text-sm">
-            {results.map((r) => (
-              <div key={`${r.asset_id}-${r.status}`} className="flex justify-between border-b border-gray-50 px-3 py-2 last:border-0">
-                <span>{r.asset_name}</span>
-                <span className="text-gray-600">
-                  {r.status}{r.amount != null ? ` · ${r.amount.toLocaleString()}` : ''}{r.error ? ` — ${r.error}` : ''}
-                </span>
+            </PipelineIconField>
+          </PipelineFormSection>
+
+          {results ? (
+            <PipelineFormSection
+              title="Run results"
+              icon={CheckCircle2}
+              description={`${depreciatedCount} posted · ${skippedCount} skipped · ${failedCount} failed`}
+            >
+              <div className="max-h-56 space-y-2 overflow-y-auto">
+                {results.map((r) => (
+                  <div
+                    key={`${r.asset_id}-${r.status}-${r.amount ?? 0}`}
+                    className={cn('flex items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm', resultTone(r.status))}
+                  >
+                    <div className="flex min-w-0 items-start gap-2">
+                      <ResultIcon status={r.status} />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{r.asset_name}</p>
+                        <p className="text-xs capitalize opacity-80">
+                          {r.status}
+                          {r.error ? ` — ${r.error}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="shrink-0 font-medium tabular-nums">
+                      {r.amount != null ? r.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '—'}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </div>
+            </PipelineFormSection>
+          ) : null}
+
+          <FormModalFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {results ? 'Done' : 'Cancel'}
+            </Button>
+            <Button type="submit" loading={runDepreciation.isPending} disabled={!periodId || Boolean(selectedPeriod?.is_closed)}>
+              {results ? 'Run again' : 'Run depreciation'}
+            </Button>
+          </FormModalFooter>
+        </form>
+      )}
+    </Modal>
   );
 }
 
@@ -102,140 +207,61 @@ export function FixedAssetSchedulePanel({
 }) {
   const { data: schedule = [], isLoading } = useFixedAssetSchedule(asset?.id ?? 0, Boolean(asset));
 
-  if (!asset) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-2xl space-y-4 rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Depreciation schedule</h2>
-            <p className="text-sm text-gray-500">{asset.name}</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
-        </div>
+    <Modal
+      isOpen={Boolean(asset)}
+      onClose={onClose}
+      title="Depreciation schedule"
+      subtitle={asset ? `${asset.name}${asset.asset_tag ? ` · ${asset.asset_tag}` : ''}` : undefined}
+      size="lg"
+    >
+      <div className="space-y-4">
+        <PipelineModalHero
+          icon={CalendarRange}
+          title="Posted depreciation history"
+          description="Each row is one period’s journal posting and the book value after that run."
+          tone="slate"
+        />
         {isLoading ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
-        ) : schedule.length === 0 ? (
-          <p className="text-sm text-gray-500">No depreciation entries yet. Run depreciation for an open period.</p>
+        ) : !asset || schedule.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+            No depreciation entries yet. Use Run depreciation for an open period.
+          </p>
         ) : (
           <ScheduleTable rows={schedule} />
         )}
+        <FormModalFooter>
+          <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+        </FormModalFooter>
       </div>
-    </div>
+    </Modal>
   );
 }
 
 function ScheduleTable({ rows }: { rows: DepreciationEntry[] }) {
   return (
-    <div className="max-h-80 overflow-auto rounded-lg border border-gray-100">
+    <div className="max-h-80 overflow-auto rounded-xl border border-gray-200">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+        <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
           <tr>
-            <th className="px-3 py-2">Period</th>
-            <th className="px-3 py-2 text-right">Amount</th>
-            <th className="px-3 py-2 text-right">Accumulated</th>
-            <th className="px-3 py-2 text-right">Book after</th>
+            <th className="px-4 py-2.5">Period</th>
+            <th className="px-4 py-2.5 text-right">Amount</th>
+            <th className="px-4 py-2.5 text-right">Accumulated</th>
+            <th className="px-4 py-2.5 text-right">Book after</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-100">
           {rows.map((row) => (
-            <tr key={row.id} className="border-t border-gray-50">
-              <td className="px-3 py-2">{row.period_id}</td>
-              <td className="px-3 py-2 text-right">{row.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-              <td className="px-3 py-2 text-right">{row.accumulated_depreciation.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-              <td className="px-3 py-2 text-right">{row.book_value_after.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+            <tr key={row.id} className="hover:bg-indigo-50/30">
+              <td className="px-4 py-2.5 text-gray-700">{row.period_id}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{row.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{row.accumulated_depreciation.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums font-medium">{row.book_value_after.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-export function AddFixedAssetForm({
-  onClose,
-  onSubmit,
-  loading,
-}: {
-  onClose: () => void;
-  onSubmit: (data: Partial<FixedAsset>) => void;
-  loading: boolean;
-}) {
-  const { data: accounts = [] } = useChartOfAccounts();
-  const assetAccounts = useMemo(
-    () => accounts.filter((a) => a.is_active && String(a.code).startsWith('12')),
-    [accounts],
-  );
-
-  const [name, setName] = useState('');
-  const [cost, setCost] = useState('');
-  const [salvageValue, setSalvageValue] = useState('');
-  const [usefulLife, setUsefulLife] = useState('');
-  const [purchaseDate, setPurchaseDate] = useState('');
-  const [accountId, setAccountId] = useState('');
-  const [category, setCategory] = useState('other');
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const resolvedAccount = accountId
-      ? Number(accountId)
-      : assetAccounts[0]?.id;
-    if (!resolvedAccount) return;
-    onSubmit({
-      name,
-      cost: Number(cost),
-      salvage_value: Number(salvageValue),
-      useful_life_months: Number(usefulLife),
-      purchase_date: purchaseDate,
-      account_id: resolvedAccount,
-      category: category as FixedAsset['category'],
-      status: 'active',
-      book_value: Number(cost),
-      notes: null,
-    });
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900">Add Fixed Asset</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Asset Name" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input label="Cost" type="number" step="0.01" min="0" value={cost} onChange={(e) => setCost(e.target.value)} required />
-          <Input label="Salvage Value" type="number" step="0.01" min="0" value={salvageValue} onChange={(e) => setSalvageValue(e.target.value)} required />
-          <Input label="Useful Life (months)" type="number" min="1" value={usefulLife} onChange={(e) => setUsefulLife(e.target.value)} required />
-          <Input label="Purchase Date" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
-          <label className="block text-sm font-medium text-gray-700">
-            Category
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-              <option value="laptop">Laptop</option>
-              <option value="phone">Phone</option>
-              <option value="furniture">Furniture</option>
-              <option value="vehicle">Vehicle</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-          <label className="block text-sm font-medium text-gray-700">
-            GL account (12xx)
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              required={!assetAccounts[0]}
-            >
-              <option value="">{assetAccounts[0] ? `Default: ${assetAccounts[0].code} ${assetAccounts[0].name}` : 'Select account…'}</option>
-              {assetAccounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
-              ))}
-            </select>
-          </label>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-            <Button type="submit" loading={loading} disabled={!assetAccounts.length && !accountId}>Create</Button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }

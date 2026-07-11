@@ -33,9 +33,12 @@ export const accountingKeys = {
   incomeStatement: (params?: ReportPeriodParams) => [...accountingKeys.all, 'income-statement', params?.cacheKey ?? 'current'] as const,
   balanceSheet: (params?: ReportPeriodParams) => [...accountingKeys.all, 'balance-sheet', params?.cacheKey ?? 'current'] as const,
   ratios: (params?: ReportPeriodParams) => [...accountingKeys.all, 'ratios', params?.cacheKey ?? 'current'] as const,
-  fixedAssets: (filters?: Record<string, string>) => [...accountingKeys.all, 'fixed-assets', filters] as const,
-  fixedAsset: (id: number) => [...accountingKeys.all, 'fixed-assets', id] as const,
-  fixedAssetSchedule: (id: number) => [...accountingKeys.all, 'fixed-assets', id, 'schedule'] as const,
+  fixedAssets: (filters?: Record<string, string>) =>
+    (filters
+      ? ([...accountingKeys.all, 'fixed-assets', filters] as const)
+      : ([...accountingKeys.all, 'fixed-assets'] as const)),
+  fixedAsset: (id: number) => [...accountingKeys.all, 'fixed-assets', 'detail', id] as const,
+  fixedAssetSchedule: (id: number) => [...accountingKeys.all, 'fixed-assets', 'detail', id, 'schedule'] as const,
   cashFlow: (params?: ReportPeriodParams) => [...accountingKeys.all, 'cash-flow', params?.cacheKey ?? 'current'] as const,
   equity: (params?: ReportPeriodParams) => [...accountingKeys.all, 'equity', params?.cacheKey ?? 'current'] as const,
   inventoryReconciliation: () => [...accountingKeys.all, 'inventory-reconciliation'] as const,
@@ -171,8 +174,11 @@ export function useFixedAssets(filters?: Record<string, string>) {
   return useQuery<FixedAsset[]>({
     queryKey: accountingKeys.fixedAssets(filters),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: FixedAsset[] }>(`${ACCOUNTING.FIXED_ASSETS}${params ? `?${params}` : ''}`);
-      return data.data ?? [];
+      const { data } = await axiosInstance.get(`${ACCOUNTING.FIXED_ASSETS}${params ? `?${params}` : ''}`);
+      if (Array.isArray(data)) return data as FixedAsset[];
+      if (Array.isArray(data?.data)) return data.data as FixedAsset[];
+      if (Array.isArray(data?.data?.data)) return data.data.data as FixedAsset[];
+      return [];
     },
   });
 }
@@ -209,6 +215,7 @@ export function useRunDepreciation() {
     },
     onSuccess: (results) => {
       qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+      qc.invalidateQueries({ queryKey: ['hr', 'company-assets'] });
       const ok = results.filter((r) => r.status === 'depreciated' || r.status === 'posted' || r.status === 'success').length;
       showToast('success', ok ? `Depreciation posted for ${ok} asset(s)` : 'Depreciation run completed');
     },
@@ -384,11 +391,52 @@ export function useCreateFixedAsset() {
       const { data } = await axiosInstance.post<{ data: FixedAsset }>(ACCOUNTING.FIXED_ASSETS, payload);
       return data.data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+    onSuccess: (asset) => {
+      if (!asset?.id) {
+        void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+        void qc.invalidateQueries({ queryKey: ['hr', 'company-assets'] });
+        showToast('success', 'Fixed asset created');
+        return;
+      }
+      qc.setQueriesData<FixedAsset[]>({ queryKey: accountingKeys.fixedAssets() }, (old) => {
+        if (!old) return [asset];
+        if (old.some((a) => a.id === asset.id)) {
+          return old.map((a) => (a.id === asset.id ? asset : a));
+        }
+        return [asset, ...old];
+      });
+      void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+      void qc.invalidateQueries({ queryKey: ['hr', 'company-assets'] });
       showToast('success', 'Fixed asset created');
     },
     onError: () => showToast('error', 'Failed to create fixed asset'),
+  });
+}
+
+export function useUpdateFixedAsset() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<FixedAsset, AxiosError, Partial<FixedAsset> & { id: number }>({
+    mutationFn: async ({ id, ...payload }) => {
+      const { data } = await axiosInstance.put<{ data: FixedAsset }>(ACCOUNTING.FIXED_ASSET(id), payload);
+      return data.data;
+    },
+    onSuccess: (asset) => {
+      qc.setQueriesData<FixedAsset[]>({ queryKey: accountingKeys.fixedAssets() }, (old) => {
+        if (!old) return [asset];
+        return old.map((a) => (a.id === asset.id ? { ...a, ...asset } : a));
+      });
+      qc.setQueryData(accountingKeys.fixedAsset(asset.id), asset);
+      void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+      void qc.invalidateQueries({ queryKey: accountingKeys.fixedAsset(asset.id) });
+      void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssetSchedule(asset.id) });
+      void qc.invalidateQueries({ queryKey: ['hr', 'company-assets'] });
+      showToast('success', 'Fixed asset updated');
+    },
+    onError: (err) => {
+      const msg = (err.response?.data as { message?: string })?.message ?? 'Failed to update fixed asset';
+      showToast('error', msg);
+    },
   });
 }
 

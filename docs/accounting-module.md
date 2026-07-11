@@ -31,7 +31,8 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | File | Purpose |
 |------|---------|
 | `src/renderer/modules/accounting/pages/ChartOfAccountsPage.tsx` | COA flat/tree view, add account form |
-| `src/renderer/modules/accounting/pages/JournalEntriesPage.tsx` | Entry list, multi-line entry editor with balance validation |
+| `src/renderer/modules/accounting/pages/JournalEntriesPage.tsx` | Entry list; opens new-entry modal |
+| `src/renderer/modules/accounting/pages/NewJournalEntryForm.tsx` | New journal entry modal — columnar lines with **one Amount + Debit/Credit side** (defaults: line 1 debit, line 2 credit); balance checked in minor units; Create enabled when header, accounts, amounts, and balance are ready |
 | `src/renderer/modules/accounting/pages/TrialBalancePage.tsx` | Trial balance report with period filter |
 | `src/renderer/modules/accounting/pages/IncomeStatementPage.tsx` | P&L statement with section drill-down |
 | `src/renderer/modules/accounting/pages/BalanceSheetPage.tsx` | Balance sheet with assets = liabilities + equity check |

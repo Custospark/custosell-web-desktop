@@ -13,7 +13,6 @@ import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
-import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
@@ -33,6 +32,7 @@ import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
 import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
 import GenerateSellerInvoiceFromPoModal from './ui/supply/GenerateSellerInvoiceFromPoModal';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
+import RejectPurchaseOrderModal from './ui/supply/RejectPurchaseOrderModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -121,17 +121,15 @@ function sellerPoRowActions(opts: {
 
 export default function IncomingOrdersPage() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
-  const { confirm } = useConfirm();
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('submitted');
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<PurchaseOrder | null>(null);
   const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
+  const [rejectPo, setRejectPo] = useState<PurchaseOrder | null>(null);
   const [invoicePo, setInvoicePo] = useState<PurchaseOrder | null>(null);
 
   const { data, isLoading, isFetching, refetch } = useIncomingPurchaseOrders(undefined, !isOffline);
   const acceptPo = useAcceptPurchaseOrder();
-  const rejectPo = useRejectPurchaseOrder();
+  const rejectPoMut = useRejectPurchaseOrder();
   const fulfillPo = useFulfillPurchaseOrder();
 
   const orders = useMemo(() => {
@@ -158,7 +156,7 @@ export default function IncomingOrdersPage() {
   }, [data]);
 
   const paginated = usePagination(orders, 15);
-  const busy = acceptPo.isPending || rejectPo.isPending || fulfillPo.isPending;
+  const busy = acceptPo.isPending || rejectPoMut.isPending || fulfillPo.isPending;
 
   return (
     <div className="space-y-4 p-4 md:p-6">
@@ -215,22 +213,14 @@ export default function IncomingOrdersPage() {
                 purchaseOrder={po}
                 partyLabel="Buyer"
                 partyName={po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}
-                onOpen={() => {
-                  setSelected(po);
-                  setRejectReason('');
-                }}
+                onOpen={() => setViewPo(po)}
                 actions={sellerPoRowActions({
                   po,
                   isOffline,
                   busy,
                   onView: () => setViewPo(po),
                   onAccept: () => void acceptPo.mutateAsync(po.id),
-                  onReject: async () => {
-                    const reason = window.prompt(`Reason for rejecting ${po.po_number}:`);
-                    if (reason && reason.trim()) {
-                      await rejectPo.mutateAsync({ id: po.id, rejection_reason: reason.trim() });
-                    }
-                  },
+                  onReject: () => setRejectPo(po),
                   onFulfill: () => void fulfillPo.mutateAsync(po.id),
                   onInvoice: () => setInvoicePo(po),
                 })}
@@ -242,10 +232,7 @@ export default function IncomingOrdersPage() {
             <Table
               data={paginated.data}
               rowKey={(po) => po.id}
-              onRowClick={(po) => {
-                setSelected(po);
-                setRejectReason('');
-              }}
+              onRowClick={(po) => setViewPo(po)}
               columns={[
                 {
                   key: 'po_number',
@@ -278,12 +265,7 @@ export default function IncomingOrdersPage() {
                         busy,
                         onView: () => setViewPo(po),
                         onAccept: () => void acceptPo.mutateAsync(po.id),
-                        onReject: async () => {
-                          const reason = window.prompt(`Reason for rejecting ${po.po_number}:`);
-                          if (reason && reason.trim()) {
-                            await rejectPo.mutateAsync({ id: po.id, rejection_reason: reason.trim() });
-                          }
-                        },
+                        onReject: () => setRejectPo(po),
                         onFulfill: () => void fulfillPo.mutateAsync(po.id),
                         onInvoice: () => setInvoicePo(po),
                       })}
@@ -307,116 +289,20 @@ export default function IncomingOrdersPage() {
         </>
       )}
 
-      {selected ? (
-        <Card className="space-y-3 p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <h2 className="font-semibold text-gray-900">{selected.po_number}</h2>
-              <p className="truncate text-sm text-gray-600">
-                Buyer: {selected.buyer_business?.name ?? selected.buyer_business_id}
-              </p>
-            </div>
-            {purchaseOrderStatusBadge(selected.status)}
-          </div>
-          <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200">
-            {(selected.items ?? []).map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                <span className="min-w-0 truncate">{item.product_name}</span>
-                <span className="shrink-0 text-gray-600">
-                  {item.quantity} × {formatCurrency(Number(item.unit_price))}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {selected.status === 'submitted' ? (
-            <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <label className="block text-xs font-medium text-gray-700" htmlFor="reject_reason">
-                Rejection reason (required to reject)
-              </label>
-              <textarea
-                id="reject_reason"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                rows={2}
-                value={rejectReason}
-                disabled={isOffline || busy}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Explain why you cannot fulfill this order"
-              />
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap">
-                <Button
-                  type="button"
-                  disabled={isOffline || busy}
-                  onClick={() => void acceptPo.mutateAsync(selected.id)}
-                  className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
-                >
-                  <CheckCircle2 className="h-4 w-4" /> Accept
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isOffline || busy || !rejectReason.trim()}
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: 'Reject purchase order?',
-                      message: `Reject ${selected.po_number}? The buyer will see your reason.`,
-                      confirmText: 'Reject',
-                      cancelText: 'Keep',
-                      variant: 'danger',
-                    });
-                    if (!ok) return;
-                    void rejectPo.mutateAsync({ id: selected.id, rejection_reason: rejectReason.trim() });
-                  }}
-                  className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
-                >
-                  <Ban className="h-4 w-4" /> Reject
-                </Button>
-              </div>
-            </div>
-          ) : null}
-          {selected.status === 'accepted' ? (
-            <div className="flex justify-stretch sm:justify-end">
-              <Button
-                type="button"
-                disabled={isOffline || busy}
-                loading={fulfillPo.isPending}
-                onClick={() => void fulfillPo.mutateAsync(selected.id)}
-                className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
-              >
-                <PackageCheck className="h-4 w-4" /> Fulfill & stock out
-              </Button>
-            </div>
-          ) : null}
-          {selected.status === 'fulfilled' || selected.status === 'received' ? (
-            <div className="flex justify-stretch sm:justify-end">
-              <Button
-                type="button"
-                disabled={isOffline}
-                onClick={() => setInvoicePo(selected)}
-                className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
-              >
-                <FileText className="h-4 w-4" /> Generate invoice
-              </Button>
-            </div>
-          ) : null}
-          <div className="flex justify-stretch sm:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setSelected(null)}
-              className="w-full sm:w-auto"
-            >
-              Close detail
-            </Button>
-          </div>
-        </Card>
-      ) : null}
-
       {viewPo ? (
         <ViewPurchaseOrderModal
           purchaseOrder={viewPo}
           isOpen={!!viewPo}
           onClose={() => setViewPo(null)}
           role="seller"
+        />
+      ) : null}
+
+      {rejectPo ? (
+        <RejectPurchaseOrderModal
+          purchaseOrder={rejectPo}
+          isOpen={!!rejectPo}
+          onClose={() => setRejectPo(null)}
         />
       ) : null}
 

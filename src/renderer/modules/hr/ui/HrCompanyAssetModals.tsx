@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, UserRound } from 'lucide-react';
+import { Package, Pencil, UserRound } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { useHrEmployees } from '../api/useHrQueries';
@@ -10,6 +10,7 @@ import {
   useCreateHrCompanyAsset,
   useReturnHrCompanyAsset,
   useTransferHrCompanyAsset,
+  useUpdateHrCompanyAssetCustody,
   type CreateCompanyAssetPayload,
 } from '../api/useHrCompanyAssetsQueries';
 import {
@@ -175,6 +176,163 @@ export function AddCompanyAssetModal({
         <HrModalFooter>
           <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
           <Button type="submit" loading={createAsset.isPending}>Create asset</Button>
+        </HrModalFooter>
+      </form>
+    </Modal>
+  );
+}
+
+function toDateInput(value?: string | null) {
+  if (!value) return '';
+  return value.slice(0, 10);
+}
+
+function assetToEditForm(asset: FixedAsset): CreateCompanyAssetPayload {
+  return {
+    name: asset.name,
+    cost: asset.cost,
+    salvage_value: asset.salvage_value,
+    useful_life_months: asset.useful_life_months,
+    purchase_date: toDateInput(asset.purchase_date),
+    category: asset.category ?? 'other',
+    asset_tag: asset.asset_tag ?? '',
+    serial_number: asset.serial_number ?? '',
+    location: asset.location ?? '',
+    condition: asset.condition ?? 'good',
+    notes: asset.notes ?? '',
+  };
+}
+
+export function EditCompanyAssetModal({
+  asset,
+  onClose,
+}: {
+  asset: FixedAsset;
+  onClose: () => void;
+}) {
+  const updateAsset = useUpdateHrCompanyAssetCustody();
+  const [form, setForm] = useState(() => assetToEditForm(asset));
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await updateAsset.mutateAsync({
+      id: asset.id,
+      name: form.name,
+      cost: form.cost,
+      salvage_value: form.salvage_value,
+      useful_life_months: form.useful_life_months,
+      purchase_date: form.purchase_date,
+      category: form.category,
+      condition: form.condition,
+      asset_tag: form.asset_tag || null,
+      serial_number: form.serial_number || null,
+      location: form.location || null,
+      notes: form.notes || null,
+    });
+    onClose();
+  }
+
+  return (
+    <Modal isOpen onClose={onClose} title="Edit company asset" subtitle="Update equipment details for custody and accounting." size="lg">
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <HrModalHero icon={Pencil} title="Edit asset" description={`${asset.name}${asset.asset_tag ? ` · ${asset.asset_tag}` : ''}`} tone="indigo" />
+        <HrFormSection title="Basics" icon={Package}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <HrIconField label="Name" icon={Package} required>
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Dell Latitude 5540"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Category" icon={Package}>
+              <select value={form.category ?? 'other'} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as AssetCategory }))} className={hrSelectClass}>
+                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </HrIconField>
+            <HrIconField label="Cost" icon={Package} required>
+              <input
+                required
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.cost || ''}
+                onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))}
+                placeholder="e.g. 3200000"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Salvage value (worth at end of life)" icon={Package} required>
+              <input
+                required
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.salvage_value || ''}
+                onChange={(e) => setForm((f) => ({ ...f, salvage_value: Number(e.target.value) }))}
+                placeholder="e.g. 200000"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Useful life (months)" icon={Package} required>
+              <input
+                required
+                type="number"
+                min={1}
+                value={form.useful_life_months || ''}
+                onChange={(e) => setForm((f) => ({ ...f, useful_life_months: Number(e.target.value) }))}
+                placeholder="e.g. 36"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Purchase date" icon={Package} required>
+              <input required type="date" value={form.purchase_date} onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))} className={hrInputClass} />
+            </HrIconField>
+            <HrIconField label="Asset tag" icon={Package}>
+              <input
+                value={form.asset_tag ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, asset_tag: e.target.value }))}
+                placeholder="e.g. LAP-0042"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Serial number" icon={Package}>
+              <input
+                value={form.serial_number ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, serial_number: e.target.value }))}
+                placeholder="e.g. SN-5Y8K2L9P"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Location" icon={Package}>
+              <input
+                value={form.location ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                placeholder="e.g. Kampala HQ · Desk 12"
+                className={hrInputClass}
+              />
+            </HrIconField>
+            <HrIconField label="Condition" icon={Package}>
+              <select value={form.condition ?? 'good'} onChange={(e) => setForm((f) => ({ ...f, condition: e.target.value as AssetCondition }))} className={hrSelectClass}>
+                {CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </HrIconField>
+          </div>
+          <HrIconField label="Notes" icon={Package}>
+            <textarea
+              rows={2}
+              value={form.notes ?? ''}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder="e.g. Includes charger and laptop bag"
+              className={hrInputClass}
+            />
+          </HrIconField>
+        </HrFormSection>
+        <HrModalFooter>
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={updateAsset.isPending}>Save changes</Button>
         </HrModalFooter>
       </form>
     </Modal>

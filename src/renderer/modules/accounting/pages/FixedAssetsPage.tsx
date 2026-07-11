@@ -3,16 +3,17 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
-import { useFixedAssets, useCreateFixedAsset } from '../api/AccountingQueries';
+import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
+import { useFixedAssets } from '../api/AccountingQueries';
 import type { FixedAsset } from '../api/AccountingTypes';
-import { Building2, Plus, Play, CalendarRange } from 'lucide-react';
+import { Building2, Plus, Play, CalendarRange, Pencil } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
-  AddFixedAssetForm,
   FixedAssetSchedulePanel,
   RunDepreciationModal,
 } from './FixedAssetDepreciationPanels';
+import { FixedAssetFormModal } from './FixedAssetFormModal';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-700',
@@ -22,13 +23,19 @@ const statusColors: Record<string, string> = {
 
 export default function FixedAssetsPage() {
   const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<FixedAsset | null>(null);
   const [runOpen, setRunOpen] = useState(false);
   const [scheduleAsset, setScheduleAsset] = useState<FixedAsset | null>(null);
-  const { data: assets, isLoading } = useFixedAssets();
-  const createAsset = useCreateFixedAsset();
+  const { data: assets = [], isLoading } = useFixedAssets({ per_page: '500' });
+  const paginated = usePagination(assets, 15);
 
   const columns = [
     { key: 'name', header: 'Name', sortable: true },
+    {
+      key: 'tag',
+      header: 'Tag',
+      render: (item: FixedAsset) => item.asset_tag ?? <span className="text-gray-400">—</span>,
+    },
     {
       key: 'assignee',
       header: 'Assignee',
@@ -73,9 +80,14 @@ export default function FixedAssetsPage() {
       key: 'actions',
       header: '',
       render: (item: FixedAsset) => (
-        <Button size="sm" variant="outline" onClick={() => setScheduleAsset(item)} className="inline-flex items-center gap-1">
-          <CalendarRange className="h-3.5 w-3.5" /> Schedule
-        </Button>
+        <div className="flex flex-wrap justify-end gap-1">
+          <Button size="sm" variant="outline" onClick={() => setEditing(item)} className="inline-flex items-center gap-1">
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setScheduleAsset(item)} className="inline-flex items-center gap-1">
+            <CalendarRange className="h-3.5 w-3.5" /> Schedule
+          </Button>
+        </div>
       ),
     },
   ];
@@ -90,7 +102,7 @@ export default function FixedAssetsPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Fixed Assets</h1>
-              <p className="text-sm text-gray-500">Financial register, depreciation, and schedules</p>
+              <p className="text-sm text-gray-500">Shared register with HR Company Assets — depreciation and book value</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -104,17 +116,26 @@ export default function FixedAssetsPage() {
         </div>
       </Card>
 
-      <Table columns={columns} data={assets ?? []} loading={isLoading} rowKey={(item) => item.id} />
+      <div>
+        <Table columns={columns} data={paginated.data} loading={isLoading} rowKey={(item) => item.id} />
+        {!isLoading ? (
+          <Pagination
+            currentPage={paginated.page}
+            totalPages={paginated.totalPages}
+            totalItems={paginated.totalItems}
+            pageSize={paginated.pageSize}
+            onPageChange={paginated.setPage}
+            onPageSizeChange={paginated.setPageSize}
+          />
+        ) : null}
+      </div>
 
-      {formOpen && (
-        <AddFixedAssetForm
-          onClose={() => setFormOpen(false)}
-          onSubmit={(data) => {
-            createAsset.mutate(data, { onSuccess: () => setFormOpen(false) });
-          }}
-          loading={createAsset.isPending}
-        />
-      )}
+      <FixedAssetFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <FixedAssetFormModal
+        open={Boolean(editing)}
+        asset={editing}
+        onClose={() => setEditing(null)}
+      />
 
       <RunDepreciationModal open={runOpen} onClose={() => setRunOpen(false)} />
       <FixedAssetSchedulePanel asset={scheduleAsset} onClose={() => setScheduleAsset(null)} />

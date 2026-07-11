@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightLeft, Package, Plus, Search, Undo2, UserPlus } from 'lucide-react';
+import { ArrowRightLeft, Package, Pencil, Plus, Search, Undo2, UserPlus } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
 import type { FixedAsset } from '../../accounting/api/AccountingTypes';
 import { useHrCompanyAssets } from '../api/useHrCompanyAssetsQueries';
 import { HrEmptyState, HrPageHeader } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
-import { AddCompanyAssetModal, CATEGORIES, CustodyAssetModal } from '../ui/HrCompanyAssetModals';
+import { AddCompanyAssetModal, CATEGORIES, CustodyAssetModal, EditCompanyAssetModal } from '../ui/HrCompanyAssetModals';
 
 type CustodyAction = 'assign' | 'transfer' | 'return';
 
@@ -24,15 +25,18 @@ export default function HrCompanyAssetsPage() {
   const [category, setCategory] = useState('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<FixedAsset | null>(null);
   const [custody, setCustody] = useState<{ asset: FixedAsset; action: CustodyAction } | null>(null);
 
   const filters = useMemo(() => ({
     search: search.trim() || undefined,
     category: category || undefined,
     unassigned: unassignedOnly ? '1' : undefined,
+    per_page: 500,
   }), [search, category, unassignedOnly]);
 
   const { data: assets = [], isLoading } = useHrCompanyAssets(filters);
+  const paginated = usePagination(assets, 15);
 
   return (
     <div className="space-y-5">
@@ -103,7 +107,7 @@ export default function HrCompanyAssetsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {assets.map((asset) => {
+              {paginated.data.map((asset) => {
                 const name = assigneeName(asset);
                 return (
                   <tr key={asset.id} className="transition-colors hover:bg-indigo-50/40">
@@ -134,6 +138,9 @@ export default function HrCompanyAssetsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
+                        <Button size="sm" variant="outline" onClick={() => setEditing(asset)} className="inline-flex items-center gap-1">
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </Button>
                         {!asset.assigned_employee_id ? (
                           <Button size="sm" variant="outline" onClick={() => setCustody({ asset, action: 'assign' })} className="inline-flex items-center gap-1">
                             <UserPlus className="h-3.5 w-3.5" /> Assign
@@ -155,10 +162,23 @@ export default function HrCompanyAssetsPage() {
               })}
             </tbody>
           </table>
+          <div className="px-4 pb-3">
+            <Pagination
+              currentPage={paginated.page}
+              totalPages={paginated.totalPages}
+              totalItems={paginated.totalItems}
+              pageSize={paginated.pageSize}
+              onPageChange={paginated.setPage}
+              onPageSizeChange={paginated.setPageSize}
+            />
+          </div>
         </div>
       )}
 
       <AddCompanyAssetModal open={addOpen} onClose={() => setAddOpen(false)} />
+      {editing ? (
+        <EditCompanyAssetModal key={editing.id} asset={editing} onClose={() => setEditing(null)} />
+      ) : null}
       <CustodyAssetModal
         asset={custody?.asset ?? null}
         action={custody?.action ?? null}

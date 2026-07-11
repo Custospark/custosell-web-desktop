@@ -32,9 +32,12 @@ HR-style surfaces in `ui/ForecastingSurface.tsx` + `forecastingSurfaceStyles.ts`
 
 `Product.is_recurring` + optional `billing_interval` on create/update (ProductFormDrawer). Enables SaaS KPI mode when recurring products exist.
 
-## Failure states
+## Accounting integration
+
+Cash and unpaid payroll liabilities come from **GL closing balances** (1101/1102 and 2110–2112) for the selected accounting period — the same source as payroll affordability. Payroll burn is reused from `HrPayrollAffordabilityService` (no duplicate PAYE math). Month ladder and BvA variance are covered by `ForecastingAccountingCorrectnessTest` (exact numeric assertions, not structure-only).
 
 | Case | Behavior |
+|------|----------|
 |------|----------|
 | Overview / KPI load fail | Empty state + Retry |
 | No expense categories | BvA empty state → Expense categories CTA |

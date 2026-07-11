@@ -165,6 +165,23 @@ export function useCancelPurchaseOrder() {
   });
 }
 
+export function useDeletePurchaseOrder() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<void, AxiosError<ApiError>, { id: number; poNumber?: string }>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async ({ id }) => {
+      await axiosInstance.delete(PURCHASE_ORDERS.DELETE(id));
+    },
+    onSuccess: (_data, vars) => {
+      invalidatePoQueries(qc);
+      showToast('success', vars.poNumber ? `PO ${vars.poNumber} deleted` : 'Purchase order deleted');
+    },
+    onError: (e) => showToast('error', apiError(e, 'Failed to delete purchase order')),
+  });
+}
+
 export function useAcceptPurchaseOrder() {
   const qc = useQueryClient();
   const { showToast } = useToast();
@@ -177,7 +194,14 @@ export function useAcceptPurchaseOrder() {
     },
     onSuccess: (po) => {
       invalidatePoQueries(qc);
-      showToast('success', `PO ${po.po_number} accepted`);
+      qc.invalidateQueries({ queryKey: ['invoices'] });
+      const inv = po.invoice?.invoice_number;
+      showToast(
+        'success',
+        inv
+          ? `PO ${po.po_number} accepted — invoice ${inv} created`
+          : `PO ${po.po_number} accepted`,
+      );
     },
     onError: (e) => showToast('error', apiError(e, 'Failed to accept purchase order')),
   });

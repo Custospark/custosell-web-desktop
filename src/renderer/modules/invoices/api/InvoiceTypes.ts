@@ -15,6 +15,12 @@ export interface Invoice {
   customer_id: number | null;
   sale_id?: number | null;
   estimate_id?: number | null;
+  purchase_order_id?: number | null;
+  buyer_business_id?: number | null;
+  /** issued = we sold; received = PO invoice from a supplier */
+  direction?: 'issued' | 'received';
+  seller_business?: { id: number; name: string } | null;
+  purchase_order?: { id: number; po_number: string; status: string } | null;
   customer?: { id: number; name: string; phone?: string; email?: string | null } | null;
   issue_date: string;
   due_date: string;

@@ -12,22 +12,22 @@ interface ViewPurchaseOrderModalProps {
 }
 
 const BUYER_ACTION: Record<string, string> = {
-  draft: 'You can edit or submit this order. The seller cannot see it until you submit.',
+  draft: 'You can edit, submit, or delete this draft. The seller cannot see it until you submit.',
   submitted: 'Waiting for the seller to review. You can cancel if needed.',
-  accepted: 'The seller has accepted. Awaiting them to prepare and ship the items.',
-  rejected: 'The seller declined your order. Review their reason below.',
-  fulfilled: 'Items are ready. Confirm receipt to add them to your stock.',
-  received: 'Items added to your stock. You can generate an invoice from this order.',
+  accepted: 'The seller accepted and created an invoice. Track payment under Invoices; await fulfillment.',
+  rejected: 'The seller declined your order. You can delete it after reviewing their reason.',
+  fulfilled: 'Items are ready. Confirm receipt to add them to your stock. Invoice and receipts are under Invoices.',
+  received: 'Items are in your stock. Open Invoices for the linked invoice and payment receipts.',
   cancelled: 'This order was cancelled. No further action needed.',
 };
 
 const SELLER_ACTION: Record<string, string> = {
   draft: 'Not visible yet — the buyer is still composing this order.',
-  submitted: 'Review the order. You can accept or reject it.',
-  accepted: 'You accepted this order. Prepare and ship the items, then mark as fulfilled.',
-  rejected: 'You rejected this order. The buyer can see your reason.',
-  fulfilled: 'Items deducted from your stock. Waiting for the buyer to confirm receipt.',
-  received: 'The buyer confirmed receipt. This order is complete.',
+  submitted: 'Review the order. Accepting creates an invoice for the buyer automatically.',
+  accepted: 'Invoice created. Prepare and ship the items, then mark as fulfilled. Manage payments under Invoices.',
+  rejected: 'You rejected this order. You can delete it from your list.',
+  fulfilled: 'Stock deducted. Waiting for the buyer to confirm receipt. Payments stay under Invoices.',
+  received: 'The buyer confirmed receipt. This order is complete — keep managing payment under Invoices.',
   cancelled: 'The buyer cancelled this order. No further action needed.',
 };
 

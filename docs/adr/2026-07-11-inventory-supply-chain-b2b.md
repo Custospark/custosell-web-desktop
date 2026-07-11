@@ -14,7 +14,7 @@ Businesses need a way to buy stock from other Custosell tenants without leaving 
 2. **Opt-in catalog** — sellers set `is_open_for_supply` on the business and `listed_for_supply` (+ supply price / min qty) per product. Marketplace never exposes unlisted inventory.
 3. **Purchase-order lifecycle** — `draft → submitted → accepted|rejected → fulfilled → received` (or `cancelled` from draft/submitted).
 4. **Online only** — no IndexedDB / mutation-queue path. UI shows “Supply chain requires connection” when `systemStatus === 'offline'`.
-5. **Payments off-platform** — `payment_status` / notes only in v1.
+5. **Payments off-platform for v1 notes** — superseded for PO-linked billing: accepting a PO auto-creates a shared invoice; payments/receipts live under Invoices (see [2026-07-11-po-accept-auto-invoice.md](./2026-07-11-po-accept-auto-invoice.md)).
 6. **Stock effects** — seller fulfill → stock out (`sale` movement); buyer receive → map lines to local products → stock in (`purchase`). No silent catalog clone.
 7. **Naming** — buyer UI: **Purchase orders**; seller UI: **Incoming orders**. Sales **Orders** unchanged.
 
@@ -30,7 +30,8 @@ Businesses need a way to buy stock from other Custosell tenants without leaving 
 
 - `GET /marketplace/businesses`, `GET /marketplace/businesses/{id}/products`
 - `PATCH /businesses/supply-profile`, `PATCH /products/{id}/supply-listing`
-- `GET|POST /purchase-orders`, submit/cancel/accept/reject/fulfill/receive, `GET /purchase-orders/incoming`
+- `GET|POST /purchase-orders`, submit/cancel/**delete**/accept/reject/fulfill/receive, `GET /purchase-orders/incoming`
+- Accept creates and sends a seller invoice linked to the PO (`purchase_order_id`, `buyer_business_id`)
 
 ## Failure states
 

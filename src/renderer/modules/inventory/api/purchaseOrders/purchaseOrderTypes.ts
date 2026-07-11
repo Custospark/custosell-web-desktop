@@ -9,6 +9,15 @@ export type PurchaseOrderStatus =
 
 export type PurchaseOrderPaymentStatus = 'unpaid' | 'partial' | 'paid';
 
+export interface PurchaseOrderInvoiceRef {
+  id: number;
+  invoice_number: string;
+  status: string;
+  amount_paid: string | number;
+  total_amount: string | number;
+  payments_count?: number | null;
+}
+
 export interface PurchaseOrderBusinessRef {
   id: number;
   name: string;
@@ -50,6 +59,8 @@ export interface PurchaseOrder {
   total_amount: string | number;
   notes: string | null;
   rejection_reason: string | null;
+  invoice_id?: number | null;
+  invoice?: PurchaseOrderInvoiceRef | null;
   items?: PurchaseOrderItem[];
   submitted_at: string | null;
   accepted_at: string | null;

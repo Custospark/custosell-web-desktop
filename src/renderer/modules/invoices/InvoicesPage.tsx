@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { Table } from '../../shared/components/tables/Table';
@@ -13,94 +13,26 @@ import EditInvoiceDraftPanel from './EditInvoiceDraftPanel';
 import RecordPaymentModal from './RecordPaymentModal';
 import { viewInvoicePdf, downloadInvoicePdf } from './useInvoicePdf';
 import {
-  FileText, Plus, Send, Download, Trash2, DollarSign, Search,
-  ShoppingCart, ArrowRight, List, Eye, Info, AlertCircle, Pencil, Receipt, Mail,
+  FileText, Plus, Search,
+  ShoppingCart, ArrowRight, List, Info, AlertCircle,
 } from 'lucide-react';
 import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEmailModal';
-import { EmailSentCountBadge, emailSentLabel } from '../../shared/components/email/EmailSentCountBadge';
 import { cn } from '../../shared/utils/cn';
-import { formatShiftDate } from '../../shared/utils/formatDateTime';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
+import { balanceDue, displayStatus, invoicePartyLabel, isOverdue, isReceivedInvoice } from './invoiceListHelpers';
+import { buildInvoiceColumns } from './buildInvoiceColumns';
 
 type InvoiceView = 'list' | 'create' | 'edit';
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-700 ring-1 ring-gray-200',
-  sent: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-  paid: 'bg-green-50 text-green-700 ring-1 ring-green-200',
-  partially_paid: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200',
-  cancelled: 'bg-red-50 text-red-700 ring-1 ring-red-200',
-  overdue: 'bg-red-100 text-red-800 ring-1 ring-red-300 font-semibold',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  paid: 'Paid',
-  partially_paid: 'Partially Paid',
-  cancelled: 'Cancelled',
-  overdue: 'Overdue',
-};
-
-function balanceDue(inv: Invoice): number {
-  return Math.max(0, inv.total_amount - (inv.amount_paid || 0));
-}
-
-function isOverdue(inv: Invoice): boolean {
-  if (inv.status === 'paid' || inv.status === 'cancelled') return false;
-  if (balanceDue(inv) <= 0) return false;
-  const due = new Date(inv.due_date);
-  due.setHours(23, 59, 59, 999);
-  return due.getTime() < Date.now();
-}
-
-function displayStatus(inv: Invoice): string {
-  if (isOverdue(inv) && inv.status !== 'overdue') return 'overdue';
-  return inv.status;
-}
-
-function IconAction({
-  title,
-  onClick,
-  loading,
-  disabled,
-  children,
-  className,
-}: {
-  title: string;
-  onClick: () => void;
-  loading?: boolean;
-  disabled?: boolean;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      disabled={disabled || loading}
-      onClick={onClick}
-      className={cn(
-        'inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors',
-        'hover:bg-gray-100 hover:text-gray-800 disabled:opacity-40 disabled:pointer-events-none',
-        className,
-      )}
-    >
-      {loading ? (
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-      ) : children}
-    </button>
-  );
-}
-
 export default function InvoicesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<InvoiceView>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [paymentModal, setPaymentModal] = useState<Invoice | null>(null);
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'issued' | 'received'>('all');
+  const [localPaymentModal, setLocalPaymentModal] = useState<Invoice | null>(null);
   const [emailTarget, setEmailTarget] = useState<Invoice | null>(null);
   const [busyAction, setBusyAction] = useState<{ id: number; type: string } | null>(null);
 
@@ -118,25 +50,59 @@ export default function InvoicesPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const poParam = searchParams.get('po');
     return sorted.filter((inv) => {
       const status = displayStatus(inv);
       if (statusFilter && status !== statusFilter) return false;
-      if (q && !inv.invoice_number.toLowerCase().includes(q) && !(inv.customer?.name ?? '').toLowerCase().includes(q)) {
+      if (directionFilter === 'issued' && isReceivedInvoice(inv)) return false;
+      if (directionFilter === 'received' && !isReceivedInvoice(inv)) return false;
+      if (poParam && String(inv.purchase_order_id ?? '') !== poParam) return false;
+      if (
+        q
+        && !inv.invoice_number.toLowerCase().includes(q)
+        && !invoicePartyLabel(inv).toLowerCase().includes(q)
+        && !(inv.purchase_order?.po_number ?? '').toLowerCase().includes(q)
+      ) {
         return false;
       }
       return true;
     });
-  }, [sorted, search, statusFilter]);
+  }, [sorted, search, statusFilter, directionFilter, searchParams]);
 
   const paginated = usePagination(filtered, 15);
 
   const stats = useMemo(() => {
     const list = invoices ?? [];
-    const drafts = list.filter((i) => i.status === 'draft').length;
+    const drafts = list.filter((i) => i.status === 'draft' && !isReceivedInvoice(i)).length;
     const outstanding = list.reduce((sum, i) => sum + balanceDue(i), 0);
     const overdueCount = list.filter((i) => isOverdue(i)).length;
     return { total: list.length, drafts, outstanding, overdueCount };
   }, [invoices]);
+
+  /** Deep-link from PO pages: ?invoice=&focus=payments */
+  const urlPaymentInvoice = useMemo(() => {
+    if (searchParams.get('focus') !== 'payments') return null;
+    const invoiceId = Number(searchParams.get('invoice') || 0);
+    if (!invoiceId || !invoices?.length) return null;
+    return invoices.find((inv) => inv.id === invoiceId) ?? null;
+  }, [invoices, searchParams]);
+
+  const paymentModal = localPaymentModal ?? urlPaymentInvoice;
+
+  const clearInvoiceDeepLink = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('invoice');
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const clearPoFilter = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('po');
+    next.delete('invoice');
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handlePdfAction = useCallback(async (invoiceId: number, type: 'view' | 'download') => {
     setBusyAction({ id: invoiceId, type });
@@ -159,207 +125,21 @@ export default function InvoicesPage() {
     fn();
   }, []);
 
-  const columns = useMemo(() => [
-    {
-      key: 'invoice_number',
-      header: 'Invoice #',
-      render: (item: Invoice) => (
-        <span className="font-mono text-sm font-semibold text-gray-900">{item.invoice_number}</span>
-      ),
-    },
-    {
-      key: 'customer',
-      header: 'Customer',
-      render: (item: Invoice) => (
-        <span className={cn('text-sm', item.customer?.name ? 'text-gray-800' : 'text-gray-400 italic')}>
-          {item.customer?.name ?? 'Walk-in'}
-        </span>
-      ),
-    },
-    {
-      key: 'issue_date',
-      header: 'Issued',
-      render: (item: Invoice) => (
-        <span className="text-sm text-gray-600 tabular-nums">{formatShiftDate(item.issue_date)}</span>
-      ),
-    },
-    {
-      key: 'due_date',
-      header: 'Due',
-      render: (item: Invoice) => {
-        const overdue = isOverdue(item);
-        return (
-          <span className={cn('text-sm tabular-nums', overdue ? 'text-red-600 font-medium' : 'text-gray-600')}>
-            {formatShiftDate(item.due_date)}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (item: Invoice) => {
-        const status = displayStatus(item);
-        return (
-          <div className="min-w-[7rem]">
-            <span className={cn(
-              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-              STATUS_STYLES[status] || STATUS_STYLES.draft,
-            )}>
-              {STATUS_LABELS[status] || status}
-            </span>
-            {item.status === 'draft' && (
-              <p className="text-[10px] text-gray-400 mt-1 leading-tight">Send to post to accounting</p>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: 'total_amount',
-      header: 'Total',
-      align: 'right' as const,
-      render: (item: Invoice) => (
-        <span className="text-sm font-medium text-gray-900 tabular-nums">{formatCurrency(item.total_amount)}</span>
-      ),
-    },
-    {
-      key: 'amount_paid',
-      header: 'Paid',
-      align: 'right' as const,
-      render: (item: Invoice) => (
-        <span className="text-sm text-gray-600 tabular-nums">{formatCurrency(item.amount_paid || 0)}</span>
-      ),
-    },
-    {
-      key: 'balance_due',
-      header: 'Balance',
-      align: 'right' as const,
-      render: (item: Invoice) => {
-        const due = balanceDue(item);
-        return (
-          <span className={cn(
-            'text-sm font-semibold tabular-nums',
-            due > 0 ? 'text-red-600' : 'text-green-600',
-          )}>
-            {formatCurrency(due)}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      align: 'right' as const,
-      render: (item: Invoice) => {
-        const rowBusy = busyAction?.id === item.id;
-        const canPay = item.status === 'sent' || item.status === 'partially_paid' || isOverdue(item);
-        const paymentCount = item.payments?.length ?? 0;
-        const emailSentCount = item.email_sent_count ?? 0;
-
-        return (
-          <div
-            className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50/80 p-0.5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {item.status === 'draft' && (
-              <>
-                <IconAction
-                  title="Edit draft"
-                  disabled={busyAction !== null}
-                  onClick={() => {
-                    setEditingId(item.id);
-                    setView('edit');
-                  }}
-                  className="text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </IconAction>
-                <IconAction
-                  title="Send invoice (posts to accounting)"
-                  loading={rowBusy && busyAction?.type === 'send'}
-                  disabled={busyAction !== null && !rowBusy}
-                  onClick={() => runRowAction(item.id, 'send', () => {
-                    sendInvoice.mutate(item.id, { onSettled: () => setBusyAction(null) });
-                  })}
-                  className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </IconAction>
-              </>
-            )}
-            {(canPay && balanceDue(item) > 0) || ((item.amount_paid || 0) > 0 && item.status !== 'draft') ? (
-              <IconAction
-                title={
-                  paymentCount > 0
-                    ? `Payment history (${paymentCount})`
-                    : balanceDue(item) > 0
-                      ? 'Payments — record or view history'
-                      : 'Payment history & receipts'
-                }
-                disabled={busyAction !== null}
-                onClick={() => setPaymentModal(item)}
-                className="text-green-600 hover:bg-green-50 hover:text-green-700"
-              >
-                <span className="relative inline-flex">
-                  {balanceDue(item) > 0 ? (
-                    <DollarSign className="w-3.5 h-3.5" />
-                  ) : (
-                    <Receipt className="w-3.5 h-3.5" />
-                  )}
-                  {paymentCount > 0 && (
-                    <span className="absolute -top-2 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
-                      {paymentCount}
-                    </span>
-                  )}
-                </span>
-              </IconAction>
-            ) : null}
-            <IconAction
-              title="View PDF"
-              loading={rowBusy && busyAction?.type === 'view'}
-              disabled={busyAction !== null && !rowBusy}
-              onClick={() => void handlePdfAction(item.id, 'view')}
-            >
-              <Eye className="w-3.5 h-3.5" />
-            </IconAction>
-            <IconAction
-              title="Download PDF"
-              loading={rowBusy && busyAction?.type === 'download'}
-              disabled={busyAction !== null && !rowBusy}
-              onClick={() => void handlePdfAction(item.id, 'download')}
-            >
-              <Download className="w-3.5 h-3.5" />
-            </IconAction>
-            <IconAction
-              title={emailSentLabel(emailSentCount)}
-              disabled={busyAction !== null}
-              onClick={() => setEmailTarget(item)}
-              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-            >
-              <span className="relative inline-flex">
-                <Mail className="w-3.5 h-3.5" />
-                <EmailSentCountBadge count={emailSentCount} />
-              </span>
-            </IconAction>
-            {(item.status === 'draft' || item.status === 'cancelled') && (
-              <IconAction
-                title="Delete invoice"
-                loading={rowBusy && busyAction?.type === 'delete'}
-                disabled={busyAction !== null && !rowBusy}
-                onClick={() => runRowAction(item.id, 'delete', () => {
-                  deleteInvoice.mutate(item.id, { onSettled: () => setBusyAction(null) });
-                })}
-                className="text-red-500 hover:bg-red-50 hover:text-red-700"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </IconAction>
-            )}
-          </div>
-        );
-      },
-    },
-  ], [busyAction, deleteInvoice, handlePdfAction, runRowAction, sendInvoice]);
+  const columns = useMemo(
+    () => buildInvoiceColumns({
+      busyAction,
+      setBusyAction,
+      setEditingId,
+      setView,
+      setPaymentModal: setLocalPaymentModal,
+      setEmailTarget,
+      runRowAction,
+      handlePdfAction,
+      sendInvoice,
+      deleteInvoice,
+    }),
+    [busyAction, deleteInvoice, handlePdfAction, runRowAction, sendInvoice],
+  );
 
   const statusOptions = [
     { value: '', label: 'All statuses' },
@@ -371,9 +151,10 @@ export default function InvoicesPage() {
     { value: 'cancelled', label: 'Cancelled' },
   ];
 
+  const poFilter = searchParams.get('po');
+
   return (
     <div className="space-y-5">
-      {/* Page header */}
       <Card className="p-0 overflow-hidden">
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
@@ -384,7 +165,7 @@ export default function InvoicesPage() {
               <h1 className="text-xl font-semibold text-gray-900">Invoices</h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 {view === 'list'
-                  ? 'Create → Send (accounting) → Record payment'
+                  ? 'Issued and received invoices — payments and receipts live here'
                   : view === 'edit'
                     ? 'Edit draft items, customer, and dates'
                     : 'Add products and create a draft invoice'}
@@ -455,19 +236,28 @@ export default function InvoicesPage() {
         </Card>
       ) : (
         <Card className="p-0 overflow-hidden">
-          {/* Toolbar */}
           <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center">
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="search"
-                placeholder="Search invoice # or customer…"
+                placeholder="Search invoice #, party, or PO…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <select
+                aria-label="Filter by direction"
+                value={directionFilter}
+                onChange={(e) => setDirectionFilter(e.target.value as 'all' | 'issued' | 'received')}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="all">All invoices</option>
+                <option value="issued">Issued (you sold)</option>
+                <option value="received">Received (you bought)</option>
+              </select>
               <select
                 aria-label="Filter by status"
                 value={statusFilter}
@@ -484,13 +274,20 @@ export default function InvoicesPage() {
             </div>
           </div>
 
+          {poFilter ? (
+            <div className="flex items-center justify-between gap-2 border-b border-violet-100 bg-violet-50/80 px-4 py-2.5 text-sm text-violet-900">
+              <span>Showing invoices for purchase order #{poFilter}</span>
+              <Button type="button" size="sm" variant="secondary" onClick={clearPoFilter}>
+                Clear PO filter
+              </Button>
+            </div>
+          ) : null}
+
           {stats.drafts > 0 && !statusFilter && (
             <div className="flex items-start gap-2 border-b border-blue-100 bg-blue-50/80 px-4 py-2.5 text-sm text-blue-800">
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
-                <strong>{stats.drafts}</strong> draft{stats.drafts !== 1 ? 's' : ''} — use{' '}
-                <Pencil className="w-3.5 h-3.5 inline -mt-0.5" /> Edit to adjust items, then{' '}
-                <Send className="w-3.5 h-3.5 inline -mt-0.5" /> Send to post revenue and receivables to accounting.
+                <strong>{stats.drafts}</strong> draft{stats.drafts !== 1 ? 's' : ''} — edit then send to post to accounting.
               </span>
             </div>
           )}
@@ -504,7 +301,6 @@ export default function InvoicesPage() {
             </div>
           )}
 
-          {/* Table / states */}
           <div className="p-4 pt-3">
             {isLoading ? (
               <Table columns={columns} data={[]} loading rowKey={(item) => item.id} />
@@ -515,7 +311,7 @@ export default function InvoicesPage() {
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">No invoices yet</h2>
                 <p className="text-sm text-gray-500 mt-1 mb-6">
-                  Create a draft here or from the Sales page, then send it to the customer.
+                  Create a draft, or accept an incoming purchase order to auto-create an invoice for the buyer.
                 </p>
                 <div className="space-y-3 text-left text-sm">
                   <button
@@ -546,12 +342,12 @@ export default function InvoicesPage() {
             ) : filtered.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm font-medium text-gray-700">No matching invoices</p>
-                <p className="text-sm text-gray-500 mt-1">Try a different search or clear the status filter.</p>
+                <p className="text-sm text-gray-500 mt-1">Try a different search or clear filters.</p>
                 <Button
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => { setSearch(''); setStatusFilter(''); }}
+                  onClick={() => { setSearch(''); setStatusFilter(''); setDirectionFilter('all'); clearPoFilter(); }}
                 >
                   Clear filters
                 </Button>
@@ -580,7 +376,10 @@ export default function InvoicesPage() {
       {paymentModal && (
         <RecordPaymentModal
           invoice={paymentModal}
-          onClose={() => setPaymentModal(null)}
+          onClose={() => {
+            setLocalPaymentModal(null);
+            clearInvoiceDeepLink();
+          }}
         />
       )}
 

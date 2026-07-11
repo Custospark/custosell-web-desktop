@@ -1,18 +1,13 @@
 import { useMemo, useState } from 'react';
-import {
-  Ban,
-  CheckCircle2,
-  Eye,
-  FileText,
-  PackageCheck,
-  RefreshCw,
-  Truck,
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
+import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
@@ -22,15 +17,15 @@ import { cn } from '../../shared/utils/cn';
 import type { PurchaseOrder, PurchaseOrderStatus } from './api/purchaseOrders/purchaseOrderTypes';
 import {
   useAcceptPurchaseOrder,
+  useDeletePurchaseOrder,
   useFulfillPurchaseOrder,
   useIncomingPurchaseOrders,
-  useRejectPurchaseOrder,
 } from './api/purchaseOrders/usePurchaseOrderQueries';
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
 import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
-import GenerateSellerInvoiceFromPoModal from './ui/supply/GenerateSellerInvoiceFromPoModal';
+import { sellerPoActions } from './ui/supply/sellerPoActions';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 import RejectPurchaseOrderModal from './ui/supply/RejectPurchaseOrderModal';
 
@@ -44,93 +39,29 @@ const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
-function sellerPoRowActions(opts: {
-  po: PurchaseOrder;
-  isOffline: boolean;
-  busy: boolean;
-  onView: () => void;
-  onAccept: () => void;
-  onReject: () => void;
-  onFulfill: () => void;
-  onInvoice: () => void;
-}) {
-  const { po, isOffline, busy, onView, onAccept, onReject, onFulfill, onInvoice } = opts;
-  return (
-    <>
-      <button
-        type="button"
-        onClick={onView}
-        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
-        title="View order details"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
-      {po.status === 'submitted' ? (
-        <>
-          <Button
-            type="button"
-            size="sm"
-            disabled={isOffline || busy}
-            onClick={onAccept}
-            title="Accept this order"
-            className="inline-flex items-center gap-1"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" /> Accept
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            disabled={isOffline || busy}
-            onClick={onReject}
-            title="Reject this order"
-            className="inline-flex items-center gap-1"
-          >
-            <Ban className="h-3.5 w-3.5" /> Reject
-          </Button>
-        </>
-      ) : null}
-      {po.status === 'accepted' ? (
-        <Button
-          type="button"
-          size="sm"
-          disabled={isOffline || busy}
-          onClick={onFulfill}
-          title="Fulfill this order (deduct stock)"
-          className="inline-flex items-center gap-1"
-        >
-          <PackageCheck className="h-3.5 w-3.5" /> Fulfill
-        </Button>
-      ) : null}
-      {po.status === 'fulfilled' || po.status === 'received' ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          disabled={isOffline}
-          onClick={onInvoice}
-          title="Generate invoice for buyer"
-          className="inline-flex items-center gap-1"
-        >
-          <FileText className="h-3.5 w-3.5" /> Invoice
-        </Button>
-      ) : null}
-    </>
-  );
+function invoicePath(po: PurchaseOrder, focus: 'invoice' | 'payments' = 'invoice'): string {
+  const invoiceId = po.invoice_id ?? po.invoice?.id;
+  const params = new URLSearchParams();
+  if (invoiceId) params.set('invoice', String(invoiceId));
+  if (po.id) params.set('po', String(po.id));
+  if (focus === 'payments') params.set('focus', 'payments');
+  const qs = params.toString();
+  return qs ? `${ROUTES.INVOICES.INDEX}?${qs}` : ROUTES.INVOICES.INDEX;
 }
 
 export default function IncomingOrdersPage() {
+  const navigate = useNavigate();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
+  const { confirm } = useConfirm();
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('submitted');
   const [search, setSearch] = useState('');
   const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
   const [rejectPo, setRejectPo] = useState<PurchaseOrder | null>(null);
-  const [invoicePo, setInvoicePo] = useState<PurchaseOrder | null>(null);
 
-  const { data, isLoading, isFetching, refetch } = useIncomingPurchaseOrders(undefined, !isOffline);
+  const { data, isLoading, isFetching, isError, error, refetch } = useIncomingPurchaseOrders(undefined, !isOffline);
   const acceptPo = useAcceptPurchaseOrder();
-  const rejectPoMut = useRejectPurchaseOrder();
   const fulfillPo = useFulfillPurchaseOrder();
+  const deletePo = useDeletePurchaseOrder();
 
   const orders = useMemo(() => {
     let list = data ?? [];
@@ -156,14 +87,42 @@ export default function IncomingOrdersPage() {
   }, [data]);
 
   const paginated = usePagination(orders, 15);
-  const busy = acceptPo.isPending || rejectPoMut.isPending || fulfillPo.isPending;
+  const busy = acceptPo.isPending || fulfillPo.isPending || deletePo.isPending;
+
+  async function handleDelete(po: PurchaseOrder) {
+    const ok = await confirm({
+      title: 'Delete rejected order?',
+      message: `Permanently delete ${po.po_number}? This cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Keep',
+      variant: 'danger',
+    });
+    if (ok) void deletePo.mutateAsync({ id: po.id, poNumber: po.po_number });
+  }
+
+  function rowActions(po: PurchaseOrder) {
+    return sellerPoActions({
+      po,
+      isOffline,
+      busy,
+      onView: () => setViewPo(po),
+      onAccept: () => void acceptPo.mutateAsync(po.id),
+      onReject: () => setRejectPo(po),
+      onFulfill: () => void fulfillPo.mutateAsync(po.id),
+      onDelete: () => void handleDelete(po),
+      onOpenInvoice: () => navigate(invoicePath(po, 'invoice')),
+      onOpenReceipts: () => navigate(invoicePath(po, 'payments')),
+    });
+  }
 
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Incoming orders</h1>
-          <p className="text-sm text-gray-600">Purchase orders other businesses sent to you as the seller.</p>
+          <p className="text-sm text-gray-600">
+            Accepting an order creates the buyer invoice automatically. Manage payments under Invoices.
+          </p>
         </div>
         <Button
           type="button"
@@ -198,6 +157,14 @@ export default function IncomingOrdersPage() {
         <EmptyState title="Offline" description="Connect to manage incoming orders." icon={<Truck className="h-10 w-10" />} />
       ) : isLoading ? (
         <LoadingSkeleton variant="table" />
+      ) : isError ? (
+        <EmptyState
+          title="Could not load incoming orders"
+          description={error instanceof Error ? error.message : 'Something went wrong. Try refreshing.'}
+          icon={<Truck className="h-10 w-10" />}
+          actionLabel="Retry"
+          onAction={() => void refetch()}
+        />
       ) : orders.length === 0 ? (
         <EmptyState
           title="No incoming orders"
@@ -214,16 +181,7 @@ export default function IncomingOrdersPage() {
                 partyLabel="Buyer"
                 partyName={po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}
                 onOpen={() => setViewPo(po)}
-                actions={sellerPoRowActions({
-                  po,
-                  isOffline,
-                  busy,
-                  onView: () => setViewPo(po),
-                  onAccept: () => void acceptPo.mutateAsync(po.id),
-                  onReject: () => setRejectPo(po),
-                  onFulfill: () => void fulfillPo.mutateAsync(po.id),
-                  onInvoice: () => setInvoicePo(po),
-                })}
+                actions={rowActions(po)}
               />
             ))}
           </div>
@@ -250,6 +208,25 @@ export default function IncomingOrdersPage() {
                   render: (po) => purchaseOrderStatusBadge(po.status),
                 },
                 {
+                  key: 'invoice',
+                  header: 'Invoice',
+                  render: (po) =>
+                    po.invoice?.invoice_number ? (
+                      <button
+                        type="button"
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(invoicePath(po));
+                        }}
+                      >
+                        {po.invoice.invoice_number}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    ),
+                },
+                {
                   key: 'total',
                   header: 'Total',
                   render: (po) => formatCurrency(Number(po.total_amount)),
@@ -259,16 +236,7 @@ export default function IncomingOrdersPage() {
                   header: '',
                   render: (po) => (
                     <div className="flex flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                      {sellerPoRowActions({
-                        po,
-                        isOffline,
-                        busy,
-                        onView: () => setViewPo(po),
-                        onAccept: () => void acceptPo.mutateAsync(po.id),
-                        onReject: () => setRejectPo(po),
-                        onFulfill: () => void fulfillPo.mutateAsync(po.id),
-                        onInvoice: () => setInvoicePo(po),
-                      })}
+                      {rowActions(po)}
                     </div>
                   ),
                 },
@@ -303,14 +271,6 @@ export default function IncomingOrdersPage() {
           purchaseOrder={rejectPo}
           isOpen={!!rejectPo}
           onClose={() => setRejectPo(null)}
-        />
-      ) : null}
-
-      {invoicePo ? (
-        <GenerateSellerInvoiceFromPoModal
-          purchaseOrder={invoicePo}
-          isOpen={!!invoicePo}
-          onClose={() => setInvoicePo(null)}
         />
       ) : null}
     </div>

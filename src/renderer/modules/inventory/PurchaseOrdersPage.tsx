@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Ban, Eye, FileText, PackageCheck, Pencil, RefreshCw, Send, Truck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -15,6 +17,7 @@ import { cn } from '../../shared/utils/cn';
 import type { PurchaseOrder, PurchaseOrderStatus } from './api/purchaseOrders/purchaseOrderTypes';
 import {
   useCancelPurchaseOrder,
+  useDeletePurchaseOrder,
   usePurchaseOrders,
   useSubmitPurchaseOrder,
 } from './api/purchaseOrders/usePurchaseOrderQueries';
@@ -22,8 +25,8 @@ import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
 import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
+import { buyerPoActions } from './ui/supply/buyerPoActions';
 import { ReceivePurchaseOrderModal } from './ui/supply/ReceivePurchaseOrderModal';
-import GenerateInvoiceFromPoModal from './ui/supply/GenerateInvoiceFromPoModal';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 import EditPurchaseOrderModal from './ui/supply/EditPurchaseOrderModal';
 
@@ -38,93 +41,18 @@ const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
-function buyerPoActions(opts: {
-  po: PurchaseOrder;
-  isOffline: boolean;
-  busy: boolean;
-  onView: () => void;
-  onEdit: () => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-  onReceive: () => void;
-  onInvoice: () => void;
-}) {
-  const { po, isOffline, busy, onView, onEdit, onSubmit, onCancel, onReceive, onInvoice } = opts;
-  return (
-    <>
-      <button
-        type="button"
-        onClick={onView}
-        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
-        title="View order details"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
-      {po.status === 'draft' ? (
-        <button
-          type="button"
-          onClick={onEdit}
-          className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
-          title="Edit this draft order"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-      ) : null}
-      {po.status === 'draft' ? (
-        <Button
-          type="button"
-          size="sm"
-          disabled={isOffline || busy}
-          onClick={onSubmit}
-          title="Submit this order to the seller"
-          className="inline-flex items-center gap-1"
-        >
-          <Send className="h-3.5 w-3.5" /> Submit
-        </Button>
-      ) : null}
-      {po.status === 'draft' || po.status === 'submitted' ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          disabled={isOffline || busy}
-          onClick={onCancel}
-          title="Cancel this order"
-          className="inline-flex items-center gap-1"
-        >
-          <Ban className="h-3.5 w-3.5" /> Cancel
-        </Button>
-      ) : null}
-      {po.status === 'fulfilled' ? (
-        <Button
-          type="button"
-          size="sm"
-          disabled={isOffline}
-          onClick={onReceive}
-          title="Receive these items into your stock"
-          className="inline-flex items-center gap-1"
-        >
-          <PackageCheck className="h-3.5 w-3.5" /> Receive
-        </Button>
-      ) : null}
-      {po.status === 'received' ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          disabled={isOffline}
-          onClick={onInvoice}
-          title="Generate an invoice from this order"
-          className="inline-flex items-center gap-1"
-        >
-          <FileText className="h-3.5 w-3.5" /> Invoice
-        </Button>
-      ) : null}
-    </>
-  );
+function invoicePath(po: PurchaseOrder, focus: 'invoice' | 'payments' = 'invoice'): string {
+  const invoiceId = po.invoice_id ?? po.invoice?.id;
+  const params = new URLSearchParams();
+  if (invoiceId) params.set('invoice', String(invoiceId));
+  if (po.id) params.set('po', String(po.id));
+  if (focus === 'payments') params.set('focus', 'payments');
+  const qs = params.toString();
+  return qs ? `${ROUTES.INVOICES.INDEX}?${qs}` : ROUTES.INVOICES.INDEX;
 }
 
 export default function PurchaseOrdersPage() {
+  const navigate = useNavigate();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('all');
@@ -132,11 +60,11 @@ export default function PurchaseOrdersPage() {
   const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
   const [editPo, setEditPo] = useState<PurchaseOrder | null>(null);
   const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
-  const [generateInvoicePo, setGenerateInvoicePo] = useState<PurchaseOrder | null>(null);
 
-  const { data, isLoading, isFetching, refetch } = usePurchaseOrders(undefined, !isOffline);
+  const { data, isLoading, isFetching, isError, error, refetch } = usePurchaseOrders(undefined, !isOffline);
   const submitPo = useSubmitPurchaseOrder();
   const cancelPo = useCancelPurchaseOrder();
+  const deletePo = useDeletePurchaseOrder();
 
   const orders = useMemo(() => {
     let list = data ?? [];
@@ -162,14 +90,52 @@ export default function PurchaseOrdersPage() {
   }, [data]);
 
   const paginated = usePagination(orders, 15);
-  const busy = submitPo.isPending || cancelPo.isPending;
+  const busy = submitPo.isPending || cancelPo.isPending || deletePo.isPending;
+
+  async function handleDelete(po: PurchaseOrder) {
+    const ok = await confirm({
+      title: 'Delete purchase order?',
+      message: `Permanently delete ${po.po_number}? This cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Keep',
+      variant: 'danger',
+    });
+    if (ok) void deletePo.mutateAsync({ id: po.id, poNumber: po.po_number });
+  }
+
+  function rowActions(po: PurchaseOrder) {
+    return buyerPoActions({
+      po,
+      isOffline,
+      busy,
+      onView: () => setViewPo(po),
+      onEdit: () => setEditPo(po),
+      onSubmit: () => void submitPo.mutateAsync(po.id),
+      onCancel: async () => {
+        const ok = await confirm({
+          title: 'Cancel purchase order?',
+          message: `Cancel ${po.po_number}? This cannot be undone.`,
+          confirmText: 'Cancel PO',
+          cancelText: 'Keep',
+          variant: 'danger',
+        });
+        if (ok) void cancelPo.mutateAsync(po.id);
+      },
+      onDelete: () => void handleDelete(po),
+      onReceive: () => setReceivePo(po),
+      onOpenInvoice: () => navigate(invoicePath(po, 'invoice')),
+      onOpenReceipts: () => navigate(invoicePath(po, 'payments')),
+    });
+  }
 
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Purchase orders</h1>
-          <p className="text-sm text-gray-600">Outbound B2B orders you placed with other businesses.</p>
+          <p className="text-sm text-gray-600">
+            Orders you placed with suppliers. Invoices and payments live under Invoices.
+          </p>
         </div>
         <Button
           type="button"
@@ -204,6 +170,14 @@ export default function PurchaseOrdersPage() {
         <EmptyState title="Offline" description="Connect to load purchase orders." icon={<Truck className="h-10 w-10" />} />
       ) : isLoading ? (
         <LoadingSkeleton variant="table" />
+      ) : isError ? (
+        <EmptyState
+          title="Could not load purchase orders"
+          description={error instanceof Error ? error.message : 'Something went wrong. Try refreshing.'}
+          icon={<Truck className="h-10 w-10" />}
+          actionLabel="Retry"
+          onAction={() => void refetch()}
+        />
       ) : orders.length === 0 ? (
         <EmptyState
           title="No purchase orders"
@@ -220,26 +194,7 @@ export default function PurchaseOrdersPage() {
                 partyLabel="Seller"
                 partyName={po.seller_business?.name ?? `Business #${po.seller_business_id}`}
                 onOpen={() => setViewPo(po)}
-                actions={buyerPoActions({
-                  po,
-                  isOffline,
-                  busy,
-                  onView: () => setViewPo(po),
-                  onEdit: () => setEditPo(po),
-                  onSubmit: () => void submitPo.mutateAsync(po.id),
-                  onCancel: async () => {
-                    const ok = await confirm({
-                      title: 'Cancel purchase order?',
-                      message: `Cancel ${po.po_number}? This cannot be undone.`,
-                      confirmText: 'Cancel PO',
-                      cancelText: 'Keep',
-                      variant: 'danger',
-                    });
-                    if (ok) void cancelPo.mutateAsync(po.id);
-                  },
-                  onReceive: () => setReceivePo(po),
-                  onInvoice: () => setGenerateInvoicePo(po),
-                })}
+                actions={rowActions(po)}
               />
             ))}
           </div>
@@ -265,6 +220,22 @@ export default function PurchaseOrdersPage() {
                   render: (po) => purchaseOrderStatusBadge(po.status),
                 },
                 {
+                  key: 'invoice',
+                  header: 'Invoice',
+                  render: (po) =>
+                    po.invoice?.invoice_number ? (
+                      <button
+                        type="button"
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                        onClick={() => navigate(invoicePath(po))}
+                      >
+                        {po.invoice.invoice_number}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    ),
+                },
+                {
                   key: 'total',
                   header: 'Total',
                   render: (po) => formatCurrency(Number(po.total_amount)),
@@ -283,26 +254,7 @@ export default function PurchaseOrdersPage() {
                   header: '',
                   render: (po) => (
                     <div className="flex flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                      {buyerPoActions({
-                        po,
-                        isOffline,
-                        busy,
-                        onView: () => setViewPo(po),
-                        onEdit: () => setEditPo(po),
-                        onSubmit: () => void submitPo.mutateAsync(po.id),
-                        onCancel: async () => {
-                          const ok = await confirm({
-                            title: 'Cancel purchase order?',
-                            message: `Cancel ${po.po_number}? This cannot be undone.`,
-                            confirmText: 'Cancel PO',
-                            cancelText: 'Keep',
-                            variant: 'danger',
-                          });
-                          if (ok) void cancelPo.mutateAsync(po.id);
-                        },
-                        onReceive: () => setReceivePo(po),
-                        onInvoice: () => setGenerateInvoicePo(po),
-                      })}
+                      {rowActions(po)}
                     </div>
                   ),
                 },
@@ -345,14 +297,6 @@ export default function PurchaseOrdersPage() {
           purchaseOrder={receivePo}
           isOpen={!!receivePo}
           onClose={() => setReceivePo(null)}
-        />
-      ) : null}
-
-      {generateInvoicePo ? (
-        <GenerateInvoiceFromPoModal
-          purchaseOrder={generateInvoicePo}
-          isOpen={!!generateInvoicePo}
-          onClose={() => setGenerateInvoicePo(null)}
         />
       ) : null}
     </div>

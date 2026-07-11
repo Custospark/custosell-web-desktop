@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { Main } from './Main';
 import { Footer } from './Footer';
+import { OnboardingGate } from '../../../modules/onboarding/OnboardingGate';
 
 export function Layout() {
   const { state, dispatch } = useAppContext();
@@ -32,6 +33,7 @@ export function Layout() {
         <Main />
         <Footer />
       </div>
+      <OnboardingGate />
     </div>
   );
 }

@@ -61,6 +61,18 @@ export interface AuthUser {
   accessible_modules?: string[];
   project_member_ids?: number[];
   last_login_at?: string | null;
+  onboarding?: {
+    is_owner: boolean;
+    needs_intent: boolean;
+    needs_tour: boolean;
+    primary_intent: string | null;
+    secondary_intent: string | null;
+    intent_completed_at: string | null;
+    intent_skipped_at: string | null;
+    tour_step: number;
+    tour_completed_at: string | null;
+    tour_skipped_at: string | null;
+  } | null;
 }
 
 interface AuthState {

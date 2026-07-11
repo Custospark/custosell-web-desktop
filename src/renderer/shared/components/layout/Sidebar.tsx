@@ -154,7 +154,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         )}
       </div>
 
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto" data-tour="sidebar-nav">
         {navGroups.map((group, groupIndex) => {
           const groupOpen = openGroup === groupIndex;
           const Icon = group.icon;
@@ -164,10 +164,11 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           const groupOfflineTitle = groupOfflineBlocked
             ? onlineOnlyHoverMessage(group.subItems[0]?.to ?? '')
             : group.label;
+          const firstGroupAttr = groupIndex === 0 ? { 'data-tour': 'sidebar-first-group' } : {};
 
           if (collapsed) {
             return (
-              <div key={group.label} className="space-y-1">
+              <div key={group.label} className="space-y-1" {...firstGroupAttr}>
                 <div
                   className={cn(
                     'flex justify-center py-2.5',
@@ -190,6 +191,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                   key={group.label}
                   title={onlineOnlyHoverMessage(item.to)}
                   className="gap-3 rounded-lg px-4 py-2.5 text-sm text-gray-500"
+                  {...firstGroupAttr}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
                   <span>{group.label}</span>
@@ -201,6 +203,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                 key={group.label}
                 to={item.to}
                 onClick={onClose}
+                {...firstGroupAttr}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
                     isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -218,7 +221,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           );
 
           return (
-            <div key={group.label}>
+            <div key={group.label} {...firstGroupAttr}>
               <button
                 type="button"
                 onClick={() => setOpenGroup(groupOpen ? null : groupIndex)}
@@ -240,12 +243,16 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                   {group.subItems.map((item) => {
                     const isChildActive = isSidebarSubItemActive(location.pathname, item.to);
                     const childBlocked = isCompletelyOffline && isOnlineOnlyNavTarget(item.to);
+                    const modulesAttr = item.to === ROUTES.SETTINGS.MODULES
+                      ? { 'data-tour': 'sidebar-settings-modules' }
+                      : {};
                     if (childBlocked) {
                       return (
                         <OfflineDisabledNav
                           key={item.to}
                           title={onlineOnlyHoverMessage(item.to)}
                           className="gap-3 rounded-lg px-3 py-2 text-sm text-gray-400"
+                          {...modulesAttr}
                         >
                           <item.icon className="w-4 h-4 shrink-0" />
                           <span>{item.label}</span>
@@ -258,6 +265,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                         to={item.to}
                         end
                         onClick={onClose}
+                        {...modulesAttr}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
                           isChildActive
                             ? 'bg-blue-50 text-blue-700 font-medium'

@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { Bell, GraduationCap, HelpCircle, MessageSquareHeart } from 'lucide-react';
+import { Bell, GraduationCap, HelpCircle, MessageSquareHeart, Sparkles } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useNotificationUnreadCount } from '../../../modules/notifications/api/NotificationQueries';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
+import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQueries';
 import { cn } from '../../utils/cn';
 
 const guideLinks = [
@@ -22,12 +23,30 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export function GuideHeaderNav() {
   const { isCompletelyOffline } = useNetworkStatus();
   const { data: unreadCount = 0 } = useNotificationUnreadCount(true);
+  const replayTour = useUpdateOnboarding();
 
   return (
     <nav
       className="flex items-center gap-0.5 sm:gap-1 shrink-0 min-w-0"
       aria-label="Tutorials, FAQs, feedback, and notifications"
+      data-tour="navbar-guide"
     >
+      <button
+        type="button"
+        title="Replay product tour"
+        aria-label="Replay product tour"
+        disabled={isCompletelyOffline || replayTour.isPending}
+        onClick={() => void replayTour.mutateAsync({ action: 'replay_tour' })}
+        className={cn(
+          'inline-flex items-center justify-center gap-1 rounded-lg font-medium transition-colors shrink-0',
+          'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
+          'text-xs xl:text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+        )}
+      >
+        <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="hidden xl:inline truncate">Tour</span>
+      </button>
       {guideLinks.map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}

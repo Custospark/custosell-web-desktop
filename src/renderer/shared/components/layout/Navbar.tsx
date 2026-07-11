@@ -83,6 +83,7 @@ function NavbarNetworkStatus({
       <button
         type="button"
         onClick={onRetry}
+        data-tour="navbar-network"
         title={latency != null ? `Connected · ${latency}ms latency` : 'Connected'}
         aria-label={latency != null ? `Connected, ${latency} milliseconds latency` : 'Connected'}
         className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
@@ -102,6 +103,7 @@ function NavbarNetworkStatus({
       <button
         type="button"
         onClick={onRetry}
+        data-tour="navbar-network"
         title="Slow connection — tap to retry"
         aria-label="Slow internet connection"
         className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
@@ -118,6 +120,7 @@ function NavbarNetworkStatus({
     <button
       type="button"
       onClick={onRetry}
+      data-tour="navbar-network"
       title="No internet connection — tap to retry"
       aria-label="No internet connection"
       className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}

@@ -48,6 +48,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [documents-module.md](./documents-module.md) | Business file vault — folders, ACL, tags, cross-module links |
 | [design-system.md](./product/design-system.md) | Colors, typography, UI patterns |
 | [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
+| [intent-and-tour.md](./product/intent-and-tour.md) | Post-register intent cards + shell product tour |
 
 ## Future work
 
@@ -91,6 +92,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-supplier-party-receive-create-payment-counts.md](./adr/2026-07-11-supplier-party-receive-create-payment-counts.md) | Supplier party labels; receive create-product; PO payment counts |
 | [2026-07-11-document-letterhead-issuer-not-viewer.md](./adr/2026-07-11-document-letterhead-issuer-not-viewer.md) | Invoice/receipt letterhead = seller issuer; Customer = buyer |
 | [2026-07-11-offline-disable-online-only-modules.md](./adr/2026-07-11-offline-disable-online-only-modules.md) | Grey out online-only nav when offline; banner if already on page |
+| [2026-07-11-intent-and-app-tour.md](./adr/2026-07-11-intent-and-app-tour.md) | Owner intent + app-wide tour; never auto-set modules |
 | [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
 

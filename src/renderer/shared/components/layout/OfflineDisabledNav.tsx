@@ -1,14 +1,13 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 
-interface OfflineDisabledNavProps {
+interface OfflineDisabledNavProps extends HTMLAttributes<HTMLSpanElement> {
   title: string;
-  className?: string;
   children: ReactNode;
 }
 
 /** Non-navigating control: not-allowed cursor + native hover title. */
-export function OfflineDisabledNav({ title, className, children }: OfflineDisabledNavProps) {
+export function OfflineDisabledNav({ title, className, children, ...rest }: OfflineDisabledNavProps) {
   return (
     <span
       role="link"
@@ -19,6 +18,7 @@ export function OfflineDisabledNav({ title, className, children }: OfflineDisabl
         className,
       )}
       onClick={(e) => e.preventDefault()}
+      {...rest}
     >
       {children}
     </span>

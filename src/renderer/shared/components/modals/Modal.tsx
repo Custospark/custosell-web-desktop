@@ -20,6 +20,10 @@ interface ModalProps {
   bodyClassName?: string;
   panelClassName?: string;
   titleCentered?: boolean;
+  /** Hide the X control (e.g. required onboarding). */
+  hideCloseButton?: boolean;
+  /** When false, Escape does not call onClose. Default true. */
+  closeOnEscape?: boolean;
   /** @deprecated Color pickers and menus use portals; body always scrolls. */
   overflowVisible?: boolean;
 }
@@ -42,15 +46,17 @@ export function Modal({
   bodyClassName,
   panelClassName,
   titleCentered = false,
+  hideCloseButton = false,
+  closeOnEscape = true,
 }: ModalProps) {
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !closeOnEscape) return;
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnEscape]);
 
   if (typeof document === 'undefined') return null;
 
@@ -82,23 +88,29 @@ export function Modal({
                   <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
                   {subtitle && <p className="mt-0.5 text-sm text-slate-600">{subtitle}</p>}
                 </div>
+                {!hideCloseButton ? (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className={cn(
+                      'shrink-0 text-slate-500 transition-colors hover:text-slate-800',
+                      titleCentered ? 'absolute right-4 top-4' : '',
+                    )}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              !hideCloseButton ? (
                 <button
+                  type="button"
                   onClick={onClose}
-                  className={cn(
-                    'shrink-0 text-slate-500 transition-colors hover:text-slate-800',
-                    titleCentered ? 'absolute right-4 top-4' : '',
-                  )}
+                  className="absolute right-4 top-4 z-10 text-slate-500 transition-colors hover:text-slate-800"
                 >
                   <X className="h-5 w-5" />
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={onClose}
-                className="absolute right-4 top-4 z-10 text-slate-500 transition-colors hover:text-slate-800"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              ) : null
             )}
             <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', bodyClassName ?? 'px-6 py-4')}>
               {children}

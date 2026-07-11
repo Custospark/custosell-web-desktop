@@ -124,7 +124,7 @@ export function MarketplaceCatalog({
                     size="sm"
                     disabled={offline || busy}
                     onClick={() => onAdd(product)}
-                    className="inline-flex w-full items-center justify-center gap-1.5"
+                    className="inline-flex w-fit shrink-0 items-center justify-center gap-1.5 self-start"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add to cart

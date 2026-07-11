@@ -161,7 +161,9 @@ export default function MarketplacePage() {
 
   const mySuppliers = mySuppliersQuery.data ?? [];
   const location = selected
-    ? [selected.city, selected.state, selected.country].filter(Boolean).join(', ')
+    ? [selected.address, selected.city, selected.state, selected.country]
+        .filter(Boolean)
+        .join(', ')
     : '';
 
   const cartProps = {
@@ -219,9 +221,9 @@ export default function MarketplacePage() {
               <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">{selected.supply_headline}</p>
             ) : null}
             {location ? (
-              <p className="mt-1 flex items-center gap-1 text-xs text-slate-600">
-                <MapPin className="h-3.5 w-3.5" />
-                {location}
+              <p className="mt-1 flex items-start gap-1 text-xs text-slate-600">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span className="line-clamp-2">{location}</span>
               </p>
             ) : null}
           </div>

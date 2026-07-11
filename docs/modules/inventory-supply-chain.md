@@ -36,6 +36,7 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 - Bottom strip: **My suppliers** · **Browse** · **Cart** · **Orders** (open-count badge for draft/submitted/accepted/fulfilled) · **Refresh**.
 - Saving a draft or submitting from the marketplace cart **refetches purchase-order queries** (`refetchType: 'all'`) so Purchase orders and the Orders badge update immediately.
 - Supplier selection happens in large (`2xl`) search modals; products appear only after a supplier is chosen.
+- Selected supplier header shows **business address** (street + city/state/country when present). Catalog **Add to cart** is label-sized (`w-fit`), not full-card width.
 - **Cart docks in the raw page row** beside marketplace chrome on large screens, with outer padding/gap so the marketplace keeps a right margin and the cart breathes. Phones and tablets use a full-height side sheet. Draft / Submit sit in one row; cart lines are searchable and chunk-rendered for large orders.
 - PO cart **lines, notes, selected supplier, and open state** live in Redux (`marketplaceCart` slice) so they survive leaving Marketplace mid-order; cleared on submit/draft success and on logout.
 

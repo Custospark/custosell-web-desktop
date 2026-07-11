@@ -99,9 +99,9 @@ Billing rule: **Accept creates the invoice.** **Only the seller records payments
 | Accept | Seller | `POST /purchase-orders/{id}/accept` | `submitted` → `accepted`; creates + sends seller invoice (`purchase_order_id`, `buyer_business_id`). |
 | Reject | Seller | `POST /purchase-orders/{id}/reject` | `submitted` → `rejected` with reason. |
 | Fulfill | Seller | `POST /purchase-orders/{id}/fulfill` | `accepted` → `fulfilled`; stock out. 422 if insufficient stock. |
-| Receive | Buyer | `POST /purchase-orders/{id}/receive` | `fulfilled` → `received`; stock in after local product mapping. |
-| Invoice | Both | In-place modal | Opens linked invoice without leaving PO/IO. |
-| Receipts | Both | In-place modal | Buyer: view history. Seller: can record payment when balance remains. |
+| Receive | Buyer | `POST /purchase-orders/{id}/receive` | `fulfilled` → `received`; stock in after mapping to an existing local product **or** `create_product: true` to add a new catalog item from the supplier line. |
+| Invoice | Both | In-place modal | Opens linked invoice without leaving PO/IO. Party label for buyers is the **supplier** (`party_name` / `seller_business`). |
+| Receipts | Both | In-place modal | Buyer: view history. Seller: can record payment when balance remains. List shows payment **counts** on PO/IO. |
 
 ### Explicitly not available on PO screens
 

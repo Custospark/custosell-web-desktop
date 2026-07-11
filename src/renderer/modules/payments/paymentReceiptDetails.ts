@@ -73,8 +73,9 @@ export function buildBillDetailsFromInvoice(invoice: Invoice): PaymentReceiptBil
     taxTotal: invoice.tax_total,
     totalRefunded: 0,
     billTotal: invoice.total_amount,
+    // Received = show supplier; never the buyer customer row from seller books.
     customerName: isReceived
-      ? (invoice.seller_business?.name ?? invoice.customer?.name ?? null)
-      : (invoice.customer?.name ?? null),
+      ? (invoice.party_name ?? invoice.seller_business?.name ?? 'Supplier')
+      : (invoice.party_name ?? invoice.customer?.name ?? null),
   };
 }

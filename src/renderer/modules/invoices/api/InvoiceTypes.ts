@@ -19,6 +19,9 @@ export interface Invoice {
   buyer_business_id?: number | null;
   /** issued = we sold; received = PO invoice from a supplier */
   direction?: 'issued' | 'received';
+  /** Counterparty label from API (supplier when received, customer when issued). */
+  party_name?: string | null;
+  party_role?: 'supplier' | 'customer' | null;
   seller_business?: { id: number; name: string } | null;
   purchase_order?: { id: number; po_number: string; status: string } | null;
   customer?: { id: number; name: string; phone?: string; email?: string | null } | null;

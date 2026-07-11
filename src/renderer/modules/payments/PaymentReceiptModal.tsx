@@ -59,8 +59,8 @@ export default function PaymentReceiptModal({
   const isReceivedInvoice = invoice?.direction === 'received';
   const defaultEmail = invoice?.customer?.email ?? sale?.customer?.email ?? null;
   const customerName = isReceivedInvoice
-    ? (invoice?.seller_business?.name ?? invoice?.customer?.name ?? 'Supplier')
-    : (invoice?.customer?.name ?? sale?.customer?.name);
+    ? (invoice?.party_name ?? invoice?.seller_business?.name ?? 'Supplier')
+    : (invoice?.party_name ?? invoice?.customer?.name ?? sale?.customer?.name);
 
   const billDetails = billDetailsProp
     ?? (sale ? buildBillDetailsFromSale(sale) : invoice ? buildBillDetailsFromInvoice(invoice) : null);

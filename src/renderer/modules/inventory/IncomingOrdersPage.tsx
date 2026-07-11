@@ -231,6 +231,35 @@ export default function IncomingOrdersPage() {
                     ),
                 },
                 {
+                  key: 'payments',
+                  header: 'Payments',
+                  render: (po) => {
+                    if (!po.invoice) return <span className="text-sm text-gray-400">—</span>;
+                    const count = po.invoice.payments_count ?? 0;
+                    const status = po.invoice.payment_status
+                      ?? (Number(po.invoice.amount_paid) <= 0
+                        ? 'unpaid'
+                        : Number(po.invoice.amount_paid) + 0.009 >= Number(po.invoice.total_amount)
+                          ? 'paid'
+                          : 'partial');
+                    return (
+                      <button
+                        type="button"
+                        className="text-left text-sm text-gray-800 hover:text-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const id = poInvoiceId(po);
+                          if (id) setInvoiceModal({ id, focus: 'receipts' });
+                        }}
+                        title="View payment receipts"
+                      >
+                        <span className="font-medium tabular-nums">{count}</span>
+                        <span className="text-gray-500"> · {status.replace('_', ' ')}</span>
+                      </button>
+                    );
+                  },
+                },
+                {
                   key: 'total',
                   header: 'Total',
                   render: (po) => formatCurrency(Number(po.total_amount)),

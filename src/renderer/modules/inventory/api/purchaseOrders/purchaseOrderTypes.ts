@@ -28,6 +28,7 @@ export interface PurchaseOrderInvoiceRef {
   amount_paid: string | number;
   total_amount: string | number;
   payments_count?: number | null;
+  payment_status?: 'unpaid' | 'partial' | 'paid' | null;
 }
 
 export interface PurchaseOrderBusinessRef {
@@ -93,5 +94,8 @@ export interface CreatePurchaseOrderPayload {
 }
 
 export interface ReceivePurchaseOrderPayload {
-  items: { id: number; product_id: number }[];
+  items: Array<
+    | { id: number; product_id: number; create_product?: false }
+    | { id: number; create_product: true; product_id?: never }
+  >;
 }

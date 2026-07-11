@@ -115,10 +115,11 @@ export function sellerPoActions({
               variant="secondary"
               disabled={isOffline}
               onClick={onOpenReceipts}
-              title="View payment receipts"
+              title={`${paymentCount} payment receipt${paymentCount === 1 ? '' : 's'}`}
               className="inline-flex items-center gap-1"
             >
-              <Receipt className="h-3.5 w-3.5" /> Receipts
+              <Receipt className="h-3.5 w-3.5" />
+              Receipts{paymentCount > 0 ? ` (${paymentCount})` : ''}
             </Button>
           ) : null}
         </>

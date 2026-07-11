@@ -56,7 +56,15 @@ export function PurchaseOrderMobileCard({
           <p className="text-xs text-gray-500">Total</p>
           <p className="text-sm font-medium text-gray-900">{formatCurrency(Number(po.total_amount))}</p>
         </div>
-        <p className="text-xs text-gray-500">{new Date(po.created_at).toLocaleDateString()}</p>
+        <div className="text-right">
+          {po.invoice ? (
+            <p className="text-xs text-gray-600">
+              <span className="font-medium tabular-nums">{po.invoice.payments_count ?? 0}</span>
+              {' '}payment{(po.invoice.payments_count ?? 0) === 1 ? '' : 's'}
+            </p>
+          ) : null}
+          <p className="text-xs text-gray-500">{new Date(po.created_at).toLocaleDateString()}</p>
+        </div>
       </div>
 
       {actions ? (

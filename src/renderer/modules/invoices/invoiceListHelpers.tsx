@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- shared invoice list helpers + one icon button */
 import type { ReactNode } from 'react';
 import { cn } from '../../shared/utils/cn';
 import type { Invoice } from './api/InvoiceTypes';
@@ -44,9 +45,16 @@ export function isReceivedInvoice(inv: Invoice): boolean {
 
 export function invoicePartyLabel(inv: Invoice): string {
   if (isReceivedInvoice(inv)) {
-    return inv.seller_business?.name ?? inv.customer?.name ?? 'Supplier';
+    // Never fall back to customer — that row is the buyer on the seller's books.
+    return inv.party_name
+      ?? inv.seller_business?.name
+      ?? 'Supplier';
   }
-  return inv.customer?.name ?? 'Walk-in';
+  return inv.party_name ?? inv.customer?.name ?? 'Walk-in';
+}
+
+export function invoicePartyColumnHeader(isSupplierMode: boolean): string {
+  return isSupplierMode ? 'Supplier' : 'Customer';
 }
 
 export function InvoiceIconAction({

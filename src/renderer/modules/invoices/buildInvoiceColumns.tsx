@@ -65,9 +65,14 @@ export function buildInvoiceColumns({
       key: 'customer',
       header: 'Party',
       render: (item: Invoice) => (
-        <span className={cn('text-sm', invoicePartyLabel(item) !== 'Walk-in' ? 'text-gray-800' : 'text-gray-400 italic')}>
-          {invoicePartyLabel(item)}
-        </span>
+        <div className="min-w-0">
+          <span className={cn('text-sm', invoicePartyLabel(item) !== 'Walk-in' ? 'text-gray-800' : 'text-gray-400 italic')}>
+            {invoicePartyLabel(item)}
+          </span>
+          {isReceivedInvoice(item) ? (
+            <p className="text-[10px] font-medium uppercase tracking-wide text-violet-600 mt-0.5">Supplier</p>
+          ) : null}
+        </div>
       ),
     },
     {

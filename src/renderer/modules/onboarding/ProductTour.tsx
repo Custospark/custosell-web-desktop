@@ -1,6 +1,7 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { Play, Pause } from 'lucide-react';
 import { Button } from '../../shared/components/buttons/Button';
 import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -237,32 +238,59 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     }
   }, [open, step, index, placement.width, cardHeight, viewportTick]);
 
-  async function persistFinish(kind: 'complete_tour' | 'skip_tour') {
-    await update.mutateAsync({ action: kind });
-  }
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [autoCountdown, setAutoCountdown] = useState(5);
 
-  async function goNext() {
+  const fireSave = useCallback((action: string, tourStep?: number) => {
+    update.mutate({ action, tour_step: tourStep } as never, {
+      onError: () => { /* background save — errors are non-blocking */ },
+    });
+  }, [update]);
+
+  function goNext() {
     if (isLast) {
       onFinished?.();
-      await persistFinish('complete_tour');
+      fireSave('complete_tour');
       return;
     }
     const next = index + 1;
     setIndex(next);
-    await update.mutateAsync({ action: 'tour_step', tour_step: next });
+    fireSave('tour_step', next);
+    setAutoCountdown(5);
   }
 
-  async function goBack() {
+  function goBack() {
     if (index <= 0) return;
     const prev = index - 1;
     setIndex(prev);
-    await update.mutateAsync({ action: 'tour_step', tour_step: prev });
+    fireSave('tour_step', prev);
+    setAutoCountdown(5);
   }
 
-  async function skipTour() {
+  function skipTour() {
     onSkipped?.();
-    await persistFinish('skip_tour');
+    fireSave('skip_tour');
   }
+
+  function toggleAutoPlay() {
+    setAutoPlay((p) => !p);
+    setAutoCountdown(5);
+  }
+
+  useEffect(() => {
+    if (!autoPlay || isLast) return;
+    const timer = setInterval(() => {
+      setAutoCountdown((c) => {
+        if (c <= 1) {
+          goNext();
+          return 5;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, isLast, index]);
 
   if (!open || !step || steps.length === 0 || typeof document === 'undefined') return null;
 
@@ -327,19 +355,31 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
           <div className="px-3.5 py-3 sm:px-4 sm:py-3.5">
             <p className="text-sm leading-relaxed text-slate-600">{step.body}</p>
             <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 sm:mt-4">
-              <button
-                type="button"
-                className="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
-                disabled={update.isPending}
-                onClick={() => void skipTour()}
-              >
-                Skip tour
-              </button>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" disabled={index <= 0 || update.isPending} onClick={() => void goBack()}>
+                <button
+                  type="button"
+                  className="text-sm font-medium text-slate-500 hover:text-slate-800"
+                  onClick={() => skipTour()}
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleAutoPlay}
+                  className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+                    autoPlay ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                  title={autoPlay ? 'Pause auto-play' : 'Auto-play every 5s'}
+                >
+                  {autoPlay ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  {autoPlay ? `${autoCountdown}s` : 'Auto'}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={index <= 0} onClick={() => goBack()}>
                   Back
                 </Button>
-                <Button size="sm" disabled={update.isPending} loading={update.isPending} onClick={() => void goNext()}>
+                <Button size="sm" onClick={() => goNext()}>
                   {isLast ? 'Finish' : 'Next'}
                 </Button>
               </div>

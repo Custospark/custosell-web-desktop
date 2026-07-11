@@ -56,8 +56,11 @@ export default function PaymentReceiptModal({
   const refLabel = referenceLabel ?? invoice?.invoice_number ?? `#${payment.payable_id}`;
   const isPaidInFull = payment.balance_after <= 0;
   const canPdf = payment.id > 0 && !payment._pendingSync;
+  const isReceivedInvoice = invoice?.direction === 'received';
   const defaultEmail = invoice?.customer?.email ?? sale?.customer?.email ?? null;
-  const customerName = invoice?.customer?.name ?? sale?.customer?.name;
+  const customerName = isReceivedInvoice
+    ? (invoice?.seller_business?.name ?? invoice?.customer?.name ?? 'Supplier')
+    : (invoice?.customer?.name ?? sale?.customer?.name);
 
   const billDetails = billDetailsProp
     ?? (sale ? buildBillDetailsFromSale(sale) : invoice ? buildBillDetailsFromInvoice(invoice) : null);

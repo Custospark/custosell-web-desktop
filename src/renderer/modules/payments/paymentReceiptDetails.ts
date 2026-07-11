@@ -64,6 +64,7 @@ export function buildBillDetailsFromInvoice(invoice: Invoice): PaymentReceiptBil
   }));
 
   const linesSubtotal = lineItems.reduce((s, i) => s + i.subtotal, 0);
+  const isReceived = invoice.direction === 'received';
 
   return {
     lineItems,
@@ -72,6 +73,8 @@ export function buildBillDetailsFromInvoice(invoice: Invoice): PaymentReceiptBil
     taxTotal: invoice.tax_total,
     totalRefunded: 0,
     billTotal: invoice.total_amount,
-    customerName: invoice.customer?.name ?? null,
+    customerName: isReceived
+      ? (invoice.seller_business?.name ?? invoice.customer?.name ?? null)
+      : (invoice.customer?.name ?? null),
   };
 }

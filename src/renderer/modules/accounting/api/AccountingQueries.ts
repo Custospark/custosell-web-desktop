@@ -86,12 +86,23 @@ export function useCurrentPeriod() {
 }
 
 export function useJournalEntries(filters?: Record<string, string>) {
-  const params = filters ? new URLSearchParams(filters).toString() : '';
+  const params = new URLSearchParams(filters ?? {});
+  if (!params.has('per_page')) params.set('per_page', '500');
+  const query = params.toString();
   return useQuery<JournalEntry[]>({
     queryKey: accountingKeys.journalEntries(filters),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: JournalEntry[] }>(`${ACCOUNTING.JOURNAL_ENTRIES}${params ? `?${params}` : ''}`);
-      return data.data ?? [];
+      const { data } = await axiosInstance.get<{ data: JournalEntry[] }>(
+        `${ACCOUNTING.JOURNAL_ENTRIES}?${query}`,
+      );
+      const list = Array.isArray(data.data) ? data.data : [];
+      return [...list].sort((a, b) => {
+        const byDate = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (byDate !== 0) return byDate;
+        const byCreated = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (byCreated !== 0) return byCreated;
+        return b.id - a.id;
+      });
     },
   });
 }
@@ -276,7 +287,7 @@ export function useCreateJournalEntry() {
         return;
       }
       qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) => {
-        if (!old) return [entry];
+        if (!Array.isArray(old)) return [entry];
         if (old.some((e) => e.id === entry.id)) return old;
         return [entry, ...old];
       });
@@ -372,7 +383,7 @@ export function useReverseJournalEntry() {
     onSuccess: (reversal) => {
       // Optimistically add the reversal entry to the list
       qc.setQueryData<JournalEntry[]>(accountingKeys.journalEntries(), (old) => {
-        if (!old) return [reversal];
+        if (!Array.isArray(old)) return [reversal];
         if (old.some((e) => e.id === reversal.id)) return old;
         return [reversal, ...old];
       });
@@ -398,13 +409,22 @@ export function useCreateFixedAsset() {
         showToast('success', 'Fixed asset created');
         return;
       }
-      qc.setQueriesData<FixedAsset[]>({ queryKey: accountingKeys.fixedAssets() }, (old) => {
-        if (!old) return [asset];
-        if (old.some((a) => a.id === asset.id)) {
-          return old.map((a) => (a.id === asset.id ? asset : a));
-        }
-        return [asset, ...old];
-      });
+      qc.setQueriesData<FixedAsset[]>(
+        {
+          queryKey: accountingKeys.fixedAssets(),
+          predicate: (query) => {
+            const key = query.queryKey;
+            return key[0] === 'accounting' && key[1] === 'fixed-assets' && key[2] !== 'detail';
+          },
+        },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          if (old.some((a) => a.id === asset.id)) {
+            return old.map((a) => (a.id === asset.id ? asset : a));
+          }
+          return [asset, ...old];
+        },
+      );
       void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
       void qc.invalidateQueries({ queryKey: ['hr', 'company-assets'] });
       showToast('success', 'Fixed asset created');
@@ -422,10 +442,19 @@ export function useUpdateFixedAsset() {
       return data.data;
     },
     onSuccess: (asset) => {
-      qc.setQueriesData<FixedAsset[]>({ queryKey: accountingKeys.fixedAssets() }, (old) => {
-        if (!old) return [asset];
-        return old.map((a) => (a.id === asset.id ? { ...a, ...asset } : a));
-      });
+      qc.setQueriesData<FixedAsset[]>(
+        {
+          queryKey: accountingKeys.fixedAssets(),
+          predicate: (query) => {
+            const key = query.queryKey;
+            return key[0] === 'accounting' && key[1] === 'fixed-assets' && key[2] !== 'detail';
+          },
+        },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          return old.map((a) => (a.id === asset.id ? { ...a, ...asset } : a));
+        },
+      );
       qc.setQueryData(accountingKeys.fixedAsset(asset.id), asset);
       void qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
       void qc.invalidateQueries({ queryKey: accountingKeys.fixedAsset(asset.id) });

@@ -55,7 +55,11 @@ export default function JournalEntriesPage() {
           if (a.id === highlightEntryId) return -1;
           if (b.id === highlightEntryId) return 1;
         }
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+        const byDate = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (byDate !== 0) return byDate;
+        const byCreated = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (byCreated !== 0) return byCreated;
+        return b.id - a.id;
       });
   }, [entries, search, activePeriodIds, highlightEntryId]);
 

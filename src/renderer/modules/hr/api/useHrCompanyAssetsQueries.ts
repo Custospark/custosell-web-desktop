@@ -108,13 +108,31 @@ function useCompanyAssetErrorToast() {
 
 function patchAssetLists(qc: ReturnType<typeof useQueryClient>, asset: FixedAsset) {
   const updater = (old: FixedAsset[] | undefined) => {
-    if (!old) return [asset];
+    if (!Array.isArray(old)) return old;
     const exists = old.some((a) => a.id === asset.id);
     if (!exists) return [asset, ...old];
     return old.map((a) => (a.id === asset.id ? { ...a, ...asset } : a));
   };
-  qc.setQueriesData<FixedAsset[]>({ queryKey: hrCompanyAssetsKeys.all }, updater);
-  qc.setQueriesData<FixedAsset[]>({ queryKey: accountingKeys.fixedAssets() }, updater);
+  // Only patch list caches — detail/assignments/expenses share the same key prefix.
+  qc.setQueriesData<FixedAsset[]>(
+    {
+      queryKey: hrCompanyAssetsKeys.all,
+      predicate: (query) => query.queryKey[2] === 'list',
+    },
+    updater,
+  );
+  qc.setQueriesData<FixedAsset[]>(
+    {
+      queryKey: accountingKeys.fixedAssets(),
+      predicate: (query) => {
+        const key = query.queryKey;
+        // ['accounting','fixed-assets'] or ['accounting','fixed-assets', filters]
+        // exclude ['accounting','fixed-assets','detail', id, ...]
+        return key[0] === 'accounting' && key[1] === 'fixed-assets' && key[2] !== 'detail';
+      },
+    },
+    updater,
+  );
   qc.setQueryData(hrCompanyAssetsKeys.detail(asset.id), asset);
 }
 

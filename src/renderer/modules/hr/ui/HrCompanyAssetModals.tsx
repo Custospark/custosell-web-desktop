@@ -159,9 +159,9 @@ export function CustodyAssetModal({
     } else if (!employeeId) {
       return;
     } else if (action === 'assign') {
-      await assign.mutateAsync({ id: asset.id, to_employee_id: Number(employeeId), notes: notes || null });
+      await assign.mutateAsync({ id: asset.id, employee_id: Number(employeeId), notes: notes || null });
     } else {
-      await transfer.mutateAsync({ id: asset.id, to_employee_id: Number(employeeId), notes: notes || null });
+      await transfer.mutateAsync({ id: asset.id, employee_id: Number(employeeId), notes: notes || null });
     }
     setEmployeeId('');
     setNotes('');

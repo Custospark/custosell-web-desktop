@@ -86,7 +86,8 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | **Settings Staff** | Create staff → auto HR employee; delete staff → HR profile remains (No login); soft-sync name/email/phone onto linked employee on staff update |
 | **Estimates timesheets** | Attendance → “Import approved timesheets” mirrors approved hours into HR day minutes (project costing stays on timesheets) |
 | **POS Shifts** | Attendance shows read-only sales-floor shifts for linked users (not merged with HR clock) |
-| **Accounting** | Pay-run **Post** creates accrual JE (Dr 6101 / Cr 2110–2112). **Settle** and **Remit statutory** clear liabilities vs Bank. **Void** reverses linked journals. Fail-hard: no journal → stay `approved` + `posting_note`. See [ADR: payroll accounting bridge](../adr/2026-07-10-hr-payroll-accounting-bridge.md) |
+| **Accounting** | Pay-run **Post** creates accrual JE (Dr 6101 / Cr 2110–2112). **Settle** and **Remit statutory** clear liabilities vs Bank. **Void** reverses linked journals. Fail-hard: no journal → stay `approved` + `posting_note`. See [ADR: payroll accounting bridge](../adr/2026-07-10-hr-payroll-accounting-bridge.md). **Company Assets** share the `fixed_assets` register with Accounting Fixed Assets (custody in HR; depreciation/GL in Accounting). See [ADR: company assets](../adr/2026-07-11-company-assets-hr-accounting.md) |
+| **Expenses** | Optional `fixed_asset_id` on maintenance/repair expenses; rollup on Company Asset detail |
 | **Documents** | Seeded HR cabinet remains the file home for contracts/policies |
 
 ## Payroll flow
@@ -132,6 +133,10 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Offline HR account create | Online-first — use Settings staff create (queued) if offline |
 | Payroll post without open period / COA | 422; run stays `approved`; `posting_note` explains; Retry post |
 | Void with closed period | 422; journals unchanged; toast shows accounting error |
+| Assign already-assigned asset | 422 — transfer or return first |
+| Return unassigned asset | 422 |
+| Dispose while assigned | 422 — return first |
+| Invalid `fixed_asset_id` on expense | 422 |
 | Delete non-draft/calculated pay run | 422 |
 
 ## Related docs

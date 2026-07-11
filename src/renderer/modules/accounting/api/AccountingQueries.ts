@@ -209,7 +209,7 @@ export function useRunDepreciation() {
     },
     onSuccess: (results) => {
       qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
-      const ok = results.filter((r) => r.status === 'posted' || r.status === 'success').length;
+      const ok = results.filter((r) => r.status === 'depreciated' || r.status === 'posted' || r.status === 'success').length;
       showToast('success', ok ? `Depreciation posted for ${ok} asset(s)` : 'Depreciation run completed');
     },
     onError: (err) => {

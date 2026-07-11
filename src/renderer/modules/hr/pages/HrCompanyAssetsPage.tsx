@@ -27,7 +27,7 @@ export default function HrCompanyAssetsPage() {
   const [custody, setCustody] = useState<{ asset: FixedAsset; action: CustodyAction } | null>(null);
 
   const filters = useMemo(() => ({
-    q: search.trim() || undefined,
+    search: search.trim() || undefined,
     category: category || undefined,
     unassigned: unassignedOnly ? '1' : undefined,
   }), [search, category, unassignedOnly]);

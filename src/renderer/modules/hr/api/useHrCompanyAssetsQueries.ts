@@ -74,16 +74,14 @@ export type UpdateCompanyAssetCustodyPayload = {
 
 export type AssignCompanyAssetPayload = {
   id: number;
-  to_employee_id: number;
+  employee_id: number;
   notes?: string | null;
-  occurred_at?: string | null;
 };
 
 export type TransferCompanyAssetPayload = {
   id: number;
-  to_employee_id: number;
+  employee_id: number;
   notes?: string | null;
-  occurred_at?: string | null;
 };
 
 export type ReturnCompanyAssetPayload = {

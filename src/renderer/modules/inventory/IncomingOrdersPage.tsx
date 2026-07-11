@@ -50,10 +50,11 @@ function sellerPoRowActions(opts: {
   busy: boolean;
   onView: () => void;
   onAccept: () => void;
+  onReject: () => void;
   onFulfill: () => void;
   onInvoice: () => void;
 }) {
-  const { po, isOffline, busy, onView, onAccept, onFulfill, onInvoice } = opts;
+  const { po, isOffline, busy, onView, onAccept, onReject, onFulfill, onInvoice } = opts;
   return (
     <>
       <button
@@ -65,16 +66,29 @@ function sellerPoRowActions(opts: {
         <Eye className="h-4 w-4" />
       </button>
       {po.status === 'submitted' ? (
-        <Button
-          type="button"
-          size="sm"
-          disabled={isOffline || busy}
-          onClick={onAccept}
-          title="Accept this order"
-          className="inline-flex items-center gap-1"
-        >
-          <CheckCircle2 className="h-3.5 w-3.5" /> Accept
-        </Button>
+        <>
+          <Button
+            type="button"
+            size="sm"
+            disabled={isOffline || busy}
+            onClick={onAccept}
+            title="Accept this order"
+            className="inline-flex items-center gap-1"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" /> Accept
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={isOffline || busy}
+            onClick={onReject}
+            title="Reject this order"
+            className="inline-flex items-center gap-1"
+          >
+            <Ban className="h-3.5 w-3.5" /> Reject
+          </Button>
+        </>
       ) : null}
       {po.status === 'accepted' ? (
         <Button
@@ -211,6 +225,12 @@ export default function IncomingOrdersPage() {
                   busy,
                   onView: () => setViewPo(po),
                   onAccept: () => void acceptPo.mutateAsync(po.id),
+                  onReject: async () => {
+                    const reason = window.prompt(`Reason for rejecting ${po.po_number}:`);
+                    if (reason && reason.trim()) {
+                      await rejectPo.mutateAsync({ id: po.id, rejection_reason: reason.trim() });
+                    }
+                  },
                   onFulfill: () => void fulfillPo.mutateAsync(po.id),
                   onInvoice: () => setInvoicePo(po),
                 })}
@@ -258,6 +278,12 @@ export default function IncomingOrdersPage() {
                         busy,
                         onView: () => setViewPo(po),
                         onAccept: () => void acceptPo.mutateAsync(po.id),
+                        onReject: async () => {
+                          const reason = window.prompt(`Reason for rejecting ${po.po_number}:`);
+                          if (reason && reason.trim()) {
+                            await rejectPo.mutateAsync({ id: po.id, rejection_reason: reason.trim() });
+                          }
+                        },
                         onFulfill: () => void fulfillPo.mutateAsync(po.id),
                         onInvoice: () => setInvoicePo(po),
                       })}

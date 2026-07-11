@@ -21,6 +21,8 @@ import {
 } from './api/purchaseOrders/usePurchaseOrderQueries';
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
+import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
+import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
 import { ReceivePurchaseOrderModal } from './ui/supply/ReceivePurchaseOrderModal';
 import GenerateInvoiceFromPoModal from './ui/supply/GenerateInvoiceFromPoModal';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
@@ -36,6 +38,92 @@ const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'rejected', label: 'Rejected' },
   { id: 'cancelled', label: 'Cancelled' },
 ];
+
+function buyerPoActions(opts: {
+  po: PurchaseOrder;
+  isOffline: boolean;
+  busy: boolean;
+  onView: () => void;
+  onEdit: () => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  onReceive: () => void;
+  onInvoice: () => void;
+}) {
+  const { po, isOffline, busy, onView, onEdit, onSubmit, onCancel, onReceive, onInvoice } = opts;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onView}
+        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+        title="View order details"
+      >
+        <Eye className="h-4 w-4" />
+      </button>
+      {po.status === 'draft' ? (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+          title="Edit this draft order"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+      ) : null}
+      {po.status === 'draft' ? (
+        <Button
+          type="button"
+          size="sm"
+          disabled={isOffline || busy}
+          onClick={onSubmit}
+          title="Submit this order to the seller"
+          className="inline-flex items-center gap-1"
+        >
+          <Send className="h-3.5 w-3.5" /> Submit
+        </Button>
+      ) : null}
+      {po.status === 'draft' || po.status === 'submitted' ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={isOffline || busy}
+          onClick={onCancel}
+          title="Cancel this order"
+          className="inline-flex items-center gap-1"
+        >
+          <Ban className="h-3.5 w-3.5" /> Cancel
+        </Button>
+      ) : null}
+      {po.status === 'fulfilled' ? (
+        <Button
+          type="button"
+          size="sm"
+          disabled={isOffline}
+          onClick={onReceive}
+          title="Receive these items into your stock"
+          className="inline-flex items-center gap-1"
+        >
+          <PackageCheck className="h-3.5 w-3.5" /> Receive
+        </Button>
+      ) : null}
+      {po.status === 'received' ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={isOffline}
+          onClick={onInvoice}
+          title="Generate an invoice from this order"
+          className="inline-flex items-center gap-1"
+        >
+          <FileText className="h-3.5 w-3.5" /> Invoice
+        </Button>
+      ) : null}
+    </>
+  );
+}
 
 export default function PurchaseOrdersPage() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
@@ -98,24 +186,12 @@ export default function PurchaseOrdersPage() {
 
       {isOffline ? <SupplyOfflineBanner /> : null}
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setStatusTab(tab.id)}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors',
-              statusTab === tab.id
-                ? 'border-blue-300 bg-blue-50 text-blue-800'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
-            )}
-          >
-            {tab.label}
-            <Badge variant="neutral">{statusCounts[tab.id] ?? 0}</Badge>
-          </button>
-        ))}
-      </div>
+      <SupplyStatusTabs
+        tabs={STATUS_TABS}
+        active={statusTab}
+        counts={statusCounts}
+        onChange={setStatusTab}
+      />
 
       <SearchInput
         value={search}
@@ -136,82 +212,86 @@ export default function PurchaseOrdersPage() {
           icon={<Truck className="h-10 w-10" />}
         />
       ) : (
-        <Card className="overflow-hidden p-0">
-          <Table
-            data={paginated.data}
-            rowKey={(po) => po.id}
-            columns={[
-              {
-                key: 'po_number',
-                header: 'PO',
-                render: (po) => <span className="font-medium text-gray-900">{po.po_number}</span>,
-              },
-              {
-                key: 'seller',
-                header: 'Seller',
-                render: (po) => po.seller_business?.name ?? `Business #${po.seller_business_id}`,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (po) => purchaseOrderStatusBadge(po.status),
-              },
-              {
-                key: 'total',
-                header: 'Total',
-                render: (po) => formatCurrency(Number(po.total_amount)),
-              },
-              {
-                key: 'date',
-                header: 'Date',
-                render: (po) => (
-                  <span className="text-sm text-gray-500">
-                    {new Date(po.created_at).toLocaleDateString()}
-                  </span>
-                ),
-              },
-              {
-                key: 'actions',
-                header: '',
-                render: (po) => (
-                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setViewPo(po)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      title="View order details"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    {po.status === 'draft' ? (
-                      <button
-                        type="button"
-                        onClick={() => setEditPo(po)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                        title="Edit this draft order"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    ) : null}
-                    {po.status === 'draft' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isOffline || busy}
-                        onClick={() => void submitPo.mutateAsync(po.id)}
-                        title="Submit this order to the seller"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <Send className="h-3.5 w-3.5" /> Submit
-                      </Button>
-                    ) : null}
-                    {po.status === 'draft' || po.status === 'submitted' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={isOffline || busy}
-                        onClick={async () => {
+        <>
+          <div className="space-y-3 md:hidden">
+            {paginated.data.map((po) => (
+              <PurchaseOrderMobileCard
+                key={po.id}
+                purchaseOrder={po}
+                partyLabel="Seller"
+                partyName={po.seller_business?.name ?? `Business #${po.seller_business_id}`}
+                onOpen={() => setViewPo(po)}
+                actions={buyerPoActions({
+                  po,
+                  isOffline,
+                  busy,
+                  onView: () => setViewPo(po),
+                  onEdit: () => setEditPo(po),
+                  onSubmit: () => void submitPo.mutateAsync(po.id),
+                  onCancel: async () => {
+                    const ok = await confirm({
+                      title: 'Cancel purchase order?',
+                      message: `Cancel ${po.po_number}? This cannot be undone.`,
+                      confirmText: 'Cancel PO',
+                      cancelText: 'Keep',
+                      variant: 'danger',
+                    });
+                    if (ok) void cancelPo.mutateAsync(po.id);
+                  },
+                  onReceive: () => setReceivePo(po),
+                  onInvoice: () => setGenerateInvoicePo(po),
+                })}
+              />
+            ))}
+          </div>
+
+          <Card className="hidden overflow-hidden p-0 md:block" padding={false}>
+            <Table
+              data={paginated.data}
+              rowKey={(po) => po.id}
+              columns={[
+                {
+                  key: 'po_number',
+                  header: 'PO',
+                  render: (po) => <span className="font-medium text-gray-900">{po.po_number}</span>,
+                },
+                {
+                  key: 'seller',
+                  header: 'Seller',
+                  render: (po) => po.seller_business?.name ?? `Business #${po.seller_business_id}`,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (po) => purchaseOrderStatusBadge(po.status),
+                },
+                {
+                  key: 'total',
+                  header: 'Total',
+                  render: (po) => formatCurrency(Number(po.total_amount)),
+                },
+                {
+                  key: 'date',
+                  header: 'Date',
+                  render: (po) => (
+                    <span className="text-sm text-gray-500">
+                      {new Date(po.created_at).toLocaleDateString()}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  header: '',
+                  render: (po) => (
+                    <div className="flex flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      {buyerPoActions({
+                        po,
+                        isOffline,
+                        busy,
+                        onView: () => setViewPo(po),
+                        onEdit: () => setEditPo(po),
+                        onSubmit: () => void submitPo.mutateAsync(po.id),
+                        onCancel: async () => {
                           const ok = await confirm({
                             title: 'Cancel purchase order?',
                             message: `Cancel ${po.po_number}? This cannot be undone.`,
@@ -220,44 +300,18 @@ export default function PurchaseOrdersPage() {
                             variant: 'danger',
                           });
                           if (ok) void cancelPo.mutateAsync(po.id);
-                        }}
-                        title="Cancel this order"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <Ban className="h-3.5 w-3.5" /> Cancel
-                      </Button>
-                    ) : null}
-                    {po.status === 'fulfilled' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isOffline}
-                        onClick={() => setReceivePo(po)}
-                        title="Receive these items into your stock"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <PackageCheck className="h-3.5 w-3.5" /> Receive
-                      </Button>
-                    ) : null}
-                    {po.status === 'received' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={isOffline}
-                        onClick={() => setGenerateInvoicePo(po)}
-                        title="Generate an invoice from this order"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <FileText className="h-3.5 w-3.5" /> Invoice
-                      </Button>
-                    ) : null}
-                  </div>
-                ),
-              },
-            ]}
-          />
-          <div className="border-t border-gray-100 px-4 py-3">
+                        },
+                        onReceive: () => setReceivePo(po),
+                        onInvoice: () => setGenerateInvoicePo(po),
+                      })}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </Card>
+
+          <div className="rounded-xl border border-gray-200 bg-white px-3 py-3 sm:px-4">
             <Pagination
               currentPage={paginated.page}
               totalPages={paginated.totalPages}
@@ -267,7 +321,7 @@ export default function PurchaseOrdersPage() {
               onPageSizeChange={paginated.setPageSize}
             />
           </div>
-        </Card>
+        </>
       )}
 
       {viewPo ? (

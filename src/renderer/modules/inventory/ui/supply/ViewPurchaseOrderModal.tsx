@@ -121,14 +121,12 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="lg">
       <div className="p-5 space-y-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-lg font-bold text-gray-900">{po.po_number}</h2>
-              {purchaseOrderStatusBadge(po.status)}
-            </div>
-
-            <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm sm:justify-center">
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <h2 className="text-lg font-bold text-gray-900">{po.po_number}</h2>
+            {purchaseOrderStatusBadge(po.status)}
+          </div>
+          <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm sm:justify-center">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Seller</p>
                 <p className="font-medium text-gray-900">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</p>
@@ -166,7 +164,6 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
                 </div>
               )}
             </div>
-          </div>
         </div>
 
         <OrderStages po={po} />

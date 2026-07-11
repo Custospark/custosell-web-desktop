@@ -3,7 +3,7 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { version } from '../../../../../package.json';
 import {
-  ChevronDown, ChevronRight, Kanban, Clock, CalendarDays, ClipboardCheck, Mail, Phone, Headset,
+  ChevronDown, ChevronRight, Kanban, Clock, CalendarDays, ClipboardCheck, Mail, Phone, Headset, X,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -147,11 +147,20 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
       >
         <LogoImage size="sm" />
         {!collapsed && (
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 flex-1 min-w-0">
             <span className="text-lg font-bold text-blue-600">Custosell</span>
-            <span className="text-[11px] font-semibold text-black ml-1">Version {version}</span>
+            <span className="text-[11px] font-semibold text-black ml-1 hidden sm:inline">Version {version}</span>
           </div>
         )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-auto lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          aria-label="Close sidebar"
+          data-tour="sidebar-close"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto" data-tour="sidebar-nav">

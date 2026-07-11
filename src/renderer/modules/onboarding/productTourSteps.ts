@@ -178,8 +178,8 @@ const CLOSING_STEPS: ProductTourStep[] = [
   {
     id: 'workspace',
     target: 'main-workspace',
-    title: 'You’re ready',
-    body: 'This is your workspace. Start with any module you have access to — you’ve got this.',
+    title: 'Welcome to Custosell',
+    body: 'This is your workspace. Open any module you have access to and get started.',
     icon: Sparkles,
     tone: 'bg-fuchsia-50 text-fuchsia-600 ring-fuchsia-100',
   },

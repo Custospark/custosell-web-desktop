@@ -184,7 +184,19 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     let cancelled = false;
 
     async function focusStep() {
+      const isSidebarTarget = step.target.startsWith('sidebar-');
       expandSidebarGroup(step.expandGroup);
+
+      if (isSidebarTarget) {
+        const hamburger = document.querySelector<HTMLElement>('[data-tour="sidebar-hamburger"]');
+        if (hamburger) hamburger.click();
+        await new Promise((r) => setTimeout(r, 350));
+      } else {
+        const overlay = document.querySelector<HTMLElement>('.fixed.inset-0.bg-black\\/50');
+        if (overlay) overlay.click();
+        await new Promise((r) => setTimeout(r, 350));
+      }
+
       await new Promise((r) => setTimeout(r, 100));
       if (step.route) {
         navigate(step.route);

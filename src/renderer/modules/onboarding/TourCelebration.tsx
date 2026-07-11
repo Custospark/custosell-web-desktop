@@ -60,12 +60,10 @@ export function TourCelebration({ open, onDone, reason = 'completed' }: TourCele
 
   if (!open || typeof document === 'undefined') return null;
 
-  const title = reason === 'skipped'
-    ? 'You’re set — welcome to Custosell'
-    : 'You’re ready to run your business';
+  const title = 'Welcome to Custosell';
   const body = reason === 'skipped'
-    ? 'No worries for skipping the tour. Your workspace is ready — explore at your pace, and replay the tour anytime from Guide → Tour.'
-    : 'Congratulations — you’ve completed the Custosell tour. Explore your modules, invite your team, and grow with confidence. Replay anytime from Guide → Tour.';
+    ? 'No worries for skipping the tour. Your workspace is ready — explore at your pace, and replay anytime from Guide → Tour.'
+    : 'You’ve finished the tour. Explore the modules you have access to, and replay anytime from Guide → Tour.';
 
   return createPortal(
     <div className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} pointer-events-none`} aria-live="polite">

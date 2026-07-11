@@ -235,6 +235,7 @@ export function Navbar() {
             className={cn(iconBtn, 'w-10 h-10 sm:w-9 sm:h-9 shrink-0')}
             title={sidebarLabel}
             aria-label={sidebarLabel}
+            data-tour="sidebar-hamburger"
           >
             <Menu className="w-6 h-6 sm:w-5 sm:h-5" />
           </button>

@@ -1,3 +1,25 @@
+import type { ElementType } from 'react';
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Users,
+  Kanban,
+  FileSpreadsheet,
+  Receipt,
+  BookOpen,
+  LineChart,
+  Files,
+  IdCard,
+  Settings,
+  LayoutGrid,
+  Wifi,
+  GraduationCap,
+  CircleUser,
+  PanelLeft,
+  Headset,
+  Sparkles,
+} from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import {
@@ -7,6 +29,7 @@ import {
   isBusinessOwner,
   type BusinessModuleSlug,
 } from '../../shared/utils/moduleAccess';
+import { MODULE_LAUNCHER_CATALOG } from '../../shared/components/layout/moduleLauncherCatalog';
 
 export interface ProductTourStep {
   id: string;
@@ -14,8 +37,9 @@ export interface ProductTourStep {
   title: string;
   body: string;
   route?: string;
-  /** Expand sidebar group before measuring (group label). */
   expandGroup?: string;
+  icon?: ElementType;
+  tone?: string;
   when?: (user: AuthUser | null | undefined) => boolean;
 }
 
@@ -82,36 +106,52 @@ const MODULE_TOUR_COPY: Record<BusinessModuleSlug, { title: string; body: string
   },
 };
 
+function launcherMeta(slug: string): { icon: ElementType; tone: string } | null {
+  const item = MODULE_LAUNCHER_CATALOG.find((m) => m.slug === slug);
+  if (!item) return null;
+  return { icon: item.icon, tone: item.tone };
+}
+
 const SHELL_STEPS: ProductTourStep[] = [
   {
     id: 'apps',
     target: 'navbar-apps',
     title: 'Apps launcher',
     body: 'Jump anywhere in your workspace from one place — you’re never more than a click from the tools you need.',
+    icon: LayoutGrid,
+    tone: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
   },
   {
     id: 'network',
     target: 'navbar-network',
     title: 'Stay connected',
     body: 'See online, slow, or offline instantly. Core selling and stock keep working when the network drops.',
+    icon: Wifi,
+    tone: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
   },
   {
     id: 'guide',
     target: 'navbar-guide',
     title: 'Guide & tour',
     body: 'Tutorials, FAQs, and Replay Tour live here whenever you want a refresher.',
+    icon: GraduationCap,
+    tone: 'bg-violet-50 text-violet-600 ring-violet-100',
   },
   {
     id: 'profile',
     target: 'navbar-profile',
     title: 'Your profile',
     body: 'Open your account menu for My Profile, shift actions, and sign out.',
+    icon: CircleUser,
+    tone: 'bg-blue-50 text-blue-600 ring-blue-100',
   },
   {
     id: 'sidebar',
     target: 'sidebar-nav',
     title: 'Your modules',
     body: 'Only the modules you can access appear here — your workspace, built for you.',
+    icon: PanelLeft,
+    tone: 'bg-slate-100 text-slate-600 ring-slate-200',
   },
 ];
 
@@ -121,6 +161,8 @@ const CLOSING_STEPS: ProductTourStep[] = [
     target: 'sidebar-support',
     title: 'Quick Support',
     body: 'Need help? Email or call from here anytime — we’re with you.',
+    icon: Headset,
+    tone: 'bg-cyan-50 text-cyan-600 ring-cyan-100',
   },
   {
     id: 'modules-owner',
@@ -129,6 +171,8 @@ const CLOSING_STEPS: ProductTourStep[] = [
     body: 'Owners turn modules on for the team here. Intent never changes permissions for you.',
     route: ROUTES.SETTINGS.MODULES,
     expandGroup: 'Settings',
+    icon: Settings,
+    tone: 'bg-slate-100 text-slate-600 ring-slate-200',
     when: (user) => isBusinessOwner(user) && canAccessModule(user, 'settings'),
   },
   {
@@ -136,25 +180,52 @@ const CLOSING_STEPS: ProductTourStep[] = [
     target: 'main-workspace',
     title: 'You’re ready',
     body: 'This is your workspace. Start with any module you have access to — you’ve got this.',
+    icon: Sparkles,
+    tone: 'bg-fuchsia-50 text-fuchsia-600 ring-fuchsia-100',
   },
 ];
+
+const FALLBACK_ICONS: Record<BusinessModuleSlug, ElementType> = {
+  dashboard: LayoutDashboard,
+  sales: ShoppingCart,
+  inventory: Package,
+  customers: Users,
+  pipeline: Kanban,
+  estimates: FileSpreadsheet,
+  expenses: Receipt,
+  accounting: BookOpen,
+  forecasting: LineChart,
+  documents: Files,
+  hr: IdCard,
+  settings: Settings,
+};
 
 function moduleStepsForUser(user: AuthUser | null | undefined): ProductTourStep[] {
   const steps: ProductTourStep[] = [];
   for (const slug of BUSINESS_MODULE_SLUGS) {
     if (!canAccessModule(user, slug)) continue;
+    // Skip if the sidebar target is not rendered (group filtered out)
     const copy = MODULE_TOUR_COPY[slug];
     const label = MODULE_LABELS[slug];
+    const meta = launcherMeta(slug);
     steps.push({
       id: `module-${slug}`,
       target: `sidebar-module-${slug}`,
       title: copy.title,
       body: copy.body,
       route: copy.route,
-      expandGroup: label === 'Inventory' ? 'Inventory & Supply Chain' : label,
+      expandGroup: label,
+      icon: meta?.icon ?? FALLBACK_ICONS[slug],
+      tone: meta?.tone ?? 'bg-slate-100 text-slate-600 ring-slate-200',
     });
   }
   return steps;
+}
+
+/** Prefer steps whose DOM target exists (improves precision after layout settles). */
+export function filterStepsWithTargets(steps: ProductTourStep[]): ProductTourStep[] {
+  if (typeof document === 'undefined') return steps;
+  return steps.filter((step) => document.querySelector(`[data-tour="${step.target}"]`));
 }
 
 /** Tour steps filtered to shell + modules the user can open. */

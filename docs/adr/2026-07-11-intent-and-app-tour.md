@@ -22,9 +22,14 @@ Custosell grew from offline POS into sales, inventory, supply, pipeline, project
 2. **App-wide product tour**  
    - Shared `ProductTour` with `data-tour` anchors on shell controls.  
    - Covers **shell**: navbar, Apps launcher, Guide, sidebar — then hubs the user can already open.  
-   - Tour **only spotlights accessible nav** (respects module access).  
+   - Tour **only spotlights accessible nav** (respects module access); card icons match Apps launcher.  
+   - Steps without a live DOM target are filtered out; spotlight re-measures with retry.  
    - Resume if incomplete; **Skip** and **Replay tour** (navbar Tour button) required.  
+   - **Skip and Finish** both open a ~30s flower celebration (dismissible).  
    - Staff may get a shorter shell tour; they do not get owner intent → module presets.
+
+3. **Intent timing**  
+   - After login/register, wait **5 seconds** once `needs_intent` is known before showing the intent modal so the shell can settle.
 
 3. **Persistence**  
    - Business: `primary_intent`, `secondary_intent`, `intent_completed_at`, `intent_skipped_at`  
@@ -55,7 +60,8 @@ Custosell grew from offline POS into sales, inventory, supply, pipeline, project
 | Case | Behavior |
 |------|----------|
 | Owner skips intent | Mark skipped; continue to tour |
-| Owner skips tour | Mark skipped; Replay from navbar Tour |
+| Owner skips tour | Mark skipped; flower celebration; Replay from navbar Tour |
+| Tour finished | Flower celebration (~30s); Replay from navbar Tour |
 | Incomplete mid-tour / logout | Resume at saved step on next login |
 | Offline | Gate deferred (POS usable); resume when online |
 | Staff login | No owner intent gate; tour if not completed/skipped |

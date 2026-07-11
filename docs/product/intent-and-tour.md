@@ -14,14 +14,19 @@ ADR: [../adr/2026-07-11-intent-and-app-tour.md](../adr/2026-07-11-intent-and-app
 ```mermaid
 flowchart TD
   A[Register or Login] --> B{Owner and intent incomplete?}
-  B -->|Yes| C[What brings you to Custosell?]
+  B -->|Yes| W[Wait 5s after shell ready]
+  W --> C[What brings you to Custosell?]
   B -->|No| D{Tour incomplete?}
   C --> E[Save intents - preference only]
   E --> D
   D -->|Yes| F[Shell tour then accessible hubs]
   D -->|No| G[Normal app]
-  F --> G
+  F --> H[Flower celebration ~30s]
+  F -->|Skip tour| H
+  H --> G
 ```
+
+**Timing:** Intent modal waits **5 seconds** after login/register (once `needs_intent` is known) so the workspace can settle. Celebration petals run for **~30 seconds** (dismiss early with “Let’s go”). Skip tour still opens the celebration with skip-friendly copy.
 
 ## Intent cards (v1 copy)
 
@@ -39,7 +44,9 @@ Targets need stable anchors (`data-tour`). Guide card is placed **away from** th
 | Shell | Apps, network, Guide/Tour, profile, sidebar, Quick Support |
 | Modules | One step per module the user can access |
 | Owners | Module access in Settings |
-| Finish | Flower celebration + congratulations |
+| Finish / Skip | Flower celebration (~30s) + congratulations; skip has its own welcome copy |
+| Icons | Tour cards use the same module icons/tones as the Apps launcher |
+| Precision | Steps whose `data-tour` target is missing are dropped; targets re-measured with retry |
 
 ## Wireframe (intent)
 

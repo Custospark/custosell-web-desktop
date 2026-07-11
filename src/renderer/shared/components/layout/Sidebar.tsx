@@ -57,7 +57,7 @@ function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
 
 const baseSubRoutes = [
   ROUTES.DASHBOARD,
-  ROUTES.SALES.NEW, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
+  ROUTES.SALES.NEW, ROUTES.SALES.ORDERS, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
   ROUTES.PIPELINE.BOARDS, ROUTES.PIPELINE.MY_WORK, ROUTES.PIPELINE.LEADS,
@@ -120,6 +120,7 @@ const baseNavGroups: NavGroup[] = [
     label: 'Sales',
     subItems: [
       { to: ROUTES.SALES.NEW, label: 'New Sale', icon: Plus },
+      { to: ROUTES.SALES.ORDERS, label: 'Orders', icon: ListOrdered },
       { to: ROUTES.SALES.HISTORY, label: 'History', icon: History },
       { to: ROUTES.SALES.REFUNDS, label: 'Refunds', icon: RotateCcw },
       { to: ROUTES.SALES.MY_SHIFT, label: 'My Shift', icon: Clock },

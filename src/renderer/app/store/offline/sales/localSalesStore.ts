@@ -139,4 +139,16 @@ export const localSalesStore = {
       }
     }
   },
+
+  async updateOrderIdInPending(oldOrderId: number, newOrderId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localSales');
+    for (const record of all) {
+      if (record.payload.order_id === oldOrderId) {
+        record.payload.order_id = newOrderId;
+        record.sale.order_id = newOrderId;
+        await db.put('localSales', record);
+      }
+    }
+  },
 };

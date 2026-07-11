@@ -12,11 +12,12 @@ Related: [architecture.md](./architecture.md) · [auth.md](./auth.md)
 
 ## IndexedDB stores (sales-related)
 
-Part of `CustosellOffline` v12 — see [architecture.md](./architecture.md).
+Part of `CustosellOffline` v13 — see [architecture.md](./architecture.md).
 
 | Store | Purpose |
 |-------|---------|
 | `localSales` | Full sale records pending server sync |
+| `localOrders` | Held/open orders pending create/update/cancel sync |
 | `localRefunds` | Refund snapshots pending server sync |
 | `localShifts` | Shift open/close records pending server sync |
 | `mutations` | Outbound API mutation queue |
@@ -76,6 +77,15 @@ Wired in `salesQueries.ts` and `ShiftQueries.ts` (`readShiftSalesBaseline`).
 5. UI: `OFF-*` receipt + **Pending sync** badge
 
 Online/slow path: tries `POST /sales` (4s timeout) first; falls back to local on network failure only.
+
+## Held orders (offline)
+
+1. Hold → `POST /orders` (or local `completeOfflineCreateOrderInstant` when offline)
+2. Resume keeps order `open` and sets Redux `activeOrderId`
+3. Offline sale payload includes `order_id`; sync creates orders **before** sales and remaps negative ids
+4. Legacy `localStorage.heldOrders` migrates once via `migrateHeldOrdersFromLocalStorage` on online sync
+
+See ADR: [pos-orders-persistence](../adr/2026-07-11-pos-orders-persistence.md).
 
 ## Refund flow (offline)
 

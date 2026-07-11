@@ -82,6 +82,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-stock-movement-actor-attribution.md](./adr/2026-07-11-stock-movement-actor-attribution.md) | Stock History shows logged-in user; BE `created_by` + backfill |
 | [2026-07-11-navbar-module-launcher.md](./adr/2026-07-11-navbar-module-launcher.md) | Navbar Apps modal — per-user module switcher |
 | [2026-07-11-hr-overview-dashboard.md](./adr/2026-07-11-hr-overview-dashboard.md) | Full-access HR dashboard at `/hr/overview` |
+| [2026-07-11-pos-orders-persistence.md](./adr/2026-07-11-pos-orders-persistence.md) | POS Hold/Take orders persist to DB; open→completed→invoiced |
 
 ## Modules
 

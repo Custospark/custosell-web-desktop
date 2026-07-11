@@ -28,6 +28,7 @@ import {
 } from '../../../app/store/offline/sync/offlineCacheReconcile';
 import { inventoryKeys } from '../../inventory/api/products/ProductQueries';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
+import { orderKeys } from './orders/orderQueryKeys';
 import { shiftKeys } from '../../shifts/ShiftQueries';
 import type { Product } from '../../inventory/api/products/ProductTypes';
 import { tracksStock } from '../../inventory/api/products/ProductTypes';
@@ -392,10 +393,13 @@ export function useCreateSale() {
         // Cache is already updated optimistically — defer non-critical refetches so the modal opens faster.
         queueMicrotask(() => {
           void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+          void qc.invalidateQueries({ queryKey: orderKeys.all });
           if (payload.shift_id) {
             void qc.invalidateQueries({ queryKey: [...shiftKeys.all, 'sales', payload.shift_id] });
           }
         });
+      } else if (payload.order_id) {
+        void qc.invalidateQueries({ queryKey: orderKeys.all });
       }
     },
     onError: (e) => {

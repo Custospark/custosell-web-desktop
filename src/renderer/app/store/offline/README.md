@@ -23,7 +23,7 @@ offline/
 |--------|-------------------|
 | **core** | DB open errors, `readWithOfflineStrategy`, offline vs slow detection, business ID remap |
 | **auth** | Offline login, silent session upgrade, 401 on reconnect, `pendingAuthSync` |
-| **sales** | `OFF-*` receipts, pending sales/refunds, shift clock-in/out, shift ID remap |
+| **sales** | `OFF-*` receipts, pending sales/refunds/orders, shift clock-in/out, shift/order ID remap |
 | **inventory** | Product/category pending rows, stock ledger, failed product sync |
 | **customers** | Customer pending CRUD |
 | **expenses** | Expense/receipt upload queue, category remap |

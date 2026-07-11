@@ -32,12 +32,27 @@ function extractBatchSales(responseData: unknown): Sale[] {
   return [];
 }
 
-function remapSalePayload(payload: CreateSalePayload, idMap: Map<number, number>): CreateSalePayload {
+function remapSalePayload(
+  payload: CreateSalePayload,
+  shiftIdMap: Map<number, number>,
+  orderIdMap: Map<number, number> = new Map(),
+): CreateSalePayload {
   const next = { ...payload };
-  if (next.shift_id && idMap.has(next.shift_id)) {
-    next.shift_id = idMap.get(next.shift_id)!;
+  if (next.shift_id && shiftIdMap.has(next.shift_id)) {
+    next.shift_id = shiftIdMap.get(next.shift_id)!;
+  }
+  if (next.order_id && orderIdMap.has(next.order_id)) {
+    next.order_id = orderIdMap.get(next.order_id)!;
   }
   return next;
+}
+
+function saleWaitingForOrderRemap(
+  payload: CreateSalePayload,
+  orderIdMap: Map<number, number>,
+): boolean {
+  const orderId = payload.order_id;
+  return typeof orderId === 'number' && orderId < 0 && !orderIdMap.has(orderId);
 }
 
 export function sortSalesMutationsChronologically(mutations: QueuedMutation[]): QueuedMutation[] {
@@ -151,13 +166,23 @@ async function syncSingleSale(
   m: QueuedMutation,
   idMap: Map<number, number>,
   saleIdMap: Map<number, number>,
+  orderIdMap: Map<number, number>,
 ): Promise<boolean> {
   const queued = await mutationQueue.getById(m.id);
   if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) {
     return true;
   }
 
-  const payload = remapSalePayload(m.data as CreateSalePayload, idMap);
+  const rawPayload = m.data as CreateSalePayload;
+  if (saleWaitingForOrderRemap(rawPayload, orderIdMap)) {
+    console.warn('[SyncEngine] Sale waiting for order id remap:', {
+      mutationId: m.id,
+      orderId: rawPayload.order_id,
+    });
+    return false;
+  }
+
+  const payload = remapSalePayload(rawPayload, idMap, orderIdMap);
   try {
     await mutationQueue.markSyncing(m.id);
     const response = await axiosInstance.post<{ data?: Sale } | Sale>('/sales', payload, {
@@ -189,18 +214,20 @@ async function syncSalesChunkBatch(
   chunk: QueuedMutation[],
   idMap: Map<number, number>,
   saleIdMap: Map<number, number>,
+  orderIdMap: Map<number, number>,
 ): Promise<{ synced: number; failed: number }> {
   const activeChunk = (
     await Promise.all(chunk.map(async (m) => ({ m, queued: await mutationQueue.getById(m.id) })))
   )
     .filter(({ queued }) => queued && (queued.status === 'queued' || queued.status === 'failed'))
-    .map(({ m }) => m);
+    .map(({ m }) => m)
+    .filter((m) => !saleWaitingForOrderRemap(m.data as CreateSalePayload, orderIdMap));
 
   if (activeChunk.length === 0) {
     return { synced: 0, failed: 0 };
   }
 
-  const sales = activeChunk.map((m) => remapSalePayload(m.data as CreateSalePayload, idMap));
+  const sales = activeChunk.map((m) => remapSalePayload(m.data as CreateSalePayload, idMap, orderIdMap));
 
   for (let attempt = 0; attempt < NETWORK_RETRY_MAX; attempt++) {
     try {
@@ -238,7 +265,7 @@ async function syncSalesChunkBatch(
   let synced = 0;
   let failed = 0;
   for (const m of activeChunk) {
-    const ok = await syncSingleSale(m, idMap, saleIdMap);
+    const ok = await syncSingleSale(m, idMap, saleIdMap, orderIdMap);
     if (ok) synced++;
     else failed++;
   }
@@ -253,6 +280,7 @@ export async function processSalesInChunks(
   idMap: Map<number, number>,
   saleIdMap: Map<number, number>,
   reporter?: SyncProgressReporter,
+  orderIdMap: Map<number, number> = new Map(),
 ): Promise<{ synced: number; failed: number }> {
   if (saleMutations.length === 0) return { synced: 0, failed: 0 };
 
@@ -264,13 +292,11 @@ export async function processSalesInChunks(
 
   for (let i = 0; i < sorted.length; i += SALES_BATCH_SIZE) {
     if (isOfflineMode()) break;
-
     const chunk = sorted.slice(i, i + SALES_BATCH_SIZE);
-    const result = await syncSalesChunkBatch(chunk, idMap, saleIdMap);
+    const result = await syncSalesChunkBatch(chunk, idMap, saleIdMap, orderIdMap);
     synced += result.synced;
     failed += result.failed;
     reporter?.addProgress(result.synced, result.failed);
-
     if (i + SALES_BATCH_SIZE < sorted.length) {
       await sleep(BATCH_PAUSE_MS);
     }

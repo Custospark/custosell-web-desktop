@@ -13,6 +13,7 @@ import { AppChrome } from '../../shared/components/layout/AppChrome';
 import { Layout } from '../../shared/components/layout/Layout';
 import NewSalePage from '../../modules/sales/NewSale';
 import SalesHistoryPage from '../../modules/sales/SalesHistoryPage';
+import OrdersPage from '../../modules/sales/OrdersPage';
 import RefundsPage from '../../modules/sales/RefundsPage';
 import MyShiftPage from '../../modules/shifts/MyShiftPage';
 import DashboardPage from '../../modules/dashboard/DashboardPage';
@@ -137,6 +138,7 @@ export function AppRoutes() {
           <Route element={<ModuleAccessMiddleware module="sales" />}>
             <Route path={ROUTES.SALES.INDEX} element={<Navigate to={ROUTES.SALES.NEW} replace />} />
             <Route path={ROUTES.SALES.NEW} element={<SuspenseWrapper><NewSalePage /></SuspenseWrapper>} />
+            <Route path={ROUTES.SALES.ORDERS} element={<SuspenseWrapper><OrdersPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.HISTORY} element={<SuspenseWrapper><SalesHistoryPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.REFUNDS} element={<SuspenseWrapper><RefundsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.MY_SHIFT} element={<SuspenseWrapper><MyShiftPage /></SuspenseWrapper>} />

@@ -1,12 +1,14 @@
 import { axiosInstance } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { setBusiness, updateShiftContext } from '../../slices/authSlice';
+import { setActiveOrderId } from '../../../../modules/sales/api/salesSlice';
 import { businessToAuthInfo } from '../../../../modules/settings/api/settings/businessAuthSync';
 import { persistAuthSnapshot } from '../auth/persistAuthSnapshot';
 import { mutationQueue } from './mutationQueue';
 import { isServerOwnedStockReason, stockLedger, type PendingAdjustment } from '../inventory/stockLedger';
 import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
 import { localSalesStore } from '../sales/localSalesStore';
+import { localOrdersStore } from '../sales/localOrdersStore';
 import { localRefundsStore } from '../sales/localRefundsStore';
 import { localShiftsStore, type ShiftRecord } from '../sales/localShiftsStore';
 import { localProductsStore } from '../inventory/localProductsStore';
@@ -91,6 +93,18 @@ function isSaleMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/sales';
 }
 
+function isOrderCreateMutation(m: QueuedMutation): boolean {
+  return m.method === 'POST' && m.url === '/orders';
+}
+
+function isOrderMutation(m: QueuedMutation): boolean {
+  return (
+    isOrderCreateMutation(m)
+    || (m.method === 'PUT' && /^\/orders\/-?\d+$/.test(m.url))
+    || (m.method === 'POST' && /^\/orders\/-?\d+\/cancel$/.test(m.url))
+  );
+}
+
 function isShiftOpenMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/shifts';
 }
@@ -170,6 +184,10 @@ function extractCategory(responseData: unknown): { id: number } | null {
   const direct = responseData as { id: number };
   if ('id' in direct) return direct;
   return null;
+}
+
+function extractOrder(responseData: unknown): { id: number } | null {
+  return extractCategory(responseData);
 }
 
 function extractExpenseCategory(responseData: unknown): ExpenseCategory | null {
@@ -334,6 +352,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       await localGuideFeedbackStore.removeByMutationId(m.id);
     }
 
+    if (isOrderMutation(m)) {
+      await localOrdersStore.removeByMutationId(m.id);
+    }
+
     void invalidateAfterItemCommitted().catch(() => undefined);
     return true;
   } catch (error: unknown) {
@@ -403,6 +425,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     if (isGuideFeedbackMutation(m)) {
       await localGuideFeedbackStore.markFailedByMutationId(m.id, message);
+    }
+
+    if (isOrderMutation(m)) {
+      await localOrdersStore.markFailedByMutationId(m.id, message);
     }
 
     if (isServerError && m.retryCount >= m.maxRetries) {
@@ -543,6 +569,52 @@ async function processCategoryCreates(
   return { synced, failed, idMap };
 }
 
+async function processOrderCreates(
+  orderCreates: QueuedMutation[],
+): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
+  const idMap = new Map<number, number>();
+  let synced = 0;
+  let failed = 0;
+
+  for (const m of orderCreates) {
+    const queued = await mutationQueue.getById(m.id);
+    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
+
+    const localRecord = (await localOrdersStore.getPending()).find((r) => r.mutationId === m.id);
+    const oldOrderId = localRecord?.order.id ?? null;
+
+    try {
+      await mutationQueue.markSyncing(m.id);
+      const response = await axiosInstance.post('/orders', m.data, { skipAuthRedirect: true });
+      const serverOrder = extractOrder(response.data);
+      await commitMutationQueueEntry(m.id);
+      await localOrdersStore.removeByMutationId(m.id);
+
+      if (oldOrderId && serverOrder?.id && oldOrderId !== serverOrder.id) {
+        idMap.set(oldOrderId, serverOrder.id);
+        await localSalesStore.updateOrderIdInPending(oldOrderId, serverOrder.id);
+        await mutationQueue.remapOrderId(oldOrderId, serverOrder.id);
+
+        const activeOrderId = store.getState().sales.activeOrderId;
+        if (activeOrderId === oldOrderId) {
+          store.dispatch(setActiveOrderId(serverOrder.id));
+        }
+      }
+
+      synced++;
+      void invalidateAfterItemCommitted().catch(() => undefined);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      const message = err?.response?.data?.message || err?.message || 'Order sync failed';
+      await mutationQueue.markFailed(m.id, message);
+      await localOrdersStore.markFailedByMutationId(m.id, message);
+      failed++;
+    }
+  }
+
+  return { synced, failed, idMap };
+}
+
 async function processShiftOpens(
   shiftOpens: QueuedMutation[],
 ): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
@@ -604,6 +676,20 @@ function remapShiftCloseUrl(url: string, idMap: Map<number, number>): string {
   return `/shifts/${serverId}`;
 }
 
+function remapOrderScopedUrl(url: string, idMap: Map<number, number>): string {
+  const updateMatch = url.match(/^\/orders\/(-?\d+)$/);
+  if (updateMatch) {
+    const localId = Number(updateMatch[1]);
+    return `/orders/${idMap.get(localId) ?? localId}`;
+  }
+  const cancelMatch = url.match(/^\/orders\/(-?\d+)\/cancel$/);
+  if (cancelMatch) {
+    const localId = Number(cancelMatch[1]);
+    return `/orders/${idMap.get(localId) ?? localId}/cancel`;
+  }
+  return url;
+}
+
 export async function syncAllMutations(reporter?: SyncProgressReporter): Promise<{ synced: number; failed: number }> {
   const pending = await mutationQueue.getPending();
 
@@ -618,6 +704,7 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
   const expenseCategoryCreates = pending.filter(isExpenseCategoryCreateMutation);
   const roleCreates = pending.filter(isRoleCreateMutation);
   const staffCreates = pending.filter(isStaffCreateMutation);
+  const orderCreates = pending.filter(isOrderCreateMutation);
   const saleMutations = pending.filter(isSaleMutation);
   const salePaymentMutations = pending.filter(isSalePaymentMutation);
   const productCreates = pending.filter(isProductCreateMutation);
@@ -632,6 +719,7 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
       !isExpenseCategoryCreateMutation(m) &&
       !isRoleCreateMutation(m) &&
       !isStaffCreateMutation(m) &&
+      !isOrderCreateMutation(m) &&
       !isSaleMutation(m) &&
       !isSalePaymentMutation(m) &&
       !isProductCreateMutation(m) &&
@@ -686,10 +774,17 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
     else failed++;
   }
 
+  reporter?.setTier(2, 'Orders');
+
+  const { synced: orderSynced, failed: orderFailed, idMap: orderIdMap } = await processOrderCreates(orderCreates);
+  synced += orderSynced;
+  failed += orderFailed;
+  reporter?.addProgress(orderSynced, orderFailed);
+
   reporter?.setTier(2, 'Transactions');
 
   const saleIdMap = new Map<number, number>();
-  const salesResult = await processSalesInChunks(saleMutations, idMap, saleIdMap, reporter);
+  const salesResult = await processSalesInChunks(saleMutations, idMap, saleIdMap, reporter, orderIdMap);
   synced += salesResult.synced;
   failed += salesResult.failed;
 
@@ -760,7 +855,19 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
   reporter?.setTier(3, 'Other updates');
 
   for (const m of otherMutations) {
-    const ok = await processMutation(m);
+    const remapped = { ...m, url: remapOrderScopedUrl(m.url, orderIdMap) };
+    const orderIdMatch = remapped.url.match(/^\/orders\/(-?\d+)(?:\/cancel)?$/);
+    if (orderIdMatch) {
+      const oid = Number(orderIdMatch[1]);
+      if (oid < 0 && !orderIdMap.has(oid)) {
+        console.warn('[SyncEngine] Order mutation waiting for create remap:', {
+          mutationId: m.id,
+          url: remapped.url,
+        });
+        continue;
+      }
+    }
+    const ok = await processMutation(remapped);
     if (ok) synced++;
     else failed++;
   }

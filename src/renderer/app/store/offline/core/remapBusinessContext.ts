@@ -81,6 +81,7 @@ export async function remapBusinessContext(
   await remapStoreEntities('localRoles', 'role', oldBusinessId, newBusinessId, oldUserId, newUserId);
   await remapStoreEntities('localStaff', 'staff', oldBusinessId, newBusinessId, oldUserId, newUserId);
   await remapStoreEntities('localBusinessSettings', 'business', oldBusinessId, newBusinessId, oldUserId, newUserId);
+  await remapStoreEntities('localOrders', 'order', oldBusinessId, newBusinessId, oldUserId, newUserId);
 
   const mutations = await mutationQueue.getAll();
   for (const mutation of mutations) {

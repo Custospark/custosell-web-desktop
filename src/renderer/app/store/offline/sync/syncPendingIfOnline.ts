@@ -3,6 +3,7 @@ import { mutationQueue } from './mutationQueue';
 import { isServerOwnedStockReason, stockLedger } from '../inventory/stockLedger';
 import { runSyncCoordinator, isSyncCoordinatorRunning } from './syncCoordinator';
 import { isAuthMutation } from '../auth/syncAuthEngine';
+import { migrateHeldOrdersFromLocalStorage } from '../sales/migrateHeldOrdersFromLocalStorage';
 
 export interface PendingSyncResult {
   synced: number;
@@ -50,6 +51,12 @@ export async function hasPendingSyncWork(): Promise<boolean> {
 export async function syncPendingDataIfOnline(): Promise<PendingSyncResult> {
   if (isOfflineMode()) {
     return SKIPPED_OFFLINE;
+  }
+
+  try {
+    await migrateHeldOrdersFromLocalStorage();
+  } catch (err) {
+    console.warn('[Sync] Held-order migration failed:', err);
   }
 
   activeSyncRun ??= runSyncCoordinator().finally(() => {

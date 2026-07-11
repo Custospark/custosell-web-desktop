@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
-import { clearCart, setActiveOrderId } from '../api/salesSlice';
+import { clearCart } from '../api/salesSlice';
 import { cartItemsToOrderItems, type CreateOrderPayload } from '../api/orders/orderTypes';
-import { useCreateOrder } from '../api/orders/useOrderQueries';
+import { useOpenOrders, useUpdateOrder } from '../api/orders/useOrderQueries';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
@@ -14,20 +14,25 @@ interface Props {
   onClose: () => void;
 }
 
-/** Hold always creates a new open order — never updates an existing one. */
-function HoldOrderForm({ onClose }: { onClose: () => void }) {
+/** Saves cart changes back to the order opened via explicit Update. */
+function UpdateOrderForm({ onClose }: { onClose: () => void }) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const customerId = useAppSelector((s) => s.sales.customerId);
   const discountAmount = useAppSelector((s) => s.sales.discountAmount);
   const discountType = useAppSelector((s) => s.sales.discountType);
   const cartNotes = useAppSelector((s) => s.sales.notes);
+  const activeOrderId = useAppSelector((s) => s.sales.activeOrderId);
   const shiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
+  const { data: openOrders = [] } = useOpenOrders();
   const { taxSettings } = useBusinessTaxSettings();
-  const createOrder = useCreateOrder();
+  const updateOrder = useUpdateOrder();
 
-  const [name, setName] = useState('');
-  const [notes, setNotes] = useState(cartNotes || '');
+  const linked = openOrders.find((o) => o.id === activeOrderId);
+  const [name, setName] = useState(
+    !linked?.customer_name || linked.customer_name === 'Guest' ? '' : linked.customer_name,
+  );
+  const [notes, setNotes] = useState(cartNotes || linked?.notes || '');
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -54,26 +59,30 @@ function HoldOrderForm({ onClose }: { onClose: () => void }) {
     items: cartItemsToOrderItems(cartItems),
   });
 
-  const handleHoldNew = () => {
-    if (cartItems.length === 0) return;
-    createOrder.mutate(buildPayload(), {
-      onSuccess: () => {
-        dispatch(clearCart());
-        dispatch(setActiveOrderId(null));
-        onClose();
+  const handleUpdate = () => {
+    if (!activeOrderId || cartItems.length === 0) return;
+    updateOrder.mutate(
+      { id: activeOrderId, ...buildPayload() },
+      {
+        onSuccess: () => {
+          dispatch(clearCart());
+          onClose();
+        },
       },
-    });
+    );
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5 text-sm">
-        <span className="text-gray-600">{count} item{count > 1 ? 's' : ''}</span>
+      <div className="flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2.5 text-sm">
+        <span className="text-blue-800 font-medium">
+          Updating {linked?.order_number ?? `order #${activeOrderId}`}
+        </span>
         <span className="font-semibold text-gray-900">{formatCurrency(taxBreakdown.total)}</span>
       </div>
 
       <p className="text-xs text-gray-500">
-        Creates a <strong>new</strong> open order. To change an existing order, use Update on the Orders list.
+        {count} item{count === 1 ? '' : 's'} — saves changes to this open order only.
       </p>
 
       <div>
@@ -99,19 +108,19 @@ function HoldOrderForm({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
-        <Button variant="secondary" onClick={onClose} disabled={createOrder.isPending}>Cancel</Button>
-        <Button onClick={handleHoldNew} disabled={createOrder.isPending || cartItems.length === 0}>
-          {createOrder.isPending ? 'Holding…' : 'Hold Order'}
+        <Button variant="secondary" onClick={onClose} disabled={updateOrder.isPending}>Cancel</Button>
+        <Button onClick={handleUpdate} disabled={updateOrder.isPending || cartItems.length === 0 || !activeOrderId}>
+          {updateOrder.isPending ? 'Updating…' : 'Update Order'}
         </Button>
       </div>
     </div>
   );
 }
 
-export default function HoldOrderModal({ open, onClose }: Props) {
+export default function UpdateOrderModal({ open, onClose }: Props) {
   return (
-    <Modal isOpen={open} onClose={onClose} title="Hold Order" size="sm">
-      {open ? <HoldOrderForm key="hold-form" onClose={onClose} /> : null}
+    <Modal isOpen={open} onClose={onClose} title="Update Order" size="sm">
+      {open ? <UpdateOrderForm key="update-form" onClose={onClose} /> : null}
     </Modal>
   );
 }

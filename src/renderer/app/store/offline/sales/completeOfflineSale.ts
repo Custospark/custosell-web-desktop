@@ -74,6 +74,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
     user_id: authUser?.id ?? 0,
     customer_id: payload.customer_id ?? null,
     shift_id: payload.shift_id ?? null,
+    order_id: payload.order_id ?? null,
     amount_tendered: payload.amount_tendered ? payload.amount_tendered.toString() : null,
     change_given: payload.change_given ? payload.change_given.toString() : null,
     notes: payload.notes ?? null,

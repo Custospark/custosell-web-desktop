@@ -1,21 +1,5 @@
+import type { CartItem, SalesState } from './salesTypes';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SalesState, HeldOrder } from './salesTypes';
-
-const EXPIRY_MS = 72 * 60 * 60 * 1000; // 72 hours
-
-function loadHeldOrders(): HeldOrder[] {
-  try {
-    const orders: HeldOrder[] = JSON.parse(localStorage.getItem('heldOrders') || '[]');
-    const now = Date.now();
-    const active = orders.filter((o) => now - o.timestamp < EXPIRY_MS);
-    if (active.length !== orders.length) saveHeldOrders(active);
-    return active;
-  } catch { return []; }
-}
-
-function saveHeldOrders(orders: HeldOrder[]) {
-  try { localStorage.setItem('heldOrders', JSON.stringify(orders)); } catch { /* noop */ }
-}
 
 const initialState: SalesState = {
   cartItems: [],
@@ -25,7 +9,17 @@ const initialState: SalesState = {
   discountType: 'percentage',
   notes: '',
   amountTendered: 0,
-  heldOrders: loadHeldOrders(),
+  activeOrderId: null,
+  activeOrderMode: null,
+};
+
+type LoadOrderPayload = {
+  orderId: number;
+  items: CartItem[];
+  customerId: number | null;
+  notes?: string | null;
+  discountAmount?: number;
+  mode: 'sale' | 'update';
 };
 
 const salesSlice = createSlice({
@@ -74,6 +68,8 @@ const salesSlice = createSlice({
       state.customerId = null;
       state.notes = '';
       state.amountTendered = 0;
+      state.activeOrderId = null;
+      state.activeOrderMode = null;
     },
     setPaymentMethod(state, action: PayloadAction<SalesState['paymentMethod']>) {
       state.paymentMethod = action.payload;
@@ -94,49 +90,29 @@ const salesSlice = createSlice({
     setAmountTendered(state, action: PayloadAction<number>) {
       state.amountTendered = action.payload;
     },
-    holdOrder(state, action: PayloadAction<{ notes?: string; customerName?: string } | undefined>) {
-      if (state.cartItems.length === 0) return;
-      const payload = action.payload || {};
-      const order: HeldOrder = {
-        id: Date.now().toString(),
-        timestamp: Date.now(),
-        customerName: payload.customerName || 'Guest',
-        items: [...state.cartItems],
-        paymentMethod: state.paymentMethod,
-        amountTendered: state.amountTendered,
-        customerId: state.customerId,
-        itemCount: state.cartItems.reduce((s, c) => s + c.quantity, 0),
-        total: state.cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0),
-        notes: payload.notes || '',
-      };
-      state.heldOrders = [order, ...state.heldOrders];
-      saveHeldOrders(state.heldOrders);
-      state.cartItems = [];
+    setActiveOrderId(state, action: PayloadAction<number | null>) {
+      state.activeOrderId = action.payload;
+      if (action.payload == null) state.activeOrderMode = null;
+    },
+    /** Resume open order to complete a sale (keeps order open until checkout). */
+    resumeOrderToCart(state, action: PayloadAction<Omit<LoadOrderPayload, 'mode'> & { mode?: 'sale' }>) {
+      state.cartItems = action.payload.items;
+      state.customerId = action.payload.customerId;
+      state.notes = action.payload.notes ?? '';
+      state.discountAmount = action.payload.discountAmount ?? 0;
       state.amountTendered = 0;
-      state.customerId = null;
+      state.activeOrderId = action.payload.orderId;
+      state.activeOrderMode = 'sale';
     },
-    takeOrder(state, action: PayloadAction<string>) {
-      const idx = state.heldOrders.findIndex((o) => o.id === action.payload);
-      if (idx === -1) return;
-      const order = state.heldOrders[idx];
-      state.cartItems = order.items;
-      state.paymentMethod = order.paymentMethod;
-      state.amountTendered = order.amountTendered;
-      state.customerId = order.customerId;
-      state.heldOrders.splice(idx, 1);
-      saveHeldOrders(state.heldOrders);
-    },
-    removeHeldOrder(state, action: PayloadAction<string>) {
-      state.heldOrders = state.heldOrders.filter((o) => o.id !== action.payload);
-      saveHeldOrders(state.heldOrders);
-    },
-    renameHeldOrder(state, action: PayloadAction<{ id: string; name?: string; notes?: string }>) {
-      const order = state.heldOrders.find((o) => o.id === action.payload.id);
-      if (order) {
-        if (action.payload.name !== undefined) order.customerName = action.payload.name || 'Guest';
-        if (action.payload.notes !== undefined) order.notes = action.payload.notes;
-        saveHeldOrders(state.heldOrders);
-      }
+    /** Explicit Update from Orders / Take — cart edits save via Update Order only. */
+    loadOrderForUpdate(state, action: PayloadAction<Omit<LoadOrderPayload, 'mode'>>) {
+      state.cartItems = action.payload.items;
+      state.customerId = action.payload.customerId;
+      state.notes = action.payload.notes ?? '';
+      state.discountAmount = action.payload.discountAmount ?? 0;
+      state.amountTendered = 0;
+      state.activeOrderId = action.payload.orderId;
+      state.activeOrderMode = 'update';
     },
     resetSales(state) {
       Object.assign(state, initialState);
@@ -147,7 +123,7 @@ const salesSlice = createSlice({
 export const {
   addToCart, updateQuantity, removeFromCart, clearCart,
   setPaymentMethod, setCustomer, setDiscount, setDiscountType, setNotes, setAmountTendered,
-  holdOrder, takeOrder, removeHeldOrder, renameHeldOrder, resetSales,
+  setActiveOrderId, resumeOrderToCart, loadOrderForUpdate, resetSales,
 } = salesSlice.actions;
 
 export default salesSlice.reducer;
@@ -157,3 +133,5 @@ export const selectCartTotal = (state: { sales: SalesState }) =>
   state.sales.cartItems.reduce((sum, c) => sum + c.unit_price * c.quantity, 0);
 export const selectCartCount = (state: { sales: SalesState }) =>
   state.sales.cartItems.reduce((sum, c) => sum + c.quantity, 0);
+export const selectActiveOrderId = (state: { sales: SalesState }) => state.sales.activeOrderId;
+export const selectActiveOrderMode = (state: { sales: SalesState }) => state.sales.activeOrderMode;

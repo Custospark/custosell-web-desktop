@@ -2,6 +2,13 @@
 
 Summary of major offline-related work for documentation traceability.
 
+## 2026-07-11 — POS orders persistence
+
+- **DB v13** — `localOrders` object store
+- Hold/Take uses API orders + offline overlay; `activeOrderId` in Redux
+- Sync: order creates before sales; remap `order_id` on sale payloads
+- One-time migration of `localStorage.heldOrders` → `POST /orders`
+
 ## 2025–2026 — Catalog snapshots & sales history
 
 - **DB v12** — `serverCatalogs` object store

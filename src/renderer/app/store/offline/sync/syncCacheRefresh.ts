@@ -7,6 +7,7 @@ import { shiftKeys } from '../../../../modules/shifts/ShiftQueries';
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
 import { expenseKeys } from '../../../../modules/expenses/api/ExpenseQueries';
 import { guideKeys } from '../../../../modules/guide/api/GuideQueries';
+import { orderKeys } from '../../../../modules/sales/api/orders/orderQueryKeys';
 import { refreshAllServerCatalogSnapshots } from '../catalogs/catalogSnapshotRefresh';
 import { refreshSalesCatalogSnapshotsForSession } from '../catalogs/salesCatalogSnapshot';
 
@@ -16,6 +17,7 @@ export async function refreshSalesUiAfterCommit(): Promise<void> {
   await refreshSalesCatalogSnapshotsForSession();
   await queryClient.invalidateQueries({ queryKey: salesKeys.all });
   await queryClient.refetchQueries({ queryKey: salesKeys.all, type: 'active' });
+  await queryClient.invalidateQueries({ queryKey: orderKeys.all, refetchType: 'active' });
   await queryClient.invalidateQueries({ queryKey: dashboardKeys.all, refetchType: 'active' });
   await queryClient.invalidateQueries({ queryKey: shiftKeys.all, refetchType: 'active' });
 }
@@ -25,6 +27,7 @@ export async function invalidateAfterItemCommitted(): Promise<void> {
   await notifyItemCommitted();
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: salesKeys.all, refetchType: 'active' }),
+    queryClient.invalidateQueries({ queryKey: orderKeys.all, refetchType: 'active' }),
     queryClient.invalidateQueries({ queryKey: shiftKeys.all, refetchType: 'active' }),
     queryClient.invalidateQueries({ queryKey: dashboardKeys.all, refetchType: 'active' }),
     queryClient.invalidateQueries({ queryKey: inventoryKeys.all, refetchType: 'active' }),
@@ -59,6 +62,7 @@ export async function invalidateAfterFullSync(): Promise<void> {
   await purgeSyncedOptimisticFromCache(queryClient);
   await refreshAllServerCatalogSnapshots();
   await queryClient.invalidateQueries({ queryKey: salesKeys.all });
+  await queryClient.invalidateQueries({ queryKey: orderKeys.all });
   await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
   await queryClient.invalidateQueries({ queryKey: shiftKeys.all });
   await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });

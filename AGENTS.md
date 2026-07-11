@@ -46,6 +46,7 @@ Keep our interaction **conversational**—just like two teammates working side b
 | 10 | **Parallel lanes are allowed with ownership.** Run agents in parallel when boundaries are clear; Mike reconciles conflicts before implementation is treated as complete. |
 | 11 | **Frontend and backend stay in sync.** Any feature, bug, validation rule, API contract, offline sync behavior, auth flow, inventory flow, or user-facing failure state must be reviewed across both Frontend and Backend before implementation is considered complete. |
 | 12 | **Sage and Blue are cross-stack by default when needed.** If a change can affect API contracts, backend validation, database state, frontend UX, offline queues, or sync replay, Sage and Blue must inspect both stacks and produce one integrated plan. |
+| 13 | **File size hard limit: 500 lines.** No source file may exceed **500 lines of code**. If a change would push a file over 500 lines, **stop and refactor** (split components, extract hooks/utils, move types) before continuing. This is non-negotiable — do not ship oversized files. |
 
 ---
 

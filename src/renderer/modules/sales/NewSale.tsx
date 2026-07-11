@@ -1,466 +1,41 @@
 import { Link } from "react-router-dom";
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useProducts } from '../inventory/api/products/ProductQueries';
-import type { Product } from '../inventory/api/products/ProductTypes';
 import { isSellable, isServiceItem, SERVICE_QTY_SOFT_CAP, tracksStock } from '../inventory/api/products/ProductTypes';
-import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
-import { addToCart, updateQuantity, removeFromCart, clearCart, setPaymentMethod, setCustomer, setAmountTendered, setDiscount, setDiscountType } from './api/salesSlice';
-import { useCustomers, useCreateSale } from './api/salesQueries';
-import CustomerContactField, { EMPTY_CUSTOMER_CONTACT } from '../../shared/components/customers/CustomerContactField';
-import { contactFromValue, hasResolvableContact, useResolveCustomerContact } from '../../shared/hooks/useResolveCustomerContact';
-import { customerToContact, type CustomerContactValue } from '../../shared/utils/customerContactUtils';
-import type { Sale } from './api/salesTypes';
-import type { Payment } from '../payments/paymentTypes';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, Banknote, Smartphone, CreditCard, Wallet, RotateCcw, PauseCircle, Pencil, ArrowDownToLine, WifiOff, RefreshCw, SlidersHorizontal, PackagePlus, CheckCircle2, CircleCheck, FileText } from 'lucide-react';
-import { HiCheckCircle } from 'react-icons/hi2';
+import { addToCart, updateQuantity, removeFromCart, clearCart, setCustomer, setDiscount } from './api/salesSlice';
+import { useOpenOrders } from './api/orders/useOrderQueries';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, RotateCcw, PauseCircle, Pencil, FileText, Save, ListOrdered } from 'lucide-react';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
+import UpdateOrderModal from './ui/UpdateOrderModal';
 import QuantityEditModal from './ui/QuantityEditModal';
 import InvoiceFromSaleModal from './ui/InvoiceFromSaleModal';
-import SaleCompletedModal from './ui/SaleCompletedModal';
+import { BillingControls } from './ui/BillingControls';
+import { ProductSearchEmptyState, inventorySnapshot, RELOAD_SUCCESS_MS, type ReloadFeedback } from './ui/ProductSearchEmptyState';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { computeSaleTax } from '../../shared/utils/taxEngine';
-import { cn } from '../../shared/utils/cn';
 import { findProductByBarcode, matchesProductSearch } from '../../shared/utils/productSearch';
-import { Button } from '../../shared/components/buttons/Button';
 
-const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
-const RELOAD_SUCCESS_MS = 10_000;
-
-type ReloadFeedback = 'idle' | 'updated' | 'upToDate';
-
-function inventorySnapshot(products: Product[] | undefined): string {
-  if (!products?.length) return '';
-  return [...products]
-    .sort((a, b) => a.id - b.id)
-    .map((p) => `${p.id}:${p.stock_quantity}:${p.is_active ? 1 : 0}:${p.type ?? 'product'}`)
-    .join('|');
-}
-
-const PRODUCT_SEARCH_SUGGESTIONS = [
-  {
-    icon: SlidersHorizontal,
-    title: 'Adjust your search',
-    description: 'Try fewer characters or a different spelling',
-  },
-  {
-    icon: PackagePlus,
-    title: 'Consider adding the product to stock',
-    description: 'Ask someone with inventory access if the item should be stocked',
-  },
-] as const;
-
-function ProductSearchEmptyState({
-  searchQuery,
-  onReload,
-  isReloading,
-  reloadFeedback,
-}: {
-  searchQuery: string;
-  onReload: () => void;
-  isReloading: boolean;
-  reloadFeedback: ReloadFeedback;
-}) {
-  return (
-    <div className="p-4">
-      <div className="text-center mb-4">
-        <Package className="w-8 h-8 mx-auto text-gray-300 mb-2" aria-hidden />
-        <p className="text-sm font-medium text-gray-700">No products found</p>
-        <p className="text-xs text-gray-400 mt-0.5 truncate px-2" title={searchQuery}>
-          Nothing matched &ldquo;{searchQuery}&rdquo;
-        </p>
-      </div>
-
-      {reloadFeedback === 'updated' ? (
-        <Button
-          variant="primary"
-          size="sm"
-          className="w-full gap-2 bg-green-600 hover:bg-green-600 active:bg-green-600 focus:ring-green-500 cursor-default"
-          disabled
-        >
-          <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden />
-          Stock updated — search again
-        </Button>
-      ) : reloadFeedback === 'upToDate' ? (
-        <Button
-          variant="primary"
-          size="sm"
-          className="w-full gap-2 bg-green-600 hover:bg-green-600 active:bg-green-600 focus:ring-green-500 cursor-default"
-          disabled
-        >
-          <CircleCheck className="w-4 h-4 shrink-0" aria-hidden />
-          Products up to date — adjust your search
-        </Button>
-      ) : (
-        <Button
-          variant="primary"
-          size="sm"
-          className="w-full gap-2"
-          disabled={isReloading}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => void onReload()}
-        >
-          <RefreshCw className={cn('w-4 h-4 shrink-0', isReloading && 'animate-spin')} aria-hidden />
-          {isReloading ? 'Reloading…' : 'Reload products'}
-        </Button>
-      )}
-
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mt-4 mb-2 px-0.5">Suggestions</p>
-      <ul className="space-y-1">
-        {PRODUCT_SEARCH_SUGGESTIONS.map(({ icon: Icon, title, description }) => (
-          <li
-            key={title}
-            className="flex items-start gap-3 rounded-lg p-2.5 text-left bg-gray-50/80"
-          >
-            <span className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 shrink-0">
-              <Icon className="w-4 h-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm text-gray-700">{title}</span>
-              <span className="block text-xs text-gray-500">{description}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-// ============================================================
-// BILLING CONTROLS COMPONENT (Right Column)
-// ============================================================
-function BillingControls() {
-  const dispatch = useAppDispatch();
-  const cartItems = useAppSelector((s) => s.sales.cartItems);
-  const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
-  const amountTendered = useAppSelector((s) => s.sales.amountTendered);
-  const customerId = useAppSelector((s) => s.sales.customerId);
-  const discountAmount = useAppSelector((s) => s.sales.discountAmount);
-  const discountType = useAppSelector((s) => s.sales.discountType);
-  const { data: customers } = useCustomers();
-  const createSale = useCreateSale();
-  const resolveCustomer = useResolveCustomerContact();
-  const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
-  const authUser = useAppSelector((s) => s.auth.user);
-  const { taxSettings, business: taxBusinessRecord } = useBusinessTaxSettings();
-  const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
-  const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
-  const [completedSale, setCompletedSale] = useState<Sale | null>(null);
-  const [invoiceFromSale, setInvoiceFromSale] = useState<Sale | null>(null);
-  const [lastPayment, setLastPayment] = useState<Payment | null>(null);
-  const [installmentMode, setInstallmentMode] = useState(false);
-
-  const [contact, setContact] = useState<CustomerContactValue>(EMPTY_CUSTOMER_CONTACT);
-  const [prevSyncCustomerId, setPrevSyncCustomerId] = useState(customerId);
-
-  if (customerId !== prevSyncCustomerId) {
-    setPrevSyncCustomerId(customerId);
-    if (customerId && customers?.length) {
-      const match = customers.find((c) => c.id === customerId);
-      if (match) setContact(customerToContact(match));
-    } else if (!customerId) {
-      setContact(EMPTY_CUSTOMER_CONTACT);
-    }
-  }
-
-  useEffect(() => {
-    if (contact.customerId && contact.customerId !== customerId) {
-      dispatch(setCustomer(contact.customerId));
-    } else if (!contact.customerId && !contact.name && !contact.email && !contact.phone && customerId) {
-      dispatch(setCustomer(null));
-    }
-  }, [contact, customerId, dispatch]);
-
-  const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
-  const discountValue = discountType === 'percentage'
-    ? Math.min(subtotal * (discountAmount / 100), subtotal)
-    : Math.min(discountAmount, subtotal);
-  const taxBreakdown = useMemo(
-    () => computeSaleTax(taxSettings, cartItems, discountValue),
-    [taxSettings, cartItems, discountValue],
-  );
-  const total = taxBreakdown.total;
-  const payNow = installmentMode
-    ? Math.min(Math.max(0, amountTendered), total)
-    : total;
-  const isPartialPayment = payNow > 0 && payNow < total - 0.009;
-  const changeDue = paymentMethod === 'cash' && !isPartialPayment
-    ? Math.max(0, amountTendered - total)
-    : 0;
-  const handleCompleteSale = () => {
-    if (cartItems.length === 0) return;
-
-    const submitSale = (resolvedCustomerId: number | null) => {
-      createSale.mutate(
-        {
-          items: cartItems.map((c) => ({
-            product_id: c.product_id,
-            quantity: c.quantity,
-            unit_price: c.unit_price,
-          })),
-          subtotal: taxBreakdown.subtotalNet,
-          tax_total: taxBreakdown.taxTotal,
-          discount_amount: taxBreakdown.discountAmount,
-          total_amount: taxBreakdown.total,
-          payment_method: paymentMethod,
-          customer_id: resolvedCustomerId,
-          amount_paid: isPartialPayment ? payNow : undefined,
-          amount_tendered: paymentMethod === 'cash'
-            ? (isPartialPayment ? payNow : (amountTendered > 0 ? amountTendered : null))
-            : (installmentMode ? payNow : null),
-          change_given: paymentMethod === 'cash'
-            ? (isPartialPayment
-              ? (amountTendered > payNow ? amountTendered - payNow : null)
-              : (amountTendered >= total ? changeDue : null))
-            : null,
-          shift_id: currentShiftId || null,
-        },
-        {
-          onSuccess: (sale) => {
-            dispatch(clearCart());
-            dispatch(setAmountTendered(0));
-            dispatch(setCustomer(null));
-            dispatch(setDiscount(0));
-            setContact(EMPTY_CUSTOMER_CONTACT);
-            setInstallmentMode(false);
-            setCompletedSale(sale);
-            const payments = (sale as Sale & { payments?: Payment[] }).payments;
-            setLastPayment(payments?.length ? payments[payments.length - 1] : null);
-          },
-        },
-      );
-    };
-
-    const shouldResolve = hasResolvableContact(contact, contact.email)
-      && (!customerId || contact.email.trim() || contact.name.trim() || contact.phone.trim());
-
-    if (shouldResolve && !isOffline) {
-      void resolveCustomer.mutateAsync(contactFromValue(contact))
-        .then((customer) => submitSale(customer.id))
-        .catch(() => submitSale(customerId));
-      return;
-    }
-
-    submitSale(customerId);
-  };
-
-  return (
-    <>
-    <div className="bg-white rounded-xl border border-gray-200 p-5 h-fit sticky top-0">
-      <div className="space-y-5">
-        <CustomerContactField
-          value={contact}
-          onChange={setContact}
-          disabled={createSale.isPending || resolveCustomer.isPending}
-        />
-
-        {/* Payment Method */}
-        <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Payment Method</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {(['cash', 'mobile_money', 'card', 'other'] as const).map((m) => {
-              const Icon = PAY_ICONS[m];
-              const isActive = paymentMethod === m;
-              return (
-                <button key={m} title={`Pay with ${m === 'mobile_money' ? 'Mobile Money' : m.charAt(0).toUpperCase() + m.slice(1)}`}
-                  className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all ${
-                    isActive ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                  onClick={() => dispatch(setPaymentMethod(m))}>
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{m === 'mobile_money' ? 'Mobile' : m.charAt(0).toUpperCase() + m.slice(1)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Installment mode */}
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
-          <div>
-            <p className="text-xs font-semibold text-gray-700">Pay in installments</p>
-            <p className="text-[11px] text-gray-500">Customer pays part now, rest later</p>
-          </div>
-          <button
-            type="button"
-            title="Toggle installment payments"
-            onClick={() => setInstallmentMode((v) => !v)}
-            className={`relative h-6 w-11 rounded-full transition-colors ${installmentMode ? 'bg-blue-600' : 'bg-gray-300'}`}
-          >
-            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${installmentMode ? 'left-5' : 'left-0.5'}`} />
-          </button>
-        </div>
-
-        {/* Amount paying now */}
-        {(installmentMode || paymentMethod === 'cash') && (
-          <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-              {installmentMode ? 'Amount paying now' : 'Amount Tendered'}
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
-              <input title="Enter amount paying now" type="number" min={0} step="100"
-                className="w-full pl-11 pr-28 py-2.5 border border-gray-300 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0" value={amountTendered || ''}
-                onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
-                onFocus={(e) => e.target.select()} />
-              <button title="Fill exact total" type="button"
-                onClick={() => dispatch(setAmountTendered(total))}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">
-                <ArrowDownToLine className="w-3.5 h-3.5" />
-                Full amount
-              </button>
-            </div>
-            {isPartialPayment && (
-              <p className="text-xs text-amber-700 mt-1.5 font-medium">
-                Balance after this: {formatCurrency(total - payNow)}
-              </p>
-            )}
-            {!installmentMode && amountTendered > 0 && amountTendered < total && (
-              <p className="text-xs text-amber-600 mt-1.5">Short by {formatCurrency(total - amountTendered)} — enable installments to accept partial pay</p>
-            )}
-          </div>
-        )}
-
-        {/* Discount */}
-        <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Discount</label>
-          <div className="flex gap-1.5">
-            <div className="relative flex-1">
-              {discountType === 'fixed' && (
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
-              )}
-              <input title="Enter discount amount" type="number" min={0}
-                className={`border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 ${discountType === 'fixed' ? 'pl-11 pr-3' : 'pl-3 pr-3'}`}
-                placeholder={discountType === 'percentage' ? '0%' : '0'}
-                value={discountAmount || ''}
-                onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
-                onFocus={(e) => e.target.select()} />
-              {discountType === 'percentage' && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">%</span>
-              )}
-            </div>
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
-              <button title="Switch to percentage discount" onClick={() => dispatch(setDiscountType('percentage'))}
-                className={`px-4 py-2.5 text-xs font-medium transition-colors ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>%</button>
-              <button title="Switch to fixed discount" onClick={() => dispatch(setDiscountType('fixed'))}
-                className={`px-4 py-2.5 text-xs font-medium transition-colors ${discountType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>Fix</button>
-            </div>
-          </div>
-          {discountValue > 0 && (
-            <p className="text-xs text-green-600 mt-1.5 font-medium">-{formatCurrency(discountValue)} off</p>
-          )}
-        </div>
-
-        {/* Total */}
-        <div className="pt-2">
-          <div className="bg-gray-50 rounded-xl p-4">
-            {(discountValue > 0 || taxBreakdown.taxEnabled) && (
-              <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                <span>{taxBreakdown.taxEnabled ? 'Subtotal (excl. VAT)' : 'Subtotal'}</span>
-                <span>{formatCurrency(taxBreakdown.taxEnabled ? taxBreakdown.subtotalNet + taxBreakdown.discountAmount : subtotal)}</span>
-              </div>
-            )}
-            {discountValue > 0 && (
-              <div className="flex justify-between items-center text-sm text-green-600 mb-2">
-                <span>Discount</span>
-                <span>-{formatCurrency(discountValue)}</span>
-              </div>
-            )}
-            {taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0 && (
-              <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                <span>VAT</span>
-                <span>{formatCurrency(taxBreakdown.taxTotal)}</span>
-              </div>
-            )}
-            <div className="flex justify-between items-center">
-              <span className="text-base font-semibold text-gray-700">Total</span>
-              <span className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</span>
-            </div>
-            {paymentMethod === 'cash' && !isPartialPayment && amountTendered > 0 && (
-              <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
-                <span className="text-sm font-medium text-green-600">Change Due</span>
-                <span className="text-xl font-bold text-green-600">{formatCurrency(changeDue)}</span>
-              </div>
-            )}
-            {isPartialPayment && (
-              <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
-                <span className="text-sm font-medium text-amber-700">Paying now</span>
-                <span className="text-xl font-bold text-amber-700 tabular-nums">{formatCurrency(payNow)}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {isOffline && (
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
-            <WifiOff className="w-4 h-4 shrink-0" />
-            Offline. Sale saved. Auto-syncs when connected. No worries. Keep working.
-          </div>
-        )}
-        {/* Complete Sale Button */}
-        <Button title={isPartialPayment ? 'Record partial payment' : 'Finalize and complete the sale'}
-          className="w-full h-12 text-base font-semibold" 
-          onClick={handleCompleteSale} 
-          loading={createSale.isPending}
-          disabled={
-            cartItems.length === 0
-            || (isPartialPayment && payNow <= 0)
-            || (!installmentMode && paymentMethod === 'cash' && amountTendered < total)
-            || (installmentMode && payNow <= 0)
-          }
-        >
-          <HiCheckCircle className="w-5 h-5 mr-2" />
-          {isPartialPayment ? `Record ${formatCurrency(payNow)} payment` : 'Complete Sale'}
-        </Button>
-      </div>
-    </div>
-    <SaleCompletedModal
-      sale={completedSale}
-      lastPayment={lastPayment}
-      onNewSale={() => { setCompletedSale(null); setLastPayment(null); setInvoiceFromSale(null); createSale.reset(); }}
-      onGenerateInvoice={() => completedSale && setInvoiceFromSale(completedSale)}
-    />
-    {invoiceFromSale && (
-      <InvoiceFromSaleModal
-        open={!!invoiceFromSale}
-        linkedSale={invoiceFromSale}
-        onClose={() => setInvoiceFromSale(null)}
-        onSuccess={() => {
-          setInvoiceFromSale(null);
-          setCompletedSale(null);
-          setLastPayment(null);
-          createSale.reset();
-        }}
-      />
-    )}
-    </>
-  );
-}
-
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
 export default function NewSale() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.sales.cartItems);
-  const heldOrders = useAppSelector((s) => s.sales.heldOrders);
+  const activeOrderId = useAppSelector((s) => s.sales.activeOrderId);
+  const activeOrderMode = useAppSelector((s) => s.sales.activeOrderMode);
+  const { data: openOrders = [] } = useOpenOrders();
   const { data: products, refetch: refetchProducts, isFetching: isProductsFetching } = useProducts();
   const { confirm } = useConfirm();
 
-  // Search State
   const [search, setSearch] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  
-  // Refs
   const searchRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [heldModalOpen, setHeldModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number; maxQty: number } | null>(null);
   const [reloadFeedback, setReloadFeedback] = useState<ReloadFeedback>('idle');
   const reloadFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -473,7 +48,6 @@ export default function NewSale() {
     setReloadFeedback('idle');
   }, []);
 
-  // Invoice generation state
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [invoiceSession, setInvoiceSession] = useState(0);
 
@@ -501,7 +75,6 @@ export default function NewSale() {
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
 
-  // Filter products
   const results = useMemo(() => {
     if (!products || !search.trim()) return [];
     return products
@@ -509,7 +82,6 @@ export default function NewSale() {
       .slice(0, 8);
   }, [products, search]);
 
-  // Handlers
   const handleClearAll = async () => {
     if (cartItems.length === 0) return;
     const ok = await confirm({
@@ -561,7 +133,6 @@ export default function NewSale() {
     );
   }, [search, products, addItem]);
 
-  // Click outside handlers
   useEffect(() => {
     searchRef.current?.focus();
   }, []);
@@ -713,6 +284,21 @@ export default function NewSale() {
             </AnimatePresence>
           </div>
 
+          {activeOrderMode === 'update' && activeOrderId ? (
+            <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+              <span>
+                Updating open order — use <strong>Update Order</strong> to save. Hold creates a new order instead.
+              </span>
+              <button
+                type="button"
+                className="shrink-0 text-xs font-medium text-blue-700 underline"
+                onClick={() => dispatch(clearCart())}
+              >
+                Cancel update
+              </button>
+            </div>
+          ) : null}
+
           {/* Cart Items Header */}
           {cartItems.length > 0 && (
             <div className="flex items-center justify-between mb-3 px-1">
@@ -844,18 +430,34 @@ export default function NewSale() {
               className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
               <FileText className="w-4 h-4" /> Manage Invoices
             </Link>
+            <Link to={ROUTES.SALES.ORDERS} title="View and manage all orders"
+              className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-indigo-800 bg-indigo-50 border-2 border-indigo-300 rounded-xl hover:bg-indigo-100 hover:border-indigo-400 transition-all shadow-sm whitespace-nowrap">
+              <ListOrdered className="w-4 h-4" /> Manage Orders
+            </Link>
+            {cartItems.length > 0 && activeOrderMode === 'update' && (
+              <button
+                title="Save changes to this open order"
+                onClick={() => setUpdateModalOpen(true)}
+                className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-800 bg-blue-50 border-2 border-blue-400 rounded-xl hover:bg-blue-100 hover:border-blue-500 transition-all shadow-sm whitespace-nowrap"
+              >
+                <Save className="w-4 h-4" /> Update Order
+              </button>
+            )}
             {cartItems.length > 0 && (
-              <button title="Save current order and clear cart" onClick={() => setHoldModalOpen(true)}
-                className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm whitespace-nowrap">
+              <button
+                title="Hold this cart as a new open order"
+                onClick={() => setHoldModalOpen(true)}
+                className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm whitespace-nowrap"
+              >
                 <PauseCircle className="w-4 h-4" /> Hold Order
               </button>
             )}
             <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
               className="flex shrink-0 items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm relative whitespace-nowrap">
               <RotateCcw className="w-4 h-4" /> Take Order
-              {heldOrders.length > 0 && (
+              {openOrders.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
-                  {heldOrders.length}
+                  {openOrders.length}
                 </span>
               )}
             </button>
@@ -871,6 +473,7 @@ export default function NewSale() {
 
       <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />
       <HoldOrderModal open={holdModalOpen} onClose={() => setHoldModalOpen(false)} />
+      <UpdateOrderModal open={updateModalOpen} onClose={() => setUpdateModalOpen(false)} />
       <InvoiceFromSaleModal
         key={invoiceSession}
         open={invoiceModalOpen}

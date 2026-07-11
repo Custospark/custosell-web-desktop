@@ -22,12 +22,13 @@ Only **`offline`** (or browser offline) triggers instant local completion for sa
 
 Probe: `connectivityCheck.ts` → `GET /sales` with 8s timeout; 401/403 still counts as reachable.
 
-## IndexedDB (`CustosellOffline` v12)
+## IndexedDB (`CustosellOffline` v13)
 
 | Store | Purpose |
 |-------|---------|
 | `mutations` | Outbound API queue (POST/PUT/PATCH/DELETE) |
 | `localSales` | Pending sale records |
+| `localOrders` | Pending open order create/update/cancel |
 | `localRefunds` | Pending refund overlays |
 | `localShifts` | Pending shift open/close |
 | `localProducts` | Pending product CRUD |

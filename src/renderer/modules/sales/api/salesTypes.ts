@@ -66,6 +66,7 @@ export interface Sale {
   user?: UserInfo;
   customer_id: number | null;
   shift_id: number | null;
+  order_id?: number | null;
   business?: BusinessInfo;
   receipt_number: string;
   subtotal: string;
@@ -99,6 +100,7 @@ export interface CreateSalePayload {
   amount_paid?: number | null;
   change_given?: number | null;
   shift_id?: number | null;
+  order_id?: number | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';
   customer_id?: number | null;
   notes?: string | null;
@@ -106,19 +108,6 @@ export interface CreateSalePayload {
 
 export interface RefundData {
   items: { id: number; quantity: number; amount?: number }[];
-}
-
-export interface HeldOrder {
-  id: string;
-  timestamp: number;
-  customerName: string;
-  items: CartItem[];
-  paymentMethod: 'cash' | 'mobile_money' | 'card' | 'other';
-  amountTendered: number;
-  customerId: number | null;
-  itemCount: number;
-  total: number;
-  notes: string;
 }
 
 export interface SalesState {
@@ -129,5 +118,13 @@ export interface SalesState {
   discountType: 'percentage' | 'fixed';
   notes: string;
   amountTendered: number;
-  heldOrders: HeldOrder[];
+  /** Open order linked to the cart (sale completion or explicit update). */
+  activeOrderId: number | null;
+  /**
+   * How the cart is linked to activeOrderId:
+   * - `sale` — resumed to complete a sale (order_id on checkout)
+   * - `update` — user chose Update on an order (explicit PUT save)
+   * - null — no order edit session
+   */
+  activeOrderMode: 'sale' | 'update' | null;
 }

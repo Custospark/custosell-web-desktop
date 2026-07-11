@@ -257,4 +257,32 @@ export const mutationQueue = {
       }
     }
   },
+
+  async remapOrderId(oldOrderId: number, newOrderId: number): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('mutations');
+
+    for (const entry of all) {
+      if (entry.method === 'PUT' && entry.url === `/orders/${oldOrderId}`) {
+        entry.url = `/orders/${newOrderId}`;
+        await db.put('mutations', entry);
+        continue;
+      }
+
+      if (entry.method === 'POST' && entry.url === `/orders/${oldOrderId}/cancel`) {
+        entry.url = `/orders/${newOrderId}/cancel`;
+        await db.put('mutations', entry);
+        continue;
+      }
+
+      if (entry.method === 'POST' && entry.url === '/sales' && entry.data) {
+        const payload = entry.data as { order_id?: number | null };
+        if (payload.order_id === oldOrderId) {
+          payload.order_id = newOrderId;
+          entry.data = payload;
+          await db.put('mutations', entry);
+        }
+      }
+    }
+  },
 };

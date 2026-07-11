@@ -7,7 +7,7 @@ export const ROUTES = {
   PRICING: '/pricing',
   PRIVACY: '/privacy',
   DASHBOARD: '/dashboard',
-  SALES: { INDEX: '/sales', NEW: '/sales/new', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
+  SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: { INDEX: '/inventory', PRODUCTS: '/inventory/products', CATEGORIES: '/inventory/categories', STOCK: '/inventory/stock' },
   CUSTOMERS: { INDEX: '/customers' },
   PIPELINE: {

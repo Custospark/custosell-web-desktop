@@ -39,6 +39,12 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [service-worker.md](./app/service-worker.md) | Web production caching (static + API GET) |
 | [vera-logic.md](./vera-logic.md) | Vera Logic — repo rules & contracts gate (`npm run vera:logic`) |
 
+## Compliance
+
+| Document | Contents |
+|----------|----------|
+| [efris-setup.md](./compliance/efris-setup.md) | URA EFRIS credentials, `.env` flag, sandbox/pilot procedure |
+
 ## Platform & product
 
 | Document | Contents |
@@ -95,6 +101,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-intent-and-app-tour.md](./adr/2026-07-11-intent-and-app-tour.md) | Owner intent + app-wide tour; never auto-set modules |
 | [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
+| [2026-07-12-efris-fiscalization.md](./adr/2026-07-12-efris-fiscalization.md) | URA EFRIS — API, both POS+invoices, sync-later, master flag |
 
 ## Modules
 

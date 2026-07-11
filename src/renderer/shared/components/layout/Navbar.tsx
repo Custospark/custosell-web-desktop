@@ -9,6 +9,7 @@ import { useConfirm } from '../Feedback/ConfirmContext';
 import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { SyncHeaderChip } from '../Errors/SyncProgressBanner';
 import { GuideHeaderNav } from './GuideHeaderNav';
+import { ModuleLauncherButton } from './ModuleLauncherButton';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
@@ -276,6 +277,8 @@ export function Navbar() {
           </div>
 
           <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" aria-hidden />
+
+          <ModuleLauncherButton />
 
           <GuideHeaderNav />
 

@@ -87,6 +87,7 @@ const EstimatesInsightsPage = lazy(() => import('../../modules/estimates/pages/E
 const EstimateTemplatesPage = lazy(() => import('../../modules/estimates/pages/EstimateTemplatesPage'));
 
 const HrLayout = lazy(() => import('../../modules/hr/pages/HrLayout'));
+const HrOverviewPage = lazy(() => import('../../modules/hr/pages/HrOverviewPage'));
 const HrPeoplePage = lazy(() => import('../../modules/hr/pages/HrPeoplePage'));
 const HrEmployeeDetailPage = lazy(() => import('../../modules/hr/pages/HrEmployeeDetailPage'));
 const HrDepartmentsPage = lazy(() => import('../../modules/hr/pages/HrDepartmentsPage'));
@@ -202,6 +203,7 @@ export function AppRoutes() {
             <Route element={<HrAccessMiddleware />}>
               <Route path="/hr" element={<SuspenseWrapper><HrLayout /></SuspenseWrapper>}>
                 <Route index element={<HrIndexRedirect />} />
+                <Route path="overview" element={<SuspenseWrapper><HrOverviewPage /></SuspenseWrapper>} />
                 <Route path="people" element={<SuspenseWrapper><HrPeoplePage /></SuspenseWrapper>} />
                 <Route path="people/:employeeId" element={<SuspenseWrapper><HrEmployeeDetailPage /></SuspenseWrapper>} />
                 <Route path="departments" element={<SuspenseWrapper><HrDepartmentsPage /></SuspenseWrapper>} />

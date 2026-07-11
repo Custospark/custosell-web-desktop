@@ -1,0 +1,223 @@
+import { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { LayoutGrid, Search, Shield } from 'lucide-react';
+import { Modal } from '../modals/Modal';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { resolveModuleForPath } from '../../utils/moduleAccess';
+import { cn } from '../../utils/cn';
+import {
+  getLauncherModulesForUser,
+  sortLauncherModules,
+  type ModuleLauncherItem,
+} from './moduleLauncherCatalog';
+
+interface ModuleLauncherModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function SectionHeading({
+  icon: Icon,
+  label,
+  tone,
+}: {
+  icon: typeof LayoutGrid;
+  label: string;
+  tone: 'indigo' | 'violet';
+}) {
+  const tones = {
+    indigo: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
+    violet: 'bg-violet-50 text-violet-600 ring-violet-100',
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-0.5">
+      <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-1', tones[tone])}>
+        <Icon className="h-3.5 w-3.5" />
+      </span>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</h3>
+    </div>
+  );
+}
+
+function ModuleTile({
+  item,
+  isActive,
+  onSelect,
+}: {
+  item: ModuleLauncherItem;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const Icon = item.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'group flex w-full items-center gap-2.5 overflow-hidden rounded-lg border bg-white px-2.5 py-2 text-left shadow-sm',
+        'transition-all duration-150 ease-out',
+        'hover:border-indigo-200 hover:shadow',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40',
+        isActive
+          ? 'border-indigo-400 bg-indigo-50/80 ring-1 ring-indigo-300/60'
+          : 'border-gray-200/90',
+      )}
+    >
+      <span
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-md ring-1',
+          item.tone,
+        )}
+      >
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-gray-900 group-hover:text-indigo-800">
+          {item.label}
+        </span>
+        <span className="mt-0.5 block truncate text-[11px] text-gray-500">
+          {item.description}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function ModuleGrid({
+  items,
+  activeSlug,
+  onSelect,
+}: {
+  items: ModuleLauncherItem[];
+  activeSlug: string | null;
+  onSelect: (item: ModuleLauncherItem) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <ModuleTile
+          key={item.slug}
+          item={item}
+          isActive={activeSlug === item.slug}
+          onSelect={() => onSelect(item)}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherModalProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user = useAppSelector((s) => s.auth.user);
+  const [query, setQuery] = useState('');
+
+  const accessible = useMemo(
+    () => sortLauncherModules(getLauncherModulesForUser(user)),
+    [user],
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return accessible;
+    return accessible.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q)
+        || item.description.toLowerCase().includes(q)
+        || item.slug.toLowerCase().includes(q),
+    );
+  }, [accessible, query]);
+
+  const workspaceItems = useMemo(
+    () => filtered.filter((item) => item.section === 'workspace'),
+    [filtered],
+  );
+  const platformItems = useMemo(
+    () => filtered.filter((item) => item.section === 'platform'),
+    [filtered],
+  );
+
+  const activeSlug = resolveModuleForPath(location.pathname);
+  const totalCount = filtered.length;
+  const empty = totalCount === 0;
+
+  const handleClose = () => {
+    setQuery('');
+    onClose();
+  };
+
+  const handleSelect = (item: ModuleLauncherItem) => {
+    const to = item.getRoute(user);
+    setQuery('');
+    onClose();
+    if (to !== location.pathname) {
+      navigate(to);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={open}
+      onClose={handleClose}
+      title="Switch modules"
+      subtitle="Pick a module you can access"
+      titleCentered
+      size="xl"
+      bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4"
+    >
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search modules…"
+              className="w-full rounded-xl border border-indigo-200/80 bg-indigo-50/30 py-2 pl-10 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
+            />
+          </div>
+          <p className="shrink-0 text-sm text-gray-600 sm:text-right">
+            {totalCount} module{totalCount === 1 ? '' : 's'}
+            {query.trim() ? ' found' : ''}
+          </p>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 scrollbar-thin">
+          {empty ? (
+            <p className="py-10 text-center text-sm text-gray-500">
+              {query.trim()
+                ? 'No modules match your search.'
+                : 'No modules available for your account.'}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {workspaceItems.length > 0 && (
+                <section className="space-y-2">
+                  <SectionHeading icon={LayoutGrid} label="Your modules" tone="indigo" />
+                  <ModuleGrid
+                    items={workspaceItems}
+                    activeSlug={activeSlug}
+                    onSelect={handleSelect}
+                  />
+                </section>
+              )}
+              {platformItems.length > 0 && (
+                <section className="space-y-2">
+                  <SectionHeading icon={Shield} label="Platform" tone="violet" />
+                  <ModuleGrid
+                    items={platformItems}
+                    activeSlug={activeSlug}
+                    onSelect={handleSelect}
+                  />
+                </section>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}

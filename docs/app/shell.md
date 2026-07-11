@@ -23,9 +23,12 @@ Dismiss state for offline banner: `offline/core/offlinePreferences.ts` + `networ
 | **Network status** | `online` = emerald, `slow` = orange, `offline` = red (`NETWORK_STATUS_THEME`) |
 | **Sync chip** | `SyncHeaderChip` — compact % when sync active |
 | **Shift badge** | Shows `shift_clock_in` from auth slice (md+ breakpoint) |
+| **Apps launcher** | 9-dot control left of Guide — opens `ModuleLauncherModal` (boards-style) with only modules the signed-in user can access |
 | **Guide nav** | Tutorials, FAQs, notifications (offline dot on notifications when offline) |
 
 Network button calls `checkNetworkConnectivity()` on click (retry probe).
+
+Module launcher catalog: `moduleLauncherCatalog.ts`. Visibility = staff/owner drawer modules + Account/Guide defaults + Platform/Guide Settings for platform admins (see ADR `2026-07-11-navbar-module-launcher`).
 
 ## Sidebar
 

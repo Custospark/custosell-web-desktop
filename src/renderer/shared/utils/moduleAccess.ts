@@ -49,7 +49,7 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   accounting: ROUTES.ACCOUNTING.RATIOS,
   forecasting: ROUTES.FORECASTING.OVERVIEW,
   documents: ROUTES.DOCUMENTS.INDEX,
-  hr: ROUTES.HR.INDEX,
+  hr: ROUTES.HR.OVERVIEW,
   settings: ROUTES.SETTINGS.BUSINESS,
   account: ROUTES.ACCOUNT.NOTIFICATIONS,
   guide: ROUTES.GUIDE.TUTORIALS,
@@ -276,7 +276,7 @@ export function getEstimatesFallbackRoute(user: AuthUser | null | undefined): st
 }
 
 export function getHrModuleDefaultRoute(user: AuthUser | null | undefined): string {
-  if (canViewFullHr(user)) return ROUTES.HR.PEOPLE;
+  if (canViewFullHr(user)) return ROUTES.HR.OVERVIEW;
   return ROUTES.HR.ATTENDANCE;
 }
 

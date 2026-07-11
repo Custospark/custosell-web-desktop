@@ -6,7 +6,8 @@ Frontend module for people operations, time & leave, Uganda-first payroll, talen
 
 | UI | Path |
 |----|------|
-| Module shell | `/hr` → People (full) or Attendance (limited) |
+| Module shell | `/hr` → Overview (full) or Attendance (limited) |
+| Overview dashboard | `/hr/overview` — full access only |
 | People directory | `/hr/people` |
 | Employee detail | `/hr/people/:employeeId` |
 | Departments | `/hr/departments` |
@@ -22,7 +23,7 @@ Access is gated by `ModuleAccessMiddleware` with slug `hr`, plus `HrAccessMiddle
 
 | Access | Modules | UI routes | Typical API |
 |--------|---------|-----------|-------------|
-| **Full** | `hr` + `hr_full` | All `/hr/*` | Org, people admin, payroll, reports, leave approve |
+| **Full** | `hr` + `hr_full` | All `/hr/*` including Overview dashboard | Org, people admin, payroll, reports, leave approve |
 | **Limited** | `hr` only | Attendance, Leave, Talent | Clock self, leave request/cancel, talent task update, own work performance |
 
 Owners follow the same rule as staff: without `hr_full`, the Sidebar shows only Attendance / Leave / Talent and admin HR APIs return 403. Saving Module access (or editing your own staff modules) refreshes the auth user so the Sidebar updates immediately.

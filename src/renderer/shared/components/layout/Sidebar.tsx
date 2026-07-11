@@ -183,6 +183,7 @@ const baseNavGroups: NavGroup[] = [
     icon: IdCard,
     label: 'HR & Payroll',
     subItems: [
+      { to: ROUTES.HR.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
       { to: ROUTES.HR.PEOPLE, label: 'People', icon: Users },
       { to: ROUTES.HR.DEPARTMENTS, label: 'Departments', icon: Building },
       { to: ROUTES.HR.ATTENDANCE, label: 'Attendance', icon: Clock },

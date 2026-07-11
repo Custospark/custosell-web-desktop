@@ -42,6 +42,7 @@ export const ROUTES = {
   },
   HR: {
     INDEX: '/hr',
+    OVERVIEW: '/hr/overview',
     PEOPLE: '/hr/people',
     EMPLOYEE: (id: number) => `/hr/people/${id}`,
     DEPARTMENTS: '/hr/departments',

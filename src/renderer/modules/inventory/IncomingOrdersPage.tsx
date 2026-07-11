@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   Ban,
   CheckCircle2,
+  Eye,
   FileText,
   PackageCheck,
   RefreshCw,
@@ -30,6 +31,7 @@ import {
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import GenerateSellerInvoiceFromPoModal from './ui/supply/GenerateSellerInvoiceFromPoModal';
+import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -47,6 +49,7 @@ export default function IncomingOrdersPage() {
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('submitted');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
+  const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [invoicePo, setInvoicePo] = useState<PurchaseOrder | null>(null);
 
@@ -173,13 +176,22 @@ export default function IncomingOrdersPage() {
                 key: 'actions',
                 header: '',
                 render: (po) => (
-                  <div className="flex flex-wrap justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setViewPo(po)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="View order details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     {po.status === 'submitted' ? (
                       <Button
                         type="button"
                         size="sm"
                         disabled={isOffline || busy}
                         onClick={() => void acceptPo.mutateAsync(po.id)}
+                        title="Accept this order"
                         className="inline-flex items-center gap-1"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Accept
@@ -191,6 +203,7 @@ export default function IncomingOrdersPage() {
                         size="sm"
                         disabled={isOffline || busy}
                         onClick={() => void fulfillPo.mutateAsync(po.id)}
+                        title="Fulfill this order (deduct stock)"
                         className="inline-flex items-center gap-1"
                       >
                         <PackageCheck className="h-3.5 w-3.5" /> Fulfill
@@ -203,6 +216,7 @@ export default function IncomingOrdersPage() {
                         variant="secondary"
                         disabled={isOffline}
                         onClick={() => setInvoicePo(po)}
+                        title="Generate invoice for buyer"
                         className="inline-flex items-center gap-1"
                       >
                         <FileText className="h-3.5 w-3.5" /> Invoice
@@ -323,6 +337,15 @@ export default function IncomingOrdersPage() {
             </Button>
           </div>
         </Card>
+      ) : null}
+
+      {viewPo ? (
+        <ViewPurchaseOrderModal
+          purchaseOrder={viewPo}
+          isOpen={!!viewPo}
+          onClose={() => setViewPo(null)}
+          role="seller"
+        />
       ) : null}
 
       {invoicePo ? (

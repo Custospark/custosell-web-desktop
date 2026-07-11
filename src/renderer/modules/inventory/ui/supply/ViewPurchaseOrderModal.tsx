@@ -8,9 +8,10 @@ interface ViewPurchaseOrderModalProps {
   purchaseOrder: PurchaseOrder;
   isOpen: boolean;
   onClose: () => void;
+  role?: 'buyer' | 'seller';
 }
 
-const STATUS_ACTION: Record<string, string> = {
+const BUYER_ACTION: Record<string, string> = {
   draft: 'You can edit or submit this order. The seller cannot see it until you submit.',
   submitted: 'Waiting for the seller to review. You can cancel if needed.',
   accepted: 'The seller has accepted. Awaiting them to prepare and ship the items.',
@@ -18,6 +19,16 @@ const STATUS_ACTION: Record<string, string> = {
   fulfilled: 'Items are ready. Confirm receipt to add them to your stock.',
   received: 'Items added to your stock. You can generate an invoice from this order.',
   cancelled: 'This order was cancelled. No further action needed.',
+};
+
+const SELLER_ACTION: Record<string, string> = {
+  draft: 'Not visible yet — the buyer is still composing this order.',
+  submitted: 'Review the order. You can accept or reject it.',
+  accepted: 'You accepted this order. Prepare and ship the items, then mark as fulfilled.',
+  rejected: 'You rejected this order. The buyer can see your reason.',
+  fulfilled: 'Items deducted from your stock. Waiting for the buyer to confirm receipt.',
+  received: 'The buyer confirmed receipt. This order is complete.',
+  cancelled: 'The buyer cancelled this order. No further action needed.',
 };
 
 const STEP_ORDER = ['draft', 'submitted', 'accepted', 'fulfilled', 'received'] as const;
@@ -104,7 +115,9 @@ function RejectionBanner({ reason }: { reason: string }) {
   );
 }
 
-export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onClose }: ViewPurchaseOrderModalProps) {
+export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onClose, role = 'buyer' }: ViewPurchaseOrderModalProps) {
+  const statusAction = role === 'seller' ? SELLER_ACTION : BUYER_ACTION;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="lg">
       <div className="p-5 space-y-5">
@@ -119,6 +132,9 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Seller</p>
                 <p className="font-medium text-gray-900">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</p>
+                {po.seller_business?.description && (
+                  <p className="text-gray-500 text-xs italic">{po.seller_business.description}</p>
+                )}
                 {po.seller_business?.business_phone && (
                   <p className="text-gray-600 text-xs">{po.seller_business.business_phone}</p>
                 )}
@@ -133,6 +149,9 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Buyer</p>
                 <p className="font-medium text-gray-900">{po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}</p>
+                {po.buyer_business?.description && (
+                  <p className="text-gray-500 text-xs italic">{po.buyer_business.description}</p>
+                )}
                 {po.buyer_business?.business_phone && (
                   <p className="text-gray-600 text-xs">{po.buyer_business.business_phone}</p>
                 )}
@@ -151,7 +170,7 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
         <OrderStages po={po} />
 
         <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
-          <p className="text-sm text-blue-800">{STATUS_ACTION[po.status] ?? ''}</p>
+          <p className="text-sm text-blue-800">{statusAction[po.status] ?? ''}</p>
         </div>
 
         {po.rejection_reason ? <RejectionBanner reason={po.rejection_reason} /> : null}

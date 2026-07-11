@@ -128,7 +128,7 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
               {purchaseOrderStatusBadge(po.status)}
             </div>
 
-            <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm">
+            <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm sm:justify-center">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Seller</p>
                 <p className="font-medium text-gray-900">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</p>

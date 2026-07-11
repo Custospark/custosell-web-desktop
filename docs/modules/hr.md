@@ -11,6 +11,8 @@ Frontend module for people operations, time & leave, Uganda-first payroll, talen
 | People directory | `/hr/people` |
 | Employee detail | `/hr/people/:employeeId` |
 | Departments | `/hr/departments` |
+| Company Assets | `/hr/company-assets` |
+| Company Asset detail | `/hr/company-assets/:assetId` |
 | Attendance | `/hr/attendance` — clock capture + hours/presence charts over 7/30 days |
 | Leave | `/hr/leave` |
 | Payroll | `/hr/payroll` |
@@ -63,8 +65,9 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Types | `api/hrTypes.ts` |
 | Query keys | `api/hrQueryKeys.ts` |
 | Hooks | `api/useHrQueries.ts` |
+| Company Assets API | `api/hrCompanyAssetsEndpoints.ts`, `api/hrCompanyAssetsKeys.ts`, `api/useHrCompanyAssetsQueries.ts` |
 | Shell | `pages/HrLayout.tsx` — outlet-only; navigation lives in the main app Sidebar (HR & Payroll group) |
-| Shared UI | `ui/HrSurface.tsx`, `ui/hrFormFields.tsx`, `ui/HrAppLoginFields.tsx`, `ui/HrStatusBadges.tsx`, `ui/HrWorkPerformancePanel.tsx`, `ui/EvaluateStaffPerformanceLink.tsx`, `ui/talentSurface.ts` (Progress-style frosted canvas) |
+| Shared UI | `ui/HrSurface.tsx`, `ui/hrFormFields.tsx`, `ui/HrAppLoginFields.tsx`, `ui/HrStatusBadges.tsx`, `ui/HrWorkPerformancePanel.tsx`, `ui/HrEmployeeAssetsPanel.tsx`, `ui/HrCompanyAssetModals.tsx`, `ui/EvaluateStaffPerformanceLink.tsx`, `ui/talentSurface.ts` (Progress-style frosted canvas) |
 
 ## Identity model
 

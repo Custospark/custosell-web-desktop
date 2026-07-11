@@ -126,24 +126,26 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
             <h2 className="text-lg font-bold text-gray-900">{po.po_number}</h2>
             {purchaseOrderStatusBadge(po.status)}
           </div>
-          <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm sm:justify-center">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Seller</p>
-                <p className="font-medium text-gray-900">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</p>
-                {po.seller_business?.description && (
-                  <p className="text-gray-500 text-xs italic">{po.seller_business.description}</p>
-                )}
-                {po.seller_business?.business_phone && (
-                  <p className="text-gray-600 text-xs">{po.seller_business.business_phone}</p>
-                )}
-                {po.seller_business?.business_email && (
-                  <p className="text-gray-600 text-xs">{po.seller_business.business_email}</p>
-                )}
-                {(() => {
-                  const parts = [po.seller_business?.address, po.seller_business?.city, po.seller_business?.state, po.seller_business?.country].filter(Boolean);
-                  return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
-                })()}
-              </div>
+            <div className="mt-3 text-sm sm:text-center">
+              {role === 'buyer' && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Seller</p>
+                  <p className="font-medium text-gray-900">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</p>
+                  {po.seller_business?.description && (
+                    <p className="text-gray-500 text-xs italic">{po.seller_business.description}</p>
+                  )}
+                  {po.seller_business?.business_phone && (
+                    <p className="text-gray-600 text-xs">{po.seller_business.business_phone}</p>
+                  )}
+                  {po.seller_business?.business_email && (
+                    <p className="text-gray-600 text-xs">{po.seller_business.business_email}</p>
+                  )}
+                  {(() => {
+                    const parts = [po.seller_business?.address, po.seller_business?.city, po.seller_business?.state, po.seller_business?.country].filter(Boolean);
+                    return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
+                  })()}
+                </div>
+              )}
               {role === 'seller' && (
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Buyer</p>

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
 import { useBillableProjects } from '../../estimates/api/useProjectQueries';
-import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat, FolderKanban } from 'lucide-react';
+import { useFixedAssets } from '../../accounting/api/AccountingQueries';
+import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat, FolderKanban, Package } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
@@ -18,6 +19,7 @@ interface ExpenseFormProps {
 export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
   const { data: categories } = useExpenseCategories();
   const { data: projects } = useBillableProjects();
+  const { data: fixedAssets = [] } = useFixedAssets();
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
@@ -26,6 +28,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
   const [categoryId, setCategoryId] = useState('');
   const [projectId, setProjectId] = useState('');
+  const [fixedAssetId, setFixedAssetId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [reference, setReference] = useState('');
@@ -46,6 +49,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
       if (expense) {
         setCategoryId(expense.expense_category_id?.toString() || '');
         setProjectId('');
+        setFixedAssetId(expense.fixed_asset_id?.toString() || '');
         setAmount(parseFloat(expense.amount).toString());
         setDescription(expense.description);
         setReference(expense.reference || '');
@@ -61,6 +65,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
       } else {
         setCategoryId('');
         setProjectId('');
+        setFixedAssetId('');
         setAmount('');
         setDescription('');
         setReference('');
@@ -83,6 +88,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     const formData = new FormData();
     if (categoryId) formData.append('expense_category_id', categoryId);
     if (projectId) formData.append('project_id', projectId);
+    if (fixedAssetId) formData.append('fixed_asset_id', fixedAssetId);
     formData.append('amount', amount);
     formData.append('description', description);
     if (reference) formData.append('reference', reference);
@@ -145,6 +151,19 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                 </select>
               </div>
               <p className="mt-1 text-xs text-gray-400">Link to a project for automatic cost allocation and budget tracking.</p>
+            </div>
+            <div>
+              <div className="relative">
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <select value={fixedAssetId} onChange={(e) => setFixedAssetId(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none">
+                  <option value="">No company asset</option>
+                  {fixedAssets.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}{a.asset_tag ? ` (${a.asset_tag})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">Optional — link repair/maintenance spend to a fixed asset.</p>
             </div>
           </div>
         </div>

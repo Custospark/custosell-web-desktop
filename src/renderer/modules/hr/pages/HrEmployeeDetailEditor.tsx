@@ -1,13 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Briefcase,
   Building2,
   Calendar,
   Hash,
-  KeyRound,
-  Link2,
   Mail,
   MessageSquare,
   Phone,
@@ -17,40 +15,23 @@ import {
   Users,
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { buildStaffModulesPayload } from '../../../shared/utils/moduleAccess';
 import {
-  useCreateHrEmployeeAccount,
   useDeleteHrEmployee,
-  useHrAccountOptions,
   useHrDepartments,
-  useHrEmployee,
   useHrEmployees,
   useHrPositions,
-  useLinkHrEmployeeUser,
-  useRemoveHrEmployeeAccount,
-  useUnlinkHrEmployeeUser,
   useUpdateHrEmployee,
 } from '../api/useHrQueries';
 import type { EmployeeStatus, EmploymentType, HrEmployee, UpdateEmployeePayload } from '../api/hrTypes';
 import { employeeDisplayName } from '../api/hrTypes';
 import { EmployeeStatusBadge } from '../ui/HrStatusBadges';
-import { HrPageHeader, HrSectionCard } from '../ui/HrSurface';
-import {
-  HrFormSection,
-  HrIconField,
-  HrModalFooter,
-  HrModalHero,
-  hrInputClass,
-  hrSelectClass,
-} from '../ui/hrFormFields';
-import { emptyAppLoginForm, type HrAppLoginFormState } from '../ui/hrAppLoginForm';
-import { HrAppLoginFields } from '../ui/HrAppLoginFields';
+import { HrPageHeader } from '../ui/HrSurface';
+import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from '../ui/hrFormFields';
 import { HrEmployeePerformanceCard } from '../ui/HrWorkPerformancePanel';
 import { HrEmployeeAssetsPanel } from '../ui/HrEmployeeAssetsPanel';
+import { HrEmployeeLoginSection } from '../ui/HrEmployeeLoginSection';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { canViewFullHr } from '../../../shared/utils/moduleAccess';
 
@@ -78,28 +59,13 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
   const user = useAppSelector((s) => s.auth.user);
   const isFullHr = canViewFullHr(user);
   const id = employee.id;
-
   const [form, setForm] = useState<UpdateEmployeePayload>(() => toForm(employee));
-  const [linkUserId, setLinkUserId] = useState('');
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [loginForm, setLoginForm] = useState<HrAppLoginFormState>(() => ({
-    ...emptyAppLoginForm(),
-    email: employee.email ?? '',
-  }));
 
   const { data: departments = [] } = useHrDepartments();
   const { data: positions = [] } = useHrPositions(form.department_id);
   const { data: managers = [] } = useHrEmployees();
-  const { data: accountOptions } = useHrAccountOptions(true);
   const updateEmployee = useUpdateHrEmployee();
   const deleteEmployee = useDeleteHrEmployee();
-  const linkUser = useLinkHrEmployeeUser();
-  const unlinkUser = useUnlinkHrEmployeeUser();
-  const createAccount = useCreateHrEmployeeAccount();
-  const removeAccount = useRemoveHrEmployeeAccount();
-
-  const unlinkedUsers = accountOptions?.unlinked_users ?? [];
-  const roles = accountOptions?.roles ?? [];
   const managerOptions = managers.filter((m) => m.id !== id);
   const hasLogin = Boolean(employee.user_id);
 
@@ -114,49 +80,6 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
       termination_date: form.termination_date || null,
       notes: form.notes || null,
     });
-  }
-
-  async function handleLink() {
-    if (!linkUserId) return;
-    await linkUser.mutateAsync({ id, user_id: Number(linkUserId) });
-    setLinkUserId('');
-  }
-
-  async function handleUnlink() {
-    const ok = await confirm({
-      title: 'Disconnect login?',
-      message: 'Their staff account stays in Settings — only the link to this HR profile is removed.',
-      confirmText: 'Disconnect',
-      variant: 'warning',
-    });
-    if (ok) await unlinkUser.mutateAsync(id);
-  }
-
-  async function handleRemoveAccount() {
-    const ok = await confirm({
-      title: 'Remove app login?',
-      message: `Delete the login for ${employee.user?.name ?? employeeDisplayName(employee)}? They will no longer be able to sign in. Their HR profile stays.`,
-      confirmText: 'Remove login',
-      variant: 'danger',
-    });
-    if (ok) await removeAccount.mutateAsync(id);
-  }
-
-  async function handleCreateAccount(e: FormEvent) {
-    e.preventDefault();
-    if (loginForm.password !== loginForm.password_confirmation) return;
-    await createAccount.mutateAsync({
-      id,
-      email: loginForm.email.trim(),
-      password: loginForm.password,
-      password_confirmation: loginForm.password_confirmation,
-      role_id: loginForm.role_id ? Number(loginForm.role_id) : null,
-      modules: buildStaffModulesPayload(loginForm.modules, false, loginForm.hrFullAccess),
-      phone: form.phone || null,
-      account_name: `${form.first_name ?? ''} ${form.last_name ?? ''}`.trim(),
-    });
-    setAccountOpen(false);
-    setLoginForm({ ...emptyAppLoginForm(), email: loginForm.email });
   }
 
   async function handleDelete() {
@@ -229,35 +152,16 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         <HrFormSection title="Identity" icon={User} description="How they appear across HR — name, number, and status.">
           <div className="grid gap-4 sm:grid-cols-2">
             <HrIconField label="First name" icon={User} required>
-              <input
-                required
-                value={form.first_name ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input required value={form.first_name ?? ''} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} className={hrInputClass} />
             </HrIconField>
             <HrIconField label="Last name" icon={User} required>
-              <input
-                required
-                value={form.last_name ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input required value={form.last_name ?? ''} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} className={hrInputClass} />
             </HrIconField>
             <HrIconField label="Employee number" icon={Hash} required>
-              <input
-                required
-                value={form.employee_number ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, employee_number: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input required value={form.employee_number ?? ''} onChange={(e) => setForm((f) => ({ ...f, employee_number: e.target.value }))} className={hrInputClass} />
             </HrIconField>
             <HrIconField label="Status" icon={UserCircle} required>
-              <select
-                value={form.status ?? 'active'}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as EmployeeStatus }))}
-                className={hrSelectClass}
-              >
+              <select value={form.status ?? 'active'} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as EmployeeStatus }))} className={hrSelectClass}>
                 <option value="onboarding">Onboarding</option>
                 <option value="active">Active</option>
                 <option value="on_leave">On leave</option>
@@ -270,19 +174,10 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         <HrFormSection title="Contact" icon={Mail} description="Optional — helpful for payslips and leave notices.">
           <div className="grid gap-4 sm:grid-cols-2">
             <HrIconField label="Email" icon={Mail}>
-              <input
-                type="email"
-                value={form.email ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input type="email" value={form.email ?? ''} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className={hrInputClass} />
             </HrIconField>
             <HrIconField label="Phone" icon={Phone}>
-              <input
-                value={form.phone ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input value={form.phone ?? ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className={hrInputClass} />
             </HrIconField>
           </div>
         </HrFormSection>
@@ -292,13 +187,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
             <HrIconField label="Department" icon={Building2}>
               <select
                 value={form.department_id ?? ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    department_id: e.target.value ? Number(e.target.value) : null,
-                    position_id: null,
-                  }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, department_id: e.target.value ? Number(e.target.value) : null, position_id: null }))}
                 className={hrSelectClass}
               >
                 <option value="">None</option>
@@ -308,13 +197,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
               </select>
             </HrIconField>
             <HrIconField label="Position" icon={Briefcase}>
-              <select
-                value={form.position_id ?? ''}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, position_id: e.target.value ? Number(e.target.value) : null }))
-                }
-                className={hrSelectClass}
-              >
+              <select value={form.position_id ?? ''} onChange={(e) => setForm((f) => ({ ...f, position_id: e.target.value ? Number(e.target.value) : null }))} className={hrSelectClass}>
                 <option value="">None</option>
                 {positions.map((p) => (
                   <option key={p.id} value={p.id}>{p.title}</option>
@@ -322,16 +205,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
               </select>
             </HrIconField>
             <HrIconField label="Manager" icon={Users}>
-              <select
-                value={form.manager_employee_id ?? ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    manager_employee_id: e.target.value ? Number(e.target.value) : null,
-                  }))
-                }
-                className={hrSelectClass}
-              >
+              <select value={form.manager_employee_id ?? ''} onChange={(e) => setForm((f) => ({ ...f, manager_employee_id: e.target.value ? Number(e.target.value) : null }))} className={hrSelectClass}>
                 <option value="">None</option>
                 {managerOptions.map((m) => (
                   <option key={m.id} value={m.id}>{employeeDisplayName(m)}</option>
@@ -339,13 +213,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
               </select>
             </HrIconField>
             <HrIconField label="Employment type" icon={Briefcase}>
-              <select
-                value={form.employment_type ?? 'full_time'}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, employment_type: e.target.value as EmploymentType }))
-                }
-                className={hrSelectClass}
-              >
+              <select value={form.employment_type ?? 'full_time'} onChange={(e) => setForm((f) => ({ ...f, employment_type: e.target.value as EmploymentType }))} className={hrSelectClass}>
                 <option value="full_time">Full time</option>
                 <option value="part_time">Part time</option>
                 <option value="contract">Contract</option>
@@ -358,30 +226,14 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         <HrFormSection title="Dates & notes" icon={Calendar}>
           <div className="grid gap-4 sm:grid-cols-2">
             <HrIconField label="Hire date" icon={Calendar}>
-              <input
-                type="date"
-                value={form.hire_date ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, hire_date: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input type="date" value={form.hire_date ?? ''} onChange={(e) => setForm((f) => ({ ...f, hire_date: e.target.value }))} className={hrInputClass} />
             </HrIconField>
             <HrIconField label="Termination date" icon={Calendar}>
-              <input
-                type="date"
-                value={form.termination_date ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, termination_date: e.target.value }))}
-                className={hrInputClass}
-              />
+              <input type="date" value={form.termination_date ?? ''} onChange={(e) => setForm((f) => ({ ...f, termination_date: e.target.value }))} className={hrInputClass} />
             </HrIconField>
           </div>
           <HrIconField label="Notes" icon={MessageSquare}>
-            <textarea
-              rows={3}
-              value={form.notes ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              placeholder="Internal notes — not shown on payslips"
-              className={hrInputClass}
-            />
+            <textarea rows={3} value={form.notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Internal notes — not shown on payslips" className={hrInputClass} />
           </HrIconField>
         </HrFormSection>
 
@@ -390,130 +242,13 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         </div>
       </form>
 
-      <HrSectionCard
-        title="App login"
-        description="Admin or HR owns account creation and removal. Password is set by you — share it securely."
-        actions={
-          hasLogin ? (
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void handleUnlink()}
-                loading={unlinkUser.isPending}
-              >
-                Disconnect only
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => void handleRemoveAccount()}
-                loading={removeAccount.isPending}
-                className="inline-flex items-center gap-1.5"
-              >
-                <KeyRound className="h-3.5 w-3.5" />
-                Remove login
-              </Button>
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              onClick={() => {
-                setLoginForm({ ...emptyAppLoginForm(), email: form.email ?? employee.email ?? '' });
-                setAccountOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5"
-            >
-              <KeyRound className="h-3.5 w-3.5" />
-              Create app login
-            </Button>
-          )
-        }
-      >
-        {hasLogin && employee.user ? (
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-950">
-            <p className="font-medium">{employee.user.name}</p>
-            <p className="mt-0.5 text-xs opacity-80">{employee.user.email}</p>
-            <p className="mt-2 text-xs text-emerald-800/80">
-              Disconnect keeps the Settings account. Remove login deletes the account so they cannot sign in.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500">
-              No app login yet. Create one with a password, or link an existing staff account that isn’t already tied to someone else.
-            </p>
-            {unlinkedUsers.length > 0 ? (
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="min-w-[220px] flex-1">
-                  <HrIconField label="Link existing staff" icon={Link2}>
-                    <select
-                      value={linkUserId}
-                      onChange={(e) => setLinkUserId(e.target.value)}
-                      className={hrSelectClass}
-                    >
-                      <option value="">Select staff…</option>
-                      {unlinkedUsers.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.email})
-                        </option>
-                      ))}
-                    </select>
-                  </HrIconField>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!linkUserId}
-                  loading={linkUser.isPending}
-                  onClick={() => void handleLink()}
-                  className="inline-flex items-center gap-1.5"
-                >
-                  <Link2 className="h-3.5 w-3.5" />
-                  Link
-                </Button>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">All staff accounts are already linked to an HR profile.</p>
-            )}
-          </div>
-        )}
-      </HrSectionCard>
-
-      <Modal
-        isOpen={accountOpen}
-        onClose={() => setAccountOpen(false)}
-        title="Create app login"
-        subtitle="You set the password — same pattern as Settings → Staff."
-        size="lg"
-      >
-        <form onSubmit={(e) => void handleCreateAccount(e)} className="space-y-5">
-          <HrModalHero
-            icon={KeyRound}
-            title="Give them access"
-            description={`Create a login for ${employeeDisplayName(employee)}. Share the password securely — they can change it later.`}
-            tone="indigo"
-          />
-          <HrAppLoginFields value={loginForm} onChange={setLoginForm} roles={roles} />
-          {loginForm.password && loginForm.password !== loginForm.password_confirmation ? (
-            <p className="text-sm text-red-600">Password confirmation does not match.</p>
-          ) : null}
-          <HrModalFooter>
-            <Button type="button" variant="outline" onClick={() => setAccountOpen(false)}>Cancel</Button>
-            <Button
-              type="submit"
-              loading={createAccount.isPending}
-              disabled={
-                !loginForm.email.trim()
-                || loginForm.password.length < 6
-                || loginForm.password !== loginForm.password_confirmation
-              }
-            >
-              Create login
-            </Button>
-          </HrModalFooter>
-        </form>
-      </Modal>
+      <HrEmployeeLoginSection
+        employee={employee}
+        formEmail={form.email}
+        formPhone={form.phone}
+        formFirstName={form.first_name}
+        formLastName={form.last_name}
+      />
     </div>
   );
 }

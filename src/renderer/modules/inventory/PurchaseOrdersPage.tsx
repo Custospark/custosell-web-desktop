@@ -341,6 +341,7 @@ export default function PurchaseOrdersPage() {
 
       {receivePo ? (
         <ReceivePurchaseOrderModal
+          key={receivePo.id}
           purchaseOrder={receivePo}
           isOpen={!!receivePo}
           onClose={() => setReceivePo(null)}

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PackageCheck } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { useProducts } from '../../api/products/ProductQueries';
-import { tracksStock } from '../../api/products/ProductTypes';
+import { tracksStock, type Product } from '../../api/products/ProductTypes';
 import { useReceivePurchaseOrder } from '../../api/purchaseOrders/usePurchaseOrderQueries';
-import type { PurchaseOrder } from '../../api/purchaseOrders/purchaseOrderTypes';
+import type { PurchaseOrder, PurchaseOrderItem } from '../../api/purchaseOrders/purchaseOrderTypes';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 
 interface ReceivePurchaseOrderModalProps {
@@ -14,6 +14,22 @@ interface ReceivePurchaseOrderModalProps {
   onClose: () => void;
 }
 
+function autoMapLines(items: PurchaseOrderItem[], localProducts: Product[]): Record<number, number> {
+  const next: Record<number, number> = {};
+  for (const item of items) {
+    const skuMatch = item.product_sku
+      ? localProducts.find((p) => p.sku && p.sku.toLowerCase() === item.product_sku!.toLowerCase())
+      : undefined;
+    const nameMatch = localProducts.find(
+      (p) => p.name.trim().toLowerCase() === item.product_name.trim().toLowerCase(),
+    );
+    const matched = skuMatch ?? nameMatch;
+    if (matched) next[item.id] = matched.id;
+  }
+  return next;
+}
+
+/** Parent should pass `key={purchaseOrder.id}` so manual overrides reset per PO. */
 export function ReceivePurchaseOrderModal({ purchaseOrder, isOpen, onClose }: ReceivePurchaseOrderModalProps) {
   const { data: products = [] } = useProducts();
   const receivePo = useReceivePurchaseOrder();
@@ -22,25 +38,13 @@ export function ReceivePurchaseOrderModal({ purchaseOrder, isOpen, onClose }: Re
     [products],
   );
 
-  const items = purchaseOrder.items ?? [];
-  const [mappings, setMappings] = useState<Record<number, number>>({});
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const next: Record<number, number> = {};
-    for (const item of items) {
-      const skuMatch = item.product_sku
-        ? localProducts.find((p) => p.sku && p.sku.toLowerCase() === item.product_sku!.toLowerCase())
-        : undefined;
-      const nameMatch = localProducts.find(
-        (p) => p.name.trim().toLowerCase() === item.product_name.trim().toLowerCase(),
-      );
-      const matched = skuMatch ?? nameMatch;
-      if (matched) next[item.id] = matched.id;
-    }
-    setMappings(next);
-  }, [isOpen, purchaseOrder.id, items, localProducts]);
-
+  const items = useMemo(() => purchaseOrder.items ?? [], [purchaseOrder.items]);
+  const suggested = useMemo(
+    () => autoMapLines(items, localProducts),
+    [items, localProducts],
+  );
+  const [manual, setManual] = useState<Record<number, number>>({});
+  const mappings = useMemo(() => ({ ...suggested, ...manual }), [suggested, manual]);
   const allMapped = items.length > 0 && items.every((item) => mappings[item.id] > 0);
 
   return (
@@ -54,7 +58,7 @@ export function ReceivePurchaseOrderModal({ purchaseOrder, isOpen, onClose }: Re
             <li key={item.id} className="rounded-lg border border-gray-200 p-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 break-words">{item.product_name}</p>
+                  <p className="break-words font-medium text-gray-900">{item.product_name}</p>
                   <p className="text-xs text-gray-500">
                     Qty {item.quantity_fulfilled || item.quantity} · {formatCurrency(Number(item.unit_price))}
                     {item.product_sku ? ` · SKU ${item.product_sku}` : ''}
@@ -65,12 +69,10 @@ export function ReceivePurchaseOrderModal({ purchaseOrder, isOpen, onClose }: Re
                   <select
                     className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm font-normal text-gray-900"
                     value={mappings[item.id] ?? ''}
-                    onChange={(e) =>
-                      setMappings((prev) => ({
-                        ...prev,
-                        [item.id]: Number(e.target.value),
-                      }))
-                    }
+                    onChange={(e) => {
+                      const productId = Number(e.target.value);
+                      setManual((prev) => ({ ...prev, [item.id]: productId }));
+                    }}
                   >
                     <option value="">Select product…</option>
                     {localProducts.map((p) => (

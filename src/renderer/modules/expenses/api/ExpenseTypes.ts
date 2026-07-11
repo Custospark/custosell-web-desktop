@@ -44,6 +44,7 @@ export interface Expense {
   recurrence_end_date: string | null;
   next_due_date: string | null;
   expense_date: string;
+  fixed_asset_id?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -83,6 +84,7 @@ export interface CreateExpenseData {
   next_due_date?: string | null;
   expense_date: string;
   shift_id?: number | null;
+  fixed_asset_id?: number | null;
 }
 
 export type UpdateExpenseData = Partial<CreateExpenseData>;

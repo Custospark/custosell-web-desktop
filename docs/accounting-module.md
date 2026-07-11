@@ -19,6 +19,7 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | **Payroll liabilities in ratios/CFS** | Liquidity current liabilities and Cash Flow WC changes include 2110–2112 (not only 2101–2104). |
 | **Payroll cash runway** | HR Reports affordability uses GL **closing** cash (1101/1102) vs unpaid payroll vs live compensation burn. See [ADR: cash runway](./adr/2026-07-10-payroll-affordability-cash-runway.md). |
 | **Straight-line depreciation only** | Simplest method, most predictable, URA-accepted. Accelerated/mileage methods can be added later. |
+| **Company Assets (HR) ↔ Fixed Assets** | One `fixed_assets` register: HR owns custody (assign/transfer/return); Accounting owns cost, depreciation, schedule. Sidebar: Accounting → Fixed Assets; HR → Company Assets. See [ADR](./adr/2026-07-11-company-assets-hr-accounting.md). |
 | **Single currency per business** | Business settings define the functional currency. No multi-currency support in v1. FX features deferred. |
 | **Strict period closing** | Closed periods reject new/pending entries. Reopening requires explicit action and logs the event. Prevents accidental post-dating. |
 | **Default URA-compliant COA template** | New businesses get a pre-seeded chart of accounts matching Ugandan tax authority classification. Customizable after activation. |
@@ -37,6 +38,7 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | `src/renderer/modules/accounting/pages/RatiosPage.tsx` | Financial ratio dashboard (liquidity, solvency, efficiency, profitability) |
 | `src/renderer/modules/accounting/pages/AccountingPeriodsPage.tsx` | Period CRUD, close/reopen actions |
 | `src/renderer/modules/accounting/pages/FixedAssetsPage.tsx` | Asset list, register, depreciation run, schedule viewer |
+| `src/renderer/modules/accounting/pages/FixedAssetDepreciationPanels.tsx` | Run depreciation modal, schedule panel, add-asset form |
 | `src/renderer/modules/accounting/pages/AccountingSettingsPage.tsx` | Module settings |
 
 ### Frontend — API Layer (2 files)
@@ -147,8 +149,9 @@ Covers:
 - Periods: CRUD, close guard (rejects new entries), reopen audit log
 - General Ledger: trial balance balancing, P&L calculations, balance sheet equation
 - Ratios: correct formula math, null-safe division for missing data
-- Fixed Assets: CRUD, straight-line calculation, monthly schedule, fully-depreciated status
+- Fixed Assets: CRUD, straight-line calculation, monthly schedule, fully-depreciated status; custody fields + assignee shown when present; Run Depreciation + schedule UX on Fixed Assets page
 - Auto-Accounting: event listener wiring, correct account selection, amount accuracy
+- Optional expense `fixed_asset_id` for maintenance rollup on HR Company Asset detail
 
 ### Frontend Verification
 ```bash

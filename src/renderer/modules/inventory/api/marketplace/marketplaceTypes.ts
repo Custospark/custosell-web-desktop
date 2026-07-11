@@ -9,6 +9,9 @@ export interface MarketplaceBusiness {
   city: string | null;
   state: string | null;
   country: string | null;
+  is_open_for_supply?: boolean;
+  is_saved?: boolean;
+  listed_products_count?: number;
 }
 
 export interface MarketplaceProduct {

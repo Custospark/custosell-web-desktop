@@ -85,6 +85,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-pos-orders-persistence.md](./adr/2026-07-11-pos-orders-persistence.md) | POS Hold/Take orders persist to DB; open→completed→invoiced |
 | [2026-07-11-inventory-supply-chain-b2b.md](./adr/2026-07-11-inventory-supply-chain-b2b.md) | B2B marketplace + purchase orders (online-only, opt-in listings) |
 | [2026-07-11-po-accept-auto-invoice.md](./adr/2026-07-11-po-accept-auto-invoice.md) | Accept PO → shared seller invoice + buyer receipts via Invoices |
+| [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
 
 ## Modules

@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, MapPin, Store } from 'lucide-react';
+import { Bookmark, ChevronDown, MapPin, Store } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
 import {
+  useAddSupplier,
   useMarketplaceBusinesses,
   useMarketplaceProducts,
+  useMySuppliers,
+  useRemoveSupplier,
 } from './api/marketplace/useMarketplaceQueries';
 import type {
   MarketplaceBusiness,
@@ -24,6 +27,7 @@ import { BrowseSuppliersModal } from './ui/marketplace/BrowseSuppliersModal';
 import { MarketplaceActionStrip } from './ui/marketplace/MarketplaceActionStrip';
 import { MarketplaceCartSheet } from './ui/marketplace/MarketplaceCartSheet';
 import { MarketplaceCatalog } from './ui/marketplace/MarketplaceCatalog';
+import { MySuppliersModal } from './ui/marketplace/MySuppliersModal';
 import {
   marketplaceGlassHeader,
   marketplaceGlassPanel,
@@ -38,16 +42,25 @@ export default function MarketplacePage() {
   const [cart, setCart] = useState<MarketplaceCartLine[]>([]);
   const [notes, setNotes] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
+  const [mySuppliersOpen, setMySuppliersOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
 
   const businessesQuery = useMarketplaceBusinesses(undefined, !isOffline);
+  const mySuppliersQuery = useMySuppliers(undefined, !isOffline);
   const productsQuery = useMarketplaceProducts(selected?.id ?? null, !isOffline && !!selected);
+  const addSupplier = useAddSupplier();
+  const removeSupplier = useRemoveSupplier();
   const createPo = useCreatePurchaseOrder();
   const submitPo = useSubmitPurchaseOrder();
 
   const cartSellerId = cart[0]?.product.business_id ?? selected?.id ?? null;
   const busy = createPo.isPending || submitPo.isPending;
+  const saveBusyId = addSupplier.isPending
+    ? (addSupplier.variables?.seller_business_id ?? null)
+    : removeSupplier.isPending
+      ? (removeSupplier.variables?.sellerBusinessId ?? null)
+      : null;
 
   const filteredProducts = useMemo(() => {
     const list = productsQuery.data ?? [];
@@ -112,11 +125,22 @@ export default function MarketplacePage() {
     }
   }
 
+  function toggleSave(biz: MarketplaceBusiness) {
+    if (isOffline) return;
+    if (biz.is_saved) {
+      void removeSupplier.mutateAsync({ sellerBusinessId: biz.id, name: biz.name });
+    } else {
+      void addSupplier.mutateAsync({ seller_business_id: biz.id });
+    }
+  }
+
   function refresh() {
     void businessesQuery.refetch();
+    void mySuppliersQuery.refetch();
     if (selected) void productsQuery.refetch();
   }
 
+  const mySuppliers = mySuppliersQuery.data ?? [];
   const location = selected
     ? [selected.city, selected.state, selected.country].filter(Boolean).join(', ')
     : '';
@@ -182,16 +206,27 @@ export default function MarketplacePage() {
               Start with a supplier
             </h2>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600">
-              Browse businesses open for supply, open their catalog, and build a purchase order — the same calm flow you use when switching boards.
+              Open My suppliers for your shortlist, or browse every business open for supply — then add items to a purchase order.
             </p>
-            <Button
-              type="button"
-              className="mt-6"
-              disabled={isOffline}
-              onClick={() => setBrowseOpen(true)}
-            >
-              Browse suppliers
-            </Button>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Button
+                type="button"
+                disabled={isOffline}
+                onClick={() => setMySuppliersOpen(true)}
+              >
+                <Bookmark className="mr-1.5 h-4 w-4" />
+                My suppliers
+                {mySuppliers.length > 0 ? ` (${mySuppliers.length})` : ''}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isOffline}
+                onClick={() => setBrowseOpen(true)}
+              >
+                Browse all
+              </Button>
+            </div>
           </div>
         ) : (
           <MarketplaceCatalog
@@ -207,13 +242,33 @@ export default function MarketplacePage() {
       </div>
 
       <MarketplaceActionStrip
+        onMySuppliers={() => setMySuppliersOpen(true)}
         onBrowseSuppliers={() => setBrowseOpen(true)}
         onOpenCart={() => setCartOpen(true)}
         cartCount={cart.length}
         onOpenOrders={() => navigate(ROUTES.INVENTORY.PURCHASE_ORDERS)}
         onRefresh={refresh}
-        refreshing={businessesQuery.isFetching || productsQuery.isFetching}
+        mySuppliersCount={mySuppliers.length}
+        refreshing={
+          businessesQuery.isFetching
+          || mySuppliersQuery.isFetching
+          || productsQuery.isFetching
+        }
         disabled={isOffline}
+      />
+
+      <MySuppliersModal
+        open={mySuppliersOpen}
+        onClose={() => setMySuppliersOpen(false)}
+        suppliers={mySuppliers}
+        selectedId={selected?.id ?? null}
+        loading={mySuppliersQuery.isLoading}
+        removingId={removeSupplier.isPending ? (removeSupplier.variables?.sellerBusinessId ?? null) : null}
+        onSelect={selectSupplier}
+        onRemove={(biz) => {
+          void removeSupplier.mutateAsync({ sellerBusinessId: biz.id, name: biz.name });
+        }}
+        onBrowseAll={() => setBrowseOpen(true)}
       />
 
       <BrowseSuppliersModal
@@ -222,7 +277,9 @@ export default function MarketplacePage() {
         suppliers={businessesQuery.data ?? []}
         selectedId={selected?.id ?? null}
         loading={businessesQuery.isLoading}
+        savingId={saveBusyId}
         onSelect={selectSupplier}
+        onToggleSave={toggleSave}
       />
 
       <MarketplaceCartSheet

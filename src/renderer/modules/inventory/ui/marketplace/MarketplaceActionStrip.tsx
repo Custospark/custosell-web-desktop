@@ -1,23 +1,27 @@
-import { ArrowLeftRight, LayoutList, RefreshCw, ShoppingCart } from 'lucide-react';
+import { ArrowLeftRight, Bookmark, LayoutList, RefreshCw, ShoppingCart } from 'lucide-react';
 import { cn } from '../../../../shared/utils/cn';
 
 interface MarketplaceActionStripProps {
+  onMySuppliers: () => void;
   onBrowseSuppliers: () => void;
   onOpenCart: () => void;
   cartCount: number;
   onOpenOrders: () => void;
   onRefresh: () => void;
+  mySuppliersCount?: number;
   refreshing?: boolean;
   disabled?: boolean;
   className?: string;
 }
 
 export function MarketplaceActionStrip({
+  onMySuppliers,
   onBrowseSuppliers,
   onOpenCart,
   cartCount,
   onOpenOrders,
   onRefresh,
+  mySuppliersCount = 0,
   refreshing = false,
   disabled = false,
   className,
@@ -29,6 +33,30 @@ export function MarketplaceActionStrip({
         className,
       )}
     >
+      <button
+        type="button"
+        onClick={onMySuppliers}
+        disabled={disabled}
+        className={cn(
+          'relative inline-flex items-center gap-2 rounded-xl border-2 border-amber-300/90 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all',
+          'bg-gradient-to-r from-amber-50 via-white to-orange-50 text-amber-950',
+          'hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:shadow-md hover:shadow-amber-200/50',
+          'active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
+        )}
+        title="My suppliers"
+        aria-label={mySuppliersCount > 0 ? `My suppliers (${mySuppliersCount})` : 'My suppliers'}
+      >
+        <span className="relative inline-flex shrink-0">
+          <Bookmark className="h-4 w-4 text-amber-700" />
+          {mySuppliersCount > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+              {mySuppliersCount > 99 ? '99+' : mySuppliersCount}
+            </span>
+          ) : null}
+        </span>
+        <span className="hidden sm:inline">My suppliers</span>
+      </button>
+
       <button
         type="button"
         onClick={onBrowseSuppliers}
@@ -43,7 +71,7 @@ export function MarketplaceActionStrip({
         aria-label="Browse suppliers"
       >
         <ArrowLeftRight className="h-4 w-4 text-teal-600" />
-        <span className="hidden sm:inline">Browse suppliers</span>
+        <span className="hidden sm:inline">Browse</span>
       </button>
 
       <button
@@ -84,7 +112,7 @@ export function MarketplaceActionStrip({
         aria-label="My purchase orders"
       >
         <LayoutList className="h-4 w-4 text-blue-600" />
-        <span className="hidden sm:inline">My orders</span>
+        <span className="hidden sm:inline">Orders</span>
       </button>
 
       <button

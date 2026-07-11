@@ -29,6 +29,7 @@ Businesses need a way to buy stock from other Custosell tenants without leaving 
 ## API (BE, `module:inventory`)
 
 - `GET /marketplace/businesses`, `GET /marketplace/businesses/{id}/products`
+- `GET|POST /marketplace/suppliers`, `DELETE /marketplace/suppliers/{sellerBusinessId}` (per-buyer shortlist)
 - `PATCH /businesses/supply-profile`, `PATCH /products/{id}/supply-listing`
 - `GET|POST /purchase-orders`, submit/cancel/**delete**/accept/reject/fulfill/receive, `GET /purchase-orders/incoming`
 - Accept creates and sends a seller invoice linked to the PO (`purchase_order_id`, `buyer_business_id`)

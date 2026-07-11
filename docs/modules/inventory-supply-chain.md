@@ -1,16 +1,16 @@
 # Inventory & Supply Chain (B2B)
 
-Online-only marketplace and purchase orders between businesses. See ADR [2026-07-11-inventory-supply-chain-b2b.md](../adr/2026-07-11-inventory-supply-chain-b2b.md) and [2026-07-11-po-accept-auto-invoice.md](../adr/2026-07-11-po-accept-auto-invoice.md).
+Online-only marketplace and purchase orders between businesses. See ADR [2026-07-11-inventory-supply-chain-b2b.md](../adr/2026-07-11-inventory-supply-chain-b2b.md), [2026-07-11-po-accept-auto-invoice.md](../adr/2026-07-11-po-accept-auto-invoice.md), and [2026-07-11-marketplace-supplier-list.md](../adr/2026-07-11-marketplace-supplier-list.md).
 
 ## FE layout
 
 | Path | Role |
 |------|------|
 | `modules/inventory/MarketplacePage.tsx` | Immersive supplier browse → catalog → cart |
-| `modules/inventory/ui/marketplace/` | Action strip, browse modal, catalog, cart sheet, theme |
+| `modules/inventory/ui/marketplace/` | Action strip, My suppliers + browse modals, catalog, cart sheet, theme |
 | `modules/inventory/PurchaseOrdersPage.tsx` | Buyer outbound POs + receive + invoice/receipt deep-links |
 | `modules/inventory/IncomingOrdersPage.tsx` | Seller accept / reject / fulfill + invoice/receipt deep-links |
-| `modules/inventory/api/marketplace/` | Marketplace queries |
+| `modules/inventory/api/marketplace/` | Marketplace + supplier-list queries/mutations |
 | `modules/inventory/api/purchaseOrders/` | PO queries + mutations |
 | `modules/inventory/ui/supply/buyerPoActions.tsx` | Buyer status → CTA matrix |
 | `modules/inventory/ui/supply/sellerPoActions.tsx` | Seller status → CTA matrix |
@@ -24,17 +24,23 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 ## Buyer flow
 
-1. **Marketplace** → bottom bar **Browse suppliers** (search & pick) → open catalog → add lines to cart → draft or submit PO.
-2. Purchase orders → submit / cancel; **delete** draft, rejected, or cancelled.
-3. After seller accepts → invoice appears under **Invoices** (Received). Open Invoice / Receipts from the PO row.
-4. After seller fulfills → **Receive** and map each line to a local product.
+1. **Marketplace** → **My suppliers** (saved shortlist) or **Browse** (all open-for-supply) → open catalog → add lines to cart → draft or submit PO.
+2. In Browse, bookmark a supplier to save it; remove from My suppliers or un-bookmark in Browse.
+3. Purchase orders → submit / cancel; **delete** draft, rejected, or cancelled.
+4. After seller accepts → invoice appears under **Invoices** (Received). Open Invoice / Receipts from the PO row.
+5. After seller fulfills → **Receive** and map each line to a local product.
 
 ### Marketplace UX (pipeline-inspired)
 
 - Full-bleed workspace with external hero image + glass header/footer (same language as board workspaces).
-- Bottom strip: **Browse suppliers** · **Cart** · **My orders** · **Refresh**.
+- Bottom strip: **My suppliers** · **Browse** · **Cart** · **Orders** · **Refresh**.
 - Supplier selection happens in a search modal; products appear only after a supplier is chosen.
 - Cart opens as a focused sheet so browsing stays calm and one-job-at-a-time.
+
+### Supplier list APIs
+
+- `GET /marketplace/suppliers`, `POST /marketplace/suppliers`, `DELETE /marketplace/suppliers/{sellerBusinessId}`
+- Browse payload includes `is_saved` + `listed_products_count`
 
 ## Seller flow
 

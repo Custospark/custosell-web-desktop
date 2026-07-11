@@ -53,7 +53,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'sidebar',
     target: 'sidebar-nav',
     title: 'Your modules',
-    body: 'Only the modules you can access appear here — including Account and Custosell Guide. Each stop shows a section with its screens.',
+    body: 'Only the modules you can access appear here — including Account and Custosell Guide.',
     icon: PanelLeft,
     tone: 'bg-slate-100 text-slate-600 ring-slate-200',
   },

@@ -89,7 +89,7 @@ function groupBody(slug: string, group: SidebarNavGroup): string {
   const intro = GROUP_INTRO[slug] ?? `${group.label} — part of your Custosell workspace.`;
   if (group.subItems.length <= 1) return intro;
   const names = group.subItems.map((s) => s.label).join(', ');
-  return `${intro} Screens here: ${names}.`;
+  return `${intro} Includes ${names}.`;
 }
 
 /**

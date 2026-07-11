@@ -61,6 +61,8 @@ Logout clears React Query but **keeps** IDB snapshots, so offline re-login still
 | Online | `POST /stock-movements` → cache + IDB ledger updated → catalog snapshot refresh |
 | Offline | `stockLedger.adjust()` + pending adjustment → `processStockAdjustments()` on sync |
 
+Optimistic local movements include `created_by` + `created_by_user` from the auth slice so Stock History shows the logged-in user before sync. Server sale/refund/import paths also persist `created_by` (see ADR `2026-07-11-stock-movement-actor-attribution`).
+
 Key modules: `completeOfflineStockAdjustment.ts`, `useCreateStockMovement()` in `ProductQueries.ts`, `offlineStockOverlay.ts`.
 
 ## Product validation failures

@@ -26,7 +26,7 @@ export default function ForecastingScenariosPage() {
   const runScenario = useRunForecastScenario();
 
   const [name, setName] = useState('');
-  const [horizon, setHorizon] = useState(6);
+  const [horizon, setHorizon] = useState('6');
   const [hireSalary, setHireSalary] = useState('');
   const [extraOpex, setExtraOpex] = useState('');
   const [revenueUplift, setRevenueUplift] = useState('');
@@ -34,10 +34,14 @@ export default function ForecastingScenariosPage() {
 
   const handleCreate = () => {
     if (!name.trim()) return;
+    const parsedHorizon = Number(horizon);
+    const horizonMonths = Number.isFinite(parsedHorizon) && parsedHorizon > 0
+      ? Math.min(24, Math.max(1, Math.round(parsedHorizon)))
+      : 6;
     createScenario.mutate(
       {
         name: name.trim(),
-        horizon_months: horizon,
+        horizon_months: horizonMonths,
         hire_basic_salary: hireSalary === '' ? null : Number(hireSalary),
         extra_monthly_opex: extraOpex === '' ? 0 : Number(extraOpex),
         revenue_uplift_pct: revenueUplift === '' ? 0 : Number(revenueUplift),
@@ -45,6 +49,7 @@ export default function ForecastingScenariosPage() {
       {
         onSuccess: () => {
           setName('');
+          setHorizon('6');
           setHireSalary('');
           setExtraOpex('');
           setRevenueUplift('');
@@ -87,9 +92,21 @@ export default function ForecastingScenariosPage() {
               type="number"
               min={1}
               max={24}
+              inputMode="numeric"
               value={horizon}
-              onChange={(e) => setHorizon(Number(e.target.value))}
+              onChange={(e) => setHorizon(e.target.value)}
+              onBlur={() => {
+                if (horizon.trim() === '') {
+                  setHorizon('6');
+                  return;
+                }
+                const n = Number(horizon);
+                if (!Number.isFinite(n) || n < 1) setHorizon('1');
+                else if (n > 24) setHorizon('24');
+                else setHorizon(String(Math.round(n)));
+              }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              placeholder="1–24"
             />
           </label>
           <label className="block text-sm">

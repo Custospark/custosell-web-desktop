@@ -79,6 +79,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-10-product-vs-service-sales.md](./adr/2026-07-10-product-vs-service-sales.md) | Product vs service catalog — stock skip, revenue 4100/4200 |
 | [2026-07-10-payroll-affordability-cash-runway.md](./adr/2026-07-10-payroll-affordability-cash-runway.md) | Payroll cash check, N-month runway, hire what-if |
 | [2026-07-11-forecasting-module.md](./adr/2026-07-11-forecasting-module.md) | Financial Forecasting FE — cash, BvA, budgets, KPIs, scenarios |
+| [2026-07-11-stock-movement-actor-attribution.md](./adr/2026-07-11-stock-movement-actor-attribution.md) | Stock History shows logged-in user; BE `created_by` + backfill |
 
 ## Modules
 

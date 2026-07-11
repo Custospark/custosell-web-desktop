@@ -1,9 +1,10 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import {
   useStockMovements, useCreateStockMovement, useProducts,
 } from '../../api/products/ProductQueries';
 import type { StockMovement } from '../../api/products/ProductTypes';
 import type { Product } from '../../api/products/ProductTypes';
+import { stockMovementActor } from '../../api/products/ProductTypes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
 import { Button } from '../../../../shared/components/buttons/Button';
@@ -15,6 +16,7 @@ import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { SlideDrawer } from '../../../../shared/components/modals/SlideDrawer';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
+import { UserIdentityChip } from '../../../../shared/components/UserIdentityChip';
 import { ClipboardList, Plus, Package, Search, Archive, Hash, FileText, Minus, Plus as PlusIcon, AlertTriangle, Trash2, CheckSquare, Square, RotateCcw } from 'lucide-react';
 
 const typeOptions = [
@@ -97,18 +99,17 @@ export default function StockLedger() {
 
   const paginated = usePagination(filtered, 15);
 
-  useEffect(() => {
-    if (drawerOpen) {
-      setDirection('add');
-      setSelectedProduct(null);
-      setSearchQuery('');
-      setQuantity(1);
-      setMovementType('adjustment');
-      setReference('');
-      setNotes('');
-      setTimeout(() => searchRef.current?.focus(), 100);
-    }
-  }, [drawerOpen]);
+  const openDrawer = () => {
+    setDirection('add');
+    setSelectedProduct(null);
+    setSearchQuery('');
+    setQuantity(1);
+    setMovementType('adjustment');
+    setReference('');
+    setNotes('');
+    setDrawerOpen(true);
+    window.setTimeout(() => searchRef.current?.focus(), 100);
+  };
 
   const selectProduct = (p: Product) => {
     setSelectedProduct(p);
@@ -198,7 +199,7 @@ export default function StockLedger() {
               <RotateCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </button>
-            <Button onClick={() => setDrawerOpen(true)}><Plus className="w-4 h-4 mr-1.5" />Record Adjustment</Button>
+            <Button onClick={openDrawer}><Plus className="w-4 h-4 mr-1.5" />Record Adjustment</Button>
           </div>
         </div>
 
@@ -249,6 +250,18 @@ export default function StockLedger() {
                 { key: 'stock_after', header: 'After' },
                 { key: 'reference', header: 'Reference', render: (item) => item.reference || <span className="text-gray-400">—</span> },
                 { key: 'notes', header: 'Notes', render: (item) => item.notes || <span className="text-gray-400">—</span> },
+                {
+                  key: 'created_by',
+                  header: 'By',
+                  render: (item) => {
+                    const actor = stockMovementActor(item);
+                    return actor ? (
+                      <UserIdentityChip name={actor.name} avatar={actor.avatar} size="xs" />
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    );
+                  },
+                },
               ]}
               data={paginated.data}
             />

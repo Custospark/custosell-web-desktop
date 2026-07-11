@@ -1,8 +1,9 @@
 import { useProductStockMovements } from '../../api/products/ProductQueries';
-
+import { stockMovementActor } from '../../api/products/ProductTypes';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
-import { Package, Plus, Minus, AlertTriangle, RefreshCw, Clock, User } from 'lucide-react';
+import { UserIdentityChip } from '../../../../shared/components/UserIdentityChip';
+import { Package, Plus, Minus, AlertTriangle, RefreshCw, Clock } from 'lucide-react';
 
 interface LedgerHistoryModalProps {
   open: boolean;
@@ -42,8 +43,7 @@ export default function LedgerHistoryModal({ open, onClose, productId, productNa
         </div>
       ) : (
         <div className="relative max-h-[60vh] overflow-y-auto">
-          {/* Vertical timeline line */}
-          <div className="absolute left-[23px] top-2 bottom-2 w-px bg-gray-200" />
+          <div className="absolute bottom-2 left-[23px] top-2 w-px bg-gray-200" />
 
           <div className="space-y-4 p-0.5">
             {movements.map((m) => {
@@ -51,24 +51,20 @@ export default function LedgerHistoryModal({ open, onClose, productId, productNa
               const colorClass = typeColors[m.type] || 'text-gray-600 bg-gray-100';
               const label = typeLabels[m.type] || m.type;
               const isPositive = m.quantity_change > 0;
-
-              // Extract user name from created_by_user if available
-              const userName = (m as any).created_by_user?.data?.name || (m as any).created_by_user?.name || null;
+              const actor = stockMovementActor(m);
 
               return (
                 <div key={m.id} className="relative flex gap-4 pl-0">
-                  {/* Timeline dot */}
-                  <div className="relative flex-shrink-0 z-10">
-                    <div className={`w-[46px] h-[46px] rounded-full flex items-center justify-center ${colorClass}`}>
-                      <Icon className="w-4 h-4" />
+                  <div className="relative z-10 flex-shrink-0">
+                    <div className={`flex h-[46px] w-[46px] items-center justify-center rounded-full ${colorClass}`}>
+                      <Icon className="h-4 w-4" />
                     </div>
                   </div>
 
-                  {/* Content card */}
-                  <div className="flex-1 bg-white border border-gray-100 rounded-lg p-4 shadow-sm min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colorClass}`}>{label}</span>
+                  <div className="min-w-0 flex-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${colorClass}`}>{label}</span>
                         <span className={`text-sm font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                           {isPositive ? '+' : ''}{m.quantity_change}
                         </span>
@@ -81,13 +77,23 @@ export default function LedgerHistoryModal({ open, onClose, productId, productNa
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      {m.reference && <span>Ref: {m.reference}</span>}
-                      {m.notes && <span>{m.notes}</span>}
-                      {userName && (
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" /> {userName}
-                        </span>
+                    {(m.reference || m.notes) ? (
+                      <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                        {m.reference ? <span>Ref: {m.reference}</span> : null}
+                        {m.notes ? <span>{m.notes}</span> : null}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-1 flex items-center gap-2 border-t border-gray-50 pt-2">
+                      {actor ? (
+                        <UserIdentityChip
+                          name={actor.name}
+                          avatar={actor.avatar}
+                          size="sm"
+                          nameClassName="text-xs text-gray-700"
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-400">System / unknown user</span>
                       )}
                     </div>
                   </div>

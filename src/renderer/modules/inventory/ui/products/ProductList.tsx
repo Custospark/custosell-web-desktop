@@ -20,7 +20,7 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { ProductStatsCards } from './ProductStatsCards';
 import { isServiceItem, tracksStock } from '../../api/products/ProductTypes';
 import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square } from 'lucide-react';
-import ProductFormDrawer from './ProductFormDrawer';
+import ProductFormModal from './ProductFormModal';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
 import ExportModal from './ExportModal';
@@ -33,7 +33,7 @@ export default function ProductList() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithSyncMeta | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<ProductWithSyncMeta | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -61,8 +61,8 @@ export default function ProductList() {
 
   const paginated = usePagination(filtered, 10);
 
-  const openCreate = () => { setEditingProduct(null); setDrawerOpen(true); };
-  const openEdit = (p: ProductWithSyncMeta) => { setEditingProduct(p); setDrawerOpen(true); };
+  const openCreate = () => { setEditingProduct(null); setFormOpen(true); };
+  const openEdit = (p: ProductWithSyncMeta) => { setEditingProduct(p); setFormOpen(true); };
 
   const handleDelete = async (product: ProductWithSyncMeta) => {
     const confirmed = await confirm({
@@ -214,9 +214,9 @@ export default function ProductList() {
         />
       </Card>
 
-      <ProductFormDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+      <ProductFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
         product={editingProduct}
       />
 

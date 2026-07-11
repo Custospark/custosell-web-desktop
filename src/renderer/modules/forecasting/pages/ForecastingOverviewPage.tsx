@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, LineChart, RefreshCw } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { cn } from '../../../shared/utils/cn';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { canAccessModule } from '../../../shared/utils/moduleAccess';
 import { useForecastingOverview } from '../api/useForecastingQueries';
 import type { ForecastMonthRow } from '../api/forecastingTypes';
 import {
@@ -86,6 +88,8 @@ function CashMonthsTable({ months }: { months: ForecastMonthRow[] }) {
 }
 
 export default function ForecastingOverviewPage() {
+  const navigate = useNavigate();
+  const user = useAppSelector((s) => s.auth.user);
   const [horizon, setHorizon] = useState(6);
   const { data, isLoading, isFetching, isError, error, refetch } = useForecastingOverview({
     horizon_months: horizon,
@@ -93,6 +97,15 @@ export default function ForecastingOverviewPage() {
 
   const cash = data?.cash_forecast;
   const bva = data?.budget_vs_actual;
+
+  const goToExpenseCategories = () => {
+    if (canAccessModule(user, 'expenses')) {
+      navigate(ROUTES.EXPENSES.CATEGORIES);
+      return;
+    }
+    // Categories live under Expenses — send owners to module access if Expenses is off.
+    navigate(ROUTES.SETTINGS.MODULES);
+  };
 
   return (
     <div className="space-y-5 p-4 sm:p-6">
@@ -211,9 +224,15 @@ export default function ForecastingOverviewPage() {
                 : undefined
             }
             actions={
-              <Link to={ROUTES.EXPENSES.CATEGORIES} className="text-sm text-blue-600 hover:underline">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700"
+                onClick={goToExpenseCategories}
+              >
                 Expense categories
-              </Link>
+              </Button>
             }
           >
             {!bva || bva.categories.length === 0 ? (
@@ -222,11 +241,9 @@ export default function ForecastingOverviewPage() {
                 title="No expense categories"
                 description="Add expense categories with budgets to compare planned vs actual spend."
                 action={
-                  <Link to={ROUTES.EXPENSES.CATEGORIES}>
-                    <Button size="sm" variant="outline">
-                      Manage categories
-                    </Button>
-                  </Link>
+                  <Button type="button" size="sm" variant="outline" onClick={goToExpenseCategories}>
+                    Manage categories
+                  </Button>
                 }
               />
             ) : (

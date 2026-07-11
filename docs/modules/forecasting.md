@@ -26,7 +26,7 @@ Guarded by `ModuleAccessMiddleware module="forecasting"`. Sidebar group **Foreca
 
 ## UI
 
-HR-style surfaces in `ui/ForecastingSurface.tsx` + `forecastingSurfaceStyles.ts`. Status chips: coverage `healthy|tight|critical|unknown`, BvA `over|under|on_track`, ZBB `draft|justified|approved`. Assumptions and warnings panels stay visible on overview, KPIs, and scenario runs.
+HR-style surfaces in `ui/ForecastingSurface.tsx` + `forecastingSurfaceStyles.ts`. Status chips: coverage `healthy|tight|critical|unknown`, BvA `over|under|on_track`, ZBB `draft|justified|approved`. Assumptions and warnings panels stay visible on overview, KPIs, and scenario runs. All money amounts use `formatForecastMoney` → shared `formatCurrency` with the business configured currency (same as Sales / Inventory).
 
 ## Product recurring (Phase 3)
 

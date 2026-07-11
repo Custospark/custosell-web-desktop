@@ -50,6 +50,13 @@ export function isSellable(p: Product): boolean {
 
 export const SERVICE_QTY_SOFT_CAP = 9999;
 
+export interface StockMovementUser {
+  id: number;
+  name: string;
+  email?: string | null;
+  avatar?: string | null;
+}
+
 export interface StockMovement {
   id: number;
   business_id: number;
@@ -63,9 +70,18 @@ export interface StockMovement {
   reference: string | null;
   notes: string | null;
   created_by: number | null;
-  created_by_user?: { data: { id: number; name: string } } | null;
+  /** Nested user who recorded the movement (avatar + name). */
+  created_by_user?: StockMovementUser | { data: StockMovementUser } | null;
   created_at: string;
   updated_at: string;
+}
+
+export function stockMovementActor(m: StockMovement): StockMovementUser | null {
+  const raw = m.created_by_user;
+  if (!raw) return null;
+  if ('data' in raw && raw.data) return raw.data;
+  if ('name' in raw && raw.name) return raw as StockMovementUser;
+  return null;
 }
 
 export interface CreateProductData {

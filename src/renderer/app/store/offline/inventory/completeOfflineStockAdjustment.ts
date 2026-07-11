@@ -23,6 +23,9 @@ function buildLocalStockMovement(payload: CreateStockMovementData): StockMovemen
     reference: payload.reference ?? null,
     notes: payload.notes ?? null,
     created_by: authUser?.id ?? null,
+    created_by_user: authUser
+      ? { id: authUser.id, name: authUser.name, email: authUser.email, avatar: authUser.avatar ?? null }
+      : null,
     created_at: now,
     updated_at: now,
   };

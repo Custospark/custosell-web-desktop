@@ -142,8 +142,8 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
                   <p className="text-gray-600 text-xs">{po.seller_business.business_email}</p>
                 )}
                 {(() => {
-                  const loc = [po.seller_business?.city, po.seller_business?.state, po.seller_business?.country].filter(Boolean).join(', ');
-                  return loc ? <p className="text-gray-500 text-xs">{loc}</p> : null;
+                  const parts = [po.seller_business?.address, po.seller_business?.city, po.seller_business?.state, po.seller_business?.country].filter(Boolean);
+                  return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
                 })()}
               </div>
               <div>
@@ -159,8 +159,8 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
                   <p className="text-gray-600 text-xs">{po.buyer_business.business_email}</p>
                 )}
                 {(() => {
-                  const loc = [po.buyer_business?.city, po.buyer_business?.state, po.buyer_business?.country].filter(Boolean).join(', ');
-                  return loc ? <p className="text-gray-500 text-xs">{loc}</p> : null;
+                  const parts = [po.buyer_business?.address, po.buyer_business?.city, po.buyer_business?.state, po.buyer_business?.country].filter(Boolean);
+                  return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
                 })()}
               </div>
             </div>

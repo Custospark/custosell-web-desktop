@@ -7,6 +7,18 @@ export type PurchaseOrderStatus =
   | 'cancelled'
   | 'received';
 
+/** Buyer-side POs that still need attention (not finished / cancelled / rejected). */
+export const OPEN_PURCHASE_ORDER_STATUSES: readonly PurchaseOrderStatus[] = [
+  'draft',
+  'submitted',
+  'accepted',
+  'fulfilled',
+];
+
+export function isOpenPurchaseOrderStatus(status: PurchaseOrderStatus): boolean {
+  return (OPEN_PURCHASE_ORDER_STATUSES as readonly string[]).includes(status);
+}
+
 export type PurchaseOrderPaymentStatus = 'unpaid' | 'partial' | 'paid';
 
 export interface PurchaseOrderInvoiceRef {

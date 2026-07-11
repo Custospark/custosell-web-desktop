@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Truck } from 'lucide-react';
+import { RefreshCw, Store, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -137,16 +137,27 @@ export default function PurchaseOrdersPage() {
             Orders you placed with suppliers. Invoices and payments live under Invoices.
           </p>
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          className="inline-flex items-center gap-2"
-          disabled={isOffline || isFetching}
-          onClick={() => void refetch()}
-        >
-          <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
-          Refresh
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            className="inline-flex items-center gap-2"
+            disabled={isOffline}
+            onClick={() => navigate(ROUTES.INVENTORY.MARKETPLACE)}
+          >
+            <Store className="h-4 w-4" />
+            Explore marketplace
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="inline-flex items-center gap-2"
+            disabled={isOffline || isFetching}
+            onClick={() => void refetch()}
+          >
+            <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {isOffline ? <SupplyOfflineBanner /> : null}
@@ -181,8 +192,10 @@ export default function PurchaseOrdersPage() {
       ) : orders.length === 0 ? (
         <EmptyState
           title="No purchase orders"
-          description="Create one from Marketplace by adding listed products to a PO cart."
+          description="Browse suppliers in Marketplace, add listed products to a cart, then save a draft or submit an order."
           icon={<Truck className="h-10 w-10" />}
+          actionLabel="Explore marketplace"
+          onAction={() => navigate(ROUTES.INVENTORY.MARKETPLACE)}
         />
       ) : (
         <>
@@ -206,7 +219,7 @@ export default function PurchaseOrdersPage() {
               columns={[
                 {
                   key: 'po_number',
-                  header: 'PO',
+                  header: 'Purchase orders',
                   render: (po) => <span className="font-medium text-gray-900">{po.po_number}</span>,
                 },
                 {

@@ -45,9 +45,18 @@ function apiError(err: unknown, fallback: string): string {
 }
 
 function invalidatePoQueries(qc: ReturnType<typeof useQueryClient>) {
-  qc.invalidateQueries({ queryKey: purchaseOrderKeys.all });
-  qc.invalidateQueries({ queryKey: inventoryKeys.products() });
-  qc.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
+  void qc.invalidateQueries({ queryKey: purchaseOrderKeys.all, refetchType: 'all' });
+  void qc.invalidateQueries({ queryKey: inventoryKeys.products() });
+  void qc.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
+}
+
+/** Awaitable refresh used after marketplace draft/submit so lists + badges update immediately. */
+export async function refetchPurchaseOrderQueries(
+  qc: ReturnType<typeof useQueryClient>,
+): Promise<void> {
+  await qc.invalidateQueries({ queryKey: purchaseOrderKeys.all, refetchType: 'all' });
+  void qc.invalidateQueries({ queryKey: inventoryKeys.products() });
+  void qc.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
 }
 
 export function usePurchaseOrders(filters?: { status?: string }, enabled = true) {
@@ -59,6 +68,7 @@ export function usePurchaseOrders(filters?: { status?: string }, enabled = true)
     },
     enabled,
     retry: false,
+    networkMode: 'online',
   });
 }
 

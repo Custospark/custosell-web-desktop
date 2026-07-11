@@ -48,10 +48,7 @@ export function applyOnboardingLocally(
   return next;
 }
 
-export function localStateForAction(
-  current: OnboardingState,
-  action: OnboardingAction,
-): Partial<OnboardingState> {
+export function localStateForAction(action: OnboardingAction): Partial<OnboardingState> {
   switch (action.action) {
     case 'replay_tour':
       return {
@@ -124,10 +121,7 @@ export function useUpdateOnboarding() {
 
   return useMutation({
     mutationFn: async (payload: OnboardingAction) => {
-      const current = (qc.getQueryData(onboardingKeys.state()) as OnboardingState | undefined)
-        ?? onboardingFromUser(user)
-        ?? defaultOnboarding(user);
-      const local = applyOnboardingLocally(dispatch, qc, user, localStateForAction(current, payload));
+      const local = applyOnboardingLocally(dispatch, qc, user, localStateForAction(payload));
 
       // Sync in the background — never block tour start / offline replay
       void axiosInstance.patch('/auth/onboarding', payload).then(({ data }) => {

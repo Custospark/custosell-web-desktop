@@ -86,6 +86,7 @@ export interface Sale {
   customer?: { id: number; name: string; phone?: string; email?: string | null };
   sale_items?: SaleItem[];
   payments?: import('../../payments/paymentTypes').Payment[];
+  email_sent_count?: number;
   created_at: string;
   updated_at: string;
 }

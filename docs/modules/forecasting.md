@@ -7,7 +7,7 @@ Financial forecasting frontend for cash runway, budget vs actual, zero-based bud
 | Path | Page |
 |------|------|
 | `/forecasting` | Redirect → overview |
-| `/forecasting/overview` | Cash cards, burn, month ladder, BvA |
+| `/forecasting/overview` | HR-style dashboard — KPI strip, cash ladder, burn, BvA, quick links |
 | `/forecasting/budgets` | Budget list + create year budget |
 | `/forecasting/budgets/:budgetId` | Lines, justify/approve, roll, snapshots |
 | `/forecasting/kpis` | Retail / SaaS KPI pulse |

@@ -80,12 +80,12 @@ export function Modal({
               >
                 <div className={cn('min-w-0', titleCentered ? 'px-8' : 'pr-4')}>
                   <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-                  {subtitle && <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>}
+                  {subtitle && <p className="mt-0.5 text-sm text-slate-600">{subtitle}</p>}
                 </div>
                 <button
                   onClick={onClose}
                   className={cn(
-                    'shrink-0 text-gray-400 transition-colors hover:text-gray-600',
+                    'shrink-0 text-slate-500 transition-colors hover:text-slate-800',
                     titleCentered ? 'absolute right-4 top-4' : '',
                   )}
                 >
@@ -95,7 +95,7 @@ export function Modal({
             ) : (
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 z-10 text-gray-400 transition-colors hover:text-gray-600"
+                className="absolute right-4 top-4 z-10 text-slate-500 transition-colors hover:text-slate-800"
               >
                 <X className="h-5 w-5" />
               </button>

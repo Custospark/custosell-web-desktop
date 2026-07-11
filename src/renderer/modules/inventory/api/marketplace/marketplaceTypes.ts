@@ -2,6 +2,10 @@ export interface MarketplaceBusiness {
   id: number;
   name: string;
   supply_headline: string | null;
+  description?: string | null;
+  business_email?: string | null;
+  business_phone?: string | null;
+  address?: string | null;
   city: string | null;
   state: string | null;
   country: string | null;

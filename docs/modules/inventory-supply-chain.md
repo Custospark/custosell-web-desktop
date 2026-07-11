@@ -6,7 +6,8 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 | Path | Role |
 |------|------|
-| `modules/inventory/MarketplacePage.tsx` | Supplier browse + PO cart |
+| `modules/inventory/MarketplacePage.tsx` | Immersive supplier browse → catalog → cart |
+| `modules/inventory/ui/marketplace/` | Action strip, browse modal, catalog, cart sheet, theme |
 | `modules/inventory/PurchaseOrdersPage.tsx` | Buyer outbound POs + receive + invoice/receipt deep-links |
 | `modules/inventory/IncomingOrdersPage.tsx` | Seller accept / reject / fulfill + invoice/receipt deep-links |
 | `modules/inventory/api/marketplace/` | Marketplace queries |
@@ -23,10 +24,17 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 ## Buyer flow
 
-1. Marketplace → add listed lines to cart (one seller at a time) → draft or submit PO.
+1. **Marketplace** → bottom bar **Browse suppliers** (search & pick) → open catalog → add lines to cart → draft or submit PO.
 2. Purchase orders → submit / cancel; **delete** draft, rejected, or cancelled.
 3. After seller accepts → invoice appears under **Invoices** (Received). Open Invoice / Receipts from the PO row.
 4. After seller fulfills → **Receive** and map each line to a local product.
+
+### Marketplace UX (pipeline-inspired)
+
+- Full-bleed workspace with external hero image + glass header/footer (same language as board workspaces).
+- Bottom strip: **Browse suppliers** · **Cart** · **My orders** · **Refresh**.
+- Supplier selection happens in a search modal; products appear only after a supplier is chosen.
+- Cart opens as a focused sheet so browsing stays calm and one-job-at-a-time.
 
 ## Seller flow
 

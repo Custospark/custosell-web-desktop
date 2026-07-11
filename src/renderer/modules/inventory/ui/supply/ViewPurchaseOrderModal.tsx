@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { purchaseOrderStatusBadge } from './purchaseOrderBadges';
@@ -9,65 +10,88 @@ interface ViewPurchaseOrderModalProps {
   onClose: () => void;
 }
 
-const STATUS_EXPLANATION: Record<string, { buyer: string; seller: string }> = {
-  draft: {
-    buyer: 'You can edit or submit this order. No action needed from the seller yet.',
-    seller: 'Not visible to you yet. The buyer is still composing this order.',
-  },
-  submitted: {
-    buyer: 'Waiting for the seller to respond. You can cancel if needed.',
-    seller: 'Review the order details. You can accept or reject it.',
-  },
-  accepted: {
-    buyer: 'The seller has accepted your order. Awaiting fulfillment.',
-    seller: 'You have accepted this order. Prepare the items for fulfillment.',
-  },
-  rejected: {
-    buyer: 'The seller declined your order. Check the reason provided.',
-    seller: 'You rejected this order. The buyer can see your reason.',
-  },
-  fulfilled: {
-    buyer: 'The seller has shipped/prepared the items. Confirm receipt to add to your stock.',
-    seller: 'Items deducted from your stock. Waiting for the buyer to confirm receipt.',
-  },
-  received: {
-    buyer: 'Items added to your stock. You can generate an invoice from this order.',
-    seller: 'The buyer confirmed receipt. This order is complete.',
-  },
-  cancelled: {
-    buyer: 'This order has been cancelled. No further action possible.',
-    seller: 'The buyer cancelled this order. No further action needed.',
-  },
+const STATUS_ACTION: Record<string, string> = {
+  draft: 'You can edit or submit this order. The seller cannot see it until you submit.',
+  submitted: 'Waiting for the seller to review. You can cancel if needed.',
+  accepted: 'The seller has accepted. Awaiting them to prepare and ship the items.',
+  rejected: 'The seller declined your order. Review their reason below.',
+  fulfilled: 'Items are ready. Confirm receipt to add them to your stock.',
+  received: 'Items added to your stock. You can generate an invoice from this order.',
+  cancelled: 'This order was cancelled. No further action needed.',
 };
 
-function Timeline({ po }: { po: PurchaseOrder }) {
-  const entries: { label: string; date: string | null; done: boolean }[] = [
-    { label: 'Created', date: po.created_at, done: true },
-    { label: 'Submitted', date: po.submitted_at, done: po.status !== 'draft' },
-    { label: 'Accepted', date: po.accepted_at, done: po.status === 'accepted' || po.status === 'fulfilled' || po.status === 'received' },
-    { label: 'Fulfilled', date: po.fulfilled_at, done: po.status === 'fulfilled' || po.status === 'received' },
-    { label: 'Received', date: po.received_at, done: po.status === 'received' },
-  ];
+const STEP_ORDER = ['draft', 'submitted', 'accepted', 'fulfilled', 'received'] as const;
 
-  if (po.status === 'rejected') {
-    entries.push({ label: 'Rejected', date: po.rejected_at, done: true });
-  }
-  if (po.status === 'cancelled') {
-    entries.push({ label: 'Cancelled', date: po.cancelled_at, done: true });
-  }
+const STEP_LABELS: Record<string, string> = {
+  draft: 'Created',
+  submitted: 'Submitted',
+  accepted: 'Accepted',
+  fulfilled: 'Fulfilled',
+  received: 'Received',
+};
+
+const STEP_DATE: Record<string, keyof PurchaseOrder> = {
+  draft: 'created_at',
+  submitted: 'submitted_at',
+  accepted: 'accepted_at',
+  fulfilled: 'fulfilled_at',
+  received: 'received_at',
+};
+
+function toDateStr(val: unknown): string | null {
+  if (typeof val === 'string') return val;
+  return null;
+}
+
+function OrderStages({ po }: { po: PurchaseOrder }) {
+  const statusRank: Record<string, number> = { draft: 0, submitted: 1, accepted: 2, fulfilled: 3, received: 4, rejected: -1, cancelled: -1 };
+  const currentRank = statusRank[po.status] ?? -1;
+
+  const isTerminal = po.status === 'rejected' || po.status === 'cancelled';
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Timeline</h3>
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {entries.map((e) => (
-          <div key={e.label} className="flex items-center gap-1.5 text-xs">
-            <span className={`w-1.5 h-1.5 rounded-full ${e.done ? 'bg-blue-600' : 'bg-gray-300'}`} />
-            <span className={e.done ? 'text-gray-700 font-medium' : 'text-gray-400'}>{e.label}</span>
-            {e.date && <span className="text-gray-400">{new Date(e.date).toLocaleDateString()}</span>}
-          </div>
-        ))}
+    <div className="space-y-3">
+      <div className="flex items-center gap-0">
+        {STEP_ORDER.map((step, i) => {
+          const rank = statusRank[step];
+          const completed = rank <= currentRank && !isTerminal;
+          const isCurrent = rank === currentRank && !isTerminal;
+          const date = toDateStr(po[STEP_DATE[step]]);
+
+          return (
+            <div key={step} className="flex-1 flex flex-col items-center relative">
+              {i > 0 && (
+                <div className={`absolute top-3.5 right-1/2 h-0.5 w-full -z-10 ${completed ? 'bg-blue-600' : 'bg-gray-200'}`} />
+              )}
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 z-10
+                  ${isCurrent ? 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-100' : ''}
+                  ${completed && !isCurrent ? 'bg-blue-600 border-blue-600 text-white' : ''}
+                  ${!completed && !isCurrent ? 'bg-white border-gray-300 text-gray-400' : ''}
+                `}
+              >
+                {completed ? <Check className="w-3.5 h-3.5" /> : i + 1}
+              </div>
+              <p className={`text-[10px] mt-1.5 font-medium text-center leading-tight ${isCurrent ? 'text-blue-700' : completed ? 'text-gray-700' : 'text-gray-400'}`}>
+                {STEP_LABELS[step]}
+              </p>
+              {date && (
+                <p className="text-[9px] text-gray-400 text-center leading-tight">{new Date(date).toLocaleDateString()}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {isTerminal && (
+        <div className="text-center">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+            po.status === 'rejected' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600'
+          }`}>
+            {po.status === 'rejected' ? 'Rejected' : 'Cancelled'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -81,8 +105,6 @@ function RejectionBanner({ reason }: { reason: string }) {
 }
 
 export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onClose }: ViewPurchaseOrderModalProps) {
-  const explanation = STATUS_EXPLANATION[po.status] ?? { buyer: '', seller: '' };
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="lg">
       <div className="p-5 space-y-5">
@@ -99,7 +121,11 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
           </div>
         </div>
 
-        <Timeline po={po} />
+        <OrderStages po={po} />
+
+        <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
+          <p className="text-sm text-blue-800">{STATUS_ACTION[po.status] ?? ''}</p>
+        </div>
 
         {po.rejection_reason ? <RejectionBanner reason={po.rejection_reason} /> : null}
 
@@ -123,14 +149,6 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
             <p className="text-sm font-semibold text-gray-900">
               Total: {formatCurrency(Number(po.total_amount))}
             </p>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 space-y-2">
-          <h3 className="text-xs font-semibold text-blue-700 uppercase tracking-wider">What this status means</h3>
-          <div className="text-sm space-y-1.5">
-            <p><span className="font-medium text-gray-700">Buyer (you):</span> {explanation.buyer}</p>
-            <p><span className="font-medium text-gray-700">Seller:</span> {explanation.seller}</p>
           </div>
         </div>
 

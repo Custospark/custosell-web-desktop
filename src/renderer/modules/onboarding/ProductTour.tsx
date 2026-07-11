@@ -1,10 +1,16 @@
-import { useLayoutEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../shared/components/buttons/Button';
 import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { cn } from '../../shared/utils/cn';
+import {
+  placeTourCard,
+  TOUR_CARET_SIZE,
+  type CardPlacement,
+  type SpotRect,
+} from './tourCardPlacement';
 import {
   filterStepsWithTargets,
   resolveTourSteps,
@@ -19,16 +25,6 @@ interface ProductTourProps {
   onSkipped?: () => void;
 }
 
-interface SpotRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
-const CARD_W = 360;
-const CARD_H = 230;
-const GAP = 16;
 const PAD = 4;
 
 function measureTourTarget(target: string): SpotRect | null {
@@ -70,38 +66,65 @@ function expandSidebarGroup(label?: string) {
   }
 }
 
-function placeCardAwayFromSpot(spot: SpotRect | null): CSSProperties {
-  if (!spot) {
-    return { bottom: 28, left: '50%', transform: 'translateX(-50%)' };
+function TourCaret({ placement }: { placement: CardPlacement }) {
+  const size = TOUR_CARET_SIZE;
+  if (placement.side === 'center') return null;
+
+  const base = 'pointer-events-none absolute h-0 w-0 border-solid';
+  if (placement.side === 'bottom') {
+    return (
+      <span
+        aria-hidden
+        className={cn(base, 'border-x-transparent border-b-white')}
+        style={{
+          top: -size,
+          left: placement.caretAlong - size,
+          borderWidth: `0 ${size}px ${size}px ${size}px`,
+          filter: 'drop-shadow(0 -1px 0 rgb(199 210 254))',
+        }}
+      />
+    );
   }
-
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const candidates: Array<{ top: number; left: number; score: number }> = [
-    { top: spot.top + spot.height + GAP, left: spot.left, score: 5 },
-    { top: spot.top - CARD_H - GAP, left: spot.left, score: 4 },
-    { top: spot.top, left: spot.left + spot.width + GAP, score: 3 },
-    { top: spot.top, left: spot.left - CARD_W - GAP, score: 2 },
-    { top: vh - CARD_H - 28, left: (vw - CARD_W) / 2, score: 1 },
-  ];
-
-  const ranked = candidates
-    .map((c) => ({
-      ...c,
-      top: Math.min(vh - CARD_H - 12, Math.max(12, c.top)),
-      left: Math.min(vw - CARD_W - 12, Math.max(12, c.left)),
-    }))
-    .map((c) => {
-      const overlaps =
-        c.left < spot.left + spot.width + 10
-        && c.left + CARD_W > spot.left - 10
-        && c.top < spot.top + spot.height + 10
-        && c.top + CARD_H > spot.top - 10;
-      return { ...c, score: overlaps ? c.score - 20 : c.score };
-    })
-    .sort((a, b) => b.score - a.score);
-
-  return { top: ranked[0].top, left: ranked[0].left };
+  if (placement.side === 'top') {
+    return (
+      <span
+        aria-hidden
+        className={cn(base, 'border-x-transparent border-t-white')}
+        style={{
+          bottom: -size,
+          left: placement.caretAlong - size,
+          borderWidth: `${size}px ${size}px 0 ${size}px`,
+          filter: 'drop-shadow(0 1px 0 rgb(199 210 254))',
+        }}
+      />
+    );
+  }
+  if (placement.side === 'right') {
+    return (
+      <span
+        aria-hidden
+        className={cn(base, 'border-y-transparent border-r-white')}
+        style={{
+          left: -size,
+          top: placement.caretAlong - size,
+          borderWidth: `${size}px ${size}px ${size}px 0`,
+          filter: 'drop-shadow(-1px 0 0 rgb(199 210 254))',
+        }}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className={cn(base, 'border-y-transparent border-l-white')}
+      style={{
+        right: -size,
+        top: placement.caretAlong - size,
+        borderWidth: `${size}px 0 ${size}px ${size}px`,
+        filter: 'drop-shadow(1px 0 0 rgb(199 210 254))',
+      }}
+    />
+  );
 }
 
 export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: ProductTourProps) {
@@ -112,10 +135,20 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
   const [steps, setSteps] = useState<ProductTourStep[]>(baseSteps);
   const [index, setIndex] = useState(() => Math.min(startStep, Math.max(0, baseSteps.length - 1)));
   const [spot, setSpot] = useState<SpotRect | null>(null);
+  const [viewportTick, setViewportTick] = useState(0);
+  const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const step = steps[Math.min(index, Math.max(0, steps.length - 1))];
   const isLast = index >= steps.length - 1;
   const StepIcon = step?.icon;
+
+  const placement = useMemo(
+    () => placeTourCard(spot, cardHeight),
+    // viewportTick forces recompute on resize / orientation / visualViewport
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional viewport tick
+    [spot, cardHeight, viewportTick],
+  );
 
   useLayoutEffect(() => {
     if (!open) {
@@ -127,7 +160,6 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     let cancelled = false;
 
     async function prepare() {
-      // Wait a beat for sidebar/nav to paint, then drop missing targets
       await new Promise((r) => setTimeout(r, 120));
       if (cancelled) return;
       const available = filterStepsWithTargets(baseSteps);
@@ -164,17 +196,34 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     }
 
     void focusStep();
-    const onResize = () => {
+
+    const bump = () => {
+      setViewportTick((n) => n + 1);
       void measureWithRetry(step.target, 3).then((m) => {
         if (!cancelled) setSpot(m);
       });
     };
-    window.addEventListener('resize', onResize);
+
+    window.addEventListener('resize', bump);
+    window.addEventListener('orientationchange', bump);
+    window.visualViewport?.addEventListener('resize', bump);
+    window.visualViewport?.addEventListener('scroll', bump);
     return () => {
       cancelled = true;
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', bump);
+      window.removeEventListener('orientationchange', bump);
+      window.visualViewport?.removeEventListener('resize', bump);
+      window.visualViewport?.removeEventListener('scroll', bump);
     };
   }, [open, step, navigate, index]);
+
+  useLayoutEffect(() => {
+    if (!open || !cardRef.current) return;
+    const h = Math.round(cardRef.current.getBoundingClientRect().height);
+    if (h > 0 && h !== cardHeight) {
+      setCardHeight(h);
+    }
+  }, [open, step, index, placement.width, cardHeight, viewportTick]);
 
   async function persistFinish(kind: 'complete_tour' | 'skip_tour') {
     await update.mutateAsync({ action: kind });
@@ -205,8 +254,6 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
 
   if (!open || !step || steps.length === 0 || typeof document === 'undefined') return null;
 
-  const cardStyle = placeCardAwayFromSpot(spot);
-
   return createPortal(
     <div className={cn('fixed inset-0', MODAL_Z_INDEX_CLASS)} role="dialog" aria-modal="true" aria-label="Product tour">
       <svg className="absolute inset-0 h-full w-full" aria-hidden>
@@ -229,7 +276,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
       </svg>
       {spot ? (
         <div
-          className="pointer-events-none absolute rounded-2xl ring-2 ring-indigo-400 shadow-[0_0_0_1px_rgba(129,140,248,0.5),0_0_24px_rgba(99,102,241,0.35)]"
+          className="pointer-events-none absolute rounded-2xl ring-2 ring-indigo-400 shadow-[0_0_0_1px_rgba(129,140,248,0.5),0_0_28px_rgba(99,102,241,0.4)]"
           style={{
             top: spot.top,
             left: spot.left,
@@ -239,40 +286,51 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
         />
       ) : null}
       <div
-        className="absolute z-10 w-[min(100%-1.5rem,22.5rem)] overflow-hidden rounded-2xl border border-indigo-200/80 bg-white shadow-2xl"
-        style={cardStyle}
+        ref={cardRef}
+        className="absolute z-10 overflow-visible rounded-2xl border border-indigo-200/80 bg-white shadow-2xl"
+        style={{
+          top: placement.top,
+          left: placement.left,
+          width: placement.width,
+          maxWidth: 'calc(100vw - 1.5rem)',
+        }}
       >
-        <div className="flex items-start gap-3 border-b border-indigo-50 bg-gradient-to-r from-indigo-50/90 to-white px-4 py-3.5">
-          {StepIcon ? (
-            <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1', step.tone ?? 'bg-indigo-50 text-indigo-600 ring-indigo-100')}>
-              <StepIcon className="h-5 w-5" aria-hidden />
-            </span>
-          ) : null}
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
-              Guided tour · {index + 1} / {steps.length}
-            </p>
-            <h3 className="mt-0.5 text-base font-semibold text-slate-900">{step.title}</h3>
+        <TourCaret placement={placement} />
+        <div className="overflow-hidden rounded-2xl">
+          <div className="flex items-start gap-3 border-b border-indigo-50 bg-gradient-to-r from-indigo-50/90 to-white px-3.5 py-3 sm:px-4 sm:py-3.5">
+            {StepIcon ? (
+              <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 sm:h-11 sm:w-11', step.tone ?? 'bg-indigo-50 text-indigo-600 ring-indigo-100')}>
+                <StepIcon className="h-5 w-5" aria-hidden />
+              </span>
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
+                Guided tour · {index + 1} / {steps.length}
+              </p>
+              <h3 className="mt-0.5 text-[0.95rem] font-semibold leading-snug text-slate-900 sm:text-base">
+                {step.title}
+              </h3>
+            </div>
           </div>
-        </div>
-        <div className="px-4 py-3.5">
-          <p className="text-sm leading-relaxed text-slate-600">{step.body}</p>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <button
-              type="button"
-              className="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
-              disabled={update.isPending}
-              onClick={() => void skipTour()}
-            >
-              Skip tour
-            </button>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" disabled={index <= 0 || update.isPending} onClick={() => void goBack()}>
-                Back
-              </Button>
-              <Button size="sm" disabled={update.isPending} loading={update.isPending} onClick={() => void goNext()}>
-                {isLast ? 'Finish' : 'Next'}
-              </Button>
+          <div className="px-3.5 py-3 sm:px-4 sm:py-3.5">
+            <p className="text-sm leading-relaxed text-slate-600">{step.body}</p>
+            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 sm:mt-4">
+              <button
+                type="button"
+                className="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
+                disabled={update.isPending}
+                onClick={() => void skipTour()}
+              >
+                Skip tour
+              </button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={index <= 0 || update.isPending} onClick={() => void goBack()}>
+                  Back
+                </Button>
+                <Button size="sm" disabled={update.isPending} loading={update.isPending} onClick={() => void goNext()}>
+                  {isLast ? 'Finish' : 'Next'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

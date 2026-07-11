@@ -37,7 +37,7 @@ Pick **one primary**; optional **one secondary**. Cards mirror Custosell modules
 
 ## Shell + module tour (v1)
 
-Targets need stable anchors (`data-tour`). Guide card is placed **away from** the highlighted control so it never covers the spotlight.
+Targets need stable anchors (`data-tour`). Guide card sits beside the spotlight with a **caret that points at the target**, reflowing on resize / orientation / `visualViewport` (phone, tablet, desktop).
 
 | Area | What’s covered |
 |------|----------------|

@@ -109,15 +109,42 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
     <Modal isOpen={isOpen} onClose={onClose} title="" size="lg">
       <div className="p-5 space-y-5">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h2 className="text-lg font-bold text-gray-900">{po.po_number}</h2>
               {purchaseOrderStatusBadge(po.status)}
             </div>
-            <p className="text-sm text-gray-500">
-              Seller: <span className="font-medium text-gray-700">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</span>
-              {po.seller_business?.city ? ` · ${po.seller_business.city}` : ''}
-            </p>
+
+            <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Seller</p>
+                <p className="font-medium text-gray-900">{po.seller_business?.name ?? `Business #${po.seller_business_id}`}</p>
+                {po.seller_business?.business_phone && (
+                  <p className="text-gray-600 text-xs">{po.seller_business.business_phone}</p>
+                )}
+                {po.seller_business?.business_email && (
+                  <p className="text-gray-600 text-xs">{po.seller_business.business_email}</p>
+                )}
+                {(() => {
+                  const loc = [po.seller_business?.city, po.seller_business?.state, po.seller_business?.country].filter(Boolean).join(', ');
+                  return loc ? <p className="text-gray-500 text-xs">{loc}</p> : null;
+                })()}
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Buyer</p>
+                <p className="font-medium text-gray-900">{po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}</p>
+                {po.buyer_business?.business_phone && (
+                  <p className="text-gray-600 text-xs">{po.buyer_business.business_phone}</p>
+                )}
+                {po.buyer_business?.business_email && (
+                  <p className="text-gray-600 text-xs">{po.buyer_business.business_email}</p>
+                )}
+                {(() => {
+                  const loc = [po.buyer_business?.city, po.buyer_business?.state, po.buyer_business?.country].filter(Boolean).join(', ');
+                  return loc ? <p className="text-gray-500 text-xs">{loc}</p> : null;
+                })()}
+              </div>
+            </div>
           </div>
         </div>
 

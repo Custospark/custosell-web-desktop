@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PartyPopper } from 'lucide-react';
 import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
@@ -6,6 +6,7 @@ import { Button } from '../../shared/components/buttons/Button';
 
 const FLOWERS = ['🌸', '🌺', '🌼', '🌻', '🌷', '🌹', '💮', '🏵️', '💐', '✨', '🌸', '🌺'];
 const CELEBRATION_MS = 30_000;
+const CELEBRATION_SECONDS = Math.round(CELEBRATION_MS / 1000);
 
 interface Petal {
   id: number;
@@ -38,25 +39,31 @@ function buildPetals(): Petal[] {
 
 export function TourCelebration({ open, onDone, reason = 'completed' }: TourCelebrationProps) {
   const petals = useMemo(() => (open ? buildPetals() : []), [open]);
-  const [secondsLeft, setSecondsLeft] = useState(30);
+  const [secondsLeft, setSecondsLeft] = useState(CELEBRATION_SECONDS);
+  const onDoneRef = useRef(onDone);
 
   useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
+  // One 30s window per open — do not restart when parent re-renders with a new onDone
+  useEffect(() => {
     if (!open) return;
+
     const started = Date.now();
+    queueMicrotask(() => setSecondsLeft(CELEBRATION_SECONDS));
+
     const tick = window.setInterval(() => {
       const left = Math.max(0, Math.ceil((CELEBRATION_MS - (Date.now() - started)) / 1000));
       setSecondsLeft(left);
       if (left <= 0) {
         window.clearInterval(tick);
-        onDone();
+        onDoneRef.current();
       }
     }, 250);
-    const auto = window.setTimeout(() => onDone(), CELEBRATION_MS);
-    return () => {
-      window.clearInterval(tick);
-      window.clearTimeout(auto);
-    };
-  }, [open, onDone]);
+
+    return () => window.clearInterval(tick);
+  }, [open]);
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -81,6 +88,7 @@ export function TourCelebration({ open, onDone, reason = 'completed' }: TourCele
           style={{
             left: `${p.left}%`,
             fontSize: p.size,
+            // Keep falling for the whole time the celebration modal is open
             animation: `custosell-petal-fall ${p.duration}s linear ${p.delay}s infinite`,
             ['--drift' as string]: `${p.drift}px`,
           }}
@@ -101,7 +109,7 @@ export function TourCelebration({ open, onDone, reason = 'completed' }: TourCele
             <p className="mt-3 text-xs font-medium text-indigo-600">
               Enjoy the moment · closing in {secondsLeft}s
             </p>
-            <Button className="mt-4 min-w-[10rem]" onClick={onDone}>
+            <Button className="mt-4 min-w-[10rem]" onClick={() => onDoneRef.current()}>
               Let’s go
             </Button>
           </div>

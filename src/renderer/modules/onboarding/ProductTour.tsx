@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '../../shared/components/buttons/Button';
 import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
+import { useAppContext } from '../../app/contexts/AppContext';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { cn } from '../../shared/utils/cn';
 import {
@@ -12,11 +13,7 @@ import {
   type CardPlacement,
   type SpotRect,
 } from './tourCardPlacement';
-import {
-  filterStepsWithTargets,
-  resolveTourSteps,
-  type ProductTourStep,
-} from './productTourSteps';
+import { resolveTourSteps } from './productTourSteps';
 import { useUpdateOnboarding } from './useOnboardingQueries';
 
 interface ProductTourProps {
@@ -27,6 +24,8 @@ interface ProductTourProps {
 }
 
 const PAD = 4;
+const AUTO_PLAY_SECONDS = 5;
+const LG_BREAKPOINT = 1024;
 
 function measureTourTarget(target: string): SpotRect | null {
   const el = document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null;
@@ -42,14 +41,14 @@ function measureTourTarget(target: string): SpotRect | null {
   };
 }
 
-async function measureWithRetry(target: string, attempts = 6): Promise<SpotRect | null> {
+async function measureWithRetry(target: string, attempts = 8): Promise<SpotRect | null> {
   for (let i = 0; i < attempts; i++) {
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => resolve());
     });
     const spot = measureTourTarget(target);
     if (spot) return spot;
-    await new Promise((r) => setTimeout(r, 60 + i * 40));
+    await new Promise((r) => setTimeout(r, 50 + i * 40));
   }
   return null;
 }
@@ -130,15 +129,25 @@ function TourCaret({ placement }: { placement: CardPlacement }) {
 
 export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: ProductTourProps) {
   const user = useAppSelector((s) => s.auth.user);
+  const { state: appState, dispatch: appDispatch } = useAppContext();
   const navigate = useNavigate();
   const update = useUpdateOnboarding();
-  const baseSteps = useMemo(() => resolveTourSteps(user), [user]);
-  const [steps, setSteps] = useState<ProductTourStep[]>(baseSteps);
-  const [index, setIndex] = useState(() => Math.min(startStep, Math.max(0, baseSteps.length - 1)));
+  const steps = useMemo(() => resolveTourSteps(user), [user]);
+  const [index, setIndex] = useState(() => Math.min(startStep, Math.max(0, steps.length - 1)));
   const [spot, setSpot] = useState<SpotRect | null>(null);
   const [viewportTick, setViewportTick] = useState(0);
   const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [autoCountdown, setAutoCountdown] = useState(AUTO_PLAY_SECONDS);
+  /** True once the current step’s spotlight attempt finished — autoplay waits on this. */
+  const [stepReady, setStepReady] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const sidebarStateRef = useRef(appState);
+  const focusGenRef = useRef(0);
+
+  useEffect(() => {
+    sidebarStateRef.current = appState;
+  }, [appState]);
 
   const step = steps[Math.min(index, Math.max(0, steps.length - 1))];
   const isLast = index >= steps.length - 1;
@@ -151,61 +160,62 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     [spot, cardHeight, viewportTick],
   );
 
-  useLayoutEffect(() => {
-    if (!open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when closed
-      setSpot(null);
-      return;
+  /** Open/expand sidebar when spotlight is inside it; never toggle blindly. */
+  function ensureSidebarForTarget(target: string): boolean {
+    const needsSidebar = target.startsWith('sidebar-');
+    const isLg = window.innerWidth >= LG_BREAKPOINT;
+    const { sidebarCollapsed, sidebarOpen } = sidebarStateRef.current;
+
+    if (needsSidebar) {
+      if (isLg) {
+        if (sidebarCollapsed) {
+          appDispatch({ type: 'SET_SIDEBAR_COLLAPSED', payload: false });
+        }
+      } else if (!sidebarOpen) {
+        appDispatch({ type: 'SET_SIDEBAR_OPEN', payload: true });
+      }
+      return true;
     }
 
-    let cancelled = false;
-
-    async function prepare() {
-      await new Promise((r) => setTimeout(r, 120));
-      if (cancelled) return;
-      const available = filterStepsWithTargets(baseSteps);
-      const nextSteps = available.length > 0 ? available : baseSteps;
-      setSteps(nextSteps);
-      setIndex((prev) => Math.min(prev, Math.max(0, nextSteps.length - 1)));
+    if (!isLg && sidebarOpen) {
+      appDispatch({ type: 'SET_SIDEBAR_OPEN', payload: false });
     }
-
-    void prepare();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, baseSteps]);
+    return false;
+  }
 
   useLayoutEffect(() => {
     if (!open || !step) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clear highlight when tour closes
       setSpot(null);
+      setStepReady(false);
       return;
     }
 
-    let cancelled = false;
+    const gen = ++focusGenRef.current;
+    setStepReady(false);
 
     async function focusStep() {
-      const isSidebarTarget = step.target.startsWith('sidebar-');
-      expandSidebarGroup(step.expandGroup);
-
-      if (isSidebarTarget) {
-        const hamburger = document.querySelector<HTMLElement>('[data-tour="sidebar-hamburger"]');
-        if (hamburger) hamburger.click();
-        await new Promise((r) => setTimeout(r, 350));
-      } else {
-        const overlay = document.querySelector<HTMLElement>('.fixed.inset-0.bg-black\\/50');
-        if (overlay) overlay.click();
-        await new Promise((r) => setTimeout(r, 350));
+      const needsSidebar = ensureSidebarForTarget(step.target);
+      if (needsSidebar || window.innerWidth < LG_BREAKPOINT) {
+        await new Promise((r) => setTimeout(r, 280));
       }
 
-      await new Promise((r) => setTimeout(r, 100));
+      expandSidebarGroup(step.expandGroup);
+      await new Promise((r) => setTimeout(r, 80));
+
       if (step.route) {
         navigate(step.route);
-        await new Promise((r) => setTimeout(r, 240));
+        await new Promise((r) => setTimeout(r, 220));
+        ensureSidebarForTarget(step.target);
+        await new Promise((r) => setTimeout(r, 120));
+        expandSidebarGroup(step.expandGroup);
       }
-      if (cancelled) return;
+
+      if (gen !== focusGenRef.current) return;
       const measured = await measureWithRetry(step.target);
-      if (!cancelled) setSpot(measured);
+      if (gen !== focusGenRef.current) return;
+      setSpot(measured);
+      setStepReady(true);
     }
 
     void focusStep();
@@ -213,7 +223,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     const bump = () => {
       setViewportTick((n) => n + 1);
       void measureWithRetry(step.target, 3).then((m) => {
-        if (!cancelled) setSpot(m);
+        if (gen === focusGenRef.current) setSpot(m);
       });
     };
 
@@ -222,12 +232,13 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     window.visualViewport?.addEventListener('resize', bump);
     window.visualViewport?.addEventListener('scroll', bump);
     return () => {
-      cancelled = true;
+      focusGenRef.current += 1; // invalidate in-flight focus
       window.removeEventListener('resize', bump);
       window.removeEventListener('orientationchange', bump);
       window.visualViewport?.removeEventListener('resize', bump);
       window.visualViewport?.removeEventListener('scroll', bump);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sidebar ensure reads refs; only re-focus on step/index
   }, [open, step, navigate, index]);
 
   useLayoutEffect(() => {
@@ -238,18 +249,15 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     }
   }, [open, step, index, placement.width, cardHeight, viewportTick]);
 
-  const [autoPlay, setAutoPlay] = useState(false);
-  const [autoCountdown, setAutoCountdown] = useState(5);
-
   const fireSave = useCallback((action: string, tourStep?: number) => {
     update.mutate({ action, tour_step: tourStep } as never, {
       onError: () => { /* background save — errors are non-blocking */ },
     });
   }, [update]);
 
-  const goNextRef = useRef<() => void>(() => {});
-  function goNext() {
+  const goNext = useCallback(() => {
     if (isLast) {
+      setAutoPlay(false);
       onFinished?.();
       fireSave('complete_tour');
       return;
@@ -257,41 +265,51 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     const next = index + 1;
     setIndex(next);
     fireSave('tour_step', next);
-    setAutoCountdown(5);
-  }
-  useLayoutEffect(() => { goNextRef.current = goNext; });
+  }, [isLast, index, onFinished, fireSave]);
+
+  const goNextRef = useRef(goNext);
+  useLayoutEffect(() => {
+    goNextRef.current = goNext;
+  }, [goNext]);
 
   function goBack() {
     if (index <= 0) return;
+    setAutoPlay(false);
     const prev = index - 1;
     setIndex(prev);
     fireSave('tour_step', prev);
-    setAutoCountdown(5);
   }
 
   function skipTour() {
+    setAutoPlay(false);
     onSkipped?.();
     fireSave('skip_tour');
   }
 
   function toggleAutoPlay() {
     setAutoPlay((p) => !p);
-    setAutoCountdown(5);
   }
 
+  // Auto-play: after each step is ready, count down then call Next — repeats for every step
   useEffect(() => {
-    if (!autoPlay) return;
-    const timer = setInterval(() => {
-      setAutoCountdown((c) => {
-        if (c <= 1) {
-          goNextRef.current();
-          return 5;
-        }
-        return c - 1;
-      });
+    if (!autoPlay || !open || !stepReady) return;
+
+    let remaining = AUTO_PLAY_SECONDS;
+    queueMicrotask(() => setAutoCountdown(remaining));
+
+    const timer = window.setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        window.clearInterval(timer);
+        setAutoCountdown(0);
+        goNextRef.current();
+        return;
+      }
+      setAutoCountdown(remaining);
     }, 1000);
-    return () => clearInterval(timer);
-  }, [autoPlay, index, goNextRef]);
+
+    return () => window.clearInterval(timer);
+  }, [autoPlay, open, stepReady, index]);
 
   if (!open || !step || steps.length === 0 || typeof document === 'undefined') return null;
 
@@ -370,10 +388,10 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
                   className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
                     autoPlay ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-slate-600'
                   }`}
-                  title={autoPlay ? 'Pause auto-play' : 'Auto-play every 5s'}
+                  title={autoPlay ? 'Pause auto-play' : `Auto-play every ${AUTO_PLAY_SECONDS}s`}
                 >
                   {autoPlay ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  {autoPlay ? `${autoCountdown}s` : 'Auto Play'}
+                  {autoPlay ? (stepReady ? `${autoCountdown}s` : '…') : 'Auto Play'}
                 </button>
               </div>
               <div className="flex items-center gap-2">

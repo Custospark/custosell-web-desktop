@@ -10,6 +10,8 @@ interface AppState {
 type AppAction =
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_SIDEBAR_COLLAPSED' }
+  | { type: 'SET_SIDEBAR_OPEN'; payload: boolean }
+  | { type: 'SET_SIDEBAR_COLLAPSED'; payload: boolean }
   | { type: 'TOGGLE_THEME' }
   | { type: 'SET_SYSTEM_STATUS'; payload: 'online' | 'offline' };
 
@@ -26,6 +28,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, sidebarOpen: !state.sidebarOpen };
     case 'TOGGLE_SIDEBAR_COLLAPSED':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed };
+    case 'SET_SIDEBAR_OPEN':
+      return { ...state, sidebarOpen: action.payload };
+    case 'SET_SIDEBAR_COLLAPSED':
+      return { ...state, sidebarCollapsed: action.payload };
     case 'TOGGLE_THEME':
       return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
     case 'SET_SYSTEM_STATUS':
@@ -52,6 +58,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Hook colocated with provider (standard React context pattern). */
+// eslint-disable-next-line react-refresh/only-export-components -- context hook must live with provider
 export function useAppContext() {
   const context = useContext(AppContext);
   if (!context) {

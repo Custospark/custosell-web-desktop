@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { IntentOnboardingModal } from './IntentOnboardingModal';
@@ -29,6 +29,12 @@ export function OnboardingGate() {
   const [celebrate, setCelebrate] = useState(false);
   const [celebrateReason, setCelebrateReason] = useState<'completed' | 'skipped'>('completed');
 
+  const closeCelebration = useCallback(() => setCelebrate(false), []);
+  const openCelebration = useCallback((reason: 'completed' | 'skipped') => {
+    setCelebrateReason(reason);
+    setCelebrate(true);
+  }, []);
+
   if (!isAuthenticated || isCompletelyOffline || !data) {
     return celebrate
       ? (
@@ -36,7 +42,7 @@ export function OnboardingGate() {
           key={`celebrate-${celebrateReason}`}
           open
           reason={celebrateReason}
-          onDone={() => setCelebrate(false)}
+          onDone={closeCelebration}
         />
       )
       : null;
@@ -45,16 +51,12 @@ export function OnboardingGate() {
   const showIntent = Boolean(data.needs_intent);
   const showTour = !data.needs_intent && data.needs_tour;
 
-  function openCelebration(reason: 'completed' | 'skipped') {
-    setCelebrateReason(reason);
-    setCelebrate(true);
-  }
-
   return (
     <>
       {showIntent ? <DelayedIntentModal key={`intent-${userId ?? 'anon'}`} /> : null}
       <ProductTour
-        key={showTour ? `tour-${data.tour_step ?? 0}` : 'tour-off'}
+        // Stable while the tour is open — keying on tour_step remounted and killed Auto Play
+        key={showTour ? `tour-active-${userId ?? 'anon'}` : 'tour-off'}
         open={showTour}
         startStep={data.tour_step ?? 0}
         onFinished={() => openCelebration('completed')}
@@ -64,7 +66,7 @@ export function OnboardingGate() {
         key={celebrate ? `celebrate-${celebrateReason}` : 'celebrate-off'}
         open={celebrate}
         reason={celebrateReason}
-        onDone={() => setCelebrate(false)}
+        onDone={closeCelebration}
       />
     </>
   );

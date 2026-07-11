@@ -155,11 +155,11 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 lg:hidden"
           aria-label="Close sidebar"
           data-tour="sidebar-close"
         >
-          <X className="w-5 h-5" />
+          <X className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
 

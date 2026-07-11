@@ -186,21 +186,25 @@ export function buildInvoiceColumns({
             {(canPay && balanceDue(item) > 0) || ((item.amount_paid || 0) > 0 && item.status !== 'draft') ? (
               <InvoiceIconAction
                 title={
-                  paymentCount > 0
-                    ? `Payment history & receipts (${paymentCount})`
-                    : balanceDue(item) > 0
-                      ? 'Payments — record or view history'
-                      : 'Payment history & receipts'
+                  received
+                    ? paymentCount > 0
+                      ? `View payment receipts (${paymentCount})`
+                      : 'View payment status'
+                    : paymentCount > 0
+                      ? `Payment history & receipts (${paymentCount})`
+                      : balanceDue(item) > 0
+                        ? 'Payments — record or view history'
+                        : 'Payment history & receipts'
                 }
                 disabled={busyAction !== null}
                 onClick={() => setPaymentModal(item)}
                 className="text-green-600 hover:bg-green-50 hover:text-green-700"
               >
                 <span className="relative inline-flex">
-                  {balanceDue(item) > 0 ? (
-                    <DollarSign className="w-3.5 h-3.5" />
-                  ) : (
+                  {received || balanceDue(item) <= 0 ? (
                     <Receipt className="w-3.5 h-3.5" />
+                  ) : (
+                    <DollarSign className="w-3.5 h-3.5" />
                   )}
                   {paymentCount > 0 && (
                     <span className="absolute -top-2 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">

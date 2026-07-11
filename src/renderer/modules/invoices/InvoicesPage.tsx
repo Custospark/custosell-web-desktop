@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { Table } from '../../shared/components/tables/Table';
@@ -11,10 +11,11 @@ import type { Invoice } from './api/InvoiceTypes';
 import NewInvoiceBuilder from './NewInvoiceBuilder';
 import EditInvoiceDraftPanel from './EditInvoiceDraftPanel';
 import RecordPaymentModal from './RecordPaymentModal';
+import ViewInvoiceModal from './ViewInvoiceModal';
 import { viewInvoicePdf, downloadInvoicePdf } from './useInvoicePdf';
 import {
   FileText, Plus, Search,
-  ShoppingCart, ArrowRight, List, Info, AlertCircle,
+  ShoppingCart, ArrowRight, List, Info, AlertCircle, Store,
 } from 'lucide-react';
 import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEmailModal';
 import { cn } from '../../shared/utils/cn';
@@ -24,22 +25,36 @@ import { balanceDue, displayStatus, invoicePartyLabel, isOverdue, isReceivedInvo
 import { buildInvoiceColumns } from './buildInvoiceColumns';
 
 type InvoiceView = 'list' | 'create' | 'edit';
+export type InvoicesPageMode = 'sales' | 'supplier';
 
-export default function InvoicesPage() {
+interface InvoicesPageProps {
+  /** sales = issued AR; supplier = received AP (view-only payments). */
+  mode?: InvoicesPageMode;
+}
+
+export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
+  const isSupplierMode = mode === 'supplier';
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<InvoiceView>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [directionFilter, setDirectionFilter] = useState<'all' | 'issued' | 'received'>('all');
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'issued' | 'received'>('issued');
   const [localPaymentModal, setLocalPaymentModal] = useState<Invoice | null>(null);
+  const [localViewInvoiceId, setLocalViewInvoiceId] = useState<number | null>(null);
   const [emailTarget, setEmailTarget] = useState<Invoice | null>(null);
   const [busyAction, setBusyAction] = useState<{ id: number; type: string } | null>(null);
 
   const { showToast } = useToast();
-  const { data: invoices, isLoading } = useInvoices();
+  const { data: invoices, isLoading } = useInvoices(
+    isSupplierMode ? { direction: 'received' } : { direction: 'issued' },
+  );
   const sendInvoice = useSendInvoice();
   const deleteInvoice = useDeleteInvoice();
+
+  /** Supplier mode is list-only; sales mode keeps create/edit. */
+  const effectiveView: InvoiceView = isSupplierMode ? 'list' : view;
 
   const sorted = useMemo(() => {
     if (!invoices) return [];
@@ -54,8 +69,11 @@ export default function InvoicesPage() {
     return sorted.filter((inv) => {
       const status = displayStatus(inv);
       if (statusFilter && status !== statusFilter) return false;
-      if (directionFilter === 'issued' && isReceivedInvoice(inv)) return false;
-      if (directionFilter === 'received' && !isReceivedInvoice(inv)) return false;
+      if (isSupplierMode || directionFilter === 'received') {
+        if (!isReceivedInvoice(inv)) return false;
+      } else if (directionFilter === 'issued') {
+        if (isReceivedInvoice(inv)) return false;
+      }
       if (poParam && String(inv.purchase_order_id ?? '') !== poParam) return false;
       if (
         q
@@ -67,7 +85,7 @@ export default function InvoicesPage() {
       }
       return true;
     });
-  }, [sorted, search, statusFilter, directionFilter, searchParams]);
+  }, [sorted, search, statusFilter, directionFilter, searchParams, isSupplierMode]);
 
   const paginated = usePagination(filtered, 15);
 
@@ -79,15 +97,22 @@ export default function InvoicesPage() {
     return { total: list.length, drafts, outstanding, overdueCount };
   }, [invoices]);
 
-  /** Deep-link from PO pages: ?invoice=&focus=payments */
-  const urlPaymentInvoice = useMemo(() => {
-    if (searchParams.get('focus') !== 'payments') return null;
-    const invoiceId = Number(searchParams.get('invoice') || 0);
-    if (!invoiceId || !invoices?.length) return null;
-    return invoices.find((inv) => inv.id === invoiceId) ?? null;
-  }, [invoices, searchParams]);
+  const urlInvoiceId = Number(searchParams.get('invoice') || 0) || null;
+  const urlFocusPayments = searchParams.get('focus') === 'payments';
+  const urlInvoice = useMemo(() => {
+    if (!urlInvoiceId || !invoices?.length) return null;
+    return invoices.find((i) => i.id === urlInvoiceId) ?? null;
+  }, [urlInvoiceId, invoices]);
 
-  const paymentModal = localPaymentModal ?? urlPaymentInvoice;
+  const canRecordFromUrl = Boolean(
+    urlInvoice
+    && urlFocusPayments
+    && !isSupplierMode
+    && !isReceivedInvoice(urlInvoice),
+  );
+  const paymentModal = localPaymentModal ?? (canRecordFromUrl ? urlInvoice : null);
+  const viewInvoiceId = localViewInvoiceId
+    ?? (urlInvoiceId && urlInvoice && !canRecordFromUrl && !localPaymentModal ? urlInvoiceId : null);
 
   const clearInvoiceDeepLink = useCallback(() => {
     const next = new URLSearchParams(searchParams);
@@ -152,6 +177,14 @@ export default function InvoicesPage() {
   ];
 
   const poFilter = searchParams.get('po');
+  const pageTitle = isSupplierMode ? 'Supplier invoices' : 'Sales invoices';
+  const pageSubtitle = isSupplierMode
+    ? 'Invoices from suppliers. View PDFs and payment receipts — only the seller records payments.'
+    : effectiveView === 'list'
+      ? 'Invoices you issue to customers. Record payments and send receipts here.'
+      : effectiveView === 'edit'
+        ? 'Edit draft items, customer, and dates'
+        : 'Add products and create a draft invoice';
 
   return (
     <div className="space-y-5">
@@ -162,52 +195,61 @@ export default function InvoicesPage() {
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Invoices</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {view === 'list'
-                  ? 'Issued and received invoices — payments and receipts live here'
-                  : view === 'edit'
-                    ? 'Edit draft items, customer, and dates'
-                    : 'Add products and create a draft invoice'}
-              </p>
+              <h1 className="text-xl font-semibold text-gray-900">{pageTitle}</h1>
+              <p className="text-sm text-gray-500 mt-0.5">{pageSubtitle}</p>
             </div>
           </div>
 
-          <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 self-start sm:self-auto">
-            <button
+          {!isSupplierMode ? (
+            <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => { setView('list'); setEditingId(null); }}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                  effectiveView === 'list'
+                    ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
+                    : 'text-gray-600 hover:text-gray-900',
+                )}
+              >
+                <List className="w-4 h-4" />
+                Invoice list
+              </button>
+              <button
+                type="button"
+                onClick={() => { setView('create'); setEditingId(null); }}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                  effectiveView === 'create'
+                    ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
+                    : 'text-gray-600 hover:text-gray-900',
+                )}
+              >
+                <Plus className="w-4 h-4" />
+                New invoice
+              </button>
+            </div>
+          ) : (
+            <Button
               type="button"
-              onClick={() => { setView('list'); setEditingId(null); }}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
-                view === 'list'
-                  ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
-                  : 'text-gray-600 hover:text-gray-900',
-              )}
+              variant="secondary"
+              className="inline-flex items-center gap-2 self-start"
+              onClick={() => navigate(ROUTES.INVENTORY.MARKETPLACE)}
             >
-              <List className="w-4 h-4" />
-              Invoice list
-            </button>
-            <button
-              type="button"
-              onClick={() => { setView('create'); setEditingId(null); }}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
-                view === 'create'
-                  ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
-                  : 'text-gray-600 hover:text-gray-900',
-              )}
-            >
-              <Plus className="w-4 h-4" />
-              New invoice
-            </button>
-          </div>
+              <Store className="h-4 w-4" />
+              Explore marketplace
+            </Button>
+          )}
         </div>
 
-        {view === 'list' && stats.total > 0 && (
+        {effectiveView === 'list' && stats.total > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-200 border-t border-gray-200">
             {[
               { label: 'Total', value: String(stats.total) },
-              { label: 'Drafts', value: String(stats.drafts) },
+              {
+                label: isSupplierMode ? 'Open balance' : 'Drafts',
+                value: isSupplierMode ? formatCurrency(stats.outstanding) : String(stats.drafts),
+              },
               { label: 'Outstanding', value: formatCurrency(stats.outstanding) },
               { label: 'Overdue', value: String(stats.overdueCount), warn: stats.overdueCount > 0 },
             ].map(({ label, value, warn }) => (
@@ -222,7 +264,7 @@ export default function InvoicesPage() {
         )}
       </Card>
 
-      {view === 'edit' && editingId ? (
+      {effectiveView === 'edit' && editingId && !isSupplierMode ? (
         <Card className="p-5">
           <EditInvoiceDraftPanel
             invoiceId={editingId}
@@ -230,7 +272,7 @@ export default function InvoicesPage() {
             onCancel={() => { setView('list'); setEditingId(null); }}
           />
         </Card>
-      ) : view === 'create' ? (
+      ) : effectiveView === 'create' && !isSupplierMode ? (
         <Card className="p-5">
           <NewInvoiceBuilder onCreated={() => setView('list')} />
         </Card>
@@ -241,30 +283,32 @@ export default function InvoicesPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="search"
-                placeholder="Search invoice #, party, or PO…"
+                placeholder={isSupplierMode ? 'Search invoice #, supplier, or PO…' : 'Search invoice #, customer, or PO…'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <select
-                aria-label="Filter by direction"
-                value={directionFilter}
-                onChange={(e) => setDirectionFilter(e.target.value as 'all' | 'issued' | 'received')}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="all">All invoices</option>
-                <option value="issued">Issued (you sold)</option>
-                <option value="received">Received (you bought)</option>
-              </select>
+              {!isSupplierMode ? (
+                <select
+                  aria-label="Filter by direction"
+                  value={directionFilter}
+                  onChange={(e) => setDirectionFilter(e.target.value as 'all' | 'issued' | 'received')}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="issued">Sales invoices</option>
+                  <option value="all">All (incl. received)</option>
+                  <option value="received">Received only</option>
+                </select>
+              ) : null}
               <select
                 aria-label="Filter by status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               >
-                {statusOptions.map((opt) => (
+                {statusOptions.filter((opt) => !(isSupplierMode && opt.value === 'draft')).map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
@@ -283,7 +327,7 @@ export default function InvoicesPage() {
             </div>
           ) : null}
 
-          {stats.drafts > 0 && !statusFilter && (
+          {stats.drafts > 0 && !statusFilter && !isSupplierMode && (
             <div className="flex items-start gap-2 border-b border-blue-100 bg-blue-50/80 px-4 py-2.5 text-sm text-blue-800">
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
@@ -296,7 +340,8 @@ export default function InvoicesPage() {
             <div className="flex items-start gap-2 border-b border-red-100 bg-red-50/80 px-4 py-2.5 text-sm text-red-800">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
-                <strong>{stats.overdueCount}</strong> overdue invoice{stats.overdueCount !== 1 ? 's' : ''} — follow up or record payment.
+                <strong>{stats.overdueCount}</strong> overdue invoice{stats.overdueCount !== 1 ? 's' : ''}
+                {isSupplierMode ? ' — awaiting seller payment recording.' : ' — follow up or record payment.'}
               </span>
             </div>
           )}
@@ -309,10 +354,20 @@ export default function InvoicesPage() {
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                   <FileText className="w-7 h-7" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">No invoices yet</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {isSupplierMode ? 'No supplier invoices yet' : 'No sales invoices yet'}
+                </h2>
                 <p className="text-sm text-gray-500 mt-1 mb-6">
-                  Create a draft, or accept an incoming purchase order to auto-create an invoice for the buyer.
+                  {isSupplierMode
+                    ? 'When a supplier accepts your purchase order, their invoice appears here.'
+                    : 'Create a draft, or accept an incoming purchase order to auto-create an invoice for the buyer.'}
                 </p>
+                {isSupplierMode ? (
+                  <Button type="button" onClick={() => navigate(ROUTES.INVENTORY.MARKETPLACE)}>
+                    <Store className="mr-1.5 h-4 w-4" />
+                    Explore marketplace
+                  </Button>
+                ) : (
                 <div className="space-y-3 text-left text-sm">
                   <button
                     type="button"
@@ -338,6 +393,7 @@ export default function InvoicesPage() {
                     <ArrowRight className="w-4 h-4 text-gray-400 ml-auto shrink-0" />
                   </Link>
                 </div>
+                )}
               </div>
             ) : filtered.length === 0 ? (
               <div className="py-12 text-center">
@@ -347,7 +403,12 @@ export default function InvoicesPage() {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => { setSearch(''); setStatusFilter(''); setDirectionFilter('all'); clearPoFilter(); }}
+                  onClick={() => {
+                    setSearch('');
+                    setStatusFilter('');
+                    setDirectionFilter(isSupplierMode ? 'received' : 'issued');
+                    clearPoFilter();
+                  }}
                 >
                   Clear filters
                 </Button>
@@ -376,6 +437,7 @@ export default function InvoicesPage() {
       {paymentModal && (
         <RecordPaymentModal
           invoice={paymentModal}
+          viewOnly={isSupplierMode || isReceivedInvoice(paymentModal)}
           onClose={() => {
             setLocalPaymentModal(null);
             clearInvoiceDeepLink();
@@ -383,7 +445,19 @@ export default function InvoicesPage() {
         />
       )}
 
-      {emailTarget && (
+      {viewInvoiceId ? (
+        <ViewInvoiceModal
+          invoiceId={viewInvoiceId}
+          isOpen
+          onClose={() => {
+            setLocalViewInvoiceId(null);
+            clearInvoiceDeepLink();
+          }}
+          role={isSupplierMode ? 'buyer' : 'seller'}
+        />
+      ) : null}
+
+      {emailTarget && !isSupplierMode && (
         <SendDocumentEmailModal
           open
           onClose={() => setEmailTarget(null)}

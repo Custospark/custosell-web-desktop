@@ -14,20 +14,20 @@ interface ViewPurchaseOrderModalProps {
 const BUYER_ACTION: Record<string, string> = {
   draft: 'You can edit, submit, or delete this draft. The seller cannot see it until you submit.',
   submitted: 'Waiting for the seller to review. You can cancel if needed.',
-  accepted: 'The seller accepted and created an invoice. Track payment under Invoices; await fulfillment.',
+  accepted: 'The seller accepted and created a supplier invoice. Open Invoice here to view it; only the seller records payments.',
   rejected: 'The seller declined your order. You can delete it after reviewing their reason.',
-  fulfilled: 'Items are ready. Confirm receipt to add them to your stock. Invoice and receipts are under Invoices.',
-  received: 'Items are in your stock. Open Invoices for the linked invoice and payment receipts.',
+  fulfilled: 'Items are ready. Confirm receipt to add them to your stock. View the supplier invoice and receipts from this page.',
+  received: 'Items are in your stock. Open the supplier invoice here for PDFs and payment receipts.',
   cancelled: 'This order was cancelled. You can delete it from your list.',
 };
 
 const SELLER_ACTION: Record<string, string> = {
   draft: 'Not visible yet — the buyer is still composing this order.',
   submitted: 'Review the order. Accepting creates an invoice for the buyer automatically.',
-  accepted: 'Invoice created. Prepare and ship the items, then mark as fulfilled. Manage payments under Invoices.',
+  accepted: 'Invoice created. Prepare and ship the items, then mark as fulfilled. Record payments under Sales invoices.',
   rejected: 'You rejected this order. You can delete it from your list.',
-  fulfilled: 'Stock deducted. Waiting for the buyer to confirm receipt. Payments stay under Invoices.',
-  received: 'The buyer confirmed receipt. This order is complete — keep managing payment under Invoices.',
+  fulfilled: 'Stock deducted. Waiting for the buyer to confirm receipt. Record payments under Sales invoices.',
+  received: 'The buyer confirmed receipt. This order is complete — keep recording payment under Sales invoices.',
   cancelled: 'The buyer cancelled this order. You can delete it from your list.',
 };
 

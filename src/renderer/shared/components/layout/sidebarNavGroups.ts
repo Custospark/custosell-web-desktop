@@ -34,6 +34,7 @@ export const baseSubRoutes = [
   ROUTES.ESTIMATES.INDEX, ROUTES.ESTIMATES.PROJECTS, ROUTES.ESTIMATES.BOARDS,
   ROUTES.ESTIMATES.INSIGHTS, ROUTES.ESTIMATES.TEMPLATES,
   ROUTES.INVOICES.INDEX,
+  ROUTES.INVOICES.SUPPLIER,
   ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
   ROUTES.DOCUMENTS.INDEX,
   ROUTES.HR.OVERVIEW, ROUTES.HR.PEOPLE, ROUTES.HR.DEPARTMENTS, ROUTES.HR.COMPANY_ASSETS,
@@ -97,7 +98,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.SALES.HISTORY, label: 'History', icon: History },
       { to: ROUTES.SALES.REFUNDS, label: 'Refunds', icon: RotateCcw },
       { to: ROUTES.SALES.MY_SHIFT, label: 'My Shift', icon: Clock },
-      { to: ROUTES.INVOICES.INDEX, label: 'Invoices', icon: FileText },
+      { to: ROUTES.INVOICES.INDEX, label: 'Sales invoices', icon: FileText },
     ],
   },
   {
@@ -110,6 +111,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.INVENTORY.MARKETPLACE, label: 'Marketplace', icon: Store },
       { to: ROUTES.INVENTORY.PURCHASE_ORDERS, label: 'Purchase orders', icon: Truck },
       { to: ROUTES.INVENTORY.INCOMING_ORDERS, label: 'Incoming orders', icon: PackageCheck },
+      { to: ROUTES.INVOICES.SUPPLIER, label: 'Supplier invoices', icon: Receipt },
     ],
   },
   {

@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
-import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -28,6 +26,7 @@ import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
 import { sellerPoActions } from './ui/supply/sellerPoActions';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 import RejectPurchaseOrderModal from './ui/supply/RejectPurchaseOrderModal';
+import ViewInvoiceModal from '../invoices/ViewInvoiceModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -39,24 +38,22 @@ const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
-function invoicePath(po: PurchaseOrder, focus: 'invoice' | 'payments' = 'invoice'): string {
-  const invoiceId = po.invoice_id ?? po.invoice?.id;
-  const params = new URLSearchParams();
-  if (invoiceId) params.set('invoice', String(invoiceId));
-  if (po.id) params.set('po', String(po.id));
-  if (focus === 'payments') params.set('focus', 'payments');
-  const qs = params.toString();
-  return qs ? `${ROUTES.INVOICES.INDEX}?${qs}` : ROUTES.INVOICES.INDEX;
+function poInvoiceId(po: PurchaseOrder): number | null {
+  const id = po.invoice_id ?? po.invoice?.id;
+  return id != null && id > 0 ? id : null;
 }
 
 export default function IncomingOrdersPage() {
-  const navigate = useNavigate();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('submitted');
   const [search, setSearch] = useState('');
   const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
   const [rejectPo, setRejectPo] = useState<PurchaseOrder | null>(null);
+  const [invoiceModal, setInvoiceModal] = useState<{
+    id: number;
+    focus: 'details' | 'receipts';
+  } | null>(null);
 
   const { data, isLoading, isFetching, isError, error, refetch } = useIncomingPurchaseOrders(undefined, !isOffline);
   const acceptPo = useAcceptPurchaseOrder();
@@ -110,8 +107,14 @@ export default function IncomingOrdersPage() {
       onReject: () => setRejectPo(po),
       onFulfill: () => void fulfillPo.mutateAsync(po.id),
       onDelete: () => void handleDelete(po),
-      onOpenInvoice: () => navigate(invoicePath(po, 'invoice')),
-      onOpenReceipts: () => navigate(invoicePath(po, 'payments')),
+      onOpenInvoice: () => {
+        const id = poInvoiceId(po);
+        if (id) setInvoiceModal({ id, focus: 'details' });
+      },
+      onOpenReceipts: () => {
+        const id = poInvoiceId(po);
+        if (id) setInvoiceModal({ id, focus: 'receipts' });
+      },
     });
   }
 
@@ -121,7 +124,7 @@ export default function IncomingOrdersPage() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Incoming orders</h1>
           <p className="text-sm text-gray-600">
-            Accepting an order creates the buyer invoice automatically. Manage payments under Invoices.
+            Accepting an order creates the buyer invoice automatically. Record payments under Sales invoices.
           </p>
         </div>
         <Button
@@ -217,7 +220,8 @@ export default function IncomingOrdersPage() {
                         className="text-sm font-medium text-blue-600 hover:underline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(invoicePath(po));
+                          const id = poInvoiceId(po);
+                          if (id) setInvoiceModal({ id, focus: 'details' });
                         }}
                       >
                         {po.invoice.invoice_number}
@@ -271,6 +275,17 @@ export default function IncomingOrdersPage() {
           purchaseOrder={rejectPo}
           isOpen={!!rejectPo}
           onClose={() => setRejectPo(null)}
+        />
+      ) : null}
+
+      {invoiceModal ? (
+        <ViewInvoiceModal
+          key={`${invoiceModal.id}-${invoiceModal.focus}`}
+          invoiceId={invoiceModal.id}
+          isOpen
+          onClose={() => setInvoiceModal(null)}
+          role="seller"
+          focus={invoiceModal.focus}
         />
       ) : null}
     </div>

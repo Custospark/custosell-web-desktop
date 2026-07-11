@@ -29,6 +29,7 @@ import { buyerPoActions } from './ui/supply/buyerPoActions';
 import { ReceivePurchaseOrderModal } from './ui/supply/ReceivePurchaseOrderModal';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 import EditPurchaseOrderModal from './ui/supply/EditPurchaseOrderModal';
+import ViewInvoiceModal from '../invoices/ViewInvoiceModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -41,14 +42,9 @@ const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
-function invoicePath(po: PurchaseOrder, focus: 'invoice' | 'payments' = 'invoice'): string {
-  const invoiceId = po.invoice_id ?? po.invoice?.id;
-  const params = new URLSearchParams();
-  if (invoiceId) params.set('invoice', String(invoiceId));
-  if (po.id) params.set('po', String(po.id));
-  if (focus === 'payments') params.set('focus', 'payments');
-  const qs = params.toString();
-  return qs ? `${ROUTES.INVOICES.INDEX}?${qs}` : ROUTES.INVOICES.INDEX;
+function poInvoiceId(po: PurchaseOrder): number | null {
+  const id = po.invoice_id ?? po.invoice?.id;
+  return id != null && id > 0 ? id : null;
 }
 
 export default function PurchaseOrdersPage() {
@@ -60,6 +56,10 @@ export default function PurchaseOrdersPage() {
   const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
   const [editPo, setEditPo] = useState<PurchaseOrder | null>(null);
   const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
+  const [invoiceModal, setInvoiceModal] = useState<{
+    id: number;
+    focus: 'details' | 'receipts';
+  } | null>(null);
 
   const { data, isLoading, isFetching, isError, error, refetch } = usePurchaseOrders(undefined, !isOffline);
   const submitPo = useSubmitPurchaseOrder();
@@ -123,8 +123,14 @@ export default function PurchaseOrdersPage() {
       },
       onDelete: () => void handleDelete(po),
       onReceive: () => setReceivePo(po),
-      onOpenInvoice: () => navigate(invoicePath(po, 'invoice')),
-      onOpenReceipts: () => navigate(invoicePath(po, 'payments')),
+      onOpenInvoice: () => {
+        const id = poInvoiceId(po);
+        if (id) setInvoiceModal({ id, focus: 'details' });
+      },
+      onOpenReceipts: () => {
+        const id = poInvoiceId(po);
+        if (id) setInvoiceModal({ id, focus: 'receipts' });
+      },
     });
   }
 
@@ -240,7 +246,10 @@ export default function PurchaseOrdersPage() {
                       <button
                         type="button"
                         className="text-sm font-medium text-blue-600 hover:underline"
-                        onClick={() => navigate(invoicePath(po))}
+                        onClick={() => {
+                          const id = poInvoiceId(po);
+                          if (id) setInvoiceModal({ id, focus: 'details' });
+                        }}
                       >
                         {po.invoice.invoice_number}
                       </button>
@@ -310,6 +319,17 @@ export default function PurchaseOrdersPage() {
           purchaseOrder={receivePo}
           isOpen={!!receivePo}
           onClose={() => setReceivePo(null)}
+        />
+      ) : null}
+
+      {invoiceModal ? (
+        <ViewInvoiceModal
+          key={`${invoiceModal.id}-${invoiceModal.focus}`}
+          invoiceId={invoiceModal.id}
+          isOpen
+          onClose={() => setInvoiceModal(null)}
+          role="buyer"
+          focus={invoiceModal.focus}
         />
       ) : null}
     </div>

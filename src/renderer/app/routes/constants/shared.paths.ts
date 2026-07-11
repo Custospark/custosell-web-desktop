@@ -27,7 +27,12 @@ export const ROUTES = {
     INSIGHTS: '/pipeline/insights',
     SETTINGS: '/pipeline/settings',
   },
-  INVOICES: { INDEX: '/invoices', NEW: '/invoices/new', DETAIL: (id: number) => `/invoices/${id}` },
+  INVOICES: {
+    INDEX: '/invoices',
+    SUPPLIER: '/invoices/supplier',
+    NEW: '/invoices/new',
+    DETAIL: (id: number) => `/invoices/${id}`,
+  },
   ESTIMATES: {
     INDEX: '/estimates',
     DETAIL: (id: number) => `/estimates/${id}`,

@@ -53,7 +53,7 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 ## Seller flow
 
 1. Incoming orders → accept or reject (reason required).
-2. **Accept** auto-creates and sends an invoice for the buyer (manage payments under Invoices).
+2. **Accept** auto-creates and sends an invoice for the buyer (seller records payments under **Sales invoices**).
 3. Fulfill deducts stock. Insufficient stock returns 422.
 4. **Delete** rejected or cancelled orders from the list.
 
@@ -63,7 +63,7 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 Lifecycle: `draft → submitted → accepted|rejected → fulfilled → received` (or `cancelled` from draft/submitted).
 
-Billing rule: **Accept creates the invoice.** Payments and receipts are managed only under **Invoices** — PO screens deep-link there (`?po=&invoice=&focus=payments`).
+Billing rule: **Accept creates the invoice.** **Only the seller records payments.** Buyers view **Supplier invoices** / in-place `ViewInvoiceModal`. See [2026-07-11-supplier-invoices-seller-payments.md](../adr/2026-07-11-supplier-invoices-seller-payments.md).
 
 ### Buyer — Purchase orders (`/inventory/purchase-orders`)
 
@@ -71,9 +71,9 @@ Billing rule: **Accept creates the invoice.** Payments and receipts are managed 
 |--------|-----------------|-------|
 | **draft** | View, Edit, Submit, **Delete** | Seller cannot see the PO until submit. Delete is permanent. |
 | **submitted** | View, Cancel | Waiting on seller. Cancel → `cancelled` (not delete). |
-| **accepted** | View, **Invoice**, **Receipts** | Seller invoice already exists. Open Invoices to pay / view receipts. |
+| **accepted** | View, **Invoice**, **Receipts** | Opens supplier invoice modal (view-only payments). |
 | **fulfilled** | View, **Receive**, Invoice, Receipts | Receive maps each line to a local product → stock in. |
-| **received** | View, Invoice, Receipts | Stock already in. Payment continues under Invoices. |
+| **received** | View, Invoice, Receipts | Stock already in. Receipts are view-only for the buyer. |
 | **rejected** | View, **Delete** | Review rejection reason, then remove from list. |
 | **cancelled** | View, **Delete** | Terminal on the order flow; delete to clean up. |
 
@@ -83,7 +83,7 @@ Billing rule: **Accept creates the invoice.** Payments and receipts are managed 
 |--------|-----------------|-------|
 | **draft** | — | Hidden from seller (buyer still composing). |
 | **submitted** | View, **Accept**, **Reject** | Accept → status `accepted` **and** auto-creates/sends invoice for buyer. Reject requires a reason. |
-| **accepted** | View, **Fulfill**, Invoice, Receipts | Fulfill deducts seller stock (`sale` movement). Manage payment under Invoices. |
+| **accepted** | View, **Fulfill**, Invoice, Receipts | Fulfill deducts seller stock. Record payment under Sales invoices / modal. |
 | **fulfilled** | View, Invoice, Receipts | Waiting for buyer receive. |
 | **received** | View, Invoice, Receipts | Order complete on the goods side; payment may still be open. |
 | **rejected** | View, **Delete** | Clean up rejected inbound POs. |
@@ -100,8 +100,8 @@ Billing rule: **Accept creates the invoice.** Payments and receipts are managed 
 | Reject | Seller | `POST /purchase-orders/{id}/reject` | `submitted` → `rejected` with reason. |
 | Fulfill | Seller | `POST /purchase-orders/{id}/fulfill` | `accepted` → `fulfilled`; stock out. 422 if insufficient stock. |
 | Receive | Buyer | `POST /purchase-orders/{id}/receive` | `fulfilled` → `received`; stock in after local product mapping. |
-| Invoice | Both | Navigate to Invoices | Opens linked invoice (`?invoice=&po=`). |
-| Receipts | Both | Navigate to Invoices | Opens payment history / receipts (`?focus=payments`). |
+| Invoice | Both | In-place modal | Opens linked invoice without leaving PO/IO. |
+| Receipts | Both | In-place modal | Buyer: view history. Seller: can record payment when balance remains. |
 
 ### Explicitly not available on PO screens
 

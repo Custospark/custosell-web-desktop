@@ -10,22 +10,31 @@ import { computeInvoiceBalance, computePayableTotal } from '../payments/payableB
 import type { RecordPaymentInput } from '../payments/RecordPaymentForm';
 import { Button } from '../../shared/components/buttons/Button';
 import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
+import { isReceivedInvoice } from './invoiceListHelpers';
 import { X } from 'lucide-react';
 
 interface RecordPaymentModalProps {
   invoice: Invoice;
   onClose: () => void;
   onPaymentRecorded?: (result: { invoice: Invoice; payment: Payment }) => void;
+  /** Force view-only even if issued (e.g. buyer opening receipts from PO). */
+  viewOnly?: boolean;
 }
 
-export default function RecordPaymentModal({ invoice, onClose, onPaymentRecorded }: RecordPaymentModalProps) {
+export default function RecordPaymentModal({
+  invoice,
+  onClose,
+  onPaymentRecorded,
+  viewOnly = false,
+}: RecordPaymentModalProps) {
   const { data: freshInvoice } = useInvoice(invoice.id);
   const activeInvoice = freshInvoice ?? invoice;
   const payments = activeInvoice.payments ?? [];
   const totalAmount = computePayableTotal(activeInvoice, 'invoice');
   const remainingBalance = computeInvoiceBalance(activeInvoice);
   const amountPaid = activeInvoice.amount_paid || 0;
-  const canRecord = remainingBalance > 0.009;
+  const received = viewOnly || isReceivedInvoice(activeInvoice);
+  const canRecord = !received && remainingBalance > 0.009;
 
   const recordPayment = useRecordPayment();
   const [receiptPayment, setReceiptPayment] = useState<{ payment: Payment; invoice: Invoice } | null>(null);
@@ -63,17 +72,25 @@ export default function RecordPaymentModal({ invoice, onClose, onPaymentRecorded
 
   return createPortal(
     <div className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} flex items-center justify-center p-4 pointer-events-none`}>
-      <div
-        className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full max-w-xl lg:max-w-3xl xl:max-w-4xl max-h-[92vh] overflow-y-auto"
-      >
+      <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full max-w-xl lg:max-w-3xl xl:max-w-4xl max-h-[92vh] overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4">
-          <div />
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">
+              {canRecord ? 'Record payment' : 'Payment receipts'}
+            </h2>
+            <p className="mt-0.5 text-sm text-gray-500">{activeInvoice.invoice_number}</p>
+          </div>
           <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="px-5 pb-5 pt-1">
+          {received && remainingBalance > 0.009 ? (
+            <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              This is a supplier invoice. Only the seller can record payments — you can view receipts here.
+            </p>
+          ) : null}
           <PaymentsPanel
             referenceLabel={activeInvoice.invoice_number}
             referenceType="Invoice"

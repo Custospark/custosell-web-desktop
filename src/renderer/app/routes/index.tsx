@@ -147,7 +147,8 @@ export function AppRoutes() {
             <Route path={ROUTES.SALES.HISTORY} element={<SuspenseWrapper><SalesHistoryPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.REFUNDS} element={<SuspenseWrapper><RefundsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.SALES.MY_SHIFT} element={<SuspenseWrapper><MyShiftPage /></SuspenseWrapper>} />
-            <Route path={ROUTES.INVOICES.INDEX} element={<SuspenseWrapper><InvoicesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVOICES.INDEX} element={<SuspenseWrapper><InvoicesPage mode="sales" /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVOICES.SUPPLIER} element={<SuspenseWrapper><InvoicesPage mode="supplier" /></SuspenseWrapper>} />
           </Route>
           <Route element={<ModuleAccessMiddleware module="inventory" />}>
             <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />

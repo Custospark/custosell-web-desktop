@@ -142,6 +142,9 @@ export interface RatioTrendItem {
   ratios: RatioSet;
 }
 
+export type AssetCategory = 'laptop' | 'phone' | 'furniture' | 'vehicle' | 'other';
+export type AssetCondition = 'new' | 'good' | 'fair' | 'poor' | 'retired';
+
 export interface FixedAsset {
   id: number;
   business_id: number;
@@ -155,6 +158,33 @@ export interface FixedAsset {
   status: 'active' | 'disposed' | 'fully_depreciated';
   notes: string | null;
   monthly_depreciation?: number;
+  asset_tag?: string | null;
+  serial_number?: string | null;
+  category?: AssetCategory | null;
+  location?: string | null;
+  condition?: AssetCondition | null;
+  assigned_employee_id?: number | null;
+  assigned_at?: string | null;
+  returned_at?: string | null;
+  assigned_employee?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    employee_number?: string;
+  } | null;
+}
+
+export interface FixedAssetAssignment {
+  id: number;
+  asset_id: number;
+  from_employee_id: number | null;
+  to_employee_id: number | null;
+  action: 'assign' | 'transfer' | 'return';
+  notes: string | null;
+  occurred_at: string;
+  performed_by?: number | null;
+  from_employee?: { id: number; first_name: string; last_name: string } | null;
+  to_employee?: { id: number; first_name: string; last_name: string } | null;
 }
 
 export interface DepreciationEntry {
@@ -164,6 +194,14 @@ export interface DepreciationEntry {
   amount: number;
   accumulated_depreciation: number;
   book_value_after: number;
+}
+
+export interface DepreciationRunResult {
+  asset_id: number;
+  asset_name: string;
+  amount?: number;
+  status: string;
+  error?: string;
 }
 
 export interface CashFlowItem {

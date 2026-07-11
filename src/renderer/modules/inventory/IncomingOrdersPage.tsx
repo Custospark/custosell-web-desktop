@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
-import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -30,6 +29,8 @@ import {
 } from './api/purchaseOrders/usePurchaseOrderQueries';
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
+import { SupplyStatusTabs } from './ui/supply/SupplyStatusTabs';
+import { PurchaseOrderMobileCard } from './ui/supply/PurchaseOrderMobileCard';
 import GenerateSellerInvoiceFromPoModal from './ui/supply/GenerateSellerInvoiceFromPoModal';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 
@@ -42,6 +43,67 @@ const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'rejected', label: 'Rejected' },
   { id: 'cancelled', label: 'Cancelled' },
 ];
+
+function sellerPoRowActions(opts: {
+  po: PurchaseOrder;
+  isOffline: boolean;
+  busy: boolean;
+  onView: () => void;
+  onAccept: () => void;
+  onFulfill: () => void;
+  onInvoice: () => void;
+}) {
+  const { po, isOffline, busy, onView, onAccept, onFulfill, onInvoice } = opts;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onView}
+        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+        title="View order details"
+      >
+        <Eye className="h-4 w-4" />
+      </button>
+      {po.status === 'submitted' ? (
+        <Button
+          type="button"
+          size="sm"
+          disabled={isOffline || busy}
+          onClick={onAccept}
+          title="Accept this order"
+          className="inline-flex items-center gap-1"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" /> Accept
+        </Button>
+      ) : null}
+      {po.status === 'accepted' ? (
+        <Button
+          type="button"
+          size="sm"
+          disabled={isOffline || busy}
+          onClick={onFulfill}
+          title="Fulfill this order (deduct stock)"
+          className="inline-flex items-center gap-1"
+        >
+          <PackageCheck className="h-3.5 w-3.5" /> Fulfill
+        </Button>
+      ) : null}
+      {po.status === 'fulfilled' || po.status === 'received' ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={isOffline}
+          onClick={onInvoice}
+          title="Generate invoice for buyer"
+          className="inline-flex items-center gap-1"
+        >
+          <FileText className="h-3.5 w-3.5" /> Invoice
+        </Button>
+      ) : null}
+    </>
+  );
+}
 
 export default function IncomingOrdersPage() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
@@ -105,24 +167,12 @@ export default function IncomingOrdersPage() {
 
       {isOffline ? <SupplyOfflineBanner /> : null}
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setStatusTab(tab.id)}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm',
-              statusTab === tab.id
-                ? 'border-blue-300 bg-blue-50 text-blue-800'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
-            )}
-          >
-            {tab.label}
-            <Badge variant="neutral">{statusCounts[tab.id] ?? 0}</Badge>
-          </button>
-        ))}
-      </div>
+      <SupplyStatusTabs
+        tabs={STATUS_TABS}
+        active={statusTab}
+        counts={statusCounts}
+        onChange={setStatusTab}
+      />
 
       <SearchInput
         value={search}
@@ -143,91 +193,82 @@ export default function IncomingOrdersPage() {
           icon={<Truck className="h-10 w-10" />}
         />
       ) : (
-        <Card className="overflow-hidden p-0">
-          <Table
-            data={paginated.data}
-            rowKey={(po) => po.id}
-            onRowClick={(po) => {
-              setSelected(po);
-              setRejectReason('');
-            }}
-            columns={[
-              {
-                key: 'po_number',
-                header: 'PO',
-                render: (po) => <span className="font-medium text-gray-900">{po.po_number}</span>,
-              },
-              {
-                key: 'buyer',
-                header: 'Buyer',
-                render: (po) => po.buyer_business?.name ?? `Business #${po.buyer_business_id}`,
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (po) => purchaseOrderStatusBadge(po.status),
-              },
-              {
-                key: 'total',
-                header: 'Total',
-                render: (po) => formatCurrency(Number(po.total_amount)),
-              },
-              {
-                key: 'actions',
-                header: '',
-                render: (po) => (
-                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setViewPo(po)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      title="View order details"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    {po.status === 'submitted' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isOffline || busy}
-                        onClick={() => void acceptPo.mutateAsync(po.id)}
-                        title="Accept this order"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Accept
-                      </Button>
-                    ) : null}
-                    {po.status === 'accepted' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isOffline || busy}
-                        onClick={() => void fulfillPo.mutateAsync(po.id)}
-                        title="Fulfill this order (deduct stock)"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <PackageCheck className="h-3.5 w-3.5" /> Fulfill
-                      </Button>
-                    ) : null}
-                    {po.status === 'fulfilled' || po.status === 'received' ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={isOffline}
-                        onClick={() => setInvoicePo(po)}
-                        title="Generate invoice for buyer"
-                        className="inline-flex items-center gap-1"
-                      >
-                        <FileText className="h-3.5 w-3.5" /> Invoice
-                      </Button>
-                    ) : null}
-                  </div>
-                ),
-              },
-            ]}
-          />
-          <div className="border-t border-gray-100 px-4 py-3">
+        <>
+          <div className="space-y-3 md:hidden">
+            {paginated.data.map((po) => (
+              <PurchaseOrderMobileCard
+                key={po.id}
+                purchaseOrder={po}
+                partyLabel="Buyer"
+                partyName={po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}
+                onOpen={() => {
+                  setSelected(po);
+                  setRejectReason('');
+                }}
+                actions={sellerPoRowActions({
+                  po,
+                  isOffline,
+                  busy,
+                  onView: () => setViewPo(po),
+                  onAccept: () => void acceptPo.mutateAsync(po.id),
+                  onFulfill: () => void fulfillPo.mutateAsync(po.id),
+                  onInvoice: () => setInvoicePo(po),
+                })}
+              />
+            ))}
+          </div>
+
+          <Card className="hidden overflow-hidden p-0 md:block" padding={false}>
+            <Table
+              data={paginated.data}
+              rowKey={(po) => po.id}
+              onRowClick={(po) => {
+                setSelected(po);
+                setRejectReason('');
+              }}
+              columns={[
+                {
+                  key: 'po_number',
+                  header: 'PO',
+                  render: (po) => <span className="font-medium text-gray-900">{po.po_number}</span>,
+                },
+                {
+                  key: 'buyer',
+                  header: 'Buyer',
+                  render: (po) => po.buyer_business?.name ?? `Business #${po.buyer_business_id}`,
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (po) => purchaseOrderStatusBadge(po.status),
+                },
+                {
+                  key: 'total',
+                  header: 'Total',
+                  render: (po) => formatCurrency(Number(po.total_amount)),
+                },
+                {
+                  key: 'actions',
+                  header: '',
+                  render: (po) => (
+                    <div className="flex flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      {sellerPoRowActions({
+                        po,
+                        isOffline,
+                        busy,
+                        onView: () => setViewPo(po),
+                        onAccept: () => void acceptPo.mutateAsync(po.id),
+                        onFulfill: () => void fulfillPo.mutateAsync(po.id),
+                        onInvoice: () => setInvoicePo(po),
+                      })}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </Card>
+
+          <div className="rounded-xl border border-gray-200 bg-white px-3 py-3 sm:px-4">
             <Pagination
               currentPage={paginated.page}
               totalPages={paginated.totalPages}
@@ -237,15 +278,15 @@ export default function IncomingOrdersPage() {
               onPageSizeChange={paginated.setPageSize}
             />
           </div>
-        </Card>
+        </>
       )}
 
       {selected ? (
         <Card className="space-y-3 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <h2 className="font-semibold text-gray-900">{selected.po_number}</h2>
-              <p className="text-sm text-gray-600">
+              <p className="truncate text-sm text-gray-600">
                 Buyer: {selected.buyer_business?.name ?? selected.buyer_business_id}
               </p>
             </div>
@@ -275,12 +316,12 @@ export default function IncomingOrdersPage() {
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Explain why you cannot fulfill this order"
               />
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap">
                 <Button
                   type="button"
                   disabled={isOffline || busy}
                   onClick={() => void acceptPo.mutateAsync(selected.id)}
-                  className="inline-flex items-center gap-1"
+                  className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
                 >
                   <CheckCircle2 className="h-4 w-4" /> Accept
                 </Button>
@@ -299,7 +340,7 @@ export default function IncomingOrdersPage() {
                     if (!ok) return;
                     void rejectPo.mutateAsync({ id: selected.id, rejection_reason: rejectReason.trim() });
                   }}
-                  className="inline-flex items-center gap-1"
+                  className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
                 >
                   <Ban className="h-4 w-4" /> Reject
                 </Button>
@@ -307,32 +348,37 @@ export default function IncomingOrdersPage() {
             </div>
           ) : null}
           {selected.status === 'accepted' ? (
-            <div className="flex justify-end">
+            <div className="flex justify-stretch sm:justify-end">
               <Button
                 type="button"
                 disabled={isOffline || busy}
                 loading={fulfillPo.isPending}
                 onClick={() => void fulfillPo.mutateAsync(selected.id)}
-                className="inline-flex items-center gap-1"
+                className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
               >
                 <PackageCheck className="h-4 w-4" /> Fulfill & stock out
               </Button>
             </div>
           ) : null}
           {selected.status === 'fulfilled' || selected.status === 'received' ? (
-            <div className="flex justify-end">
+            <div className="flex justify-stretch sm:justify-end">
               <Button
                 type="button"
                 disabled={isOffline}
                 onClick={() => setInvoicePo(selected)}
-                className="inline-flex items-center gap-1"
+                className="inline-flex w-full items-center justify-center gap-1 sm:w-auto"
               >
                 <FileText className="h-4 w-4" /> Generate invoice
               </Button>
             </div>
           ) : null}
-          <div className="flex justify-end">
-            <Button type="button" variant="secondary" onClick={() => setSelected(null)}>
+          <div className="flex justify-stretch sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setSelected(null)}
+              className="w-full sm:w-auto"
+            >
               Close detail
             </Button>
           </div>

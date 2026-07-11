@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Ban, Eye, FileText, PackageCheck, Pencil, RefreshCw, Send, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
-import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';

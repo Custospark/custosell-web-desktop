@@ -54,6 +54,8 @@ export const ROUTES = {
     PEOPLE: '/hr/people',
     EMPLOYEE: (id: number) => `/hr/people/${id}`,
     DEPARTMENTS: '/hr/departments',
+    COMPANY_ASSETS: '/hr/company-assets',
+    COMPANY_ASSET: (id: number) => `/hr/company-assets/${id}`,
     ATTENDANCE: '/hr/attendance',
     LEAVE: '/hr/leave',
     PAYROLL: '/hr/payroll',

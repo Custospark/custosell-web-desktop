@@ -7,6 +7,7 @@ import type {
   ChartOfAccount, AccountingPeriod, JournalEntry, JournalEntryLine,
   TrialBalance, IncomeStatement, BalanceSheet, RatioSet, RatioTrendItem, FixedAsset,
   CashFlowStatement, EquityStatement, InventoryReconciliation,
+  DepreciationEntry, DepreciationRunResult,
 } from './AccountingTypes';
 import { buildReportQueryString, type ReportPeriodParams } from '../utils/periodSelectionUtils';
 
@@ -33,6 +34,8 @@ export const accountingKeys = {
   balanceSheet: (params?: ReportPeriodParams) => [...accountingKeys.all, 'balance-sheet', params?.cacheKey ?? 'current'] as const,
   ratios: (params?: ReportPeriodParams) => [...accountingKeys.all, 'ratios', params?.cacheKey ?? 'current'] as const,
   fixedAssets: (filters?: Record<string, string>) => [...accountingKeys.all, 'fixed-assets', filters] as const,
+  fixedAsset: (id: number) => [...accountingKeys.all, 'fixed-assets', id] as const,
+  fixedAssetSchedule: (id: number) => [...accountingKeys.all, 'fixed-assets', id, 'schedule'] as const,
   cashFlow: (params?: ReportPeriodParams) => [...accountingKeys.all, 'cash-flow', params?.cacheKey ?? 'current'] as const,
   equity: (params?: ReportPeriodParams) => [...accountingKeys.all, 'equity', params?.cacheKey ?? 'current'] as const,
   inventoryReconciliation: () => [...accountingKeys.all, 'inventory-reconciliation'] as const,
@@ -170,6 +173,48 @@ export function useFixedAssets(filters?: Record<string, string>) {
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: FixedAsset[] }>(`${ACCOUNTING.FIXED_ASSETS}${params ? `?${params}` : ''}`);
       return data.data ?? [];
+    },
+  });
+}
+
+export function useFixedAsset(id: number, enabled = true) {
+  return useQuery<FixedAsset>({
+    queryKey: accountingKeys.fixedAsset(id),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: FixedAsset }>(ACCOUNTING.FIXED_ASSET(id));
+      return data.data;
+    },
+    enabled: enabled && Number.isFinite(id) && id > 0,
+  });
+}
+
+export function useFixedAssetSchedule(id: number, enabled = true) {
+  return useQuery<DepreciationEntry[]>({
+    queryKey: accountingKeys.fixedAssetSchedule(id),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: DepreciationEntry[] }>(ACCOUNTING.fixedAssetSchedule(id));
+      return data.data ?? [];
+    },
+    enabled: enabled && Number.isFinite(id) && id > 0,
+  });
+}
+
+export function useRunDepreciation() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<DepreciationRunResult[], AxiosError, { period_id: number }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post<{ data: DepreciationRunResult[] }>(ACCOUNTING.runDepreciation, payload);
+      return data.data ?? [];
+    },
+    onSuccess: (results) => {
+      qc.invalidateQueries({ queryKey: accountingKeys.fixedAssets() });
+      const ok = results.filter((r) => r.status === 'posted' || r.status === 'success').length;
+      showToast('success', ok ? `Depreciation posted for ${ok} asset(s)` : 'Depreciation run completed');
+    },
+    onError: (err) => {
+      const msg = (err.response?.data as { message?: string })?.message ?? 'Failed to run depreciation';
+      showToast('error', msg);
     },
   });
 }

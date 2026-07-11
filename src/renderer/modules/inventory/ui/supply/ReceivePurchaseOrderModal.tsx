@@ -49,21 +49,21 @@ export function ReceivePurchaseOrderModal({ purchaseOrder, isOpen, onClose }: Re
         <p className="text-sm text-gray-600">
           Map each fulfilled line to one of your local products. Stock will increase on those products.
         </p>
-        <ul className="space-y-3">
+        <ul className="max-h-[60vh] space-y-3 overflow-y-auto pr-0.5">
           {items.map((item) => (
             <li key={item.id} className="rounded-lg border border-gray-200 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="font-medium text-gray-900">{item.product_name}</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 break-words">{item.product_name}</p>
                   <p className="text-xs text-gray-500">
                     Qty {item.quantity_fulfilled || item.quantity} · {formatCurrency(Number(item.unit_price))}
                     {item.product_sku ? ` · SKU ${item.product_sku}` : ''}
                   </p>
                 </div>
-                <label className="flex min-w-[14rem] flex-col gap-1 text-xs font-medium text-gray-700">
+                <label className="flex w-full min-w-0 flex-col gap-1 text-xs font-medium text-gray-700 sm:max-w-xs">
                   Map to my product
                   <select
-                    className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm font-normal text-gray-900"
+                    className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm font-normal text-gray-900"
                     value={mappings[item.id] ?? ''}
                     onChange={(e) =>
                       setMappings((prev) => ({
@@ -85,14 +85,14 @@ export function ReceivePurchaseOrderModal({ purchaseOrder, isOpen, onClose }: Re
           ))}
         </ul>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={receivePo.isPending}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={receivePo.isPending} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button
             type="button"
             disabled={!allMapped || receivePo.isPending}
             loading={receivePo.isPending}
-            className="inline-flex items-center gap-2"
+            className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
             onClick={() => {
               receivePo.mutate(
                 {

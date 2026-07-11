@@ -189,6 +189,8 @@ export const ACCOUNTING = {
   RATIO_TRENDS: '/ratios/trends',
   FIXED_ASSETS: '/fixed-assets',
   FIXED_ASSET: (id: number) => `/fixed-assets/${id}`,
+  runDepreciation: '/fixed-assets/run-depreciation',
+  fixedAssetSchedule: (id: number) => `/fixed-assets/${id}/schedule`,
   EXPORT: (type: string) => `/accounting/export/${type}`,
   INVENTORY_RECONCILIATION: '/inventory/reconciliation',
   INVENTORY_OPENING_BALANCE: '/inventory/opening-balance',

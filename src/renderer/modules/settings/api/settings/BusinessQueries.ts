@@ -5,7 +5,12 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { BUSINESSES } from '../../../../shared/api/endpoints/endpoints';
-import type { Business, UpdateBusinessData, UpdateBusinessMutationInput } from './BusinessTypes';
+import type {
+  Business,
+  UpdateBusinessData,
+  UpdateBusinessMutationInput,
+  UpdateSupplyProfileData,
+} from './BusinessTypes';
 import { setBusiness } from '../../../../app/store/slices/authSlice';
 import { useAppDispatch } from '../../../../app/store/hooks/useApp';
 import { store } from '../../../../app/store/store';
@@ -103,6 +108,33 @@ export function useBusiness() {
   }, [query.data, dispatch]);
 
   return query;
+}
+
+export function useUpdateSupplyProfile() {
+  const qc = useQueryClient();
+  const dispatch = useAppDispatch();
+  const { showToast } = useToast();
+  return useMutation<Business, AxiosError<ApiError>, UpdateSupplyProfileData>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async (data) => {
+      const { data: response } = await axiosInstance.patch<{ data: Business }>(BUSINESSES.SUPPLY_PROFILE, data);
+      return response.data;
+    },
+    onSuccess: (business) => {
+      dispatch(setBusiness(businessToAuthInfo(business)));
+      qc.setQueryData(businessKeys.mine(), (old: BusinessWithSyncMeta | undefined) =>
+        old ? { ...old, ...business, _pendingSync: false } : (business as BusinessWithSyncMeta),
+      );
+      showToast(
+        'success',
+        business.is_open_for_supply ? 'Business is open for supply' : 'Business closed for supply',
+      );
+    },
+    onError: (e) => {
+      showToast('error', sanitizeErrorMessage(e, 'Failed to update supply profile'));
+    },
+  });
 }
 
 export function useUpdateBusiness() {

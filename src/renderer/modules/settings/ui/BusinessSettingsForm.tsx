@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
 import { useBusiness, useUpdateBusiness } from '../api/settings/BusinessQueries';
 import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
+import { BusinessSupplyProfileCard } from '../../inventory/ui/supply/BusinessSupplyProfileCard';
 import { Badge } from '../../../shared/components/badges/Badge';
 import { Button } from '../../../shared/components/buttons/Button';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
@@ -1100,6 +1101,8 @@ export default function BusinessSettingsForm() {
               </BusinessViewField>
             )}
           </BusinessSectionCard>
+
+          <BusinessSupplyProfileCard />
         </div>
       </div>
 

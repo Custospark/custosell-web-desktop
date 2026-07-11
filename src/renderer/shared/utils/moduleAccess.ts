@@ -26,7 +26,7 @@ export type BusinessModuleSlug = (typeof BUSINESS_MODULE_SLUGS)[number];
 export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
   dashboard: 'Dashboard',
   sales: 'Sales',
-  inventory: 'Inventory',
+  inventory: 'Inventory & Supply Chain',
   customers: 'Customers',
   pipeline: 'Pipeline',
   estimates: 'Projects & Estimates',
@@ -68,6 +68,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Dashboard: 'dashboard',
   Sales: 'sales',
   Inventory: 'inventory',
+  'Inventory & Supply Chain': 'inventory',
   Customers: 'customers',
   Pipeline: 'pipeline',
   'Projects & Estimates': 'estimates',

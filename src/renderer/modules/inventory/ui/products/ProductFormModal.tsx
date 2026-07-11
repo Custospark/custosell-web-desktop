@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Check,
 } from 'lucide-react';
+import { ProductSupplyListingSection } from '../supply/ProductSupplyListingSection';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -373,6 +374,10 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
             {itemLabel} is active
           </label>
         </PipelineFormSection>
+
+        {isEditing && product && !isService ? (
+          <ProductSupplyListingSection product={product} />
+        ) : null}
 
         <PipelineFormSection
           title="Recurring / subscription"

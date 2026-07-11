@@ -98,3 +98,4 @@ Editing a pending or failed product create does not duplicate local rows or queu
 - Failed-sync correction scoped to queued **creates** for products; updates/deletes use standard queue behavior.
 - Low-stock and stock-movement endpoints are **not** snapshotted; they require network.
 - Platform admin queries are never persisted.
+- **B2B supply chain** (marketplace, purchase orders, incoming orders, supply listing/profile) is **online-only** — no IndexedDB or mutation-queue path. See [modules/inventory-supply-chain.md](../modules/inventory-supply-chain.md).

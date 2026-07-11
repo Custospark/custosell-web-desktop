@@ -37,10 +37,17 @@ import {
   completeOfflineStockAdjustmentInstant,
 } from '../../../../app/store/offline/inventory/completeOfflineStockAdjustment';
 import { stockLedger } from '../../../../app/store/offline/inventory/stockLedger';
+import { PRODUCTS } from '../../../../shared/api/endpoints/endpoints';
 import type {
   Category, Product, StockMovement,
   CreateCategoryData, CreateProductData, UpdateProductData, CreateStockMovementData,
 } from './ProductTypes';
+
+export interface UpdateSupplyListingData {
+  listed_for_supply: boolean;
+  supply_price?: number | null;
+  supply_min_qty?: number | null;
+}
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -487,6 +494,32 @@ export function useCreateProduct() {
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to create product'));
+    },
+  });
+}
+
+export function useUpdateSupplyListing() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<Product, AxiosError<ApiError>, { id: number; data: UpdateSupplyListingData }>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async ({ id, data }) => {
+      const { data: res } = await axiosInstance.patch(PRODUCTS.SUPPLY_LISTING(id), data);
+      const product = extractProductFromResponse(res);
+      if (!product) throw new Error('Invalid supply listing response');
+      return product;
+    },
+    onSuccess: (product, { id }) => {
+      qc.setQueryData<ProductWithSyncMeta[]>(inventoryKeys.products(), (old) =>
+        (old ?? []).map((p) => (p.id === id ? { ...p, ...product } : p)),
+      );
+      qc.setQueryData(inventoryKeys.product(id), product);
+      void refreshProductCatalogSnapshot();
+      showToast('success', product.listed_for_supply ? 'Product listed on marketplace' : 'Product removed from marketplace');
+    },
+    onError: (e) => {
+      showToast('error', extractApiErrorMessage(e, 'Failed to update supply listing'));
     },
   });
 }

@@ -37,6 +37,8 @@ export interface BusinessInfo {
   logo_path: string | null;
   status: string;
   owner_id?: number | null;
+  is_open_for_supply?: boolean;
+  supply_headline?: string | null;
 }
 export interface AuthUser {
   id: number;

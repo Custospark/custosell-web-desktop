@@ -34,8 +34,15 @@ export interface Business {
   logo_path: string | null;
   status: string;
   trial_ends_at: string | null;
+  is_open_for_supply?: boolean;
+  supply_headline?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface UpdateSupplyProfileData {
+  is_open_for_supply: boolean;
+  supply_headline?: string | null;
 }
 
 export interface UpdateBusinessData {

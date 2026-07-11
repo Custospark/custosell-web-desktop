@@ -8,7 +8,15 @@ export const ROUTES = {
   PRIVACY: '/privacy',
   DASHBOARD: '/dashboard',
   SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
-  INVENTORY: { INDEX: '/inventory', PRODUCTS: '/inventory/products', CATEGORIES: '/inventory/categories', STOCK: '/inventory/stock' },
+  INVENTORY: {
+    INDEX: '/inventory',
+    PRODUCTS: '/inventory/products',
+    CATEGORIES: '/inventory/categories',
+    STOCK: '/inventory/stock',
+    MARKETPLACE: '/inventory/marketplace',
+    PURCHASE_ORDERS: '/inventory/purchase-orders',
+    INCOMING_ORDERS: '/inventory/incoming-orders',
+  },
   CUSTOMERS: { INDEX: '/customers' },
   PIPELINE: {
     INDEX: '/pipeline',

@@ -26,6 +26,9 @@ import ResetPasswordPage from '../../modules/auth/ResetPasswordPage';
 import ProductsPage from '../../modules/inventory/ProductsPage';
 import CategoriesPage from '../../modules/inventory/CategoriesPage';
 import StockLedgerPage from '../../modules/inventory/StockLedgerPage';
+import MarketplacePage from '../../modules/inventory/MarketplacePage';
+import PurchaseOrdersPage from '../../modules/inventory/PurchaseOrdersPage';
+import IncomingOrdersPage from '../../modules/inventory/IncomingOrdersPage';
 import CustomerListPage from '../../modules/customers/CustomerListPage';
 import InvoicesPage from '../../modules/invoices/InvoicesPage';
 import SettingsPage from '../../modules/settings/SettingsPage';
@@ -151,6 +154,9 @@ export function AppRoutes() {
             <Route path="/inventory/products/:id/edit" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
             <Route path={ROUTES.INVENTORY.CATEGORIES} element={<SuspenseWrapper><CategoriesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.INVENTORY.STOCK} element={<SuspenseWrapper><StockLedgerPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVENTORY.MARKETPLACE} element={<SuspenseWrapper><MarketplacePage /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVENTORY.PURCHASE_ORDERS} element={<SuspenseWrapper><PurchaseOrdersPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.INVENTORY.INCOMING_ORDERS} element={<SuspenseWrapper><IncomingOrdersPage /></SuspenseWrapper>} />
           </Route>
           <Route element={<ModuleAccessMiddleware module="customers" />}>
             <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />

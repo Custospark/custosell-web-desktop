@@ -31,6 +31,10 @@ export interface Product {
   is_active: boolean;
   is_recurring?: boolean;
   billing_interval?: string | null;
+  listed_for_supply?: boolean;
+  supply_price?: string | number | null;
+  supply_min_qty?: number | null;
+  listed_at?: string | null;
   created_at: string;
   updated_at: string;
 }

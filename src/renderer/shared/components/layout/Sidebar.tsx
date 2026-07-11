@@ -11,6 +11,7 @@ import {
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
+  Store, Truck, PackageCheck,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -129,11 +130,14 @@ const baseNavGroups: NavGroup[] = [
   },
   {
     icon: Package,
-    label: 'Inventory',
+    label: 'Inventory & Supply Chain',
     subItems: [
       { to: ROUTES.INVENTORY.PRODUCTS, label: 'Products', icon: Package },
       { to: ROUTES.INVENTORY.CATEGORIES, label: 'Categories', icon: FolderTree },
       { to: ROUTES.INVENTORY.STOCK, label: 'Stock Ledger', icon: ClipboardList },
+      { to: ROUTES.INVENTORY.MARKETPLACE, label: 'Marketplace', icon: Store },
+      { to: ROUTES.INVENTORY.PURCHASE_ORDERS, label: 'Purchase orders', icon: Truck },
+      { to: ROUTES.INVENTORY.INCOMING_ORDERS, label: 'Incoming orders', icon: PackageCheck },
     ],
   },
   {

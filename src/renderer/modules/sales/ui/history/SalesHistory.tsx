@@ -13,7 +13,7 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { SearchInput } from '../../../../shared/components/inputs/SearchInput';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
-import { Eye, RotateCcw, Trash2, CheckSquare, Square, WifiOff, DollarSign, FileText, Mail } from 'lucide-react';
+import { RotateCcw, Trash2, CheckSquare, Square, WifiOff, DollarSign, FileText, Mail } from 'lucide-react';
 import SendDocumentEmailModal from '../../../../shared/components/email/SendDocumentEmailModal';
 import { EmailSentCountBadge, emailSentLabel } from '../../../../shared/components/email/EmailSentCountBadge';
 import { saleDocumentEmailCount, saleEmailDocumentTarget } from '../../../../shared/utils/customerContactUtils';
@@ -22,7 +22,6 @@ import type { DocumentEmailType } from '../../../../shared/components/email/Send
 import InvoiceFromSaleModal from '../InvoiceFromSaleModal';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
-import ReceiptPreviewModal from './ReceiptPreviewModal';
 import SalePaymentsModal from './SalePaymentsModal';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 import { computeSaleBalance } from '../../../payments/payableBalance';
@@ -37,7 +36,6 @@ export default function SalesHistory() {
   const qc = useQueryClient();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
-  const [previewSale, setPreviewSale] = useState<Sale | null>(null);
   const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
   const [invoiceSale, setInvoiceSale] = useState<Sale | null>(null);
   const [existingInvoiceForSale, setExistingInvoiceForSale] = useState<Invoice | null>(null);
@@ -248,9 +246,6 @@ export default function SalesHistory() {
             const emailDoc = saleEmailDocumentTarget(s, linkedInvoice);
             return (
             <div className="flex gap-1">
-              <button title="Sale summary receipt" onClick={() => setPreviewSale(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
-                <Eye className="w-4 h-4" />
-              </button>
               {canInvoice && (
                 <button
                   title={
@@ -293,9 +288,6 @@ export default function SalesHistory() {
       <div className="flex items-center justify-between mt-4">
         <Pagination currentPage={paginated.page} totalPages={paginated.totalPages} totalItems={paginated.totalItems} pageSize={paginated.pageSize} onPageChange={paginated.setPage} onPageSizeChange={paginated.setPageSize} />
       </div>
-      {previewSale && (
-        <ReceiptPreviewModal sale={previewSale} open={!!previewSale} onClose={() => setPreviewSale(null)} />
-      )}
       {paymentsSale && (
         <SalePaymentsModal sale={paymentsSale} open={!!paymentsSale} onClose={() => setPaymentsSale(null)} />
       )}

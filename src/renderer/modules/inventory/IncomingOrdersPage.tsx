@@ -91,7 +91,7 @@ export default function IncomingOrdersPage() {
 
   async function handleDelete(po: PurchaseOrder) {
     const ok = await confirm({
-      title: 'Delete rejected order?',
+      title: 'Delete order?',
       message: `Permanently delete ${po.po_number}? This cannot be undone.`,
       confirmText: 'Delete',
       cancelText: 'Keep',

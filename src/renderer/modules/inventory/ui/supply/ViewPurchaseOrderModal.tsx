@@ -18,7 +18,7 @@ const BUYER_ACTION: Record<string, string> = {
   rejected: 'The seller declined your order. You can delete it after reviewing their reason.',
   fulfilled: 'Items are ready. Confirm receipt to add them to your stock. Invoice and receipts are under Invoices.',
   received: 'Items are in your stock. Open Invoices for the linked invoice and payment receipts.',
-  cancelled: 'This order was cancelled. No further action needed.',
+  cancelled: 'This order was cancelled. You can delete it from your list.',
 };
 
 const SELLER_ACTION: Record<string, string> = {
@@ -28,7 +28,7 @@ const SELLER_ACTION: Record<string, string> = {
   rejected: 'You rejected this order. You can delete it from your list.',
   fulfilled: 'Stock deducted. Waiting for the buyer to confirm receipt. Payments stay under Invoices.',
   received: 'The buyer confirmed receipt. This order is complete — keep managing payment under Invoices.',
-  cancelled: 'The buyer cancelled this order. No further action needed.',
+  cancelled: 'The buyer cancelled this order. You can delete it from your list.',
 };
 
 const STEP_ORDER = ['draft', 'submitted', 'accepted', 'fulfilled', 'received'] as const;

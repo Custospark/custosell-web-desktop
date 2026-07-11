@@ -92,14 +92,14 @@ export function buyerPoActions({
         </Button>
       ) : null}
 
-      {po.status === 'rejected' ? (
+      {po.status === 'rejected' || po.status === 'cancelled' ? (
         <Button
           type="button"
           size="sm"
           variant="secondary"
           disabled={isOffline || busy}
           onClick={onDelete}
-          title="Delete this rejected order"
+          title={po.status === 'cancelled' ? 'Delete this cancelled order' : 'Delete this rejected order'}
           className="inline-flex items-center gap-1"
         >
           <Trash2 className="h-3.5 w-3.5" /> Delete

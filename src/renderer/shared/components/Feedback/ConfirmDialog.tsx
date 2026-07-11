@@ -28,6 +28,15 @@ export function ConfirmDialog({ open, options, onConfirm, onCancel }: ConfirmDia
     return () => clearInterval(timer);
   }, [open, options?.countdownSec]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onCancel]);
+
   if (!options || typeof document === 'undefined') return null;
 
   const config = variantConfig[options.variant || 'info'];
@@ -37,20 +46,15 @@ export function ConfirmDialog({ open, options, onConfirm, onCancel }: ConfirmDia
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className={`fixed inset-0 ${CONFIRM_Z_INDEX_CLASS} flex items-center justify-center p-4`}>
+        <div
+          className={`fixed inset-0 ${CONFIRM_Z_INDEX_CLASS} flex items-center justify-center p-4 pointer-events-none`}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/80 backdrop-blur-[2px]"
-            onClick={onCancel}
-            aria-hidden
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md rounded-xl bg-white p-6 opacity-100 shadow-2xl ring-1 ring-black/10"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="relative pointer-events-auto w-full max-w-md rounded-xl bg-white p-6 opacity-100 shadow-2xl ring-1 ring-black/10"
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
@@ -67,7 +71,7 @@ export function ConfirmDialog({ open, options, onConfirm, onCancel }: ConfirmDia
               <div className={`rounded-full p-2.5 ${config.iconBg}`}>
                 <Icon className={`h-6 w-6 ${config.iconColor}`} />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 pr-6">
                 <h3 id="confirm-dialog-title" className="text-lg font-semibold text-gray-900">
                   {options.title}
                 </h3>

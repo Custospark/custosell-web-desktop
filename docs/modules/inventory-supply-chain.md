@@ -24,7 +24,7 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 ## Buyer flow
 
 1. Marketplace → add listed lines to cart (one seller at a time) → draft or submit PO.
-2. Purchase orders → submit / cancel; **delete** draft or rejected.
+2. Purchase orders → submit / cancel; **delete** draft, rejected, or cancelled.
 3. After seller accepts → invoice appears under **Invoices** (Received). Open Invoice / Receipts from the PO row.
 4. After seller fulfills → **Receive** and map each line to a local product.
 
@@ -33,7 +33,7 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 1. Incoming orders → accept or reject (reason required).
 2. **Accept** auto-creates and sends an invoice for the buyer (manage payments under Invoices).
 3. Fulfill deducts stock. Insufficient stock returns 422.
-4. **Delete** rejected orders from the list.
+4. **Delete** rejected or cancelled orders from the list.
 
 ---
 
@@ -53,7 +53,7 @@ Billing rule: **Accept creates the invoice.** Payments and receipts are managed 
 | **fulfilled** | View, **Receive**, Invoice, Receipts | Receive maps each line to a local product → stock in. |
 | **received** | View, Invoice, Receipts | Stock already in. Payment continues under Invoices. |
 | **rejected** | View, **Delete** | Review rejection reason, then remove from list. |
-| **cancelled** | View | Terminal. No further actions. |
+| **cancelled** | View, **Delete** | Terminal on the order flow; delete to clean up. |
 
 ### Seller — Incoming orders (`/inventory/incoming-orders`)
 
@@ -65,7 +65,7 @@ Billing rule: **Accept creates the invoice.** Payments and receipts are managed 
 | **fulfilled** | View, Invoice, Receipts | Waiting for buyer receive. |
 | **received** | View, Invoice, Receipts | Order complete on the goods side; payment may still be open. |
 | **rejected** | View, **Delete** | Clean up rejected inbound POs. |
-| **cancelled** | View | Buyer cancelled. Terminal. |
+| **cancelled** | View, **Delete** | Buyer cancelled; seller can remove from Incoming. |
 
 ### What each action means
 
@@ -73,7 +73,7 @@ Billing rule: **Accept creates the invoice.** Payments and receipts are managed 
 |--------|-----|-----|--------|
 | Submit | Buyer | `POST /purchase-orders/{id}/submit` | `draft` → `submitted`; seller sees it under Incoming. |
 | Cancel | Buyer | `POST /purchase-orders/{id}/cancel` | `draft`/`submitted` → `cancelled`. |
-| Delete | Buyer or seller | `DELETE /purchase-orders/{id}` | Hard-delete **draft** (buyer only) or **rejected** (either). Blocked if an invoice is linked. |
+| Delete | Buyer or seller | `DELETE /purchase-orders/{id}` | Hard-delete **draft** (buyer only) or **rejected** / **cancelled** (either). Blocked if an invoice is linked. |
 | Accept | Seller | `POST /purchase-orders/{id}/accept` | `submitted` → `accepted`; creates + sends seller invoice (`purchase_order_id`, `buyer_business_id`). |
 | Reject | Seller | `POST /purchase-orders/{id}/reject` | `submitted` → `rejected` with reason. |
 | Fulfill | Seller | `POST /purchase-orders/{id}/fulfill` | `accepted` → `fulfilled`; stock out. 422 if insufficient stock. |

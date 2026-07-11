@@ -289,6 +289,7 @@ export function Navbar() {
             <button
               ref={triggerRef}
               type="button"
+              data-tour="navbar-profile"
               onClick={() => setDropdownOpen((open) => !open)}
               aria-expanded={dropdownOpen}
               aria-haspopup="menu"

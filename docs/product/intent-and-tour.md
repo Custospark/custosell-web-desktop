@@ -25,38 +25,21 @@ flowchart TD
 
 ## Intent cards (v1 copy)
 
-Pick **one primary**; optional **one secondary**.
+Pick **one primary**; optional **one secondary**. Cards mirror Custosell modules (icons/tones match Apps launcher): Dashboard, Sales, Inventory, Customers, Pipeline, Projects & Estimates, Expenses, Documents, HR, Accounting, Forecasting, plus “Show me everything”.
 
-| ID | Title | Supporting line |
-|----|--------|-----------------|
-| `sell_pos` | Sell every day | Counter sales, stock, and shifts — including offline |
-| `get_paid` | Get paid | Customers, invoices, and payment receipts |
-| `buy_supply` | Buy and supply | Marketplace, purchase orders, supplier invoices |
-| `win_deals` | Win deals | Pipeline boards, leads, and follow-ups |
-| `run_projects` | Run projects | Estimates, project boards, and delivery |
-| `people_payroll` | People and payroll | Team, attendance, leave, and payroll |
-| `know_numbers` | Know the numbers | Books, statements, and forecasting |
-| `explore` | Not sure yet | Show me around — I’ll choose as I go |
+**After submit (owner):** soft line — modules stay under Settings → Module access.  
+**Skip:** still continues into the guided tour.
 
-**After submit (owner):** soft line — “You can turn modules on anytime in Settings → Module access.”  
-**Home CTA (soft):** suggest a first action matching primary intent if that module is already enabled; otherwise point to Module access or Dashboard.
+## Shell + module tour (v1)
 
-## Shell tour step map (v1)
+Targets need stable anchors (`data-tour`). Guide card is placed **away from** the highlighted control so it never covers the spotlight.
 
-Targets need stable anchors (e.g. `data-tour="navbar-apps"`).
-
-| Step | Target | Message |
-|------|--------|---------|
-| 1 | Apps launcher (navbar) | Jump between areas of your business from one place |
-| 2 | Network / status (navbar) | See online, slow, or offline — core work keeps going when the network drops |
-| 3 | Guide (navbar) | Tutorials, FAQs, and help when you need them |
-| 4 | Sidebar | Your modules live here — only what your business has enabled |
-| 5 | Sidebar group (first accessible) | Open a section to reach day-to-day screens |
-| 6 | Module launcher reminder | Prefer the grid? Use Apps anytime |
-| 7 | Dashboard or first accessible hub | You’re ready — start with this workspace |
-| 8 | Module access (owners only) | Turn modules on or off for your team here |
-
-Skip if target missing (e.g. no Guide access). Offline: skip steps that only apply to online-only modules.
+| Area | What’s covered |
+|------|----------------|
+| Shell | Apps, network, Guide/Tour, profile, sidebar, Quick Support |
+| Modules | One step per module the user can access |
+| Owners | Module access in Settings |
+| Finish | Flower celebration + congratulations |
 
 ## Wireframe (intent)
 

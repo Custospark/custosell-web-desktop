@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
@@ -47,23 +48,38 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
   return (
     <Modal
       isOpen={open}
-      onClose={() => { /* must complete or skip */ }}
-      title="What brings you to Custosell?"
-      subtitle="Choose what matters most. You control modules anytime in Settings → Module access — this never changes permissions."
-      size="xl"
+      onClose={() => { /* complete or skip */ }}
+      size="2xl"
       titleCentered
-      bodyClassName="px-4 py-4 sm:px-6"
+      bodyClassName="px-0 py-0"
+      panelClassName="overflow-hidden max-w-4xl"
       hideCloseButton
       closeOnEscape={false}
     >
-      <div className="space-y-4">
-        <p className="text-center text-xs text-slate-500">
-          Select one primary goal
-          {primary ? ' — optionally add a second' : ''}
-          .
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 px-6 pb-8 pt-8 text-center text-white sm:px-10">
+        <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -right-8 bottom-0 h-32 w-32 rounded-full bg-cyan-300/20" />
+        <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/30 backdrop-blur">
+          <Sparkles className="h-6 w-6" aria-hidden />
+        </div>
+        <h2 className="relative mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+          What brings you to Custosell?
+        </h2>
+        <p className="relative mx-auto mt-2 max-w-xl text-sm text-indigo-50 sm:text-base">
+          You’re in control of a full business workspace — sales, stock, people, books, and more.
+          Pick what matters most. You enable modules anytime in Settings → Module access.
         </p>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      </div>
+
+      <div className="space-y-4 px-4 py-5 sm:px-6">
+        <p className="text-center text-sm font-medium text-slate-700">
+          {primary
+            ? 'Nice — add a second focus if you want, then continue'
+            : 'Choose your primary goal to get started'}
+        </p>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {INTENT_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
             const selected = primary === opt.id || secondary === opt.id;
             const badge = primary === opt.id ? 'Primary' : secondary === opt.id ? 'Also' : null;
             return (
@@ -72,19 +88,24 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
                 type="button"
                 onClick={() => toggle(opt.id)}
                 className={cn(
-                  'relative rounded-xl border px-3 py-3 text-left transition',
+                  'group relative flex gap-3 overflow-hidden rounded-2xl border px-3.5 py-3.5 text-left transition-all',
                   selected
-                    ? 'border-indigo-400 bg-indigo-50/80 ring-1 ring-indigo-300/60'
-                    : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50',
+                    ? 'border-indigo-400 bg-indigo-50/90 shadow-md shadow-indigo-100 ring-1 ring-indigo-300/50'
+                    : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-sm',
                 )}
               >
                 {badge ? (
-                  <span className="absolute right-2 top-2 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="absolute right-2.5 top-2.5 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                     {badge}
                   </span>
                 ) : null}
-                <p className="pr-12 text-sm font-semibold text-slate-900">{opt.title}</p>
-                <p className="mt-1 text-xs leading-snug text-slate-600">{opt.description}</p>
+                <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1', opt.tone)}>
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1 pr-10">
+                  <span className="block text-sm font-semibold text-slate-900">{opt.title}</span>
+                  <span className="mt-0.5 block text-xs leading-snug text-slate-600">{opt.description}</span>
+                </span>
               </button>
             );
           })}
@@ -94,14 +115,15 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
             type="button"
             onClick={() => void handleSkip()}
             disabled={update.isPending}
-            className="text-sm text-slate-500 hover:text-slate-800 disabled:opacity-50"
+            className="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
           >
-            Skip for now
+            Skip — take the tour anyway
           </button>
           <Button
             onClick={() => void handleContinue()}
             disabled={!primary || update.isPending}
             loading={update.isPending}
+            className="min-w-[9rem]"
           >
             Continue
           </Button>

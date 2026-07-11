@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Ban, FileText, PackageCheck, RefreshCw, Send, Truck } from 'lucide-react';
+import { Ban, Eye, FileText, PackageCheck, RefreshCw, Send, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { Badge } from '../../shared/components/badges/Badge';
@@ -23,6 +23,7 @@ import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { ReceivePurchaseOrderModal } from './ui/supply/ReceivePurchaseOrderModal';
 import GenerateInvoiceFromPoModal from './ui/supply/GenerateInvoiceFromPoModal';
+import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -40,7 +41,7 @@ export default function PurchaseOrdersPage() {
   const { confirm } = useConfirm();
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('all');
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<PurchaseOrder | null>(null);
+  const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
   const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
   const [generateInvoicePo, setGenerateInvoicePo] = useState<PurchaseOrder | null>(null);
 
@@ -102,7 +103,7 @@ export default function PurchaseOrdersPage() {
             type="button"
             onClick={() => setStatusTab(tab.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm',
+              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors',
               statusTab === tab.id
                 ? 'border-blue-300 bg-blue-50 text-blue-800'
                 : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
@@ -137,7 +138,6 @@ export default function PurchaseOrdersPage() {
           <Table
             data={paginated.data}
             rowKey={(po) => po.id}
-            onRowClick={(po) => setSelected(po)}
             columns={[
               {
                 key: 'po_number',
@@ -160,10 +160,27 @@ export default function PurchaseOrdersPage() {
                 render: (po) => formatCurrency(Number(po.total_amount)),
               },
               {
+                key: 'date',
+                header: 'Date',
+                render: (po) => (
+                  <span className="text-sm text-gray-500">
+                    {new Date(po.created_at).toLocaleDateString()}
+                  </span>
+                ),
+              },
+              {
                 key: 'actions',
                 header: '',
                 render: (po) => (
-                  <div className="flex flex-wrap justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setViewPo(po)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="View order details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     {po.status === 'draft' ? (
                       <Button
                         type="button"
@@ -237,44 +254,12 @@ export default function PurchaseOrdersPage() {
         </Card>
       )}
 
-      {selected ? (
-        <Card className="space-y-3 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-semibold text-gray-900">{selected.po_number}</h2>
-              <p className="text-sm text-gray-600">
-                Seller: {selected.seller_business?.name ?? selected.seller_business_id}
-              </p>
-            </div>
-            {purchaseOrderStatusBadge(selected.status)}
-          </div>
-          {selected.rejection_reason ? (
-            <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-800">
-              Rejected: {selected.rejection_reason}
-            </p>
-          ) : null}
-          <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200">
-            {(selected.items ?? []).map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                <span className="min-w-0 truncate text-gray-900">
-                  {item.product_name}
-                  {item.product_sku ? ` (${item.product_sku})` : ''}
-                </span>
-                <span className="shrink-0 text-gray-600">
-                  {item.quantity} × {formatCurrency(Number(item.unit_price))}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-right text-sm font-medium text-gray-900">
-            Total {formatCurrency(Number(selected.total_amount))}
-          </p>
-          <div className="flex justify-end">
-            <Button type="button" variant="secondary" onClick={() => setSelected(null)}>
-              Close detail
-            </Button>
-          </div>
-        </Card>
+      {viewPo ? (
+        <ViewPurchaseOrderModal
+          purchaseOrder={viewPo}
+          isOpen={!!viewPo}
+          onClose={() => setViewPo(null)}
+        />
       ) : null}
 
       {receivePo ? (

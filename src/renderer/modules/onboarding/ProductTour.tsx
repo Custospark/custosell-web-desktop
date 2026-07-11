@@ -247,6 +247,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     });
   }, [update]);
 
+  const goNextRef = useRef<() => void>(() => {});
   function goNext() {
     if (isLast) {
       onFinished?.();
@@ -258,6 +259,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     fireSave('tour_step', next);
     setAutoCountdown(5);
   }
+  useLayoutEffect(() => { goNextRef.current = goNext; });
 
   function goBack() {
     if (index <= 0) return;
@@ -282,15 +284,14 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     const timer = setInterval(() => {
       setAutoCountdown((c) => {
         if (c <= 1) {
-          goNext();
+          goNextRef.current();
           return 5;
         }
         return c - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPlay, index]);
+  }, [autoPlay, index, goNextRef]);
 
   if (!open || !step || steps.length === 0 || typeof document === 'undefined') return null;
 

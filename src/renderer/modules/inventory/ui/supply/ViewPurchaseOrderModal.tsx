@@ -146,23 +146,25 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
                   return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
                 })()}
               </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Buyer</p>
-                <p className="font-medium text-gray-900">{po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}</p>
-                {po.buyer_business?.description && (
-                  <p className="text-gray-500 text-xs italic">{po.buyer_business.description}</p>
-                )}
-                {po.buyer_business?.business_phone && (
-                  <p className="text-gray-600 text-xs">{po.buyer_business.business_phone}</p>
-                )}
-                {po.buyer_business?.business_email && (
-                  <p className="text-gray-600 text-xs">{po.buyer_business.business_email}</p>
-                )}
-                {(() => {
-                  const parts = [po.buyer_business?.address, po.buyer_business?.city, po.buyer_business?.state, po.buyer_business?.country].filter(Boolean);
-                  return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
-                })()}
-              </div>
+              {role === 'seller' && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Buyer</p>
+                  <p className="font-medium text-gray-900">{po.buyer_business?.name ?? `Business #${po.buyer_business_id}`}</p>
+                  {po.buyer_business?.description && (
+                    <p className="text-gray-500 text-xs italic">{po.buyer_business.description}</p>
+                  )}
+                  {po.buyer_business?.business_phone && (
+                    <p className="text-gray-600 text-xs">{po.buyer_business.business_phone}</p>
+                  )}
+                  {po.buyer_business?.business_email && (
+                    <p className="text-gray-600 text-xs">{po.buyer_business.business_email}</p>
+                  )}
+                  {(() => {
+                    const parts = [po.buyer_business?.address, po.buyer_business?.city, po.buyer_business?.state, po.buyer_business?.country].filter(Boolean);
+                    return parts.length > 0 ? <p className="text-gray-500 text-xs">{parts.join(', ')}</p> : null;
+                  })()}
+                </div>
+              )}
             </div>
           </div>
         </div>

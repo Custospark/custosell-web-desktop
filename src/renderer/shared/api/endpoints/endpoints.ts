@@ -31,6 +31,8 @@ export const SALES = {
   REFUND: (id: number) => `/sales/${id}/refund`,
   PAYMENT: (id: number) => `/sales/${id}/payment`,
   ASSIGN_CUSTOMER: (id: number) => `/sales/${id}/customer`,
+  EMAIL: (id: number) => `/sales/${id}/email`,
+  PDF: (id: number) => `/sales/${id}/pdf`,
 };
 
 export const PAYMENTS = {

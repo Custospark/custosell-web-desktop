@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { useToast } from '../../app/contexts/useToast';
-import { INVOICES, PAYMENTS } from '../api/endpoints/endpoints';
+import { INVOICES, PAYMENTS, SALES } from '../api/endpoints/endpoints';
 import { invoiceKeys } from '../../modules/invoices/api/InvoiceQueries';
 import { salesKeys } from '../../modules/sales/api/salesQueries';
 
@@ -61,6 +61,20 @@ export function useEmailPaymentReceipt() {
     mutationFn: ({ id, payload }) => postDocumentEmail(PAYMENTS.EMAIL(id), payload),
     onSuccess: (result) => {
       void qc.invalidateQueries({ queryKey: invoiceKeys.all });
+      void qc.invalidateQueries({ queryKey: salesKeys.all });
+      showToast('success', `Receipt emailed to ${result.sent_to}`);
+    },
+    onError: (error) => showToast('error', extractErrorMessage(error)),
+  });
+}
+
+export function useEmailSaleReceipt() {
+  const { showToast } = useToast();
+  const qc = useQueryClient();
+
+  return useMutation<SendDocumentEmailResult, AxiosError, { id: number; payload: SendDocumentEmailPayload }>({
+    mutationFn: ({ id, payload }) => postDocumentEmail(SALES.EMAIL(id), payload),
+    onSuccess: (result) => {
       void qc.invalidateQueries({ queryKey: salesKeys.all });
       showToast('success', `Receipt emailed to ${result.sent_to}`);
     },

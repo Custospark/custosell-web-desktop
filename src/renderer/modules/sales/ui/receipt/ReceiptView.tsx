@@ -3,7 +3,8 @@ import { useReactToPrint } from 'react-to-print';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { Printer, Plus } from 'lucide-react';
+import { Printer, Plus, Download, Share2 } from 'lucide-react';
+import { useWebShare, receiptShareText } from '../../../../shared/hooks/useWebShare';
 
 interface Props {
   receiptNumber: string;
@@ -16,7 +17,9 @@ export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
   const authUser = useAppSelector((s) => s.auth.user);
   const business = authUser?.business;
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { share } = useWebShare();
   const handlePrint = useReactToPrint({ contentRef: receiptRef });
+  const handleDownloadPdf = useReactToPrint({ contentRef: receiptRef, documentTitle: receiptNumber });
   const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
 
   const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
@@ -69,8 +72,28 @@ export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
 
       {/* Right: Actions */}
       <div className="w-full lg:w-72 flex flex-row lg:flex-col items-center justify-center gap-3 lg:gap-4 px-4 lg:px-0 pb-4 lg:pb-0">
-        <Button size="sm" className="lg:w-full flex-1 lg:flex-none" onClick={handlePrint}>
-          <Printer className="w-4 h-4 mr-1.5" />Print Receipt
+        <Button size="sm" className="lg:w-full flex-1 lg:flex-none" onClick={handleDownloadPdf}>
+          <Download className="w-4 h-4 mr-1.5" />Download PDF
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="lg:w-full flex-1 lg:flex-none"
+          onClick={() => void share({
+            title: `Receipt ${receiptNumber}`,
+            text: receiptShareText(
+              business?.name ?? 'Business',
+              receiptNumber,
+              subtotal,
+              business?.currency || 'UGX',
+              paymentMethod,
+            ),
+          })}
+        >
+          <Share2 className="w-4 h-4 mr-1.5" />Share
+        </Button>
+        <Button size="sm" variant="secondary" className="lg:w-full flex-1 lg:flex-none" onClick={handlePrint}>
+          <Printer className="w-4 h-4 mr-1.5" />Print
         </Button>
         <Button variant="outline" size="sm" className="lg:w-full flex-1 lg:flex-none" onClick={onNewSale}>
           <Plus className="w-4 h-4 mr-1.5" />New Sale

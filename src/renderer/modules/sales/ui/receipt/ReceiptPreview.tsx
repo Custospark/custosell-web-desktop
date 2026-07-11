@@ -4,7 +4,8 @@ import type { CartItem } from '../../api/salesTypes';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
-import { Printer, Plus } from 'lucide-react';
+import { Printer, Plus, Download, Share2 } from 'lucide-react';
+import { useWebShare, receiptShareText } from '../../../../shared/hooks/useWebShare';
 
 interface ReceiptPreviewProps {
   receiptNumber: string;
@@ -19,7 +20,9 @@ export default function ReceiptPreview({ receiptNumber, items, total, paymentMet
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
   const business = authUser?.business;
+  const { share } = useWebShare();
   const handlePrint = useReactToPrint({ contentRef: receiptRef });
+  const handleDownloadPdf = useReactToPrint({ contentRef: receiptRef, documentTitle: receiptNumber });
   const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
 
   return (
@@ -65,11 +68,30 @@ export default function ReceiptPreview({ receiptNumber, items, total, paymentMet
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Button variant="secondary" className="flex-1" onClick={handlePrint}>
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        <Button variant="secondary" size="sm" onClick={handleDownloadPdf}>
+          <Download className="w-4 h-4 mr-1.5" />PDF
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => void share({
+            title: `Receipt ${receiptNumber}`,
+            text: receiptShareText(
+              business?.name ?? 'Business',
+              receiptNumber,
+              total,
+              business?.currency || 'UGX',
+              paymentMethod,
+            ),
+          })}
+        >
+          <Share2 className="w-4 h-4 mr-1.5" />Share
+        </Button>
+        <Button variant="secondary" size="sm" onClick={handlePrint}>
           <Printer className="w-4 h-4 mr-1.5" />Print
         </Button>
-        <Button className="flex-1" onClick={onNewSale}>
+        <Button size="sm" onClick={onNewSale}>
           <Plus className="w-4 h-4 mr-1.5" />New Sale
         </Button>
       </div>

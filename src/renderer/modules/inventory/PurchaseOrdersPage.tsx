@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Ban, PackageCheck, RefreshCw, Send, Truck } from 'lucide-react';
+import { Ban, FileText, PackageCheck, RefreshCw, Send, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { Badge } from '../../shared/components/badges/Badge';
@@ -22,6 +22,7 @@ import {
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { ReceivePurchaseOrderModal } from './ui/supply/ReceivePurchaseOrderModal';
+import GenerateInvoiceFromPoModal from './ui/supply/GenerateInvoiceFromPoModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -41,6 +42,7 @@ export default function PurchaseOrdersPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
   const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
+  const [generateInvoicePo, setGenerateInvoicePo] = useState<PurchaseOrder | null>(null);
 
   const { data, isLoading, isFetching, refetch } = usePurchaseOrders(undefined, !isOffline);
   const submitPo = useSubmitPurchaseOrder();
@@ -205,6 +207,18 @@ export default function PurchaseOrdersPage() {
                         <PackageCheck className="h-3.5 w-3.5" /> Receive
                       </Button>
                     ) : null}
+                    {po.status === 'received' ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={isOffline}
+                        onClick={() => setGenerateInvoicePo(po)}
+                        className="inline-flex items-center gap-1"
+                      >
+                        <FileText className="h-3.5 w-3.5" /> Invoice
+                      </Button>
+                    ) : null}
                   </div>
                 ),
               },
@@ -268,6 +282,14 @@ export default function PurchaseOrdersPage() {
           purchaseOrder={receivePo}
           isOpen={!!receivePo}
           onClose={() => setReceivePo(null)}
+        />
+      ) : null}
+
+      {generateInvoicePo ? (
+        <GenerateInvoiceFromPoModal
+          purchaseOrder={generateInvoicePo}
+          isOpen={!!generateInvoicePo}
+          onClose={() => setGenerateInvoicePo(null)}
         />
       ) : null}
     </div>

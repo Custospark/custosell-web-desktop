@@ -5,7 +5,7 @@ import { Button } from '../buttons/Button';
 import { Input } from '../inputs/Input';
 import CustomerContactPicker, { EMPTY_CUSTOMER_CONTACT } from '../customers/CustomerContactPicker';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
-import { useEmailInvoice, useEmailPaymentReceipt, type SendDocumentEmailResult } from '../../hooks/useDocumentEmail';
+import { useEmailInvoice, useEmailPaymentReceipt, useEmailSaleReceipt, type SendDocumentEmailResult } from '../../hooks/useDocumentEmail';
 import {
   contactFromValue,
   hasResolvableContact,
@@ -15,7 +15,7 @@ import {
 import { customerToContact, type CustomerContactValue } from '../../utils/customerContactUtils';
 import { emailSentLabel } from './EmailSentCountBadge';
 
-export type DocumentEmailType = 'invoice' | 'payment_receipt';
+export type DocumentEmailType = 'invoice' | 'payment_receipt' | 'sale_receipt';
 
 interface SendDocumentEmailModalProps {
   open: boolean;
@@ -44,6 +44,11 @@ const DOCUMENT_COPY: Record<DocumentEmailType, { title: string; description: str
     description: 'Send this payment receipt as a PDF attachment to your customer.',
     hint: 'Contact details are saved to your customer list when you send.',
   },
+  sale_receipt: {
+    title: 'Email sales receipt',
+    description: 'Send the full itemized sales receipt as a PDF attachment to your customer.',
+    hint: 'Contact details are saved to your customer list when you send.',
+  },
 };
 
 export default function SendDocumentEmailModal({
@@ -65,9 +70,10 @@ export default function SendDocumentEmailModal({
   const { isCompletelyOffline } = useNetworkStatus();
   const emailInvoice = useEmailInvoice();
   const emailReceipt = useEmailPaymentReceipt();
+  const emailSaleReceipt = useEmailSaleReceipt();
   const resolveCustomer = useResolveCustomerContact();
   const assignSaleCustomer = useAssignSaleCustomer();
-  const isPending = emailInvoice.isPending || emailReceipt.isPending
+  const isPending = emailInvoice.isPending || emailReceipt.isPending || emailSaleReceipt.isPending
     || resolveCustomer.isPending || assignSaleCustomer.isPending;
 
   const [contact, setContact] = useState<CustomerContactValue>(EMPTY_CUSTOMER_CONTACT);
@@ -141,6 +147,8 @@ export default function SendDocumentEmailModal({
 
       const result = documentType === 'invoice'
         ? await emailInvoice.mutateAsync({ id: documentId, payload: emailPayload })
+        : documentType === 'sale_receipt'
+        ? await emailSaleReceipt.mutateAsync({ id: documentId, payload: emailPayload })
         : await emailReceipt.mutateAsync({ id: documentId, payload: emailPayload });
       onSent?.(result);
       onClose();

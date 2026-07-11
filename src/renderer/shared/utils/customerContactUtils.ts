@@ -124,6 +124,15 @@ export function saleEmailDocumentTarget(sale: Sale, linkedInvoice?: Invoice | nu
       emailSentCount: latestPayment.email_sent_count ?? 0,
     };
   }
+  const saleSentCount = sale.email_sent_count ?? 0;
+  if (!linkedInvoice && saleSentCount > 0) {
+    return {
+      documentType: 'payment_receipt',
+      documentId: 0,
+      documentLabel: `Sale Receipt ${sale.receipt_number}`,
+      emailSentCount: saleSentCount,
+    };
+  }
   if (linkedInvoice && linkedInvoice.id > 0) {
     return {
       documentType: 'invoice',

@@ -1,18 +1,19 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useReactToPrint } from 'react-to-print';
-import { Printer, Plus, CheckCircle, X, FileText, Mail } from 'lucide-react';
+import { Printer, Plus, CheckCircle, X, FileText, Mail, Download, Share2 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import ReceiptContent from './receipt/ReceiptContent';
 import PaymentReceiptModal from '../../payments/PaymentReceiptModal';
 import SendDocumentEmailModal from '../../../shared/components/email/SendDocumentEmailModal';
-import { EmailSentCountBadge, emailSentLabel } from '../../../shared/components/email/EmailSentCountBadge';
 import type { SendDocumentEmailResult } from '../../../shared/hooks/useDocumentEmail';
+import { useWebShare, receiptShareText } from '../../../shared/hooks/useWebShare';
 import type { Payment } from '../../payments/paymentTypes';
 import type { SaleWithSyncMeta } from '../../../app/store/offline/sales/localSalesStore';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { netSaleAmount } from '../utils/saleAmounts';
 import { MODAL_Z_INDEX_CLASS } from '../../../shared/components/modals/Modal';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;
@@ -28,6 +29,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   const receiptRef = useRef<HTMLDivElement>(null);
   const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [emailType, setEmailType] = useState<'payment_receipt' | 'sale_receipt'>('payment_receipt');
   const paymentForEmail = lastPayment;
   const baseEmailSentCount = lastPayment?.email_sent_count ?? 0;
   const [emailSentOverride, setEmailSentOverride] = useState<number | null>(null);
@@ -38,12 +40,28 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
     setEmailSentOverride(null);
   }
   const emailSentCount = emailSentOverride ?? baseEmailSentCount;
+  const authUser = useAppSelector((s) => s.auth.user);
+  const business = authUser?.business;
+  const { share } = useWebShare();
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: sale?.receipt_number ?? 'receipt',
     pageStyle: `
       @page { margin: 0; }
+      @media print {
+        html, body { margin: 0; padding: 0; width: auto; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 10px; }
+        .no-print { display: none !important; }
+      }
+    `,
+  });
+
+  const handleDownloadPdf = useReactToPrint({
+    contentRef: receiptRef,
+    documentTitle: sale?.receipt_number ?? 'receipt',
+    pageStyle: `
+      @page { margin: 0; size: auto; }
       @media print {
         html, body { margin: 0; padding: 0; width: auto; }
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 10px; }
@@ -59,6 +77,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   const balanceDue = Math.max(0, totalAmount - amountPaid);
   const isPartial = sale.payment_status === 'partially_paid' || balanceDue > 0.009;
   const canEmailReceipt = paymentForEmail != null && paymentForEmail.id > 0 && !paymentForEmail._pendingSync;
+  const canEmailFullReceipt = sale.id > 0 && !sale._pendingSync;
 
   if (showPaymentReceipt && lastPayment) {
     return (
@@ -124,23 +143,43 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
               Payment receipt
             </Button>
           )}
-          {canEmailReceipt && paymentForEmail && (
+          {canEmailFullReceipt && (
             <Button
               className={actionBtnClass}
               variant="outline"
-              onClick={() => setEmailOpen(true)}
-              title={emailSentLabel(emailSentCount)}
+              onClick={() => {
+                setEmailType('sale_receipt');
+                setEmailOpen(true);
+              }}
             >
-              <span className="relative inline-flex items-center justify-center">
-                <Mail className="w-4 h-4 mr-1.5 shrink-0" />
-                Email receipt
-                <EmailSentCountBadge count={emailSentCount} className="-top-2 -right-3" />
-              </span>
+              <Mail className="w-4 h-4 mr-1.5 shrink-0" />
+              Email receipt
             </Button>
           )}
+          <Button className={actionBtnClass} variant="outline" onClick={handleDownloadPdf}>
+            <Download className="w-4 h-4 mr-1.5 shrink-0" />
+            Download PDF
+          </Button>
+          <Button
+            className={actionBtnClass}
+            variant="outline"
+            onClick={() => void share({
+              title: `Receipt ${sale.receipt_number}`,
+              text: receiptShareText(
+                business?.name ?? 'Business',
+                sale.receipt_number,
+                totalAmount,
+                business?.currency || 'UGX',
+                sale.payment_method,
+              ),
+            })}
+          >
+            <Share2 className="w-4 h-4 mr-1.5 shrink-0" />
+            Share
+          </Button>
           <Button className={actionBtnClass} variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1.5 shrink-0" />
-            {isPartial ? 'Sale summary' : 'Print receipt'}
+            {isPartial ? 'Sale summary' : 'Print'}
           </Button>
           <Button className={actionBtnClass} onClick={onNewSale}>
             <Plus className="w-4 h-4 mr-1.5 shrink-0" />
@@ -152,7 +191,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
     document.body,
     )}
 
-    {emailOpen && paymentForEmail && (
+    {emailOpen && emailType === 'payment_receipt' && paymentForEmail && (
       <SendDocumentEmailModal
         open
         onClose={() => setEmailOpen(false)}
@@ -169,6 +208,21 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
         }}
         blocked={!canEmailReceipt}
         blockedReason={paymentForEmail._pendingSync ? 'Receipt must sync before it can be emailed.' : undefined}
+      />
+    )}
+    {emailOpen && emailType === 'sale_receipt' && (
+      <SendDocumentEmailModal
+        open
+        onClose={() => setEmailOpen(false)}
+        documentType="sale_receipt"
+        documentId={sale.id}
+        documentLabel={`Receipt ${sale.receipt_number}`}
+        customerName={sale.customer?.name}
+        defaultEmail={sale.customer?.email}
+        customerId={sale.customer_id}
+        saleId={sale.id}
+        blocked={!canEmailFullReceipt}
+        blockedReason={sale._pendingSync ? 'Receipt must sync before it can be emailed.' : undefined}
       />
     )}
     </>

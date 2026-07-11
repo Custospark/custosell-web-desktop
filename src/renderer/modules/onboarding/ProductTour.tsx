@@ -278,7 +278,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
   }
 
   useEffect(() => {
-    if (!autoPlay || isLast) return;
+    if (!autoPlay) return;
     const timer = setInterval(() => {
       setAutoCountdown((c) => {
         if (c <= 1) {
@@ -290,7 +290,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     }, 1000);
     return () => clearInterval(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPlay, isLast, index]);
+  }, [autoPlay, index]);
 
   if (!open || !step || steps.length === 0 || typeof document === 'undefined') return null;
 
@@ -372,7 +372,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
                   title={autoPlay ? 'Pause auto-play' : 'Auto-play every 5s'}
                 >
                   {autoPlay ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  {autoPlay ? `${autoCountdown}s` : 'Auto'}
+                  {autoPlay ? `${autoCountdown}s` : 'Auto Play'}
                 </button>
               </div>
               <div className="flex items-center gap-2">

@@ -23,6 +23,7 @@ const COMMON_UNITS = [
 interface FormState {
   name: string; type: CatalogItemType; unit: string; category_id: number | null; description: string | null;
   sku: string | null; barcode: string | null; is_active: boolean;
+  is_recurring: boolean; billing_interval: string;
   unit_price: string; wholesale_price: string; cost_price: string; stock_quantity: string;
   low_stock_threshold: string; tax_percentage: string; tax_class: TaxClass;
 }
@@ -30,6 +31,7 @@ interface FormState {
 const emptyForm: FormState = {
   name: '', type: 'product', unit: '', category_id: null, description: null,
   sku: null, barcode: null, is_active: true,
+  is_recurring: false, billing_interval: 'month',
   unit_price: '', wholesale_price: '', cost_price: '', stock_quantity: '0',
   low_stock_threshold: '5', tax_percentage: '0', tax_class: 'standard',
 };
@@ -44,6 +46,8 @@ function toCreatePayload(f: FormState): CreateProductData {
   return {
     name: f.name, type: f.type, unit: f.unit || null, category_id: f.category_id, description: f.description,
     sku: f.sku, barcode: f.barcode, is_active: f.is_active,
+    is_recurring: f.is_recurring,
+    billing_interval: f.is_recurring ? (f.billing_interval || 'month') : null,
     unit_price: toNumber(f.unit_price),
     wholesale_price: f.wholesale_price === '' ? null : toNumber(f.wholesale_price),
     cost_price: f.cost_price === '' ? null : toNumber(f.cost_price),
@@ -72,6 +76,8 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
           name: product.name, type: product.type === 'service' ? 'service' : 'product',
           unit: product.unit ?? '', category_id: product.category_id, description: product.description,
           sku: product.sku, barcode: product.barcode, is_active: product.is_active,
+          is_recurring: product.is_recurring ?? false,
+          billing_interval: product.billing_interval ?? 'month',
           unit_price: product.unit_price, wholesale_price: product.wholesale_price ?? '', cost_price: product.cost_price ?? '',
           stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
           tax_percentage: product.tax_percentage,
@@ -289,6 +295,39 @@ export default function ProductFormDrawer({ open, onClose, product }: ProductFor
           <div className="flex items-center gap-2">
             <input type="checkbox" id="is_active" checked={form.is_active ?? true} onChange={(e) => update('is_active', e.target.checked)} className="rounded border-gray-300 text-blue-600" />
             <label htmlFor="is_active" className="text-sm text-gray-700">{itemLabel} is active</label>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_recurring"
+                checked={form.is_recurring}
+                onChange={(e) => update('is_recurring', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600"
+              />
+              <label htmlFor="is_recurring" className="text-sm text-gray-700">
+                Recurring / subscription {itemLabel.toLowerCase()}
+              </label>
+            </div>
+            {form.is_recurring ? (
+              <div>
+                <label className={labelClass}>Billing interval</label>
+                <select
+                  className={inputClass}
+                  value={form.billing_interval}
+                  onChange={(e) => update('billing_interval', e.target.value)}
+                  title="Billing interval"
+                >
+                  <option value="week">Weekly</option>
+                  <option value="month">Monthly</option>
+                  <option value="quarter">Quarterly</option>
+                  <option value="year">Yearly</option>
+                </select>
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Used by Forecasting SaaS KPIs (MRR proxy). Defaults to month when unset.
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

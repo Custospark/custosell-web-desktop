@@ -34,6 +34,8 @@ export function buildLocalProduct(payload: CreateProductData): ProductWithSyncMe
     tax_percentage: String(payload.tax_percentage ?? 0),
     tax_class: payload.tax_class,
     is_active: payload.is_active ?? true,
+    is_recurring: payload.is_recurring ?? false,
+    billing_interval: payload.is_recurring ? (payload.billing_interval ?? 'month') : null,
     created_at: now,
     updated_at: now,
   };
@@ -61,6 +63,13 @@ function applyProductPayload(product: Product, payload: UpdateProductData): Prod
     tax_percentage: payload.tax_percentage != null ? String(payload.tax_percentage) : product.tax_percentage,
     tax_class: payload.tax_class ?? product.tax_class,
     is_active: payload.is_active ?? product.is_active,
+    is_recurring: payload.is_recurring ?? product.is_recurring ?? false,
+    billing_interval:
+      'billing_interval' in payload || 'is_recurring' in payload
+        ? (payload.is_recurring ?? product.is_recurring)
+          ? (payload.billing_interval ?? product.billing_interval ?? 'month')
+          : null
+        : product.billing_interval ?? null,
     updated_at: new Date().toISOString(),
   };
 }
@@ -83,6 +92,8 @@ function buildCreatePayloadFromProduct(product: Product): CreateProductData {
     tax_percentage: Number(product.tax_percentage),
     tax_class: product.tax_class as CreateProductData['tax_class'],
     is_active: product.is_active,
+    is_recurring: product.is_recurring ?? false,
+    billing_interval: product.is_recurring ? (product.billing_interval ?? 'month') : null,
   };
 }
 

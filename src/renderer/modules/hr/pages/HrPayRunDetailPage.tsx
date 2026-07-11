@@ -121,6 +121,7 @@ export default function HrPayRunDetailPage() {
   const isRetryPost = payRun.status === 'posted' && !payRun.posted_journal_entry_id;
 
   function openPeriodEdit() {
+    if (!payRun) return;
     setPeriodForm({
       period_start: toDateInput(payRun.period_start),
       period_end: toDateInput(payRun.period_end),

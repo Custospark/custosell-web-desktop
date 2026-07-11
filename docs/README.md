@@ -78,6 +78,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-10-hr-payroll-accounting-bridge.md](./adr/2026-07-10-hr-payroll-accounting-bridge.md) | Fail-hard payroll post, split liabilities, settle/remit/void |
 | [2026-07-10-product-vs-service-sales.md](./adr/2026-07-10-product-vs-service-sales.md) | Product vs service catalog — stock skip, revenue 4100/4200 |
 | [2026-07-10-payroll-affordability-cash-runway.md](./adr/2026-07-10-payroll-affordability-cash-runway.md) | Payroll cash check, N-month runway, hire what-if |
+| [2026-07-11-forecasting-module.md](./adr/2026-07-11-forecasting-module.md) | Financial Forecasting FE — cash, BvA, budgets, KPIs, scenarios |
 
 ## Modules
 
@@ -85,6 +86,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [modules/pipeline-progress.md](./modules/pipeline-progress.md) | Board Progress v2 — columns, decomposition, My progress, export |
 | [modules/hr.md](./modules/hr.md) | HR & Payroll — routes, API layer, payroll flow, failure states |
+| [modules/forecasting.md](./modules/forecasting.md) | Forecasting — cash runway, budgets, KPIs, scenarios |
 
 ## Key source locations
 

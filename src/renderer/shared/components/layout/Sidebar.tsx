@@ -10,7 +10,7 @@ import {
   GraduationCap, HelpCircle, MessageSquareHeart, CircleUser, Headset, BellRing,
   Mail, Phone, BookOpen, BookType, FileText, BarChart3, Percent,
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
-  IdCard, CalendarDays, Wallet, ClipboardCheck, Building,
+  IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -69,6 +69,8 @@ const baseSubRoutes = [
   ROUTES.DOCUMENTS.INDEX,
   ROUTES.ACCOUNTING.RATIOS, ROUTES.ACCOUNTING.STATEMENTS,
   ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, ROUTES.ACCOUNTING.JOURNAL_ENTRIES,
+  ROUTES.FORECASTING.OVERVIEW, ROUTES.FORECASTING.BUDGETS,
+  ROUTES.FORECASTING.KPIS, ROUTES.FORECASTING.SCENARIOS,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES, ROUTES.SETTINGS.MODULES,
@@ -199,6 +201,16 @@ const baseNavGroups: NavGroup[] = [
       { to: ROUTES.ACCOUNTING.STATEMENTS, label: 'Financial Statements', icon: BarChart3 },
       { to: ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, label: 'Chart of Accounts', icon: BookType },
       { to: ROUTES.ACCOUNTING.JOURNAL_ENTRIES, label: 'Journal Entries', icon: FileText },
+    ],
+  },
+  {
+    icon: LineChart,
+    label: 'Forecasting',
+    subItems: [
+      { to: ROUTES.FORECASTING.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
+      { to: ROUTES.FORECASTING.BUDGETS, label: 'Budgets', icon: Layers },
+      { to: ROUTES.FORECASTING.KPIS, label: 'KPIs', icon: Target },
+      { to: ROUTES.FORECASTING.SCENARIOS, label: 'Scenarios', icon: TrendingUp },
     ],
   },
   {

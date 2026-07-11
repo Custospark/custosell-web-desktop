@@ -1,0 +1,17 @@
+export const FORECASTING = {
+  OVERVIEW: '/forecasting/overview',
+  CASH_FORECAST: '/forecasting/cash-forecast',
+  BUDGET_VS_ACTUAL: '/forecasting/budget-vs-actual',
+  KPIS: '/forecasting/kpis',
+  BUDGETS: '/forecasting/budgets',
+  BUDGET: (id: number) => `/forecasting/budgets/${id}`,
+  BUDGET_LINES: (id: number) => `/forecasting/budgets/${id}/lines`,
+  BUDGET_LINE: (id: number, lineId: number) => `/forecasting/budgets/${id}/lines/${lineId}`,
+  BUDGET_LINE_JUSTIFY: (id: number, lineId: number) => `/forecasting/budgets/${id}/lines/${lineId}/justify`,
+  BUDGET_LINE_APPROVE: (id: number, lineId: number) => `/forecasting/budgets/${id}/lines/${lineId}/approve`,
+  BUDGET_ROLL: (id: number) => `/forecasting/budgets/${id}/roll`,
+  SNAPSHOTS: '/forecasting/snapshots',
+  SCENARIOS: '/forecasting/scenarios',
+  SCENARIO: (id: number) => `/forecasting/scenarios/${id}`,
+  SCENARIO_RUN: (id: number) => `/forecasting/scenarios/${id}/run`,
+} as const;

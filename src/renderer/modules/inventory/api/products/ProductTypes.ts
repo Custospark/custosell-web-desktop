@@ -29,6 +29,8 @@ export interface Product {
   tax_percentage: string;
   tax_class?: 'standard' | 'exempt' | 'zero_rated' | string;
   is_active: boolean;
+  is_recurring?: boolean;
+  billing_interval?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -82,6 +84,8 @@ export interface CreateProductData {
   tax_percentage?: number;
   tax_class?: 'standard' | 'exempt' | 'zero_rated';
   is_active?: boolean;
+  is_recurring?: boolean;
+  billing_interval?: string | null;
 }
 
 export type UpdateProductData = Partial<CreateProductData>;

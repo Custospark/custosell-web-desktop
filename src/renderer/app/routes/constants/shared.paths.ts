@@ -80,6 +80,14 @@ export const ROUTES = {
     FIXED_ASSETS: '/accounting/fixed-assets',
     SETTINGS: '/accounting/settings',
   },
+  FORECASTING: {
+    INDEX: '/forecasting',
+    OVERVIEW: '/forecasting/overview',
+    BUDGETS: '/forecasting/budgets',
+    BUDGET: (id: number) => `/forecasting/budgets/${id}`,
+    KPIS: '/forecasting/kpis',
+    SCENARIOS: '/forecasting/scenarios',
+  },
   PLATFORM: {
     INDEX: '/platform',
     OVERVIEW: '/platform/overview',

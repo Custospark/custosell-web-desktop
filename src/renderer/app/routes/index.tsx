@@ -98,6 +98,12 @@ const HrTalentPage = lazy(() => import('../../modules/hr/pages/HrTalentPage'));
 const HrReportsPage = lazy(() => import('../../modules/hr/pages/HrReportsPage'));
 const HrSettingsPage = lazy(() => import('../../modules/hr/pages/HrSettingsPage'));
 
+const ForecastingOverviewPage = lazy(() => import('../../modules/forecasting/pages/ForecastingOverviewPage'));
+const ForecastingBudgetsPage = lazy(() => import('../../modules/forecasting/pages/ForecastingBudgetsPage'));
+const ForecastingBudgetDetailPage = lazy(() => import('../../modules/forecasting/pages/ForecastingBudgetDetailPage'));
+const ForecastingKpisPage = lazy(() => import('../../modules/forecasting/pages/ForecastingKpisPage'));
+const ForecastingScenariosPage = lazy(() => import('../../modules/forecasting/pages/ForecastingScenariosPage'));
+
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
@@ -223,6 +229,14 @@ export function AppRoutes() {
             <Route path={ROUTES.ACCOUNTING.PERIODS} element={<SuspenseWrapper><AccountingPeriodsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.FIXED_ASSETS} element={<SuspenseWrapper><FixedAssetsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.ACCOUNTING.SETTINGS} element={<SuspenseWrapper><AccountingSettingsPage /></SuspenseWrapper>} />
+          </Route>
+          <Route element={<ModuleAccessMiddleware module="forecasting" />}>
+            <Route path={ROUTES.FORECASTING.INDEX} element={<Navigate to={ROUTES.FORECASTING.OVERVIEW} replace />} />
+            <Route path={ROUTES.FORECASTING.OVERVIEW} element={<SuspenseWrapper><ForecastingOverviewPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.FORECASTING.BUDGETS} element={<SuspenseWrapper><ForecastingBudgetsPage /></SuspenseWrapper>} />
+            <Route path="/forecasting/budgets/:budgetId" element={<SuspenseWrapper><ForecastingBudgetDetailPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.FORECASTING.KPIS} element={<SuspenseWrapper><ForecastingKpisPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.FORECASTING.SCENARIOS} element={<SuspenseWrapper><ForecastingScenariosPage /></SuspenseWrapper>} />
           </Route>
           <Route element={<ModuleAccessMiddleware module="guide" />}>
             <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />

@@ -1,7 +1,11 @@
+/* eslint-disable react-refresh/only-export-components -- receipt content + context helper */
 import { forwardRef } from 'react';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../shared/utils/formatDateTime';
-import ReceiptBusinessHeader, { useReceiptBusiness } from '../../shared/components/receipt/ReceiptBusinessHeader';
+import ReceiptBusinessHeader, {
+  useReceiptBusiness,
+  type ReceiptBusinessSnapshot,
+} from '../../shared/components/receipt/ReceiptBusinessHeader';
 import type { Payment } from './paymentTypes';
 import type { PaymentReceiptBillDetails } from './paymentReceiptDetails';
 import PaymentReceiptLineItems from './PaymentReceiptLineItems';
@@ -18,11 +22,13 @@ interface PaymentReceiptContentProps {
   payment: Payment;
   context: PaymentReceiptContext;
   billDetails?: PaymentReceiptBillDetails | null;
+  /** Issuing seller letterhead. When omitted, uses the logged-in business. */
+  issuerBusiness?: ReceiptBusinessSnapshot | null;
 }
 
 const PaymentReceiptContent = forwardRef<HTMLDivElement, PaymentReceiptContentProps>(
-  ({ payment, context, billDetails }, ref) => {
-    const business = useReceiptBusiness();
+  ({ payment, context, billDetails, issuerBusiness }, ref) => {
+    const business = useReceiptBusiness(issuerBusiness);
     const currency = business?.currency || 'UGX';
     const tendered = payment.amount_tendered ?? payment.amount;
     const change = payment.change_given ?? 0;
@@ -39,7 +45,7 @@ const PaymentReceiptContent = forwardRef<HTMLDivElement, PaymentReceiptContentPr
           }
         `}</style>
         <div className="p-4 print:px-2 print:py-3">
-          <ReceiptBusinessHeader subtitle="Payment Receipt" />
+          <ReceiptBusinessHeader subtitle="Payment Receipt" business={issuerBusiness} />
 
           <div className="border-t border-dashed border-gray-400 border-b py-2 mb-3 text-xs text-gray-600 space-y-0.5">
             <div className="flex justify-between">

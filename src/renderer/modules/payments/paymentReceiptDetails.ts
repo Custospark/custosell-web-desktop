@@ -64,7 +64,6 @@ export function buildBillDetailsFromInvoice(invoice: Invoice): PaymentReceiptBil
   }));
 
   const linesSubtotal = lineItems.reduce((s, i) => s + i.subtotal, 0);
-  const isReceived = invoice.direction === 'received';
 
   return {
     lineItems,
@@ -73,9 +72,7 @@ export function buildBillDetailsFromInvoice(invoice: Invoice): PaymentReceiptBil
     taxTotal: invoice.tax_total,
     totalRefunded: 0,
     billTotal: invoice.total_amount,
-    // Received = show supplier; never the buyer customer row from seller books.
-    customerName: isReceived
-      ? (invoice.party_name ?? invoice.seller_business?.name ?? 'Supplier')
-      : (invoice.party_name ?? invoice.customer?.name ?? null),
+    // Always the bill-to party (buyer). Letterhead uses seller_business separately.
+    customerName: invoice.customer?.name ?? null,
   };
 }

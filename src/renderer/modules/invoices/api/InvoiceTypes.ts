@@ -22,7 +22,21 @@ export interface Invoice {
   /** Counterparty label from API (supplier when received, customer when issued). */
   party_name?: string | null;
   party_role?: 'supplier' | 'customer' | null;
-  seller_business?: { id: number; name: string } | null;
+  seller_business?: {
+    id: number;
+    name: string;
+    description?: string | null;
+    business_phone?: string | null;
+    phone?: string | null;
+    business_email?: string | null;
+    email?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+    currency?: string | null;
+    receipt_footer?: string | null;
+  } | null;
   purchase_order?: { id: number; po_number: string; status: string } | null;
   customer?: { id: number; name: string; phone?: string; email?: string | null } | null;
   issue_date: string;

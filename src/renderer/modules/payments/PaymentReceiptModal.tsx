@@ -58,9 +58,9 @@ export default function PaymentReceiptModal({
   const canPdf = payment.id > 0 && !payment._pendingSync;
   const isReceivedInvoice = invoice?.direction === 'received';
   const defaultEmail = invoice?.customer?.email ?? sale?.customer?.email ?? null;
-  const customerName = isReceivedInvoice
-    ? (invoice?.party_name ?? invoice?.seller_business?.name ?? 'Supplier')
-    : (invoice?.party_name ?? invoice?.customer?.name ?? sale?.customer?.name);
+  // Customer on the receipt = buyer (bill-to). Seller letterhead comes from issuerBusiness.
+  const customerName = invoice?.customer?.name ?? sale?.customer?.name ?? undefined;
+  const issuerBusiness = isReceivedInvoice ? (invoice?.seller_business ?? null) : null;
 
   const billDetails = billDetailsProp
     ?? (sale ? buildBillDetailsFromSale(sale) : invoice ? buildBillDetailsFromInvoice(invoice) : null);
@@ -132,7 +132,13 @@ export default function PaymentReceiptModal({
         </div>
 
         <div className="flex justify-center">
-          <PaymentReceiptContent ref={receiptRef} payment={payment} context={context} billDetails={billDetails} />
+          <PaymentReceiptContent
+            ref={receiptRef}
+            payment={payment}
+            context={context}
+            billDetails={billDetails}
+            issuerBusiness={issuerBusiness}
+          />
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2 no-print">

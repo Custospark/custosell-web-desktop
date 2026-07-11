@@ -34,10 +34,13 @@ export function GuideHeaderNav() {
       <div className="flex items-center gap-0.5 sm:gap-1" data-tour="navbar-guide">
         <button
           type="button"
-          title="Replay product tour"
+          title={isCompletelyOffline ? 'Replay product tour (works offline)' : 'Replay product tour'}
           aria-label="Replay product tour"
-          disabled={isCompletelyOffline || replayTour.isPending}
-          onClick={() => void replayTour.mutateAsync({ action: 'replay_tour' })}
+          disabled={replayTour.isPending}
+          onClick={() => {
+            // Local apply is synchronous inside the mutation — tour opens immediately (online or offline)
+            replayTour.mutate({ action: 'replay_tour' });
+          }}
           className={cn(
             'inline-flex items-center justify-center gap-1 rounded-lg font-medium transition-colors shrink-0',
             'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',

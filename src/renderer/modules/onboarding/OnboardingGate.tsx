@@ -20,12 +20,13 @@ function DelayedIntentModal() {
   return <IntentOnboardingModal open={ready} />;
 }
 
-/** Owner intent + product tour after auth. Does not change module access. */
+/** Owner intent + product tour after auth. Tour works online and offline. */
 export function OnboardingGate() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const { isCompletelyOffline } = useNetworkStatus();
-  const { data } = useOnboardingState(isAuthenticated && !isCompletelyOffline);
+  // Always read onboarding when authed — embedded user.onboarding covers offline
+  const { data } = useOnboardingState(isAuthenticated);
   const [celebrate, setCelebrate] = useState(false);
   const [celebrateReason, setCelebrateReason] = useState<'completed' | 'skipped'>('completed');
 
@@ -35,7 +36,7 @@ export function OnboardingGate() {
     setCelebrate(true);
   }, []);
 
-  if (!isAuthenticated || isCompletelyOffline || !data) {
+  if (!isAuthenticated || !data) {
     return celebrate
       ? (
         <TourCelebration
@@ -48,12 +49,20 @@ export function OnboardingGate() {
       : null;
   }
 
+  // Intent picker needs a quiet moment after login; skip the delay when already offline
+  // so the tour path isn't blocked longer than necessary.
   const showIntent = Boolean(data.needs_intent);
   const showTour = !data.needs_intent && data.needs_tour;
 
   return (
     <>
-      {showIntent ? <DelayedIntentModal key={`intent-${userId ?? 'anon'}`} /> : null}
+      {showIntent
+        ? (
+          isCompletelyOffline
+            ? <IntentOnboardingModal open key={`intent-offline-${userId ?? 'anon'}`} />
+            : <DelayedIntentModal key={`intent-${userId ?? 'anon'}`} />
+        )
+        : null}
       <ProductTour
         // Stable while the tour is open — keying on tour_step remounted and killed Auto Play
         key={showTour ? `tour-active-${userId ?? 'anon'}` : 'tour-off'}

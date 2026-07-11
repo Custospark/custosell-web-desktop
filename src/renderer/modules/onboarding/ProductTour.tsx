@@ -169,30 +169,34 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     setStepReady(false);
 
     async function focusStep() {
+      // Paint a spotlight ASAP — refine after layout settles (keeps precision, feels instant)
+      const quick = measureTourTarget(step.target);
+      if (quick && gen === focusGenRef.current) setSpot(quick);
+
       const needsSidebar = ensureSidebarForTarget(step.target);
       if (needsSidebar || window.innerWidth < LG_BREAKPOINT) {
-        await new Promise((r) => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, 120));
       }
 
       expandSidebarGroup(step.expandGroup);
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 40));
 
       if (step.route) {
         navigate(step.route);
-        await new Promise((r) => setTimeout(r, 240));
+        await new Promise((r) => setTimeout(r, 100));
         ensureSidebarForTarget(step.target);
-        await new Promise((r) => setTimeout(r, 140));
+        await new Promise((r) => setTimeout(r, 60));
         expandSidebarGroup(step.expandGroup);
       }
 
       if (gen !== focusGenRef.current) return;
-      const measured = await measureTourTargetStable(step.target, { attempts: 12, settleMs: 35 });
+      const measured = await measureTourTargetStable(step.target, { attempts: 6, settleMs: 20 });
       if (gen !== focusGenRef.current) return;
-      setSpot(measured);
+      setSpot(measured ?? quick);
       setStepReady(true);
 
-      // One extra settle pass after paint (fonts / sticky header)
-      await new Promise((r) => setTimeout(r, 50));
+      // Background refine after paint
+      await new Promise((r) => setTimeout(r, 30));
       if (gen !== focusGenRef.current) return;
       const refined = measureTourTarget(step.target);
       if (refined) setSpot(refined);

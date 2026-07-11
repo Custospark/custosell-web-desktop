@@ -26,9 +26,9 @@ flowchart TD
   H --> G
 ```
 
-**Timing:** Intent modal waits **5 seconds** after login/register (once `needs_intent` is known) so the workspace can settle. Celebration runs **once for ~30 seconds** (countdown must not restart on parent re-renders; flower petals keep falling for as long as the modal is visible). Dismiss early with “Let’s go”. Skip tour still opens the celebration with skip-friendly copy.
+**Timing:** Intent modal waits **5 seconds** after login/register when online (once `needs_intent` is known). Offline skips that delay. Celebration runs **once for ~30 seconds**. Tour Replay applies **locally first** so the tour opens immediately; API sync is background. **Tour works offline** using embedded `user.onboarding`.
 
-**Auto Play (product):** Opt-in, **not** on by default. Recommended dwell **4–5s per step** after the spotlight is ready (current: 5s) — enough to read a short card without feeling rushed.
+**Auto Play (product):** Opt-in, **not** on by default. Recommended dwell **4–5s per step** after the spotlight is ready (current: 5s).
 
 ## Intent cards (v1 copy)
 

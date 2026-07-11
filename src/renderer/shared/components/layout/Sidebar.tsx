@@ -175,9 +175,11 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
             : group.label;
           const firstGroupAttr = groupIndex === 0 ? { 'data-tour': 'sidebar-first-group' } : {};
           const moduleSlug = NAV_GROUP_MODULE[group.label];
-          const moduleTourAttr = moduleSlug && moduleSlug !== 'account' && moduleSlug !== 'guide' && moduleSlug !== 'platform' && moduleSlug !== 'guide_settings'
+          // Include Account + Custosell Guide; skip platform admin-only groups
+          const moduleTourAttr = moduleSlug && moduleSlug !== 'platform' && moduleSlug !== 'guide_settings'
             ? { 'data-tour': `sidebar-module-${moduleSlug}` }
             : {};
+          // Group wrapper gets the module anchor so expanded sub-nav is inside the spotlight
           const groupTourAttr = { ...firstGroupAttr, ...moduleTourAttr };
 
           if (collapsed) {
@@ -299,9 +301,12 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         })}
       </nav>
 
-      <div className="shrink-0 p-4 border-t border-gray-200/50" data-tour="sidebar-support">
+      <div className="shrink-0 p-4 border-t border-gray-200/50">
         {!collapsed && (
-          <div className="p-3 rounded-xl border bg-linear-to-br from-gray-50 to-gray-100/50 border-gray-200/50">
+          <div
+            className="p-3 rounded-xl border bg-linear-to-br from-gray-50 to-gray-100/50 border-gray-200/50"
+            data-tour="sidebar-support"
+          >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg shrink-0 bg-cyan-100">
                 <Headset className="w-4 h-4 text-cyan-600" />
@@ -331,7 +336,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         )}
 
         {collapsed && (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2" data-tour="sidebar-support">
             <a
               href={`mailto:${CUSTOSELL_SUPPORT.email}`}
               className="text-gray-400 hover:text-cyan-600 transition-colors"

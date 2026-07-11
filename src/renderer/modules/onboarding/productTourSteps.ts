@@ -1,16 +1,4 @@
-import type { ElementType } from 'react';
 import {
-  LayoutDashboard,
-  ShoppingCart,
-  Package,
-  Users,
-  Kanban,
-  FileSpreadsheet,
-  Receipt,
-  BookOpen,
-  LineChart,
-  Files,
-  IdCard,
   Settings,
   LayoutGrid,
   Wifi,
@@ -22,95 +10,11 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../app/store/slices/authSlice';
-import {
-  BUSINESS_MODULE_SLUGS,
-  MODULE_LABELS,
-  canAccessModule,
-  isBusinessOwner,
-  type BusinessModuleSlug,
-} from '../../shared/utils/moduleAccess';
-import { MODULE_LAUNCHER_CATALOG } from '../../shared/components/layout/moduleLauncherCatalog';
+import { canAccessModule, isBusinessOwner } from '../../shared/utils/moduleAccess';
+import { navTourStepsForUser } from './productTourNavSteps';
+import type { ProductTourStep } from './productTourTypes';
 
-export interface ProductTourStep {
-  id: string;
-  target: string;
-  title: string;
-  body: string;
-  route?: string;
-  expandGroup?: string;
-  icon?: ElementType;
-  tone?: string;
-  when?: (user: AuthUser | null | undefined) => boolean;
-}
-
-const MODULE_TOUR_COPY: Record<BusinessModuleSlug, { title: string; body: string; route: string }> = {
-  dashboard: {
-    title: 'Dashboard',
-    body: 'Your business overview — a quick pulse on performance.',
-    route: ROUTES.DASHBOARD,
-  },
-  sales: {
-    title: 'Sales',
-    body: 'Ring sales, manage orders, history, refunds, and sales invoices.',
-    route: ROUTES.SALES.NEW,
-  },
-  inventory: {
-    title: 'Inventory & Supply',
-    body: 'Products, stock, marketplace, and purchase orders live here.',
-    route: ROUTES.INVENTORY.PRODUCTS,
-  },
-  customers: {
-    title: 'Customers',
-    body: 'Keep your customer list ready for sales and invoicing.',
-    route: ROUTES.CUSTOMERS.INDEX,
-  },
-  pipeline: {
-    title: 'Pipeline',
-    body: 'Boards and leads to win deals and track follow-ups.',
-    route: ROUTES.PIPELINE.BOARDS,
-  },
-  estimates: {
-    title: 'Projects & Estimates',
-    body: 'Estimates, projects, and delivery boards.',
-    route: ROUTES.ESTIMATES.INDEX,
-  },
-  expenses: {
-    title: 'Expenses',
-    body: 'Track spending and expense categories.',
-    route: ROUTES.EXPENSES.LIST,
-  },
-  accounting: {
-    title: 'Accounting',
-    body: 'Books, statements, and financial ratios.',
-    route: ROUTES.ACCOUNTING.RATIOS,
-  },
-  forecasting: {
-    title: 'Forecasting',
-    body: 'Cash outlook, budgets, KPIs, and scenarios.',
-    route: ROUTES.FORECASTING.OVERVIEW,
-  },
-  documents: {
-    title: 'Documents',
-    body: 'Business files organized in cabinets and folders.',
-    route: ROUTES.DOCUMENTS.INDEX,
-  },
-  hr: {
-    title: 'HR & Payroll',
-    body: 'People, attendance, leave, and payroll.',
-    route: ROUTES.HR.OVERVIEW,
-  },
-  settings: {
-    title: 'Settings',
-    body: 'Business profile, staff, roles, and module access.',
-    route: ROUTES.SETTINGS.BUSINESS,
-  },
-};
-
-function launcherMeta(slug: string): { icon: ElementType; tone: string } | null {
-  const item = MODULE_LAUNCHER_CATALOG.find((m) => m.slug === slug);
-  if (!item) return null;
-  return { icon: item.icon, tone: item.tone };
-}
+export type { ProductTourStep } from './productTourTypes';
 
 const SHELL_STEPS: ProductTourStep[] = [
   {
@@ -149,7 +53,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'sidebar',
     target: 'sidebar-nav',
     title: 'Your modules',
-    body: 'Only the modules you can access appear here — your workspace, built for you.',
+    body: 'Only the modules you can access appear here — including Account and Custosell Guide. Each stop shows a section with its screens.',
     icon: PanelLeft,
     tone: 'bg-slate-100 text-slate-600 ring-slate-200',
   },
@@ -185,53 +89,19 @@ const CLOSING_STEPS: ProductTourStep[] = [
   },
 ];
 
-const FALLBACK_ICONS: Record<BusinessModuleSlug, ElementType> = {
-  dashboard: LayoutDashboard,
-  sales: ShoppingCart,
-  inventory: Package,
-  customers: Users,
-  pipeline: Kanban,
-  estimates: FileSpreadsheet,
-  expenses: Receipt,
-  accounting: BookOpen,
-  forecasting: LineChart,
-  documents: Files,
-  hr: IdCard,
-  settings: Settings,
-};
-
-function moduleStepsForUser(user: AuthUser | null | undefined): ProductTourStep[] {
-  const steps: ProductTourStep[] = [];
-  for (const slug of BUSINESS_MODULE_SLUGS) {
-    if (!canAccessModule(user, slug)) continue;
-    // Skip if the sidebar target is not rendered (group filtered out)
-    const copy = MODULE_TOUR_COPY[slug];
-    const label = MODULE_LABELS[slug];
-    const meta = launcherMeta(slug);
-    steps.push({
-      id: `module-${slug}`,
-      target: `sidebar-module-${slug}`,
-      title: copy.title,
-      body: copy.body,
-      route: copy.route,
-      expandGroup: label,
-      icon: meta?.icon ?? FALLBACK_ICONS[slug],
-      tone: meta?.tone ?? 'bg-slate-100 text-slate-600 ring-slate-200',
-    });
-  }
-  return steps;
-}
-
 /** Prefer steps whose DOM target exists (improves precision after layout settles). */
 export function filterStepsWithTargets(steps: ProductTourStep[]): ProductTourStep[] {
   if (typeof document === 'undefined') return steps;
   return steps.filter((step) => document.querySelector(`[data-tour="${step.target}"]`));
 }
 
-/** Tour steps filtered to shell + modules the user can open. */
+/**
+ * Shell + one step per accessible module (Account & Guide included;
+ * each module expands so sub-nav sits inside the spotlight) + closing.
+ */
 export function resolveTourSteps(user: AuthUser | null | undefined): ProductTourStep[] {
   const shell = SHELL_STEPS.filter((step) => !step.when || step.when(user));
-  const modules = moduleStepsForUser(user);
+  const nav = navTourStepsForUser(user);
   const closing = CLOSING_STEPS.filter((step) => !step.when || step.when(user));
-  return [...shell, ...modules, ...closing];
+  return [...shell, ...nav, ...closing];
 }

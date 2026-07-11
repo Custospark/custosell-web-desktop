@@ -44,12 +44,13 @@ Targets need stable anchors (`data-tour`). Guide card sits beside the spotlight 
 | Area | What’s covered |
 |------|----------------|
 | Shell | Apps, network, Guide/Tour, profile, sidebar, Quick Support |
-| Modules | One step per module the user can access |
+| Modules | One step per accessible module — **Account & Custosell Guide included** |
+| Grouping | Each module expands so **header + sub-nav** share one spotlight (not a step per link) |
 | Owners | Module access in Settings |
 | Finish / Skip | Flower celebration (~30s) + congratulations; skip has its own welcome copy |
 | Icons | Tour cards use the same module icons/tones as the Apps launcher |
-| Auto Play | Counts down after each spotlight is ready, then Next — stays on through the last step (tour is not remounted on `tour_step` saves) |
-| Sidebar | Large screens **expand** (un-collapse) when the target is in the sidebar; phones open the drawer — never blind-toggle the hamburger |
+| Precision | Instant scroll + stable re-measure; group wrappers for expanded sections |
+| Sidebar | Large screens **expand** when the target is in the sidebar; phones open the drawer |
 
 ## Wireframe (intent)
 

@@ -29,36 +29,38 @@ export function GuideHeaderNav() {
     <nav
       className="flex items-center gap-0.5 sm:gap-1 shrink-0 min-w-0"
       aria-label="Tutorials, FAQs, feedback, and notifications"
-      data-tour="navbar-guide"
     >
-      <button
-        type="button"
-        title="Replay product tour"
-        aria-label="Replay product tour"
-        disabled={isCompletelyOffline || replayTour.isPending}
-        onClick={() => void replayTour.mutateAsync({ action: 'replay_tour' })}
-        className={cn(
-          'inline-flex items-center justify-center gap-1 rounded-lg font-medium transition-colors shrink-0',
-          'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
-          'text-xs xl:text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-        )}
-      >
-        <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="hidden xl:inline truncate">Tour</span>
-      </button>
-      {guideLinks.map(({ to, label, icon: Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          title={label}
-          aria-label={label}
-          className={navLinkClass}
+      {/* Tight guide cluster — excludes notifications so the spotlight is exact */}
+      <div className="flex items-center gap-0.5 sm:gap-1" data-tour="navbar-guide">
+        <button
+          type="button"
+          title="Replay product tour"
+          aria-label="Replay product tour"
+          disabled={isCompletelyOffline || replayTour.isPending}
+          onClick={() => void replayTour.mutateAsync({ action: 'replay_tour' })}
+          className={cn(
+            'inline-flex items-center justify-center gap-1 rounded-lg font-medium transition-colors shrink-0',
+            'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
+            'text-xs xl:text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+          )}
         >
-          <Icon className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="hidden xl:inline truncate">{label}</span>
-        </NavLink>
-      ))}
+          <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="hidden xl:inline truncate">Tour</span>
+        </button>
+        {guideLinks.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            title={label}
+            aria-label={label}
+            className={navLinkClass}
+          >
+            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden xl:inline truncate">{label}</span>
+          </NavLink>
+        ))}
+      </div>
 
       <NavLink
         to={ROUTES.ACCOUNT.NOTIFICATIONS}

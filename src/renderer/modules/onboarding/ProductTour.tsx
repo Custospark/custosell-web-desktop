@@ -13,6 +13,7 @@ import {
   type CardPlacement,
   type SpotRect,
 } from './tourCardPlacement';
+import { measureTourTarget, measureTourTargetStable } from './tourTargetMeasure';
 import { resolveTourSteps } from './productTourSteps';
 import { useUpdateOnboarding } from './useOnboardingQueries';
 
@@ -23,35 +24,8 @@ interface ProductTourProps {
   onSkipped?: () => void;
 }
 
-const PAD = 4;
 const AUTO_PLAY_SECONDS = 5;
 const LG_BREAKPOINT = 1024;
-
-function measureTourTarget(target: string): SpotRect | null {
-  const el = document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null;
-  if (!el || el.getClientRects().length === 0) return null;
-  el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-  const rect = el.getBoundingClientRect();
-  if (rect.width < 2 && rect.height < 2) return null;
-  return {
-    top: Math.round(rect.top) - PAD,
-    left: Math.round(rect.left) - PAD,
-    width: Math.round(Math.max(rect.width + PAD * 2, 32)),
-    height: Math.round(Math.max(rect.height + PAD * 2, 32)),
-  };
-}
-
-async function measureWithRetry(target: string, attempts = 8): Promise<SpotRect | null> {
-  for (let i = 0; i < attempts; i++) {
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => resolve());
-    });
-    const spot = measureTourTarget(target);
-    if (spot) return spot;
-    await new Promise((r) => setTimeout(r, 50 + i * 40));
-  }
-  return null;
-}
 
 function expandSidebarGroup(label?: string) {
   if (!label) return;
@@ -197,34 +171,39 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     async function focusStep() {
       const needsSidebar = ensureSidebarForTarget(step.target);
       if (needsSidebar || window.innerWidth < LG_BREAKPOINT) {
-        await new Promise((r) => setTimeout(r, 280));
+        await new Promise((r) => setTimeout(r, 300));
       }
 
       expandSidebarGroup(step.expandGroup);
-      await new Promise((r) => setTimeout(r, 80));
+      await new Promise((r) => setTimeout(r, 100));
 
       if (step.route) {
         navigate(step.route);
-        await new Promise((r) => setTimeout(r, 220));
+        await new Promise((r) => setTimeout(r, 240));
         ensureSidebarForTarget(step.target);
-        await new Promise((r) => setTimeout(r, 120));
+        await new Promise((r) => setTimeout(r, 140));
         expandSidebarGroup(step.expandGroup);
       }
 
       if (gen !== focusGenRef.current) return;
-      const measured = await measureWithRetry(step.target);
+      const measured = await measureTourTargetStable(step.target, { attempts: 12, settleMs: 35 });
       if (gen !== focusGenRef.current) return;
       setSpot(measured);
       setStepReady(true);
+
+      // One extra settle pass after paint (fonts / sticky header)
+      await new Promise((r) => setTimeout(r, 50));
+      if (gen !== focusGenRef.current) return;
+      const refined = measureTourTarget(step.target);
+      if (refined) setSpot(refined);
     }
 
     void focusStep();
 
     const bump = () => {
       setViewportTick((n) => n + 1);
-      void measureWithRetry(step.target, 3).then((m) => {
-        if (gen === focusGenRef.current) setSpot(m);
-      });
+      const next = measureTourTarget(step.target);
+      if (gen === focusGenRef.current && next) setSpot(next);
     };
 
     window.addEventListener('resize', bump);
@@ -232,7 +211,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     window.visualViewport?.addEventListener('resize', bump);
     window.visualViewport?.addEventListener('scroll', bump);
     return () => {
-      focusGenRef.current += 1; // invalidate in-flight focus
+      focusGenRef.current += 1;
       window.removeEventListener('resize', bump);
       window.removeEventListener('orientationchange', bump);
       window.visualViewport?.removeEventListener('resize', bump);
@@ -325,7 +304,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
                 y={spot.top}
                 width={spot.width}
                 height={spot.height}
-                rx="14"
+                rx="10"
                 fill="black"
               />
             ) : null}
@@ -335,12 +314,13 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
       </svg>
       {spot ? (
         <div
-          className="pointer-events-none absolute rounded-2xl ring-2 ring-indigo-400 shadow-[0_0_0_1px_rgba(129,140,248,0.5),0_0_28px_rgba(99,102,241,0.4)]"
+          className="pointer-events-none absolute rounded-[10px] ring-2 ring-indigo-400 ring-inset shadow-[0_0_0_1px_rgba(129,140,248,0.45),0_0_24px_rgba(99,102,241,0.35)]"
           style={{
             top: spot.top,
             left: spot.left,
             width: spot.width,
             height: spot.height,
+            boxSizing: 'border-box',
           }}
         />
       ) : null}

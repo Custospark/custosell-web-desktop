@@ -60,8 +60,9 @@ export function BrowseSuppliersModal({
       onClose={handleClose}
       title="Browse suppliers"
       subtitle="Search open-for-supply businesses. Save favorites to My suppliers for a faster start."
-      size="lg"
+      size="2xl"
       titleCentered
+      panelClassName="h-[min(92vh,900px)]"
       bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-4 pt-3"
     >
       <div className="flex min-h-0 flex-1 flex-col gap-3">

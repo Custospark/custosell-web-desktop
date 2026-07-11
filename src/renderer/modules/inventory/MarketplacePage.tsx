@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, ChevronDown, MapPin, Store } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -34,9 +34,22 @@ import {
   marketplaceWorkspaceStyle,
 } from './ui/marketplace/marketplaceTheme';
 
+function useIsNarrowViewport() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia('(max-width: 767px)');
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    },
+    () => window.matchMedia('(max-width: 767px)').matches,
+    () => false,
+  );
+}
+
 export default function MarketplacePage() {
   const navigate = useNavigate();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
+  const isNarrow = useIsNarrowViewport();
 
   const [selected, setSelected] = useState<MarketplaceBusiness | null>(null);
   const [cart, setCart] = useState<MarketplaceCartLine[]>([]);
@@ -61,6 +74,7 @@ export default function MarketplacePage() {
     : removeSupplier.isPending
       ? (removeSupplier.variables?.sellerBusinessId ?? null)
       : null;
+  const cartDocked = cartOpen && !isNarrow;
 
   const filteredProducts = useMemo(() => {
     const list = productsQuery.data ?? [];
@@ -99,6 +113,10 @@ export default function MarketplacePage() {
         .map((l) => (l.product.id === productId ? { ...l, quantity } : l))
         .filter((l) => l.quantity > 0),
     );
+  }
+
+  function removeLine(productId: number) {
+    setCart((prev) => prev.filter((l) => l.product.id !== productId));
   }
 
   async function placeOrder(submitAfterCreate: boolean) {
@@ -145,9 +163,24 @@ export default function MarketplacePage() {
     ? [selected.city, selected.state, selected.country].filter(Boolean).join(', ')
     : '';
 
+  const cartProps = {
+    open: cartOpen,
+    onClose: () => setCartOpen(false),
+    cart,
+    notes,
+    onNotesChange: setNotes,
+    onUpdateQty: updateQty,
+    onRemoveLine: removeLine,
+    onSaveDraft: () => void placeOrder(false),
+    onSubmit: () => void placeOrder(true),
+    busy,
+    offline: isOffline,
+    creatingDraft: createPo.isPending && !submitPo.isPending,
+  } as const;
+
   return (
     <div
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 shadow-none sm:rounded-xl sm:border sm:border-white/50 sm:shadow-sm m-0 sm:m-3"
+      className="m-0 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 shadow-none sm:m-3 sm:rounded-xl sm:border sm:border-white/50 sm:shadow-sm"
       style={marketplaceWorkspaceStyle()}
     >
       <header className={marketplaceGlassHeader}>
@@ -190,55 +223,64 @@ export default function MarketplacePage() {
         ) : null}
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
-        {isOffline ? (
-          <div className="mb-3">
-            <SupplyOfflineBanner />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
+          {isOffline ? (
+            <div className="mb-3">
+              <SupplyOfflineBanner />
+            </div>
+          ) : null}
+
+          {!selected ? (
+            <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-xl flex-col items-center px-6 py-14 text-center')}>
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-lg shadow-teal-900/30">
+                <Store className="h-7 w-7" />
+              </span>
+              <h2 className="mt-5 text-xl font-semibold tracking-tight text-slate-900">
+                Start with a supplier
+              </h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600">
+                Open My suppliers for your shortlist, or browse every business open for supply — then add items to a purchase order.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  type="button"
+                  disabled={isOffline}
+                  onClick={() => setMySuppliersOpen(true)}
+                >
+                  <Bookmark className="mr-1.5 h-4 w-4" />
+                  My suppliers
+                  {mySuppliers.length > 0 ? ` (${mySuppliers.length})` : ''}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isOffline}
+                  onClick={() => setBrowseOpen(true)}
+                >
+                  Browse all
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <MarketplaceCatalog
+              products={filteredProducts}
+              loading={productsQuery.isLoading}
+              offline={isOffline}
+              busy={busy}
+              onAdd={addToCart}
+              productSearch={productSearch}
+              onProductSearchChange={setProductSearch}
+              compact={cartDocked}
+            />
+          )}
+        </div>
+
+        {cartDocked ? (
+          <div className="hidden min-h-0 w-[min(100%,26rem)] shrink-0 md:flex xl:w-[28rem]">
+            <MarketplaceCartSheet {...cartProps} variant="dock" />
           </div>
         ) : null}
-
-        {!selected ? (
-          <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-xl flex-col items-center px-6 py-14 text-center')}>
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-lg shadow-teal-900/30">
-              <Store className="h-7 w-7" />
-            </span>
-            <h2 className="mt-5 text-xl font-semibold tracking-tight text-slate-900">
-              Start with a supplier
-            </h2>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600">
-              Open My suppliers for your shortlist, or browse every business open for supply — then add items to a purchase order.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Button
-                type="button"
-                disabled={isOffline}
-                onClick={() => setMySuppliersOpen(true)}
-              >
-                <Bookmark className="mr-1.5 h-4 w-4" />
-                My suppliers
-                {mySuppliers.length > 0 ? ` (${mySuppliers.length})` : ''}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={isOffline}
-                onClick={() => setBrowseOpen(true)}
-              >
-                Browse all
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <MarketplaceCatalog
-            products={filteredProducts}
-            loading={productsQuery.isLoading}
-            offline={isOffline}
-            busy={busy}
-            onAdd={addToCart}
-            productSearch={productSearch}
-            onProductSearchChange={setProductSearch}
-          />
-        )}
       </div>
 
       <MarketplaceActionStrip
@@ -282,19 +324,7 @@ export default function MarketplacePage() {
         onToggleSave={toggleSave}
       />
 
-      <MarketplaceCartSheet
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        cart={cart}
-        notes={notes}
-        onNotesChange={setNotes}
-        onUpdateQty={updateQty}
-        onSaveDraft={() => void placeOrder(false)}
-        onSubmit={() => void placeOrder(true)}
-        busy={busy}
-        offline={isOffline}
-        creatingDraft={createPo.isPending && !submitPo.isPending}
-      />
+      {isNarrow ? <MarketplaceCartSheet {...cartProps} variant="sheet" /> : null}
     </div>
   );
 }

@@ -34,8 +34,14 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 - Full-bleed workspace with external hero image + glass header/footer (same language as board workspaces).
 - Bottom strip: **My suppliers** · **Browse** · **Cart** · **Orders** · **Refresh**.
-- Supplier selection happens in a search modal; products appear only after a supplier is chosen.
-- Cart opens as a focused sheet so browsing stays calm and one-job-at-a-time.
+- Supplier selection happens in large (`2xl`) search modals; products appear only after a supplier is chosen.
+- **Cart docks beside the catalog** on desktop so shoppers can keep adding lines; mobile uses a side sheet with **Keep shopping**. Draft / Submit sit in one row; cart lines are searchable and chunk-rendered for large orders.
+
+### Scale notes (display)
+
+- Current UI is built for **realistic B2B carts and per-seller catalogs** (tens–thousands), not millions of DOM rows.
+- Catalog and cart use **chunked render + client filter**; supplier browse still loads the open-for-supply list then filters locally.
+- Millions of records would need **server pagination / search** (and ideally virtualized lists) — not the current full-array `.map()` path.
 
 ### Supplier list APIs
 

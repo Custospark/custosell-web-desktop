@@ -104,6 +104,31 @@ export function useCreatePurchaseOrder() {
   });
 }
 
+export interface UpdatePurchaseOrderPayload {
+  notes?: string | null;
+  items?: { product_id: number; quantity: number }[];
+  discount_amount?: number;
+  tax_total?: number;
+}
+
+export function useUpdatePurchaseOrder() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<PurchaseOrder, AxiosError<ApiError>, { id: number; payload: UpdatePurchaseOrderPayload }>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async ({ id, payload }) => {
+      const { data } = await axiosInstance.put(PURCHASE_ORDERS.UPDATE(id), payload);
+      return unwrapEntity<PurchaseOrder>(data);
+    },
+    onSuccess: (po) => {
+      invalidatePoQueries(qc);
+      showToast('success', `PO ${po.po_number} updated`);
+    },
+    onError: (e) => showToast('error', apiError(e, 'Failed to update purchase order')),
+  });
+}
+
 export function useSubmitPurchaseOrder() {
   const qc = useQueryClient();
   const { showToast } = useToast();

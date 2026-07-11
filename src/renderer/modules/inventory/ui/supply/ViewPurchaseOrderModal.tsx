@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { purchaseOrderStatusBadge } from './purchaseOrderBadges';
@@ -98,9 +97,6 @@ export default function ViewPurchaseOrderModal({ purchaseOrder: po, isOpen, onCl
               {po.seller_business?.city ? ` · ${po.seller_business.city}` : ''}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         <Timeline po={po} />

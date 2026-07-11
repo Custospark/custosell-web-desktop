@@ -2,6 +2,7 @@ export const PURCHASE_ORDERS = {
   INDEX: '/purchase-orders',
   INCOMING: '/purchase-orders/incoming',
   DETAIL: (id: number) => `/purchase-orders/${id}`,
+  UPDATE: (id: number) => `/purchase-orders/${id}`,
   SUBMIT: (id: number) => `/purchase-orders/${id}/submit`,
   CANCEL: (id: number) => `/purchase-orders/${id}/cancel`,
   ACCEPT: (id: number) => `/purchase-orders/${id}/accept`,

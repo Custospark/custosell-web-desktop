@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Ban, Eye, FileText, PackageCheck, RefreshCw, Send, Truck } from 'lucide-react';
+import { Ban, Eye, FileText, PackageCheck, Pencil, RefreshCw, Send, Truck } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { Badge } from '../../shared/components/badges/Badge';
@@ -24,6 +24,7 @@ import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
 import { ReceivePurchaseOrderModal } from './ui/supply/ReceivePurchaseOrderModal';
 import GenerateInvoiceFromPoModal from './ui/supply/GenerateInvoiceFromPoModal';
 import ViewPurchaseOrderModal from './ui/supply/ViewPurchaseOrderModal';
+import EditPurchaseOrderModal from './ui/supply/EditPurchaseOrderModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -42,6 +43,7 @@ export default function PurchaseOrdersPage() {
   const [statusTab, setStatusTab] = useState<PurchaseOrderStatus | 'all'>('all');
   const [search, setSearch] = useState('');
   const [viewPo, setViewPo] = useState<PurchaseOrder | null>(null);
+  const [editPo, setEditPo] = useState<PurchaseOrder | null>(null);
   const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
   const [generateInvoicePo, setGenerateInvoicePo] = useState<PurchaseOrder | null>(null);
 
@@ -182,11 +184,22 @@ export default function PurchaseOrdersPage() {
                       <Eye className="h-4 w-4" />
                     </button>
                     {po.status === 'draft' ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditPo(po)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        title="Edit this draft order"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                    {po.status === 'draft' ? (
                       <Button
                         type="button"
                         size="sm"
                         disabled={isOffline || busy}
                         onClick={() => void submitPo.mutateAsync(po.id)}
+                        title="Submit this order to the seller"
                         className="inline-flex items-center gap-1"
                       >
                         <Send className="h-3.5 w-3.5" /> Submit
@@ -208,6 +221,7 @@ export default function PurchaseOrdersPage() {
                           });
                           if (ok) void cancelPo.mutateAsync(po.id);
                         }}
+                        title="Cancel this order"
                         className="inline-flex items-center gap-1"
                       >
                         <Ban className="h-3.5 w-3.5" /> Cancel
@@ -219,6 +233,7 @@ export default function PurchaseOrdersPage() {
                         size="sm"
                         disabled={isOffline}
                         onClick={() => setReceivePo(po)}
+                        title="Receive these items into your stock"
                         className="inline-flex items-center gap-1"
                       >
                         <PackageCheck className="h-3.5 w-3.5" /> Receive
@@ -231,6 +246,7 @@ export default function PurchaseOrdersPage() {
                         variant="secondary"
                         disabled={isOffline}
                         onClick={() => setGenerateInvoicePo(po)}
+                        title="Generate an invoice from this order"
                         className="inline-flex items-center gap-1"
                       >
                         <FileText className="h-3.5 w-3.5" /> Invoice
@@ -259,6 +275,14 @@ export default function PurchaseOrdersPage() {
           purchaseOrder={viewPo}
           isOpen={!!viewPo}
           onClose={() => setViewPo(null)}
+        />
+      ) : null}
+
+      {editPo ? (
+        <EditPurchaseOrderModal
+          purchaseOrder={editPo}
+          isOpen={!!editPo}
+          onClose={() => setEditPo(null)}
         />
       ) : null}
 

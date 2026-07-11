@@ -81,7 +81,13 @@ export function AddCompanyAssetModal({
         <HrFormSection title="Basics" icon={Package}>
           <div className="grid gap-3 sm:grid-cols-2">
             <HrIconField label="Name" icon={Package} required>
-              <input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={hrInputClass} />
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Dell Latitude 5540"
+                className={hrInputClass}
+              />
             </HrIconField>
             <HrIconField label="Category" icon={Package}>
               <select value={form.category ?? 'other'} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as AssetCategory }))} className={hrSelectClass}>
@@ -89,25 +95,66 @@ export function AddCompanyAssetModal({
               </select>
             </HrIconField>
             <HrIconField label="Cost" icon={Package} required>
-              <input required type="number" min={0} step="0.01" value={form.cost || ''} onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} className={hrInputClass} />
+              <input
+                required
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.cost || ''}
+                onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))}
+                placeholder="e.g. 3200000"
+                className={hrInputClass}
+              />
             </HrIconField>
-            <HrIconField label="Salvage value" icon={Package} required>
-              <input required type="number" min={0} step="0.01" value={form.salvage_value || ''} onChange={(e) => setForm((f) => ({ ...f, salvage_value: Number(e.target.value) }))} className={hrInputClass} />
+            <HrIconField label="Salvage value (worth at end of life)" icon={Package} required>
+              <input
+                required
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.salvage_value || ''}
+                onChange={(e) => setForm((f) => ({ ...f, salvage_value: Number(e.target.value) }))}
+                placeholder="e.g. 200000"
+                className={hrInputClass}
+              />
             </HrIconField>
             <HrIconField label="Useful life (months)" icon={Package} required>
-              <input required type="number" min={1} value={form.useful_life_months || ''} onChange={(e) => setForm((f) => ({ ...f, useful_life_months: Number(e.target.value) }))} className={hrInputClass} />
+              <input
+                required
+                type="number"
+                min={1}
+                value={form.useful_life_months || ''}
+                onChange={(e) => setForm((f) => ({ ...f, useful_life_months: Number(e.target.value) }))}
+                placeholder="e.g. 36"
+                className={hrInputClass}
+              />
             </HrIconField>
             <HrIconField label="Purchase date" icon={Package} required>
               <input required type="date" value={form.purchase_date} onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))} className={hrInputClass} />
             </HrIconField>
             <HrIconField label="Asset tag" icon={Package}>
-              <input value={form.asset_tag ?? ''} onChange={(e) => setForm((f) => ({ ...f, asset_tag: e.target.value }))} className={hrInputClass} />
+              <input
+                value={form.asset_tag ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, asset_tag: e.target.value }))}
+                placeholder="e.g. LAP-0042"
+                className={hrInputClass}
+              />
             </HrIconField>
             <HrIconField label="Serial number" icon={Package}>
-              <input value={form.serial_number ?? ''} onChange={(e) => setForm((f) => ({ ...f, serial_number: e.target.value }))} className={hrInputClass} />
+              <input
+                value={form.serial_number ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, serial_number: e.target.value }))}
+                placeholder="e.g. SN-5Y8K2L9P"
+                className={hrInputClass}
+              />
             </HrIconField>
             <HrIconField label="Location" icon={Package}>
-              <input value={form.location ?? ''} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} className={hrInputClass} />
+              <input
+                value={form.location ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                placeholder="e.g. Kampala HQ · Desk 12"
+                className={hrInputClass}
+              />
             </HrIconField>
             <HrIconField label="Condition" icon={Package}>
               <select value={form.condition ?? 'good'} onChange={(e) => setForm((f) => ({ ...f, condition: e.target.value as AssetCondition }))} className={hrSelectClass}>
@@ -116,7 +163,13 @@ export function AddCompanyAssetModal({
             </HrIconField>
           </div>
           <HrIconField label="Notes" icon={Package}>
-            <textarea rows={2} value={form.notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className={hrInputClass} />
+            <textarea
+              rows={2}
+              value={form.notes ?? ''}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder="e.g. Includes charger and laptop bag"
+              className={hrInputClass}
+            />
           </HrIconField>
         </HrFormSection>
         <HrModalFooter>
@@ -183,7 +236,19 @@ export function CustodyAssetModal({
           </HrIconField>
         ) : null}
         <HrIconField label="Notes" icon={UserRound}>
-          <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className={hrInputClass} />
+          <textarea
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={
+              action === 'return'
+                ? 'e.g. Returned with charger; screen scratch noted'
+                : action === 'transfer'
+                  ? 'e.g. Moving to field team for Q3'
+                  : 'e.g. Issued for remote work'
+            }
+            className={hrInputClass}
+          />
         </HrIconField>
         <HrModalFooter>
           <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>

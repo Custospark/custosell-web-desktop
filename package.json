@@ -15,6 +15,7 @@
     "build:react": "npm run react:build",
     "lint": "eslint .",
     "vera:fast": "node scripts/vera-fast.mjs",
+    "vera:logic": "node scripts/vera-logic.mjs",
     "vera:extended": "node scripts/vera-extended.mjs",
     "preview": "vite preview",
     "transpile:electron": "node ./node_modules/typescript/bin/tsc --project src/tsconfig.json",

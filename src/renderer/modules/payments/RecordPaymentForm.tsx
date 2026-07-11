@@ -1,7 +1,22 @@
 import { useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  Banknote,
+  CircleDollarSign,
+  CreditCard,
+  Paperclip,
+  StickyNote,
+  Wallet,
+} from 'lucide-react';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { Paperclip, AlertCircle } from 'lucide-react';
+import {
+  PipelineFormSection,
+  PipelineIconField,
+  pipelineInputClass,
+  pipelineSelectClass,
+} from '../pipeline/ui/pipelineFormFields';
+import { cn } from '../../shared/utils/cn';
 
 export interface RecordPaymentInput {
   amount: number;
@@ -30,6 +45,11 @@ const PAYMENT_METHODS = [
   { value: 'bank', label: 'Bank Transfer' },
   { value: 'other', label: 'Other' },
 ];
+
+const notesClass = cn(
+  pipelineInputClass,
+  'min-h-[72px] resize-none py-2.5 leading-relaxed',
+);
 
 export default function RecordPaymentForm({
   remainingBalance,
@@ -65,26 +85,27 @@ export default function RecordPaymentForm({
       amount: displayAmount,
       payment_method: paymentMethod,
       notes: notes.trim() || undefined,
-      amount_tendered: displayAmount,
+      amount_tendered: isCash ? cashTendered : displayAmount,
       change_given: changeDue > 0.009 ? changeDue : undefined,
       attachment,
     });
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 border-t border-gray-100 pt-4">
-      <p className="text-sm font-medium text-gray-800">Record payment</p>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PipelineFormSection
+        title="Record payment"
+        icon={Wallet}
+        description={`Balance due ${formatCurrency(remainingBalance)}. Partial payments are allowed.`}
+      >
+        {errorMessage && (
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{errorMessage}</p>
+          </div>
+        )}
 
-      {errorMessage && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <p>{errorMessage}</p>
-        </div>
-      )}
-
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">Amount</label>
+        <div className="flex items-center justify-end">
           <button
             type="button"
             className="text-xs font-medium text-blue-600 hover:text-blue-800"
@@ -93,92 +114,107 @@ export default function RecordPaymentForm({
               setCashTendered(remainingBalance);
             }}
           >
-            Pay full balance
+            Pay full balance ({formatCurrency(remainingBalance)})
           </button>
         </div>
-        <input
-          type="number"
-          min={0.01}
-          max={remainingBalance}
-          step="0.01"
-          value={displayAmount}
-          onChange={(e) => {
-            onDismissError?.();
-            const next = parseFloat(e.target.value) || 0;
-            setAmount(next);
-            if (isCash && cashTendered < next) setCashTendered(next);
-          }}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-      </div>
 
-      {isCash && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cash tendered</label>
-          <input
-            type="number"
-            min={displayAmount}
-            step="0.01"
-            value={cashTendered || ''}
-            onChange={(e) => setCashTendered(parseFloat(e.target.value) || 0)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {cashShort && (
-            <p className="text-xs text-red-600 mt-1">Tendered amount must cover the payment.</p>
-          )}
-          {changeDue > 0.009 && (
-            <p className="text-xs text-emerald-700 mt-1 tabular-nums">Change: {formatCurrency(changeDue)}</p>
-          )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <PipelineIconField label="Amount" icon={CircleDollarSign} required hint="Cannot exceed balance due">
+            <input
+              type="number"
+              min={0.01}
+              max={remainingBalance}
+              step="0.01"
+              value={displayAmount}
+              onChange={(e) => {
+                onDismissError?.();
+                const next = parseFloat(e.target.value) || 0;
+                setAmount(next);
+                if (isCash && cashTendered < next) setCashTendered(next);
+              }}
+              className={pipelineInputClass}
+              required
+            />
+          </PipelineIconField>
+
+          <PipelineIconField label="Method" icon={CreditCard} required>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className={pipelineSelectClass}
+            >
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </PipelineIconField>
         </div>
-      )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
-        <select
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {isCash ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <PipelineIconField
+              label="Cash tendered"
+              icon={Banknote}
+              hint={cashShort ? 'Tendered amount must cover the payment.' : undefined}
+            >
+              <input
+                type="number"
+                min={displayAmount}
+                step="0.01"
+                value={cashTendered || ''}
+                onChange={(e) => setCashTendered(parseFloat(e.target.value) || 0)}
+                className={cn(pipelineInputClass, cashShort && 'border-red-300 focus:border-red-500 focus:ring-red-500/20')}
+              />
+            </PipelineIconField>
+            <div className="flex items-end">
+              <div className={cn(
+                'w-full rounded-lg border px-3 py-2.5 text-sm',
+                changeDue > 0.009
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-gray-100 bg-gray-50 text-gray-500',
+              )}
+              >
+                <p className="text-[10px] font-medium uppercase tracking-wide opacity-80">Change due</p>
+                <p className="mt-0.5 font-semibold tabular-nums">{formatCurrency(changeDue)}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <PipelineIconField label="Notes" icon={StickyNote} hint="Optional — reference, cheque #, mobile money ID">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            maxLength={1000}
+            placeholder="Reference, cheque #, etc."
+            className={notesClass}
+          />
+        </PipelineIconField>
+
+        <PipelineIconField
+          label="Attachment"
+          icon={Paperclip}
+          hint={attachment
+            ? `${attachment.name} (${(attachment.size / 1024).toFixed(1)} KB)`
+            : 'JPG, PNG, PDF, Word, or Excel · max 5 MB'}
         >
-          {PAYMENT_METHODS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
-          ))}
-        </select>
-      </div>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/jpg,application/pdf,.doc,.docx,.xlsx"
+            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+            className={cn(
+              pipelineInputClass,
+              'cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-2.5 file:py-1 file:text-xs file:font-medium file:text-blue-700 hover:file:bg-blue-100',
+            )}
+          />
+        </PipelineIconField>
+      </PipelineFormSection>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          maxLength={1000}
-          placeholder="Reference, cheque #, etc."
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          <Paperclip className="w-3.5 h-3.5 inline mr-1" />
-          Attachment (optional)
-        </label>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/jpg,application/pdf,.doc,.docx,.xlsx"
-          onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-          className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
-        />
-        <p className="text-[11px] text-gray-400 mt-1">JPG, PNG, PDF, Word, or Excel · max 5 MB</p>
-        {attachment && (
-          <p className="text-xs text-gray-400 mt-1">{attachment.name} ({(attachment.size / 1024).toFixed(1)} KB)</p>
-        )}
-      </div>
-
-      <div className="flex flex-wrap justify-end gap-2 pt-1">
-        {onCancel && (
+      <div className="sticky bottom-0 -mx-1 flex flex-wrap justify-end gap-2 border-t border-gray-100 bg-white/95 px-1 pt-4 backdrop-blur-sm">
+        {onCancel ? (
           <Button variant="outline" size="sm" type="button" onClick={onCancel}>Cancel</Button>
-        )}
+        ) : null}
         <Button size="sm" type="submit" loading={loading} disabled={cashShort || displayAmount <= 0}>
           {submitLabel ?? `Record ${formatCurrency(displayAmount)}`}
         </Button>

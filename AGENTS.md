@@ -191,15 +191,16 @@ Component (.tsx) → Query hooks + types → axiosConfig.ts → Backend API
 
 | Tier | When | Command | Target |
 |------|------|---------|--------|
-| **Vera Fast** | Every handoff | `npm run vera:fast` | < 30s |
-| **Vera Extended** | Type-surface changes | `npx tsc --noEmit` | Minutes |
+| **Vera Fast** | Every handoff | `npm run vera:fast` | < 30s — eslint on changed files **+** `vera:logic` |
+| **Vera Logic** | Part of Fast (also standalone) | `npm run vera:logic` | Repo rules & contracts (file ≤500, invoice ownership UX, routes) |
+| **Vera Extended** | Type-surface changes | `npx tsc --noEmit` / `npm run vera:extended` | Minutes |
 
 ### Never during agent Vera
 - `npm run lint` / `eslint .` — use `vera:fast`
 - `npm run build` / `react:build` — release/CI only
 
 ### Report format
-`🧪 Vera: Fast pass — eslint (4 files). Extended skipped (no type-surface changes).`
+`🧪 Vera: Fast pass — eslint (4 files) + logic. Extended skipped (no type-surface changes).`
 
 ---
 

@@ -1,5 +1,5 @@
 /**
- * Vera Fast — ESLint on changed .ts/.tsx files only.
+ * Vera Fast — ESLint on changed .ts/.tsx + Vera Logic (repo rules/contracts).
  * Usage: node scripts/vera-fast.mjs
  */
 import { execSync } from 'child_process';
@@ -19,28 +19,46 @@ function getChangedFiles() {
           files.add(trimmed);
         }
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
   return [...files];
 }
 
+let failed = false;
+
 const files = getChangedFiles();
 
 if (files.length === 0) {
-  console.log('🧪 Vera fast: no changed TS/TSX files — skipped.');
-  process.exit(0);
+  console.log('🧪 Vera fast: no changed TS/TSX files — eslint skipped.');
+} else {
+  console.log(`🧪 Vera fast: eslint on ${files.length} file(s)`);
+  try {
+    execSync(`npx eslint --no-warn-ignored ${files.join(' ')}`, {
+      stdio: 'inherit',
+      encoding: 'utf8',
+    });
+    console.log('✅ Vera fast: eslint passed');
+  } catch {
+    console.log('❌ Vera fast: eslint failed');
+    failed = true;
+  }
 }
 
-console.log(`🧪 Vera fast: eslint on ${files.length} file(s)`);
-
 try {
-  execSync(`npx eslint --no-warn-ignored ${files.join(' ')}`, {
+  execSync('node scripts/vera-logic.mjs', {
     stdio: 'inherit',
     encoding: 'utf8',
   });
-  console.log('✅ Vera fast: passed');
-  process.exit(0);
 } catch {
+  failed = true;
+}
+
+if (failed) {
   console.log('❌ Vera fast: failed');
   process.exit(1);
 }
+
+console.log('✅ Vera fast: passed (eslint + logic)');
+process.exit(0);

@@ -63,7 +63,7 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 Lifecycle: `draft → submitted → accepted|rejected → fulfilled → received` (or `cancelled` from draft/submitted).
 
-Billing rule: **Accept creates the invoice.** **Only the seller records payments.** Buyers view **Supplier invoices** / in-place `ViewInvoiceModal`. See [2026-07-11-supplier-invoices-seller-payments.md](../adr/2026-07-11-supplier-invoices-seller-payments.md).
+Billing rule: **Accept creates the invoice.** **Only the seller records payments.** Buyers view **Supplier invoices** / in-place `ViewInvoiceModal`. Seller AR + buyer AP journals: [2026-07-11-buyer-ap-supplier-invoice-automation.md](../adr/2026-07-11-buyer-ap-supplier-invoice-automation.md). See also [2026-07-11-supplier-invoices-seller-payments.md](../adr/2026-07-11-supplier-invoices-seller-payments.md).
 
 ### Buyer — Purchase orders (`/inventory/purchase-orders`)
 

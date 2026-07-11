@@ -37,6 +37,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [shell.md](./app/shell.md) | Status banners, navbar, layout chrome |
 | [service-worker.md](./app/service-worker.md) | Web production caching (static + API GET) |
+| [vera-logic.md](./vera-logic.md) | Vera Logic — repo rules & contracts gate (`npm run vera:logic`) |
 
 ## Platform & product
 
@@ -86,6 +87,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-inventory-supply-chain-b2b.md](./adr/2026-07-11-inventory-supply-chain-b2b.md) | B2B marketplace + purchase orders (online-only, opt-in listings) |
 | [2026-07-11-po-accept-auto-invoice.md](./adr/2026-07-11-po-accept-auto-invoice.md) | Accept PO → shared seller invoice + buyer receipts via Invoices |
 | [2026-07-11-supplier-invoices-seller-payments.md](./adr/2026-07-11-supplier-invoices-seller-payments.md) | Seller-only payments; Sales vs Supplier invoices; in-place PO view |
+| [2026-07-11-buyer-ap-supplier-invoice-automation.md](./adr/2026-07-11-buyer-ap-supplier-invoice-automation.md) | Buyer AP + inventory/expense JEs mirrored from shared B2B invoices |
 | [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
 

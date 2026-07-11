@@ -15,7 +15,7 @@ import ViewInvoiceModal from './ViewInvoiceModal';
 import { viewInvoicePdf, downloadInvoicePdf } from './useInvoicePdf';
 import {
   FileText, Plus, Search,
-  ShoppingCart, ArrowRight, List, Info, AlertCircle, Store,
+  ShoppingCart, ArrowRight, List, Info, AlertCircle, Store, RefreshCw,
 } from 'lucide-react';
 import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEmailModal';
 import { cn } from '../../shared/utils/cn';
@@ -47,7 +47,12 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
   const [busyAction, setBusyAction] = useState<{ id: number; type: string } | null>(null);
 
   const { showToast } = useToast();
-  const { data: invoices, isLoading } = useInvoices(
+  const {
+    data: invoices,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useInvoices(
     isSupplierMode ? { direction: 'received' } : { direction: 'issued' },
   );
   const sendInvoice = useSendInvoice();
@@ -201,44 +206,68 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
           </div>
 
           {!isSupplierMode ? (
-            <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 self-start sm:self-auto">
-              <button
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <Button
                 type="button"
-                onClick={() => { setView('list'); setEditingId(null); }}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
-                  effectiveView === 'list'
-                    ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
-                    : 'text-gray-600 hover:text-gray-900',
-                )}
+                variant="secondary"
+                className="inline-flex items-center gap-2"
+                disabled={isFetching}
+                onClick={() => void refetch()}
               >
-                <List className="w-4 h-4" />
-                Invoice list
-              </button>
-              <button
-                type="button"
-                onClick={() => { setView('create'); setEditingId(null); }}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
-                  effectiveView === 'create'
-                    ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
-                    : 'text-gray-600 hover:text-gray-900',
-                )}
-              >
-                <Plus className="w-4 h-4" />
-                New invoice
-              </button>
+                <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+                Refresh
+              </Button>
+              <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => { setView('list'); setEditingId(null); }}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                    effectiveView === 'list'
+                      ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
+                      : 'text-gray-600 hover:text-gray-900',
+                  )}
+                >
+                  <List className="w-4 h-4" />
+                  Invoice list
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setView('create'); setEditingId(null); }}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                    effectiveView === 'create'
+                      ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200'
+                      : 'text-gray-600 hover:text-gray-900',
+                  )}
+                >
+                  <Plus className="w-4 h-4" />
+                  New invoice
+                </button>
+              </div>
             </div>
           ) : (
-            <Button
-              type="button"
-              variant="secondary"
-              className="inline-flex items-center gap-2 self-start"
-              onClick={() => navigate(ROUTES.INVENTORY.MARKETPLACE)}
-            >
-              <Store className="h-4 w-4" />
-              Explore marketplace
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 self-start">
+              <Button
+                type="button"
+                variant="secondary"
+                className="inline-flex items-center gap-2"
+                disabled={isFetching}
+                onClick={() => void refetch()}
+              >
+                <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+                Refresh
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="inline-flex items-center gap-2"
+                onClick={() => navigate(ROUTES.INVENTORY.MARKETPLACE)}
+              >
+                <Store className="h-4 w-4" />
+                Explore marketplace
+              </Button>
+            </div>
           )}
         </div>
 

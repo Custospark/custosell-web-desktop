@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useInvoice, useRecordPayment } from './api/InvoiceQueries';
 import type { Invoice } from './api/InvoiceTypes';
 import type { Payment } from '../payments/paymentTypes';
@@ -9,9 +8,8 @@ import { getPaymentErrorMessage } from '../payments/paymentQueries';
 import { computeInvoiceBalance, computePayableTotal } from '../payments/payableBalance';
 import type { RecordPaymentInput } from '../payments/RecordPaymentForm';
 import { Button } from '../../shared/components/buttons/Button';
-import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
+import { Modal } from '../../shared/components/modals/Modal';
 import { isReceivedInvoice } from './invoiceListHelpers';
-import { X } from 'lucide-react';
 
 interface RecordPaymentModalProps {
   invoice: Invoice;
@@ -70,51 +68,46 @@ export default function RecordPaymentModal({
     );
   }
 
-  return createPortal(
-    <div className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} flex items-center justify-center p-4 pointer-events-none`}>
-      <div className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full max-w-xl lg:max-w-3xl xl:max-w-4xl max-h-[92vh] overflow-y-auto">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">
-              {canRecord ? 'Record payment' : 'Payment receipts'}
-            </h2>
-            <p className="mt-0.5 text-sm text-gray-500">{activeInvoice.invoice_number}</p>
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={canRecord ? 'Record payment' : 'Payment receipts'}
+      subtitle={
+        canRecord
+          ? `Invoice ${activeInvoice.invoice_number} — post a receipt against the open balance.`
+          : `Invoice ${activeInvoice.invoice_number} — view payment history and receipts.`
+      }
+      size="xl"
+      panelClassName="lg:max-w-4xl"
+      bodyClassName="px-6 py-4"
+    >
+      <PaymentsPanel
+        referenceLabel={activeInvoice.invoice_number}
+        referenceType="Invoice"
+        totalAmount={totalAmount}
+        amountPaid={amountPaid}
+        remainingBalance={remainingBalance}
+        payments={payments}
+        canRecord={canRecord}
+        invoice={activeInvoice}
+        loading={recordPayment.isPending}
+        errorMessage={recordPayment.isError ? getPaymentErrorMessage(recordPayment.error) : null}
+        viewOnlyNotice={
+          received && remainingBalance > 0.009
+            ? 'This is a supplier invoice. Only the seller can record payments — you can view receipts here.'
+            : null
+        }
+        onDismissError={() => recordPayment.reset()}
+        onSubmit={handleSubmit}
+        onCancel={onClose}
+      >
+        {!canRecord ? (
+          <div className="flex justify-end border-t border-gray-100 pt-4">
+            <Button variant="outline" size="sm" type="button" onClick={onClose}>Close</Button>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="px-5 pb-5 pt-1">
-          {received && remainingBalance > 0.009 ? (
-            <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              This is a supplier invoice. Only the seller can record payments — you can view receipts here.
-            </p>
-          ) : null}
-          <PaymentsPanel
-            referenceLabel={activeInvoice.invoice_number}
-            referenceType="Invoice"
-            totalAmount={totalAmount}
-            amountPaid={amountPaid}
-            remainingBalance={remainingBalance}
-            payments={payments}
-            canRecord={canRecord}
-            invoice={activeInvoice}
-            loading={recordPayment.isPending}
-            errorMessage={recordPayment.isError ? getPaymentErrorMessage(recordPayment.error) : null}
-            onDismissError={() => recordPayment.reset()}
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-          />
-
-          {!canRecord && (
-            <div className="flex justify-end border-t border-gray-100 pt-4 mt-2">
-              <Button variant="outline" size="sm" type="button" onClick={onClose}>Close</Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body,
+        ) : null}
+      </PaymentsPanel>
+    </Modal>
   );
 }

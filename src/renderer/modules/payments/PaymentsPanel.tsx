@@ -3,8 +3,8 @@ import {
   CircleDollarSign,
   Scale,
   History,
-  FileText,
   WifiOff,
+  Info,
 } from 'lucide-react';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import PaymentHistoryList from './PaymentHistoryList';
@@ -13,6 +13,10 @@ import type { Sale } from '../sales/api/salesTypes';
 import type { Invoice } from '../invoices/api/InvoiceTypes';
 import type { Payment } from './paymentTypes';
 import { cn } from '../../shared/utils/cn';
+import {
+  PipelineFormSection,
+  PipelineModalHero,
+} from '../pipeline/ui/pipelineFormFields';
 
 interface PaymentsPanelProps {
   referenceLabel: string;
@@ -28,6 +32,8 @@ interface PaymentsPanelProps {
   offline?: boolean;
   sale?: Sale;
   invoice?: Invoice;
+  /** Extra banner for supplier / view-only contexts. */
+  viewOnlyNotice?: string | null;
   onDismissError?: () => void;
   onSubmit?: (input: RecordPaymentInput) => void;
   onCancel?: () => void;
@@ -48,10 +54,10 @@ function SummaryCard({
   return (
     <div
       className={cn(
-        'rounded-xl border px-3 py-3 flex items-start gap-2.5',
-        tone === 'paid' && 'bg-emerald-50/80 border-emerald-100',
-        tone === 'balance' && 'bg-amber-50/80 border-amber-100',
-        tone === 'neutral' && 'bg-gray-50/80 border-gray-100',
+        'flex items-start gap-2.5 rounded-xl border px-3 py-3',
+        tone === 'paid' && 'border-emerald-100 bg-emerald-50/80',
+        tone === 'balance' && 'border-amber-100 bg-amber-50/80',
+        tone === 'neutral' && 'border-gray-100 bg-gray-50/80',
       )}
     >
       <div
@@ -59,14 +65,14 @@ function SummaryCard({
           'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
           tone === 'paid' && 'bg-emerald-100 text-emerald-700',
           tone === 'balance' && 'bg-amber-100 text-amber-700',
-          tone === 'neutral' && 'bg-white text-gray-500 border border-gray-100',
+          tone === 'neutral' && 'border border-gray-100 bg-white text-gray-500',
         )}
       >
-        <Icon className="w-4 h-4" />
+        <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-gray-500 font-medium">{label}</p>
-        <p className="text-sm font-bold tabular-nums text-gray-900 mt-0.5 break-words">{value}</p>
+        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">{label}</p>
+        <p className="mt-0.5 break-words text-sm font-bold tabular-nums text-gray-900">{value}</p>
       </div>
     </div>
   );
@@ -86,6 +92,7 @@ export default function PaymentsPanel({
   offline,
   sale,
   invoice,
+  viewOnlyNotice,
   onDismissError,
   onSubmit,
   onCancel,
@@ -94,50 +101,58 @@ export default function PaymentsPanel({
   const progress = totalAmount > 0 ? Math.min(100, (amountPaid / totalAmount) * 100) : 0;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-50 to-white px-4 py-3.5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-          <Wallet className="w-5 h-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900">Payments</p>
-          <p className="text-xs text-gray-500 font-mono mt-0.5 truncate">{referenceLabel}</p>
-          <p className="text-[11px] text-gray-400 mt-1">{referenceType} · {payments.length} payment{payments.length === 1 ? '' : 's'}</p>
-        </div>
-        <FileText className="w-4 h-4 text-gray-300 shrink-0 mt-1" />
-      </div>
+    <div className="space-y-4">
+      <PipelineModalHero
+        icon={Wallet}
+        title={canRecord ? 'Collect payment' : 'Payment receipts'}
+        description={`${referenceType} ${referenceLabel} · ${payments.length} payment${payments.length === 1 ? '' : 's'} on record`}
+        tone={canRecord ? 'emerald' : 'slate'}
+      />
 
-      {offline && (
-        <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-          <WifiOff className="w-4 h-4 shrink-0" />
+      {viewOnlyNotice ? (
+        <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+          <p>{viewOnlyNotice}</p>
+        </div>
+      ) : null}
+
+      {offline ? (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+          <WifiOff className="h-4 w-4 shrink-0" />
           Offline — payments save locally and sync when you reconnect.
         </div>
-      )}
+      ) : null}
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-[11px] text-gray-500">
-          <span>Payment progress</span>
-          <span className="tabular-nums font-medium">{progress.toFixed(0)}%</span>
+      <PipelineFormSection
+        title="Balance summary"
+        icon={Scale}
+        description="Totals for this bill and how much remains open."
+      >
+        <div className="space-y-2">
+          <div className="flex justify-between text-[11px] text-gray-500">
+            <span>Payment progress</span>
+            <span className="font-medium tabular-nums">{progress.toFixed(0)}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
-        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <SummaryCard icon={CircleDollarSign} label="Total bill" value={formatCurrency(totalAmount)} tone="neutral" />
-        <SummaryCard icon={Wallet} label="Paid" value={formatCurrency(amountPaid)} tone="paid" />
-        <SummaryCard icon={Scale} label="Balance due" value={formatCurrency(remainingBalance)} tone="balance" />
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <History className="w-4 h-4 text-gray-400" />
-          <p className="text-sm font-semibold text-gray-800">Payment history</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <SummaryCard icon={CircleDollarSign} label="Total bill" value={formatCurrency(totalAmount)} tone="neutral" />
+          <SummaryCard icon={Wallet} label="Paid" value={formatCurrency(amountPaid)} tone="paid" />
+          <SummaryCard icon={Scale} label="Balance due" value={formatCurrency(remainingBalance)} tone="balance" />
         </div>
+      </PipelineFormSection>
+
+      <PipelineFormSection
+        title="Payment history"
+        icon={History}
+        description={payments.length === 0 ? 'No payments recorded yet.' : 'Receipts already posted against this bill.'}
+      >
         <PaymentHistoryList
           payments={payments}
           totalBill={totalAmount}
@@ -147,9 +162,9 @@ export default function PaymentsPanel({
           invoice={invoice}
           compact
         />
-      </div>
+      </PipelineFormSection>
 
-      {canRecord && onSubmit && (
+      {canRecord && onSubmit ? (
         <RecordPaymentForm
           remainingBalance={remainingBalance}
           defaultMethod={defaultMethod}
@@ -159,7 +174,7 @@ export default function PaymentsPanel({
           onSubmit={onSubmit}
           onCancel={onCancel}
         />
-      )}
+      ) : null}
 
       {children}
     </div>

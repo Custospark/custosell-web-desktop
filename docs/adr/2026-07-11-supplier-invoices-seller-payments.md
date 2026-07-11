@@ -28,3 +28,4 @@ After PO accept, one seller-owned invoice is shared with the buyer (`buyer_busin
 
 - Supersedes buyer-can-pay language in [2026-07-11-po-accept-auto-invoice.md](./2026-07-11-po-accept-auto-invoice.md).
 - Buyers still need sales-module access for invoice APIs (unchanged).
+- **Buyer AP GL** is automated separately — see [2026-07-11-buyer-ap-supplier-invoice-automation.md](./2026-07-11-buyer-ap-supplier-invoice-automation.md).

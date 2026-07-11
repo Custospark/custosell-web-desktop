@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   Ban,
   CheckCircle2,
+  FileText,
   PackageCheck,
   RefreshCw,
   Truck,
@@ -28,6 +29,7 @@ import {
 } from './api/purchaseOrders/usePurchaseOrderQueries';
 import { purchaseOrderStatusBadge } from './ui/supply/purchaseOrderBadges';
 import { SupplyOfflineBanner } from './ui/supply/SupplyOfflineBanner';
+import GenerateSellerInvoiceFromPoModal from './ui/supply/GenerateSellerInvoiceFromPoModal';
 
 const STATUS_TABS: { id: PurchaseOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -46,6 +48,7 @@ export default function IncomingOrdersPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [invoicePo, setInvoicePo] = useState<PurchaseOrder | null>(null);
 
   const { data, isLoading, isFetching, refetch } = useIncomingPurchaseOrders(undefined, !isOffline);
   const acceptPo = useAcceptPurchaseOrder();
@@ -193,6 +196,18 @@ export default function IncomingOrdersPage() {
                         <PackageCheck className="h-3.5 w-3.5" /> Fulfill
                       </Button>
                     ) : null}
+                    {po.status === 'fulfilled' || po.status === 'received' ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={isOffline}
+                        onClick={() => setInvoicePo(po)}
+                        className="inline-flex items-center gap-1"
+                      >
+                        <FileText className="h-3.5 w-3.5" /> Invoice
+                      </Button>
+                    ) : null}
                   </div>
                 ),
               },
@@ -290,12 +305,32 @@ export default function IncomingOrdersPage() {
               </Button>
             </div>
           ) : null}
+          {selected.status === 'fulfilled' || selected.status === 'received' ? (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                disabled={isOffline}
+                onClick={() => setInvoicePo(selected)}
+                className="inline-flex items-center gap-1"
+              >
+                <FileText className="h-4 w-4" /> Generate invoice
+              </Button>
+            </div>
+          ) : null}
           <div className="flex justify-end">
             <Button type="button" variant="secondary" onClick={() => setSelected(null)}>
               Close detail
             </Button>
           </div>
         </Card>
+      ) : null}
+
+      {invoicePo ? (
+        <GenerateSellerInvoiceFromPoModal
+          purchaseOrder={invoicePo}
+          isOpen={!!invoicePo}
+          onClose={() => setInvoicePo(null)}
+        />
       ) : null}
     </div>
   );

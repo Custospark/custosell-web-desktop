@@ -70,6 +70,10 @@ API: `PATCH /businesses/storefront-profile`, `GET /businesses/slug-available?slu
 
 ## Product setup
 
+Product edit modal → **Pricing & tax**:
+
+- Optional **Sale discount %** (0–100). Public shop shows struck regular + sale price; place-order charges the effective sale unit price. POS till still uses regular `unit_price` in v1. See ADR [product-percent-discounts](../adr/2026-07-12-product-percent-discounts.md).
+
 Product edit modal → **Public shop**:
 
 - Upload image (`POST /products/{id}/image`)  

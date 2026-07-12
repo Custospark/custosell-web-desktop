@@ -22,7 +22,7 @@ export interface StorefrontProduct {
   unit_price: string | number;
   /** Regular price when on sale (same as unit_price). */
   compare_at_price?: string | number | null;
-  /** Effective sell price when discount_percent &gt; 0. */
+  /** Effective sell price when discount_percent > 0. */
   sale_price?: string | number | null;
   discount_percent?: string | number | null;
   unit: string | null;

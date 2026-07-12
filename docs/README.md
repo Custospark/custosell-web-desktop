@@ -114,6 +114,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-12-storefront-buyer-receipts-invoices.md](./adr/2026-07-12-storefront-buyer-receipts-invoices.md) | B2C My Orders → sale receipt / invoice (reuse POS modals) |
 | [2026-07-12-storefront-buyer-doc-letterhead.md](./adr/2026-07-12-storefront-buyer-doc-letterhead.md) | Buyer receipts/invoices/PDF use shop name, not Custosell |
 | [2026-07-12-storefront-buyer-phone-and-order-eye.md](./adr/2026-07-12-storefront-buyer-phone-and-order-eye.md) | Persist delivery phone for reorders; Eye → line items on My Orders |
+| [2026-07-12-product-percent-discounts.md](./adr/2026-07-12-product-percent-discounts.md) | Product `discount_percent`; storefront struck sale prices; place-order uses effective price |
 
 ## Modules
 

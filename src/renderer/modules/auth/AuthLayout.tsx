@@ -5,11 +5,13 @@ import { Home } from 'lucide-react';
 import LogoImage from '../../shared/assets/LogoImage';
 import {
   PRODUCT_NAME,
-  SUPPORTING_LINE,
   TAGLINE,
   TAGLINE_SHORT,
 } from '../../shared/brand/custosellBrand';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
+
+const AUTH_HERO_DESCRIPTION =
+  'Point of Sale (POS), Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one system that works with or without the internet.';
 
 interface AuthLayoutProps {
   title: string;
@@ -26,7 +28,7 @@ const AUTH_HIGHLIGHTS = [
 
 export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
   const image = heroImage || AUTH_HERO_IMAGES.login;
-  const description = heroDescription || SUPPORTING_LINE;
+  const description = heroDescription || AUTH_HERO_DESCRIPTION;
 
   return (
     <div className="min-h-screen flex bg-gray-50">

@@ -7,6 +7,12 @@ import { cn } from '../../utils/cn';
 /** Above cart sheets, strips, and nav menus. */
 export const MODAL_Z_INDEX_CLASS = 'z-[20000]';
 
+/**
+ * Portaled menus/selects opened from inside a modal — above the modal panel,
+ * below confirm dialogs.
+ */
+export const MODAL_NESTED_PORTAL_Z_INDEX_CLASS = 'z-[20500]';
+
 /** Confirm dialogs must sit above modals and drawers. */
 export const CONFIRM_Z_INDEX_CLASS = 'z-[21000]';
 

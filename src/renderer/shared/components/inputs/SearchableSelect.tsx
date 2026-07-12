@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { MODAL_NESTED_PORTAL_Z_INDEX_CLASS } from '../modals/Modal';
 
 export interface SearchableSelectOption {
   value: string;
@@ -143,7 +144,10 @@ export function SearchableSelect({
       {open && createPortal(
         <div
           ref={panelRef}
-          className="fixed z-[200] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl"
+          className={cn(
+            'fixed overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl',
+            MODAL_NESTED_PORTAL_Z_INDEX_CLASS,
+          )}
           style={{
             top: position.top,
             left: position.left,

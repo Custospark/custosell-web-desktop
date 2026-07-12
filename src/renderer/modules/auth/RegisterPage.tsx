@@ -97,7 +97,7 @@ export default function RegisterPage() {
         </div>
         <div className="relative">
           <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input placeholder="Business / Company / Institution name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
+          <input placeholder="Business, Company, or Institution name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
         </div>
         <div className="relative">
           <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />

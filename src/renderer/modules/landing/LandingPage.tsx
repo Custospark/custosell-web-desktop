@@ -104,18 +104,18 @@ export default function LandingPage() {
     <>
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pt-8 lg:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="text-center lg:text-left space-y-8">
+          <div className="text-center lg:text-left space-y-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full shadow-lg shadow-blue-500/20 mx-auto lg:mx-0">
               <Sparkles className="w-4 h-4 text-white" />
-              <span className="text-sm font-semibold text-white">Sell more, work less, grow faster</span>
+              <span className="text-sm font-semibold text-white">Work smarter, grow faster</span>
             </motion.div>
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1">
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest">
               {TAGLINE_SHORT}
             </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
               {PRODUCT_NAME}
             </motion.h1>
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-snug tracking-tight">
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-xl sm:text-2xl lg:text-3xl font-bold leading-snug tracking-tight -mt-2">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
                 {TAGLINE}
               </span>

@@ -46,7 +46,7 @@ const BENEFITS = [
   {
     icon: Layers,
     title: 'Everything in one place',
-    description: 'POS, Inventory & Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting — all connected, no more juggling separate apps.',
+    description: 'POS, E-commerce Storefront, Inventory & Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting — all connected, no more juggling separate apps.',
     color: 'from-blue-500 to-blue-600',
   },
   {
@@ -104,7 +104,7 @@ export default function LandingPage() {
             </motion.p>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-base sm:text-lg text-gray-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              <strong className="text-gray-700">Point of Sale (POS)</strong>, <strong className="text-gray-700">Inventory &amp; Supply Chain</strong>, <strong className="text-gray-700">Accounting</strong>, <strong className="text-gray-700">HR &amp; Payroll</strong>, <strong className="text-gray-700">Invoicing</strong>, <strong className="text-gray-700">Expenses</strong>, <strong className="text-gray-700">Project Management</strong>, <strong className="text-gray-700">Sales Pipeline (CRM)</strong>, <strong className="text-gray-700">Financial Forecasting</strong>, and <strong className="text-gray-700">Document Management</strong> — all in one connected system that works with or without the internet.
+              <strong className="text-gray-700">Point of Sale (POS)</strong>, <strong className="text-gray-700">E-commerce Storefront</strong>, <strong className="text-gray-700">Inventory &amp; Supply Chain</strong>, <strong className="text-gray-700">Accounting</strong>, <strong className="text-gray-700">HR &amp; Payroll</strong>, <strong className="text-gray-700">Invoicing</strong>, <strong className="text-gray-700">Expenses</strong>, <strong className="text-gray-700">Project Management</strong>, <strong className="text-gray-700">Sales Pipeline (CRM)</strong>, <strong className="text-gray-700">Financial Forecasting</strong>, and <strong className="text-gray-700">Document Management</strong> — all in one connected system that works with or without the internet.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">

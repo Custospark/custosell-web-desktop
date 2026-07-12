@@ -1,5 +1,5 @@
 import { Ban, Eye, FileText, Receipt, Trash2 } from 'lucide-react';
-import { Button } from '../../../shared/components/buttons/Button';
+import { cn } from '../../../shared/utils/cn';
 import type { MyStorefrontOrder } from '../api/storefrontTypes';
 
 interface MyOrderDocActionsProps {
@@ -10,10 +10,12 @@ interface MyOrderDocActionsProps {
   onDelete?: () => void;
   onOpenReceipt: () => void;
   onOpenInvoice: () => void;
-  onOpenInvoiceReceipts: () => void;
 }
 
-/** B2C My Orders actions — Eye, cancel open, delete cancelled, receipts/invoices. */
+const iconBtn =
+  'rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 disabled:opacity-50';
+
+/** B2C My Orders actions — sparse icon controls (Sales History / completed Orders style). */
 export function MyOrderDocActions({
   order,
   busy,
@@ -22,7 +24,6 @@ export function MyOrderDocActions({
   onDelete,
   onOpenReceipt,
   onOpenInvoice,
-  onOpenInvoiceReceipts,
 }: MyOrderDocActionsProps) {
   const hasSale = Boolean(order.sale_id);
   const hasInvoice = Boolean(order.invoice_id);
@@ -30,88 +31,68 @@ export function MyOrderDocActions({
   const canDelete = order.status === 'cancelled' && Boolean(onDelete);
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1">
+    <div className="flex flex-wrap items-center justify-end gap-0.5">
       <button
         type="button"
         onClick={onView}
         disabled={busy}
-        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
+        className={cn(iconBtn, 'hover:bg-blue-50 hover:text-blue-600')}
         title="View order items"
+        aria-label="View order items"
       >
         <Eye className="h-4 w-4" />
       </button>
 
       {canCancel ? (
-        <Button
+        <button
           type="button"
-          size="sm"
-          variant="secondary"
-          disabled={busy}
           onClick={onCancel}
+          disabled={busy}
+          className={cn(iconBtn, 'hover:bg-red-50 hover:text-red-600')}
           title="Cancel this open order"
-          className="gap-1"
+          aria-label="Cancel order"
         >
-          <Ban className="h-3.5 w-3.5" />
-          Cancel
-        </Button>
+          <Ban className="h-4 w-4" />
+        </button>
       ) : null}
 
       {canDelete ? (
-        <Button
+        <button
           type="button"
-          size="sm"
-          variant="secondary"
-          disabled={busy}
           onClick={onDelete}
+          disabled={busy}
+          className={cn(iconBtn, 'hover:bg-red-50 hover:text-red-600')}
           title="Remove this cancelled order from your list"
-          className="gap-1"
+          aria-label="Delete order"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete
-        </Button>
+          <Trash2 className="h-4 w-4" />
+        </button>
       ) : null}
 
       {hasSale ? (
-        <Button
+        <button
           type="button"
-          size="sm"
-          variant="secondary"
-          disabled={busy}
           onClick={onOpenReceipt}
+          disabled={busy}
+          className={cn(iconBtn, 'hover:bg-emerald-50 hover:text-emerald-700')}
           title={order.receipt_number ? `Receipt ${order.receipt_number}` : 'View sale receipt'}
-          className="gap-1"
+          aria-label="View receipt"
         >
-          <Receipt className="h-3.5 w-3.5" />
-          Receipt
-        </Button>
+          <Receipt className="h-4 w-4" />
+        </button>
       ) : null}
+
       {hasInvoice ? (
-        <>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            disabled={busy}
-            onClick={onOpenInvoice}
-            title={order.invoice_number ? `Invoice ${order.invoice_number}` : 'View invoice'}
-            className="gap-1"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            Invoice
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={busy}
-            onClick={onOpenInvoiceReceipts}
-            title="Payment receipts on this invoice"
-            className="gap-1"
-          >
-            <Receipt className="h-3.5 w-3.5" />
-            Payments
-          </Button>
-        </>
+        <button
+          type="button"
+          onClick={onOpenInvoice}
+          disabled={busy}
+          className={cn(iconBtn, 'hover:bg-indigo-50 hover:text-indigo-600')}
+          title={order.invoice_number ? `Invoice ${order.invoice_number}` : 'View invoice'}
+          aria-label="View invoice"
+        >
+          <FileText className="h-4 w-4" />
+        </button>
       ) : null}
     </div>
   );

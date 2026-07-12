@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Modal } from '../../shared/components/modals/Modal';
-import { Button } from '../../shared/components/buttons/Button';
 import type { Payment } from './paymentTypes';
 import type { Invoice } from '../invoices/api/InvoiceTypes';
 import type { Sale } from '../sales/api/salesTypes';
@@ -12,11 +11,12 @@ import {
 } from './paymentReceiptDetails';
 import { viewPaymentReceiptPdf, downloadPaymentReceiptPdf } from './usePaymentPdf';
 import PaymentReceiptContent, { buildPaymentReceiptContext } from './PaymentReceiptContent';
-import { CheckCircle2, Eye, Download, Printer, Mail } from 'lucide-react';
+import { CheckCircle2, Eye, Download, Printer, Mail, Paperclip } from 'lucide-react';
 import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEmailModal';
-import { EmailSentCountBadge, emailSentLabel } from '../../shared/components/email/EmailSentCountBadge';
+import { emailSentLabel } from '../../shared/components/email/EmailSentCountBadge';
 import type { SendDocumentEmailResult } from '../../shared/hooks/useDocumentEmail';
 import { cn } from '../../shared/utils/cn';
+import { ReceiptActionBar } from '../sales/ui/receipt/ReceiptActionBar';
 
 interface PaymentReceiptModalProps {
   payment: Payment;
@@ -58,7 +58,6 @@ export default function PaymentReceiptModal({
   const canPdf = payment.id > 0 && !payment._pendingSync;
   const isReceivedInvoice = invoice?.direction === 'received';
   const defaultEmail = invoice?.customer?.email ?? sale?.customer?.email ?? null;
-  // Customer on the receipt = buyer (bill-to). Seller letterhead comes from issuerBusiness.
   const customerName = invoice?.customer?.name ?? sale?.customer?.name ?? undefined;
   const issuerBusiness = isReceivedInvoice ? (invoice?.seller_business ?? null) : null;
 
@@ -99,106 +98,136 @@ export default function PaymentReceiptModal({
     }
   }
 
+  const moreActions = [
+    ...(canPdf
+      ? [
+          {
+            key: 'view-pdf',
+            label: 'View PDF',
+            icon: <Eye className="h-4 w-4" />,
+            onClick: () => void handleViewPdf(),
+            loading: pdfBusy === 'view',
+            title: 'Open PDF in browser',
+          },
+          {
+            key: 'email',
+            label: emailSentCount > 0 ? `Email (${emailSentCount})` : 'Email',
+            icon: <Mail className="h-4 w-4" />,
+            onClick: () => setEmailOpen(true),
+            title: emailSentLabel(emailSentCount),
+          },
+        ]
+      : []),
+    ...(payment.attachment_url
+      ? [
+          {
+            key: 'attachment',
+            label: 'Attachment',
+            icon: <Paperclip className="h-4 w-4" />,
+            onClick: () => {
+              window.open(payment.attachment_url!, '_blank', 'noopener,noreferrer');
+            },
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
-    <Modal isOpen onClose={onClose} title="Payment receipt" size="md" bodyClassName="px-5 py-4">
-      <div className="space-y-4">
-        <div className={cn(
-          'rounded-2xl border px-4 py-3 no-print',
-          isPaidInFull
-            ? 'border-emerald-200 bg-gradient-to-br from-emerald-50/90 to-white'
-            : 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-white',
-        )}>
-          <div className="flex items-start gap-3">
-            <div className={cn(
-              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
-              isPaidInFull ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
-            )}>
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-gray-900">
-                {isPaidInFull ? 'Paid in full' : 'Partial payment'}
-              </p>
-              <p className="text-xs text-gray-600 mt-0.5 font-mono">{payment.receipt_number}</p>
-              {emailSentCount > 0 && (
-                <p className="text-[11px] text-violet-700 mt-0.5">{emailSentLabel(emailSentCount)}</p>
-              )}
-              {payment._pendingSync && (
-                <p className="text-xs text-amber-600 mt-1">Saved locally — syncs when online</p>
-              )}
+      <Modal isOpen onClose={onClose} title="Payment receipt" size="md" bodyClassName="px-5 py-4">
+        <div className="space-y-4">
+          <div className={cn(
+            'rounded-2xl border px-4 py-3 no-print',
+            isPaidInFull
+              ? 'border-emerald-200 bg-gradient-to-br from-emerald-50/90 to-white'
+              : 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-white',
+          )}>
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+                isPaidInFull ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+              )}>
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900">
+                  {isPaidInFull ? 'Paid in full' : 'Partial payment'}
+                </p>
+                <p className="mt-0.5 font-mono text-xs text-gray-600">{payment.receipt_number}</p>
+                {emailSentCount > 0 ? (
+                  <p className="mt-0.5 text-[11px] text-violet-700">{emailSentLabel(emailSentCount)}</p>
+                ) : null}
+                {payment._pendingSync ? (
+                  <p className="mt-1 text-xs text-amber-600">Saved locally — syncs when online</p>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-center">
-          <PaymentReceiptContent
-            ref={receiptRef}
-            payment={payment}
-            context={context}
-            billDetails={billDetails}
-            issuerBusiness={issuerBusiness}
+          <div className="flex justify-center">
+            <PaymentReceiptContent
+              ref={receiptRef}
+              payment={payment}
+              context={context}
+              billDetails={billDetails}
+              issuerBusiness={issuerBusiness}
+            />
+          </div>
+
+          <ReceiptActionBar
+            actions={[
+              ...(canPdf
+                ? [
+                    {
+                      key: 'download',
+                      label: 'Download PDF',
+                      icon: <Download className="h-4 w-4" />,
+                      onClick: () => void handleDownloadPdf(),
+                      loading: pdfBusy === 'download',
+                      title: 'Save this receipt as a PDF file',
+                    },
+                  ]
+                : []),
+              {
+                key: 'print',
+                label: 'Print',
+                icon: <Printer className="h-4 w-4" />,
+                onClick: handlePrint,
+                title: 'Print a paper copy of this receipt',
+              },
+              {
+                key: 'done',
+                label: 'Done',
+                icon: <CheckCircle2 className="h-4 w-4" />,
+                onClick: onClose,
+                primary: true,
+                title: 'Close',
+              },
+            ]}
+            moreActions={moreActions}
           />
         </div>
+      </Modal>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 no-print">
-          <Button size="sm" variant="outline" onClick={handlePrint}>
-            <Printer className="w-3.5 h-3.5 mr-1.5" />
-            Print
-          </Button>
-          {canPdf && (
-            <>
-              <Button size="sm" variant="outline" onClick={() => void handleViewPdf()} loading={pdfBusy === 'view'}>
-                <Eye className="w-3.5 h-3.5 mr-1.5" />
-                PDF
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => void handleDownloadPdf()} loading={pdfBusy === 'download'}>
-                <Download className="w-3.5 h-3.5 mr-1.5" />
-                Download
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setEmailOpen(true)} title={emailSentLabel(emailSentCount)}>
-                <span className="relative inline-flex items-center">
-                  <Mail className="w-3.5 h-3.5 mr-1.5" />
-                  Email
-                  <EmailSentCountBadge count={emailSentCount} className="-top-1.5 -right-3" />
-                </span>
-              </Button>
-            </>
-          )}
-          {payment.attachment_url && (
-            <a
-              href={payment.attachment_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
-            >
-              Attachment
-            </a>
-          )}
-          <Button size="sm" onClick={onClose}>Done</Button>
-        </div>
-      </div>
-    </Modal>
-
-    {emailOpen && (
-      <SendDocumentEmailModal
-        open
-        onClose={() => setEmailOpen(false)}
-        documentType="payment_receipt"
-        documentId={payment.id}
-        documentLabel={`Receipt ${payment.receipt_number}`}
-        customerName={customerName}
-        defaultEmail={defaultEmail}
-        customerId={sale?.customer_id ?? invoice?.customer_id}
-        saleId={sale?.id}
-        emailSentCount={emailSentCount}
-        onSent={(result: SendDocumentEmailResult) => {
-          setEmailSentOverride(result.email_sent_count);
-        }}
-        blocked={!canPdf}
-        blockedReason={payment._pendingSync ? 'Receipt must sync before it can be emailed.' : undefined}
-      />
-    )}
+      {emailOpen ? (
+        <SendDocumentEmailModal
+          open
+          onClose={() => setEmailOpen(false)}
+          documentType="payment_receipt"
+          documentId={payment.id}
+          documentLabel={`Receipt ${payment.receipt_number}`}
+          customerName={customerName}
+          defaultEmail={defaultEmail}
+          customerId={sale?.customer_id ?? invoice?.customer_id}
+          saleId={sale?.id}
+          emailSentCount={emailSentCount}
+          onSent={(result: SendDocumentEmailResult) => {
+            setEmailSentOverride(result.email_sent_count);
+          }}
+          blocked={!canPdf}
+          blockedReason={payment._pendingSync ? 'Receipt must sync before it can be emailed.' : undefined}
+        />
+      ) : null}
     </>
   );
 }

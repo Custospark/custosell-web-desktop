@@ -2,8 +2,8 @@ import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Printer, Download, Share2 } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
-import { Button } from '../../../../shared/components/buttons/Button';
 import ReceiptContent from '../receipt/ReceiptContent';
+import { ReceiptActionBar } from '../receipt/ReceiptActionBar';
 import { useWebShare, receiptShareText } from '../../../../shared/hooks/useWebShare';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import type { Sale } from '../../api/salesTypes';
@@ -14,10 +14,10 @@ interface ReceiptPreviewModalProps {
   onClose: () => void;
 }
 
+/** Receipt preview — Sale completed action layout (Download / Print / More → Share). */
 export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPreviewModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
-  // Issuer on the sale — not the viewer (Discover buyers have no / wrong business).
   const business = sale.business ?? authUser?.business;
   const { share } = useWebShare();
 
@@ -52,35 +52,48 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
 
   return (
     <Modal isOpen={open} onClose={onClose} title="Receipt Preview" size="sm">
-      <div className="no-print flex flex-wrap gap-2 justify-end mb-3 sm:mb-4">
-        <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-          <Download className="w-4 h-4 sm:mr-1" />
-          <span className="hidden sm:inline">Download PDF</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void share({
-            title: `Receipt ${sale.receipt_number}`,
-            text: receiptShareText(
-              shopName,
-              sale.receipt_number,
-              parseFloat(sale.total_amount),
-              currency,
-              sale.payment_method,
-            ),
-          })}
-        >
-          <Share2 className="w-4 h-4 sm:mr-1" />
-          <span className="hidden sm:inline">Share</span>
-        </Button>
-        <Button variant="outline" size="sm" onClick={handlePrint}>
-          <Printer className="w-4 h-4 sm:mr-1" />
-          <span className="hidden sm:inline">Print Receipt</span>
-        </Button>
+      <div className="flex justify-center overflow-x-auto">
+        <ReceiptContent ref={receiptRef} sale={sale} />
       </div>
 
-      <ReceiptContent ref={receiptRef} sale={sale} />
+      <ReceiptActionBar
+        className="mt-4"
+        actions={[
+          {
+            key: 'pdf',
+            label: 'Download PDF',
+            icon: <Download className="h-4 w-4" />,
+            onClick: handleDownloadPdf,
+            title: 'Save this receipt as a PDF file',
+          },
+          {
+            key: 'print',
+            label: 'Print',
+            icon: <Printer className="h-4 w-4" />,
+            onClick: handlePrint,
+            title: 'Print a paper copy of this receipt',
+          },
+        ]}
+        moreActions={[
+          {
+            key: 'share',
+            label: 'Share',
+            icon: <Share2 className="h-4 w-4" />,
+            onClick: () => {
+              void share({
+                title: `Receipt ${sale.receipt_number}`,
+                text: receiptShareText(
+                  shopName,
+                  sale.receipt_number,
+                  parseFloat(sale.total_amount),
+                  currency,
+                  sale.payment_method,
+                ),
+              });
+            },
+          },
+        ]}
+      />
     </Modal>
   );
 }

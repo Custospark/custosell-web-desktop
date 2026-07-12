@@ -2,10 +2,10 @@ import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import type { CartItem } from '../../api/salesTypes';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import { Button } from '../../../../shared/components/buttons/Button';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { Printer, Plus, Download, Share2 } from 'lucide-react';
 import { useWebShare, receiptShareText } from '../../../../shared/hooks/useWebShare';
+import { ReceiptActionBar } from './ReceiptActionBar';
 
 interface ReceiptPreviewProps {
   receiptNumber: string;
@@ -16,6 +16,7 @@ interface ReceiptPreviewProps {
   onNewSale: () => void;
 }
 
+/** Legacy cart receipt preview — same action layout as Sale completed. */
 export default function ReceiptPreview({ receiptNumber, items, total, paymentMethod, onNewSale }: ReceiptPreviewProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
@@ -26,18 +27,20 @@ export default function ReceiptPreview({ receiptNumber, items, total, paymentMet
   const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
-      <div ref={receiptRef} className="bg-white p-6 border border-gray-200 rounded-xl">
-          <div className="text-center border-b border-gray-200 pb-4 mb-4">
-            <h2 className="text-lg font-bold text-gray-900">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
-            {business?.description && <p className="text-xs text-gray-500 mt-0.5">{business.description}</p>}
-            {(business?.business_phone || business?.phone || authUser?.phone) && (
-              <p className="text-xs text-gray-500 mt-0.5">Call/WhatsApp: {business?.business_phone || business?.phone || authUser?.phone}</p>
-            )}
-            {business?.business_email && <p className="text-xs text-gray-500">{business.business_email}</p>}
-            {location && <p className="text-xs text-gray-400 mt-0.5">{location}</p>}
-            <p className="text-xs text-gray-400 mt-1.5">Receipt: {receiptNumber}</p>
-          </div>
+    <div className="mx-auto max-w-md space-y-4">
+      <div ref={receiptRef} className="rounded-xl border border-gray-200 bg-white p-6">
+        <div className="mb-4 border-b border-gray-200 pb-4 text-center">
+          <h2 className="text-lg font-bold text-gray-900">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
+          {business?.description ? <p className="mt-0.5 text-xs text-gray-500">{business.description}</p> : null}
+          {(business?.business_phone || business?.phone || authUser?.phone) ? (
+            <p className="mt-0.5 text-xs text-gray-500">
+              Call/WhatsApp: {business?.business_phone || business?.phone || authUser?.phone}
+            </p>
+          ) : null}
+          {business?.business_email ? <p className="text-xs text-gray-500">{business.business_email}</p> : null}
+          {location ? <p className="mt-0.5 text-xs text-gray-400">{location}</p> : null}
+          <p className="mt-1.5 text-xs text-gray-400">Receipt: {receiptNumber}</p>
+        </div>
 
         <div className="space-y-2 text-sm">
           {items.map((item, i) => (
@@ -51,7 +54,7 @@ export default function ReceiptPreview({ receiptNumber, items, total, paymentMet
           ))}
         </div>
 
-        <div className="border-t border-gray-200 mt-4 pt-4 space-y-1 text-sm">
+        <div className="mt-4 space-y-1 border-t border-gray-200 pt-4 text-sm">
           <div className="flex justify-between text-gray-500">
             <span>Subtotal</span><span>{formatCurrency(total)}</span>
           </div>
@@ -63,38 +66,53 @@ export default function ReceiptPreview({ receiptNumber, items, total, paymentMet
           </div>
         </div>
 
-        <div className="text-center text-xs text-gray-400 mt-6 pt-4 border-t border-gray-100">
+        <div className="mt-6 border-t border-gray-100 pt-4 text-center text-xs text-gray-400">
           <p>Thank you for your purchase!</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 sm:gap-3">
-        <Button variant="secondary" size="sm" onClick={handleDownloadPdf}>
-          <Download className="w-4 h-4 mr-1.5" />PDF
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => void share({
-            title: `Receipt ${receiptNumber}`,
-            text: receiptShareText(
-              business?.name ?? 'Business',
-              receiptNumber,
-              total,
-              business?.currency || 'UGX',
-              paymentMethod,
-            ),
-          })}
-        >
-          <Share2 className="w-4 h-4 mr-1.5" />Share
-        </Button>
-        <Button variant="secondary" size="sm" onClick={handlePrint}>
-          <Printer className="w-4 h-4 mr-1.5" />Print
-        </Button>
-        <Button size="sm" onClick={onNewSale}>
-          <Plus className="w-4 h-4 mr-1.5" />New Sale
-        </Button>
-      </div>
+      <ReceiptActionBar
+        actions={[
+          {
+            key: 'pdf',
+            label: 'Download PDF',
+            icon: <Download className="h-4 w-4" />,
+            onClick: handleDownloadPdf,
+          },
+          {
+            key: 'print',
+            label: 'Print',
+            icon: <Printer className="h-4 w-4" />,
+            onClick: handlePrint,
+          },
+          {
+            key: 'new',
+            label: 'New sale',
+            icon: <Plus className="h-4 w-4" />,
+            onClick: onNewSale,
+            primary: true,
+          },
+        ]}
+        moreActions={[
+          {
+            key: 'share',
+            label: 'Share',
+            icon: <Share2 className="h-4 w-4" />,
+            onClick: () => {
+              void share({
+                title: `Receipt ${receiptNumber}`,
+                text: receiptShareText(
+                  business?.name ?? 'Business',
+                  receiptNumber,
+                  total,
+                  business?.currency || 'UGX',
+                  paymentMethod,
+                ),
+              });
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

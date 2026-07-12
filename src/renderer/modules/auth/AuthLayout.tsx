@@ -5,13 +5,13 @@ import { Home } from 'lucide-react';
 import LogoImage from '../../shared/assets/LogoImage';
 import {
   PRODUCT_NAME,
+  SUPPORTING_LINE,
   TAGLINE,
   TAGLINE_SHORT,
 } from '../../shared/brand/custosellBrand';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 
-const AUTH_HERO_DESCRIPTION =
-  'Point of Sale (POS), Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';
+const AUTH_HERO_DESCRIPTION = SUPPORTING_LINE;
 
 interface AuthLayoutProps {
   title: string;

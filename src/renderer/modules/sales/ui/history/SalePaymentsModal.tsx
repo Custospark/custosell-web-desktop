@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
-import { Printer } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
-import { Button } from '../../../../shared/components/buttons/Button';
 import ReceiptContent from '../receipt/ReceiptContent';
+import { ReceiptActionBar } from '../receipt/ReceiptActionBar';
 import PaymentsPanel from '../../../payments/PaymentsPanel';
 import PaymentReceiptModal from '../../../payments/PaymentReceiptModal';
 import type { RecordPaymentInput } from '../../../payments/RecordPaymentForm';
@@ -41,6 +41,12 @@ export default function SalePaymentsModal({ sale, open, onClose }: SalePaymentsM
     contentRef: receiptRef,
     documentTitle: activeSale.receipt_number,
     pageStyle: `@page { margin: 0; } @media print { .no-print { display: none !important; } }`,
+  });
+
+  const handleDownloadPdf = useReactToPrint({
+    contentRef: receiptRef,
+    documentTitle: activeSale.receipt_number,
+    pageStyle: `@page { margin: 0; size: auto; } @media print { .no-print { display: none !important; } }`,
   });
 
   function handleSubmit(input: RecordPaymentInput) {
@@ -96,14 +102,27 @@ export default function SalePaymentsModal({ sale, open, onClose }: SalePaymentsM
 
         {showSummary && (
           <div className="border-t border-gray-100 pt-4">
-            <div className="no-print flex justify-between items-center mb-3">
-              <p className="text-sm font-medium text-gray-700">Sale summary</p>
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="w-4 h-4 mr-1" />
-                Print
-              </Button>
+            <p className="mb-3 text-sm font-medium text-gray-700 no-print">Sale summary</p>
+            <div className="flex justify-center overflow-x-auto">
+              <ReceiptContent ref={receiptRef} sale={activeSale} />
             </div>
-            <ReceiptContent ref={receiptRef} sale={activeSale} />
+            <ReceiptActionBar
+              className="mt-4"
+              actions={[
+                {
+                  key: 'pdf',
+                  label: 'Download PDF',
+                  icon: <Download className="h-4 w-4" />,
+                  onClick: handleDownloadPdf,
+                },
+                {
+                  key: 'print',
+                  label: 'Print',
+                  icon: <Printer className="h-4 w-4" />,
+                  onClick: handlePrint,
+                },
+              ]}
+            />
           </div>
         )}
       </PaymentsPanel>

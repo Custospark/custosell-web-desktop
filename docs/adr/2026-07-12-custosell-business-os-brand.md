@@ -12,10 +12,10 @@ Custosell began as a POS product. The lockup **“Sell More. Track All. Grow Fas
 
 1. **Primary tagline:** `Your Business Operating System`
 2. **Short lockup:** `Business OS`
-3. **Supporting line:** `Sales, people, money, and operations — offline when you need it.`
-4. **Single FE source of truth:** [`src/renderer/shared/brand/custosellBrand.ts`](../../src/renderer/shared/brand/custosellBrand.ts)
+3. **Supporting line (module list):** mirrors Frontend `SUPPORTING_LINE` and Backend `config/brand.php` `supporting_line` — includes **E-commerce Storefront** after POS (Discover public shop).
+4. **Single FE source of truth:** [`src/renderer/shared/brand/custosellBrand.ts`](../../src/renderer/shared/brand/custosellBrand.ts) (`SUPPORTING_LINE` for auth; landing hero uses the same wording with emphasis markup).
 5. **Retire** “Sell More. Track All. Grow Fast.” from auth, app footer, document title, and related shell surfaces in Phase 1.
-6. **Phased rewrite:** Phase 1 auth/shell → Phase 2 landing → Phase 3 Backend Blade emails/reports.
+6. **Phased rewrite:** Phase 1 auth/shell → Phase 2 landing → Phase 3 Backend Blade emails/reports (`config/brand.php` supporting line already aligned).
 
 ## Phase 1 surfaces
 
@@ -31,8 +31,8 @@ Custosell began as a POS product. The lockup **“Sell More. Track All. Grow Fas
 
 | Surface | Change |
 |---------|--------|
-| Landing hero | Business OS + plain module list in supporting copy |
-| Landing “What includes” | All 12 modules named clearly (POS, Inventory & Supply Chain, Documents, Projects, etc.) |
+| Landing hero | Business OS + module list including E-commerce Storefront |
+| Landing “What You Get” | Modules named clearly (POS, E-commerce Storefront, Inventory & Supply Chain, Documents, Projects, etc.) |
 | Landing layout footer | Brand lockup |
 
 ## Non-goals (remaining)

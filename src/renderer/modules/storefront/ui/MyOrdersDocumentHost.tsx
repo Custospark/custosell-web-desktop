@@ -120,15 +120,6 @@ export function MyOrdersDocumentHost({
             focus: 'details',
           });
         }}
-        onOpenInvoiceReceipts={() => {
-          if (!order.invoice_id) return;
-          void openDoc({
-            kind: 'invoice',
-            orderId: order.id,
-            invoiceId: order.invoice_id,
-            focus: 'receipts',
-          });
-        }}
       />
 
       {viewOpen ? (

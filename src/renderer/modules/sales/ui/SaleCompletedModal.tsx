@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useReactToPrint } from 'react-to-print';
-import { Printer, Plus, CheckCircle, X, FileText, Mail, Download, Share2, MoreHorizontal } from 'lucide-react';
-import { Button } from '../../../shared/components/buttons/Button';
+import { Printer, Plus, CheckCircle, X, FileText, Mail, Download, Share2 } from 'lucide-react';
 import ReceiptContent from './receipt/ReceiptContent';
+import { ReceiptActionBar } from './receipt/ReceiptActionBar';
 import PaymentReceiptModal from '../../payments/PaymentReceiptModal';
 import SendDocumentEmailModal from '../../../shared/components/email/SendDocumentEmailModal';
 import type { SendDocumentEmailResult } from '../../../shared/hooks/useDocumentEmail';
@@ -24,8 +24,6 @@ interface SaleCompletedModalProps {
   onGenerateInvoice?: () => void;
 }
 
-const actionBtnClass = 'min-h-11 py-2.5 px-4 text-sm';
-
 export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClose, onGenerateInvoice }: SaleCompletedModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
@@ -44,7 +42,6 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   const authUser = useAppSelector((s) => s.auth.user);
   const business = authUser?.business;
   const { share } = useWebShare();
-  const [showMore, setShowMore] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -142,90 +139,83 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
           <ReceiptContent ref={receiptRef} sale={sale} />
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3 mt-4">
-          <Button className={actionBtnClass} variant="outline" onClick={handleDownloadPdf} title="Save this receipt as a PDF file">
-            <Download className="w-4 h-4 mr-1.5 shrink-0" />
-            Download PDF
-          </Button>
-          <Button className={actionBtnClass} variant="outline" onClick={handlePrint} title="Print a paper copy of this receipt">
-            <Printer className="w-4 h-4 mr-1.5 shrink-0" />
-            {isPartial ? 'Sale summary' : 'Print'}
-          </Button>
-          <Button className={actionBtnClass} onClick={onNewSale} title="Start a new sale">
-            <Plus className="w-4 h-4 mr-1.5 shrink-0" />
-            New sale
-          </Button>
-
-          <div className="relative">
-            <Button
-              className={actionBtnClass}
-              variant="outline"
-              onClick={() => setShowMore((p) => !p)}
-              onBlur={() => setTimeout(() => setShowMore(false), 200)}
-              title="More actions"
-            >
-              <MoreHorizontal className="w-4 h-4 shrink-0" />
-            </Button>
-
-            {showMore && (
-              <div className="absolute bottom-full right-0 mb-2 z-50 min-w-[200px] rounded-xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 overflow-hidden">
-                <div className="py-1">
-                  {onGenerateInvoice && sale.id > 0 && (sale.sale_items?.length ?? 0) > 0 && (
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      title="Generate an invoice from this sale"
-                      onClick={() => { onGenerateInvoice(); setShowMore(false); }}
-                    >
-                      <FileText className="w-4 h-4 shrink-0 text-gray-500" />
-                      Invoice
-                    </button>
-                  )}
-                  {lastPayment && (
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      title="View the payment receipt for this sale"
-                      onClick={() => { setShowPaymentReceipt(true); setShowMore(false); }}
-                    >
-                      <FileText className="w-4 h-4 shrink-0 text-gray-500" />
-                      Payment receipt
-                    </button>
-                  )}
-                  {canEmailFullReceipt && (
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      title="Email this receipt to the customer"
-                      onClick={() => { setEmailType('sale_receipt'); setEmailOpen(true); setShowMore(false); }}
-                    >
-                      <Mail className="w-4 h-4 shrink-0 text-gray-500" />
-                      Email receipt
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    title="Share this receipt with others"
-                    onClick={() => { void share({
-                      title: `Receipt ${sale.receipt_number}`,
-                      text: receiptShareText(
-                        business?.name ?? 'Business',
-                        sale.receipt_number,
-                        totalAmount,
-                        business?.currency || 'UGX',
-                        sale.payment_method,
-                      ),
-                    }); setShowMore(false); }}
-                  >
-                    <Share2 className="w-4 h-4 shrink-0 text-gray-500" />
-                    Share
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <ReceiptActionBar
+          className="mt-4"
+          actions={[
+            {
+              key: 'pdf',
+              label: 'Download PDF',
+              icon: <Download className="h-4 w-4" />,
+              onClick: handleDownloadPdf,
+              title: 'Save this receipt as a PDF file',
+            },
+            {
+              key: 'print',
+              label: isPartial ? 'Sale summary' : 'Print',
+              icon: <Printer className="h-4 w-4" />,
+              onClick: handlePrint,
+              title: 'Print a paper copy of this receipt',
+            },
+            {
+              key: 'new',
+              label: 'New sale',
+              icon: <Plus className="h-4 w-4" />,
+              onClick: onNewSale,
+              primary: true,
+              title: 'Start a new sale',
+            },
+          ]}
+          moreActions={[
+            ...(onGenerateInvoice && sale.id > 0 && (sale.sale_items?.length ?? 0) > 0
+              ? [{
+                  key: 'invoice',
+                  label: 'Invoice',
+                  icon: <FileText className="h-4 w-4" />,
+                  onClick: () => onGenerateInvoice(),
+                  title: 'Generate an invoice from this sale',
+                }]
+              : []),
+            ...(lastPayment
+              ? [{
+                  key: 'payment-receipt',
+                  label: 'Payment receipt',
+                  icon: <FileText className="h-4 w-4" />,
+                  onClick: () => setShowPaymentReceipt(true),
+                  title: 'View the payment receipt for this sale',
+                }]
+              : []),
+            ...(canEmailFullReceipt
+              ? [{
+                  key: 'email',
+                  label: 'Email receipt',
+                  icon: <Mail className="h-4 w-4" />,
+                  onClick: () => {
+                    setEmailType('sale_receipt');
+                    setEmailOpen(true);
+                  },
+                  title: 'Email this receipt to the customer',
+                }]
+              : []),
+            {
+              key: 'share',
+              label: 'Share',
+              icon: <Share2 className="h-4 w-4" />,
+              onClick: () => {
+                void share({
+                  title: `Receipt ${sale.receipt_number}`,
+                  text: receiptShareText(
+                    business?.name ?? 'Business',
+                    sale.receipt_number,
+                    totalAmount,
+                    business?.currency || 'UGX',
+                    sale.payment_method,
+                  ),
+                });
+              },
+              title: 'Share this receipt with others',
+            },
+          ]}
+        />
       </div>
     </div>,
     document.body,

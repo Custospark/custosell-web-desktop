@@ -2,6 +2,7 @@ import type { ElementType } from 'react';
 import {
   LayoutDashboard,
   ShoppingCart,
+  Store,
   Package,
   Users,
   Kanban,
@@ -33,6 +34,13 @@ export const LANDING_MODULES: LandingModule[] = [
     description: 'Serve customers faster. Ring sales, take payments, run shifts, and print receipts without the chaos.',
     icon: ShoppingCart,
     color: 'from-emerald-500 to-emerald-600',
+  },
+  {
+    title: 'E-commerce Storefront',
+    description:
+      'Share a public shop link so customers browse your catalog, save wishlists, place order requests, and track status — stock stays tied to your inventory.',
+    icon: Store,
+    color: 'from-fuchsia-500 to-fuchsia-600',
   },
   {
     title: 'Inventory & Supply Chain Management',

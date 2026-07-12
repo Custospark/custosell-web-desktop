@@ -13,3 +13,10 @@ export const DOCUMENT_TITLE = `${PRODUCT_NAME} — ${TAGLINE}`;
 
 /** Compact shell line: "Custosell — Your Business Operating System" */
 export const BRAND_LOCKUP = `${PRODUCT_NAME} — ${TAGLINE}`;
+
+/**
+ * Hero / auth supporting sentence — keep in sync with Backend `config/brand.php`
+ * (`supporting_line`).
+ */
+export const SUPPORTING_LINE =
+  'Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';

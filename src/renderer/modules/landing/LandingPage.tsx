@@ -122,8 +122,7 @@ export default function LandingPage() {
             </motion.p>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-lg sm:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Run sales, inventory, accounting, HR, and more from one place.
-              Works online or offline — no internet required at the counter.
+              Point of sale, inventory, accounting, HR, invoicing, expenses, project management, pipeline, forecasting, and document management — all in one system that works with or without the internet.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">

@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Phone, Search, ShoppingBag, Mail, MapPin } from 'lucide-react';
+import { Phone, Search, ShoppingBag, Mail, MapPin } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useToast } from '../../app/contexts/useToast';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 import { cn } from '../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
 import {
+  useRateStorefrontShop,
   useStorefrontShop,
   useStorefrontShopProducts,
 } from './api/storefrontQueries';
@@ -15,27 +17,26 @@ import type { StorefrontProduct, StorefrontShop } from './api/storefrontTypes';
 import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
 import { DiscoverProductCard } from './ui/DiscoverProductCard';
+import { ProductStarRating } from './ui/ProductStarRating';
+import { StorefrontQrCode } from './ui/StorefrontQrCode';
 import { useDiscoverShell } from './ui/discoverShellContext';
-
-function slugFromShopHandle(shopHandle: string | undefined): string | null {
-  if (!shopHandle || !shopHandle.startsWith('@')) return null;
-  const slug = shopHandle.slice(1).trim().toLowerCase();
-  return slug.length > 0 ? slug : null;
-}
 
 function shopLocationLine(shop: StorefrontShop): string {
   return [shop.address, shop.city, shop.state, shop.country].filter(Boolean).join(', ');
 }
 
-/** Shop catalog — compact product grid; checkout in cart hub. */
+/** Shop catalog — compact product grid; checkout in cart hub. Route: /discover/shop/:slug */
 export default function ShopPage() {
-  const { shopHandle } = useParams<{ shopHandle: string }>();
-  const slug = slugFromShopHandle(shopHandle);
+  const { slug: slugParam } = useParams<{ slug: string }>();
+  const slug = slugParam?.trim().toLowerCase() || null;
   const { showToast } = useToast();
   const shell = useDiscoverShell();
-  const { addProduct, openCart, getBag, setCartOpen } = useStorefrontMultiCart();
+  const { setHeader, requestSignIn } = shell;
+  const token = useAppSelector((s) => s.auth.token);
+  const { addProduct, openCart, getBag } = useStorefrontMultiCart();
   const shopQuery = useStorefrontShop(slug ?? '');
   const productsQuery = useStorefrontShopProducts(slug ?? '');
+  const rateShop = useRateStorefrontShop();
   const [q, setQ] = useState('');
 
   const shop = shopQuery.data ?? productsQuery.data?.shop;
@@ -59,24 +60,18 @@ export default function ShopPage() {
 
   useEffect(() => {
     if (!shop) {
-      shell.setHeader({ title: 'Shop', subtitle: 'Loading…' });
-      return;
+      setHeader({ title: 'Shop', subtitle: 'Loading…' });
+      return () => {
+        setHeader(null);
+      };
     }
     const shareUrl = storefrontShareUrl(shop.slug);
     const loc = shopLocationLine(shop);
-    shell.setHeader({
+    setHeader({
       title: shop.name,
       subtitle: loc ? `@${shop.slug} · ${loc}` : `@${shop.slug}`,
       actions: (
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <Link
-            to={`${ROUTES.DISCOVER}?focus=shops`}
-            onClick={() => setCartOpen(false)}
-            className="inline-flex items-center gap-1 rounded-xl border-2 border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-2.5 py-1.5 text-[11px] font-semibold text-teal-900 sm:text-xs"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            All shops
-          </Link>
           {bagCount > 0 ? (
             <button
               type="button"
@@ -113,12 +108,10 @@ export default function ShopPage() {
         </div>
       ),
     });
-  }, [shop, shell, showToast, bagCount, openCart, setCartOpen]);
-
-  useEffect(() => () => {
-    shell.setHeader(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      setHeader(null);
+    };
+  }, [shop, setHeader, showToast, bagCount, openCart]);
 
   if (!slug) {
     return <Navigate to={`${ROUTES.DISCOVER}?focus=shops`} replace />;
@@ -139,6 +132,23 @@ export default function ShopPage() {
     showToast('success', `Added to ${shop.name} cart`);
   };
 
+  const applyShopRating = (stars: number) => {
+    if (!shop) return;
+    const submit = () => {
+      rateShop.mutate(
+        { slug: shop.slug, rating: stars },
+        {
+          onError: () => showToast('error', 'Could not save shop rating. Try again.'),
+        },
+      );
+    };
+    if (!token) {
+      requestSignIn({ intent: 'general', onSuccess: submit });
+      return;
+    }
+    submit();
+  };
+
   if (shopQuery.isLoading || productsQuery.isLoading) {
     return (
       <LoadingSkeleton
@@ -156,10 +166,9 @@ export default function ShopPage() {
         <p className="mt-2 text-sm text-slate-600">This shop may be closed or the link is incorrect.</p>
         <Link
           to={`${ROUTES.DISCOVER}?focus=shops`}
-          className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-teal-800 hover:underline"
+          className="mt-4 inline-flex text-sm font-semibold text-teal-800 hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to all shops
+          Browse shops
         </Link>
       </div>
     );
@@ -167,47 +176,51 @@ export default function ShopPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <Link
-        to={`${ROUTES.DISCOVER}?focus=shops`}
-        onClick={() => setCartOpen(false)}
-        className={cn(
-          marketplaceGlassPanel,
-          'inline-flex w-fit items-center gap-1.5 px-3 py-2 text-sm font-semibold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-400',
-        )}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        All shops
-      </Link>
-
       <div className={cn(marketplaceGlassPanel, 'space-y-2.5 px-4 py-3.5')}>
-        {shop.description ? (
-          <p className="text-sm leading-relaxed text-slate-700">{shop.description}</p>
-        ) : null}
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-600">
-          {locationLine ? (
-            <span className="inline-flex max-w-full items-start gap-1.5">
-              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" aria-hidden />
-              <span className="min-w-0">{locationLine}</span>
-            </span>
-          ) : null}
-          {shop.business_phone ? (
-            <a
-              href={`tel:${shop.business_phone}`}
-              className="inline-flex items-center gap-1.5 font-medium text-blue-700 hover:underline"
-            >
-              <Phone className="h-3.5 w-3.5" aria-hidden />
-              {shop.business_phone}
-            </a>
-          ) : null}
-          {shop.business_email ? (
-            <a
-              href={`mailto:${shop.business_email}`}
-              className="inline-flex items-center gap-1.5 font-medium text-blue-700 hover:underline"
-            >
-              <Mail className="h-3.5 w-3.5" aria-hidden />
-              {shop.business_email}
-            </a>
-          ) : null}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-2.5">
+            {shop.description ? (
+              <p className="text-sm leading-relaxed text-slate-700">{shop.description}</p>
+            ) : null}
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-600">
+              {locationLine ? (
+                <span className="inline-flex max-w-full items-start gap-1.5">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" aria-hidden />
+                  <span className="min-w-0">{locationLine}</span>
+                </span>
+              ) : null}
+              {shop.business_phone ? (
+                <a
+                  href={`tel:${shop.business_phone}`}
+                  className="inline-flex items-center gap-1.5 font-medium text-blue-700 hover:underline"
+                >
+                  <Phone className="h-3.5 w-3.5" aria-hidden />
+                  {shop.business_phone}
+                </a>
+              ) : null}
+              {shop.business_email ? (
+                <a
+                  href={`mailto:${shop.business_email}`}
+                  className="inline-flex items-center gap-1.5 font-medium text-blue-700 hover:underline"
+                >
+                  <Mail className="h-3.5 w-3.5" aria-hidden />
+                  {shop.business_email}
+                </a>
+              ) : null}
+            </div>
+            <ProductStarRating
+              avg={Number(shop.rating_avg ?? 0)}
+              count={Number(shop.rating_count ?? 0)}
+              myRating={shop.my_rating}
+              disabled={rateShop.isPending}
+              onRate={applyShopRating}
+            />
+          </div>
+          <StorefrontQrCode
+            slug={shop.slug}
+            size={96}
+            className="mx-auto w-24 shrink-0 sm:mx-0"
+          />
         </div>
       </div>
 

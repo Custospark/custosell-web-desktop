@@ -83,6 +83,7 @@ import DiscoverLayout from '../../modules/storefront/DiscoverLayout';
 import DiscoverPage from '../../modules/storefront/DiscoverPage';
 import MyOrdersPage from '../../modules/storefront/MyOrdersPage';
 import ShopPage from '../../modules/storefront/ShopPage';
+import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
 
 const EstimatesLayout = lazy(() => import('../../modules/estimates/pages/EstimatesLayout'));
 const EstimatesPage = lazy(() => import('../../modules/estimates/pages/EstimatesPage'));
@@ -127,11 +128,10 @@ export function AppRoutes() {
   return (
     <Routes>
       {/* Immersive storefront — outside PublicRoute so logged-in sidebar links are not bounced to dashboard */}
-      <Route element={<SuspenseWrapper><DiscoverLayout /></SuspenseWrapper>}>
-        <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
-        <Route path={ROUTES.DISCOVER_MY_ORDERS} element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
-        {/* RR7 cannot match "/@:slug"; use "/:shopHandle" and require leading "@" in ShopPage. */}
-        <Route path="/:shopHandle" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
+      <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverLayout /></SuspenseWrapper>}>
+        <Route index element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
+        <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
+        <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
       </Route>
 
       <Route element={<PublicRoute />}>
@@ -299,6 +299,9 @@ export function AppRoutes() {
         </Route>
         </Route>
       </Route>
+
+      {/* Public /@slug share links → /discover/shop/:slug (must stay after static routes). */}
+      <Route path="/:shopHandle" element={<ShopShareRedirect />} />
     </Routes>
   );
 }

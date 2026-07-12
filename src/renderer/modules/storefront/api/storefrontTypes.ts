@@ -10,6 +10,9 @@ export interface StorefrontShop {
   business_phone: string | null;
   business_email?: string | null;
   currency: string;
+  rating_avg?: number;
+  rating_count?: number;
+  my_rating?: number | null;
 }
 
 export interface StorefrontProduct {

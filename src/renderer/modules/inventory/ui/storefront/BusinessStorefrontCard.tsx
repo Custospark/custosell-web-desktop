@@ -10,7 +10,6 @@ import {
   useUpdateStorefrontProfile,
 } from '../../../settings/api/settings/BusinessQueries';
 import { storefrontShareUrl, whatsappShareUrl } from '../../../storefront/storefrontShare';
-import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 
 /** Business-level public shop switch + shareable @slug. */
 export function BusinessStorefrontCard() {
@@ -125,7 +124,7 @@ export function BusinessStorefrontCard() {
         </a>
         {business.storefront_enabled && business.slug ? (
           <a
-            href={ROUTES.SHOP(business.slug)}
+            href={storefrontShareUrl(business.slug)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"

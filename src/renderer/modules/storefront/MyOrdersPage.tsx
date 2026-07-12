@@ -20,9 +20,10 @@ import { Table } from '../../shared/components/tables/Table';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
-import { useMyStorefrontOrdersInfinite } from './api/storefrontQueries';
+import { useMyStorefrontOrdersList } from './api/storefrontQueries';
 import type { MyStorefrontOrder } from './api/storefrontTypes';
 import { useDiscoverShell } from './ui/discoverShellContext';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 
 type StatusTab = 'all' | 'open' | 'completed' | 'invoiced' | 'cancelled';
 
@@ -65,10 +66,11 @@ function statusBadge(status: string) {
   }
 }
 
-/** Orders you placed — progressive fetch + client-side status/search filter. */
+/** Orders you placed — fetch list once; filter status/search on device. */
 export default function MyOrdersPage() {
   const navigate = useNavigate();
-  const shell = useDiscoverShell();
+  const { setHeader } = useDiscoverShell();
+  const token = useAppSelector((s) => s.auth.token);
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [search, setSearch] = useState('');
 
@@ -77,22 +79,10 @@ export default function MyOrdersPage() {
     isLoading,
     isError,
     isFetching,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
     refetch,
-  } = useMyStorefrontOrdersInfinite();
+  } = useMyStorefrontOrdersList(Boolean(token));
 
-  useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages.length]);
-
-  const allOrders = useMemo(
-    () => data?.pages.flatMap((p) => p.orders) ?? [],
-    [data?.pages],
-  );
+  const allOrders = useMemo(() => data?.orders ?? [], [data?.orders]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<StatusTab, number> = {
@@ -122,7 +112,7 @@ export default function MyOrdersPage() {
   const paginated = usePagination(filtered, 15);
 
   useEffect(() => {
-    shell.setHeader({
+    setHeader({
       title: 'My Orders',
       subtitle: 'Orders you placed — each shop fulfills its own',
       actions: (
@@ -134,15 +124,14 @@ export default function MyOrdersPage() {
           className="gap-1.5"
         >
           <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
-          {isFetchingNextPage ? 'Loading more…' : isFetching ? 'Refreshing…' : 'Refresh'}
+          {isFetching ? 'Refreshing…' : 'Refresh'}
         </Button>
       ),
     });
     return () => {
-      shell.setHeader(null);
+      setHeader(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFetching, isFetchingNextPage]);
+  }, [isFetching, setHeader, refetch]);
 
   return (
     <div className="space-y-4">

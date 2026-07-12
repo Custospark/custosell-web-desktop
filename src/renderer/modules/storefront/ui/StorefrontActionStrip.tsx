@@ -9,6 +9,8 @@ interface StorefrontActionStripProps {
   onHome?: () => void;
   homeLabel?: string;
   homeTitle?: string;
+  shopsLabel?: string;
+  shopsTitle?: string;
   onDiscover: () => void;
   onBrowse: () => void;
   onCart: () => void;
@@ -26,6 +28,8 @@ export function StorefrontActionStrip({
   onHome,
   homeLabel = 'Home',
   homeTitle = 'Home',
+  shopsLabel = 'Shops',
+  shopsTitle = 'Browse businesses / shops',
   onDiscover,
   onBrowse,
   onCart,
@@ -34,6 +38,8 @@ export function StorefrontActionStrip({
   ordersCount = 0,
   className,
 }: StorefrontActionStripProps) {
+  const shopsActive = active === 'browse';
+
   return (
     <div
       className={cn(
@@ -62,12 +68,12 @@ export function StorefrontActionStrip({
         label="Products"
       />
       <StripButton
-        active={active === 'browse'}
+        active={shopsActive}
         onClick={onBrowse}
-        title="Browse businesses / shops"
+        title={shopsTitle}
         tone="teal"
         icon={<ArrowLeftRight className="h-4 w-4 text-teal-600" />}
-        label="Shops"
+        label={shopsLabel}
       />
       <StripButton
         active={active === 'cart'}

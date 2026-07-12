@@ -11,14 +11,16 @@ Same path for public visitors and logged-in users (Discover shell):
 3. Catalogs stay **warm in React Query** (prefetch + layout warmup, 10 min stale / 1 h gc) so Shops ↔ Products and return-from-shop feel instant.
 4. Open a shop → compact product grid + Add to that shop’s bag.
 5. **Cart** hub → one bag per business; submit one bag at a time. Logged-in buyers auto-fill name/phone from profile.
-6. **Orders** → My Orders list (progressive pages + client filter).
+6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned.
 7. Guests sign in via header, Orders, or inline cart fields when placing an order.
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
-Shops show **description, location, phone, and email** on browse tiles and on the shop page profile strip.
-Products show **stars + review count**; signed-in buyers tap a star to rate (`POST /storefront/{slug}/products/{id}/ratings`). Guests are prompted to sign in, then the pending rating is applied.
+Shops show **description, location, phone, email, and star ratings** on browse tiles and on the shop page.
+Products and shops support **optimistic** star ratings (UI updates immediately; rolls back on error).
+Catalog loads keep the first successful page visible if a later page fails; **Retry** refetches. Auto-fetch caps at a few pages so one bad page does not wipe Products.
+Shop pages show a compact **QR code** for the public `/@slug` share URL (HashRouter-safe). Shop list cards show a proportional QR on the **right**.
+Strip label stays **Shops** (never the open shop’s name). While on `/discover/shop/:slug`, Shops/Products are not highlighted; clicking them leaves the shop. The matched route always renders through **Outlet** (`DiscoverPage` / `ShopPage` / `MyOrdersPage`) so the URL and visible page stay in sync. See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md) for the blank-main / Outlet-key / shell-header bugs that were fixed.
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
-From a shop (`/@slug`), **All shops** (header + page) and the bottom **Shops / Products** strip return to `/discover` — the cart sheet stops above the strip so navigation stays clickable.
 Place-order contact fields (name*, phone*, notes) stay visible and editable; signed-in buyers get them prefilled from profile.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md).
 
@@ -28,16 +30,19 @@ Sidebar **Discover & My Orders**:
 
 | Path | Purpose |
 |------|---------|
-| `/discover` | Shops or Products (`?focus=shops|products`); product rows open that business’s `/@slug` shop |
+| `/discover` | Shops or Products (`?focus=shops|products`); product rows open `/discover/shop/:slug` |
 | `/discover/my-orders` | Orders you placed as a buyer — each shop fulfills its own |
+| `/discover/shop/:slug` | In-app shop catalog (under DiscoverLayout) |
 
-Public shop pages stay shareable outside the app chrome:
+Public share URLs (QR / WhatsApp / marketing):
 
 | Path | Purpose |
 |------|---------|
-| `/@{slug}` | Public shop catalog (RR7 route `/:shopHandle`; page strips leading `@`). Checkout = cart hub. |
+| `/@{slug}` | Redirect → `/discover/shop/:slug` (`ShopShareRedirect`). Checkout = cart hub. |
 
-`/discover`, `/discover/my-orders`, and `/@shop` live on **DiscoverLayout outside `PublicRoute`**, so signed-in sidebar links never hit the guest-only redirect to dashboard. Landing / Pricing / Privacy / Login stay under `PublicRoute` (guests only).
+`/discover`, `/discover/my-orders`, and `/discover/shop/:slug` live on **DiscoverLayout outside `PublicRoute`**, so signed-in sidebar links never hit the guest-only redirect to dashboard. Landing / Pricing / Privacy / Login stay under `PublicRoute` (guests only). See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md).
+
+Sidebar group **Discover & My Orders** is in the product tour (`sidebar-module-discover`) and is **online-only** when completely offline (greyed out via `onlineOnlyNav.ts`; banner if already on the page).
 
 Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 
@@ -76,6 +81,7 @@ Product edit modal → **Public shop**:
 | GET | `/storefront/categories` | No |
 | GET | `/storefront/{slug}` | No |
 | GET | `/storefront/{slug}/products` | Optional Sanctum (includes `my_rating`) |
+| POST | `/storefront/{slug}/ratings` | Sanctum (shop 1–5 stars, upsert) |
 | POST | `/storefront/{slug}/products/{id}/ratings` | Sanctum (1–5 stars, upsert per user) |
 | POST | `/storefront/{slug}/orders` | Sanctum (sets `storefront_buyer_user_id`) |
 | GET | `/storefront/my-orders` | Sanctum |

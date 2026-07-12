@@ -8,7 +8,10 @@ export const ROUTES = {
   PRIVACY: '/privacy',
   DISCOVER: '/discover',
   DISCOVER_MY_ORDERS: '/discover/my-orders',
-  SHOP: (slug: string) => `/@${slug}`,
+  /** In-app shop catalog (under Discover so strip/browse never fight a catch-all). */
+  SHOP: (slug: string) => `/discover/shop/${slug}`,
+  /** Public share handle — redirects to SHOP (see ShopShareRedirect). */
+  SHOP_SHARE: (slug: string) => `/@${slug}`,
   DASHBOARD: '/dashboard',
   SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: {

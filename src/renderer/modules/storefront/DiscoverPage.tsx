@@ -12,9 +12,10 @@ import { DiscoverShopsBrowse } from './ui/DiscoverShopsBrowse';
 
 /**
  * Shops / Products — both panels stay mounted; tab click only toggles visibility (instant).
+ * Rendered as the `/discover` route element (Outlet), not dual-mounted by the layout.
  */
 export default function DiscoverPage() {
-  const shell = useDiscoverShell();
+  const { setHeader } = useDiscoverShell();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const focus = searchParams.get('focus') === 'products' ? 'products' : 'shops';
@@ -24,7 +25,7 @@ export default function DiscoverPage() {
   }, [queryClient]);
 
   useEffect(() => {
-    shell.setHeader({
+    setHeader({
       title: focus === 'products' ? 'Products' : 'Shops',
       subtitle:
         focus === 'products'
@@ -32,10 +33,9 @@ export default function DiscoverPage() {
           : 'Browse businesses with a public storefront',
     });
     return () => {
-      shell.setHeader(null);
+      setHeader(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus]);
+  }, [focus, setHeader]);
 
   const setFocus = (next: 'shops' | 'products') => {
     if (next === focus) return;
@@ -61,7 +61,6 @@ export default function DiscoverPage() {
         />
       </div>
 
-      {/* Keep both mounted so tab switches are paint-instant (no remount / refetch flash). */}
       <div className={cn(focus === 'shops' ? 'block' : 'hidden')} aria-hidden={focus !== 'shops'}>
         <DiscoverShopsBrowse />
       </div>

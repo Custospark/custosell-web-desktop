@@ -11,7 +11,7 @@ import {
   marketplaceGlassHeader,
   useMarketplaceHeroBackground,
 } from '../inventory/ui/marketplace/marketplaceTheme';
-import { prefetchStorefrontCatalogs } from './api/storefrontQueries';
+import { prefetchStorefrontCatalogs, useMyStorefrontOrdersCount } from './api/storefrontQueries';
 import { useStorefrontCatalogWarmup } from './cart/useStorefrontCatalogWarmup';
 import {
   StorefrontMultiCartProvider,
@@ -27,27 +27,30 @@ import {
 } from './ui/discoverShellContext';
 import type { StorefrontStripTab } from './ui/StorefrontActionStrip';
 import { usePrefersCartSheet } from './ui/usePrefersCartSheet';
+import { normalizeDiscoverPath } from './ui/normalizeDiscoverPath';
 
 function activeTabFromPath(
   pathname: string,
   search: string,
   cartOpen: boolean,
-): StorefrontStripTab {
+): StorefrontStripTab | undefined {
   if (cartOpen) return 'cart';
-  if (pathname.startsWith(ROUTES.DISCOVER_MY_ORDERS) || pathname.endsWith('/my-orders')) {
+  const path = normalizeDiscoverPath(pathname);
+  if (path === ROUTES.DISCOVER_MY_ORDERS || path.endsWith('/my-orders')) {
     return 'orders';
   }
-  if (pathname.startsWith('/@')) return 'browse';
+  if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) return undefined;
   const focus = new URLSearchParams(search).get('focus');
   if (focus === 'products') return 'discover';
   return 'browse';
 }
 
 function defaultHeader(pathname: string, search: string): { title: string; subtitle: string } {
-  if (pathname.startsWith(ROUTES.DISCOVER_MY_ORDERS) || pathname.endsWith('/my-orders')) {
+  const path = normalizeDiscoverPath(pathname);
+  if (path === ROUTES.DISCOVER_MY_ORDERS || path.endsWith('/my-orders')) {
     return { title: 'My Orders', subtitle: 'Orders you placed — each shop fulfills its own' };
   }
-  if (pathname.startsWith('/@')) {
+  if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) {
     return { title: 'Shop', subtitle: 'Order from this business only' };
   }
   const focus = new URLSearchParams(search).get('focus');
@@ -72,6 +75,9 @@ function DiscoverShellChrome() {
   const heroStyle = useMarketplaceHeroBackground();
   const cartDocked = cartOpen && !prefersSheet;
 
+  const path = normalizeDiscoverPath(location.pathname);
+  const { data: ordersCount = 0 } = useMyStorefrontOrdersCount(Boolean(token));
+
   useEffect(() => {
     void prefetchStorefrontCatalogs(queryClient);
   }, [queryClient]);
@@ -92,8 +98,8 @@ function DiscoverShellChrome() {
     return () => registerSignInOpener(null);
   }, [registerSignInOpener]);
 
-  const active = activeTabFromPath(location.pathname, location.search, cartOpen);
-  const fallback = defaultHeader(location.pathname, location.search);
+  const active = activeTabFromPath(path, location.search, cartOpen);
+  const fallback = defaultHeader(path, location.search);
   const title = header?.title ?? fallback.title;
   const subtitle = header?.subtitle ?? fallback.subtitle;
 
@@ -101,6 +107,11 @@ function DiscoverShellChrome() {
     open: cartOpen,
     onClose: () => setCartOpen(false),
   } as const;
+
+  const goDiscover = (focus: 'shops' | 'products') => {
+    setCartOpen(false);
+    navigate({ pathname: ROUTES.DISCOVER, search: `?focus=${focus}` });
+  };
 
   return (
     <div
@@ -163,16 +174,20 @@ function DiscoverShellChrome() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
+        {/* Never key Outlet — remounting Outlet breaks child route rendering in RR7. */}
+        <main className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
           <Outlet />
         </main>
 
         <ConnectedStorefrontStrip
           active={active}
           cartCount={lineCount}
+          ordersCount={ordersCount}
           onOpenCart={() => openCart()}
           onCloseCart={() => setCartOpen(false)}
           onOrdersAuthRequired={() => openSignIn('orders')}
+          onGoShops={() => goDiscover('shops')}
+          onGoProducts={() => goDiscover('products')}
         />
       </div>
 

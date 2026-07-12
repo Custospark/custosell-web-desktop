@@ -1,6 +1,5 @@
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { normalizeBoardMemberRole, type BoardMemberRole } from '../../modules/pipeline/api/boardRoleUtils';
 
 export const ESTIMATES_FULL_MODULE = 'estimates_full';
 
@@ -53,6 +52,7 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   settings: ROUTES.SETTINGS.BUSINESS,
   account: ROUTES.ACCOUNT.NOTIFICATIONS,
   guide: ROUTES.GUIDE.TUTORIALS,
+  discover: ROUTES.DISCOVER,
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
@@ -64,7 +64,7 @@ const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
 ];
 
 /** Nav group label → module slug for business-scoped sidebar groups. */
-export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | 'guide' | 'platform' | 'guide_settings'> = {
+export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | 'guide' | 'discover' | 'platform' | 'guide_settings'> = {
   Dashboard: 'dashboard',
   Sales: 'sales',
   Inventory: 'inventory',
@@ -81,6 +81,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Settings: 'settings',
   Account: 'account',
   'Custosell Guide': 'guide',
+  'Discover & My Orders': 'discover',
   Platform: 'platform',
   'Guide Settings': 'guide_settings',
 };
@@ -150,7 +151,7 @@ export function ownerInitialEstimatesFullAccess(user: AuthUser | null | undefine
 export function getAccessibleModules(user: AuthUser | null | undefined): string[] {
   if (!user) return [];
 
-  const modules = new Set<string>(['account', 'guide']);
+  const modules = new Set<string>(['account', 'guide', 'discover']);
 
   if (user.is_platform_admin) {
     modules.add('platform');
@@ -237,17 +238,6 @@ export function hasEstimatesBoardsAccess(user: AuthUser | null | undefined): boo
     || (user.project_member_ids?.length ?? 0) > 0;
 }
 
-/** Staff with module access for team-visibility board listings (not shared-board invites). */
-export function staffHasWorkspaceBoardAccess(
-  modules: string[] | undefined,
-  workspace: 'pipeline' | 'estimates',
-): boolean {
-  if (workspace === 'estimates') {
-    return true;
-  }
-  return (modules ?? []).includes('pipeline');
-}
-
 /** Staff with Estimates module or invited collaborators — not business owners. */
 export function isLimitedEstimatesUser(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
@@ -286,210 +276,6 @@ export function getHrFallbackRoute(user: AuthUser | null | undefined): string {
     return getHrModuleDefaultRoute(user);
   }
   return getDefaultRoute(user);
-}
-
-/** Invite or change roles on a project team (owner, full estimates access, project creator, or project manager). */
-export function canManageProjectTeam(
-  user: AuthUser | null | undefined,
-  members: { user_id: number; role: string }[],
-  projectCreatedBy?: number,
-): boolean {
-  if (!user) return false;
-  if (isBusinessOwner(user)) return true;
-  if (canViewFullEstimates(user)) return true;
-  if (projectCreatedBy && user.id === projectCreatedBy) return true;
-  return members.some((m) => m.user_id === user.id && m.role === 'manager');
-}
-
-/** Board settings (visibility, team, appearance) — owners and managers only. */
-export function canManageBoardSettings(
-  user: AuthUser | null | undefined,
-  board: {
-    can_manage_settings?: boolean;
-    created_by?: number | null;
-    project_id?: number | null;
-    visibility?: string;
-    members?: { user_id: number; role: string }[];
-  },
-  options?: {
-    projectCreatedBy?: number | null;
-    projectMembers?: { user_id: number; role: string }[];
-  },
-): boolean {
-  if (!user) return false;
-  if (typeof board.can_manage_settings === 'boolean') return board.can_manage_settings;
-
-  if (board.visibility === 'private') {
-    return Number(board.created_by) === user.id;
-  }
-
-  if (isBusinessOwner(user)) return true;
-
-  const projectCreatedBy = options?.projectCreatedBy ?? null;
-  const ownerId = board.project_id ? (projectCreatedBy ?? board.created_by) : board.created_by;
-
-  if (ownerId && user.id === ownerId) return true;
-
-  if (board.project_id && options?.projectMembers) {
-    return canManageProjectTeam(user, options.projectMembers, projectCreatedBy ?? undefined);
-  }
-
-  if (board.visibility === 'shared' && board.members?.length) {
-    const member = board.members.find((m) => m.user_id === user.id);
-    if (member && normalizeBoardMemberRole(member.role) === 'manager') return true;
-  }
-
-  return false;
-}
-
-/** True when the user is an invited viewer on a shared board (read-only). */
-export function isBoardViewer(
-  user: AuthUser | null | undefined,
-  board: {
-    current_member_role?: BoardMemberRole | null;
-    visibility?: string;
-    members?: { user_id: number; role: string }[];
-  },
-): boolean {
-  if (!user || board.visibility !== 'shared') return false;
-  if (board.current_member_role === 'viewer') return true;
-  return getSharedBoardMemberRole(user, board) === 'viewer';
-}
-
-/** Move cards, columns, comment, and add resources — contributors and managers. */
-export function canContributeToBoard(
-  user: AuthUser | null | undefined,
-  board: {
-    can_contribute?: boolean;
-    current_member_role?: BoardMemberRole | null;
-    created_by?: number | null;
-    project_id?: number | null;
-    visibility?: string;
-    members?: { user_id: number; role: string }[];
-  },
-  options?: {
-    projectCreatedBy?: number | null;
-    projectMembers?: { user_id: number; role: string }[];
-  },
-): boolean {
-  if (!user) return false;
-  if (isBoardViewer(user, board)) return false;
-  if (typeof board.can_contribute === 'boolean') return board.can_contribute;
-  if (canManageBoardSettings(user, board, options)) return true;
-
-  if (board.project_id && options?.projectMembers) {
-    const member = options.projectMembers.find((m) => m.user_id === user.id);
-    const role = member?.role;
-    return role === 'contributor' || role === 'manager';
-  }
-
-  if (Number(board.created_by) === user.id) return true;
-  if (board.visibility === 'team') return true;
-
-  if (board.visibility === 'shared' && board.members?.length) {
-    const member = board.members.find((m) => m.user_id === user.id);
-    const role = normalizeBoardMemberRole(member?.role);
-    return role === 'contributor' || role === 'manager';
-  }
-
-  return false;
-}
-
-/** Invited role on a shared board, or null when visibility is not shared / user is not listed. */
-export function getSharedBoardMemberRole(
-  user: AuthUser | null | undefined,
-  board: {
-    current_member_role?: BoardMemberRole | null;
-    created_by?: number | null;
-    visibility?: string;
-    members?: { user_id: number; role: string }[];
-  },
-): BoardMemberRole | null {
-  if (!user || board.visibility !== 'shared') return null;
-  if (board.current_member_role != null) return board.current_member_role;
-  if (Number(board.created_by) === user.id) return 'manager';
-  const member = board.members?.find((m) => m.user_id === user.id);
-  return member ? normalizeBoardMemberRole(member.role) : null;
-}
-
-/** Comment author or board manager/owner may delete user comments (never contributors moderating others). */
-export function canDeletePipelineComment(
-  user: AuthUser | null | undefined,
-  activity: {
-    user_id?: number | null;
-    user?: { id: number } | null;
-    can_delete?: boolean;
-  },
-  board: Parameters<typeof canManageBoardSettings>[1],
-  options?: Parameters<typeof canManageBoardSettings>[2],
-): boolean {
-  if (!user) return false;
-
-  const authorId = Number(activity.user_id ?? activity.user?.id ?? 0);
-  const isAuthor = authorId > 0 && authorId === Number(user.id);
-  if (isAuthor) return true;
-
-  // Shared collaborators (viewer/contributor) never moderate others' comments.
-  if (board.visibility === 'shared') {
-    const role = getSharedBoardMemberRole(user, board);
-    if (role === 'viewer' || role === 'contributor') return false;
-  }
-
-  // Non-authors need true board manage rights (server flag or local manager check).
-  const isManager = canManageBoardSettings(user, board, options);
-  if (!isManager) return false;
-
-  if (typeof activity.can_delete === 'boolean') return activity.can_delete;
-  return true;
-}
-
-/** Only the comment author may edit their comment. */
-export function canEditPipelineComment(
-  user: AuthUser | null | undefined,
-  activity: {
-    user_id?: number | null;
-    user?: { id: number } | null;
-    can_edit?: boolean;
-  },
-): boolean {
-  if (!user) return false;
-  if (typeof activity.can_edit === 'boolean') return activity.can_edit;
-  const authorId = activity.user_id ?? activity.user?.id;
-  return Boolean(authorId && authorId === user.id);
-}
-
-/** Board conversation: author or board manager/owner may delete (never collaborators moderating others). */
-export function canDeleteBoardConversationMessage(
-  user: AuthUser | null | undefined,
-  message: {
-    user_id?: number | null;
-    user?: { id: number } | null;
-    can_delete?: boolean;
-    is_system?: boolean;
-  },
-  board: Parameters<typeof canManageBoardSettings>[1],
-  options?: Parameters<typeof canManageBoardSettings>[2],
-): boolean {
-  if (!user) return false;
-  if (message.is_system) return false;
-
-  if (typeof message.can_delete === 'boolean') return message.can_delete;
-  return canDeletePipelineComment(user, message, board, options);
-}
-
-/** Board conversation edit: never for automation posts; otherwise author only. */
-export function canEditBoardConversationMessage(
-  user: AuthUser | null | undefined,
-  message: {
-    user_id?: number | null;
-    user?: { id: number } | null;
-    can_edit?: boolean;
-    is_system?: boolean;
-  },
-): boolean {
-  if (!user) return false;
-  if (message.is_system) return false;
-  return canEditPipelineComment(user, message);
 }
 
 /** Estimates module, boards-only staff, or invited collaborator routes under /estimates. */
@@ -566,6 +352,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/platform')) return 'platform';
   if (pathname.startsWith('/guide')) return 'guide';
   if (pathname.startsWith('/account') || pathname.startsWith('/notifications')) return 'account';
+  if (pathname.startsWith('/discover')) return 'discover';
   if (pathname.startsWith('/settings')) return 'settings';
   if (pathname.startsWith('/dashboard')) return 'dashboard';
   if (pathname.startsWith('/invoices')) return 'sales';
@@ -592,3 +379,17 @@ export function canAccessPath(user: AuthUser | null | undefined, pathname: strin
 export function canUseShiftCloseReport(user: AuthUser | null | undefined): boolean {
   return canAccessModule(user, 'sales') || canAccessModule(user, 'dashboard');
 }
+
+// Board / pipeline permission helpers live in boardAccess.ts (keeps this file ≤500 lines).
+export {
+  staffHasWorkspaceBoardAccess,
+  canManageProjectTeam,
+  canManageBoardSettings,
+  isBoardViewer,
+  canContributeToBoard,
+  getSharedBoardMemberRole,
+  canDeletePipelineComment,
+  canEditPipelineComment,
+  canDeleteBoardConversationMessage,
+  canEditBoardConversationMessage,
+} from './boardAccess';

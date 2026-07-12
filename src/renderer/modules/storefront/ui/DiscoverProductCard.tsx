@@ -50,7 +50,6 @@ export function DiscoverProductCard({
       rate.mutate(
         { slug, productId: product.id, rating: stars },
         {
-          onSuccess: () => showToast('success', 'Thanks for your rating!'),
           onError: () => showToast('error', 'Could not save your rating. Try again.'),
         },
       );

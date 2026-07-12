@@ -6,14 +6,14 @@
 
 ## Context
 
-Several modules have no IndexedDB / mutation-queue path (Pipeline, Estimates, Documents, Forecasting, HR, Accounting, Platform, B2B supply). Users could still open them from the sidebar while offline and hit empty/error states. Oscar asked to grey them out with `cursor-not-allowed` and a hover explanation; Sales invoices stay available offline; already-on-page stays with a banner only (no redirect).
+Several modules have no IndexedDB / mutation-queue path (Pipeline, Estimates, Documents, Forecasting, HR, Accounting, Platform, B2B supply, **Discover / My Orders**). Users could still open them from the sidebar while offline and hit empty/error states. Oscar asked to grey them out with `cursor-not-allowed` and a hover explanation; Sales invoices stay available offline; already-on-page stays with a banner only (no redirect).
 
 ## Decision
 
 1. Registry: `onlineOnlyNav.ts` lists path prefixes + launcher slugs.
 2. When `systemStatus === 'offline'` (`isCompletelyOffline`):
-   - Sidebar: replace matching `NavLink`s with `OfflineDisabledNav` (opacity + not-allowed + `title` message). Inventory core items stay enabled; Marketplace / PO / Incoming / Supplier invoices disable.
-   - Module launcher: disable matching tiles; Inventory / Sales / etc. stay clickable.
+   - Sidebar: replace matching `NavLink`s with `OfflineDisabledNav` (opacity + not-allowed + `title` message). Inventory core items stay enabled; Marketplace / PO / Incoming / Supplier invoices / **Discover & My Orders** disable.
+   - Module launcher: disable matching tiles (incl. `discover`); Inventory / Sales / etc. stay clickable.
 3. If the user is already on an online-only route when going offline, `Main` shows `OnlineOnlyModuleBanner` — no auto-redirect.
 4. `slow` is not treated as offline.
 

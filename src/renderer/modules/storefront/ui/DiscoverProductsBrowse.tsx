@@ -4,9 +4,12 @@ import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkele
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import { useStorefrontDiscoverInfinite } from '../api/storefrontQueries';
+import { CatalogLoadError } from './CatalogLoadError';
 import { DiscoverProductCard } from './DiscoverProductCard';
 
 const RENDER_CHUNK = 36;
+/** Warm a few pages in the background; more load when the user asks for “Show more”. */
+const AUTO_PAGE_CAP = 3;
 
 /** Products from all shops — progressive fetch + client-side search. */
 export function DiscoverProductsBrowse() {
@@ -16,16 +19,33 @@ export function DiscoverProductsBrowse() {
     data,
     isLoading,
     isError,
-    hasNextPage,
+    isFetchNextPageError,
+    isFetching,
     isFetchingNextPage,
+    hasNextPage,
     fetchNextPage,
+    refetch,
   } = useStorefrontDiscoverInfinite();
 
+  const pageCount = data?.pages.length ?? 0;
+
   useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) {
+    if (
+      hasNextPage
+      && !isFetchingNextPage
+      && !isFetchNextPageError
+      && pageCount > 0
+      && pageCount < AUTO_PAGE_CAP
+    ) {
       void fetchNextPage();
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages.length]);
+  }, [
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+    pageCount,
+  ]);
 
   const products = useMemo(
     () => data?.pages.flatMap((p) => p.products) ?? [],
@@ -50,6 +70,14 @@ export function DiscoverProductsBrowse() {
 
   const shown = filtered.slice(0, visible);
   const totalMeta = data?.pages[0]?.meta.total;
+  const needsMoreLoaded = visible + RENDER_CHUNK > products.length && Boolean(hasNextPage);
+
+  const onShowMore = () => {
+    setVisible((n) => n + RENDER_CHUNK);
+    if (needsMoreLoaded && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  };
 
   if (!data && isLoading) {
     return (
@@ -61,12 +89,29 @@ export function DiscoverProductsBrowse() {
     );
   }
 
-  if (isError) {
-    return <p className="text-sm text-red-600">Could not load products. Check your connection.</p>;
+  if (isError && !data) {
+    return (
+      <CatalogLoadError
+        title="Could not load products"
+        detail="The catalog request failed. Check your connection, then retry."
+        onRetry={() => { void refetch(); }}
+        retrying={isFetching}
+      />
+    );
   }
 
   return (
     <div className="flex w-full flex-col gap-3">
+      {(isFetchNextPageError || (isError && data)) ? (
+        <CatalogLoadError
+          compact
+          title="Couldn’t load more products"
+          detail="Showing what we have so far. Retry to continue."
+          onRetry={() => { void (isFetchNextPageError ? fetchNextPage() : refetch()); }}
+          retrying={isFetchingNextPage || isFetching}
+        />
+      ) : null}
+
       <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5')}>
         <Search className="h-4 w-4 shrink-0 text-amber-700" />
         <input
@@ -102,13 +147,18 @@ export function DiscoverProductsBrowse() {
               <DiscoverProductCard key={`${p.id}-${p.business?.slug ?? ''}`} product={p} />
             ))}
           </div>
-          {filtered.length > visible ? (
+          {filtered.length > visible || hasNextPage ? (
             <button
               type="button"
-              className="mx-auto rounded-xl border-2 border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              onClick={() => setVisible((n) => n + RENDER_CHUNK)}
+              className="mx-auto rounded-xl border-2 border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
+              disabled={isFetchingNextPage && filtered.length <= visible}
+              onClick={onShowMore}
             >
-              Show more ({filtered.length - visible})
+              {isFetchingNextPage
+                ? 'Loading more…'
+                : filtered.length > visible
+                  ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
+                  : 'Load more products'}
             </button>
           ) : null}
         </>

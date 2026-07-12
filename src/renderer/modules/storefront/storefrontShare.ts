@@ -1,9 +1,16 @@
-/** Absolute share URL for a business shop page. */
+/** Absolute share URL for a business shop page (`/@slug`, HashRouter-safe). */
 export function storefrontShareUrl(slug: string): string {
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}/@${slug}`;
+  const handle = `/@${slug}`;
+  if (typeof window === 'undefined' || !window.location?.origin) {
+    return `https://custosell.custospark.com${handle}`;
   }
-  return `https://custosell.custospark.com/@${slug}`;
+  const { origin, pathname, hash } = window.location;
+  // Electron / HashRouter: app routes live after `#`
+  if (hash.startsWith('#/') || hash === '#') {
+    const basePath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+    return `${origin}${basePath || ''}#${handle}`;
+  }
+  return `${origin}${handle}`;
 }
 
 export function whatsappShareUrl(text: string): string {

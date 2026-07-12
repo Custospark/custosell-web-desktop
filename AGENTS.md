@@ -46,7 +46,20 @@ Keep our interaction **conversational**—just like two teammates working side b
 | 10 | **Parallel lanes are allowed with ownership.** Run agents in parallel when boundaries are clear; Mike reconciles conflicts before implementation is treated as complete. |
 | 11 | **Frontend and backend stay in sync.** Any feature, bug, validation rule, API contract, offline sync behavior, auth flow, inventory flow, or user-facing failure state must be reviewed across both Frontend and Backend before implementation is considered complete. |
 | 12 | **Sage and Blue are cross-stack by default when needed.** If a change can affect API contracts, backend validation, database state, frontend UX, offline queues, or sync replay, Sage and Blue must inspect both stacks and produce one integrated plan. |
-| 13 | **File size hard limit: 500 lines.** No source file may exceed **500 lines of code**. If a change would push a file over 500 lines, **stop and refactor** (split components, extract hooks/utils, move types) before continuing. This is non-negotiable — do not ship oversized files. |
+| 13 | **File size hard limit: 500 lines — refactor, never revert.** No source file may exceed **500 lines of code**. If a change would push a file over 500 lines, or Vera fails `[file-size-500]` on an already-oversized file you must touch, **stop and refactor into modular files** (split components, extract hooks/utils/types/helpers) **before** continuing. This is **non-negotiable**. **Never** delete, revert, or strip working functionality just so Vera passes. Fix the size by modularizing; then restore/complete the feature; then re-run Vera. |
+
+---
+
+## File Size — Non-Negotiable (FE + BE)
+
+| Must | Must not |
+|------|----------|
+| Keep every source file ≤ **500 lines** | Ship or leave a file over 500 lines |
+| When over limit (or about to be): **split into modular files** first | Revert / gut features so Vera’s file-size check passes |
+| Extract: components, hooks, utils, types, services, traits, resources | “Temporarily” drop tour, offline, nav, or other product work to green the gate |
+| Finish the requested feature **and** pass Vera | Treat Vera pass as more important than keeping working product behavior |
+
+**Vera `[file-size-500]` failure = refactor debt, not a license to undo work.**
 
 ---
 

@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { STOREFRONT } from '../../../shared/api/endpoints/endpoints';
+import { applyOptimisticRating } from './ratingOptimistic';
 import type {
   MyStorefrontOrder,
   PlaceStorefrontOrderPayload,
@@ -21,6 +22,8 @@ export const storefrontKeys = {
   products: (slug: string, category: string) => [...storefrontKeys.all, 'products', slug, category] as const,
   myOrders: (status?: string, q?: string) => [...storefrontKeys.all, 'my-orders', status ?? '', q ?? ''] as const,
   myOrdersPages: () => [...storefrontKeys.all, 'my-orders-pages'] as const,
+  myOrdersList: () => [...storefrontKeys.all, 'my-orders-list'] as const,
+  myOrdersCount: () => [...storefrontKeys.all, 'my-orders-count'] as const,
 };
 
 const CATALOG_STALE_MS = 10 * 60_000;
@@ -103,7 +106,8 @@ export function useStorefrontShopsInfinite() {
     getNextPageParam: (last) => nextPage(last.meta),
     staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
-    refetchOnMount: false,
+    retry: 2,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 }
@@ -117,7 +121,8 @@ export function useStorefrontDiscoverInfinite() {
     getNextPageParam: (last) => nextPage(last.meta),
     staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
-    refetchOnMount: false,
+    retry: 2,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 }
@@ -136,8 +141,39 @@ export function useMyStorefrontOrdersInfinite() {
       };
     },
     getNextPageParam: (last) => nextPage(last.meta),
-    staleTime: 30_000,
+    staleTime: 15_000,
+    refetchOnMount: 'always',
   });
+}
+
+/**
+ * Buyer orders + total — single source for My Orders page and strip badge.
+ * (Avoids optimistic count bumps that disagree with an empty list.)
+ */
+export function useMyStorefrontOrdersList(enabled = true) {
+  return useQuery({
+    queryKey: storefrontKeys.myOrdersList(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(STOREFRONT.MY_ORDERS, {
+        params: { per_page: 48, page: 1 },
+      });
+      const orders = unwrapList<MyStorefrontOrder>(data);
+      const total = pageMeta(data).total ?? orders.length;
+      return { orders, total };
+    },
+    enabled,
+    staleTime: 15_000,
+    refetchOnMount: 'always',
+  });
+}
+
+/** Strip badge — same cache as the orders list. */
+export function useMyStorefrontOrdersCount(enabled = true) {
+  const list = useMyStorefrontOrdersList(enabled);
+  return {
+    ...list,
+    data: list.data?.total ?? 0,
+  };
 }
 
 export function useStorefrontDiscover(q: string, category: string) {
@@ -215,6 +251,7 @@ export function useStorefrontShopProducts(slug: string, category = '') {
 }
 
 export function usePlaceStorefrontOrder() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       slug,
@@ -226,10 +263,22 @@ export function usePlaceStorefrontOrder() {
       );
       return data;
     },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: storefrontKeys.myOrdersList() }),
+        queryClient.invalidateQueries({ queryKey: storefrontKeys.myOrdersPages() }),
+        queryClient.invalidateQueries({ queryKey: storefrontKeys.myOrdersCount() }),
+        queryClient.invalidateQueries({ queryKey: [...storefrontKeys.all, 'my-orders'] }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: storefrontKeys.myOrdersList() }),
+        queryClient.refetchQueries({ queryKey: storefrontKeys.myOrdersPages() }),
+      ]);
+    },
   });
 }
 
-/** One-tap 1–5 rating; invalidates discover + shop product caches. */
+/** One-tap 1–5 rating with optimistic cache patch. */
 export function useRateStorefrontProduct() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -248,9 +297,46 @@ export function useRateStorefrontProduct() {
       }>(STOREFRONT.RATE_PRODUCT(slug, productId), { rating });
       return data.data;
     },
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: storefrontKeys.discoverPages() });
+      await queryClient.cancelQueries({ queryKey: [...storefrontKeys.all, 'products', vars.slug] });
+
+      const previousDiscover = queryClient.getQueryData(storefrontKeys.discoverPages());
+      const previousShop = queryClient.getQueriesData({
+        queryKey: [...storefrontKeys.all, 'products', vars.slug],
+      });
+
+      const patch = (product: StorefrontProduct): StorefrontProduct => {
+        if (product.id !== vars.productId) return product;
+        const next = applyOptimisticRating(
+          Number(product.rating_avg ?? 0),
+          Number(product.rating_count ?? 0),
+          product.my_rating,
+          vars.rating,
+        );
+        return { ...product, ...next };
+      };
+
+      queryClient.setQueriesData(
+        { queryKey: storefrontKeys.discoverPages() },
+        (old: unknown) => mapProductsInInfinite(old, patch),
+      );
+      queryClient.setQueriesData(
+        { queryKey: [...storefrontKeys.all, 'products', vars.slug] },
+        (old: unknown) => mapProductsInShopList(old, patch),
+      );
+
+      return { previousDiscover, previousShop };
+    },
+    onError: (_err, vars, ctx) => {
+      if (ctx?.previousDiscover != null) {
+        queryClient.setQueryData(storefrontKeys.discoverPages(), ctx.previousDiscover);
+      }
+      ctx?.previousShop?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+    },
     onSuccess: (product, vars) => {
-      queryClient.invalidateQueries({ queryKey: storefrontKeys.discoverPages() });
-      queryClient.invalidateQueries({ queryKey: storefrontKeys.products(vars.slug, '') });
       queryClient.setQueriesData(
         { queryKey: storefrontKeys.discoverPages() },
         (old: unknown) => patchProductInInfinite(old, product),
@@ -263,25 +349,135 @@ export function useRateStorefrontProduct() {
   });
 }
 
-function patchProductInInfinite(old: unknown, product: StorefrontProduct): unknown {
+/** Shop 1–5 rating with optimistic shops list + shop detail patch. */
+export function useRateStorefrontShop() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ slug, rating }: { slug: string; rating: number }) => {
+      const { data } = await axiosInstance.post<{
+        message: string;
+        data: StorefrontShop;
+      }>(STOREFRONT.RATE_SHOP(slug), { rating });
+      return data.data;
+    },
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: storefrontKeys.shopsPages() });
+      await queryClient.cancelQueries({ queryKey: storefrontKeys.shop(vars.slug) });
+      await queryClient.cancelQueries({ queryKey: [...storefrontKeys.all, 'products', vars.slug] });
+
+      const previousShops = queryClient.getQueryData(storefrontKeys.shopsPages());
+      const previousShop = queryClient.getQueryData(storefrontKeys.shop(vars.slug));
+      const previousProducts = queryClient.getQueriesData({
+        queryKey: [...storefrontKeys.all, 'products', vars.slug],
+      });
+
+      const patchShop = (shop: StorefrontShop): StorefrontShop => {
+        if (shop.slug !== vars.slug) return shop;
+        const next = applyOptimisticRating(
+          Number(shop.rating_avg ?? 0),
+          Number(shop.rating_count ?? 0),
+          shop.my_rating,
+          vars.rating,
+        );
+        return { ...shop, ...next };
+      };
+
+      queryClient.setQueriesData(
+        { queryKey: storefrontKeys.shopsPages() },
+        (old: unknown) => mapShopsInInfinite(old, patchShop),
+      );
+      queryClient.setQueryData(storefrontKeys.shop(vars.slug), (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return patchShop(old as StorefrontShop);
+      });
+      queryClient.setQueriesData(
+        { queryKey: [...storefrontKeys.all, 'products', vars.slug] },
+        (old: unknown) => {
+          if (!old || typeof old !== 'object' || !('shop' in old)) return old;
+          const list = old as { products: StorefrontProduct[]; shop?: StorefrontShop };
+          return {
+            ...list,
+            shop: list.shop ? patchShop(list.shop) : list.shop,
+          };
+        },
+      );
+
+      return { previousShops, previousShop, previousProducts };
+    },
+    onError: (_err, vars, ctx) => {
+      if (ctx?.previousShops != null) {
+        queryClient.setQueryData(storefrontKeys.shopsPages(), ctx.previousShops);
+      }
+      if (ctx?.previousShop != null) {
+        queryClient.setQueryData(storefrontKeys.shop(vars.slug), ctx.previousShop);
+      }
+      ctx?.previousProducts?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+    },
+    onSuccess: (shop) => {
+      queryClient.setQueriesData(
+        { queryKey: storefrontKeys.shopsPages() },
+        (old: unknown) => mapShopsInInfinite(old, (s) => (s.slug === shop.slug ? { ...s, ...shop } : s)),
+      );
+      queryClient.setQueryData(storefrontKeys.shop(shop.slug), shop);
+      queryClient.setQueriesData(
+        { queryKey: [...storefrontKeys.all, 'products', shop.slug] },
+        (old: unknown) => {
+          if (!old || typeof old !== 'object' || !('shop' in old)) return old;
+          const list = old as { products: StorefrontProduct[]; shop?: StorefrontShop };
+          return { ...list, shop: { ...list.shop, ...shop } };
+        },
+      );
+    },
+  });
+}
+
+function mapProductsInInfinite(
+  old: unknown,
+  mapFn: (p: StorefrontProduct) => StorefrontProduct,
+): unknown {
   if (!old || typeof old !== 'object' || !('pages' in old)) return old;
   const pages = (old as { pages: Array<{ products: StorefrontProduct[]; meta: PageMeta }> }).pages;
   return {
     ...(old as object),
     pages: pages.map((page) => ({
       ...page,
-      products: page.products.map((p) => (p.id === product.id ? { ...p, ...product } : p)),
+      products: page.products.map(mapFn),
     })),
   };
 }
 
-function patchProductInShopList(old: unknown, product: StorefrontProduct): unknown {
+function mapProductsInShopList(
+  old: unknown,
+  mapFn: (p: StorefrontProduct) => StorefrontProduct,
+): unknown {
   if (!old || typeof old !== 'object' || !('products' in old)) return old;
   const list = old as { products: StorefrontProduct[]; shop?: StorefrontShop };
+  return { ...list, products: list.products.map(mapFn) };
+}
+
+function mapShopsInInfinite(
+  old: unknown,
+  mapFn: (s: StorefrontShop) => StorefrontShop,
+): unknown {
+  if (!old || typeof old !== 'object' || !('pages' in old)) return old;
+  const pages = (old as { pages: Array<{ shops: StorefrontShop[]; meta: PageMeta }> }).pages;
   return {
-    ...list,
-    products: list.products.map((p) => (p.id === product.id ? { ...p, ...product } : p)),
+    ...(old as object),
+    pages: pages.map((page) => ({
+      ...page,
+      shops: page.shops.map(mapFn),
+    })),
   };
+}
+
+function patchProductInInfinite(old: unknown, product: StorefrontProduct): unknown {
+  return mapProductsInInfinite(old, (p) => (p.id === product.id ? { ...p, ...product } : p));
+}
+
+function patchProductInShopList(old: unknown, product: StorefrontProduct): unknown {
+  return mapProductsInShopList(old, (p) => (p.id === product.id ? { ...p, ...product } : p));
 }
 
 export function useMyStorefrontOrders(filters?: { status?: string; q?: string }) {

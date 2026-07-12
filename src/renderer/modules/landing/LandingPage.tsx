@@ -14,7 +14,7 @@ import {
 } from '../../shared/brand/custosellBrand';
 import { LANDING_MODULES } from './landingModules';
 import TestimonialCarousel from './ui/TestimonialCarousel';
-import realTimeDashboard from './assets/screenshots/real_time_dashboard.png';
+import dashboardImg from '../../../../assets/dashboard.png';
 
 const stats = [
   { value: '99.9%', label: 'Uptime' },
@@ -129,7 +129,7 @@ export default function LandingPage() {
             <div className="relative">
               <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-100 rounded-2xl -rotate-6 opacity-60" />
               <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-indigo-100 rounded-2xl rotate-6 opacity-40" />
-              <img src={realTimeDashboard} alt={`${PRODUCT_NAME} dashboard`} className="relative rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
+              <img src={dashboardImg} alt={`${PRODUCT_NAME} dashboard`} className="relative rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
             </div>
           </motion.div>
         </div>

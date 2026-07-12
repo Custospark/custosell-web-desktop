@@ -42,8 +42,8 @@ export function ConnectedStorefrontStrip({
       active={active}
       className={className}
       cartCount={cartCount}
-      homeLabel={token ? 'App' : 'Home'}
-      homeTitle={token ? 'Back to Custosell app' : 'Custosell marketing home'}
+      homeLabel="Home"
+      homeTitle={token ? 'Open your dashboard' : 'Custosell marketing home'}
       onHome={() => {
         leaveCartThen(() => {
           if (token) {

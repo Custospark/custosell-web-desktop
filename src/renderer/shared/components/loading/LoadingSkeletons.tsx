@@ -21,12 +21,48 @@ function Shimmer({ className, delay = 0 }: ShimmerProps) {
 }
 
 interface LoadingSkeletonProps {
-  variant?: 'default' | 'dashboard' | 'table' | 'card' | 'list' | 'minimal';
+  variant?: 'default' | 'dashboard' | 'table' | 'card' | 'list' | 'minimal' | 'page';
   message?: string;
+  detail?: string;
   className?: string;
 }
 
-export function LoadingSkeleton({ variant = 'default', message, className }: LoadingSkeletonProps) {
+export function LoadingSkeleton({
+  variant = 'default',
+  message,
+  detail,
+  className,
+}: LoadingSkeletonProps) {
+  if (variant === 'page') {
+    return (
+      <div
+        className={cn(
+          'flex min-h-[min(60vh,28rem)] w-full flex-col items-center justify-center gap-5 px-6 py-12 text-center',
+          className,
+        )}
+        role="status"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <div
+          className="h-12 w-12 rounded-full border-4 border-teal-100 border-t-teal-600 animate-spin"
+          aria-hidden
+        />
+        <div className="max-w-sm space-y-1.5">
+          <p className="text-base font-semibold text-slate-900">{message ?? 'Loading…'}</p>
+          <p className="text-sm text-slate-600">
+            {detail ?? 'Hang tight — this usually takes just a moment.'}
+          </p>
+        </div>
+        <div className="grid w-full max-w-sm grid-cols-3 gap-2.5">
+          {[0, 1, 2].map((i) => (
+            <Shimmer key={i} className="h-16 rounded-xl" delay={i * 80} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (variant === 'dashboard') {
     return (
       <div className={cn('p-6 space-y-6', className)} role="status" aria-busy="true">

@@ -1,13 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { ShoppingBag, Phone, Package } from 'lucide-react';
+import { Phone, Search, ShoppingBag } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { Button } from '../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useToast } from '../../app/contexts/useToast';
-import { avatarUrl } from '../../shared/utils/avatarUrl';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
 import {
@@ -17,6 +14,7 @@ import {
 import type { StorefrontProduct } from './api/storefrontTypes';
 import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
+import { DiscoverProductCard } from './ui/DiscoverProductCard';
 import { useDiscoverShell } from './ui/discoverShellContext';
 
 function slugFromShopHandle(shopHandle: string | undefined): string | null {
@@ -25,7 +23,7 @@ function slugFromShopHandle(shopHandle: string | undefined): string | null {
   return slug.length > 0 ? slug : null;
 }
 
-/** Shop catalog inside DiscoverLayout — checkout lives in the cart hub. */
+/** Shop catalog — compact product grid; checkout in cart hub. */
 export default function ShopPage() {
   const { shopHandle } = useParams<{ shopHandle: string }>();
   const slug = slugFromShopHandle(shopHandle);
@@ -34,12 +32,25 @@ export default function ShopPage() {
   const { addProduct, openCart, getBag } = useStorefrontMultiCart();
   const shopQuery = useStorefrontShop(slug ?? '');
   const productsQuery = useStorefrontShopProducts(slug ?? '');
+  const [q, setQ] = useState('');
 
   const shop = shopQuery.data ?? productsQuery.data?.shop;
-  const products = productsQuery.data?.products ?? [];
+  const products = useMemo(
+    () => productsQuery.data?.products ?? [],
+    [productsQuery.data?.products],
+  );
   const currency = shop?.currency || 'UGX';
   const bag = slug ? getBag(slug) : null;
   const bagCount = bag?.items.length ?? 0;
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return products;
+    return products.filter((p) => {
+      const hay = `${p.name} ${p.category?.name ?? ''} ${p.type ?? ''}`.toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [products, q]);
 
   useEffect(() => {
     if (!shop) {
@@ -114,7 +125,13 @@ export default function ShopPage() {
   };
 
   if (shopQuery.isLoading || productsQuery.isLoading) {
-    return <LoadingSkeleton variant="minimal" message="Loading shop…" />;
+    return (
+      <LoadingSkeleton
+        variant="page"
+        message="Loading this shop…"
+        detail="Pulling the catalog so you can browse and add to cart."
+      />
+    );
   }
 
   if (shopQuery.isError || !shop) {
@@ -128,11 +145,20 @@ export default function ShopPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className={cn(marketplaceGlassPanel, 'px-3 py-2.5')}>
-        <p className="text-xs text-slate-600">
-          Add items to this shop’s bag. Cart keeps separate bags when you shop multiple businesses.
-        </p>
+      <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5')}>
+        <Search className="h-4 w-4 shrink-0 text-teal-700" />
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search this shop…"
+          className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+        />
+        <span className="text-[11px] font-medium tabular-nums text-slate-500">
+          {filtered.length} / {products.length}
+        </span>
       </div>
+
       {products.length === 0 ? (
         <div className={cn(marketplaceGlassPanel, 'px-4 py-8')}>
           <EmptyState
@@ -141,37 +167,21 @@ export default function ShopPage() {
             description="This shop has not listed products yet."
           />
         </div>
+      ) : filtered.length === 0 ? (
+        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600')}>
+          No products match “{q.trim()}”.
+        </div>
       ) : (
-        <ul className="space-y-1.5">
-          {products.map((p) => (
-            <li
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+          {filtered.map((p) => (
+            <DiscoverProductCard
               key={p.id}
-              className={cn(
-                marketplaceGlassPanel,
-                'flex items-center gap-3 px-3 py-2.5 shadow-md transition-all duration-200',
-                'hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-xl hover:shadow-teal-900/10',
-                'active:translate-y-0 active:scale-[0.99]',
-              )}
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                {p.image_path ? (
-                  <img src={avatarUrl(p.image_path) ?? undefined} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <Package className="h-4 w-4 text-slate-400" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">{p.name}</p>
-                <p className="text-sm font-semibold tabular-nums text-teal-900">
-                  {formatCurrency(Number(p.unit_price), currency)}
-                </p>
-              </div>
-              <Button type="button" size="sm" variant="outline" onClick={() => onAdd(p)}>
-                Add
-              </Button>
-            </li>
+              product={p}
+              currency={currency}
+              onAdd={onAdd}
+            />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

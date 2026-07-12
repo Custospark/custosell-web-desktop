@@ -6,12 +6,15 @@ Consumer-facing shops and Discover — not B2B Marketplace.
 
 Same path for public visitors and logged-in users (Discover shell):
 
-1. **Browse** Shops or Products (`?focus=shops|products`, warm cache / `staleTime` 60s).
-2. **Open a shop** (`/@slug`) → Add to that shop’s bag (multi-cart).
-3. **Cart hub** (strip Cart) → one bag per business; submit one bag at a time.
-4. **Sign in** only when placing an order (humble email/password dialog; no POS redirect).
-5. **My Orders** — each shop fulfills its own order.
+1. **Shops** strip / tab → progressive shop catalog (`DiscoverShopsBrowse`); client-side search.
+2. **Products** strip / tab → progressive cross-shop products (`DiscoverProductsBrowse`); compact tiles; client-side search.
+3. Catalogs stay **warm in React Query** (prefetch + layout warmup, 10 min stale / 1 h gc) so Shops ↔ Products and return-from-shop feel instant.
+4. Open a shop → compact product grid + Add to that shop’s bag.
+5. **Cart** hub → one bag per business; submit one bag at a time. Logged-in buyers auto-fill name/phone from profile.
+6. **Orders** → My Orders list (progressive pages + client filter).
+7. Guests sign in via header, Orders, or inline cart fields when placing an order.
 
+Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md).
 
 ## App module (logged-in)
@@ -36,8 +39,11 @@ Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 Bottom strip sits inside the Marketplace-style hero chrome (not a separate slate page).
 Cart uses the same dock (desktop lg+) / sheet (tablet & phone) arrangement as Marketplace.
 Glass panels (`marketplaceGlassPanel`) for lists and orders.
-Strip: **App/Home · Products · Shops · Cart · Orders** — labels always visible; Cart opens hub; Orders / header **Sign in** open email+password dialog.
+Strip: **Home · Products · Shops · Cart · Orders** — labels always visible. Logged-in **Home** / header **Dashboard** open the user’s default app route (usually dashboard). Guests **Home** opens marketing `/`. After full-page login, return to `location.state.from` when safe; otherwise dashboard. In-shell Discover sign-in stays on the current Discover route.
+Cart opens hub; Orders / header **Sign in** open email+password dialog.
 Guest checkout shows **inline email + password** in the cart bag (“Sign in & place order”).
+
+Header lockup: logo + **Custosell** wordmark. Catalog/shop/orders first paint uses centered `LoadingSkeleton` `page` variant with clear status copy.
 
 ## Business setup
 

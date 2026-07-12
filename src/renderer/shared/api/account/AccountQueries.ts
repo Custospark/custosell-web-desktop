@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import {
   loginStart, loginSuccess, loginFailure,
@@ -10,6 +10,7 @@ import {
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -37,6 +38,24 @@ export const accountKeys = {
   all: ['account'] as const,
   profile: () => ['account', 'profile'] as const,
 };
+
+const AUTH_ENTRY_PATHS = new Set([
+  ROUTES.LOGIN,
+  ROUTES.REGISTER,
+  ROUTES.FORGOT_PASSWORD,
+  ROUTES.RESET_PASSWORD,
+]);
+
+/** Prefer the pre-login route when safe; otherwise the user's default module (dashboard). */
+function resolvePostLoginPath(user: AuthUser, from: unknown): string {
+  if (typeof from === 'string'
+    && from.startsWith('/')
+    && !from.startsWith('//')
+    && !AUTH_ENTRY_PATHS.has(from)) {
+    return from;
+  }
+  return getDefaultRoute(user);
+}
 
 function extractAuthUser(data: AuthResponse): AuthUser {
   const userData = data.user?.data ?? data.user;
@@ -80,9 +99,11 @@ type LoginMutationResult = AuthResponse & {
 export function useLogin(options?: { redirect?: boolean }) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const shouldRedirect = options?.redirect !== false;
+  const returnFrom = (location.state as { from?: string } | null)?.from;
 
   return useMutation<LoginMutationResult, Error, LoginRequest>({
     mutationFn: async (credentials) => {
@@ -132,7 +153,7 @@ export function useLogin(options?: { redirect?: boolean }) {
         void refreshAllServerCatalogSnapshots();
       }
       if (shouldRedirect) {
-        navigate(getDefaultRoute(userData));
+        navigate(resolvePostLoginPath(userData, returnFrom));
       }
     },
     onError: (error) => {

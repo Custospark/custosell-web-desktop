@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
@@ -10,6 +11,8 @@ import {
   marketplaceGlassHeader,
   useMarketplaceHeroBackground,
 } from '../inventory/ui/marketplace/marketplaceTheme';
+import { prefetchStorefrontCatalogs } from './api/storefrontQueries';
+import { useStorefrontCatalogWarmup } from './cart/useStorefrontCatalogWarmup';
 import {
   StorefrontMultiCartProvider,
   useStorefrontMultiCart,
@@ -56,6 +59,7 @@ function defaultHeader(pathname: string, search: string): { title: string; subti
 function DiscoverShellChrome() {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const token = useAppSelector((s) => s.auth.token);
   const user = useAppSelector((s) => s.auth.user);
   const { header } = useDiscoverShell();
@@ -65,6 +69,12 @@ function DiscoverShellChrome() {
   const prefersSheet = usePrefersCartSheet();
   const heroStyle = useMarketplaceHeroBackground();
   const cartDocked = cartOpen && !prefersSheet;
+
+  useEffect(() => {
+    void prefetchStorefrontCatalogs(queryClient);
+  }, [queryClient]);
+
+  useStorefrontCatalogWarmup();
 
   const active = activeTabFromPath(location.pathname, location.search, cartOpen);
   const fallback = defaultHeader(location.pathname, location.search);
@@ -103,13 +113,16 @@ function DiscoverShellChrome() {
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               to={`${ROUTES.DISCOVER}?focus=shops`}
-              className="flex shrink-0 items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-teal-600/40"
+              className="flex shrink-0 items-center gap-2.5 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-teal-600/40"
               aria-label={`${PRODUCT_NAME} Discover`}
               onClick={() => setCartOpen(false)}
             >
               <LogoImage size="sm" />
+              <span className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
+                {PRODUCT_NAME}
+              </span>
             </Link>
-            <div className="min-w-0">
+            <div className="min-w-0 border-l border-slate-300/70 pl-2.5 sm:pl-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-800">Discover</p>
               <p className="truncate text-base font-semibold text-slate-900">{title}</p>
               {subtitle ? (
@@ -125,7 +138,7 @@ function DiscoverShellChrome() {
                 onClick={() => navigate(getDefaultRoute(user))}
                 className="rounded-xl border-2 border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md"
               >
-                Open app
+                Dashboard
               </button>
             ) : (
               <button

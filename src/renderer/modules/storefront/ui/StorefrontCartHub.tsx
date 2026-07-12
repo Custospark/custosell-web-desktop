@@ -38,6 +38,7 @@ export function StorefrontCartHub({
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const token = useAppSelector((s) => s.auth.token);
+  const user = useAppSelector((s) => s.auth.user);
   const {
     bags,
     activeSlug,
@@ -122,17 +123,20 @@ export function StorefrontCartHub({
     );
   };
 
+  // Logged-in buyers: auto-fill contact from profile for seamless place-order
   useEffect(() => {
-    if (!selected || !open) return;
-    const auth = store.getState().auth;
-    if (!auth.token || !auth.user) return;
-    if (!selected.customer_name.trim() && auth.user.name) {
-      setBagContact(selected.shop.slug, {
-        customer_name: auth.user.name,
-        customer_phone: selected.customer_phone || auth.user.phone || '',
-      });
+    if (!open || !token || !user || bags.length === 0) return;
+    for (const bag of bags) {
+      const name = user.name?.trim() || bag.customer_name;
+      const phone = (user.phone?.trim() || bag.customer_phone || '').trim();
+      if (name !== bag.customer_name || phone !== bag.customer_phone) {
+        setBagContact(bag.shop.slug, {
+          customer_name: name,
+          customer_phone: phone,
+        });
+      }
     }
-  }, [selected, open, setBagContact]);
+  }, [open, token, user, bags, setBagContact]);
 
   const loginDialog = (
     <StorefrontLoginDialog
@@ -354,18 +358,27 @@ function BagCheckout({
       </div>
 
       <div className="shrink-0 space-y-3 border-t border-slate-200 bg-white px-4 py-3 sm:px-5">
-        <input
-          value={bag.customer_name}
-          onChange={(e) => onContactChange(bag.shop.slug, { customer_name: e.target.value })}
-          placeholder="Your name"
-          className={inputCls}
-        />
-        <input
-          value={bag.customer_phone}
-          onChange={(e) => onContactChange(bag.shop.slug, { customer_phone: e.target.value })}
-          placeholder="Phone / WhatsApp"
-          className={inputCls}
-        />
+        {signedIn && bag.customer_name.trim() && bag.customer_phone.trim() ? (
+          <div className="rounded-xl border border-teal-200 bg-teal-50/70 px-3 py-2.5 text-xs text-teal-950">
+            <p className="font-semibold">Ordering as {bag.customer_name}</p>
+            <p className="mt-0.5 text-teal-800">{bag.customer_phone}</p>
+          </div>
+        ) : (
+          <>
+            <input
+              value={bag.customer_name}
+              onChange={(e) => onContactChange(bag.shop.slug, { customer_name: e.target.value })}
+              placeholder="Your name"
+              className={inputCls}
+            />
+            <input
+              value={bag.customer_phone}
+              onChange={(e) => onContactChange(bag.shop.slug, { customer_phone: e.target.value })}
+              placeholder="Phone / WhatsApp"
+              className={inputCls}
+            />
+          </>
+        )}
         <textarea
           value={bag.notes}
           onChange={(e) => onContactChange(bag.shop.slug, { notes: e.target.value })}

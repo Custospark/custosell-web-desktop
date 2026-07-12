@@ -20,7 +20,7 @@ import { Table } from '../../shared/components/tables/Table';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
-import { useMyStorefrontOrders } from './api/storefrontQueries';
+import { useMyStorefrontOrdersInfinite } from './api/storefrontQueries';
 import type { MyStorefrontOrder } from './api/storefrontTypes';
 import { useDiscoverShell } from './ui/discoverShellContext';
 
@@ -65,23 +65,34 @@ function statusBadge(status: string) {
   }
 }
 
-/** My Orders content — sticky chrome from DiscoverLayout. */
+/** Orders you placed — progressive fetch + client-side status/search filter. */
 export default function MyOrdersPage() {
   const navigate = useNavigate();
   const shell = useDiscoverShell();
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [search, setSearch] = useState('');
 
-  const filters = useMemo(
-    () => ({
-      status: statusTab === 'all' ? undefined : statusTab,
-      q: search.trim() || undefined,
-    }),
-    [statusTab, search],
-  );
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useMyStorefrontOrdersInfinite();
 
-  const { data: orders = [], isLoading, error, refetch, isFetching } = useMyStorefrontOrders(filters);
-  const { data: allOrders = [] } = useMyStorefrontOrders();
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages.length]);
+
+  const allOrders = useMemo(
+    () => data?.pages.flatMap((p) => p.orders) ?? [],
+    [data?.pages],
+  );
 
   const statusCounts = useMemo(() => {
     const counts: Record<StatusTab, number> = {
@@ -98,25 +109,40 @@ export default function MyOrdersPage() {
     return counts;
   }, [allOrders]);
 
-  const paginated = usePagination(orders, 15);
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return allOrders.filter((o) => {
+      if (statusTab !== 'all' && o.status !== statusTab) return false;
+      if (!needle) return true;
+      const hay = `${o.order_number} ${o.shop_name ?? ''} ${o.shop_slug ?? ''}`.toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [allOrders, statusTab, search]);
+
+  const paginated = usePagination(filtered, 15);
 
   useEffect(() => {
     shell.setHeader({
       title: 'My Orders',
-      subtitle: 'Orders you placed at public shops',
+      subtitle: 'Orders you placed — each shop fulfills its own',
       actions: (
-        <Button variant="secondary" size="sm" onClick={() => void refetch()} disabled={isFetching} className="gap-1.5">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => void refetch()}
+          disabled={isFetching}
+          className="gap-1.5"
+        >
           <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
-          {isFetching ? 'Refreshing…' : 'Refresh'}
+          {isFetchingNextPage ? 'Loading more…' : isFetching ? 'Refreshing…' : 'Refresh'}
         </Button>
       ),
     });
-    shell.setCartCount(0);
     return () => {
       shell.setHeader(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFetching]);
+  }, [isFetching, isFetchingNextPage]);
 
   return (
     <div className="space-y-4">
@@ -131,9 +157,9 @@ export default function MyOrdersPage() {
                 type="button"
                 onClick={() => setStatusTab(tab.id)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-xl border-2 px-3 py-1.5 text-sm font-semibold transition-all',
+                  'inline-flex items-center gap-1.5 rounded-xl border-2 px-3 py-1.5 text-sm font-semibold transition-all hover:-translate-y-0.5',
                   statusTab === tab.id
-                    ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-300/40'
+                    ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-300/40 shadow-md'
                     : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-sky-50 text-blue-900 hover:border-blue-400',
                 )}
               >
@@ -161,16 +187,24 @@ export default function MyOrdersPage() {
         </div>
 
         {isLoading ? (
-          <LoadingSkeleton variant="table" />
-        ) : error ? (
+          <LoadingSkeleton
+            variant="page"
+            message="Loading your orders…"
+            detail="Fetching orders you placed across shops."
+          />
+        ) : isError ? (
           <p className="py-8 text-center text-sm text-red-600">Could not load your orders.</p>
-        ) : orders.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <EmptyState
             icon={<ShoppingBag className="w-12 h-12" />}
-            title="No orders yet"
-            description="Browse Discover, open a shop, and place an order request."
+            title={allOrders.length === 0 ? 'No orders yet' : 'No matching orders'}
+            description={
+              allOrders.length === 0
+                ? 'Browse Discover, open a shop, and place an order request.'
+                : 'Try another status or search — filtering is instant on this device.'
+            }
             actionLabel="Browse shops"
-            onAction={() => navigate(ROUTES.DISCOVER)}
+            onAction={() => navigate(`${ROUTES.DISCOVER}?focus=shops`)}
           />
         ) : (
           <>

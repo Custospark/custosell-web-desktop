@@ -29,6 +29,7 @@ import {
   Check,
 } from 'lucide-react';
 import { ProductSupplyListingSection } from '../supply/ProductSupplyListingSection';
+import { ProductStorefrontListingSection } from './ProductStorefrontListingSection';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -377,6 +378,10 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
 
         {isEditing && product && !isService ? (
           <ProductSupplyListingSection product={product} />
+        ) : null}
+
+        {isEditing && product ? (
+          <ProductStorefrontListingSection product={product} />
         ) : null}
 
         <PipelineFormSection

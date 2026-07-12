@@ -9,6 +9,7 @@ import type {
   Business,
   UpdateBusinessData,
   UpdateBusinessMutationInput,
+  UpdateStorefrontProfileData,
   UpdateSupplyProfileData,
 } from './BusinessTypes';
 import { setBusiness } from '../../../../app/store/slices/authSlice';
@@ -133,6 +134,40 @@ export function useUpdateSupplyProfile() {
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to update supply profile'));
+    },
+  });
+}
+
+export function useUpdateStorefrontProfile() {
+  const qc = useQueryClient();
+  const dispatch = useAppDispatch();
+  return useMutation<Business, AxiosError<ApiError>, UpdateStorefrontProfileData>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async (data) => {
+      const { data: response } = await axiosInstance.patch(BUSINESSES.STOREFRONT_PROFILE, data);
+      const business = (response as { data?: Business }).data ?? (response as Business);
+      return business;
+    },
+    onSuccess: (business) => {
+      dispatch(setBusiness(businessToAuthInfo(business)));
+      qc.setQueryData(businessKeys.mine(), (old: BusinessWithSyncMeta | undefined) =>
+        old ? { ...old, ...business, _pendingSync: false } : (business as BusinessWithSyncMeta),
+      );
+    },
+  });
+}
+
+export function useCheckSlugAvailable() {
+  return useMutation<{ available: boolean; slug: string; reason?: string }, AxiosError<ApiError>, string>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async (slug) => {
+      const { data } = await axiosInstance.get<{ available: boolean; slug: string; reason?: string }>(
+        BUSINESSES.SLUG_AVAILABLE,
+        { params: { slug } },
+      );
+      return data;
     },
   });
 }

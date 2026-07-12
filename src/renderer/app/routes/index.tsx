@@ -79,6 +79,8 @@ import LandingLayout from '../../modules/landing/LandingLayout';
 import LandingPage from '../../modules/landing/LandingPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import PricingPage from '../../modules/landing/PricingPage';
+import DiscoverPage from '../../modules/storefront/DiscoverPage';
+import ShopPage from '../../modules/storefront/ShopPage';
 
 const EstimatesLayout = lazy(() => import('../../modules/estimates/pages/EstimatesLayout'));
 const EstimatesPage = lazy(() => import('../../modules/estimates/pages/EstimatesPage'));
@@ -127,6 +129,8 @@ export function AppRoutes() {
           <Route path="/" element={<SuspenseWrapper><LandingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRICING} element={<SuspenseWrapper><PricingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRIVACY} element={<SuspenseWrapper><PrivacyPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
+          <Route path="/@:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
         </Route>
         <Route path={ROUTES.LOGIN} element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER} element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />

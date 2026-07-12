@@ -36,6 +36,7 @@ export interface Business {
   trial_ends_at: string | null;
   is_open_for_supply?: boolean;
   supply_headline?: string | null;
+  storefront_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +44,11 @@ export interface Business {
 export interface UpdateSupplyProfileData {
   is_open_for_supply: boolean;
   supply_headline?: string | null;
+}
+
+export interface UpdateStorefrontProfileData {
+  storefront_enabled: boolean;
+  slug?: string;
 }
 
 export interface UpdateBusinessData {

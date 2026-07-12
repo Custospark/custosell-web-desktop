@@ -9,6 +9,8 @@ export const BUSINESSES = {
   SETTINGS: '/businesses/settings',
   PROFILE: '/businesses/profile',
   SUPPLY_PROFILE: '/businesses/supply-profile',
+  STOREFRONT_PROFILE: '/businesses/storefront-profile',
+  SLUG_AVAILABLE: '/businesses/slug-available',
 };
 export const ROLES = { BASE: '/roles', BY_ID: (id: number) => `/roles/${id}` };
 export const USERS = { BASE: '/users', BY_ID: (id: number) => `/users/${id}` };
@@ -17,6 +19,8 @@ export const PRODUCTS = {
   BASE: '/products',
   LOW_STOCK: '/products/low-stock',
   SUPPLY_LISTING: (id: number) => `/products/${id}/supply-listing`,
+  STOREFRONT_LISTING: (id: number) => `/products/${id}/storefront-listing`,
+  IMAGE: (id: number) => `/products/${id}/image`,
 };
 export const CUSTOMERS = { BASE: '/customers', RESOLVE: '/customers/resolve', PURCHASES: (id: number) => `/customers/${id}/purchases` };
 export const SHIFTS = {
@@ -194,4 +198,12 @@ export const ACCOUNTING = {
   EXPORT: (type: string) => `/accounting/export/${type}`,
   INVENTORY_RECONCILIATION: '/inventory/reconciliation',
   INVENTORY_OPENING_BALANCE: '/inventory/opening-balance',
+};
+
+export const STOREFRONT = {
+  DISCOVER: '/storefront/discover',
+  CATEGORIES: '/storefront/categories',
+  SHOP: (slug: string) => `/storefront/${slug}`,
+  PRODUCTS: (slug: string) => `/storefront/${slug}/products`,
+  ORDERS: (slug: string) => `/storefront/${slug}/orders`,
 };

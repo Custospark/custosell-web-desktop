@@ -35,6 +35,9 @@ export interface Product {
   supply_price?: string | number | null;
   supply_min_qty?: number | null;
   listed_at?: string | null;
+  listed_for_storefront?: boolean;
+  image_path?: string | null;
+  storefront_listed_at?: string | null;
   created_at: string;
   updated_at: string;
 }

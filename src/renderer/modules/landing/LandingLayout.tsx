@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, Home, CreditCard, Shield, LogIn } from 'lucide-react';
+import { Download, Home, CreditCard, Shield, LogIn, Compass } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
@@ -12,6 +12,7 @@ import {
 
 const navLinks = [
   { label: 'Home', path: ROUTES.HOME, icon: Home },
+  { label: 'Discover', path: ROUTES.DISCOVER, icon: Compass },
   { label: 'Pricing', path: ROUTES.PRICING, icon: CreditCard },
   { label: 'Privacy', path: ROUTES.PRIVACY, icon: Shield },
 ];

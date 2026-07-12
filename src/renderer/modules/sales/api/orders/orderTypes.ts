@@ -1,6 +1,7 @@
 import type { CartItem } from '../salesTypes';
 
 export type OrderStatus = 'open' | 'completed' | 'invoiced' | 'cancelled';
+export type OrderSource = 'pos' | 'storefront';
 
 export interface PosOrderItem {
   id?: number;
@@ -21,9 +22,11 @@ export interface PosOrder {
   user_id: number;
   customer_id: number | null;
   customer_name: string | null;
+  customer_phone?: string | null;
   shift_id: number | null;
   order_number: string;
   status: OrderStatus;
+  source?: OrderSource | string;
   subtotal: number | string;
   tax_total: number | string;
   discount_amount: number | string;

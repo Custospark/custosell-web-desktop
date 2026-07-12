@@ -6,6 +6,8 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   PRICING: '/pricing',
   PRIVACY: '/privacy',
+  DISCOVER: '/discover',
+  SHOP: (slug: string) => `/@${slug}`,
   DASHBOARD: '/dashboard',
   SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: {

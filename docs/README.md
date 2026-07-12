@@ -103,6 +103,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
 | [2026-07-12-efris-fiscalization.md](./adr/2026-07-12-efris-fiscalization.md) | URA EFRIS — API, both POS+invoices, sync-later, master flag |
 | [2026-07-12-custosell-business-os-brand.md](./adr/2026-07-12-custosell-business-os-brand.md) | Tagline: Your Business Operating System; auth/shell + landing |
+| [2026-07-12-public-storefront.md](./adr/2026-07-12-public-storefront.md) | Public `/@slug` shops + Discover; guest unpaid order requests |
 
 ## Modules
 
@@ -112,6 +113,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [modules/hr.md](./modules/hr.md) | HR & Payroll — routes, API layer, payroll flow, failure states |
 | [modules/forecasting.md](./modules/forecasting.md) | Forecasting — cash runway, budgets, KPIs, scenarios |
 | [modules/inventory-supply-chain.md](./modules/inventory-supply-chain.md) | B2B marketplace, purchase/incoming orders, receive mapping |
+| [modules/storefront.md](./modules/storefront.md) | Public shops, Discover, guest order requests → Orders |
 
 ## Key source locations
 

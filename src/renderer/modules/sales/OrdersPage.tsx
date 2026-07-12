@@ -310,6 +310,7 @@ export default function OrdersPage() {
                   render: (order) => (
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-sm">{order.order_number}</span>
+                      {order.source === 'storefront' ? <Badge variant="primary">Online</Badge> : null}
                       {order._pendingSync ? <Badge variant="warning">Pending</Badge> : null}
                     </div>
                   ),
@@ -320,6 +321,21 @@ export default function OrdersPage() {
                   render: (order) => (
                     <div>
                       <span className="text-sm text-gray-800">{order.customer_name || 'Guest'}</span>
+                      {order.customer_phone ? (
+                        <div className="mt-0.5 flex flex-wrap gap-2 text-xs">
+                          <a href={`tel:${order.customer_phone}`} className="text-blue-600 hover:underline">
+                            {order.customer_phone}
+                          </a>
+                          <a
+                            href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-emerald-700 hover:underline"
+                          >
+                            WhatsApp
+                          </a>
+                        </div>
+                      ) : null}
                       {order.notes ? (
                         <p className="text-xs text-gray-400 truncate max-w-[180px]">{order.notes}</p>
                       ) : null}

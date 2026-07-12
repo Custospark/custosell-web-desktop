@@ -47,7 +47,7 @@ function mergeOrders(base: PosOrder[] = [], local: PosOrder[] = []): PosOrder[] 
   return [...local, ...base.filter((o) => !localIds.has(o.id))];
 }
 
-export function useOrders(filters?: { status?: string; q?: string }, enabled = true) {
+export function useOrders(filters?: { status?: string; q?: string; source?: string }, enabled = true) {
   return useQuery({
     queryKey: orderKeys.list(filters),
     queryFn: async () => {
@@ -60,12 +60,16 @@ export function useOrders(filters?: { status?: string; q?: string }, enabled = t
           if (filters?.status) {
             merged = merged.filter((o) => o.status === filters.status);
           }
+          if (filters?.source) {
+            merged = merged.filter((o) => (o.source ?? 'pos') === filters.source);
+          }
           if (filters?.q?.trim()) {
             const q = filters.q.trim().toLowerCase();
             merged = merged.filter(
               (o) =>
                 o.order_number.toLowerCase().includes(q)
                 || (o.customer_name ?? '').toLowerCase().includes(q)
+                || (o.customer_phone ?? '').toLowerCase().includes(q)
                 || (o.notes ?? '').toLowerCase().includes(q),
             );
           }
@@ -74,12 +78,14 @@ export function useOrders(filters?: { status?: string; q?: string }, enabled = t
         readFromClient: async () => {
           let list = local;
           if (filters?.status) list = list.filter((o) => o.status === filters.status);
+          if (filters?.source) list = list.filter((o) => (o.source ?? 'pos') === filters.source);
           if (filters?.q?.trim()) {
             const q = filters.q.trim().toLowerCase();
             list = list.filter(
               (o) =>
                 o.order_number.toLowerCase().includes(q)
                 || (o.customer_name ?? '').toLowerCase().includes(q)
+                || (o.customer_phone ?? '').toLowerCase().includes(q)
                 || (o.notes ?? '').toLowerCase().includes(q),
             );
           }

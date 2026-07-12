@@ -2,10 +2,9 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks/useApp';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
-import { ROUTES } from './constants/shared.paths';
 
 function isStorefrontPublicPath(pathname: string): boolean {
-  return pathname === ROUTES.DISCOVER || pathname.startsWith('/@');
+  return pathname.startsWith('/@');
 }
 
 export function PublicRoute() {

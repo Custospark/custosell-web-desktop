@@ -2,14 +2,22 @@
 
 Consumer-facing shops and Discover — not B2B Marketplace.
 
-## URLs
+## App module (logged-in)
+
+Sidebar **Discover & My Orders**:
 
 | Path | Purpose |
 |------|---------|
-| `/discover` | Lists enabled shops + listed products (search `q`; category filter is product-only) |
-| `/@{slug}` | Business public shop + guest cart |
+| `/discover` | Marketplace-style browse: inline shop list + dense product rows (no modal) |
+| `/discover/my-orders` | Orders you placed as a buyer (Sales → Orders chrome) |
 
-`PublicRoute` allows `/discover` and `/@…` while logged in (Settings → Open shop / signed-in testing). Landing, Pricing, Privacy, Login, and Register still redirect authenticated users.
+Public shop pages stay shareable outside the app chrome:
+
+| Path | Purpose |
+|------|---------|
+| `/@{slug}` | Public shop + cart (RR7 route `/:shopHandle`; page strips leading `@`) |
+
+`PublicRoute` allows `/@…` while logged in. Discover lives under the authenticated app Layout (sidebar).
 
 Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 
@@ -30,16 +38,17 @@ Product edit modal → **Public shop**:
 - Upload image (`POST /products/{id}/image`)  
 - List on shop (`PATCH /products/{id}/storefront-listing`)  
 
-## Public APIs (no auth)
+## Public APIs
 
-| Method | Path |
-|--------|------|
-| GET | `/storefront/discover?q=&category=` |
-| GET | `/storefront/shops?q=` |
-| GET | `/storefront/categories` |
-| GET | `/storefront/{slug}` |
-| GET | `/storefront/{slug}/products` |
-| POST | `/storefront/{slug}/orders` (rate-limited) |
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/storefront/discover?q=&category=` | No |
+| GET | `/storefront/shops?q=` | No |
+| GET | `/storefront/categories` | No |
+| GET | `/storefront/{slug}` | No |
+| GET | `/storefront/{slug}/products` | No |
+| POST | `/storefront/{slug}/orders` | Optional (Bearer sets `storefront_buyer_user_id`) |
+| GET | `/storefront/my-orders` | Sanctum |
 
 ## Staff fulfillment
 

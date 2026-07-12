@@ -26,7 +26,7 @@ export interface SidebarNavGroup {
 
 export const baseSubRoutes = [
   ROUTES.DASHBOARD,
-  ROUTES.DISCOVER, ROUTES.DISCOVER + '/my-orders',
+  ROUTES.DISCOVER, ROUTES.DISCOVER_MY_ORDERS,
   ROUTES.SALES.NEW, ROUTES.SALES.ORDERS, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
@@ -124,10 +124,10 @@ export const baseNavGroups: SidebarNavGroup[] = [
   },
   {
     icon: Compass,
-    label: 'Discover & Storefronts',
+    label: 'Discover & My Orders',
     subItems: [
       { to: ROUTES.DISCOVER, label: 'Discover', icon: Compass },
-      { to: ROUTES.DISCOVER + '/my-orders', label: 'My Orders', icon: ShoppingBag },
+      { to: ROUTES.DISCOVER_MY_ORDERS, label: 'My Orders', icon: ShoppingBag },
     ],
   },
   {

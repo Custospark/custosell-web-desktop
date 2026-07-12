@@ -80,6 +80,7 @@ import LandingPage from '../../modules/landing/LandingPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import PricingPage from '../../modules/landing/PricingPage';
 import DiscoverPage from '../../modules/storefront/DiscoverPage';
+import MyOrdersPage from '../../modules/storefront/MyOrdersPage';
 import ShopPage from '../../modules/storefront/ShopPage';
 
 const EstimatesLayout = lazy(() => import('../../modules/estimates/pages/EstimatesLayout'));
@@ -129,8 +130,8 @@ export function AppRoutes() {
           <Route path="/" element={<SuspenseWrapper><LandingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRICING} element={<SuspenseWrapper><PricingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRIVACY} element={<SuspenseWrapper><PrivacyPage /></SuspenseWrapper>} />
-          <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
-          <Route path="/@:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
+          {/* RR7 cannot match "/@:slug"; use "/:shopHandle" and require leading "@" in ShopPage. */}
+          <Route path="/:shopHandle" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
         </Route>
         <Route path={ROUTES.LOGIN} element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER} element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />
@@ -205,6 +206,8 @@ export function AppRoutes() {
               <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
             </Route>
           </Route>
+          <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.DISCOVER_MY_ORDERS} element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
           <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
           <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
           <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />

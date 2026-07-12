@@ -50,3 +50,16 @@ export interface PlaceStorefrontOrderResult {
   order_number: string;
   total_amount: string | number;
 }
+
+export interface MyStorefrontOrder {
+  id: number;
+  order_number: string;
+  status: 'open' | 'completed' | 'invoiced' | 'cancelled' | string;
+  total_amount: string | number;
+  items_count: number;
+  notes: string | null;
+  created_at: string | null;
+  shop_name: string | null;
+  shop_slug: string | null;
+  currency: string;
+}

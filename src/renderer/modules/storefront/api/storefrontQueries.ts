@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { STOREFRONT } from '../../../shared/api/endpoints/endpoints';
 import type {
+  MyStorefrontOrder,
   PlaceStorefrontOrderPayload,
   PlaceStorefrontOrderResult,
   StorefrontCategory,
@@ -16,6 +17,7 @@ export const storefrontKeys = {
   categories: () => [...storefrontKeys.all, 'categories'] as const,
   shop: (slug: string) => [...storefrontKeys.all, 'shop', slug] as const,
   products: (slug: string, category: string) => [...storefrontKeys.all, 'products', slug, category] as const,
+  myOrders: (status?: string, q?: string) => [...storefrontKeys.all, 'my-orders', status ?? '', q ?? ''] as const,
 };
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -50,7 +52,7 @@ export function useStorefrontShops(q: string) {
     queryKey: storefrontKeys.shops(q),
     queryFn: async () => {
       const { data } = await axiosInstance.get(STOREFRONT.SHOPS, {
-        params: { q: q || undefined },
+        params: { q: q || undefined, per_page: 48 },
       });
       return unwrapList<StorefrontShop>(data);
     },
@@ -100,6 +102,22 @@ export function usePlaceStorefrontOrder(slug: string) {
     mutationFn: async (payload: PlaceStorefrontOrderPayload) => {
       const { data } = await axiosInstance.post<PlaceStorefrontOrderResult>(STOREFRONT.ORDERS(slug), payload);
       return data;
+    },
+  });
+}
+
+export function useMyStorefrontOrders(filters?: { status?: string; q?: string }) {
+  return useQuery({
+    queryKey: storefrontKeys.myOrders(filters?.status, filters?.q),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(STOREFRONT.MY_ORDERS, {
+        params: {
+          status: filters?.status || undefined,
+          q: filters?.q || undefined,
+          per_page: 48,
+        },
+      });
+      return unwrapList<MyStorefrontOrder>(data);
     },
   });
 }

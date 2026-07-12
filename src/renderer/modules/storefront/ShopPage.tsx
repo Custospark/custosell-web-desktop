@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Minus, Plus, ShoppingBag, Phone } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -16,12 +16,20 @@ import {
 import type { StorefrontCartItem, StorefrontProduct } from './api/storefrontTypes';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
 
+/** RR7 does not match `/@:slug`; route is `/:shopHandle` with a leading `@`. */
+function slugFromShopHandle(shopHandle: string | undefined): string | null {
+  if (!shopHandle || !shopHandle.startsWith('@')) return null;
+  const slug = shopHandle.slice(1).trim().toLowerCase();
+  return slug.length > 0 ? slug : null;
+}
+
 export default function ShopPage() {
-  const { slug = '' } = useParams<{ slug: string }>();
+  const { shopHandle } = useParams<{ shopHandle: string }>();
+  const slug = slugFromShopHandle(shopHandle);
   const { showToast } = useToast();
-  const shopQuery = useStorefrontShop(slug);
-  const productsQuery = useStorefrontShopProducts(slug);
-  const placeOrder = usePlaceStorefrontOrder(slug);
+  const shopQuery = useStorefrontShop(slug ?? '');
+  const productsQuery = useStorefrontShopProducts(slug ?? '');
+  const placeOrder = usePlaceStorefrontOrder(slug ?? '');
 
   const [cart, setCart] = useState<StorefrontCartItem[]>([]);
   const [name, setName] = useState('');
@@ -37,6 +45,10 @@ export default function ShopPage() {
     () => cart.reduce((sum, line) => sum + Number(line.product.unit_price) * line.quantity, 0),
     [cart],
   );
+
+  if (!slug) {
+    return <Navigate to={ROUTES.DISCOVER} replace />;
+  }
 
   const addToCart = (product: StorefrontProduct) => {
     setCart((prev) => {

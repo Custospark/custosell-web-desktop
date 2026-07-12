@@ -1,0 +1,42 @@
+import { Store } from 'lucide-react';
+import { cn } from '../../../shared/utils/cn';
+import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import type { StorefrontShop } from '../api/storefrontTypes';
+import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
+
+interface DiscoverShopRowProps {
+  shop: StorefrontShop;
+  active?: boolean;
+  onSelect: (shop: StorefrontShop) => void;
+}
+
+/** Dense shop row — designed for long lists at scale. */
+export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShopRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(shop)}
+      className={cn(
+        marketplaceGlassPanel,
+        'flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors',
+        active
+          ? 'border-teal-500/80 ring-1 ring-teal-600/30 bg-teal-50/90'
+          : 'hover:border-slate-300',
+      )}
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+        {shop.logo_path ? (
+          <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <Store className="h-4 w-4 text-slate-400" aria-hidden />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
+        <p className="truncate text-[11px] text-slate-500">
+          @{shop.slug}{shop.city ? ` · ${shop.city}` : ''}
+        </p>
+      </div>
+    </button>
+  );
+}

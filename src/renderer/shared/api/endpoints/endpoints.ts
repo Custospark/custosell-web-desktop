@@ -204,6 +204,7 @@ export const STOREFRONT = {
   DISCOVER: '/storefront/discover',
   SHOPS: '/storefront/shops',
   CATEGORIES: '/storefront/categories',
+  MY_ORDERS: '/storefront/my-orders',
   SHOP: (slug: string) => `/storefront/${slug}`,
   PRODUCTS: (slug: string) => `/storefront/${slug}/products`,
   ORDERS: (slug: string) => `/storefront/${slug}/orders`,

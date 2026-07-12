@@ -21,7 +21,7 @@ interface StorefrontActionStripProps {
 }
 
 /**
- * Horizontal bottom nav — Marketplace-style lively strip with always-visible labels.
+ * Bottom nav — mobile: equal-width chips in a bordered card; sm+: original full-bleed strip.
  */
 export function StorefrontActionStrip({
   active,
@@ -41,12 +41,14 @@ export function StorefrontActionStrip({
   const shopsActive = active === 'browse';
 
   return (
-    <div
+    <nav
       className={cn(
-        'relative z-[10001] flex shrink-0 items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain border-t border-slate-200/80 bg-white/95 px-2 py-2 backdrop-blur-sm sm:gap-3 sm:px-3 sm:py-2.5',
+        // Mobile: inset card so chips don’t crush each other
+        'relative z-[10001] mx-2 mb-2 flex shrink-0 items-stretch gap-1 rounded-lg border border-slate-200/90 bg-white/95 p-1.5 shadow-sm backdrop-blur-sm',
+        // Large: original full-bleed strip
+        'sm:mx-0 sm:mb-0 sm:items-center sm:justify-center sm:gap-3 sm:overflow-x-auto sm:overscroll-x-contain sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:p-0 sm:px-3 sm:py-2.5 sm:shadow-none',
         className,
       )}
-      role="navigation"
       aria-label="Storefront navigation"
     >
       {onHome ? (
@@ -55,7 +57,7 @@ export function StorefrontActionStrip({
           onClick={onHome}
           title={homeTitle}
           tone="slate"
-          icon={<Home className="h-4 w-4 text-slate-600" />}
+          icon={<Home className="h-3.5 w-3.5 shrink-0 text-slate-600 sm:h-4 sm:w-4" />}
           label={homeLabel}
         />
       ) : null}
@@ -64,7 +66,7 @@ export function StorefrontActionStrip({
         onClick={onDiscover}
         title="Browse products across shops"
         tone="amber"
-        icon={<Compass className="h-4 w-4 text-amber-700" />}
+        icon={<Compass className="h-3.5 w-3.5 shrink-0 text-amber-700 sm:h-4 sm:w-4" />}
         label="Products"
       />
       <StripButton
@@ -72,7 +74,7 @@ export function StorefrontActionStrip({
         onClick={onBrowse}
         title={shopsTitle}
         tone="teal"
-        icon={<ArrowLeftRight className="h-4 w-4 text-teal-600" />}
+        icon={<ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-teal-600 sm:h-4 sm:w-4" />}
         label={shopsLabel}
       />
       <StripButton
@@ -82,9 +84,9 @@ export function StorefrontActionStrip({
         tone="emerald"
         icon={(
           <span className="relative inline-flex shrink-0">
-            <ShoppingCart className="h-4 w-4 text-emerald-600" />
+            <ShoppingCart className="h-3.5 w-3.5 text-emerald-600 sm:h-4 sm:w-4" />
             {cartCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white sm:h-4 sm:min-w-4 sm:text-[9px] sm:ring-2">
                 {cartCount > 99 ? '99+' : cartCount}
               </span>
             ) : null}
@@ -99,9 +101,9 @@ export function StorefrontActionStrip({
         tone="blue"
         icon={(
           <span className="relative inline-flex shrink-0">
-            <LayoutList className="h-4 w-4 text-blue-600" />
+            <LayoutList className="h-3.5 w-3.5 text-blue-600 sm:h-4 sm:w-4" />
             {ordersCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white sm:h-4 sm:min-w-4 sm:text-[9px] sm:ring-2">
                 {ordersCount > 99 ? '99+' : ordersCount}
               </span>
             ) : null}
@@ -109,7 +111,7 @@ export function StorefrontActionStrip({
         )}
         label="Orders"
       />
-    </div>
+    </nav>
   );
 }
 
@@ -130,22 +132,23 @@ function StripButton({
   icon: ReactNode;
   label: string;
 }) {
+  // Mobile: compact tones. sm+: original lively border-2 chips.
   const tones: Record<Tone, string> = {
     slate: active
-      ? 'border-slate-500 bg-slate-100 text-slate-950 ring-2 ring-slate-300/60 shadow-md'
-      : 'border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 text-slate-800 hover:border-slate-400 hover:shadow-md hover:shadow-slate-200/60',
+      ? 'border-slate-500 bg-slate-100 text-slate-950 max-sm:ring-1 max-sm:ring-slate-300/50 sm:ring-2 sm:ring-slate-300/60 sm:shadow-md'
+      : 'border-slate-200 bg-gradient-to-b from-slate-50 to-white text-slate-800 sm:border-slate-300/90 sm:bg-gradient-to-r sm:from-slate-50 sm:via-white sm:to-slate-50 sm:hover:border-slate-400 sm:hover:shadow-md sm:hover:shadow-slate-200/60',
     amber: active
-      ? 'border-amber-500 bg-amber-100 text-amber-950 ring-2 ring-amber-300/60 shadow-md'
-      : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 text-amber-950 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:shadow-md hover:shadow-amber-200/50',
+      ? 'border-amber-500 bg-amber-100 text-amber-950 max-sm:ring-1 max-sm:ring-amber-300/50 sm:ring-2 sm:ring-amber-300/60 sm:shadow-md'
+      : 'border-amber-200 bg-gradient-to-b from-amber-50 to-white text-amber-950 sm:border-amber-300/90 sm:bg-gradient-to-r sm:from-amber-50 sm:via-white sm:to-orange-50 sm:hover:border-amber-400 sm:hover:from-amber-100 sm:hover:to-orange-100 sm:hover:shadow-md sm:hover:shadow-amber-200/50',
     teal: active
-      ? 'border-teal-500 bg-teal-100 text-teal-950 ring-2 ring-teal-300/60 shadow-md'
-      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-teal-900 hover:border-teal-400 hover:from-teal-100 hover:to-cyan-100 hover:shadow-md hover:shadow-teal-200/50',
+      ? 'border-teal-500 bg-teal-100 text-teal-950 max-sm:ring-1 max-sm:ring-teal-300/50 sm:ring-2 sm:ring-teal-300/60 sm:shadow-md'
+      : 'border-teal-200 bg-gradient-to-b from-teal-50 to-white text-teal-900 sm:border-teal-300/90 sm:bg-gradient-to-r sm:from-teal-50 sm:via-white sm:to-cyan-50 sm:hover:border-teal-400 sm:hover:from-teal-100 sm:hover:to-cyan-100 sm:hover:shadow-md sm:hover:shadow-teal-200/50',
     emerald: active
-      ? 'border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-300/60 shadow-md'
-      : 'border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 text-emerald-900 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:shadow-md hover:shadow-emerald-200/50',
+      ? 'border-emerald-500 bg-emerald-100 text-emerald-950 max-sm:ring-1 max-sm:ring-emerald-300/50 sm:ring-2 sm:ring-emerald-300/60 sm:shadow-md'
+      : 'border-emerald-200 bg-gradient-to-b from-emerald-50 to-white text-emerald-900 sm:border-emerald-300/90 sm:bg-gradient-to-r sm:from-emerald-50 sm:via-white sm:to-teal-50 sm:hover:border-emerald-400 sm:hover:from-emerald-100 sm:hover:to-teal-100 sm:hover:shadow-md sm:hover:shadow-emerald-200/50',
     blue: active
-      ? 'border-blue-500 bg-blue-100 text-blue-950 ring-2 ring-blue-300/60 shadow-md'
-      : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-sky-50 text-blue-900 hover:border-blue-400 hover:from-blue-100 hover:to-sky-100 hover:shadow-md hover:shadow-blue-200/50',
+      ? 'border-blue-500 bg-blue-100 text-blue-950 max-sm:ring-1 max-sm:ring-blue-300/50 sm:ring-2 sm:ring-blue-300/60 sm:shadow-md'
+      : 'border-blue-200 bg-gradient-to-b from-blue-50 to-white text-blue-900 sm:border-blue-300/90 sm:bg-gradient-to-r sm:from-blue-50 sm:via-white sm:to-sky-50 sm:hover:border-blue-400 sm:hover:from-blue-100 sm:hover:to-sky-100 sm:hover:shadow-md sm:hover:shadow-blue-200/50',
   };
 
   return (
@@ -160,13 +163,15 @@ function StripButton({
       aria-label={title}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-xs font-semibold shadow-sm transition-all sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm',
-        'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
+        // Mobile: equal-width stacked icon+label
+        'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1.5 text-[10px] font-semibold leading-tight shadow-sm transition active:scale-[0.98]',
+        // Large: original horizontal chips (not flex-1)
+        'sm:inline-flex sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-xl sm:border-2 sm:px-4 sm:py-2.5 sm:text-sm sm:hover:-translate-y-0.5 sm:active:translate-y-0',
         tones[tone],
       )}
     >
       {icon}
-      <span>{label}</span>
+      <span className="max-w-full truncate">{label}</span>
     </button>
   );
 }

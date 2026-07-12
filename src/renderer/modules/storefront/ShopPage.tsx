@@ -75,7 +75,7 @@ export default function ShopPage() {
           {bagCount > 0 ? (
             <button
               type="button"
-              className="rounded-xl border-2 border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-900 sm:text-xs"
+              className="rounded-md border border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-900 sm:rounded-xl sm:border-2 sm:px-2.5 sm:text-xs"
               onClick={() => openCart(shop.slug)}
             >
               Cart ({bagCount})
@@ -83,24 +83,28 @@ export default function ShopPage() {
           ) : null}
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white/90 px-2 py-1.5 text-[11px] font-semibold hover:bg-white sm:text-xs"
+            className="rounded-md border border-slate-200 bg-white/90 px-2 py-1.5 text-[11px] font-semibold hover:bg-white sm:rounded-lg sm:text-xs"
             onClick={async () => {
               await navigator.clipboard.writeText(shareUrl);
               showToast('success', 'Shop link copied');
             }}
           >
-            Copy link
+            <span className="sm:hidden">Copy</span>
+            <span className="hidden sm:inline">Copy link</span>
           </button>
           <a
             href={whatsappShareUrl(`Order from ${shop.name}: ${shareUrl}`)}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg border border-slate-200 bg-white/90 px-2 py-1.5 text-[11px] font-semibold hover:bg-white sm:text-xs"
+            className="rounded-md border border-slate-200 bg-white/90 px-2 py-1.5 text-[11px] font-semibold hover:bg-white sm:rounded-lg sm:text-xs"
           >
             WhatsApp
           </a>
           {shop.business_phone ? (
-            <a href={`tel:${shop.business_phone}`} className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 sm:text-xs">
+            <a
+              href={`tel:${shop.business_phone}`}
+              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white/90 px-2 py-1.5 text-[11px] font-semibold text-blue-700 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:text-xs"
+            >
               <Phone className="h-3.5 w-3.5" />
               Call
             </a>

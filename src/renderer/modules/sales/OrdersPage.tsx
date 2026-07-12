@@ -23,7 +23,7 @@ import {
   type OrderStatus,
   type PosOrder,
 } from './api/orders/orderTypes';
-import { useCancelOrder, useOrders, useUpdateOrder } from './api/orders/useOrderQueries';
+import { useCancelOrder, useOrders } from './api/orders/useOrderQueries';
 import { useSale, useSales } from './api/salesQueries';
 import { useInvoices } from '../invoices/api/InvoiceQueries';
 import { findInvoiceBySaleId } from '../invoices/invoiceUtils';
@@ -39,6 +39,7 @@ import { Table } from '../../shared/components/tables/Table';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import InvoiceFromSaleModal from './ui/InvoiceFromSaleModal';
+import RenameOrderModal from './ui/RenameOrderModal';
 import type { Invoice } from '../invoices/api/InvoiceTypes';
 
 const STATUS_TABS: {
@@ -95,6 +96,7 @@ export default function OrdersPage() {
   const [search, setSearch] = useState('');
   const [invoiceSaleId, setInvoiceSaleId] = useState<number | null>(null);
   const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
+  const [renameOrder, setRenameOrder] = useState<PosOrder | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -123,7 +125,6 @@ export default function OrdersPage() {
   const { data: sales = [] } = useSales();
   const { data: invoiceSale } = useSale(invoiceSaleId ?? 0);
   const cancelOrder = useCancelOrder();
-  const updateOrder = useUpdateOrder();
 
   const paginated = usePagination(orders, 15);
 
@@ -183,13 +184,8 @@ export default function OrdersPage() {
     cancelOrder.mutate(order.id);
   };
 
-  const handleRename = async (order: PosOrder) => {
-    const next = window.prompt('Order / customer name', order.customer_name || 'Guest');
-    if (next === null) return;
-    updateOrder.mutate({
-      id: order.id,
-      customer_name: next.trim() || 'Guest',
-    });
+  const handleRename = (order: PosOrder) => {
+    setRenameOrder(order);
   };
 
   const openInvoiceForSale = (saleId: number) => {
@@ -458,6 +454,12 @@ export default function OrdersPage() {
           onSuccess={closeInvoiceModal}
         />
       ) : null}
+
+      <RenameOrderModal
+        open={!!renameOrder}
+        order={renameOrder}
+        onClose={() => setRenameOrder(null)}
+      />
     </div>
   );
 }

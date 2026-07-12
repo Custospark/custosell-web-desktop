@@ -12,6 +12,7 @@ import NetworkOfflineOverlay from './shared/components/Errors/NetworkOfflineOver
 import { AppRoutes } from './app/routes';
 import { AuthBootstrap } from './app/components/AuthBootstrap';
 import { LogoutProvider } from './app/contexts/LogoutContext';
+import { ScrollToTop } from './shared/components/routing/ScrollToTop';
 import './App.css';
 
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
@@ -40,6 +41,7 @@ function App() {
         }}
       >
         <Router>
+          <ScrollToTop />
           <LogoutProvider>
             <AppProvider>
               <ToastProvider>

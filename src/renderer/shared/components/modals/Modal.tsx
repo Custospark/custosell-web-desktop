@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
-/** Above search dropdowns (z-30), nav menus (z-100), and select portals (z-200). */
-export const MODAL_Z_INDEX_CLASS = 'z-[10000]';
+/** Above cart sheets, strips, and nav menus. */
+export const MODAL_Z_INDEX_CLASS = 'z-[20000]';
 
 /** Confirm dialogs must sit above modals and drawers. */
-export const CONFIRM_Z_INDEX_CLASS = 'z-[11000]';
+export const CONFIRM_Z_INDEX_CLASS = 'z-[21000]';
 
 interface ModalProps {
   isOpen: boolean;

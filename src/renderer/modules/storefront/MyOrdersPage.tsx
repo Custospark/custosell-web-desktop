@@ -121,7 +121,7 @@ export default function MyOrdersPage() {
           size="sm"
           onClick={() => void refetch()}
           disabled={isFetching}
-          className="gap-1.5"
+          className="gap-1.5 rounded-md border border-slate-200"
         >
           <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
           {isFetching ? 'Refreshing…' : 'Refresh'}

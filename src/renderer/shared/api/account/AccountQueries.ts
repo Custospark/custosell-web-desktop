@@ -231,10 +231,11 @@ export function useRegisterBusiness() {
   });
 }
 
-export function useRegister() {
+export function useRegister(options?: { redirect?: boolean }) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const shouldRedirect = options?.redirect !== false;
 
   return useMutation<AuthResponse, AxiosError<ApiError>, RegisterRequest>({
     mutationFn: async (data) => {
@@ -249,12 +250,16 @@ export function useRegister() {
       const userData = extractAuthUser(data);
       dispatch(registerSuccess({ user: userData, token: data.token }));
       showToast('success', 'Account created successfully');
-      navigate(getDefaultRoute(userData));
+      if (shouldRedirect) {
+        navigate(getDefaultRoute(userData));
+      }
     },
     onError: (error) => {
       const message = getAuthErrorMessage(error, 'Registration failed');
       dispatch(registerFailure(message));
-      showToast('error', message);
+      if (shouldRedirect) {
+        showToast('error', message);
+      }
     },
   });
 }

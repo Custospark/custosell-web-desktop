@@ -30,6 +30,7 @@ Persisted **Orders** domain with lifecycle:
 - Redux: `activeOrderId` replaces `heldOrders` localStorage
 - Offline: `localOrders` IDB store (schema v13), mutation queue before sales, order_id remap on sales
 - One-time migration: `migrateHeldOrdersFromLocalStorage` pushes legacy holds then clears the key
+- **Rename on Orders page:** uses shared `Modal` (`RenameOrderModal`) — not `window.prompt`. Same field as Hold Order (`customer_name`); empty → `Guest`. Save closes modal on success; Cancel / Escape discard. Failure stays in modal (toast from `useUpdateOrder`).
 
 ## Backend
 

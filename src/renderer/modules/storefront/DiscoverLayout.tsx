@@ -5,12 +5,8 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { cn } from '../../shared/utils/cn';
-import {
-  marketplaceGlassHeader,
-  useMarketplaceHeroBackground,
-} from '../inventory/ui/marketplace/marketplaceTheme';
+import { useMarketplaceHeroBackground } from '../inventory/ui/marketplace/marketplaceTheme';
 import { prefetchStorefrontCatalogs, useMyStorefrontOrdersCount } from './api/storefrontQueries';
 import { useStorefrontCatalogWarmup } from './cart/useStorefrontCatalogWarmup';
 import {
@@ -20,6 +16,7 @@ import {
 import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
 import { StorefrontCartHub } from './ui/StorefrontCartHub';
 import { StorefrontLoginDialog } from './ui/StorefrontLoginDialog';
+import { DiscoverAccountMenu } from './ui/DiscoverAccountMenu';
 import {
   DiscoverShellProvider,
   useDiscoverShell,
@@ -131,51 +128,79 @@ function DiscoverShellChrome() {
         )}
         style={heroStyle}
       >
-        <header className={marketplaceGlassHeader}>
-          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+        <header
+          className={cn(
+            // Mobile: inset card with small radius
+            'relative z-40 mx-2 mt-2 flex shrink-0 flex-col gap-2 rounded-lg border border-slate-200/90 bg-white/95 px-2.5 py-2 shadow-sm backdrop-blur-sm',
+            // Large: original full-bleed glass header
+            'sm:mx-0 sm:mt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-none sm:border-0 sm:border-b sm:border-slate-200/80 sm:px-4 sm:py-3 sm:shadow-none',
+          )}
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <Link
               to={`${ROUTES.DISCOVER}?focus=shops`}
-              className="flex shrink-0 items-center gap-2.5 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-teal-600/40"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-teal-600/40 sm:gap-2.5"
               aria-label={`${PRODUCT_NAME} Discover`}
               onClick={() => setCartOpen(false)}
             >
               <LogoImage size="sm" />
-              <span className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
+              <span className="hidden text-base font-bold tracking-tight text-slate-900 min-[380px]:inline sm:inline sm:text-lg">
                 {PRODUCT_NAME}
               </span>
             </Link>
-            <div className="min-w-0 border-l border-slate-300/70 pl-2.5 sm:pl-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-800">Discover</p>
-              <p className="truncate text-base font-semibold text-slate-900">{title}</p>
+            <div className="min-w-0 flex-1 border-l border-slate-300/70 pl-2 sm:pl-3">
+              <p className="hidden text-[11px] font-semibold uppercase tracking-wide text-teal-800 sm:block">
+                Discover
+              </p>
+              <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
               {subtitle ? (
-                <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">{subtitle}</p>
+                <p className="mt-0.5 hidden line-clamp-1 text-xs text-slate-600 sm:block">{subtitle}</p>
               ) : null}
             </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {header?.actions}
-            {token ? (
+            {/* Account stays on the title row on mobile */}
+            {token && user ? (
+              <DiscoverAccountMenu user={user} compact className="sm:hidden" />
+            ) : (
               <button
                 type="button"
-                onClick={() => navigate(getDefaultRoute(user))}
-                className="rounded-xl border-2 border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md"
+                onClick={() => openSignIn('general')}
+                className={cn(
+                  'shrink-0 font-semibold text-teal-900 shadow-sm transition sm:hidden',
+                  'rounded-md border border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-2 py-1.5 text-[11px]',
+                )}
               >
-                Dashboard
+                Account
               </button>
+            )}
+          </div>
+
+          {header?.actions ? (
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2 sm:hidden">
+              {header.actions}
+            </div>
+          ) : null}
+
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            {header?.actions}
+            {token && user ? (
+              <DiscoverAccountMenu user={user} />
             ) : (
               <button
                 type="button"
                 onClick={() => openSignIn('general')}
                 className="rounded-xl border-2 border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-md hover:shadow-teal-200/50"
               >
-                Sign in
+                Account
               </button>
             )}
           </div>
         </header>
 
         {/* Never key Outlet — remounting Outlet breaks child route rendering in RR7. */}
-        <main className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
+        <main
+          className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4"
+          data-scroll-container
+        >
           <Outlet />
         </main>
 
@@ -205,11 +230,15 @@ function DiscoverShellChrome() {
 
       <StorefrontLoginDialog
         isOpen={loginOpen}
-        title={loginIntent === 'orders' ? 'Sign in to see your orders' : 'Sign in to Discover'}
+        title={
+          loginIntent === 'orders'
+            ? 'Create an account to see your orders'
+            : 'Create an account to continue'
+        }
         subtitle={
           loginIntent === 'orders'
-            ? 'Orders you placed across shops appear here.'
-            : 'Use your email and password. Carts stay in this browser.'
+            ? 'Orders you place across shops appear here. No business setup needed.'
+            : 'Shop as a customer — no business setup. Carts stay in this browser.'
         }
         onClose={() => {
           pendingLoginSuccess.current = null;

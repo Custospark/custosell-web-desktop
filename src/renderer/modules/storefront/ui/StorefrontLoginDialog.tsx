@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, X } from 'lucide-react';
-import { useLogin } from '../../../shared/api/account/AccountQueries';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { Button } from '../../../shared/components/buttons/Button';
+import { X } from 'lucide-react';
 import { CONFIRM_Z_INDEX_CLASS } from '../../../shared/components/modals/Modal';
-import {
-  isNetworkFailure,
-  sanitizeErrorMessage,
-} from '../../../app/store/offline/core/offlineQueryUtils';
 import { cn } from '../../../shared/utils/cn';
+import { StorefrontAuthPanel } from './StorefrontAuthPanel';
 
 interface StorefrontLoginDialogProps {
   isOpen: boolean;
@@ -18,23 +11,22 @@ interface StorefrontLoginDialogProps {
   onSuccess: () => void;
   title?: string;
   subtitle?: string;
+  /** Cart place-order flow — CTA says create/sign-in & place order. */
+  placeOrderMode?: boolean;
 }
 
 /**
- * Discover sign-in — dimmed backdrop above cart sheet, stays in shell (no POS redirect).
+ * Discover account dialog — create account (default) or sign in.
+ * No dimmed/blurred backdrop so browse + cart stay visible (not “blocked”).
  */
 export function StorefrontLoginDialog({
   isOpen,
   onClose,
   onSuccess,
-  title = 'Sign in to place your order',
-  subtitle = 'Enter your email and password. Browse stays open.',
+  title = 'Create an account to continue',
+  subtitle = 'Shop as a customer — no business setup. Carts stay in this browser.',
+  placeOrderMode = false,
 }: StorefrontLoginDialogProps) {
-  const login = useLogin({ redirect: false });
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -46,35 +38,26 @@ export function StorefrontLoginDialog({
 
   if (typeof document === 'undefined' || !isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    login.mutate(
-      { email: email.trim(), password },
-      {
-        onSuccess: () => {
-          setPassword('');
-          onSuccess();
-        },
-      },
-    );
-  };
-
-  const inputCls =
-    'w-full rounded-xl border border-slate-300 py-3 pl-11 pr-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/25';
-
   return createPortal(
-    <div className={cn('fixed inset-0 flex items-center justify-center p-4', CONFIRM_Z_INDEX_CLASS)}>
+    <div
+      className={cn(
+        'fixed inset-0 flex items-center justify-center p-4 pointer-events-none',
+        CONFIRM_Z_INDEX_CLASS,
+      )}
+    >
+      {/* Transparent hit area only — no dim / blur */}
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/55 backdrop-blur-[2px]"
-        aria-label="Close sign in"
+        className="pointer-events-auto absolute inset-0 cursor-default bg-transparent"
+        aria-label="Close account dialog"
         onClick={onClose}
       />
       <div
         role="dialog"
-        aria-modal
+        aria-modal="true"
         aria-labelledby="storefront-login-title"
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+        className="pointer-events-auto relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-slate-900/10"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -91,57 +74,11 @@ export function StorefrontLoginDialog({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className={inputCls}
-            />
-          </div>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className={cn(inputCls, 'pr-11')}
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-700"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-          {login.isError ? (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-              {isNetworkFailure(login.error)
-                ? 'Could not reach the server. Check your connection and try again.'
-                : sanitizeErrorMessage(login.error, 'Invalid email or password')}
-            </p>
-          ) : null}
-          <Button type="submit" className="w-full py-3" loading={login.isPending}>
-            Sign in
-          </Button>
-          <p className="text-center text-xs text-slate-500">
-            No account?{' '}
-            <Link to={ROUTES.REGISTER} className="font-semibold text-teal-700 hover:underline">
-              Start for free
-            </Link>
-          </p>
-        </form>
+        <StorefrontAuthPanel
+          onSuccess={onSuccess}
+          defaultMode="create"
+          placeOrderMode={placeOrderMode}
+        />
       </div>
     </div>,
     document.body,

@@ -20,6 +20,7 @@ export function Main() {
         flushLayout ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 sm:p-6',
       )}
       data-tour="main-workspace"
+      data-scroll-container
     >
       {onlineOnly ? (
         <div className={cn('shrink-0', flushLayout ? 'px-4 pt-4 sm:px-6' : 'mb-4')}>

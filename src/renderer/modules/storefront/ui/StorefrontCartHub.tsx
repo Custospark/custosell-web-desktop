@@ -5,6 +5,7 @@ import { useToast } from '../../../app/contexts/useToast';
 import { store } from '../../../app/store/store';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Button } from '../../../shared/components/buttons/Button';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
 import { storefrontKeys, usePlaceStorefrontOrder } from '../api/storefrontQueries';
 import { useStorefrontMultiCart } from '../cart/storefrontMultiCartContext';
@@ -19,7 +20,7 @@ interface StorefrontCartHubProps {
 }
 
 /**
- * Multi-business cart hub — Marketplace dock/sheet; inline email/password for guests.
+ * Multi-business cart hub — Marketplace dock/sheet; guest place-order opens account modal.
  * Sheet stops above the bottom strip so Shops / Products stay clickable.
  */
 export function StorefrontCartHub({
@@ -29,6 +30,7 @@ export function StorefrontCartHub({
   className,
 }: StorefrontCartHubProps) {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const queryClient = useQueryClient();
   const token = useAppSelector((s) => s.auth.token);
   const user = useAppSelector((s) => s.auth.user);
@@ -52,6 +54,25 @@ export function StorefrontCartHub({
   }, [bags, activeSlug]);
 
   const placeOrder = usePlaceStorefrontOrder();
+
+  const removeBag = async (slug: string, shopName: string, itemCount: number) => {
+    const ok = await confirm({
+      title: 'Remove this cart?',
+      message:
+        itemCount === 1
+          ? `Remove the item in your ${shopName} cart? This cannot be undone.`
+          : `Remove all ${itemCount} items from your ${shopName} cart? This cannot be undone.`,
+      confirmText: 'Remove cart',
+      cancelText: 'Keep cart',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    clearBag(slug);
+    if (activeSlug === slug) {
+      const next = bags.find((b) => b.shop.slug !== slug);
+      setActiveSlug(next?.shop.slug ?? null);
+    }
+  };
 
   const placeBag = (slug: string) => {
     const auth = store.getState().auth;
@@ -133,6 +154,9 @@ export function StorefrontCartHub({
   const loginDialog = (
     <StorefrontLoginDialog
       isOpen={loginOpen}
+      placeOrderMode
+      title="Create an account to place your order"
+      subtitle="Shop as a customer — no business setup. Your cart stays open."
       onClose={() => {
         setLoginOpen(false);
         setPendingSlug(null);
@@ -195,21 +219,37 @@ export function StorefrontCartHub({
             {bags.map((bag) => {
               const active = bag.shop.slug === selected?.shop.slug;
               return (
-                <button
+                <div
                   key={bag.shop.slug}
-                  type="button"
-                  onClick={() => setActiveSlug(bag.shop.slug)}
                   className={cn(
-                    'inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-2.5 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5',
+                    'inline-flex shrink-0 items-center gap-1 rounded-xl border-2 pl-2.5 pr-1 py-1 text-xs font-semibold transition-all',
                     active
                       ? 'border-teal-500 bg-teal-50 text-teal-950 ring-2 ring-teal-300/40 shadow-md'
-                      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-teal-900 hover:border-teal-400 hover:shadow-md',
+                      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-teal-900',
                   )}
                 >
-                  <Store className="h-3.5 w-3.5 text-teal-600" />
-                  <span className="max-w-[8rem] truncate">{bag.shop.name}</span>
-                  <span className="tabular-nums text-slate-500">({bag.items.length})</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSlug(bag.shop.slug)}
+                    className="inline-flex max-w-[10rem] items-center gap-1.5 hover:-translate-y-0.5"
+                  >
+                    <Store className="h-3.5 w-3.5 shrink-0 text-teal-600" />
+                    <span className="truncate">{bag.shop.name}</span>
+                    <span className="tabular-nums text-slate-500">({bag.items.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void removeBag(bag.shop.slug, bag.shop.name, bag.items.length);
+                    }}
+                    className="rounded-lg p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                    aria-label={`Remove cart for ${bag.shop.name}`}
+                    title="Remove cart"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -223,7 +263,6 @@ export function StorefrontCartHub({
               onRemoveLine={removeLine}
               onContactChange={setBagContact}
               onSubmit={() => placeBag(selected.shop.slug)}
-              onSignedIn={() => placeBag(selected.shop.slug)}
               onClose={onClose}
             />
           ) : null}
@@ -238,7 +277,7 @@ export function StorefrontCartHub({
         <div className="pointer-events-none fixed inset-x-0 top-0 bottom-[4.75rem] z-[9000] flex justify-end sm:bottom-3 sm:p-3 sm:pl-0">
           <button
             type="button"
-            className="pointer-events-auto absolute inset-0 bg-slate-900/35 backdrop-blur-[1px]"
+            className="pointer-events-auto absolute inset-0 bg-transparent"
             aria-label="Close cart"
             onClick={onClose}
           />

@@ -12,7 +12,7 @@ Same path for public visitors and logged-in users (Discover shell):
 4. Open a shop → compact product grid + Add to that shop’s bag.
 5. **Cart** hub → one bag per business; submit one bag at a time. Logged-in buyers auto-fill name/phone from profile.
 6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned.
-7. Guests sign in via header, Orders, or inline cart fields when placing an order.
+7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order — no business setup. They become that shop’s customer on order.
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
 Shops show **description, location, phone, email, and star ratings** on browse tiles and on the shop page.
@@ -21,7 +21,7 @@ Catalog loads keep the first successful page visible if a later page fails; **Re
 Shop pages show a compact **QR code** for the public `/@slug` share URL (HashRouter-safe). Shop list cards show a proportional QR on the **right**.
 Strip label stays **Shops** (never the open shop’s name). While on `/discover/shop/:slug`, Shops/Products are not highlighted; clicking them leaves the shop. The matched route always renders through **Outlet** (`DiscoverPage` / `ShopPage` / `MyOrdersPage`) so the URL and visible page stay in sync. See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md) for the blank-main / Outlet-key / shell-header bugs that were fixed.
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
-Place-order contact fields (name*, phone*, notes) stay visible and editable; signed-in buyers get them prefilled from profile.
+Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md).
 
 ## App module (logged-in)
@@ -46,14 +46,13 @@ Sidebar group **Discover & My Orders** is in the product tour (`sidebar-module-d
 
 Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 
-Bottom strip sits inside the Marketplace-style hero chrome (not a separate slate page).
+Bottom strip sits inside the Marketplace-style hero chrome (not a separate slate page). **Mobile only:** header and strip use inset cards (`rounded-lg` + border) and equal-width strip chips so nav doesn’t overlap. **sm+ unchanged** from the original full-bleed glass header / strip.
 Cart uses the same dock (desktop lg+) / sheet (tablet & phone) arrangement as Marketplace.
 Glass panels (`marketplaceGlassPanel`) for lists and orders.
 Strip: **Home · Products · Shops · Cart · Orders** — labels always visible. Logged-in **Home** / header **Dashboard** open the user’s default app route (usually dashboard). Guests **Home** opens marketing `/`. After full-page login, return to `location.state.from` when safe; otherwise dashboard. In-shell Discover sign-in stays on the current Discover route.
-Cart opens hub; Orders / header **Sign in** open email+password dialog.
-Guest checkout shows **inline email + password** in the cart bag (“Sign in & place order”).
+Cart opens hub; signed-in header shows **name** (menu with email, My orders, Dashboard/home, **Log out**). Guests see **Account**. Delivery tap-row opens a **sectioned** modal (contact / phone with Uganda dial code / notes). Cart chip **X** uses the shared confirm dialog before clearing a bag. Modals/confirm sit at `z-[20000]` / `z-[21000]` above the cart sheet.
 
-Header lockup: logo + **Custosell** wordmark. Catalog/shop/orders first paint uses centered `LoadingSkeleton` `page` variant with clear status copy.
+Header lockup: logo + **Custosell** wordmark. On very narrow phones the wordmark may hide; sm+ always shows it. Extra page actions wrap under the title on mobile only. Catalog/shop/orders first paint uses centered `LoadingSkeleton` `page` variant with clear status copy.
 
 ## Business setup
 

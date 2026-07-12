@@ -114,7 +114,7 @@ export function PhoneNumberField({
           {dropdownOpen && !disabled && menuPosition && createPortal(
             <div
               ref={dropdownRef}
-              className="fixed z-[120] max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+              className="fixed z-[22000] max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
               style={{
                 top: menuPosition.top,
                 left: menuPosition.left,

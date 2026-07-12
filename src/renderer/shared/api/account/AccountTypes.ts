@@ -11,6 +11,8 @@ export interface RegisterRequest {
   password: string;
   password_confirmation: string;
   phone?: string;
+  /** Discover shopper — no business; becomes customer of shops they order from. */
+  account_type?: 'storefront_buyer';
 }
 
 export interface AuthResponse {

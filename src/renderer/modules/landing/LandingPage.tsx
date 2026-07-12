@@ -5,7 +5,7 @@ import {
   UserPlus, LogIn, Sparkles, Shield,
   Store, Pill, Apple, Wrench, Building2, Shirt, Heart,
   Globe, UtensilsCrossed,
-  Building, WifiOff, BarChart3, TrendingUp, Users, Receipt,
+  Building, WifiOff, BarChart3, TrendingUp, Users, Receipt, Layers,
 } from 'lucide-react';
 import {
   PRODUCT_NAME,

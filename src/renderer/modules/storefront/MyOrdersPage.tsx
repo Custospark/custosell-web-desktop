@@ -129,7 +129,7 @@ export default function MyOrdersPage() {
   useEffect(() => {
     setHeader({
       title: 'My Orders',
-      subtitle: 'Orders you placed — each shop fulfills its own',
+      subtitle: 'Orders you placed — each business fulfills its own',
       actions: (
         <Button
           variant="secondary"
@@ -194,7 +194,7 @@ export default function MyOrdersPage() {
           <LoadingSkeleton
             variant="page"
             message="Loading your orders…"
-            detail="Fetching orders you placed across shops."
+            detail="Fetching orders you placed across businesses."
           />
         ) : isError ? (
           <p className="py-8 text-center text-sm text-red-600">Could not load your orders.</p>
@@ -207,7 +207,7 @@ export default function MyOrdersPage() {
                 ? 'Browse Discover, open a shop, and place an order request.'
                 : 'Try another status or search — filtering is instant on this device.'
             }
-            actionLabel="Browse shops"
+            actionLabel="Browse businesses"
             onAction={() => navigate(`${ROUTES.DISCOVER}?focus=shops`)}
           />
         ) : (
@@ -225,7 +225,7 @@ export default function MyOrdersPage() {
                 },
                 {
                   key: 'shop',
-                  header: 'Shop',
+                  header: 'Business',
                   render: (o: MyStorefrontOrder) =>
                     o.shop_slug ? (
                       <Link to={ROUTES.SHOP(o.shop_slug)} className="text-sm font-medium text-blue-600 hover:underline">

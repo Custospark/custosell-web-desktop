@@ -21,7 +21,7 @@ export const ONLINE_ONLY_NAV_ENTRIES: OnlineOnlyNavEntry[] = [
   {
     prefix: ROUTES.DISCOVER,
     label: 'Discover',
-    message: 'Discover shops and products are online-only. Reconnect to browse and order.',
+    message: 'Discover businesses and products are online-only. Reconnect to browse and order.',
   },
   {
     prefix: ROUTES.INVENTORY.PURCHASE_ORDERS,

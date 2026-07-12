@@ -91,7 +91,7 @@ export function DiscoverProductsBrowse() {
       <LoadingSkeleton
         variant="page"
         message="Loading products…"
-        detail="Gathering listed products across shops — almost ready."
+        detail="Gathering listed products and services across businesses — almost ready."
       />
     );
   }
@@ -160,7 +160,7 @@ export function DiscoverProductsBrowse() {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search products across all shops…"
+          placeholder="Search products and services across all businesses…"
           className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none"
         />
         <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-500">
@@ -174,11 +174,11 @@ export function DiscoverProductsBrowse() {
         <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center')}>
           <Package className="h-10 w-10 text-amber-700" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
-            {products.length === 0 ? 'No products listed' : `No products match “${q.trim() || 'filter'}”`}
+            {products.length === 0 ? 'No products or services listed' : `No products or services match “${q.trim() || 'filter'}”`}
           </p>
           <p className="mt-1 text-xs text-slate-600">
             {products.length === 0
-              ? 'Products appear when shops list items for their public storefront.'
+              ? 'Products and services appear when businesses list items for their public storefront.'
               : 'Try another category or search — filtering is instant on this device.'}
           </p>
         </div>
@@ -204,7 +204,7 @@ export function DiscoverProductsBrowse() {
                 ? 'Loading more…'
                 : filtered.length > visible
                   ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
-                  : 'Load more products'}
+                  : 'Load more products and services'}
             </button>
           ) : null}
         </>

@@ -73,7 +73,6 @@ export function DiscoverProductCard({
       avg={Number(product.rating_avg ?? 0)}
       count={Number(product.rating_count ?? 0)}
       myRating={product.my_rating}
-      disabled={rate.isPending}
       onRate={applyRating}
     />
   );
@@ -164,16 +163,27 @@ export function DiscoverProductCard({
     className,
   );
 
-  if (onAdd || !slug) {
-    return <article className={cardClass}>{body}</article>;
-  }
-
   if (onOpenDetail) {
     return (
-      <button type="button" className={cn(cardClass, 'w-full text-left')} onClick={onOpenDetail}>
+      <div
+        role="button"
+        tabIndex={0}
+        className={cn(cardClass, 'w-full cursor-pointer text-left')}
+        onClick={onOpenDetail}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpenDetail();
+          }
+        }}
+      >
         {body}
-      </button>
+      </div>
     );
+  }
+
+  if (onAdd || !slug) {
+    return <article className={cardClass}>{body}</article>;
   }
 
   return (

@@ -28,8 +28,8 @@ export function StorefrontActionStrip({
   onHome,
   homeLabel = 'Home',
   homeTitle = 'Home',
-  shopsLabel = 'Shops',
-  shopsTitle = 'Browse businesses / shops',
+  shopsLabel = 'Businesses',
+  shopsTitle = 'Browse all businesses',
   onDiscover,
   onBrowse,
   onCart,
@@ -64,10 +64,10 @@ export function StorefrontActionStrip({
       <StripButton
         active={active === 'discover'}
         onClick={onDiscover}
-        title="Browse products across shops"
+        title="Browse products and services across all businesses"
         tone="amber"
         icon={<Compass className="h-3.5 w-3.5 shrink-0 text-amber-700 sm:h-4 sm:w-4" />}
-        label="Products"
+        label="Products & Services"
       />
       <StripButton
         active={shopsActive}

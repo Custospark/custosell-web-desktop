@@ -45,16 +45,16 @@ function activeTabFromPath(
 function defaultHeader(pathname: string, search: string): { title: string; subtitle: string } {
   const path = normalizeDiscoverPath(pathname);
   if (path === ROUTES.DISCOVER_MY_ORDERS || path.endsWith('/my-orders')) {
-    return { title: 'My Orders', subtitle: 'Orders you placed — each shop fulfills its own' };
+    return { title: 'My Orders', subtitle: 'Orders you placed — each business fulfills its own' };
   }
   if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) {
     return { title: 'Shop', subtitle: 'Order from this business only' };
   }
   const focus = new URLSearchParams(search).get('focus');
   if (focus === 'products') {
-    return { title: 'Products', subtitle: 'Browse listed products across shops' };
+    return { title: 'Products & Services', subtitle: 'Browse listed products and services across all businesses' };
   }
-  return { title: 'Shops', subtitle: 'Browse businesses with a public storefront' };
+  return { title: 'Businesses', subtitle: 'Browse businesses with a public storefront' };
 }
 
 function DiscoverShellChrome() {
@@ -237,7 +237,7 @@ function DiscoverShellChrome() {
         }
         subtitle={
           loginIntent === 'orders'
-            ? 'Orders you place across shops appear here. No business setup needed.'
+            ? 'Orders you place across businesses appear here. No business setup needed.'
             : 'Shop as a customer — no business setup. Carts stay in this browser.'
         }
         onClose={() => {

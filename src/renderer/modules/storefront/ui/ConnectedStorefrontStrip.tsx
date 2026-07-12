@@ -57,8 +57,8 @@ export function ConnectedStorefrontStrip({
       ordersCount={ordersCount}
       homeLabel="Home"
       homeTitle={token ? 'Open your dashboard' : 'Custosell marketing home'}
-      shopsLabel="Shops"
-      shopsTitle="Browse all shops"
+      shopsLabel="Businesses"
+      shopsTitle="Browse all businesses"
       onHome={() => {
         leaveCartThen(() => {
           if (token) {

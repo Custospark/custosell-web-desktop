@@ -5,7 +5,6 @@ interface ProductStarRatingProps {
   avg: number;
   count: number;
   myRating?: number | null;
-  disabled?: boolean;
   onRate?: (stars: number) => void;
   className?: string;
 }
@@ -15,7 +14,6 @@ export function ProductStarRating({
   avg,
   count,
   myRating,
-  disabled,
   onRate,
   className,
 }: ProductStarRatingProps) {
@@ -44,12 +42,12 @@ export function ProductStarRating({
             <button
               key={n}
               type="button"
-              disabled={disabled || !onRate}
+              disabled={!onRate}
               title={myRating ? `Your rating: ${myRating} — change to ${n}` : `Rate ${n} stars`}
               aria-label={`Rate ${n} stars`}
               aria-pressed={myRating === n}
               className={cn(
-                'rounded p-0.5 transition hover:scale-110 disabled:cursor-wait disabled:opacity-60',
+                'rounded p-0.5 transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60',
               )}
               onClick={(e) => {

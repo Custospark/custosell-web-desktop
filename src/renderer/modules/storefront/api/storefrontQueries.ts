@@ -45,9 +45,13 @@ function nextPage(meta: PageMeta): number | undefined {
   return cur < last ? cur + 1 : undefined;
 }
 
-async function fetchShopsPage(pageParam: number) {
+async function fetchShopsPage(pageParam: number, q = '') {
   const { data } = await axiosInstance.get(STOREFRONT.SHOPS, {
-    params: { per_page: 24, page: pageParam },
+    params: {
+      per_page: 24,
+      page: pageParam,
+      q: q.trim() || undefined,
+    },
   });
   return {
     shops: unwrapList<StorefrontShop>(data),
@@ -75,7 +79,7 @@ export async function prefetchStorefrontCatalogs(queryClient: QueryClient): Prom
     queryClient.prefetchInfiniteQuery({
       queryKey: storefrontKeys.shopsPages(),
       initialPageParam: 1,
-      queryFn: ({ pageParam }) => fetchShopsPage(pageParam),
+      queryFn: ({ pageParam }) => fetchShopsPage(pageParam, ''),
       staleTime: CATALOG_STALE_MS,
       gcTime: CATALOG_GC_MS,
     }),
@@ -89,14 +93,15 @@ export async function prefetchStorefrontCatalogs(queryClient: QueryClient): Prom
   ]);
 }
 
-/** Progressive shops — first page paints fast; later pages load in background. */
-export function useStorefrontShopsInfinite() {
+/** Progressive shops — optional server `q` (name, city, @slug). */
+export function useStorefrontShopsInfinite(q = '') {
+  const query = q.trim();
   return useInfiniteQuery({
-    queryKey: storefrontKeys.shopsPages(),
+    queryKey: storefrontKeys.shopsPages(query),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchShopsPage(pageParam),
+    queryFn: ({ pageParam }) => fetchShopsPage(pageParam, query),
     getNextPageParam: (last) => nextPage(last.meta),
-    staleTime: CATALOG_STALE_MS,
+    staleTime: query ? 30_000 : CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
     retry: 2,
     refetchOnMount: true,

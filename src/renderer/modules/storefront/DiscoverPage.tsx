@@ -26,10 +26,10 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     setHeader({
-      title: focus === 'products' ? 'Products' : 'Shops',
+      title: focus === 'products' ? 'Products & Services' : 'Businesses',
       subtitle:
         focus === 'products'
-          ? 'Browse listed products from every public shop'
+          ? 'Browse listed products and services from every public business'
           : 'Browse businesses with a public storefront',
     });
     return () => {
@@ -48,14 +48,14 @@ export default function DiscoverPage() {
         <ModeTab
           active={focus === 'shops'}
           icon={<Store className="h-4 w-4" />}
-          label="Shops"
+          label="Businesses"
           onClick={() => setFocus('shops')}
           tone="teal"
         />
         <ModeTab
           active={focus === 'products'}
           icon={<Compass className="h-4 w-4" />}
-          label="Products"
+          label="Products & Services"
           onClick={() => setFocus('products')}
           tone="amber"
         />

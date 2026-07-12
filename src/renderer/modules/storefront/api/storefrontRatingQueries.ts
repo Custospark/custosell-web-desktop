@@ -144,11 +144,11 @@ export function useRateStorefrontShop() {
       return data.data;
     },
     onMutate: async (vars) => {
-      await queryClient.cancelQueries({ queryKey: storefrontKeys.shopsPages() });
+      await queryClient.cancelQueries({ queryKey: [...storefrontKeys.all, 'shops-pages'] });
       await queryClient.cancelQueries({ queryKey: storefrontKeys.shop(vars.slug) });
       await queryClient.cancelQueries({ queryKey: [...storefrontKeys.all, 'products', vars.slug] });
 
-      const previousShops = queryClient.getQueryData(storefrontKeys.shopsPages());
+      const previousShops = queryClient.getQueriesData({ queryKey: [...storefrontKeys.all, 'shops-pages'] });
       const previousShop = queryClient.getQueryData(storefrontKeys.shop(vars.slug));
       const previousProducts = queryClient.getQueriesData({
         queryKey: [...storefrontKeys.all, 'products', vars.slug],
@@ -166,7 +166,7 @@ export function useRateStorefrontShop() {
       };
 
       queryClient.setQueriesData(
-        { queryKey: storefrontKeys.shopsPages() },
+        { queryKey: [...storefrontKeys.all, 'shops-pages'] },
         (old: unknown) => mapShopsInInfinite(old, patchShop),
       );
       queryClient.setQueryData(storefrontKeys.shop(vars.slug), (old: unknown) => {
@@ -188,9 +188,9 @@ export function useRateStorefrontShop() {
       return { previousShops, previousShop, previousProducts };
     },
     onError: (_err, vars, ctx) => {
-      if (ctx?.previousShops != null) {
-        queryClient.setQueryData(storefrontKeys.shopsPages(), ctx.previousShops);
-      }
+      ctx?.previousShops?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
       if (ctx?.previousShop != null) {
         queryClient.setQueryData(storefrontKeys.shop(vars.slug), ctx.previousShop);
       }
@@ -200,7 +200,7 @@ export function useRateStorefrontShop() {
     },
     onSuccess: (shop) => {
       queryClient.setQueriesData(
-        { queryKey: storefrontKeys.shopsPages() },
+        { queryKey: [...storefrontKeys.all, 'shops-pages'] },
         (old: unknown) => mapShopsInInfinite(old, (s) => (s.slug === shop.slug ? { ...s, ...shop } : s)),
       );
       queryClient.setQueryData(storefrontKeys.shop(shop.slug), shop);

@@ -179,7 +179,7 @@ export default function ShopPage() {
           to={`${ROUTES.DISCOVER}?focus=shops`}
           className="mt-4 inline-flex text-sm font-semibold text-teal-800 hover:underline"
         >
-          Browse shops
+          Browse businesses
         </Link>
       </div>
     );

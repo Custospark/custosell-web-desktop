@@ -3,7 +3,7 @@ export const storefrontKeys = {
   discover: (q: string, category: string) => [...storefrontKeys.all, 'discover', q, category] as const,
   discoverPages: (category = '') => [...storefrontKeys.all, 'discover-pages', category] as const,
   shops: (q: string) => [...storefrontKeys.all, 'shops', q] as const,
-  shopsPages: () => [...storefrontKeys.all, 'shops-pages'] as const,
+  shopsPages: (q = '') => [...storefrontKeys.all, 'shops-pages', q] as const,
   categories: () => [...storefrontKeys.all, 'categories'] as const,
   shop: (slug: string) => [...storefrontKeys.all, 'shop', slug] as const,
   products: (slug: string, category: string) => [...storefrontKeys.all, 'products', slug, category] as const,

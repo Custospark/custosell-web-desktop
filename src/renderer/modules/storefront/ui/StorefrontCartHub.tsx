@@ -217,8 +217,8 @@ export function StorefrontCartHub({
           <h2 className="text-base font-semibold text-slate-900">Your carts</h2>
           <p className="mt-0.5 text-xs text-slate-600">
             {bags.length === 0
-              ? 'Add products from any shop — each business keeps its own bag.'
-              : `${bags.length} shop${bags.length === 1 ? '' : 's'} · submit one bag at a time`}
+              ? 'Add from any business — each keeps its own bag.'
+              : `${bags.length} business${bags.length === 1 ? '' : 'es'} · submit one bag at a time`}
           </p>
         </div>
         <button

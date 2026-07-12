@@ -35,7 +35,7 @@ const GROUP_INTRO: Record<string, string> = {
   guide: 'Tutorials, FAQs, feedback, and help — learn Custosell at your pace.',
   account: 'Notifications and your profile — keep your account up to date.',
   discover:
-    'Browse public shops and products, and track orders you placed as a buyer. Open it anytime from here — the tour stays in your workspace.',
+    'Browse public businesses, products, and services — and track orders you placed as a buyer. Open it anytime from here — the tour stays in your workspace.',
 };
 
 /** Immersive shells leave App chrome (sidebar + tour overlay). Spotlight only — never navigate. */

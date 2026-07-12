@@ -18,15 +18,29 @@ import { shopVisual } from './productVisual';
 
 const RENDER_CHUNK = 36;
 const AUTO_PAGE_CAP = 3;
+const SEARCH_DEBOUNCE_MS = 300;
+
+/** Strip leading @ so "@cafe" matches slug "cafe". */
+function normalizeShopSearch(raw: string): string {
+  return raw.trim().replace(/^@+/, '').toLowerCase();
+}
 
 function shopLocation(shop: StorefrontShop): string {
   return [shop.address, shop.city, shop.state, shop.country].filter(Boolean).join(', ');
 }
 
-/** Browse all public shops — progressive fetch + client-side search. */
+/** Browse all public shops — server search (name / city / @slug) + progressive pages. */
 export function DiscoverShopsBrowse() {
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
   const [visible, setVisible] = useState(RENDER_CHUNK);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQ(q), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(t);
+  }, [q]);
+
+  const searchQ = normalizeShopSearch(debouncedQ);
   const {
     data,
     isLoading,
@@ -37,9 +51,10 @@ export function DiscoverShopsBrowse() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStorefrontShopsInfinite();
+  } = useStorefrontShopsInfinite(searchQ);
 
   const pageCount = data?.pages.length ?? 0;
+  const autoCap = searchQ ? 8 : AUTO_PAGE_CAP;
 
   useEffect(() => {
     if (
@@ -47,7 +62,7 @@ export function DiscoverShopsBrowse() {
       && !isFetchingNextPage
       && !isFetchNextPageError
       && pageCount > 0
-      && pageCount < AUTO_PAGE_CAP
+      && pageCount < autoCap
     ) {
       void fetchNextPage();
     }
@@ -57,6 +72,7 @@ export function DiscoverShopsBrowse() {
     isFetchNextPageError,
     fetchNextPage,
     pageCount,
+    autoCap,
   ]);
 
   const shops = useMemo(
@@ -64,9 +80,11 @@ export function DiscoverShopsBrowse() {
     [data?.pages],
   );
 
+  // Server already filtered when searchQ is set; light client refine while debounce catches up.
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needle = normalizeShopSearch(q);
     if (!needle) return shops;
+    if (needle === searchQ) return shops;
     return shops.filter((s) => {
       const hay = [
         s.name,
@@ -83,9 +101,9 @@ export function DiscoverShopsBrowse() {
         .toLowerCase();
       return hay.includes(needle);
     });
-  }, [shops, q]);
+  }, [shops, q, searchQ]);
 
-  const listKey = q.trim();
+  const listKey = `${searchQ}|${q.trim()}`;
   const [seen, setSeen] = useState(listKey);
   if (listKey !== seen) {
     setSeen(listKey);
@@ -107,7 +125,7 @@ export function DiscoverShopsBrowse() {
     return (
       <LoadingSkeleton
         variant="page"
-        message="Loading shops…"
+        message="Loading businesses…"
         detail="Finding businesses with a public storefront for you."
       />
     );
@@ -116,8 +134,8 @@ export function DiscoverShopsBrowse() {
   if (isError && !data) {
     return (
       <CatalogLoadError
-        title="Could not load shops"
-        detail="The shops request failed. Check your connection, then retry."
+        title="Could not load businesses"
+        detail="The request failed. Check your connection, then retry."
         onRetry={() => { void refetch(); }}
         retrying={isFetching}
       />
@@ -129,7 +147,7 @@ export function DiscoverShopsBrowse() {
       {(isFetchNextPageError || (isError && data)) ? (
         <CatalogLoadError
           compact
-          title="Couldn’t load more shops"
+          title="Couldn’t load more businesses"
           detail="Showing what we have so far. Retry to continue."
           onRetry={() => { void (isFetchNextPageError ? fetchNextPage() : refetch()); }}
           retrying={isFetchingNextPage || isFetching}
@@ -142,13 +160,13 @@ export function DiscoverShopsBrowse() {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search shops by name, city, contact, or @username…"
+          placeholder="Search businesses by name, city, contact, or @username…"
           className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none"
         />
         <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-500">
           {filtered.length}
           {totalMeta != null ? ` / ${totalMeta}` : ''}
-          {isFetchingNextPage ? ' · loading…' : ''}
+          {isFetchingNextPage || (isFetching && Boolean(searchQ)) ? ' · loading…' : ''}
         </span>
       </div>
 
@@ -156,12 +174,12 @@ export function DiscoverShopsBrowse() {
         <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center')}>
           <Store className="h-10 w-10 text-teal-600" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
-            {shops.length === 0 ? 'No shops yet' : `No shops match “${q.trim()}”`}
+            {shops.length === 0 && !searchQ ? 'No businesses yet' : `No businesses match “${q.trim()}”`}
           </p>
           <p className="mt-1 text-xs text-slate-600">
-            {shops.length === 0
+            {shops.length === 0 && !searchQ
               ? 'Businesses appear when they enable a public storefront.'
-              : 'Try another search — filtering is instant on this device.'}
+              : 'Try the business name or @username (with or without @).'}
           </p>
         </div>
       ) : (
@@ -182,7 +200,7 @@ export function DiscoverShopsBrowse() {
                 ? 'Loading more…'
                 : filtered.length > visible
                   ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
-                  : 'Load more shops'}
+                  : 'Load more businesses'}
             </button>
           ) : null}
         </>
@@ -243,7 +261,6 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
           avg={Number(shop.rating_avg ?? 0)}
           count={Number(shop.rating_count ?? 0)}
           myRating={shop.my_rating}
-          disabled={rateShop.isPending}
           onRate={applyRating}
         />
         <div className="space-y-1 border-t border-slate-200/70 pt-2 text-[11px] text-slate-600">

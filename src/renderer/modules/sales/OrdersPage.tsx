@@ -37,6 +37,7 @@ import { Pagination, usePagination } from '../../shared/components/tables/Pagina
 import { Table } from '../../shared/components/tables/Table';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
+import { DeliveryPopover } from './ui/orders/DeliveryPopover';
 import InvoiceFromSaleModal from './ui/InvoiceFromSaleModal';
 import RenameOrderModal from './ui/RenameOrderModal';
 import { ORDER_STATUS_TABS, orderStatusBadge } from './ui/orders/orderStatusUi';
@@ -55,6 +56,7 @@ export default function OrdersPage() {
   const [invoiceSaleId, setInvoiceSaleId] = useState<number | null>(null);
   const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
   const [renameOrder, setRenameOrder] = useState<PosOrder | null>(null);
+  const [deliveryPopoverId, setDeliveryPopoverId] = useState<number | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -352,6 +354,21 @@ export default function OrdersPage() {
                       </span>
                     );
                   },
+                },
+                {
+                  key: 'delivery',
+                  header: 'Delivery',
+                  render: (order) => (
+                    <DeliveryPopover
+                      address={order.delivery_address}
+                      city={order.delivery_city}
+                      open={deliveryPopoverId === order.id}
+                      onToggle={() =>
+                        setDeliveryPopoverId((id) => (id === order.id ? null : order.id))
+                      }
+                      onClose={() => setDeliveryPopoverId(null)}
+                    />
+                  ),
                 },
                 {
                   key: 'total',

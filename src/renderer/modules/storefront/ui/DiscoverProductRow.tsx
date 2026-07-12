@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import type { StorefrontProduct } from '../api/storefrontTypes';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
+import { StorefrontProductPrice } from './StorefrontProductPrice';
 
 interface DiscoverProductRowProps {
   product: StorefrontProduct;
@@ -27,8 +27,7 @@ export function DiscoverProductRow({ product, currency, shopSlug }: DiscoverProd
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
         <p className="mt-0.5 text-sm font-semibold tabular-nums text-teal-900">
-          {formatCurrency(Number(product.unit_price), currency)}
-          {product.unit ? <span className="font-medium text-slate-600"> / {product.unit}</span> : null}
+          <StorefrontProductPrice product={product} currency={currency} size="sm" />
         </p>
         {product.category?.name ? (
           <p className="mt-0.5 truncate text-[11px] text-slate-500">{product.category.name}</p>

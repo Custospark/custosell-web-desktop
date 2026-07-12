@@ -15,6 +15,7 @@ Same path for public visitors and logged-in users (Discover shell):
 7. **Delivery contact** → Name/phone saved to `custosell.storefront.buyerContact.v1` and to the buyer `User.phone` on place-order so reorders prefill; still editable in the delivery modal.
 7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order — no business setup. They become that shop’s customer on order.
 7b. **Your carts** line qty uses Sales-style circular red (−) / green (+) and tap-to-edit quantity.
+8. **Wishlist** → Heart on product tiles/detail saves for later (`/discover/wishlist`). Device-local; merges into account list on sign-in. Header heart badge + account menu. See ADR [storefront-wishlist](../adr/2026-07-12-storefront-wishlist.md).
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
 Shops show **description, location, phone, email, and star ratings** on browse tiles and on the shop page.
@@ -34,6 +35,7 @@ Sidebar **Discover & My Orders**:
 |------|---------|
 | `/discover` | Shops or Products (`?focus=shops|products`); product rows open `/discover/shop/:slug` |
 | `/discover/my-orders` | Orders you placed as a buyer — each shop fulfills its own |
+| `/discover/wishlist` | Saved-for-later items (local; merge on sign-in) |
 | `/discover/shop/:slug` | In-app shop catalog (under DiscoverLayout) |
 
 Public share URLs (QR / WhatsApp / marketing):
@@ -42,7 +44,7 @@ Public share URLs (QR / WhatsApp / marketing):
 |------|---------|
 | `/@{slug}` | Redirect → `/discover/shop/:slug` (`ShopShareRedirect`). Checkout = cart hub. |
 
-`/discover`, `/discover/my-orders`, and `/discover/shop/:slug` live on **DiscoverLayout outside `PublicRoute`**, so signed-in sidebar links never hit the guest-only redirect to dashboard. Landing / Pricing / Privacy / Login stay under `PublicRoute` (guests only). See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md).
+`/discover`, `/discover/my-orders`, `/discover/wishlist`, and `/discover/shop/:slug` live on **DiscoverLayout outside `PublicRoute`**, so signed-in sidebar links never hit the guest-only redirect to dashboard. Landing / Pricing / Privacy / Login stay under `PublicRoute` (guests only). See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md).
 
 Sidebar group **Discover & My Orders** is in the product tour (`sidebar-module-discover`) and is **online-only** when completely offline (greyed out via `onlineOnlyNav.ts`; banner if already on the page).
 

@@ -23,6 +23,8 @@ export interface PosOrder {
   customer_id: number | null;
   customer_name: string | null;
   customer_phone?: string | null;
+  delivery_address?: string | null;
+  delivery_city?: string | null;
   shift_id: number | null;
   order_number: string;
   status: OrderStatus;

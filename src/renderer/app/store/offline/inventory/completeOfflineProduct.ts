@@ -27,6 +27,7 @@ export function buildLocalProduct(payload: CreateProductData): ProductWithSyncMe
     sku: payload.sku ?? null,
     barcode: payload.barcode ?? null,
     unit_price: String(payload.unit_price),
+    discount_percent: payload.discount_percent != null ? String(payload.discount_percent) : null,
     wholesale_price: payload.wholesale_price != null ? String(payload.wholesale_price) : null,
     cost_price: payload.cost_price != null ? String(payload.cost_price) : null,
     stock_quantity: isService ? 0 : (payload.stock_quantity ?? 0),
@@ -56,6 +57,12 @@ function applyProductPayload(product: Product, payload: UpdateProductData): Prod
     sku: 'sku' in payload ? payload.sku ?? null : product.sku,
     barcode: 'barcode' in payload ? payload.barcode ?? null : product.barcode,
     unit_price: payload.unit_price != null ? String(payload.unit_price) : product.unit_price,
+    discount_percent:
+      'discount_percent' in payload
+        ? payload.discount_percent != null
+          ? String(payload.discount_percent)
+          : null
+        : product.discount_percent ?? null,
     wholesale_price: payload.wholesale_price != null ? String(payload.wholesale_price) : product.wholesale_price,
     cost_price: payload.cost_price != null ? String(payload.cost_price) : product.cost_price,
     stock_quantity: isService ? 0 : (payload.stock_quantity ?? product.stock_quantity),
@@ -85,6 +92,10 @@ function buildCreatePayloadFromProduct(product: Product): CreateProductData {
     sku: product.sku,
     barcode: product.barcode,
     unit_price: Number(product.unit_price),
+    discount_percent:
+      product.discount_percent != null && product.discount_percent !== ''
+        ? Number(product.discount_percent)
+        : null,
     wholesale_price: product.wholesale_price != null ? Number(product.wholesale_price) : null,
     cost_price: product.cost_price != null ? Number(product.cost_price) : null,
     stock_quantity: isService ? 0 : product.stock_quantity,

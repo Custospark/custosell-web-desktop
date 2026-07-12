@@ -2,13 +2,14 @@ import { Link } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { StorefrontProduct } from '../api/storefrontTypes';
 import { ProductStarRating } from './ProductStarRating';
 import { productVisual } from './productVisual';
 import { StockAvailabilityBadge } from './StockAvailabilityBadge';
 import { isStorefrontProductOutOfStock } from './storefrontStock';
+import { StorefrontProductPrice } from './StorefrontProductPrice';
+import { WishlistHeartButton } from './WishlistHeartButton';
 
 interface StorefrontProductDetailModalProps {
   product: StorefrontProduct;
@@ -37,7 +38,7 @@ export function StorefrontProductDetailModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={product.name} size="md">
       <div className="space-y-4 p-4">
-        <div className={`flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl ${wrap}`}>
+        <div className={`relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl ${wrap}`}>
           {product.image_path ? (
             <img
               src={avatarUrl(product.image_path) ?? undefined}
@@ -47,13 +48,13 @@ export function StorefrontProductDetailModal({
           ) : (
             <Icon className={`h-14 w-14 ${icon}`} aria-hidden />
           )}
+          <div className="absolute right-2 top-2">
+            <WishlistHeartButton product={product} shopSlug={slug} size="md" />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-lg font-bold tabular-nums text-teal-900">
-            {formatCurrency(Number(product.unit_price), currency)}
-            {product.unit ? <span className="text-sm font-medium text-slate-500"> / {product.unit}</span> : null}
-          </p>
+          <StorefrontProductPrice product={product} currency={currency} size="lg" />
           <StockAvailabilityBadge product={product} />
         </div>
 

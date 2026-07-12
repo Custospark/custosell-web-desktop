@@ -82,6 +82,7 @@ import PricingPage from '../../modules/landing/PricingPage';
 import DiscoverLayout from '../../modules/storefront/DiscoverLayout';
 import DiscoverPage from '../../modules/storefront/DiscoverPage';
 import MyOrdersPage from '../../modules/storefront/MyOrdersPage';
+import WishlistPage from '../../modules/storefront/WishlistPage';
 import ShopPage from '../../modules/storefront/ShopPage';
 import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
 
@@ -131,6 +132,7 @@ export function AppRoutes() {
       <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverLayout /></SuspenseWrapper>}>
         <Route index element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
         <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
+        <Route path="wishlist" element={<SuspenseWrapper><WishlistPage /></SuspenseWrapper>} />
         <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
       </Route>
 

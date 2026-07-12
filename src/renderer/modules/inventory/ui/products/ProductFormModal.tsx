@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { ProductSupplyListingSection } from '../supply/ProductSupplyListingSection';
 import { ProductStorefrontListingSection } from './ProductStorefrontListingSection';
+import { ProductDiscountField } from './ProductDiscountField';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -50,6 +51,7 @@ interface FormState {
   is_recurring: boolean; billing_interval: string;
   unit_price: string; wholesale_price: string; cost_price: string; stock_quantity: string;
   low_stock_threshold: string; tax_percentage: string; tax_class: TaxClass;
+  discount_percent: string;
 }
 
 const emptyForm: FormState = {
@@ -58,6 +60,7 @@ const emptyForm: FormState = {
   is_recurring: false, billing_interval: 'month',
   unit_price: '', wholesale_price: '', cost_price: '', stock_quantity: '0',
   low_stock_threshold: '5', tax_percentage: '0', tax_class: 'standard',
+  discount_percent: '',
 };
 
 function toNumber(val: string): number {
@@ -73,6 +76,7 @@ function toCreatePayload(f: FormState): CreateProductData {
     is_recurring: f.is_recurring,
     billing_interval: f.is_recurring ? (f.billing_interval || 'month') : null,
     unit_price: toNumber(f.unit_price),
+    discount_percent: f.discount_percent === '' ? null : toNumber(f.discount_percent),
     wholesale_price: f.wholesale_price === '' ? null : toNumber(f.wholesale_price),
     cost_price: f.cost_price === '' ? null : toNumber(f.cost_price),
     stock_quantity: isService ? 0 : toNumber(f.stock_quantity),
@@ -106,6 +110,10 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
           stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
           tax_percentage: product.tax_percentage,
           tax_class: (product.tax_class as TaxClass) || 'standard',
+          discount_percent:
+            product.discount_percent != null && product.discount_percent !== ''
+              ? String(product.discount_percent)
+              : '',
         });
       } else {
         setForm(emptyForm);
@@ -274,6 +282,11 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
                 placeholder="0.00"
               />
             </PipelineIconField>
+            <ProductDiscountField
+              unitPrice={form.unit_price}
+              discountPercent={form.discount_percent}
+              onChange={(v) => update('discount_percent', v)}
+            />
             <PipelineIconField label="Wholesale price (optional)" icon={DollarSign}>
               <input
                 className={pipelineInputClass}

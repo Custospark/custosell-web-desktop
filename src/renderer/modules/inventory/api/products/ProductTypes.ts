@@ -22,6 +22,8 @@ export interface Product {
   sku: string | null;
   barcode: string | null;
   unit_price: string;
+  /** 0–100 sale discount for public shop; null/empty = no sale. POS till ignores in v1. */
+  discount_percent?: string | number | null;
   wholesale_price: string | null;
   cost_price: string | null;
   stock_quantity: number;
@@ -96,6 +98,7 @@ export interface CreateProductData {
   type?: CatalogItemType;
   unit?: string | null;
   unit_price: number;
+  discount_percent?: number | null;
   wholesale_price?: number | null;
   category_id?: number | null;
   description?: string | null;

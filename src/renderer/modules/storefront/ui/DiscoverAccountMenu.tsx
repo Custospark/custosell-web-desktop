@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, LayoutDashboard, LogOut, Package } from 'lucide-react';
+import { ChevronDown, Heart, LayoutDashboard, LogOut, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
@@ -71,6 +71,11 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
     navigate(ROUTES.DISCOVER_MY_ORDERS);
   };
 
+  const goWishlist = () => {
+    setOpen(false);
+    navigate(ROUTES.DISCOVER_WISHLIST);
+  };
+
   return (
     <div ref={rootRef} className={cn('relative shrink-0', className)}>
       <button
@@ -104,6 +109,15 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
             <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>
           </div>
           <div className="p-1.5">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={goWishlist}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-rose-50"
+            >
+              <Heart className="h-4 w-4 text-rose-600" />
+              Wishlist
+            </button>
             <button
               type="button"
               role="menuitem"

@@ -13,6 +13,7 @@ import {
   StorefrontMultiCartProvider,
   useStorefrontMultiCart,
 } from './cart/storefrontMultiCartContext';
+import { StorefrontWishlistProvider, useStorefrontWishlist } from './wishlist/storefrontWishlistContext';
 import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
 import { StorefrontCartHub } from './ui/StorefrontCartHub';
 import { StorefrontLoginDialog } from './ui/StorefrontLoginDialog';
@@ -25,6 +26,7 @@ import {
 import type { StorefrontStripTab } from './ui/StorefrontActionStrip';
 import { usePrefersCartSheet } from './ui/usePrefersCartSheet';
 import { normalizeDiscoverPath } from './ui/normalizeDiscoverPath';
+import { Heart } from 'lucide-react';
 
 function activeTabFromPath(
   pathname: string,
@@ -36,6 +38,9 @@ function activeTabFromPath(
   if (path === ROUTES.DISCOVER_MY_ORDERS || path.endsWith('/my-orders')) {
     return 'orders';
   }
+  if (path === ROUTES.DISCOVER_WISHLIST || path.endsWith('/wishlist')) {
+    return undefined;
+  }
   if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) return undefined;
   const focus = new URLSearchParams(search).get('focus');
   if (focus === 'products') return 'discover';
@@ -46,6 +51,9 @@ function defaultHeader(pathname: string, search: string): { title: string; subti
   const path = normalizeDiscoverPath(pathname);
   if (path === ROUTES.DISCOVER_MY_ORDERS || path.endsWith('/my-orders')) {
     return { title: 'My Orders', subtitle: 'Orders you placed — each business fulfills its own' };
+  }
+  if (path === ROUTES.DISCOVER_WISHLIST || path.endsWith('/wishlist')) {
+    return { title: 'Wishlist', subtitle: 'Items you saved to buy later' };
   }
   if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) {
     return { title: 'Shop', subtitle: 'Order from this business only' };
@@ -65,6 +73,7 @@ function DiscoverShellChrome() {
   const user = useAppSelector((s) => s.auth.user);
   const { header, registerSignInOpener } = useDiscoverShell();
   const { lineCount, cartOpen, setCartOpen, openCart } = useStorefrontMultiCart();
+  const { count: wishlistCount } = useStorefrontWishlist();
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginIntent, setLoginIntent] = useState<'orders' | 'general'>('general');
   const pendingLoginSuccess = useRef<(() => void) | null>(null);
@@ -157,7 +166,20 @@ function DiscoverShellChrome() {
                 <p className="mt-0.5 hidden line-clamp-1 text-xs text-slate-600 sm:block">{subtitle}</p>
               ) : null}
             </div>
-            {/* Account stays on the title row on mobile */}
+            {/* Wishlist + account on the title row on mobile */}
+            <Link
+              to={ROUTES.DISCOVER_WISHLIST}
+              onClick={() => setCartOpen(false)}
+              title={wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist'}
+              className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-rose-200 bg-white text-rose-600 shadow-sm sm:hidden"
+            >
+              <Heart className={cn('h-3.5 w-3.5', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />
+              {wishlistCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold text-white ring-1 ring-white">
+                  {wishlistCount > 99 ? '99+' : wishlistCount}
+                </span>
+              ) : null}
+            </Link>
             {token && user ? (
               <DiscoverAccountMenu user={user} compact className="sm:hidden" />
             ) : (
@@ -182,6 +204,19 @@ function DiscoverShellChrome() {
 
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
             {header?.actions}
+            <Link
+              to={ROUTES.DISCOVER_WISHLIST}
+              onClick={() => setCartOpen(false)}
+              title={wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist'}
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-rose-200 bg-white text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md"
+            >
+              <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />
+              {wishlistCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[9px] font-bold text-white ring-2 ring-white">
+                  {wishlistCount > 99 ? '99+' : wishlistCount}
+                </span>
+              ) : null}
+            </Link>
             {token && user ? (
               <DiscoverAccountMenu user={user} />
             ) : (
@@ -262,7 +297,9 @@ export default function DiscoverLayout() {
   return (
     <DiscoverShellProvider>
       <StorefrontMultiCartProvider>
-        <DiscoverShellChrome />
+        <StorefrontWishlistProvider>
+          <DiscoverShellChrome />
+        </StorefrontWishlistProvider>
       </StorefrontMultiCartProvider>
     </DiscoverShellProvider>
   );

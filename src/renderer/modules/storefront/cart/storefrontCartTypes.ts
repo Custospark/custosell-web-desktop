@@ -1,5 +1,6 @@
 import type { StorefrontCartItem, StorefrontShop } from '../api/storefrontTypes';
 import { loadBuyerContact } from './storefrontBuyerContactStorage';
+import { effectiveUnitPrice } from '../ui/productPrice';
 
 export type StorefrontCartShopMeta = Pick<
   StorefrontShop,
@@ -49,7 +50,7 @@ export function bagUnitCount(bag: StorefrontCartBag): number {
 
 export function bagTotal(bag: StorefrontCartBag): number {
   return bag.items.reduce(
-    (sum, line) => sum + Number(line.product.unit_price) * line.quantity,
+    (sum, line) => sum + effectiveUnitPrice(line.product) * line.quantity,
     0,
   );
 }

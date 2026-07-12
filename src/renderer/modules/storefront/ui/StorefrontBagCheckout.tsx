@@ -8,6 +8,7 @@ import { SERVICE_QTY_SOFT_CAP } from '../../inventory/api/products/ProductTypes'
 import QuantityEditModal from '../../sales/ui/QuantityEditModal';
 import { bagTotal, type StorefrontBagContactPatch, type StorefrontCartBag } from '../cart/storefrontCartTypes';
 import { StorefrontDeliveryContactField } from './StorefrontDeliveryContactField';
+import { effectiveUnitPrice, resolveProductPrice } from './productPrice';
 
 export interface StorefrontBagCheckoutProps {
   bag: StorefrontCartBag;
@@ -57,12 +58,19 @@ export function StorefrontBagCheckout({
         <ul className="space-y-3">
           {bag.items.map((line) => {
             const atMax = line.quantity >= SERVICE_QTY_SOFT_CAP;
+            const unit = effectiveUnitPrice(line.product);
+            const { onSale, regular } = resolveProductPrice(line.product);
             return (
               <li key={line.product.id} className="flex items-start justify-between gap-2 text-sm">
                 <div className="min-w-0">
                   <p className="line-clamp-2 font-medium text-slate-900">{line.product.name}</p>
                   <p className="tabular-nums text-slate-500">
-                    {formatCurrency(Number(line.product.unit_price) * line.quantity, currency)}
+                    {formatCurrency(unit * line.quantity, currency)}
+                    {onSale ? (
+                      <span className="ml-1.5 text-xs line-through text-slate-400">
+                        {formatCurrency(regular * line.quantity, currency)}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

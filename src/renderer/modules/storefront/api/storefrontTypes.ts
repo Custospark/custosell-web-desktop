@@ -20,6 +20,11 @@ export interface StorefrontProduct {
   name: string;
   description: string | null;
   unit_price: string | number;
+  /** Regular price when on sale (same as unit_price). */
+  compare_at_price?: string | number | null;
+  /** Effective sell price when discount_percent &gt; 0. */
+  sale_price?: string | number | null;
+  discount_percent?: string | number | null;
   unit: string | null;
   image_path: string | null;
   type?: string;

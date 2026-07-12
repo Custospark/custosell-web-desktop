@@ -5,7 +5,6 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useToast } from '../../../app/contexts/useToast';
 import { Button } from '../../../shared/components/buttons/Button';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import { useRateStorefrontProduct } from '../api/storefrontQueries';
@@ -15,6 +14,8 @@ import { ProductStarRating } from './ProductStarRating';
 import { productVisual } from './productVisual';
 import { isStorefrontProductOutOfStock } from './storefrontStock';
 import { StockAvailabilityBadge } from './StockAvailabilityBadge';
+import { StorefrontProductPrice } from './StorefrontProductPrice';
+import { WishlistHeartButton } from './WishlistHeartButton';
 
 interface DiscoverProductCardProps {
   product: StorefrontProduct;
@@ -107,6 +108,9 @@ export function DiscoverProductCard({
       <div className="absolute left-1.5 top-1.5">
         <StockAvailabilityBadge product={product} />
       </div>
+      <div className="absolute right-1.5 top-1.5 z-[1]">
+        <WishlistHeartButton product={product} shopSlug={slug} />
+      </div>
     </div>
   );
 
@@ -116,8 +120,7 @@ export function DiscoverProductCard({
       <div className="min-w-0 flex-1 space-y-0.5">
         <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900">{product.name}</p>
         <p className="text-sm font-bold tabular-nums text-teal-900">
-          {formatCurrency(Number(product.unit_price), currency)}
-          {product.unit ? <span className="text-xs font-medium text-slate-500"> / {product.unit}</span> : null}
+          <StorefrontProductPrice product={product} currency={currency} size="sm" />
         </p>
         {stars}
         {product.business?.name ? (

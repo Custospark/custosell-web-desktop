@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  Ban,
+  Clock,
+  FileText,
   Pencil,
   Play,
   Plus,
@@ -23,6 +26,7 @@ import { useCancelOrder, useOrders } from './api/orders/useOrderQueries';
 import { useSale, useSales } from './api/salesQueries';
 import { useInvoices } from '../invoices/api/InvoiceQueries';
 import { findInvoiceBySaleId } from '../invoices/invoiceUtils';
+import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -46,6 +50,7 @@ export default function OrdersPage() {
   const cartItems = useAppSelector((s) => s.sales.cartItems);
 
   const [statusTab, setStatusTab] = useState<OrderStatus | 'all'>('open');
+  const [onlineOnly, setOnlineOnly] = useState(false);
   const [search, setSearch] = useState('');
   const [invoiceSaleId, setInvoiceSaleId] = useState<number | null>(null);
   const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
@@ -55,8 +60,9 @@ export default function OrdersPage() {
     () => ({
       status: statusTab === 'all' ? undefined : statusTab,
       q: search.trim() || undefined,
+      source: onlineOnly ? 'storefront' : undefined,
     }),
-    [statusTab, search],
+    [statusTab, search, onlineOnly],
   );
 
   const { data: orders = [], isLoading, error, refetch, isFetching } = useOrders(filters);
@@ -74,6 +80,10 @@ export default function OrdersPage() {
     }
     return counts;
   }, [allOrders]);
+  const onlineOpenCount = useMemo(
+    () => allOrders.filter((o) => o.source === 'storefront' && o.status === 'open').length,
+    [allOrders],
+  );
   const { data: invoices = [] } = useInvoices();
   const { data: sales = [] } = useSales();
   const { data: invoiceSale } = useSale(invoiceSaleId ?? 0);

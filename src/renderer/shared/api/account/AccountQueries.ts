@@ -39,7 +39,7 @@ export const accountKeys = {
   profile: () => ['account', 'profile'] as const,
 };
 
-const AUTH_ENTRY_PATHS = new Set([
+const AUTH_ENTRY_PATHS: ReadonlySet<string> = new Set([
   ROUTES.LOGIN,
   ROUTES.REGISTER,
   ROUTES.FORGOT_PASSWORD,

@@ -46,7 +46,7 @@ const BENEFITS = [
   {
     icon: Layers,
     title: 'Everything in one place',
-    description: 'POS, Inventory &amp; Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting — all connected, no more juggling separate apps.',
+    description: 'POS, Inventory & Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting — all connected, no more juggling separate apps.',
     color: 'from-blue-500 to-blue-600',
   },
   {

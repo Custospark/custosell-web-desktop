@@ -60,15 +60,32 @@ export interface PlaceStorefrontOrderResult {
   total_amount: string | number;
 }
 
+export interface MyStorefrontOrderItem {
+  id: number;
+  product_id: number | null;
+  product_name: string;
+  quantity: number;
+  unit_price: string | number;
+  subtotal: string | number;
+}
+
 export interface MyStorefrontOrder {
   id: number;
   order_number: string;
   status: 'open' | 'completed' | 'invoiced' | 'cancelled' | string;
   total_amount: string | number;
   items_count: number;
+  items?: MyStorefrontOrderItem[];
+  customer_name?: string | null;
+  customer_phone?: string | null;
   notes: string | null;
   created_at: string | null;
   shop_name: string | null;
   shop_slug: string | null;
   currency: string;
+  sale_id?: number | null;
+  receipt_number?: string | null;
+  payment_status?: string | null;
+  invoice_id?: number | null;
+  invoice_number?: string | null;
 }

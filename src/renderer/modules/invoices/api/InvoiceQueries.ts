@@ -84,14 +84,15 @@ export function useInvoices(filters?: Record<string, string>) {
   });
 }
 
-export function useInvoice(id: number) {
+export function useInvoice(id: number, options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? Boolean(id);
   return useQuery<Invoice>({
     queryKey: invoiceKeys.detail(id),
     queryFn: async () => {
       const { data } = await axiosInstance.get(INVOICES.BY_ID(id));
       return normalizeInvoiceResponse(data);
     },
-    enabled: Boolean(id),
+    enabled: Boolean(id) && enabled,
     ...invoiceQueryDefaults,
   });
 }

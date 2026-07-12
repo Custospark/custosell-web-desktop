@@ -205,6 +205,8 @@ export const STOREFRONT = {
   SHOPS: '/storefront/shops',
   CATEGORIES: '/storefront/categories',
   MY_ORDERS: '/storefront/my-orders',
+  MY_ORDER_SALE: (orderId: number) => `/storefront/my-orders/${orderId}/sale`,
+  MY_ORDER_INVOICE: (orderId: number) => `/storefront/my-orders/${orderId}/invoice`,
   SHOP: (slug: string) => `/storefront/${slug}`,
   PRODUCTS: (slug: string) => `/storefront/${slug}/products`,
   ORDERS: (slug: string) => `/storefront/${slug}/orders`,

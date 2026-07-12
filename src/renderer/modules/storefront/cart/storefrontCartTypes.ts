@@ -1,4 +1,5 @@
 import type { StorefrontCartItem, StorefrontShop } from '../api/storefrontTypes';
+import { loadBuyerContact } from './storefrontBuyerContactStorage';
 
 export type StorefrontCartShopMeta = Pick<
   StorefrontShop,
@@ -15,13 +16,15 @@ export type StorefrontCartBag = {
 
 export type StorefrontCartsBySlug = Record<string, StorefrontCartBag>;
 
+/** New bags inherit last saved delivery contact so reorders skip re-typing phone. */
 export function emptyBag(shop: StorefrontCartShopMeta): StorefrontCartBag {
+  const saved = loadBuyerContact();
   return {
     shop,
     items: [],
     notes: '',
-    customer_name: '',
-    customer_phone: '',
+    customer_name: saved.customer_name,
+    customer_phone: saved.customer_phone,
   };
 }
 

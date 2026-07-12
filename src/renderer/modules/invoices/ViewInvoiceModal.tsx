@@ -26,8 +26,8 @@ export interface ViewInvoiceModalProps {
   invoiceId: number;
   isOpen: boolean;
   onClose: () => void;
-  /** buyer = supplier invoice view; seller = sales invoice (can record). */
-  role: 'buyer' | 'seller';
+  /** buyer = B2B supplier invoice; seller = sales invoice; storefront_buyer = B2C Discover. */
+  role: 'buyer' | 'seller' | 'storefront_buyer';
   /** Open receipts section first. */
   focus?: 'details' | 'receipts';
   seed?: Invoice | null;
@@ -43,13 +43,18 @@ export function ViewInvoiceModal({
 }: ViewInvoiceModalProps) {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { data, isLoading, isError, error } = useInvoice(invoiceId);
+  const isStorefrontBuyer = role === 'storefront_buyer';
+  const { data, isLoading, isError, error } = useInvoice(invoiceId, {
+    enabled: isOpen && !isStorefrontBuyer,
+  });
   const invoice = data ?? seed;
   const [tab, setTab] = useState<'details' | 'receipts'>(focus);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
 
-  const received = invoice ? isReceivedInvoice(invoice) || role === 'buyer' : role === 'buyer';
+  const received = invoice
+    ? isReceivedInvoice(invoice) || role === 'buyer' || isStorefrontBuyer
+    : role === 'buyer' || isStorefrontBuyer;
   const due = invoice ? balanceDue(invoice) : 0;
   const status = invoice ? displayStatus(invoice) : 'sent';
   const canRecord = role === 'seller' && !received && due > 0.009;
@@ -85,9 +90,11 @@ export function ViewInvoiceModal({
         onClose={onClose}
         title={invoice?.invoice_number ?? 'Invoice'}
         subtitle={
-          received
-            ? 'Supplier invoice — view only. The seller records payments.'
-            : 'Sales invoice — you can record payments when balance remains.'
+          isStorefrontBuyer
+            ? 'Your purchase from this shop — view only.'
+            : received
+              ? 'Supplier invoice — view only. The seller records payments.'
+              : 'Sales invoice — you can record payments when balance remains.'
         }
         size="xl"
         panelClassName="h-[min(92vh,880px)]"
@@ -193,23 +200,30 @@ export function ViewInvoiceModal({
                   referenceLabel={invoice.invoice_number}
                   referenceType="Invoice"
                   invoice={invoice}
+                  allowRemotePdf={!isStorefrontBuyer}
                 />
               )}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 shrink-0">
               <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" size="sm" disabled={pdfBusy} onClick={() => void handlePdf('view')}>
-                  <Eye className="mr-1.5 h-3.5 w-3.5" /> View PDF
-                </Button>
-                <Button type="button" variant="secondary" size="sm" disabled={pdfBusy} onClick={() => void handlePdf('download')}>
-                  <Download className="mr-1.5 h-3.5 w-3.5" /> Download
-                </Button>
+                {!isStorefrontBuyer ? (
+                  <>
+                    <Button type="button" variant="secondary" size="sm" disabled={pdfBusy} onClick={() => void handlePdf('view')}>
+                      <Eye className="mr-1.5 h-3.5 w-3.5" /> View PDF
+                    </Button>
+                    <Button type="button" variant="secondary" size="sm" disabled={pdfBusy} onClick={() => void handlePdf('download')}>
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> Download
+                    </Button>
+                  </>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" size="sm" onClick={openInList}>
-                  {role === 'buyer' ? 'Open in Supplier invoices' : 'Open in Sales invoices'}
-                </Button>
+                {!isStorefrontBuyer ? (
+                  <Button type="button" variant="secondary" size="sm" onClick={openInList}>
+                    {role === 'buyer' ? 'Open in Supplier invoices' : 'Open in Sales invoices'}
+                  </Button>
+                ) : null}
                 {canRecord ? (
                   <Button type="button" size="sm" onClick={() => setRecordOpen(true)}>
                     Record payment

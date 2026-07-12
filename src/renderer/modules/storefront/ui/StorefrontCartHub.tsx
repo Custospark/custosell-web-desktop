@@ -3,11 +3,13 @@ import { ShoppingCart, Store, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../../app/contexts/useToast';
 import { store } from '../../../app/store/store';
-import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
+import { setUser } from '../../../app/store/slices/authSlice';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
 import { storefrontKeys, usePlaceStorefrontOrder } from '../api/storefrontQueries';
+import { loadBuyerContact, saveBuyerContact } from '../cart/storefrontBuyerContactStorage';
 import { useStorefrontMultiCart } from '../cart/storefrontMultiCartContext';
 import { StorefrontBagCheckout } from './StorefrontBagCheckout';
 import { StorefrontLoginDialog } from './StorefrontLoginDialog';
@@ -32,6 +34,7 @@ export function StorefrontCartHub({
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
   const token = useAppSelector((s) => s.auth.token);
   const user = useAppSelector((s) => s.auth.user);
   const {
@@ -82,13 +85,12 @@ export function StorefrontCartHub({
       return;
     }
 
-    if (auth.user) {
-      const name = bag.customer_name.trim() || auth.user.name || '';
-      const phone = bag.customer_phone.trim() || auth.user.phone || '';
-      if (name !== bag.customer_name || phone !== bag.customer_phone) {
-        setBagContact(slug, { customer_name: name, customer_phone: phone });
-        bag = { ...bag, customer_name: name, customer_phone: phone };
-      }
+    const saved = loadBuyerContact();
+    const name = bag.customer_name.trim() || saved.customer_name || auth.user?.name?.trim() || '';
+    const phone = bag.customer_phone.trim() || saved.customer_phone || auth.user?.phone?.trim() || '';
+    if (name !== bag.customer_name || phone !== bag.customer_phone) {
+      setBagContact(slug, { customer_name: name, customer_phone: phone });
+      bag = { ...bag, customer_name: name, customer_phone: phone };
     }
 
     if (!bag.customer_name.trim() || !bag.customer_phone.trim()) {
@@ -102,17 +104,29 @@ export function StorefrontCartHub({
       return;
     }
 
+    const placedName = bag.customer_name.trim();
+    const placedPhone = bag.customer_phone.trim();
+
     placeOrder.mutate(
       {
         slug,
-        customer_name: bag.customer_name.trim(),
-        customer_phone: bag.customer_phone.trim(),
+        customer_name: placedName,
+        customer_phone: placedPhone,
         notes: bag.notes.trim() || undefined,
         items: bag.items.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
       },
       {
         onSuccess: (res) => {
+          saveBuyerContact({ customer_name: placedName, customer_phone: placedPhone });
+          const currentUser = store.getState().auth.user;
+          if (currentUser && placedPhone && currentUser.phone !== placedPhone) {
+            dispatch(setUser({ ...currentUser, phone: placedPhone }));
+          }
           clearBag(slug);
+          if (activeSlug === slug) {
+            const next = bags.find((b) => b.shop.slug !== slug);
+            setActiveSlug(next?.shop.slug ?? null);
+          }
           void queryClient.invalidateQueries({ queryKey: storefrontKeys.all });
           showToast('success', res.message || `Order ${res.order_number} sent`);
           setPendingSlug(null);
@@ -137,17 +151,25 @@ export function StorefrontCartHub({
     );
   };
 
+  // Prefer bag → last saved contact → profile. Never wipe a typed phone with an empty profile.
   useEffect(() => {
-    if (!open || !token || !user || bags.length === 0) return;
+    if (!open || bags.length === 0) return;
+    const saved = loadBuyerContact();
     for (const bag of bags) {
-      const name = user.name?.trim() || bag.customer_name;
-      const phone = (user.phone?.trim() || bag.customer_phone || '').trim();
-      if (name !== bag.customer_name || phone !== bag.customer_phone) {
-        setBagContact(bag.shop.slug, {
-          customer_name: name,
-          customer_phone: phone,
-        });
-      }
+      const name = bag.customer_name.trim()
+        || saved.customer_name
+        || user?.name?.trim()
+        || '';
+      const phone = bag.customer_phone.trim()
+        || saved.customer_phone
+        || user?.phone?.trim()
+        || '';
+      if (!name && !phone) continue;
+      if (name === bag.customer_name && phone === bag.customer_phone) continue;
+      setBagContact(bag.shop.slug, {
+        customer_name: name,
+        customer_phone: phone,
+      });
     }
   }, [open, token, user, bags, setBagContact]);
 

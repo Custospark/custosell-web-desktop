@@ -11,7 +11,8 @@ Same path for public visitors and logged-in users (Discover shell):
 3. Catalogs stay **warm in React Query** (prefetch + layout warmup, 10 min stale / 1 h gc) so Shops ↔ Products and return-from-shop feel instant.
 4. Open a shop → compact product grid + Add to that shop’s bag.
 5. **Cart** hub → one bag per business; submit one bag at a time. Logged-in buyers auto-fill name/phone from profile.
-6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned.
+6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned. **Eye** opens line items (PO/IO-style). After a shop completes/invoices the sale, buyers open **Receipt** / **Invoice** / **Payments** via existing `ReceiptPreviewModal` and `ViewInvoiceModal` (`role="storefront_buyer"`).
+7. **Delivery contact** → Name/phone saved to `custosell.storefront.buyerContact.v1` and to the buyer `User.phone` on place-order so reorders prefill; still editable in the delivery modal.
 7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order — no business setup. They become that shop’s customer on order.
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
@@ -22,7 +23,7 @@ Shop pages show a compact **QR code** for the public `/@slug` share URL (HashRou
 Strip label stays **Shops** (never the open shop’s name). While on `/discover/shop/:slug`, Shops/Products are not highlighted; clicking them leaves the shop. The matched route always renders through **Outlet** (`DiscoverPage` / `ShopPage` / `MyOrdersPage`) so the URL and visible page stay in sync. See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md) for the blank-main / Outlet-key / shell-header bugs that were fixed.
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
 Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
-Bags persist in `localStorage` (`custosell.storefront.carts.v1`). See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md).
+Bags persist in `localStorage` (`custosell.storefront.carts.v1`). Last delivery name/phone persists separately (`custosell.storefront.buyerContact.v1`) so clearing a bag after place-order does not force re-entry. See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md) and [storefront-buyer-phone-and-order-eye](../adr/2026-07-12-storefront-buyer-phone-and-order-eye.md).
 
 ## App module (logged-in)
 

@@ -18,6 +18,8 @@ interface PaymentHistoryListProps {
   invoice?: Invoice;
   compact?: boolean;
   className?: string;
+  /** When false, hide remote PDF buttons (B2C storefront buyers). In-app preview still works. */
+  allowRemotePdf?: boolean;
 }
 
 export default function PaymentHistoryList({
@@ -29,6 +31,7 @@ export default function PaymentHistoryList({
   invoice,
   compact,
   className,
+  allowRemotePdf = true,
 }: PaymentHistoryListProps) {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [busyType, setBusyType] = useState<'view' | 'download' | null>(null);
@@ -144,7 +147,7 @@ export default function PaymentHistoryList({
                       <Paperclip className="w-3.5 h-3.5" />
                     </a>
                   )}
-                  {payment.id > 0 && !payment._pendingSync && (
+                  {allowRemotePdf && payment.id > 0 && !payment._pendingSync && (
                     <>
                       <span
                         role="button"

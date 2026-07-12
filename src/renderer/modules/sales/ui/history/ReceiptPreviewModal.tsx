@@ -17,7 +17,7 @@ interface ReceiptPreviewModalProps {
 export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPreviewModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
-  const business = authUser?.business;
+  const business = authUser?.business ?? sale.business;
   const { share } = useWebShare();
 
   const handlePrint = useReactToPrint({
@@ -46,6 +46,9 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
     `,
   });
 
+  const shopName = business?.name ?? 'Shop';
+  const currency = business?.currency || 'UGX';
+
   return (
     <Modal isOpen={open} onClose={onClose} title="Receipt Preview" size="sm">
       <div className="no-print flex flex-wrap gap-2 justify-end mb-3 sm:mb-4">
@@ -59,10 +62,10 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
           onClick={() => void share({
             title: `Receipt ${sale.receipt_number}`,
             text: receiptShareText(
-              business?.name ?? 'Business',
+              shopName,
               sale.receipt_number,
               parseFloat(sale.total_amount),
-              business?.currency || 'UGX',
+              currency,
               sale.payment_method,
             ),
           })}

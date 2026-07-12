@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { StorefrontCartItem, StorefrontProduct } from '../api/storefrontTypes';
+import { loadBuyerContact, saveBuyerContact } from './storefrontBuyerContactStorage';
 import { loadStorefrontCarts, saveStorefrontCarts } from './storefrontCartStorage';
 import {
   emptyBag,
@@ -73,9 +74,16 @@ export function StorefrontMultiCartProvider({ children }: { children: ReactNode 
   const ensureBag = useCallback((shop: StorefrontCartShopMeta) => {
     setCarts((prev) => {
       if (prev[shop.slug]) {
+        const bag = prev[shop.slug];
+        const saved = loadBuyerContact();
         return {
           ...prev,
-          [shop.slug]: { ...prev[shop.slug], shop },
+          [shop.slug]: {
+            ...bag,
+            shop,
+            customer_name: bag.customer_name.trim() || saved.customer_name,
+            customer_phone: bag.customer_phone.trim() || saved.customer_phone,
+          },
         };
       }
       return { ...prev, [shop.slug]: emptyBag(shop) };
@@ -135,7 +143,14 @@ export function StorefrontMultiCartProvider({ children }: { children: ReactNode 
     setCarts((prev) => {
       const bag = prev[slug];
       if (!bag) return prev;
-      return { ...prev, [slug]: { ...bag, ...patch } };
+      const next = { ...bag, ...patch };
+      if (patch.customer_name !== undefined || patch.customer_phone !== undefined) {
+        saveBuyerContact({
+          customer_name: next.customer_name,
+          customer_phone: next.customer_phone,
+        });
+      }
+      return { ...prev, [slug]: next };
     });
   }, []);
 

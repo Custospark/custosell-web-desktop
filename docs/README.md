@@ -108,6 +108,8 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-12-storefront-shop-contact-and-ratings.md](./adr/2026-07-12-storefront-shop-contact-and-ratings.md) | Shop contact fields + product star ratings; instant Discover tabs |
 | [2026-07-12-discover-shop-under-discover-path.md](./adr/2026-07-12-discover-shop-under-discover-path.md) | Strip blank-main bug autopsy; `/discover/shop/:slug`; place-order → orders count |
 | [2026-07-12-storefront-buyer-customer-accounts.md](./adr/2026-07-12-storefront-buyer-customer-accounts.md) | Discover create-account default; buyer → seller Customer on order |
+| [2026-07-12-storefront-buyer-receipts-invoices.md](./adr/2026-07-12-storefront-buyer-receipts-invoices.md) | B2C My Orders → sale receipt / invoice (reuse POS modals) |
+| [2026-07-12-storefront-buyer-phone-and-order-eye.md](./adr/2026-07-12-storefront-buyer-phone-and-order-eye.md) | Persist delivery phone for reorders; Eye → line items on My Orders |
 
 ## Modules
 

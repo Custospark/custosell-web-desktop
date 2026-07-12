@@ -23,7 +23,9 @@ import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTh
 import { useMyStorefrontOrdersList } from './api/storefrontQueries';
 import type { MyStorefrontOrder } from './api/storefrontTypes';
 import { useDiscoverShell } from './ui/discoverShellContext';
+import { MyOrdersDocumentHost } from './ui/MyOrdersDocumentHost';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { saveBuyerContact } from './cart/storefrontBuyerContactStorage';
 
 type StatusTab = 'all' | 'open' | 'completed' | 'invoiced' | 'cancelled';
 
@@ -83,6 +85,19 @@ export default function MyOrdersPage() {
   } = useMyStorefrontOrdersList(Boolean(token));
 
   const allOrders = useMemo(() => data?.orders ?? [], [data?.orders]);
+
+  // Hydrate last delivery phone/name from the most recent order (cross-device / cleared storage).
+  useEffect(() => {
+    const latest = allOrders[0];
+    if (!latest) return;
+    const phone = latest.customer_phone?.trim();
+    const name = latest.customer_name?.trim();
+    if (!phone && !name) return;
+    saveBuyerContact({
+      customer_name: name || undefined,
+      customer_phone: phone || undefined,
+    });
+  }, [allOrders]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<StatusTab, number> = {
@@ -251,6 +266,11 @@ export default function MyOrdersPage() {
                       {o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}
                     </span>
                   ),
+                },
+                {
+                  key: 'docs',
+                  header: 'Actions',
+                  render: (o: MyStorefrontOrder) => <MyOrdersDocumentHost order={o} />,
                 },
               ]}
             />

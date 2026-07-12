@@ -7,6 +7,7 @@ import { axiosInstance } from '../../../../app/api/axiosConfig';
 import { Table } from '../../../../shared/components/tables/Table';
 import { Card } from '../../../../shared/components/cards/Card';
 import { Badge } from '../../../../shared/components/badges/Badge';
+import { FiscalStatusBadge } from '../../../../shared/components/badges/FiscalStatusBadge';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
@@ -209,6 +210,7 @@ export default function SalesHistory() {
               {s._pendingRefundSync && (
                 <Badge variant="warning">Refund pending</Badge>
               )}
+              <FiscalStatusBadge status={s.fiscal_status} />
             </div>
           )},
           { key: 'sale_date', header: 'Date', render: (s) => new Date(s.sale_date).toLocaleDateString() },

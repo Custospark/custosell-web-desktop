@@ -51,6 +51,13 @@ export interface Invoice {
   last_emailed_at?: string | null;
   items: InvoiceItem[];
   payments?: import('../../payments/paymentTypes').Payment[];
+  /** URA EFRIS fiscalization — none when EFRIS off or not yet attempted. */
+  fiscal_status?: 'none' | 'pending' | 'fiscalized' | 'failed';
+  fiscal_fdn?: string | null;
+  fiscal_qr?: string | null;
+  fiscal_verification_code?: string | null;
+  fiscalized_at?: string | null;
+  fiscal_last_error?: string | null;
   created_at: string;
   updated_at?: string;
 }

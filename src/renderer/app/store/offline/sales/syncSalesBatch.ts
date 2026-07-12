@@ -78,6 +78,7 @@ async function commitSaleSync(
       saleIdMap?.set(localRecord.sale.id, serverSale.id);
     }
     applySyncedSaleToCache(queryClient, localRecord.sale, serverSale);
+    // Fiscal_* from SaleService (or pending/failed) now live on the server row in cache.
   }
 }
 

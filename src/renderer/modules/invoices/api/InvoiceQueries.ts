@@ -161,7 +161,15 @@ export function useSendInvoice() {
     onSuccess: (invoice) => {
       upsertInvoiceInCache(qc, invoice);
       void qc.invalidateQueries({ queryKey: invoiceKeys.all });
-      showToast('success', 'Invoice sent');
+      if (invoice.fiscal_status === 'fiscalized') {
+        showToast('success', 'Invoice sent and fiscalized');
+      } else if (invoice.fiscal_status === 'pending') {
+        showToast('success', 'Invoice sent — fiscalization pending');
+      } else if (invoice.fiscal_status === 'failed') {
+        showToast('success', 'Invoice sent — fiscalization failed (will retry)');
+      } else {
+        showToast('success', 'Invoice sent');
+      }
     },
     onError: () => showToast('error', 'Failed to send invoice'),
   });

@@ -129,4 +129,34 @@ config('efris.tin');
 // …
 ```
 
-Implementation of the fiscal queue and URA client comes after this config land — the flag alone must gate all future EFRIS code paths.
+---
+
+## Implementation status (shipped)
+
+| Piece | Status |
+|-------|--------|
+| `EfrisClient` + `EfrisService` | Shipped — no-op when `EFRIS_ENABLED=false` |
+| Hook: `SaleService::create` | Shipped — never blocks checkout |
+| Hook: `InvoiceService::send` | Shipped — never blocks send |
+| Jobs | `FiscalizeSaleJob` / `FiscalizeInvoiceJob` with backoff retries |
+| Persistence | `fiscal_status`, `fiscal_fdn`, `fiscal_qr`, `fiscal_verification_code`, payload/response, `fiscalized_at`, `fiscal_last_error` |
+| Safe status | `GET /api/v1/efris/status` → `{ enabled, configured, country, environment, … }` |
+| Frontend | Fiscal chips on sale complete / history / invoice view; receipt FDN/QR; Tax page EFRIS panel |
+| Offline POS | Local `fiscal_status=pending` hint; after batch sync, cache uses server fiscal fields |
+
+### Queue worker (required when enabled)
+
+```bash
+cd Backend
+php artisan queue:work
+```
+
+Without a worker, sales still succeed; fiscal rows stay `pending` / `failed` until jobs run.
+
+### Failure UX
+
+| Case | Behaviour |
+|------|-----------|
+| Flag off | Columns stay `none`; Tax page shows Disabled |
+| Offline / URA error | Sale kept; chip shows Fiscal pending / Fiscal failed; job retries |
+| Enabled but missing TIN/keys | No fake FDN; `failed` + Tax page **Misconfigured** |

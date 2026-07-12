@@ -43,7 +43,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
-| [efris-setup.md](./compliance/efris-setup.md) | URA EFRIS credentials, `.env` flag, sandbox/pilot procedure |
+| [efris-setup.md](./compliance/efris-setup.md) | URA EFRIS credentials, `.env` flag, sandbox/pilot, implementation status + queue worker |
 
 ## Platform & product
 
@@ -102,6 +102,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
 | [2026-07-12-efris-fiscalization.md](./adr/2026-07-12-efris-fiscalization.md) | URA EFRIS — API, both POS+invoices, sync-later, master flag |
+| [2026-07-12-custosell-business-os-brand.md](./adr/2026-07-12-custosell-business-os-brand.md) | Tagline: Your Business Operating System; auth/shell + landing |
 
 ## Modules
 

@@ -20,6 +20,7 @@ import PaymentHistoryList from '../payments/PaymentHistoryList';
 import RecordPaymentModal from './RecordPaymentModal';
 import { useToast } from '../../app/contexts/useToast';
 import { cn } from '../../shared/utils/cn';
+import { FiscalStatusBadge } from '../../shared/components/badges/FiscalStatusBadge';
 
 export interface ViewInvoiceModalProps {
   invoiceId: number;
@@ -107,6 +108,12 @@ export function ViewInvoiceModal({
               <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold', INVOICE_STATUS_STYLES[status] ?? INVOICE_STATUS_STYLES.sent)}>
                 {INVOICE_STATUS_LABELS[status] ?? status}
               </span>
+              <FiscalStatusBadge status={invoice.fiscal_status} />
+              {invoice.fiscal_status === 'failed' && invoice.fiscal_last_error ? (
+                <span className="text-xs text-red-600 max-w-xs truncate" title={invoice.fiscal_last_error}>
+                  {invoice.fiscal_last_error}
+                </span>
+              ) : null}
               <span className="text-sm text-slate-600">
                 {received ? 'From' : 'To'}: <span className="font-medium text-slate-900">{invoicePartyLabel(invoice)}</span>
               </span>

@@ -6,6 +6,7 @@ import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeleton
 import { useReportDownload } from '../dashboard/DashboardQueries';
 import { useBusinessTaxSettings } from './hooks/useBusinessTaxSettings';
 import { useVatSummary, type VatInputExpenseRow } from './api/settings/TaxQueries';
+import { useEfrisStatus } from './api/settings/EfrisQueries';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { TAX_REGIME_LABELS } from '../../shared/utils/taxEngine';
 import { getFilingAuthorityLabel, getJurisdictionLabel } from '../../shared/utils/taxJurisdictions';
@@ -27,6 +28,7 @@ import {
   Hash,
   Receipt,
   Landmark,
+  ShieldCheck,
 } from 'lucide-react';
 
 function TaxProfileField({
@@ -56,6 +58,7 @@ function TaxProfileField({
 export default function TaxCompliancePage() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { business, taxEnabled, isLoading: businessLoading } = useBusinessTaxSettings();
+  const { data: efrisStatus, isLoading: efrisLoading, isError: efrisError } = useEfrisStatus();
   const currency = business?.currency || 'UGX';
   const [preset, setPreset] = useState<ReportDatePreset>('month');
   const [customFrom, setCustomFrom] = useState('');
@@ -155,6 +158,61 @@ export default function TaxCompliancePage() {
               </TaxProfileField>
             </dl>
           )}
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border-2 border-gray-200 bg-white shadow-sm">
+        <div className="flex items-start gap-3 border-b border-gray-200 px-5 py-4">
+          <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
+            <ShieldCheck className="h-5 w-5" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-gray-900">EFRIS</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Uganda fiscal receipts — status only (credentials stay on the server).
+            </p>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          {isOffline ? (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              EFRIS status requires an internet connection.
+            </p>
+          ) : efrisLoading ? (
+            <LoadingSkeleton variant="minimal" message="Loading EFRIS status…" />
+          ) : efrisError || !efrisStatus ? (
+            <p className="text-sm text-gray-600">Could not load EFRIS status.</p>
+          ) : (
+            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <TaxProfileField label="Status" icon={<ShieldCheck className="h-4 w-4 text-blue-600" />}>
+                {efrisStatus.enabled ? 'Enabled' : 'Disabled'}
+              </TaxProfileField>
+              <TaxProfileField label="Country" icon={<Globe className="h-4 w-4 text-blue-600" />}>
+                {efrisStatus.country || '—'}
+              </TaxProfileField>
+              <TaxProfileField label="Environment" icon={<Landmark className="h-4 w-4 text-blue-600" />}>
+                {efrisStatus.environment || '—'}
+              </TaxProfileField>
+              <TaxProfileField label="Mode" icon={<Tag className="h-4 w-4 text-blue-600" />}>
+                {efrisStatus.mode || '—'}
+              </TaxProfileField>
+              <TaxProfileField label="Offline behaviour" icon={<WifiOff className="h-4 w-4 text-blue-600" />}>
+                {efrisStatus.offline_mode === 'sync_later' ? 'Sync later (checkout never blocked)' : efrisStatus.offline_mode}
+              </TaxProfileField>
+              <TaxProfileField label="Credentials" icon={<Hash className="h-4 w-4 text-blue-600" />}>
+                {efrisStatus.misconfigured
+                  ? 'Misconfigured'
+                  : efrisStatus.configured
+                    ? 'Configured'
+                    : 'Not configured'}
+              </TaxProfileField>
+            </dl>
+          )}
+          {efrisStatus?.misconfigured ? (
+            <p className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              EFRIS is enabled but TIN/device/API credentials are incomplete. Sales still succeed; fiscalization stays failed until Backend .env is fixed.
+            </p>
+          ) : null}
         </div>
       </div>
 

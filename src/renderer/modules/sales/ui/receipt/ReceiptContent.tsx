@@ -189,6 +189,27 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
           )}
         </div>
 
+        {sale.fiscal_status === 'fiscalized' && (sale.fiscal_fdn || sale.fiscal_qr || sale.fiscal_verification_code) ? (
+          <div className="text-center text-xs border-t border-dashed border-gray-300 pt-3 mb-3 space-y-1">
+            <p className="font-semibold uppercase tracking-wider text-gray-700">EFRIS</p>
+            {sale.fiscal_fdn ? (
+              <div className="flex justify-between gap-2">
+                <span className="text-gray-500">FDN</span>
+                <span className="font-medium text-gray-800 break-all">{sale.fiscal_fdn}</span>
+              </div>
+            ) : null}
+            {sale.fiscal_verification_code ? (
+              <div className="flex justify-between gap-2">
+                <span className="text-gray-500">Code</span>
+                <span className="font-medium text-gray-800 break-all">{sale.fiscal_verification_code}</span>
+              </div>
+            ) : null}
+            {sale.fiscal_qr ? (
+              <p className="text-[10px] text-gray-500 break-all mt-1">QR: {sale.fiscal_qr}</p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="text-center text-xs text-gray-400 border-t border-dashed border-gray-300 pt-3">
           {business?.receipt_footer ? (
             <p>{business.receipt_footer}</p>

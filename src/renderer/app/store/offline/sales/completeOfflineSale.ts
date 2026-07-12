@@ -80,6 +80,8 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
     notes: payload.notes ?? null,
     sale_date: now,
     payments: localPayment ? [localPayment] : undefined,
+    // Hint until server sync returns real fiscal_* (sync_later).
+    fiscal_status: 'pending',
     sale_items: payload.items.map((item, i) => ({
       id: localIdNum - i,
       sale_id: localIdNum,

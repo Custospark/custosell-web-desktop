@@ -1,8 +1,8 @@
 # ADR: URA EFRIS fiscalization (v1)
 
 **Date:** 2026-07-12  
-**Status:** Accepted (config + procedures; client implementation follows)  
-**Scope:** Frontend docs + Backend `config/efris.php` / `.env`  
+**Status:** Accepted (implemented — gated by `EFRIS_ENABLED`)  
+**Scope:** Backend fiscal client/queue + Frontend status UX + docs  
 **Country:** Uganda first; other jurisdictions configurable later
 
 ## Context
@@ -51,7 +51,11 @@ VAT-registered Ugandan businesses need electronic fiscal receipts/invoices via *
 | Config | `Backend/config/efris.php` |
 | Env template | `Backend/.env.example` (EFRIS section) |
 | Procedures | [../compliance/efris-setup.md](../compliance/efris-setup.md) |
-| Client + queue | TBD (must gate on `config('efris.enabled')`) |
+| Persistence | `sales` / `invoices` `fiscal_*` columns |
+| Client + service | `Backend/app/Services/Efris/` (gated on `config('efris.enabled')`) |
+| Queue jobs | `FiscalizeSaleJob`, `FiscalizeInvoiceJob` — run `php artisan queue:work` |
+| Safe status API | `GET /api/v1/efris/status` (no credentials) |
+| FE status UX | Sale/invoice chips, receipt FDN/QR, Tax → EFRIS panel |
 
 ## Failure states (target behaviour)
 

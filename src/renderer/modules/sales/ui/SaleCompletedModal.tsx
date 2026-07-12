@@ -14,6 +14,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { netSaleAmount } from '../utils/saleAmounts';
 import { MODAL_Z_INDEX_CLASS } from '../../../shared/components/modals/Modal';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { FiscalStatusBadge } from '../../../shared/components/badges/FiscalStatusBadge';
 
 interface SaleCompletedModalProps {
   sale: SaleWithSyncMeta | null;
@@ -124,6 +125,17 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
           <p className="text-xs text-amber-600 font-medium text-center mb-3 sm:mb-4">
             Saved locally — will sync when you&apos;re back online
           </p>
+        )}
+        {(sale.fiscal_status === 'pending' || sale.fiscal_status === 'fiscalized' || sale.fiscal_status === 'failed') && (
+          <div className="flex flex-col items-center gap-1 mb-3 sm:mb-4">
+            <FiscalStatusBadge status={sale.fiscal_status} />
+            {sale.fiscal_status === 'failed' && sale.fiscal_last_error ? (
+              <p className="text-xs text-red-600 text-center max-w-sm">{sale.fiscal_last_error}</p>
+            ) : null}
+            {sale.fiscal_status === 'pending' ? (
+              <p className="text-xs text-amber-700 text-center">Fiscal receipt will update when URA confirms</p>
+            ) : null}
+          </div>
         )}
 
         <div className="flex justify-center overflow-x-auto">

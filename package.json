@@ -2,7 +2,7 @@
   "name": "CUSTOSELL",
   "private": true,
   "version": "3.0.0",
-  "description": "Custosell — Lightweight POS for Businesses",
+  "description": "Custosell — Your Business Operating System",
   "author": "Custospark Company Ltd",
   "type": "module",
   "main": "dist/desktop/main/main.js",

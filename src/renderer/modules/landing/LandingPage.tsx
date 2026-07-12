@@ -12,6 +12,7 @@ import {
   TAGLINE,
   TAGLINE_SHORT,
 } from '../../shared/brand/custosellBrand';
+import { LANDING_MODULES } from './landingModules';
 import TestimonialCarousel from './ui/TestimonialCarousel';
 import realTimeDashboard from './assets/screenshots/real_time_dashboard.png';
 
@@ -159,6 +160,38 @@ export default function LandingPage() {
                 <div className="min-w-0">
                   <h3 className="text-base font-bold text-gray-900 leading-snug">{ben.title}</h3>
                   <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">{ben.description}</p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Everything Your Business Needs</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto text-lg">
+            From the shop floor to the back office — tools that work together, not in silos.
+          </p>
+        </motion.div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {LANDING_MODULES.map((mod, i) => {
+            const Icon = mod.icon;
+            return (
+              <motion.div
+                key={mod.title}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: Math.min(i * 0.03, 0.35) }}
+                className="flex gap-4 rounded-xl border border-gray-200 bg-white p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+              >
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${mod.color} shadow-sm`}>
+                  <Icon className="h-5 w-5 text-white" aria-hidden />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-gray-900 leading-snug">{mod.title}</h3>
+                  <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">{mod.description}</p>
                 </div>
               </motion.div>
             );

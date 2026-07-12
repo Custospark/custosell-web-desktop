@@ -71,7 +71,7 @@ export const LANDING_MODULES: LandingModule[] = [
     color: 'from-teal-500 to-teal-600',
   },
   {
-    title: 'Forecasting',
+    title: 'Financial Forecasting',
     description: 'Plan ahead with confidence. Cash outlook and scenarios before you commit.',
     icon: LineChart,
     color: 'from-cyan-500 to-cyan-600',

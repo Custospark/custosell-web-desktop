@@ -1,110 +1,122 @@
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Compass, ShoppingBag, LayoutList } from 'lucide-react';
+import { useMemo } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { cn } from '../../shared/utils/cn';
+import LogoImage from '../../shared/assets/LogoImage';
+import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
+import { useAppSelector } from '../../app/store/hooks/useApp';
+import { getDefaultRoute } from '../../shared/utils/moduleAccess';
+import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
+import {
+  DiscoverShellProvider,
+  useDiscoverShell,
+} from './ui/discoverShellContext';
+import type { StorefrontStripTab } from './ui/StorefrontActionStrip';
 
-const NAV_ITEMS = [
-  {
-    to: ROUTES.DISCOVER,
-    label: 'Browse',
-    icon: Compass,
-    color: 'teal',
-    desc: 'Browse shops & products',
-  },
-  {
-    to: ROUTES.DISCOVER + '/my-orders',
-    label: 'My Orders',
-    icon: ShoppingBag,
-    color: 'blue',
-    desc: 'Track your orders',
-    authRequired: true,
-  },
-  {
-    to: ROUTES.DISCOVER,
-    label: 'Cart',
-    icon: LayoutList,
-    color: 'emerald',
-    desc: 'Your order cart',
-  },
-];
+function activeTabFromPath(pathname: string, search: string): StorefrontStripTab {
+  if (pathname.startsWith(ROUTES.DISCOVER_MY_ORDERS) || pathname.endsWith('/my-orders')) {
+    return 'orders';
+  }
+  if (pathname.startsWith('/@')) return 'cart';
+  const focus = new URLSearchParams(search).get('focus');
+  if (focus === 'shops') return 'browse';
+  if (focus === 'products') return 'discover';
+  return 'browse';
+}
 
-const COLOR_STYLES: Record<string, { border: string; from: string; to: string; text: string; icon: string; hoverBorder: string; hoverFrom: string; hoverTo: string }> = {
-  teal: {
-    border: 'border-teal-300/90',
-    from: 'from-teal-50',
-    to: 'to-cyan-50',
-    text: 'text-teal-900',
-    icon: 'text-teal-600',
-    hoverBorder: 'hover:border-teal-400',
-    hoverFrom: 'hover:from-teal-100',
-    hoverTo: 'hover:to-cyan-100',
-  },
-  blue: {
-    border: 'border-blue-300/90',
-    from: 'from-blue-50',
-    to: 'to-sky-50',
-    text: 'text-blue-900',
-    icon: 'text-blue-600',
-    hoverBorder: 'hover:border-blue-400',
-    hoverFrom: 'hover:from-blue-100',
-    hoverTo: 'hover:to-sky-100',
-  },
-  emerald: {
-    border: 'border-emerald-300/90',
-    from: 'from-emerald-50',
-    to: 'to-teal-50',
-    text: 'text-emerald-900',
-    icon: 'text-emerald-600',
-    hoverBorder: 'hover:border-emerald-400',
-    hoverFrom: 'hover:from-emerald-100',
-    hoverTo: 'hover:to-teal-100',
-  },
-};
+function defaultHeader(pathname: string, search: string): { title: string; subtitle: string } {
+  if (pathname.startsWith(ROUTES.DISCOVER_MY_ORDERS) || pathname.endsWith('/my-orders')) {
+    return { title: 'My Orders', subtitle: 'Orders you placed — each shop fulfills its own' };
+  }
+  if (pathname.startsWith('/@')) {
+    return { title: 'Shop', subtitle: 'Order from this business only' };
+  }
+  const focus = new URLSearchParams(search).get('focus');
+  if (focus === 'products') {
+    return { title: 'Products', subtitle: 'Browse listed products across shops' };
+  }
+  return { title: 'Shops', subtitle: 'Browse businesses with a public storefront' };
+}
 
-export default function DiscoverLayout() {
-  const navigate = useNavigate();
+function DiscoverShellChrome() {
   const location = useLocation();
-  const path = location.pathname;
+  const navigate = useNavigate();
+  const token = useAppSelector((s) => s.auth.token);
+  const user = useAppSelector((s) => s.auth.user);
+  const { header, cartCount } = useDiscoverShell();
+
+  const active = activeTabFromPath(location.pathname, location.search);
+  const fallback = defaultHeader(location.pathname, location.search);
+  const title = header?.title ?? fallback.title;
+  const subtitle = header?.subtitle ?? fallback.subtitle;
+
+  const onCartScroll = useMemo(() => {
+    if (!location.pathname.startsWith('/@')) return undefined;
+    return () => {
+      document.getElementById('storefront-cart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white flex flex-col">
-      <div className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Storefronts</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Browse public shops or track your orders.</p>
-        </div>
-        <div className="flex items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain px-2 pb-2.5 sm:gap-3 sm:px-3">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const colors = COLOR_STYLES[item.color];
-            const isActive = item.to === ROUTES.DISCOVER
-              ? path === ROUTES.DISCOVER
-              : path.startsWith(item.to);
-
-            return (
+    <div className="flex h-dvh flex-col bg-slate-50">
+      <header className="sticky top-0 z-40 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+            <Link
+              to={`${ROUTES.DISCOVER}?focus=shops`}
+              className="flex shrink-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40"
+              aria-label={`${PRODUCT_NAME} Discover`}
+            >
+              <LogoImage size="sm" />
+              <span className="hidden text-sm font-bold text-teal-800 sm:inline">{PRODUCT_NAME}</span>
+            </Link>
+            <div className="h-6 w-px shrink-0 bg-slate-200" aria-hidden />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
+              {subtitle ? (
+                <p className="truncate text-[11px] text-slate-500 sm:text-xs">{subtitle}</p>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {header?.actions}
+            {token ? (
               <button
-                key={item.label}
                 type="button"
-                onClick={() => navigate(item.to)}
-                title={item.desc}
-                className={cn(
-                  'relative inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-semibold shadow-sm transition-all sm:gap-2 sm:px-4 sm:py-2.5',
-                  isActive
-                    ? `${colors.border} ${colors.from} ${colors.to} ${colors.text} shadow-md`
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50',
-                )}
+                onClick={() => navigate(getDefaultRoute(user))}
+                className="hidden rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 sm:inline-flex"
               >
-                <Icon className={cn('h-4 w-4', isActive ? colors.icon : 'text-slate-400')} />
-                <span className="hidden sm:inline">{item.label}</span>
+                Open app
               </button>
-            );
-          })}
+            ) : null}
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1">
-        <Outlet />
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col">
+          <Outlet />
+        </div>
+      </main>
+
+      <div className="sticky bottom-0 z-40 shrink-0 bg-white/95 shadow-[0_-4px_20px_rgba(15,23,42,0.06)] backdrop-blur-md">
+        <ConnectedStorefrontStrip
+          active={active}
+          cartCount={cartCount}
+          onCartScroll={onCartScroll}
+        />
       </div>
     </div>
+  );
+}
+
+/**
+ * Single consistent storefront chrome: sticky header + sticky strip.
+ * Discover, My Orders, and /@shop all render inside this shell.
+ */
+export default function DiscoverLayout() {
+  return (
+    <DiscoverShellProvider>
+      <DiscoverShellChrome />
+    </DiscoverShellProvider>
   );
 }

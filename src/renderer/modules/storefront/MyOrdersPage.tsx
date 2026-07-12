@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Ban,
@@ -8,7 +8,6 @@ import {
   LayoutList,
   RefreshCw,
   ShoppingBag,
-  Store,
 } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Badge } from '../../shared/components/badges/Badge';
@@ -23,6 +22,7 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import { useMyStorefrontOrders } from './api/storefrontQueries';
 import type { MyStorefrontOrder } from './api/storefrontTypes';
+import { useDiscoverShell } from './ui/discoverShellContext';
 
 type StatusTab = 'all' | 'open' | 'completed' | 'invoiced' | 'cancelled';
 
@@ -65,9 +65,10 @@ function statusBadge(status: string) {
   }
 }
 
-/** Buyer-facing storefront orders — same chrome pattern as Sales → Orders. */
+/** My Orders content — sticky chrome from DiscoverLayout. */
 export default function MyOrdersPage() {
   const navigate = useNavigate();
+  const shell = useDiscoverShell();
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [search, setSearch] = useState('');
 
@@ -99,29 +100,27 @@ export default function MyOrdersPage() {
 
   const paginated = usePagination(orders, 15);
 
+  useEffect(() => {
+    shell.setHeader({
+      title: 'My Orders',
+      subtitle: 'Orders you placed at public shops',
+      actions: (
+        <Button variant="secondary" size="sm" onClick={() => void refetch()} disabled={isFetching} className="gap-1.5">
+          <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
+          {isFetching ? 'Refreshing…' : 'Refresh'}
+        </Button>
+      ),
+    });
+    shell.setCartCount(0);
+    return () => {
+      shell.setHeader(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFetching]);
+
   return (
     <div className="space-y-4 p-3 sm:p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">My Orders</h1>
-          <p className="text-sm text-gray-500">Orders you placed at public shops</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => void refetch()} disabled={isFetching} className="gap-1.5">
-            <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
-            {isFetching ? 'Refreshing…' : 'Refresh'}
-          </Button>
-          <Link
-            to={ROUTES.DISCOVER}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            <Store className="w-4 h-4" />
-            Discover
-          </Link>
-        </div>
-      </div>
-
-      <Card className="p-4">
+      <Card className="p-4 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {STATUS_TABS.map((tab) => {
             const Icon = tab.icon;

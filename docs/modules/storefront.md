@@ -8,8 +8,8 @@ Sidebar **Discover & My Orders**:
 
 | Path | Purpose |
 |------|---------|
-| `/discover` | Marketplace-style browse: inline shop list + dense product rows (no modal) |
-| `/discover/my-orders` | Orders you placed as a buyer (Sales → Orders chrome) |
+| `/discover` | Shops or Products (`?focus=shops|products`); product rows open that business’s `/@slug` shop |
+| `/discover/my-orders` | Orders you placed as a buyer — each shop fulfills its own |
 
 Public shop pages stay shareable outside the app chrome:
 
@@ -17,9 +17,14 @@ Public shop pages stay shareable outside the app chrome:
 |------|---------|
 | `/@{slug}` | Public shop + cart (RR7 route `/:shopHandle`; page strips leading `@`) |
 
-`PublicRoute` allows `/@…` while logged in. Discover lives under the authenticated app Layout (sidebar).
+`/discover`, `/discover/my-orders`, and `/@shop` live on **DiscoverLayout outside `PublicRoute`**, so signed-in sidebar links never hit the guest-only redirect to dashboard. Landing / Pricing / Privacy / Login stay under `PublicRoute` (guests only).
 
 Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
+
+Bottom strip (sticky): **App/Home · Products · Shops · Cart · Orders**.
+- Logged-in **App** exits to the POS; never navigates to `/` (that bounced to dashboard).
+- **Products** / **Shops** stay in the Discover shell (`?focus=products|shops`).
+- Cart is per-shop; orders from different businesses go to those businesses.
 
 ## Business setup
 

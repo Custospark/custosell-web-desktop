@@ -7,23 +7,22 @@ import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplac
 interface DiscoverShopRowProps {
   shop: StorefrontShop;
   active?: boolean;
-  onSelect: (shop: StorefrontShop) => void;
+  /** When omitted, row is a static card (wrap with Link). */
+  onSelect?: (shop: StorefrontShop) => void;
 }
 
-/** Dense shop row — designed for long lists at scale. */
+/** Dense shop card — button when onSelect provided, otherwise plain card for Link wrappers. */
 export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShopRowProps) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(shop)}
-      className={cn(
-        marketplaceGlassPanel,
-        'flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors',
-        active
-          ? 'border-teal-500/80 ring-1 ring-teal-600/30 bg-teal-50/90'
-          : 'hover:border-slate-300',
-      )}
-    >
+  const className = cn(
+    marketplaceGlassPanel,
+    'flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors',
+    active
+      ? 'border-teal-500/80 ring-1 ring-teal-600/30 bg-teal-50/90'
+      : 'hover:border-slate-300',
+  );
+
+  const body = (
+    <>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
         {shop.logo_path ? (
           <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
@@ -37,6 +36,16 @@ export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShop
           @{shop.slug}{shop.city ? ` · ${shop.city}` : ''}
         </p>
       </div>
-    </button>
+    </>
   );
+
+  if (onSelect) {
+    return (
+      <button type="button" onClick={() => onSelect(shop)} className={className}>
+        {body}
+      </button>
+    );
+  }
+
+  return <div className={className}>{body}</div>;
 }

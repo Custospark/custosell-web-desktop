@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Minus, Plus, ShoppingBag, Phone } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+import { Minus, Plus, ShoppingBag, Phone, Package } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
@@ -8,6 +8,7 @@ import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useToast } from '../../app/contexts/useToast';
 import { avatarUrl } from '../../shared/utils/avatarUrl';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { cn } from '../../shared/utils/cn';
 import {
   usePlaceStorefrontOrder,
   useStorefrontShop,
@@ -15,18 +16,20 @@ import {
 } from './api/storefrontQueries';
 import type { StorefrontCartItem, StorefrontProduct } from './api/storefrontTypes';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
+import { useDiscoverShell } from './ui/discoverShellContext';
 
-/** RR7 does not match `/@:slug`; route is `/:shopHandle` with a leading `@`. */
 function slugFromShopHandle(shopHandle: string | undefined): string | null {
   if (!shopHandle || !shopHandle.startsWith('@')) return null;
   const slug = shopHandle.slice(1).trim().toLowerCase();
   return slug.length > 0 ? slug : null;
 }
 
+/** Shop content inside DiscoverLayout sticky chrome. */
 export default function ShopPage() {
   const { shopHandle } = useParams<{ shopHandle: string }>();
   const slug = slugFromShopHandle(shopHandle);
   const { showToast } = useToast();
+  const shell = useDiscoverShell();
   const shopQuery = useStorefrontShop(slug ?? '');
   const productsQuery = useStorefrontShopProducts(slug ?? '');
   const placeOrder = usePlaceStorefrontOrder(slug ?? '');
@@ -45,6 +48,55 @@ export default function ShopPage() {
     () => cart.reduce((sum, line) => sum + Number(line.product.unit_price) * line.quantity, 0),
     [cart],
   );
+
+  useEffect(() => {
+    if (!shop) {
+      shell.setHeader({ title: 'Shop', subtitle: 'Loading…' });
+      return;
+    }
+    const shareUrl = storefrontShareUrl(shop.slug);
+    shell.setHeader({
+      title: shop.name,
+      subtitle: `@${shop.slug}${shop.city ? ` · ${shop.city}` : ''}`,
+      actions: (
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <button
+            type="button"
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] font-semibold hover:bg-slate-50 sm:text-xs"
+            onClick={async () => {
+              await navigator.clipboard.writeText(shareUrl);
+              showToast('success', 'Shop link copied');
+            }}
+          >
+            Copy link
+          </button>
+          <a
+            href={whatsappShareUrl(`Order from ${shop.name}: ${shareUrl}`)}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] font-semibold hover:bg-slate-50 sm:text-xs"
+          >
+            WhatsApp
+          </a>
+          {shop.business_phone ? (
+            <a href={`tel:${shop.business_phone}`} className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 sm:text-xs">
+              <Phone className="h-3.5 w-3.5" />
+              Call
+            </a>
+          ) : null}
+        </div>
+      ),
+    });
+  }, [shop, shell, showToast]);
+
+  useEffect(() => {
+    shell.setCartCount(cart.length);
+    return () => {
+      shell.setCartCount(0);
+      shell.setHeader(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.length]);
 
   if (!slug) {
     return <Navigate to={ROUTES.DISCOVER} replace />;
@@ -100,7 +152,7 @@ export default function ShopPage() {
 
   if (shopQuery.isLoading || productsQuery.isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="p-4 sm:p-6">
         <LoadingSkeleton variant="minimal" message="Loading shop…" />
       </div>
     );
@@ -108,153 +160,115 @@ export default function ShopPage() {
 
   if (shopQuery.isError || !shop) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <h1 className="text-xl font-bold text-slate-900">Shop not found</h1>
+      <div className="px-4 py-16 text-center sm:px-6">
+        <h2 className="text-lg font-bold text-slate-900">Shop not found</h2>
         <p className="mt-2 text-sm text-slate-600">This shop may be closed or the link is incorrect.</p>
-        <Link to={ROUTES.DISCOVER} className="mt-6 inline-flex text-sm font-semibold text-blue-600">
-          Browse Discover
-        </Link>
       </div>
     );
   }
 
-  const shareUrl = storefrontShareUrl(shop.slug);
-
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 sm:py-10">
-      <Link to={ROUTES.DISCOVER} className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 mb-6">
-        <ArrowLeft className="h-4 w-4" /> Discover
-      </Link>
-
-      <header className="flex flex-col sm:flex-row gap-4 sm:items-center mb-8">
-        <div className="h-16 w-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
-          {shop.logo_path ? (
-            <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-slate-400 text-xs">Shop</div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-slate-900">{shop.name}</h1>
-          <p className="text-sm text-slate-500">@{shop.slug}{shop.city ? ` · ${shop.city}` : ''}</p>
-          {shop.description ? <p className="mt-2 text-sm text-slate-600">{shop.description}</p> : null}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="text-xs font-semibold rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50"
-              onClick={async () => {
-                await navigator.clipboard.writeText(shareUrl);
-                showToast('success', 'Shop link copied');
-              }}
-            >
-              Copy link
-            </button>
-            <a
-              href={whatsappShareUrl(`Order from ${shop.name}: ${shareUrl}`)}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-semibold rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50"
-            >
-              Share on WhatsApp
-            </a>
-            {shop.business_phone ? (
-              <a href={`tel:${shop.business_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700">
-                <Phone className="h-3.5 w-3.5" /> {shop.business_phone}
-              </a>
-            ) : null}
-          </div>
-        </div>
-      </header>
-
+    <div className="grid flex-1 grid-cols-1 gap-4 p-3 sm:gap-6 sm:p-4 lg:grid-cols-[1fr_300px]">
       {submitted ? (
-        <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 lg:col-span-2">
           Order <span className="font-semibold">{submitted.order_number}</span> received. The shop will contact you shortly.
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <section>
-          {products.length === 0 ? (
-            <EmptyState icon={<ShoppingBag className="w-12 h-12" />} title="No products listed" description="This shop has not listed products yet." />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {products.map((p) => (
-                <article key={p.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-                  <div className="aspect-[4/3] bg-slate-100">
-                    {p.image_path ? (
-                      <img src={avatarUrl(p.image_path) ?? undefined} alt="" className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="p-4">
-                    <h2 className="font-semibold text-slate-900">{p.name}</h2>
-                    {p.category ? <p className="text-xs text-slate-500 mt-0.5">{p.category.name}</p> : null}
-                    <p className="text-sm font-medium text-blue-700 mt-2 tabular-nums">
-                      {formatCurrency(Number(p.unit_price), currency)}
-                    </p>
-                    <Button type="button" className="mt-3 w-full" variant="outline" onClick={() => addToCart(p)}>
-                      Add to order
-                    </Button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
+      <section>
+        {products.length === 0 ? (
+          <EmptyState
+            icon={<ShoppingBag className="w-12 h-12" />}
+            title="No products listed"
+            description="This shop has not listed products yet."
+          />
+        ) : (
+          <ul className="space-y-1.5">
+            {products.map((p) => (
+              <li
+                key={p.id}
+                className={cn('flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5')}
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                  {p.image_path ? (
+                    <img src={avatarUrl(p.image_path) ?? undefined} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Package className="h-4 w-4 text-slate-400" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-900">{p.name}</p>
+                  <p className="text-sm font-semibold tabular-nums text-teal-900">
+                    {formatCurrency(Number(p.unit_price), currency)}
+                  </p>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={() => addToCart(p)}>
+                  Add
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-        <aside className="rounded-2xl border border-slate-200 bg-white p-4 h-fit lg:sticky lg:top-24">
-          <h2 className="font-semibold text-slate-900 mb-3">Your order</h2>
-          {cart.length === 0 ? (
-            <p className="text-sm text-slate-500">Add products to send an order request. No online payment — the shop will contact you.</p>
-          ) : (
-            <ul className="space-y-3 mb-4">
-              {cart.map((line) => (
-                <li key={line.product.id} className="flex items-start justify-between gap-2 text-sm">
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-900 line-clamp-1">{line.product.name}</p>
-                    <p className="text-slate-500 tabular-nums">
-                      {formatCurrency(Number(line.product.unit_price) * line.quantity, currency)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button type="button" className="p-1 rounded border" onClick={() => updateQty(line.product.id, -1)} aria-label="Decrease">
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="w-6 text-center tabular-nums">{line.quantity}</span>
-                    <button type="button" className="p-1 rounded border" onClick={() => updateQty(line.product.id, 1)} aria-label="Increase">
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="text-sm font-semibold tabular-nums mb-3">Total {formatCurrency(cartTotal, currency)}</p>
-          <div className="space-y-2">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Phone / WhatsApp"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notes (optional)"
-              rows={2}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-            <Button type="button" className="w-full" disabled={placeOrder.isPending || cart.length === 0} loading={placeOrder.isPending} onClick={submit}>
-              Place order request
-            </Button>
-          </div>
-        </aside>
-      </div>
+      <aside
+        id="storefront-cart"
+        className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
+        <h2 className="mb-3 font-semibold text-slate-900">Your order</h2>
+        {cart.length === 0 ? (
+          <p className="text-sm text-slate-500">
+            Add products to send an order request. No online payment — the shop will contact you.
+          </p>
+        ) : (
+          <ul className="mb-4 space-y-3">
+            {cart.map((line) => (
+              <li key={line.product.id} className="flex items-start justify-between gap-2 text-sm">
+                <div className="min-w-0">
+                  <p className="line-clamp-1 font-medium text-slate-900">{line.product.name}</p>
+                  <p className="tabular-nums text-slate-500">
+                    {formatCurrency(Number(line.product.unit_price) * line.quantity, currency)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button type="button" className="rounded border p-1" onClick={() => updateQty(line.product.id, -1)} aria-label="Decrease">
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="w-6 text-center tabular-nums">{line.quantity}</span>
+                  <button type="button" className="rounded border p-1" onClick={() => updateQty(line.product.id, 1)} aria-label="Increase">
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mb-3 text-sm font-semibold tabular-nums">Total {formatCurrency(cartTotal, currency)}</p>
+        <div className="space-y-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone / WhatsApp"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Notes (optional)"
+            rows={2}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
+          <Button type="button" className="w-full" disabled={placeOrder.isPending || cart.length === 0} loading={placeOrder.isPending} onClick={submit}>
+            Place order request
+          </Button>
+        </div>
+      </aside>
     </div>
   );
 }

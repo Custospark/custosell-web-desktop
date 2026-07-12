@@ -3,10 +3,10 @@ import { useAppSelector } from '../store/hooks/useApp';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 
-function isStorefrontPublicPath(pathname: string): boolean {
-  return pathname.startsWith('/@');
-}
-
+/**
+ * Guest marketing + auth pages only.
+ * Discover / @shops live outside this gate so logged-in sidebar links are never bounced to dashboard.
+ */
 export function PublicRoute() {
   const location = useLocation();
   const token = useAppSelector((state) => state.auth.token);
@@ -21,8 +21,8 @@ export function PublicRoute() {
     );
   }
 
-  if (token && !isStorefrontPublicPath(location.pathname)) {
-    return <Navigate to={getDefaultRoute(user)} replace />;
+  if (token) {
+    return <Navigate to={getDefaultRoute(user)} replace state={{ from: location.pathname }} />;
   }
 
   return <Outlet />;

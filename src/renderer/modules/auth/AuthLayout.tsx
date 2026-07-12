@@ -11,7 +11,7 @@ import {
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 
 const AUTH_HERO_DESCRIPTION =
-  'Point of Sale (POS), Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one system that works with or without the internet.';
+  'Point of Sale (POS), Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';
 
 interface AuthLayoutProps {
   title: string;

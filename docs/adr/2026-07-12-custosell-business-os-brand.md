@@ -31,7 +31,8 @@ Custosell began as a POS product. The lockup **“Sell More. Track All. Grow Fas
 
 | Surface | Change |
 |---------|--------|
-| Landing hero / sections | Business OS eyebrow, tagline, OS-wide module story |
+| Landing hero | Business OS + plain module list in supporting copy |
+| Landing “What includes” | All 12 modules named clearly (POS, Inventory & Supply Chain, Documents, Projects, etc.) |
 | Landing layout footer | Brand lockup |
 
 ## Non-goals (remaining)

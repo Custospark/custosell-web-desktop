@@ -25,33 +25,33 @@ export function WishlistHeartButton({ product, className, size = 'sm' }: Wishlis
   const add = useAddToWishlist();
   const remove = useRemoveFromWishlist();
 
-  const wishlistItem = wishlistData?.items?.find((w) => w.product_id === productId);
-  const isSaved = Boolean(wishlistItem);
-  const busy = add.isPending || remove.isPending;
+  const isSaved = Boolean(wishlistData?.items?.some((w) => w.product_id === productId));
+  const addingThis = add.isPending && add.variables?.productId === productId;
+  const removingThis = remove.isPending && remove.variables === productId;
+  const busy = addingThis || removingThis;
+
+  const toggle = () => {
+    if (isSaved) {
+      remove.mutate(productId);
+    } else {
+      add.mutate({ productId, product });
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!token) {
+      // Guests have no server wishlist yet — sign in then save.
       requestSignIn({
         intent: 'general',
-        onSuccess: () => {
-          if (wishlistItem) {
-            remove.mutate(wishlistItem.id);
-          } else {
-            add.mutate({ productId, product });
-          }
-        },
+        onSuccess: () => add.mutate({ productId, product }),
       });
       return;
     }
 
-    if (wishlistItem) {
-      remove.mutate(wishlistItem.id);
-    } else {
-      add.mutate({ productId, product });
-    }
+    toggle();
   };
 
   return (
@@ -61,6 +61,7 @@ export function WishlistHeartButton({ product, className, size = 'sm' }: Wishlis
       disabled={busy}
       title={isSaved ? 'Remove from wishlist' : 'Save for later'}
       aria-label={isSaved ? 'Remove from wishlist' : 'Save for later'}
+      aria-pressed={isSaved}
       className={cn(
         'flex items-center justify-center rounded-full p-1.5 transition hover:scale-110 disabled:opacity-50',
         isSaved

@@ -15,8 +15,30 @@ function unwrapList<T>(data: unknown): T[] {
   return [];
 }
 
+function emptyWishlist(): WishlistCache {
+  return { items: [], count: 0 };
+}
+
 function patchWishlistCount(qc: ReturnType<typeof useQueryClient>, next: number) {
   qc.setQueryData(storefrontKeys.wishlistCount(), Math.max(0, next));
+}
+
+function syncWishlistCaches(qc: ReturnType<typeof useQueryClient>, next: WishlistCache) {
+  qc.setQueryData(storefrontKeys.wishlist(), next);
+  patchWishlistCount(qc, next.count);
+}
+
+function parseWishlistItem(payload: unknown): WishlistItem | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const root = payload as { data?: unknown };
+  const raw = (root.data && typeof root.data === 'object' ? root.data : payload) as Partial<WishlistItem>;
+  if (typeof raw.id !== 'number' || typeof raw.product_id !== 'number') return null;
+  return {
+    id: raw.id,
+    product_id: raw.product_id,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : new Date().toISOString(),
+    product: raw.product ?? null,
+  };
 }
 
 export function useWishlist(enabled = true) {
@@ -46,23 +68,15 @@ export function useWishlistCount(enabled = true) {
   });
 }
 
-/** Optimistically drop products from wishlist cache (place-order / move-to-cart). */
+/** Drop products from wishlist cache after a successful place-order. */
 export function optimisticallyRemoveWishlistProducts(
   qc: ReturnType<typeof useQueryClient>,
   productIds: number[],
 ) {
   const idSet = new Set(productIds);
-  const prev = qc.getQueryData<WishlistCache>(storefrontKeys.wishlist());
-  if (prev) {
-    const items = prev.items.filter((w) => !idSet.has(w.product_id));
-    qc.setQueryData(storefrontKeys.wishlist(), { items, count: items.length });
-    patchWishlistCount(qc, items.length);
-  } else {
-    const count = qc.getQueryData<number>(storefrontKeys.wishlistCount());
-    if (typeof count === 'number') {
-      patchWishlistCount(qc, Math.max(0, count - productIds.length));
-    }
-  }
+  const prev = qc.getQueryData<WishlistCache>(storefrontKeys.wishlist()) ?? emptyWishlist();
+  const items = prev.items.filter((w) => !idSet.has(w.product_id));
+  syncWishlistCaches(qc, { items, count: items.length });
 }
 
 export function useAddToWishlist() {
@@ -74,34 +88,54 @@ export function useAddToWishlist() {
       const { data } = await axiosInstance.post(STOREFRONT.WISHLIST, {
         product_id: input.productId,
       });
-      return data as { data?: WishlistItem; message?: string };
+      return data;
     },
     onMutate: async ({ productId, product }) => {
       await qc.cancelQueries({ queryKey: storefrontKeys.wishlist() });
       await qc.cancelQueries({ queryKey: storefrontKeys.wishlistCount() });
       const prevList = qc.getQueryData<WishlistCache>(storefrontKeys.wishlist());
       const prevCount = qc.getQueryData<number>(storefrontKeys.wishlistCount());
-      if (prevList && !prevList.items.some((w) => w.product_id === productId)) {
+      const base = prevList ?? emptyWishlist();
+      if (!base.items.some((w) => w.product_id === productId)) {
         const optimistic: WishlistItem = {
-          id: -Date.now(),
+          id: -productId,
           product_id: productId,
           created_at: new Date().toISOString(),
           product: product ?? null,
         };
-        const items = [optimistic, ...prevList.items];
-        qc.setQueryData(storefrontKeys.wishlist(), { items, count: items.length });
-        patchWishlistCount(qc, items.length);
-      } else if (!prevList && typeof prevCount === 'number') {
-        patchWishlistCount(qc, prevCount + 1);
+        syncWishlistCaches(qc, {
+          items: [optimistic, ...base.items],
+          count: base.items.length + 1,
+        });
+      } else {
+        syncWishlistCaches(qc, { items: base.items, count: base.items.length });
       }
       return { prevList, prevCount };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prevList) qc.setQueryData(storefrontKeys.wishlist(), ctx.prevList);
-      if (typeof ctx?.prevCount === 'number') patchWishlistCount(qc, ctx.prevCount);
+      if (ctx?.prevList) syncWishlistCaches(qc, ctx.prevList);
+      else if (typeof ctx?.prevCount === 'number') patchWishlistCount(qc, ctx.prevCount);
       showToast('error', 'Could not save. Check your connection and try again.');
     },
-    onSuccess: () => {
+    onSuccess: (data, { productId, product }) => {
+      const serverItem = parseWishlistItem(data);
+      const prev = qc.getQueryData<WishlistCache>(storefrontKeys.wishlist()) ?? emptyWishlist();
+      const withoutTemp = prev.items.filter((w) => w.product_id !== productId);
+      const nextItem: WishlistItem = serverItem
+        ? {
+            ...serverItem,
+            product: serverItem.product ?? product ?? null,
+          }
+        : {
+            id: -productId,
+            product_id: productId,
+            created_at: new Date().toISOString(),
+            product: product ?? null,
+          };
+      syncWishlistCaches(qc, {
+        items: [nextItem, ...withoutTemp],
+        count: withoutTemp.length + 1,
+      });
       showToast('success', 'Saved to wishlist');
     },
     onSettled: () => {
@@ -111,31 +145,28 @@ export function useAddToWishlist() {
   });
 }
 
+/** Remove by product_id so hearts never DELETE a temporary optimistic row id. */
 export function useRemoveFromWishlist() {
   const qc = useQueryClient();
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async (wishlistId: number) => {
-      await axiosInstance.delete(STOREFRONT.WISHLIST_ITEM(wishlistId));
+    mutationFn: async (productId: number) => {
+      await axiosInstance.delete(STOREFRONT.WISHLIST_BY_PRODUCT(productId));
     },
-    onMutate: async (wishlistId) => {
+    onMutate: async (productId) => {
       await qc.cancelQueries({ queryKey: storefrontKeys.wishlist() });
       await qc.cancelQueries({ queryKey: storefrontKeys.wishlistCount() });
       const prevList = qc.getQueryData<WishlistCache>(storefrontKeys.wishlist());
       const prevCount = qc.getQueryData<number>(storefrontKeys.wishlistCount());
-      if (prevList) {
-        const items = prevList.items.filter((w) => w.id !== wishlistId);
-        qc.setQueryData(storefrontKeys.wishlist(), { items, count: items.length });
-        patchWishlistCount(qc, items.length);
-      } else if (typeof prevCount === 'number') {
-        patchWishlistCount(qc, prevCount - 1);
-      }
+      const base = prevList ?? emptyWishlist();
+      const items = base.items.filter((w) => w.product_id !== productId);
+      syncWishlistCaches(qc, { items, count: items.length });
       return { prevList, prevCount };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prevList) qc.setQueryData(storefrontKeys.wishlist(), ctx.prevList);
-      if (typeof ctx?.prevCount === 'number') patchWishlistCount(qc, ctx.prevCount);
+      if (ctx?.prevList) syncWishlistCaches(qc, ctx.prevList);
+      else if (typeof ctx?.prevCount === 'number') patchWishlistCount(qc, ctx.prevCount);
       showToast('error', 'Could not remove. Try again.');
     },
     onSuccess: () => {

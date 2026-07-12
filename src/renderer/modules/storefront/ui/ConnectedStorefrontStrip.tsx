@@ -10,27 +10,32 @@ import {
 interface ConnectedStorefrontStripProps {
   active: StorefrontStripTab;
   cartCount?: number;
-  onCartScroll?: () => void;
+  onOpenCart: () => void;
+  onCloseCart?: () => void;
+  onOrdersAuthRequired?: () => void;
   className?: string;
 }
 
 /**
  * Bottom strip for DiscoverLayout.
- * Logged-in users never navigate to `/` (PublicRoute would bounce them to dashboard).
- * Products / Shops stay in the Discover shell; App exits to the POS intentionally.
+ * Closes cart when switching browse modes so the page change is obvious.
  */
 export function ConnectedStorefrontStrip({
   active,
   cartCount = 0,
-  onCartScroll,
+  onOpenCart,
+  onCloseCart,
+  onOrdersAuthRequired,
   className,
 }: ConnectedStorefrontStripProps) {
   const navigate = useNavigate();
   const token = useAppSelector((s) => s.auth.token);
   const user = useAppSelector((s) => s.auth.user);
 
-  const goProducts = () => navigate({ pathname: ROUTES.DISCOVER, search: '?focus=products' });
-  const goShops = () => navigate({ pathname: ROUTES.DISCOVER, search: '?focus=shops' });
+  const leaveCartThen = (fn: () => void) => {
+    onCloseCart?.();
+    fn();
+  };
 
   return (
     <StorefrontActionStrip
@@ -40,27 +45,37 @@ export function ConnectedStorefrontStrip({
       homeLabel={token ? 'App' : 'Home'}
       homeTitle={token ? 'Back to Custosell app' : 'Custosell marketing home'}
       onHome={() => {
-        if (token) {
-          navigate(getDefaultRoute(user));
-          return;
-        }
-        navigate(ROUTES.HOME);
+        leaveCartThen(() => {
+          if (token) {
+            navigate(getDefaultRoute(user));
+            return;
+          }
+          navigate(ROUTES.HOME);
+        });
       }}
-      onDiscover={goProducts}
-      onBrowse={goShops}
-      onCart={() => {
-        if (onCartScroll) {
-          onCartScroll();
-          return;
-        }
-        goProducts();
+      onDiscover={() => {
+        leaveCartThen(() => {
+          navigate({ pathname: ROUTES.DISCOVER, search: '?focus=products' });
+        });
       }}
+      onBrowse={() => {
+        leaveCartThen(() => {
+          navigate({ pathname: ROUTES.DISCOVER, search: '?focus=shops' });
+        });
+      }}
+      onCart={onOpenCart}
       onOrders={() => {
-        if (token) {
-          navigate(ROUTES.DISCOVER_MY_ORDERS);
-          return;
-        }
-        navigate(ROUTES.LOGIN, { state: { from: ROUTES.DISCOVER_MY_ORDERS } });
+        leaveCartThen(() => {
+          if (token) {
+            navigate(ROUTES.DISCOVER_MY_ORDERS);
+            return;
+          }
+          if (onOrdersAuthRequired) {
+            onOrdersAuthRequired();
+            return;
+          }
+          navigate(ROUTES.LOGIN, { state: { from: ROUTES.DISCOVER_MY_ORDERS } });
+        });
       }}
     />
   );

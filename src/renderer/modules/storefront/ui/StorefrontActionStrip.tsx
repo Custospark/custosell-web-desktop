@@ -19,7 +19,7 @@ interface StorefrontActionStripProps {
 }
 
 /**
- * Horizontal bottom nav — Home/App · Discover (products) · Browse (shops) · Cart · Orders.
+ * Horizontal bottom nav — Marketplace-style lively strip with always-visible labels.
  */
 export function StorefrontActionStrip({
   active,
@@ -37,7 +37,7 @@ export function StorefrontActionStrip({
   return (
     <div
       className={cn(
-        'relative z-30 flex shrink-0 items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain border-t border-slate-200/80 bg-white/95 px-2 py-2 backdrop-blur-sm sm:gap-3 sm:px-3 sm:py-2.5',
+        'relative z-50 flex shrink-0 items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain border-t border-slate-200/80 bg-white/95 px-2 py-2 backdrop-blur-sm sm:gap-3 sm:px-3 sm:py-2.5',
         className,
       )}
       role="navigation"
@@ -126,37 +126,41 @@ function StripButton({
 }) {
   const tones: Record<Tone, string> = {
     slate: active
-      ? 'border-slate-500 bg-slate-100 text-slate-950 ring-2 ring-slate-300/60'
-      : 'border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 text-slate-800 hover:border-slate-400',
+      ? 'border-slate-500 bg-slate-100 text-slate-950 ring-2 ring-slate-300/60 shadow-md'
+      : 'border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 text-slate-800 hover:border-slate-400 hover:shadow-md hover:shadow-slate-200/60',
     amber: active
-      ? 'border-amber-500 bg-amber-100 text-amber-950 ring-2 ring-amber-300/60'
-      : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 text-amber-950 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100',
+      ? 'border-amber-500 bg-amber-100 text-amber-950 ring-2 ring-amber-300/60 shadow-md'
+      : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 text-amber-950 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:shadow-md hover:shadow-amber-200/50',
     teal: active
-      ? 'border-teal-500 bg-teal-100 text-teal-950 ring-2 ring-teal-300/60'
-      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-teal-900 hover:border-teal-400 hover:from-teal-100 hover:to-cyan-100',
+      ? 'border-teal-500 bg-teal-100 text-teal-950 ring-2 ring-teal-300/60 shadow-md'
+      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-teal-900 hover:border-teal-400 hover:from-teal-100 hover:to-cyan-100 hover:shadow-md hover:shadow-teal-200/50',
     emerald: active
-      ? 'border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-300/60'
-      : 'border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 text-emerald-900 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100',
+      ? 'border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-300/60 shadow-md'
+      : 'border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 text-emerald-900 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:shadow-md hover:shadow-emerald-200/50',
     blue: active
-      ? 'border-blue-500 bg-blue-100 text-blue-950 ring-2 ring-blue-300/60'
-      : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-sky-50 text-blue-900 hover:border-blue-400 hover:from-blue-100 hover:to-sky-100',
+      ? 'border-blue-500 bg-blue-100 text-blue-950 ring-2 ring-blue-300/60 shadow-md'
+      : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-sky-50 text-blue-900 hover:border-blue-400 hover:from-blue-100 hover:to-sky-100 hover:shadow-md hover:shadow-blue-200/50',
   };
 
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
       title={title}
       aria-label={title}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-sm font-semibold shadow-sm transition-all sm:gap-2 sm:px-4 sm:py-2.5',
-        'active:scale-[0.98]',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-xs font-semibold shadow-sm transition-all sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm',
+        'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
         tones[tone],
       )}
     >
       {icon}
-      <span className="hidden md:inline">{label}</span>
+      <span>{label}</span>
     </button>
   );
 }

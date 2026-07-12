@@ -44,6 +44,7 @@ export function useStorefrontDiscover(q: string, category: string) {
         meta: (data as { meta?: { total?: number } })?.meta ?? {},
       };
     },
+    staleTime: 60_000,
   });
 }
 
@@ -56,6 +57,7 @@ export function useStorefrontShops(q: string) {
       });
       return unwrapList<StorefrontShop>(data);
     },
+    staleTime: 60_000,
   });
 }
 
@@ -66,6 +68,7 @@ export function useStorefrontCategories() {
       const { data } = await axiosInstance.get(STOREFRONT.CATEGORIES);
       return unwrapList<StorefrontCategory>(data);
     },
+    staleTime: 60_000,
   });
 }
 
@@ -78,6 +81,7 @@ export function useStorefrontShop(slug: string) {
     },
     enabled: Boolean(slug),
     retry: false,
+    staleTime: 60_000,
   });
 }
 
@@ -94,13 +98,20 @@ export function useStorefrontShopProducts(slug: string, category = '') {
       };
     },
     enabled: Boolean(slug),
+    staleTime: 60_000,
   });
 }
 
-export function usePlaceStorefrontOrder(slug: string) {
+export function usePlaceStorefrontOrder() {
   return useMutation({
-    mutationFn: async (payload: PlaceStorefrontOrderPayload) => {
-      const { data } = await axiosInstance.post<PlaceStorefrontOrderResult>(STOREFRONT.ORDERS(slug), payload);
+    mutationFn: async ({
+      slug,
+      ...payload
+    }: PlaceStorefrontOrderPayload & { slug: string }) => {
+      const { data } = await axiosInstance.post<PlaceStorefrontOrderResult>(
+        STOREFRONT.ORDERS(slug),
+        payload,
+      );
       return data;
     },
   });

@@ -1,24 +1,40 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
+import { cn } from '../../shared/utils/cn';
+import {
+  marketplaceGlassHeader,
+  useMarketplaceHeroBackground,
+} from '../inventory/ui/marketplace/marketplaceTheme';
+import {
+  StorefrontMultiCartProvider,
+  useStorefrontMultiCart,
+} from './cart/storefrontMultiCartContext';
 import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
+import { StorefrontCartHub } from './ui/StorefrontCartHub';
+import { StorefrontLoginDialog } from './ui/StorefrontLoginDialog';
 import {
   DiscoverShellProvider,
   useDiscoverShell,
 } from './ui/discoverShellContext';
 import type { StorefrontStripTab } from './ui/StorefrontActionStrip';
+import { usePrefersCartSheet } from './ui/usePrefersCartSheet';
 
-function activeTabFromPath(pathname: string, search: string): StorefrontStripTab {
+function activeTabFromPath(
+  pathname: string,
+  search: string,
+  cartOpen: boolean,
+): StorefrontStripTab {
+  if (cartOpen) return 'cart';
   if (pathname.startsWith(ROUTES.DISCOVER_MY_ORDERS) || pathname.endsWith('/my-orders')) {
     return 'orders';
   }
-  if (pathname.startsWith('/@')) return 'cart';
+  if (pathname.startsWith('/@')) return 'browse';
   const focus = new URLSearchParams(search).get('focus');
-  if (focus === 'shops') return 'browse';
   if (focus === 'products') return 'discover';
   return 'browse';
 }
@@ -42,38 +58,62 @@ function DiscoverShellChrome() {
   const navigate = useNavigate();
   const token = useAppSelector((s) => s.auth.token);
   const user = useAppSelector((s) => s.auth.user);
-  const { header, cartCount } = useDiscoverShell();
+  const { header } = useDiscoverShell();
+  const { lineCount, cartOpen, setCartOpen, openCart } = useStorefrontMultiCart();
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginIntent, setLoginIntent] = useState<'orders' | 'general'>('general');
+  const prefersSheet = usePrefersCartSheet();
+  const heroStyle = useMarketplaceHeroBackground();
+  const cartDocked = cartOpen && !prefersSheet;
 
-  const active = activeTabFromPath(location.pathname, location.search);
+  const active = activeTabFromPath(location.pathname, location.search, cartOpen);
   const fallback = defaultHeader(location.pathname, location.search);
   const title = header?.title ?? fallback.title;
   const subtitle = header?.subtitle ?? fallback.subtitle;
 
-  const onCartScroll = useMemo(() => {
-    if (!location.pathname.startsWith('/@')) return undefined;
-    return () => {
-      document.getElementById('storefront-cart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-  }, [location.pathname]);
+  const cartProps = {
+    open: cartOpen,
+    onClose: () => setCartOpen(false),
+  } as const;
+
+  const openSignIn = (intent: 'orders' | 'general' = 'general') => {
+    setLoginIntent(intent);
+    setLoginOpen(true);
+  };
 
   return (
-    <div className="flex h-dvh flex-col bg-slate-50">
-      <header className="sticky top-0 z-40 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
+    <div
+      className={cn(
+        'flex h-dvh min-h-0 flex-1 overflow-hidden',
+        'flex-col lg:flex-row',
+        cartDocked ? 'gap-0 sm:gap-3 sm:p-3' : 'gap-0',
+      )}
+    >
+      <div
+        className={cn(
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
+          'rounded-none border-0 shadow-none',
+          cartDocked
+            ? 'sm:rounded-xl sm:border sm:border-white/50 sm:shadow-sm'
+            : 'm-0 sm:m-3 sm:rounded-xl sm:border sm:border-white/50 sm:shadow-sm',
+        )}
+        style={heroStyle}
+      >
+        <header className={marketplaceGlassHeader}>
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               to={`${ROUTES.DISCOVER}?focus=shops`}
-              className="flex shrink-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40"
+              className="flex shrink-0 items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-teal-600/40"
               aria-label={`${PRODUCT_NAME} Discover`}
+              onClick={() => setCartOpen(false)}
             >
               <LogoImage size="sm" />
-              <span className="hidden text-sm font-bold text-teal-800 sm:inline">{PRODUCT_NAME}</span>
             </Link>
-            <div className="h-6 w-px shrink-0 bg-slate-200" aria-hidden />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-800">Discover</p>
+              <p className="truncate text-base font-semibold text-slate-900">{title}</p>
               {subtitle ? (
-                <p className="truncate text-[11px] text-slate-500 sm:text-xs">{subtitle}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">{subtitle}</p>
               ) : null}
             </div>
           </div>
@@ -83,40 +123,73 @@ function DiscoverShellChrome() {
               <button
                 type="button"
                 onClick={() => navigate(getDefaultRoute(user))}
-                className="hidden rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 sm:inline-flex"
+                className="rounded-xl border-2 border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md"
               >
                 Open app
               </button>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => openSignIn('general')}
+                className="rounded-xl border-2 border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-md hover:shadow-teal-200/50"
+              >
+                Sign in
+              </button>
+            )}
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
           <Outlet />
-        </div>
-      </main>
+        </main>
 
-      <div className="sticky bottom-0 z-40 shrink-0 bg-white/95 shadow-[0_-4px_20px_rgba(15,23,42,0.06)] backdrop-blur-md">
         <ConnectedStorefrontStrip
           active={active}
-          cartCount={cartCount}
-          onCartScroll={onCartScroll}
+          cartCount={lineCount}
+          onOpenCart={() => openCart()}
+          onCloseCart={() => setCartOpen(false)}
+          onOrdersAuthRequired={() => openSignIn('orders')}
         />
       </div>
+
+      {cartDocked ? (
+        <div className="hidden min-h-0 w-[min(100%,22rem)] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:flex xl:w-[26rem] 2xl:w-[28rem]">
+          <StorefrontCartHub
+            {...cartProps}
+            variant="dock"
+            className="rounded-xl border-0 shadow-none"
+          />
+        </div>
+      ) : null}
+
+      {prefersSheet ? <StorefrontCartHub {...cartProps} variant="sheet" /> : null}
+
+      <StorefrontLoginDialog
+        isOpen={loginOpen}
+        title={loginIntent === 'orders' ? 'Sign in to see your orders' : 'Sign in to Discover'}
+        subtitle={
+          loginIntent === 'orders'
+            ? 'Orders you placed across shops appear here.'
+            : 'Use your email and password. Carts stay in this browser.'
+        }
+        onClose={() => setLoginOpen(false)}
+        onSuccess={() => {
+          setLoginOpen(false);
+          if (loginIntent === 'orders') {
+            navigate(ROUTES.DISCOVER_MY_ORDERS);
+          }
+        }}
+      />
     </div>
   );
 }
 
-/**
- * Single consistent storefront chrome: sticky header + sticky strip.
- * Discover, My Orders, and /@shop all render inside this shell.
- */
 export default function DiscoverLayout() {
   return (
     <DiscoverShellProvider>
-      <DiscoverShellChrome />
+      <StorefrontMultiCartProvider>
+        <DiscoverShellChrome />
+      </StorefrontMultiCartProvider>
     </DiscoverShellProvider>
   );
 }

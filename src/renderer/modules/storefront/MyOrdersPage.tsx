@@ -12,7 +12,6 @@ import {
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
-import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
@@ -20,6 +19,7 @@ import { Pagination, usePagination } from '../../shared/components/tables/Pagina
 import { Table } from '../../shared/components/tables/Table';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
+import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
 import { useMyStorefrontOrders } from './api/storefrontQueries';
 import type { MyStorefrontOrder } from './api/storefrontTypes';
 import { useDiscoverShell } from './ui/discoverShellContext';
@@ -119,8 +119,8 @@ export default function MyOrdersPage() {
   }, [isFetching]);
 
   return (
-    <div className="space-y-4 p-3 sm:p-4">
-      <Card className="p-4 shadow-sm">
+    <div className="space-y-4">
+      <div className={cn(marketplaceGlassPanel, 'p-4')}>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {STATUS_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -131,10 +131,10 @@ export default function MyOrdersPage() {
                 type="button"
                 onClick={() => setStatusTab(tab.id)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-xl border-2 px-3 py-1.5 text-sm font-semibold transition-all',
                   statusTab === tab.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                    ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-300/40'
+                    : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-sky-50 text-blue-900 hover:border-blue-400',
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -142,7 +142,7 @@ export default function MyOrdersPage() {
                 <sup
                   className={cn(
                     'ml-0.5 text-[10px] font-bold leading-none tabular-nums',
-                    statusTab === tab.id ? 'text-blue-100' : 'text-gray-500',
+                    statusTab === tab.id ? 'text-blue-700' : 'text-slate-500',
                   )}
                 >
                   {count}
@@ -243,7 +243,7 @@ export default function MyOrdersPage() {
             </div>
           </>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

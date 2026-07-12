@@ -66,7 +66,7 @@ export default function DiscoverPage() {
   const isError = focus === 'shops' ? shopsQuery.isError : productsQuery.isError;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 p-3 sm:p-4">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-3">
       <div className={cn(marketplaceGlassPanel, 'flex shrink-0 flex-col gap-2 px-3 py-2.5 shadow-md sm:flex-row sm:items-center')}>
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
@@ -206,7 +206,9 @@ function ProductsList({
                 to={ROUTES.SHOP(slug)}
                 className={cn(
                   marketplaceGlassPanel,
-                  'flex items-center gap-3 px-3 py-2.5 shadow-sm transition hover:border-teal-300',
+                  'flex items-center gap-3 px-3 py-2.5 shadow-md transition-all duration-200',
+                  'hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-xl hover:shadow-teal-900/10',
+                  'active:translate-y-0 active:scale-[0.99]',
                 )}
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">

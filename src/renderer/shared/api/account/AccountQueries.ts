@@ -77,11 +77,12 @@ type LoginMutationResult = AuthResponse & {
   pendingAuthSync?: boolean;
 };
 
-export function useLogin() {
+export function useLogin(options?: { redirect?: boolean }) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const shouldRedirect = options?.redirect !== false;
 
   return useMutation<LoginMutationResult, Error, LoginRequest>({
     mutationFn: async (credentials) => {
@@ -130,12 +131,17 @@ export function useLogin() {
         showToast('success', 'Welcome back!');
         void refreshAllServerCatalogSnapshots();
       }
-      navigate(getDefaultRoute(userData));
+      if (shouldRedirect) {
+        navigate(getDefaultRoute(userData));
+      }
     },
     onError: (error) => {
       const message = getAuthErrorMessage(error, 'Invalid credentials');
       dispatch(loginFailure(message));
-      showToast('error', message);
+      // Discover dialog shows inline error; skip duplicate toast when staying in-shell
+      if (shouldRedirect) {
+        showToast('error', message);
+      }
     },
   });
 }

@@ -5,7 +5,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { PRODUCT_NAME, SUPPORTING_LINE } from '../../shared/brand/custosellBrand';
+import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import {
   isNetworkFailure,
@@ -30,7 +30,6 @@ export default function LoginPage() {
       title="Sign In"
       subtitle={`Welcome back to ${PRODUCT_NAME}`}
       heroImage={AUTH_HERO_IMAGES.login}
-      heroDescription={SUPPORTING_LINE}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="relative">

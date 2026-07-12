@@ -5,7 +5,6 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { SUPPORTING_LINE } from '../../shared/brand/custosellBrand';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff } from 'lucide-react';
@@ -72,7 +71,6 @@ export default function RegisterPage() {
       title="Set Up Your Business"
       subtitle="Free to use. No credit card needed. Works online and offline."
       heroImage={AUTH_HERO_IMAGES.register}
-      heroDescription={SUPPORTING_LINE}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

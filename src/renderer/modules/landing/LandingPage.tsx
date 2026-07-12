@@ -1,7 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3, Users, Receipt, Clock, Store, Coffee, Pill, Scissors, Apple, Wrench, Building2, Shirt, Heart, Wine, Car, Monitor, BookOpen, Globe, Printer, Droplets, Fuel, Wheat, Ruler, PawPrint, Sofa, ChefHat, UtensilsCrossed, Building } from 'lucide-react';
+import {
+  UserPlus, LogIn, Sparkles, Shield, ShoppingCart, Package, BarChart3,
+  Store, Coffee, Pill, Scissors, Apple, Wrench, Building2, Shirt, Heart, Wine, Car, Monitor,
+  BookOpen, Globe, Printer, Droplets, Fuel, Wheat, Ruler, PawPrint, Sofa, ChefHat, UtensilsCrossed,
+  Building, Kanban, IdCard,
+} from 'lucide-react';
+import {
+  PRODUCT_NAME,
+  SUPPORTING_LINE,
+  TAGLINE,
+  TAGLINE_SHORT,
+} from '../../shared/brand/custosellBrand';
 import TestimonialCarousel from './ui/TestimonialCarousel';
 import fasterSales from './assets/screenshots/faster_sales.png';
 import smartInventory from './assets/screenshots/smart_inventory.png';
@@ -18,12 +29,48 @@ const stats = [
 ];
 
 const benefits = [
-  { icon: ShoppingCart, title: 'Fast Sales', description: 'Ring up customers in seconds — cash, mobile money, or card. No more long queues.', color: 'from-blue-500 to-blue-600', image: fasterSales },
-  { icon: Package, title: 'Smart Inventory', description: 'Track stock in real-time. Get low-stock alerts and know what to reorder.', color: 'from-emerald-500 to-emerald-600', image: smartInventory },
-  { icon: BarChart3, title: 'Real-time Dashboard', description: 'See daily revenue, sales trends, and business performance at a glance.', color: 'from-purple-500 to-purple-600', image: realTimeDashboard },
-  { icon: Users, title: 'Customer Insights', description: 'Know your customers. Track purchase history and buying patterns.', color: 'from-amber-500 to-amber-600', image: customerInsights },
-  { icon: Receipt, title: 'Expense Tracking', description: 'Log and categorize expenses. Understand where your money goes.', color: 'from-red-500 to-red-600', image: expenseTracking },
-  { icon: Clock, title: 'Shift Management', description: 'Track staff shifts, sales per cashier, and end-of-day reconciliations.', color: 'from-indigo-500 to-indigo-600', image: shiftManagement },
+  {
+    icon: ShoppingCart,
+    title: 'Sales & Checkout',
+    description: 'Ring sales fast — cash, mobile money, or card. Shifts and receipts built in.',
+    color: 'from-blue-500 to-blue-600',
+    image: fasterSales,
+  },
+  {
+    icon: Package,
+    title: 'Inventory & Supply',
+    description: 'Stock, marketplace, and purchase orders — know what you have and what to reorder.',
+    color: 'from-emerald-500 to-emerald-600',
+    image: smartInventory,
+  },
+  {
+    icon: Kanban,
+    title: 'Pipeline & Projects',
+    description: 'Win deals on boards, run estimates and delivery — from lead to done.',
+    color: 'from-violet-500 to-violet-600',
+    image: customerInsights,
+  },
+  {
+    icon: BarChart3,
+    title: 'Dashboard & Insights',
+    description: 'See revenue, trends, and performance at a glance across your workspace.',
+    color: 'from-purple-500 to-purple-600',
+    image: realTimeDashboard,
+  },
+  {
+    icon: BookOpen,
+    title: 'Money & Books',
+    description: 'Expenses, accounting, and forecasting — understand where the money goes.',
+    color: 'from-amber-500 to-amber-600',
+    image: expenseTracking,
+  },
+  {
+    icon: IdCard,
+    title: 'People & Shifts',
+    description: 'Staff, HR, and shift reconciliations — your team runs with the business.',
+    color: 'from-indigo-500 to-indigo-600',
+    image: shiftManagement,
+  },
 ];
 
 export default function LandingPage() {
@@ -35,7 +82,6 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pt-8 lg:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div className="text-center lg:text-left space-y-8">
@@ -45,17 +91,19 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1">
-              Point of Sale (POS) System
+              {TAGLINE_SHORT}
             </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
-              Sell More.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
-                Track All. Grow Fast.
-              </span>
+              {PRODUCT_NAME}
             </motion.h1>
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-snug tracking-tight">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
+                {TAGLINE}
+              </span>
+            </motion.p>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-lg sm:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              From fast sales and smart inventory to customer insights, expense tracking, and shift management — one platform that works online and offline.
+              {SUPPORTING_LINE}
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
@@ -76,16 +124,17 @@ export default function LandingPage() {
           </div>
 
           <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="lg:block">
-            <img src={realTimeDashboard} alt="Custosell Dashboard" className="rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
+            <img src={realTimeDashboard} alt={`${PRODUCT_NAME} dashboard`} className="rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
           </motion.div>
         </div>
       </section>
 
-      {/* Benefits */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">Everything You Need to Run Your Business</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">From ringing up sales to tracking inventory and understanding your customers — Custosell does it all.</p>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            From checkout to payroll, pipeline to books — {PRODUCT_NAME} is the operating system for your company.
+          </p>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {benefits.map((benefit, i) => {
@@ -115,11 +164,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Built for */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">Built for Every Business</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">From retail shops to restaurants, pharmacies to hardware stores — Custosell works for your business type.</p>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            From retail shops to restaurants, pharmacies to projects — {PRODUCT_NAME} fits how you work.
+          </p>
         </motion.div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 max-w-5xl mx-auto">
           {[
@@ -167,20 +217,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">Trusted Across Africa</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">Business owners from across the continent rely on Custosell to run their businesses every day.</p>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            Business owners across the continent rely on {PRODUCT_NAME} to run their companies every day.
+          </p>
         </motion.div>
         <TestimonialCarousel />
       </section>
 
-      {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Growing Businesses Trust Custosell</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">From small shops to growing enterprises — businesses rely on Custosell every day.</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Growing Businesses Trust {PRODUCT_NAME}</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            From small shops to growing enterprises — one business operating system, online or offline.
+          </p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
@@ -193,12 +245,13 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* CTA */}
       <section className="py-16 relative">
         <div className="absolute inset-0 bg-blue-50/50 border-t border-b border-blue-100" />
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto px-4 text-center space-y-6 relative">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Start Growing Your Business Today</h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">Join thousands of businesses already using Custosell. Free to start, no credit card required.</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Run Your Business on {PRODUCT_NAME}</h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Free to start, no credit card required. Your Business Operating System — ready when you are.
+          </p>
           <div className="flex items-center justify-center gap-3">
             <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center px-8 py-3.5 text-base font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow cursor-pointer">
               <UserPlus className="w-5 h-5 mr-2" />

@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Home } from 'lucide-react';
 import LogoImage from '../../shared/assets/LogoImage';
+import {
+  PRODUCT_NAME,
+  SUPPORTING_LINE,
+  TAGLINE,
+  TAGLINE_SHORT,
+} from '../../shared/brand/custosellBrand';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 
 interface AuthLayoutProps {
@@ -18,12 +24,9 @@ const AUTH_HIGHLIGHTS = [
   { value: 'Free', label: 'To Get Started' },
 ] as const;
 
-const DEFAULT_HERO_DESCRIPTION =
-  'A complete POS for retail and wholesale — sales, inventory, customers, and expenses in one place.';
-
 export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
   const image = heroImage || AUTH_HERO_IMAGES.login;
-  const description = heroDescription || DEFAULT_HERO_DESCRIPTION;
+  const description = heroDescription || SUPPORTING_LINE;
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -33,17 +36,17 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
         <div className="relative z-10 flex flex-col justify-between p-10 xl:p-12 w-full">
           <Link to={ROUTES.HOME} className="inline-flex w-fit group">
             <span className="text-white text-xl font-bold tracking-tight group-hover:text-blue-100 transition-colors">
-              Custosell
+              {PRODUCT_NAME}
             </span>
           </Link>
 
           <div className="max-w-md space-y-5">
             <div>
               <p className="text-white text-xs font-semibold uppercase tracking-[0.2em] mb-3">
-                Point of Sale (POS) System
+                {TAGLINE_SHORT}
               </p>
               <h1 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight">
-                Sell More. Track All. Grow Fast.
+                {TAGLINE}
               </h1>
               <p className="text-blue-100/90 text-base leading-relaxed">{description}</p>
             </div>
@@ -67,7 +70,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
 
           <div className="text-center space-y-1">
             <p className="text-white/70 text-sm">
-              Custosell is a product of{' '}
+              {PRODUCT_NAME} is a product of{' '}
               <a
                 href="https://www.custospark.com"
                 target="_blank"
@@ -88,7 +91,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
         <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
           <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
             <LogoImage size="md" />
-            <span className="text-xl font-bold text-blue-600">Custosell</span>
+            <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
           </Link>
           <div className="ml-auto">
             <Link
@@ -108,9 +111,9 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
               <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/55 to-blue-900/25" />
               <div className="absolute inset-x-0 bottom-0 p-5">
                 <p className="text-white text-[11px] font-semibold uppercase tracking-[0.18em] mb-1.5">
-                  Point of Sale (POS) System
+                  {TAGLINE_SHORT}
                 </p>
-                <p className="text-white text-lg font-bold leading-snug">Sell More. Track All. Grow Fast.</p>
+                <p className="text-white text-lg font-bold leading-snug">{TAGLINE}</p>
                 <p className="text-blue-100/80 text-xs mt-2 line-clamp-2">{description}</p>
               </div>
             </div>

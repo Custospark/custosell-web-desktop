@@ -5,6 +5,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
+import { PRODUCT_NAME, SUPPORTING_LINE } from '../../shared/brand/custosellBrand';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import {
   isNetworkFailure,
@@ -27,9 +28,9 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Sign In"
-      subtitle="Welcome back to Custosell"
+      subtitle={`Welcome back to ${PRODUCT_NAME}`}
       heroImage={AUTH_HERO_IMAGES.login}
-      heroDescription="The faster way to run your business — sales, inventory, customers, and expenses, all in one place."
+      heroDescription={SUPPORTING_LINE}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="relative">

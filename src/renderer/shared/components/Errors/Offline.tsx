@@ -3,6 +3,7 @@ import { WifiOff, Wifi, Plane, Router, Signal, RefreshCw } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { checkNetworkConnectivity } from '../../../app/store/slices/networkSlice';
 import LogoImage from '../../assets/LogoImage';
+import { PRODUCT_NAME, TAGLINE } from '../../brand/custosellBrand';
 import { getUserFirstName } from '../../utils/userDisplayName';
 
 const CONNECTION_TIPS = [
@@ -29,16 +30,16 @@ export default function Offline() {
 
   const firstName = getUserFirstName(user?.name, '');
   const headline = firstName ? `${firstName}, you're offline` : "You're offline";
-  const reassurance = "Your data in Custosell is safe — we'll reconnect when you're back.";
+  const reassurance = `Your data in ${PRODUCT_NAME} is safe — we'll reconnect when you're back.`;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <div className="mb-10 flex flex-col items-center gap-2">
         <div className="flex items-center gap-3">
           <LogoImage size="md" />
-          <span className="text-2xl font-bold text-blue-600">Custosell</span>
+          <span className="text-2xl font-bold text-blue-600">{PRODUCT_NAME}</span>
         </div>
-        <p className="text-xs font-semibold tracking-wide text-blue-600">Sell More. Track All. Grow Fast.</p>
+        <p className="text-xs font-semibold tracking-wide text-blue-600">{TAGLINE}</p>
       </div>
 
       <div className="w-full max-w-md rounded-2xl border border-gray-200/90 bg-white/90 px-8 py-10 shadow-xl shadow-gray-200/50 backdrop-blur-sm">

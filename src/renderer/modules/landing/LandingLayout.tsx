@@ -4,6 +4,7 @@ import { Download, Home, CreditCard, Shield, LogIn } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
+import { BRAND_LOCKUP, PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import {
   getWindowsInstallerDownloadUrl,
   getWindowsInstallerFileName,
@@ -44,7 +45,7 @@ export default function LandingLayout() {
               <Link to={ROUTES.HOME}>
                 <LogoImage size="sm" />
               </Link>
-              <Link to={ROUTES.HOME} className="text-lg font-bold text-blue-600">Custosell</Link>
+              <Link to={ROUTES.HOME} className="text-lg font-bold text-blue-600">{PRODUCT_NAME}</Link>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} className="flex items-center gap-1 sm:gap-2">
@@ -99,15 +100,15 @@ export default function LandingLayout() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-2.5">
               <LogoImage size="sm" />
-              <span className="text-base font-bold text-blue-600">Custosell</span>
+              <span className="text-base font-bold text-blue-600">{PRODUCT_NAME}</span>
             </div>
             <p className="text-sm text-gray-500 text-center md:text-right">
-              Custosell is a product of{' '}
+              {PRODUCT_NAME} is a product of{' '}
               <a href="https://www.custospark.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">Custospark Company Ltd</a>
             </p>
           </div>
           <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span className="text-xs text-gray-400">Custosell &mdash; Sell More. Track All. Grow Fast.</span>
+            <span className="text-xs text-gray-400">{BRAND_LOCKUP}</span>
             <a href="/register" className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline">Start for Free →</a>
           </div>
         </div>

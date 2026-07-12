@@ -1,19 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Heart, Package } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { useToast } from '../../app/contexts/useToast';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
 import { cn } from '../../shared/utils/cn';
 import { useWishlist } from './api/wishlistQueries';
+import type { StorefrontProduct } from './api/storefrontTypes';
+import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
 import { DiscoverProductCard } from './ui/DiscoverProductCard';
 import { useDiscoverShell } from './ui/discoverShellContext';
+import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
 import { StorefrontProductDetailModal } from './ui/StorefrontProductDetailModal';
-import { useState } from 'react';
-import type { StorefrontProduct } from './api/storefrontTypes';
 
 export default function WishlistPage() {
   const token = useAppSelector((s) => s.auth.token);
   const { setHeader, requestSignIn } = useDiscoverShell();
+  const { showToast } = useToast();
+  const { addProduct } = useStorefrontMultiCart();
   const { data, isLoading, isError, refetch, isFetching } = useWishlist(Boolean(token));
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
 
@@ -31,6 +35,30 @@ export default function WishlistPage() {
     });
     return () => setHeader(null);
   }, [token, data, setHeader]);
+
+  /** Add to cart only — wishlist clears after a successful place-order on the server. */
+  const addToCart = (product: StorefrontProduct) => {
+    const biz = product.business;
+    if (!biz?.slug) {
+      showToast('error', 'Could not find this shop');
+      return;
+    }
+    if (isStorefrontProductOutOfStock(product)) {
+      showToast('error', 'This item is out of stock');
+      return;
+    }
+    addProduct(
+      {
+        name: biz.name,
+        slug: biz.slug,
+        currency: biz.currency,
+        city: biz.city,
+        logo_path: biz.logo_path,
+      },
+      product,
+    );
+    showToast('success', `Added to ${biz.name} cart`);
+  };
 
   if (!token) {
     return (
@@ -95,7 +123,10 @@ export default function WishlistPage() {
             <DiscoverProductCard
               key={w.id}
               product={w.product}
+              shopSlug={w.product.business?.slug}
+              currency={w.product.business?.currency}
               onOpenDetail={() => setDetail(w.product!)}
+              onAdd={addToCart}
             />
           ) : null
         ))}
@@ -106,6 +137,12 @@ export default function WishlistPage() {
           product={detail}
           isOpen
           onClose={() => setDetail(null)}
+          shopSlug={detail.business?.slug}
+          currency={detail.business?.currency}
+          onAdd={(product) => {
+            addToCart(product);
+            setDetail(null);
+          }}
         />
       ) : null}
     </div>

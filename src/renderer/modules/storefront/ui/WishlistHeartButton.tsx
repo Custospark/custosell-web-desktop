@@ -40,7 +40,7 @@ export function WishlistHeartButton({ product, className, size = 'sm' }: Wishlis
           if (wishlistItem) {
             remove.mutate(wishlistItem.id);
           } else {
-            add.mutate(productId);
+            add.mutate({ productId, product });
           }
         },
       });
@@ -50,7 +50,7 @@ export function WishlistHeartButton({ product, className, size = 'sm' }: Wishlis
     if (wishlistItem) {
       remove.mutate(wishlistItem.id);
     } else {
-      add.mutate(productId);
+      add.mutate({ productId, product });
     }
   };
 

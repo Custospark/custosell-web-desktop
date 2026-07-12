@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { ArrowLeftRight, Compass, Home, LayoutList, ShoppingCart } from 'lucide-react';
+import { ArrowLeftRight, Compass, Heart, Home, LayoutList, ShoppingCart } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
-export type StorefrontStripTab = 'home' | 'discover' | 'browse' | 'cart' | 'orders';
+export type StorefrontStripTab = 'home' | 'discover' | 'browse' | 'cart' | 'wishlist' | 'orders';
 
 interface StorefrontActionStripProps {
   active?: StorefrontStripTab;
@@ -14,14 +14,17 @@ interface StorefrontActionStripProps {
   onDiscover: () => void;
   onBrowse: () => void;
   onCart: () => void;
+  onWishlist: () => void;
   onOrders: () => void;
   cartCount?: number;
+  wishlistCount?: number;
   ordersCount?: number;
   className?: string;
 }
 
 /**
  * Bottom nav — mobile: equal-width chips in a bordered card; sm+: original full-bleed strip.
+ * Wishlist sits immediately left of Orders.
  */
 export function StorefrontActionStrip({
   active,
@@ -33,8 +36,10 @@ export function StorefrontActionStrip({
   onDiscover,
   onBrowse,
   onCart,
+  onWishlist,
   onOrders,
   cartCount = 0,
+  wishlistCount = 0,
   ordersCount = 0,
   className,
 }: StorefrontActionStripProps) {
@@ -43,9 +48,7 @@ export function StorefrontActionStrip({
   return (
     <nav
       className={cn(
-        // Mobile: inset card so chips don’t crush each other
         'relative z-[10001] mx-2 mb-2 flex shrink-0 items-stretch gap-1 rounded-lg border border-slate-200/90 bg-white/95 p-1.5 shadow-sm backdrop-blur-sm',
-        // Large: original full-bleed strip
         'sm:mx-0 sm:mb-0 sm:items-center sm:justify-center sm:gap-3 sm:overflow-x-auto sm:overscroll-x-contain sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:p-0 sm:px-3 sm:py-2.5 sm:shadow-none',
         className,
       )}
@@ -95,6 +98,28 @@ export function StorefrontActionStrip({
         label="Cart"
       />
       <StripButton
+        active={active === 'wishlist'}
+        onClick={onWishlist}
+        title={wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist'}
+        tone="rose"
+        icon={(
+          <span className="relative inline-flex shrink-0">
+            <Heart
+              className={cn(
+                'h-3.5 w-3.5 text-rose-600 sm:h-4 sm:w-4',
+                wishlistCount > 0 && 'fill-rose-500',
+              )}
+            />
+            {wishlistCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white sm:h-4 sm:min-w-4 sm:text-[9px] sm:ring-2">
+                {wishlistCount > 99 ? '99+' : wishlistCount}
+              </span>
+            ) : null}
+          </span>
+        )}
+        label="Wishlist"
+      />
+      <StripButton
         active={active === 'orders'}
         onClick={onOrders}
         title={ordersCount > 0 ? `My orders (${ordersCount})` : 'My orders'}
@@ -115,7 +140,7 @@ export function StorefrontActionStrip({
   );
 }
 
-type Tone = 'slate' | 'amber' | 'teal' | 'emerald' | 'blue';
+type Tone = 'slate' | 'amber' | 'teal' | 'emerald' | 'rose' | 'blue';
 
 function StripButton({
   active,
@@ -132,7 +157,6 @@ function StripButton({
   icon: ReactNode;
   label: string;
 }) {
-  // Mobile: compact tones. sm+: original lively border-2 chips.
   const tones: Record<Tone, string> = {
     slate: active
       ? 'border-slate-500 bg-slate-100 text-slate-950 max-sm:ring-1 max-sm:ring-slate-300/50 sm:ring-2 sm:ring-slate-300/60 sm:shadow-md'
@@ -146,6 +170,9 @@ function StripButton({
     emerald: active
       ? 'border-emerald-500 bg-emerald-100 text-emerald-950 max-sm:ring-1 max-sm:ring-emerald-300/50 sm:ring-2 sm:ring-emerald-300/60 sm:shadow-md'
       : 'border-emerald-200 bg-gradient-to-b from-emerald-50 to-white text-emerald-900 sm:border-emerald-300/90 sm:bg-gradient-to-r sm:from-emerald-50 sm:via-white sm:to-teal-50 sm:hover:border-emerald-400 sm:hover:from-emerald-100 sm:hover:to-teal-100 sm:hover:shadow-md sm:hover:shadow-emerald-200/50',
+    rose: active
+      ? 'border-rose-500 bg-rose-100 text-rose-950 max-sm:ring-1 max-sm:ring-rose-300/50 sm:ring-2 sm:ring-rose-300/60 sm:shadow-md'
+      : 'border-rose-200 bg-gradient-to-b from-rose-50 to-white text-rose-900 sm:border-rose-300/90 sm:bg-gradient-to-r sm:from-rose-50 sm:via-white sm:to-pink-50 sm:hover:border-rose-400 sm:hover:from-rose-100 sm:hover:to-pink-100 sm:hover:shadow-md sm:hover:shadow-rose-200/50',
     blue: active
       ? 'border-blue-500 bg-blue-100 text-blue-950 max-sm:ring-1 max-sm:ring-blue-300/50 sm:ring-2 sm:ring-blue-300/60 sm:shadow-md'
       : 'border-blue-200 bg-gradient-to-b from-blue-50 to-white text-blue-900 sm:border-blue-300/90 sm:bg-gradient-to-r sm:from-blue-50 sm:via-white sm:to-sky-50 sm:hover:border-blue-400 sm:hover:from-blue-100 sm:hover:to-sky-100 sm:hover:shadow-md sm:hover:shadow-blue-200/50',
@@ -163,9 +190,7 @@ function StripButton({
       aria-label={title}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        // Mobile: equal-width stacked icon+label
         'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1.5 text-[10px] font-semibold leading-tight shadow-sm transition active:scale-[0.98]',
-        // Large: original horizontal chips (not flex-1)
         'sm:inline-flex sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-xl sm:border-2 sm:px-4 sm:py-2.5 sm:text-sm sm:hover:-translate-y-0.5 sm:active:translate-y-0',
         tones[tone],
       )}

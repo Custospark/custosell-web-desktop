@@ -10,6 +10,7 @@ import type {
   StorefrontShop,
 } from './storefrontTypes';
 import { storefrontKeys } from './storefrontQueryKeys';
+import { optimisticallyRemoveWishlistProducts } from './wishlistQueries';
 
 export { storefrontKeys };
 export { useRateStorefrontProduct, useRateStorefrontShop } from './storefrontRatingQueries';
@@ -260,12 +261,34 @@ export function usePlaceStorefrontOrder() {
       );
       return data;
     },
-    onSuccess: async () => {
+    onMutate: async () => {
+      // Orders badge can bump early; wishlist stays until the server records the order.
+      await queryClient.cancelQueries({ queryKey: storefrontKeys.myOrdersList() });
+      const prevOrders = queryClient.getQueryData<{ total?: number }>(storefrontKeys.myOrdersList());
+      if (prevOrders && typeof prevOrders.total === 'number') {
+        queryClient.setQueryData(storefrontKeys.myOrdersList(), {
+          ...prevOrders,
+          total: prevOrders.total + 1,
+        });
+      }
+      return { prevOrders };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prevOrders !== undefined) {
+        queryClient.setQueryData(storefrontKeys.myOrdersList(), ctx.prevOrders);
+      }
+    },
+    onSuccess: async (_data, vars) => {
+      // Backend already removed ordered products from wishlist — sync UI now.
+      const productIds = vars.items.map((i) => i.product_id);
+      optimisticallyRemoveWishlistProducts(queryClient, productIds);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: storefrontKeys.myOrdersList() }),
         queryClient.invalidateQueries({ queryKey: storefrontKeys.myOrdersPages() }),
         queryClient.invalidateQueries({ queryKey: storefrontKeys.myOrdersCount() }),
         queryClient.invalidateQueries({ queryKey: [...storefrontKeys.all, 'my-orders'] }),
+        queryClient.invalidateQueries({ queryKey: storefrontKeys.wishlist() }),
+        queryClient.invalidateQueries({ queryKey: storefrontKeys.wishlistCount() }),
       ]);
       await Promise.all([
         queryClient.refetchQueries({ queryKey: storefrontKeys.myOrdersList() }),

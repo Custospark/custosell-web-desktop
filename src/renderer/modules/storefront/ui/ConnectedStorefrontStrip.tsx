@@ -11,25 +11,29 @@ import {
 interface ConnectedStorefrontStripProps {
   active?: StorefrontStripTab;
   cartCount?: number;
+  wishlistCount?: number;
   ordersCount?: number;
   onOpenCart: () => void;
   onCloseCart?: () => void;
   onOrdersAuthRequired?: () => void;
+  onWishlistAuthRequired?: () => void;
   onGoShops?: () => void;
   onGoProducts?: () => void;
   className?: string;
 }
 
 /**
- * Bottom strip — label stays "Shops". On a shop page, Shops/Products leave the shop.
+ * Bottom strip — Wishlist sits left of Orders. On a shop page, Shops/Products leave the shop.
  */
 export function ConnectedStorefrontStrip({
   active,
   cartCount = 0,
+  wishlistCount = 0,
   ordersCount = 0,
   onOpenCart,
   onCloseCart,
   onOrdersAuthRequired,
+  onWishlistAuthRequired,
   onGoShops,
   onGoProducts,
   className,
@@ -54,6 +58,7 @@ export function ConnectedStorefrontStrip({
       active={active}
       className={className}
       cartCount={cartCount}
+      wishlistCount={wishlistCount}
       ordersCount={ordersCount}
       homeLabel="Home"
       homeTitle={token ? 'Open your dashboard' : 'Custosell marketing home'}
@@ -89,6 +94,19 @@ export function ConnectedStorefrontStrip({
         });
       }}
       onCart={onOpenCart}
+      onWishlist={() => {
+        leaveCartThen(() => {
+          if (token) {
+            navigate(ROUTES.DISCOVER_WISHLIST);
+            return;
+          }
+          if (onWishlistAuthRequired) {
+            onWishlistAuthRequired();
+            return;
+          }
+          navigate(ROUTES.LOGIN, { state: { from: ROUTES.DISCOVER_WISHLIST } });
+        });
+      }}
       onOrders={() => {
         leaveCartThen(() => {
           if (token) {

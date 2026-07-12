@@ -17,7 +17,7 @@ export function Main() {
     <main
       className={cn(
         'flex min-h-0 flex-1 flex-col overflow-x-hidden',
-        flushLayout ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 sm:p-6',
+        flushLayout ? 'overflow-x-auto overflow-y-hidden p-0' : 'overflow-y-auto p-4 sm:p-6',
       )}
       data-tour="main-workspace"
       data-scroll-container

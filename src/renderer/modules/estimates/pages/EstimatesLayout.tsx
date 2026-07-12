@@ -29,7 +29,7 @@ export default function EstimatesLayout() {
 
   if (onKanban) {
     return (
-      <div className="-mx-4 -mt-4 -mb-4 flex h-full min-h-0 flex-1 flex-col sm:-mx-6 sm:-mt-6 sm:-mb-6">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-x-auto">
         <Outlet />
       </div>
     );

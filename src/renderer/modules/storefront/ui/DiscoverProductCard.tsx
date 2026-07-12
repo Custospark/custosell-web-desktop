@@ -74,6 +74,7 @@ export function DiscoverProductCard({
       avg={Number(product.rating_avg ?? 0)}
       count={Number(product.rating_count ?? 0)}
       myRating={product.my_rating}
+      disabled={rate.isPending}
       onRate={applyRating}
     />
   );

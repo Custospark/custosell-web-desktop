@@ -215,6 +215,7 @@ export function DiscoverProductsBrowse() {
           product={detail}
           isOpen
           onClose={() => setDetail(null)}
+          onRated={setDetail}
         />
       ) : null}
     </div>

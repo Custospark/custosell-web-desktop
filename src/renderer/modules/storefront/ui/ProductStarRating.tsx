@@ -6,6 +6,8 @@ interface ProductStarRatingProps {
   count: number;
   myRating?: number | null;
   onRate?: (stars: number) => void;
+  /** Extra disable (e.g. mutation pending). */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -15,10 +17,12 @@ export function ProductStarRating({
   count,
   myRating,
   onRate,
+  disabled = false,
   className,
 }: ProductStarRatingProps) {
   const display = myRating ?? avg;
   const filled = Math.round(display);
+  const locked = !onRate || disabled;
 
   return (
     <div
@@ -42,7 +46,7 @@ export function ProductStarRating({
             <button
               key={n}
               type="button"
-              disabled={!onRate}
+              disabled={locked}
               title={myRating ? `Your rating: ${myRating} — change to ${n}` : `Rate ${n} stars`}
               aria-label={`Rate ${n} stars`}
               aria-pressed={myRating === n}
@@ -53,6 +57,7 @@ export function ProductStarRating({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                if (locked) return;
                 onRate?.(n);
               }}
             >
@@ -73,7 +78,7 @@ export function ProductStarRating({
             {myRating ? ` · yours ${myRating}` : ''}
           </>
         ) : (
-          <span className="text-slate-400">Tap stars to rate</span>
+          <span className="text-slate-400">{onRate ? 'Tap stars to rate' : 'No ratings yet'}</span>
         )}
       </p>
     </div>

@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useToast } from '../../../app/contexts/useToast';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useRateStorefrontProduct } from '../api/storefrontQueries';
 import type { StorefrontProduct } from '../api/storefrontTypes';
+import { useDiscoverShell } from './discoverShellContext';
 import { ProductStarRating } from './ProductStarRating';
 import { productVisual } from './productVisual';
 import { StockAvailabilityBadge } from './StockAvailabilityBadge';
@@ -16,6 +20,8 @@ interface StorefrontProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd?: (product: StorefrontProduct) => void;
+  /** Parent can sync local detail state after a successful rate. */
+  onRated?: (product: StorefrontProduct) => void;
   shopSlug?: string;
   currency?: string;
 }
@@ -26,6 +32,7 @@ export function StorefrontProductDetailModal({
   isOpen,
   onClose,
   onAdd,
+  onRated,
   shopSlug,
   currency: currencyProp,
 }: StorefrontProductDetailModalProps) {
@@ -34,6 +41,39 @@ export function StorefrontProductDetailModal({
   const visual = productVisual(product.name, product.type);
   const { Icon, wrap, icon } = visual;
   const outOfStock = isStorefrontProductOutOfStock(product);
+  const token = useAppSelector((s) => s.auth.token);
+  const { requestSignIn } = useDiscoverShell();
+  const { showToast } = useToast();
+  const rate = useRateStorefrontProduct();
+
+  const pendingStars =
+    rate.isPending && rate.variables?.productId === product.id
+      ? rate.variables.rating
+      : undefined;
+  const displayMyRating = pendingStars ?? product.my_rating;
+
+  const applyRating = (stars: number) => {
+    if (!slug) {
+      showToast('error', 'Open the shop to rate this product.');
+      return;
+    }
+    const submit = () => {
+      rate.mutate(
+        { slug, productId: product.id, rating: stars },
+        {
+          onSuccess: (updated) => {
+            onRated?.(updated);
+          },
+          onError: () => showToast('error', 'Could not save your rating. Try again.'),
+        },
+      );
+    };
+    if (!token) {
+      requestSignIn({ intent: 'general', onSuccess: submit });
+      return;
+    }
+    submit();
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={product.name} size="md">
@@ -71,7 +111,9 @@ export function StorefrontProductDetailModal({
         <ProductStarRating
           avg={Number(product.rating_avg ?? 0)}
           count={Number(product.rating_count ?? 0)}
-          myRating={product.my_rating}
+          myRating={displayMyRating}
+          disabled={rate.isPending}
+          onRate={applyRating}
         />
 
         {product.business?.name ? (

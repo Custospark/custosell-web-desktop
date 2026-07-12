@@ -139,6 +139,7 @@ export default function WishlistPage() {
           onClose={() => setDetail(null)}
           shopSlug={detail.business?.slug}
           currency={detail.business?.currency}
+          onRated={setDetail}
           onAdd={(product) => {
             addToCart(product);
             setDetail(null);

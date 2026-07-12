@@ -128,6 +128,18 @@ export function useRateStorefrontProduct() {
         { queryKey: [...storefrontKeys.all, 'products', vars.slug] },
         (old: unknown) => patchProductInShopList(old, product),
       );
+      queryClient.setQueryData(storefrontKeys.wishlist(), (old: unknown) => {
+        if (!old || typeof old !== 'object' || !('items' in old)) return old;
+        const list = old as { items: Array<{ product_id: number; product: StorefrontProduct | null }>; count: number };
+        return {
+          ...list,
+          items: list.items.map((w) =>
+            w.product_id === product.id
+              ? { ...w, product: w.product ? { ...w.product, ...product } : product }
+              : w,
+          ),
+        };
+      });
     },
   });
 }

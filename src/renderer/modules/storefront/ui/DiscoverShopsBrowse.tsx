@@ -261,6 +261,7 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
           avg={Number(shop.rating_avg ?? 0)}
           count={Number(shop.rating_count ?? 0)}
           myRating={shop.my_rating}
+          disabled={rateShop.isPending}
           onRate={applyRating}
         />
         <div className="space-y-1 border-t border-slate-200/70 pt-2 text-[11px] text-slate-600">

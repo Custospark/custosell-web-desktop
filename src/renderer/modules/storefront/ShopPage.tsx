@@ -283,6 +283,7 @@ export default function ShopPage() {
           isOpen
           onClose={() => setDetail(null)}
           onAdd={onAdd}
+          onRated={setDetail}
           shopSlug={shop.slug}
           currency={currency}
         />

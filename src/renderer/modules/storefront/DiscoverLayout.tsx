@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -23,6 +23,7 @@ import { StorefrontLoginDialog } from './ui/StorefrontLoginDialog';
 import {
   DiscoverShellProvider,
   useDiscoverShell,
+  type RequestSignInOptions,
 } from './ui/discoverShellContext';
 import type { StorefrontStripTab } from './ui/StorefrontActionStrip';
 import { usePrefersCartSheet } from './ui/usePrefersCartSheet';
@@ -62,10 +63,11 @@ function DiscoverShellChrome() {
   const queryClient = useQueryClient();
   const token = useAppSelector((s) => s.auth.token);
   const user = useAppSelector((s) => s.auth.user);
-  const { header } = useDiscoverShell();
+  const { header, registerSignInOpener } = useDiscoverShell();
   const { lineCount, cartOpen, setCartOpen, openCart } = useStorefrontMultiCart();
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginIntent, setLoginIntent] = useState<'orders' | 'general'>('general');
+  const pendingLoginSuccess = useRef<(() => void) | null>(null);
   const prefersSheet = usePrefersCartSheet();
   const heroStyle = useMarketplaceHeroBackground();
   const cartDocked = cartOpen && !prefersSheet;
@@ -76,6 +78,20 @@ function DiscoverShellChrome() {
 
   useStorefrontCatalogWarmup();
 
+  const openSignIn = (intent: 'orders' | 'general' = 'general', onSuccess?: () => void) => {
+    pendingLoginSuccess.current = onSuccess ?? null;
+    setLoginIntent(intent);
+    setLoginOpen(true);
+  };
+
+  useEffect(() => {
+    const opener = (opts?: RequestSignInOptions) => {
+      openSignIn(opts?.intent ?? 'general', opts?.onSuccess);
+    };
+    registerSignInOpener(opener);
+    return () => registerSignInOpener(null);
+  }, [registerSignInOpener]);
+
   const active = activeTabFromPath(location.pathname, location.search, cartOpen);
   const fallback = defaultHeader(location.pathname, location.search);
   const title = header?.title ?? fallback.title;
@@ -85,11 +101,6 @@ function DiscoverShellChrome() {
     open: cartOpen,
     onClose: () => setCartOpen(false),
   } as const;
-
-  const openSignIn = (intent: 'orders' | 'general' = 'general') => {
-    setLoginIntent(intent);
-    setLoginOpen(true);
-  };
 
   return (
     <div
@@ -185,9 +196,15 @@ function DiscoverShellChrome() {
             ? 'Orders you placed across shops appear here.'
             : 'Use your email and password. Carts stay in this browser.'
         }
-        onClose={() => setLoginOpen(false)}
+        onClose={() => {
+          pendingLoginSuccess.current = null;
+          setLoginOpen(false);
+        }}
         onSuccess={() => {
           setLoginOpen(false);
+          const pending = pendingLoginSuccess.current;
+          pendingLoginSuccess.current = null;
+          pending?.();
           if (loginIntent === 'orders') {
             navigate(ROUTES.DISCOVER_MY_ORDERS);
           }

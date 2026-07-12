@@ -11,7 +11,7 @@ import { DiscoverProductsBrowse } from './ui/DiscoverProductsBrowse';
 import { DiscoverShopsBrowse } from './ui/DiscoverShopsBrowse';
 
 /**
- * Shops / Products tabs. Catalogs are warmed by DiscoverLayout so switches are cache-instant.
+ * Shops / Products — both panels stay mounted; tab click only toggles visibility (instant).
  */
 export default function DiscoverPage() {
   const shell = useDiscoverShell();
@@ -37,6 +37,11 @@ export default function DiscoverPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus]);
 
+  const setFocus = (next: 'shops' | 'products') => {
+    if (next === focus) return;
+    setSearchParams({ focus: next }, { replace: true });
+  };
+
   return (
     <div className="flex w-full flex-col gap-3 pb-2">
       <div className={cn(marketplaceGlassPanel, 'flex shrink-0 gap-1.5 p-1.5 shadow-md')}>
@@ -44,19 +49,25 @@ export default function DiscoverPage() {
           active={focus === 'shops'}
           icon={<Store className="h-4 w-4" />}
           label="Shops"
-          onClick={() => setSearchParams({ focus: 'shops' }, { replace: true })}
+          onClick={() => setFocus('shops')}
           tone="teal"
         />
         <ModeTab
           active={focus === 'products'}
           icon={<Compass className="h-4 w-4" />}
           label="Products"
-          onClick={() => setSearchParams({ focus: 'products' }, { replace: true })}
+          onClick={() => setFocus('products')}
           tone="amber"
         />
       </div>
 
-      {focus === 'shops' ? <DiscoverShopsBrowse /> : <DiscoverProductsBrowse />}
+      {/* Keep both mounted so tab switches are paint-instant (no remount / refetch flash). */}
+      <div className={cn(focus === 'shops' ? 'block' : 'hidden')} aria-hidden={focus !== 'shops'}>
+        <DiscoverShopsBrowse />
+      </div>
+      <div className={cn(focus === 'products' ? 'block' : 'hidden')} aria-hidden={focus !== 'products'}>
+        <DiscoverProductsBrowse />
+      </div>
     </div>
   );
 }

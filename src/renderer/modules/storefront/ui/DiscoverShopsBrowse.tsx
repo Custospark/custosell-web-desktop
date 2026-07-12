@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Store } from 'lucide-react';
+import { Mail, MapPin, Phone, Search, Store } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
@@ -11,6 +11,10 @@ import type { StorefrontShop } from '../api/storefrontTypes';
 import { shopVisual } from './productVisual';
 
 const RENDER_CHUNK = 36;
+
+function shopLocation(shop: StorefrontShop): string {
+  return [shop.address, shop.city, shop.state, shop.country].filter(Boolean).join(', ');
+}
 
 /** Browse all public shops — progressive fetch + client-side search. */
 export function DiscoverShopsBrowse() {
@@ -40,7 +44,19 @@ export function DiscoverShopsBrowse() {
     const needle = q.trim().toLowerCase();
     if (!needle) return shops;
     return shops.filter((s) => {
-      const hay = `${s.name} ${s.slug} ${s.city ?? ''} ${s.description ?? ''}`.toLowerCase();
+      const hay = [
+        s.name,
+        s.slug,
+        s.city,
+        s.country,
+        s.address,
+        s.description,
+        s.business_email,
+        s.business_phone,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
       return hay.includes(needle);
     });
   }, [shops, q]);
@@ -77,7 +93,7 @@ export function DiscoverShopsBrowse() {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search shops by name, city, or @username…"
+          placeholder="Search shops by name, city, contact, or @username…"
           className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none"
         />
         <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-500">
@@ -124,32 +140,58 @@ export function DiscoverShopsBrowse() {
 function ShopTile({ shop }: { shop: StorefrontShop }) {
   const visual = shopVisual(shop.name);
   const { Icon, wrap, icon } = visual;
+  const location = shopLocation(shop);
 
   return (
     <Link
       to={ROUTES.SHOP(shop.slug)}
       className={cn(
         marketplaceGlassPanel,
-        'flex gap-3 p-3 shadow-md transition-all duration-200',
+        'flex flex-col gap-2.5 p-3 shadow-md transition-all duration-200',
         'hover:-translate-y-1 hover:border-teal-400 hover:shadow-xl hover:shadow-teal-900/15',
         'active:scale-[0.99]',
       )}
     >
-      <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl', wrap)}>
-        {shop.logo_path ? (
-          <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <Icon className={cn('h-7 w-7', icon)} aria-hidden />
-        )}
+      <div className="flex gap-3">
+        <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl', wrap)}>
+          {shop.logo_path ? (
+            <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Icon className={cn('h-7 w-7', icon)} aria-hidden />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
+          <p className="truncate text-[11px] text-teal-800">@{shop.slug}</p>
+          {shop.description ? (
+            <p className="mt-1 line-clamp-2 text-xs leading-snug text-slate-600">{shop.description}</p>
+          ) : null}
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
-        <p className="truncate text-[11px] text-teal-800">@{shop.slug}</p>
-        <p className="mt-0.5 truncate text-[11px] text-slate-500">
-          {[shop.city, shop.country].filter(Boolean).join(' · ') || 'Browse catalog'}
-        </p>
+      <div className="space-y-1 border-t border-slate-200/70 pt-2 text-[11px] text-slate-600">
+        {location ? (
+          <p className="flex items-start gap-1.5">
+            <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-teal-700" aria-hidden />
+            <span className="line-clamp-2">{location}</span>
+          </p>
+        ) : null}
+        {shop.business_phone ? (
+          <p className="flex items-center gap-1.5 truncate">
+            <Phone className="h-3 w-3 shrink-0 text-teal-700" aria-hidden />
+            <span>{shop.business_phone}</span>
+          </p>
+        ) : null}
+        {shop.business_email ? (
+          <p className="flex items-center gap-1.5 truncate">
+            <Mail className="h-3 w-3 shrink-0 text-teal-700" aria-hidden />
+            <span>{shop.business_email}</span>
+          </p>
+        ) : null}
+        {!location && !shop.business_phone && !shop.business_email ? (
+          <p className="text-slate-400">Open shop to browse the catalog</p>
+        ) : null}
       </div>
-      <span className="self-center text-xs font-semibold text-teal-800">Open →</span>
+      <span className="text-xs font-semibold text-teal-800">Open shop →</span>
     </Link>
   );
 }

@@ -105,6 +105,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-12-custosell-business-os-brand.md](./adr/2026-07-12-custosell-business-os-brand.md) | Tagline: Your Business Operating System; auth/shell + landing |
 | [2026-07-12-public-storefront.md](./adr/2026-07-12-public-storefront.md) | Public `/@slug` shops + Discover; order requests → Orders |
 | [2026-07-12-storefront-multi-cart-submit-auth.md](./adr/2026-07-12-storefront-multi-cart-submit-auth.md) | Multi-business cart bags + submit-time sign-in |
+| [2026-07-12-storefront-shop-contact-and-ratings.md](./adr/2026-07-12-storefront-shop-contact-and-ratings.md) | Shop contact fields + product star ratings; instant Discover tabs |
 
 ## Modules
 

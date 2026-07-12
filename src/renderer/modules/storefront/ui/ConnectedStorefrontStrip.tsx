@@ -55,12 +55,12 @@ export function ConnectedStorefrontStrip({
       }}
       onDiscover={() => {
         leaveCartThen(() => {
-          navigate({ pathname: ROUTES.DISCOVER, search: '?focus=products' });
+          navigate({ pathname: ROUTES.DISCOVER, search: '?focus=products' }, { replace: false });
         });
       }}
       onBrowse={() => {
         leaveCartThen(() => {
-          navigate({ pathname: ROUTES.DISCOVER, search: '?focus=shops' });
+          navigate({ pathname: ROUTES.DISCOVER, search: '?focus=shops' }, { replace: false });
         });
       }}
       onCart={onOpenCart}

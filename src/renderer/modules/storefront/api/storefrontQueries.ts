@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { STOREFRONT } from '../../../shared/api/endpoints/endpoints';
 import type {
@@ -227,6 +227,61 @@ export function usePlaceStorefrontOrder() {
       return data;
     },
   });
+}
+
+/** One-tap 1–5 rating; invalidates discover + shop product caches. */
+export function useRateStorefrontProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      slug,
+      productId,
+      rating,
+    }: {
+      slug: string;
+      productId: number;
+      rating: number;
+    }) => {
+      const { data } = await axiosInstance.post<{
+        message: string;
+        data: StorefrontProduct;
+      }>(STOREFRONT.RATE_PRODUCT(slug, productId), { rating });
+      return data.data;
+    },
+    onSuccess: (product, vars) => {
+      queryClient.invalidateQueries({ queryKey: storefrontKeys.discoverPages() });
+      queryClient.invalidateQueries({ queryKey: storefrontKeys.products(vars.slug, '') });
+      queryClient.setQueriesData(
+        { queryKey: storefrontKeys.discoverPages() },
+        (old: unknown) => patchProductInInfinite(old, product),
+      );
+      queryClient.setQueriesData(
+        { queryKey: [...storefrontKeys.all, 'products', vars.slug] },
+        (old: unknown) => patchProductInShopList(old, product),
+      );
+    },
+  });
+}
+
+function patchProductInInfinite(old: unknown, product: StorefrontProduct): unknown {
+  if (!old || typeof old !== 'object' || !('pages' in old)) return old;
+  const pages = (old as { pages: Array<{ products: StorefrontProduct[]; meta: PageMeta }> }).pages;
+  return {
+    ...(old as object),
+    pages: pages.map((page) => ({
+      ...page,
+      products: page.products.map((p) => (p.id === product.id ? { ...p, ...product } : p)),
+    })),
+  };
+}
+
+function patchProductInShopList(old: unknown, product: StorefrontProduct): unknown {
+  if (!old || typeof old !== 'object' || !('products' in old)) return old;
+  const list = old as { products: StorefrontProduct[]; shop?: StorefrontShop };
+  return {
+    ...list,
+    products: list.products.map((p) => (p.id === product.id ? { ...p, ...product } : p)),
+  };
 }
 
 export function useMyStorefrontOrders(filters?: { status?: string; q?: string }) {

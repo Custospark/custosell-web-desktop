@@ -5,7 +5,10 @@ export interface StorefrontShop {
   logo_path: string | null;
   city: string | null;
   country: string | null;
+  address?: string | null;
+  state?: string | null;
   business_phone: string | null;
+  business_email?: string | null;
   currency: string;
 }
 
@@ -17,6 +20,9 @@ export interface StorefrontProduct {
   unit: string | null;
   image_path: string | null;
   type?: string;
+  rating_avg?: number;
+  rating_count?: number;
+  my_rating?: number | null;
   category?: { id: number; name: string } | null;
   business?: {
     name: string;

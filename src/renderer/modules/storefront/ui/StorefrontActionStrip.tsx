@@ -37,7 +37,7 @@ export function StorefrontActionStrip({
   return (
     <div
       className={cn(
-        'relative z-50 flex shrink-0 items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain border-t border-slate-200/80 bg-white/95 px-2 py-2 backdrop-blur-sm sm:gap-3 sm:px-3 sm:py-2.5',
+        'relative z-[10001] flex shrink-0 items-center justify-center gap-1.5 overflow-x-auto overscroll-x-contain border-t border-slate-200/80 bg-white/95 px-2 py-2 backdrop-blur-sm sm:gap-3 sm:px-3 sm:py-2.5',
         className,
       )}
       role="navigation"

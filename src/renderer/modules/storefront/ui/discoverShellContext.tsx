@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -19,6 +20,11 @@ type ShellHandlers = {
   onDiscover: (() => void) | null;
 };
 
+export type RequestSignInOptions = {
+  intent?: 'orders' | 'general';
+  onSuccess?: () => void;
+};
+
 export type DiscoverShellContextValue = {
   header: DiscoverHeaderState | null;
   cartCount: number;
@@ -28,6 +34,11 @@ export type DiscoverShellContextValue = {
   setOnBrowse: (fn: (() => void) | null) => void;
   setOnCart: (fn: (() => void) | null) => void;
   setOnDiscover: (fn: (() => void) | null) => void;
+  /** Open in-shell sign-in; optional callback after success (e.g. apply pending rating). */
+  requestSignIn: (opts?: RequestSignInOptions) => void;
+  registerSignInOpener: (
+    opener: ((opts?: RequestSignInOptions) => void) | null,
+  ) => void;
 };
 
 const DiscoverShellContext = createContext<DiscoverShellContextValue | null>(null);
@@ -38,8 +49,8 @@ export function DiscoverShellProvider({ children }: { children: ReactNode }) {
   const [onBrowse, setOnBrowse] = useState<(() => void) | null>(null);
   const [onCart, setOnCart] = useState<(() => void) | null>(null);
   const [onDiscover, setOnDiscover] = useState<(() => void) | null>(null);
+  const signInOpenerRef = useRef<((opts?: RequestSignInOptions) => void) | null>(null);
 
-  // wrap setters so React doesn't treat function values as updater fns
   const setOnBrowseSafe = useCallback((fn: (() => void) | null) => {
     setOnBrowse(() => fn);
   }, []);
@@ -48,6 +59,17 @@ export function DiscoverShellProvider({ children }: { children: ReactNode }) {
   }, []);
   const setOnDiscoverSafe = useCallback((fn: (() => void) | null) => {
     setOnDiscover(() => fn);
+  }, []);
+
+  const registerSignInOpener = useCallback(
+    (opener: ((opts?: RequestSignInOptions) => void) | null) => {
+      signInOpenerRef.current = opener;
+    },
+    [],
+  );
+
+  const requestSignIn = useCallback((opts?: RequestSignInOptions) => {
+    signInOpenerRef.current?.(opts);
   }, []);
 
   const value = useMemo<DiscoverShellContextValue>(
@@ -60,8 +82,21 @@ export function DiscoverShellProvider({ children }: { children: ReactNode }) {
       setOnBrowse: setOnBrowseSafe,
       setOnCart: setOnCartSafe,
       setOnDiscover: setOnDiscoverSafe,
+      requestSignIn,
+      registerSignInOpener,
     }),
-    [header, cartCount, onBrowse, onCart, onDiscover, setOnBrowseSafe, setOnCartSafe, setOnDiscoverSafe],
+    [
+      header,
+      cartCount,
+      onBrowse,
+      onCart,
+      onDiscover,
+      setOnBrowseSafe,
+      setOnCartSafe,
+      setOnDiscoverSafe,
+      requestSignIn,
+      registerSignInOpener,
+    ],
   );
 
   return (

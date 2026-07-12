@@ -1,33 +1,79 @@
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useToast } from '../../../app/contexts/useToast';
 import { Button } from '../../../shared/components/buttons/Button';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
+import { useRateStorefrontProduct } from '../api/storefrontQueries';
 import type { StorefrontProduct } from '../api/storefrontTypes';
+import { useDiscoverShell } from './discoverShellContext';
+import { ProductStarRating } from './ProductStarRating';
 import { productVisual } from './productVisual';
 
 interface DiscoverProductCardProps {
   product: StorefrontProduct;
   /** Shop page: add to bag. Discover: omit and link to shop. */
   onAdd?: (product: StorefrontProduct) => void;
+  /** Required for rating when product.business.slug is missing (shop catalog). */
+  shopSlug?: string;
   currency?: string;
   className?: string;
 }
 
-/** Compact proportional product tile (not full-width rows). */
+/** Compact proportional product tile with one-tap star ratings. */
 export function DiscoverProductCard({
   product,
   onAdd,
+  shopSlug,
   currency: currencyProp,
   className,
 }: DiscoverProductCardProps) {
   const currency = currencyProp || product.business?.currency || 'UGX';
-  const slug = product.business?.slug;
+  const slug = shopSlug || product.business?.slug;
   const visual = productVisual(product.name, product.type);
   const { Icon, wrap, icon } = visual;
+  const token = useAppSelector((s) => s.auth.token);
+  const { requestSignIn } = useDiscoverShell();
+  const { showToast } = useToast();
+  const rate = useRateStorefrontProduct();
+
+  const applyRating = (stars: number) => {
+    if (!slug) {
+      showToast('error', 'Open the shop to rate this product.');
+      return;
+    }
+    const submit = () => {
+      rate.mutate(
+        { slug, productId: product.id, rating: stars },
+        {
+          onSuccess: () => showToast('success', 'Thanks for your rating!'),
+          onError: () => showToast('error', 'Could not save your rating. Try again.'),
+        },
+      );
+    };
+    if (!token) {
+      requestSignIn({
+        intent: 'general',
+        onSuccess: submit,
+      });
+      return;
+    }
+    submit();
+  };
+
+  const stars = (
+    <ProductStarRating
+      avg={Number(product.rating_avg ?? 0)}
+      count={Number(product.rating_count ?? 0)}
+      myRating={product.my_rating}
+      disabled={rate.isPending}
+      onRate={applyRating}
+    />
+  );
 
   const body = (
     <>
@@ -48,6 +94,7 @@ export function DiscoverProductCard({
           {formatCurrency(Number(product.unit_price), currency)}
           {product.unit ? <span className="text-xs font-medium text-slate-500"> / {product.unit}</span> : null}
         </p>
+        {stars}
         {product.business?.name ? (
           <p className="truncate text-[11px] text-slate-500">
             {product.business.name}

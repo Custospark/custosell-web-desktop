@@ -15,6 +15,11 @@ Same path for public visitors and logged-in users (Discover shell):
 7. Guests sign in via header, Orders, or inline cart fields when placing an order.
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
+Shops show **description, location, phone, and email** on browse tiles and on the shop page profile strip.
+Products show **stars + review count**; signed-in buyers tap a star to rate (`POST /storefront/{slug}/products/{id}/ratings`). Guests are prompted to sign in, then the pending rating is applied.
+Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
+From a shop (`/@slug`), **All shops** (header + page) and the bottom **Shops / Products** strip return to `/discover` — the cart sheet stops above the strip so navigation stays clickable.
+Place-order contact fields (name*, phone*, notes) stay visible and editable; signed-in buyers get them prefilled from profile.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md).
 
 ## App module (logged-in)
@@ -70,9 +75,13 @@ Product edit modal → **Public shop**:
 | GET | `/storefront/shops?q=` | No |
 | GET | `/storefront/categories` | No |
 | GET | `/storefront/{slug}` | No |
-| GET | `/storefront/{slug}/products` | No |
+| GET | `/storefront/{slug}/products` | Optional Sanctum (includes `my_rating`) |
+| POST | `/storefront/{slug}/products/{id}/ratings` | Sanctum (1–5 stars, upsert per user) |
 | POST | `/storefront/{slug}/orders` | Sanctum (sets `storefront_buyer_user_id`) |
 | GET | `/storefront/my-orders` | Sanctum |
+
+Shop public payload includes `description`, `address`, `city`, `state`, `country`, `business_phone`, `business_email`.
+Product public payload includes `rating_avg`, `rating_count`, `my_rating`.
 
 ## Staff fulfillment
 

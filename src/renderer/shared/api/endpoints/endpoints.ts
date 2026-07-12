@@ -208,4 +208,6 @@ export const STOREFRONT = {
   SHOP: (slug: string) => `/storefront/${slug}`,
   PRODUCTS: (slug: string) => `/storefront/${slug}/products`,
   ORDERS: (slug: string) => `/storefront/${slug}/orders`,
+  RATE_PRODUCT: (slug: string, productId: number) =>
+    `/storefront/${slug}/products/${productId}/ratings`,
 };

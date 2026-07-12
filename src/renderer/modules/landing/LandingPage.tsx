@@ -169,9 +169,9 @@ export default function LandingPage() {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 lg:pb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Everything Your Business Needs</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">What You Get in {PRODUCT_NAME}</h2>
           <p className="text-gray-500 max-w-2xl mx-auto text-lg">
-            From the shop floor to the back office — tools that work together, not in silos.
+            From the shop floor to the back office — every tool you need, built into one system.
           </p>
         </motion.div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -202,6 +202,7 @@ export const ACCOUNTING = {
 
 export const STOREFRONT = {
   DISCOVER: '/storefront/discover',
+  SHOPS: '/storefront/shops',
   CATEGORIES: '/storefront/categories',
   SHOP: (slug: string) => `/storefront/${slug}`,
   PRODUCTS: (slug: string) => `/storefront/${slug}/products`,

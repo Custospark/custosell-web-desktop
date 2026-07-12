@@ -6,8 +6,10 @@ Consumer-facing shops and Discover — not B2B Marketplace.
 
 | Path | Purpose |
 |------|---------|
-| `/discover` | Search + category browse across listed shops |
+| `/discover` | Lists enabled shops + listed products (search `q`; category filter is product-only) |
 | `/@{slug}` | Business public shop + guest cart |
+
+`PublicRoute` allows `/discover` and `/@…` while logged in (Settings → Open shop / signed-in testing). Landing, Pricing, Privacy, Login, and Register still redirect authenticated users.
 
 Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 
@@ -33,6 +35,7 @@ Product edit modal → **Public shop**:
 | Method | Path |
 |--------|------|
 | GET | `/storefront/discover?q=&category=` |
+| GET | `/storefront/shops?q=` |
 | GET | `/storefront/categories` |
 | GET | `/storefront/{slug}` |
 | GET | `/storefront/{slug}/products` |

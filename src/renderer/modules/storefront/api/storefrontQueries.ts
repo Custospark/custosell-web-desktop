@@ -12,6 +12,7 @@ import type {
 export const storefrontKeys = {
   all: ['storefront'] as const,
   discover: (q: string, category: string) => [...storefrontKeys.all, 'discover', q, category] as const,
+  shops: (q: string) => [...storefrontKeys.all, 'shops', q] as const,
   categories: () => [...storefrontKeys.all, 'categories'] as const,
   shop: (slug: string) => [...storefrontKeys.all, 'shop', slug] as const,
   products: (slug: string, category: string) => [...storefrontKeys.all, 'products', slug, category] as const,
@@ -40,6 +41,18 @@ export function useStorefrontDiscover(q: string, category: string) {
         products: unwrapList<StorefrontProduct>(data),
         meta: (data as { meta?: { total?: number } })?.meta ?? {},
       };
+    },
+  });
+}
+
+export function useStorefrontShops(q: string) {
+  return useQuery({
+    queryKey: storefrontKeys.shops(q),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(STOREFRONT.SHOPS, {
+        params: { q: q || undefined },
+      });
+      return unwrapList<StorefrontShop>(data);
     },
   });
 }

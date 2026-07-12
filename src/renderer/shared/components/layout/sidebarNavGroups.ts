@@ -7,7 +7,7 @@ import {
   BookOpen, BookType, FileText, BarChart3, Percent,
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
-  Store, Truck, PackageCheck,
+  Store, Truck, PackageCheck, Compass, ShoppingBag,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -26,6 +26,7 @@ export interface SidebarNavGroup {
 
 export const baseSubRoutes = [
   ROUTES.DASHBOARD,
+  ROUTES.DISCOVER, ROUTES.DISCOVER + '/my-orders',
   ROUTES.SALES.NEW, ROUTES.SALES.ORDERS, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
   ROUTES.CUSTOMERS.INDEX,
@@ -119,6 +120,14 @@ export const baseNavGroups: SidebarNavGroup[] = [
     label: 'Customers',
     subItems: [
       { to: ROUTES.CUSTOMERS.INDEX, label: 'Customer List', icon: Users },
+    ],
+  },
+  {
+    icon: Compass,
+    label: 'Discover & Storefronts',
+    subItems: [
+      { to: ROUTES.DISCOVER, label: 'Discover', icon: Compass },
+      { to: ROUTES.DISCOVER + '/my-orders', label: 'My Orders', icon: ShoppingBag },
     ],
   },
   {

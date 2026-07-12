@@ -1,10 +1,17 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks/useApp';
 import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
+import { ROUTES } from './constants/shared.paths';
+
+function isStorefrontPublicPath(pathname: string): boolean {
+  return pathname === ROUTES.DISCOVER || pathname.startsWith('/@');
+}
 
 export function PublicRoute() {
+  const location = useLocation();
   const token = useAppSelector((state) => state.auth.token);
+  const user = useAppSelector((state) => state.auth.user);
   const isInitialized = useAppSelector((state) => state.auth.isInitialized);
 
   if (!isInitialized) {
@@ -15,8 +22,7 @@ export function PublicRoute() {
     );
   }
 
-  if (token) {
-    const user = useAppSelector((state) => state.auth.user);
+  if (token && !isStorefrontPublicPath(location.pathname)) {
     return <Navigate to={getDefaultRoute(user)} replace />;
   }
 

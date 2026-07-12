@@ -17,7 +17,8 @@ interface ReceiptPreviewModalProps {
 export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPreviewModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);
-  const business = authUser?.business ?? sale.business;
+  // Issuer on the sale — not the viewer (Discover buyers have no / wrong business).
+  const business = sale.business ?? authUser?.business;
   const { share } = useWebShare();
 
   const handlePrint = useReactToPrint({

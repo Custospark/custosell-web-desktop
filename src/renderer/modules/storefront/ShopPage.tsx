@@ -18,7 +18,9 @@ import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
 import { DiscoverProductCard } from './ui/DiscoverProductCard';
 import { ProductStarRating } from './ui/ProductStarRating';
+import { StorefrontProductDetailModal } from './ui/StorefrontProductDetailModal';
 import { StorefrontQrCode } from './ui/StorefrontQrCode';
+import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
 import { useDiscoverShell } from './ui/discoverShellContext';
 
 function shopLocationLine(shop: StorefrontShop): string {
@@ -38,6 +40,7 @@ export default function ShopPage() {
   const productsQuery = useStorefrontShopProducts(slug ?? '');
   const rateShop = useRateStorefrontShop();
   const [q, setQ] = useState('');
+  const [detail, setDetail] = useState<StorefrontProduct | null>(null);
 
   const shop = shopQuery.data ?? productsQuery.data?.shop;
   const products = useMemo(
@@ -123,6 +126,10 @@ export default function ShopPage() {
 
   const onAdd = (product: StorefrontProduct) => {
     if (!shop) return;
+    if (isStorefrontProductOutOfStock(product)) {
+      showToast('error', 'This item is out of stock');
+      return;
+    }
     addProduct(
       {
         name: shop.name,
@@ -223,7 +230,8 @@ export default function ShopPage() {
           <StorefrontQrCode
             slug={shop.slug}
             size={96}
-            className="mx-auto w-24 shrink-0 sm:mx-0"
+            showDownload
+            className="mx-auto shrink-0 sm:mx-0"
           />
         </div>
       </div>
@@ -263,10 +271,22 @@ export default function ShopPage() {
               currency={currency}
               shopSlug={shop.slug}
               onAdd={onAdd}
+              onOpenDetail={() => setDetail(p)}
             />
           ))}
         </div>
       )}
+
+      {detail ? (
+        <StorefrontProductDetailModal
+          product={detail}
+          isOpen
+          onClose={() => setDetail(null)}
+          onAdd={onAdd}
+          shopSlug={shop.slug}
+          currency={currency}
+        />
+      ) : null}
     </div>
   );
 }

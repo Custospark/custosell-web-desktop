@@ -15,6 +15,8 @@ export type StorefrontDeliveryContact = {
   customer_name: string;
   customer_phone: string;
   notes: string;
+  delivery_address: string;
+  delivery_city: string;
 };
 
 interface StorefrontDeliveryContactFieldProps {
@@ -63,17 +65,27 @@ export function StorefrontDeliveryContactField({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(value.customer_name);
   const [notes, setNotes] = useState(value.notes);
+  const [address, setAddress] = useState(value.delivery_address);
+  const [city, setCity] = useState(value.delivery_city);
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [localPhone, setLocalPhone] = useState('');
 
   const hasContact = Boolean(value.customer_name.trim() && value.customer_phone.trim());
-  const hasPartial = Boolean(value.customer_name.trim() || value.customer_phone.trim() || value.notes.trim());
+  const hasPartial = Boolean(
+    value.customer_name.trim()
+    || value.customer_phone.trim()
+    || value.notes.trim()
+    || value.delivery_address.trim()
+    || value.delivery_city.trim(),
+  );
 
   const openModal = () => {
     if (disabled) return;
     const parsed = parseInternationalPhone(value.customer_phone);
     setName(value.customer_name);
     setNotes(value.notes);
+    setAddress(value.delivery_address);
+    setCity(value.delivery_city);
     setCountryCode(parsed.countryCode);
     setLocalPhone(parsed.localNumber);
     setOpen(true);
@@ -86,6 +98,8 @@ export function StorefrontDeliveryContactField({
       customer_name: name.trim(),
       customer_phone: fullPhone,
       notes: notes.trim(),
+      delivery_address: address.trim(),
+      delivery_city: city.trim(),
     });
     setOpen(false);
   };
@@ -94,6 +108,8 @@ export function StorefrontDeliveryContactField({
 
   const inputCls =
     'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/25';
+
+  const locationLine = [value.delivery_address.trim(), value.delivery_city.trim()].filter(Boolean).join(', ');
 
   return (
     <>
@@ -134,6 +150,7 @@ export function StorefrontDeliveryContactField({
                     <Phone className="h-3 w-3 shrink-0 text-slate-400" />
                     {value.customer_phone.trim()}
                   </span>
+                  {locationLine ? <span className="truncate">· {locationLine}</span> : null}
                   {value.notes.trim() ? (
                     <span className="truncate text-slate-400">· {value.notes.trim()}</span>
                   ) : null}
@@ -194,7 +211,26 @@ export function StorefrontDeliveryContactField({
             />
           </Section>
 
-          <Section icon={MessageSquare} title="Notes for the shop" hint="Optional — delivery tips, timing, extras">
+          <Section icon={MapPin} title="Delivery location" hint="Optional — helps the shop find you">
+            <div className="space-y-2">
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Street, landmark, or area"
+                autoComplete="street-address"
+                className={inputCls}
+              />
+              <input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="City / town"
+                autoComplete="address-level2"
+                className={inputCls}
+              />
+            </div>
+          </Section>
+
+          <Section icon={MessageSquare} title="Notes for the shop" hint="Optional — timing, extras">
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

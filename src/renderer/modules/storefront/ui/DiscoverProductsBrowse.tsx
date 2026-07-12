@@ -3,18 +3,25 @@ import { Package, Search } from 'lucide-react';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
-import { useStorefrontDiscoverInfinite } from '../api/storefrontQueries';
+import {
+  useStorefrontCategories,
+  useStorefrontDiscoverInfinite,
+} from '../api/storefrontQueries';
 import { CatalogLoadError } from './CatalogLoadError';
 import { DiscoverProductCard } from './DiscoverProductCard';
+import { StorefrontProductDetailModal } from './StorefrontProductDetailModal';
+import type { StorefrontProduct } from '../api/storefrontTypes';
 
 const RENDER_CHUNK = 36;
-/** Warm a few pages in the background; more load when the user asks for “Show more”. */
 const AUTO_PAGE_CAP = 3;
 
-/** Products from all shops — progressive fetch + client-side search. */
+/** Products from all shops — category chips + progressive fetch + client search. */
 export function DiscoverProductsBrowse() {
   const [q, setQ] = useState('');
+  const [category, setCategory] = useState('');
   const [visible, setVisible] = useState(RENDER_CHUNK);
+  const [detail, setDetail] = useState<StorefrontProduct | null>(null);
+  const { data: categories = [] } = useStorefrontCategories();
   const {
     data,
     isLoading,
@@ -25,7 +32,7 @@ export function DiscoverProductsBrowse() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStorefrontDiscoverInfinite();
+  } = useStorefrontDiscoverInfinite(category);
 
   const pageCount = data?.pages.length ?? 0;
 
@@ -61,7 +68,7 @@ export function DiscoverProductsBrowse() {
     });
   }, [products, q]);
 
-  const listKey = q.trim();
+  const listKey = `${category}|${q.trim()}`;
   const [seen, setSeen] = useState(listKey);
   if (listKey !== seen) {
     setSeen(listKey);
@@ -112,6 +119,41 @@ export function DiscoverProductsBrowse() {
         />
       ) : null}
 
+      {categories.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setCategory('')}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-semibold transition',
+              !category
+                ? 'border-amber-500 bg-amber-50 text-amber-950'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-amber-300',
+            )}
+          >
+            All
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setCategory(String(c.id))}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                category === String(c.id)
+                  ? 'border-amber-500 bg-amber-50 text-amber-950'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-amber-300',
+              )}
+            >
+              {c.name}
+              {c.product_count != null ? (
+                <span className="ml-1 tabular-nums text-[10px] opacity-70">{c.product_count}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5')}>
         <Search className="h-4 w-4 shrink-0 text-amber-700" />
         <input
@@ -132,19 +174,23 @@ export function DiscoverProductsBrowse() {
         <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center')}>
           <Package className="h-10 w-10 text-amber-700" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
-            {products.length === 0 ? 'No products listed' : `No products match “${q.trim()}”`}
+            {products.length === 0 ? 'No products listed' : `No products match “${q.trim() || 'filter'}”`}
           </p>
           <p className="mt-1 text-xs text-slate-600">
             {products.length === 0
               ? 'Products appear when shops list items for their public storefront.'
-              : 'Try another search — filtering is instant on this device.'}
+              : 'Try another category or search — filtering is instant on this device.'}
           </p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {shown.map((p) => (
-              <DiscoverProductCard key={`${p.id}-${p.business?.slug ?? ''}`} product={p} />
+              <DiscoverProductCard
+                key={`${p.id}-${p.business?.slug ?? ''}`}
+                product={p}
+                onOpenDetail={() => setDetail(p)}
+              />
             ))}
           </div>
           {filtered.length > visible || hasNextPage ? (
@@ -163,6 +209,14 @@ export function DiscoverProductsBrowse() {
           ) : null}
         </>
       )}
+
+      {detail ? (
+        <StorefrontProductDetailModal
+          product={detail}
+          isOpen
+          onClose={() => setDetail(null)}
+        />
+      ) : null}
     </div>
   );
 }

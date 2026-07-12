@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../app/api/axiosConfig';
-import { INVOICES } from '../../shared/api/endpoints/endpoints';
+import { INVOICES, STOREFRONT } from '../../shared/api/endpoints/endpoints';
 
 function filenameFromDisposition(header: string | undefined, fallback: string): string {
   if (!header) return fallback;
@@ -7,9 +7,11 @@ function filenameFromDisposition(header: string | undefined, fallback: string): 
   return match?.[1] ?? fallback;
 }
 
-export async function fetchInvoicePdfBlob(invoiceId: number): Promise<{ blob: Blob; filename: string }> {
-  const fallback = `invoice-${invoiceId}.pdf`;
-  const { data, headers, status } = await axiosInstance.get(INVOICES.PDF(invoiceId), {
+async function fetchPdfBlob(
+  url: string,
+  fallbackFilename: string,
+): Promise<{ blob: Blob; filename: string }> {
+  const { data, headers, status } = await axiosInstance.get(url, {
     responseType: 'blob',
     validateStatus: (s) => s < 500,
   });
@@ -30,10 +32,21 @@ export async function fetchInvoicePdfBlob(invoiceId: number): Promise<{ blob: Bl
   }
 
   const disposition = responseHeaders['content-disposition'];
-  const filename = filenameFromDisposition(disposition, fallback);
+  const filename = filenameFromDisposition(disposition, fallbackFilename);
   const blob = new Blob([data], { type: contentType.includes('pdf') ? 'application/pdf' : contentType });
 
   return { blob, filename };
+}
+
+export async function fetchInvoicePdfBlob(invoiceId: number): Promise<{ blob: Blob; filename: string }> {
+  return fetchPdfBlob(INVOICES.PDF(invoiceId), `invoice-${invoiceId}.pdf`);
+}
+
+/** B2C Discover — shop-letterhead PDF via storefront buyer route. */
+export async function fetchStorefrontBuyerInvoicePdfBlob(
+  orderId: number,
+): Promise<{ blob: Blob; filename: string }> {
+  return fetchPdfBlob(STOREFRONT.MY_ORDER_INVOICE_PDF(orderId), `invoice-order-${orderId}.pdf`);
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
@@ -47,8 +60,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export async function viewInvoicePdf(invoiceId: number): Promise<void> {
-  const { blob } = await fetchInvoicePdfBlob(invoiceId);
+async function openPdfBlob(blob: Blob): Promise<void> {
   const url = URL.createObjectURL(blob);
   const tab = window.open(url, '_blank');
   if (!tab) {
@@ -58,7 +70,22 @@ export async function viewInvoicePdf(invoiceId: number): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+export async function viewInvoicePdf(invoiceId: number): Promise<void> {
+  const { blob } = await fetchInvoicePdfBlob(invoiceId);
+  await openPdfBlob(blob);
+}
+
 export async function downloadInvoicePdf(invoiceId: number): Promise<void> {
   const { blob, filename } = await fetchInvoicePdfBlob(invoiceId);
+  downloadBlob(blob, filename);
+}
+
+export async function viewStorefrontBuyerInvoicePdf(orderId: number): Promise<void> {
+  const { blob } = await fetchStorefrontBuyerInvoicePdfBlob(orderId);
+  await openPdfBlob(blob);
+}
+
+export async function downloadStorefrontBuyerInvoicePdf(orderId: number): Promise<void> {
+  const { blob, filename } = await fetchStorefrontBuyerInvoicePdfBlob(orderId);
   downloadBlob(blob, filename);
 }

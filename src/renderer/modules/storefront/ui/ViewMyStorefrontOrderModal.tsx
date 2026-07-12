@@ -98,6 +98,15 @@ export function ViewMyStorefrontOrderModal({
             <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">{order.notes}</p>
           </div>
         ) : null}
+
+        {(order.delivery_address || order.delivery_city) ? (
+          <div>
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Delivery</h3>
+            <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+              {[order.delivery_address, order.delivery_city].filter(Boolean).join(', ')}
+            </p>
+          </div>
+        ) : null}
       </div>
     </Modal>
   );

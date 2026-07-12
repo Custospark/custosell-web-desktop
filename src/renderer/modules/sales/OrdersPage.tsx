@@ -1,17 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Ban,
-  CircleCheck,
-  Clock,
-  FileText,
-  LayoutList,
   Pencil,
   Play,
   Plus,
   RefreshCw,
   Search,
   ShoppingBag,
+  Wifi,
   WifiOff,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
@@ -27,7 +23,6 @@ import { useCancelOrder, useOrders } from './api/orders/useOrderQueries';
 import { useSale, useSales } from './api/salesQueries';
 import { useInvoices } from '../invoices/api/InvoiceQueries';
 import { findInvoiceBySaleId } from '../invoices/invoiceUtils';
-import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -40,50 +35,8 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import InvoiceFromSaleModal from './ui/InvoiceFromSaleModal';
 import RenameOrderModal from './ui/RenameOrderModal';
+import { ORDER_STATUS_TABS, orderStatusBadge } from './ui/orders/orderStatusUi';
 import type { Invoice } from '../invoices/api/InvoiceTypes';
-
-const STATUS_TABS: {
-  id: OrderStatus | 'all';
-  label: string;
-  icon: typeof LayoutList;
-}[] = [
-  { id: 'all', label: 'All', icon: LayoutList },
-  { id: 'open', label: 'Open', icon: Clock },
-  { id: 'completed', label: 'Completed', icon: CircleCheck },
-  { id: 'invoiced', label: 'Invoiced', icon: FileText },
-  { id: 'cancelled', label: 'Cancelled', icon: Ban },
-];
-
-function statusBadge(status: OrderStatus) {
-  switch (status) {
-    case 'open':
-      return (
-        <Badge variant="warning" className="gap-1">
-          <Clock className="w-3 h-3" /> Open
-        </Badge>
-      );
-    case 'completed':
-      return (
-        <Badge variant="success" className="gap-1">
-          <CircleCheck className="w-3 h-3" /> Completed
-        </Badge>
-      );
-    case 'invoiced':
-      return (
-        <Badge variant="primary" className="gap-1">
-          <FileText className="w-3 h-3" /> Invoiced
-        </Badge>
-      );
-    case 'cancelled':
-      return (
-        <Badge variant="danger" className="gap-1">
-          <Ban className="w-3 h-3" /> Cancelled
-        </Badge>
-      );
-    default:
-      return <Badge variant="neutral">{status}</Badge>;
-  }
-}
 
 export default function OrdersPage() {
   const dispatch = useAppDispatch();
@@ -234,7 +187,7 @@ export default function OrdersPage() {
 
       <Card className="p-4">
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          {STATUS_TABS.map((tab) => {
+          {ORDER_STATUS_TABS.map((tab) => {
             const Icon = tab.icon;
             const count = statusCounts[tab.id];
             return (
@@ -262,6 +215,30 @@ export default function OrdersPage() {
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => setOnlineOnly((v) => !v)}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              onlineOnly
+                ? 'bg-teal-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+            )}
+            title="Show Discover / online storefront orders only"
+          >
+            <Wifi className="w-3.5 h-3.5" />
+            Online
+            {onlineOpenCount > 0 ? (
+              <sup
+                className={cn(
+                  'ml-0.5 text-[10px] font-bold leading-none tabular-nums',
+                  onlineOnly ? 'text-teal-100' : 'text-teal-700',
+                )}
+              >
+                {onlineOpenCount}
+              </sup>
+            ) : null}
+          </button>
           <div className="ml-auto w-full sm:w-64">
             <SearchInput
               placeholder="Search number or customer…"
@@ -272,6 +249,19 @@ export default function OrdersPage() {
           </div>
         </div>
 
+        {!isOffline && onlineOpenCount > 0 && !onlineOnly ? (
+          <button
+            type="button"
+            onClick={() => {
+              setOnlineOnly(true);
+              setStatusTab('open');
+            }}
+            className="mb-3 w-full rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-left text-sm text-teal-900 hover:bg-teal-100"
+          >
+            <span className="font-semibold">{onlineOpenCount} open online order{onlineOpenCount === 1 ? '' : 's'}</span>
+            <span className="text-teal-800"> from Discover — tap to filter</span>
+          </button>
+        ) : null}
         {isLoading ? (
           <LoadingSkeleton variant="table" />
         ) : error ? (
@@ -372,7 +362,7 @@ export default function OrdersPage() {
                 {
                   key: 'status',
                   header: 'Status',
-                  render: (order) => statusBadge(order.status),
+                  render: (order) => orderStatusBadge(order.status),
                 },
                 {
                   key: 'actions',

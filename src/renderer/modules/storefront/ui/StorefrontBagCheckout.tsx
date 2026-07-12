@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Minus, Pencil, Plus, Trash2 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { bagTotal, type StorefrontCartBag } from '../cart/storefrontCartTypes';
+import { SERVICE_QTY_SOFT_CAP } from '../../inventory/api/products/ProductTypes';
+import QuantityEditModal from '../../sales/ui/QuantityEditModal';
+import { bagTotal, type StorefrontBagContactPatch, type StorefrontCartBag } from '../cart/storefrontCartTypes';
 import { StorefrontDeliveryContactField } from './StorefrontDeliveryContactField';
 
 export interface StorefrontBagCheckoutProps {
@@ -12,10 +15,7 @@ export interface StorefrontBagCheckoutProps {
   signedIn: boolean;
   onUpdateQty: (slug: string, productId: number, quantity: number) => void;
   onRemoveLine: (slug: string, productId: number) => void;
-  onContactChange: (
-    slug: string,
-    patch: Partial<Pick<StorefrontCartBag, 'customer_name' | 'customer_phone' | 'notes'>>,
-  ) => void;
+  onContactChange: (slug: string, patch: StorefrontBagContactPatch) => void;
   /** Place order (opens account modal when guest). */
   onSubmit: () => void;
   onClose: () => void;
@@ -35,6 +35,11 @@ export function StorefrontBagCheckout({
   const currency = bag.shop.currency || 'UGX';
   const total = bagTotal(bag);
   const canPlace = bag.items.length > 0 && Boolean(bag.customer_name.trim()) && Boolean(bag.customer_phone.trim());
+  const [qtyEdit, setQtyEdit] = useState<{
+    productId: number;
+    productName: string;
+    currentQty: number;
+  } | null>(null);
 
   return (
     <>
@@ -50,43 +55,71 @@ export function StorefrontBagCheckout({
           </Link>
         </div>
         <ul className="space-y-3">
-          {bag.items.map((line) => (
-            <li key={line.product.id} className="flex items-start justify-between gap-2 text-sm">
-              <div className="min-w-0">
-                <p className="line-clamp-2 font-medium text-slate-900">{line.product.name}</p>
-                <p className="tabular-nums text-slate-500">
-                  {formatCurrency(Number(line.product.unit_price) * line.quantity, currency)}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <button
-                  type="button"
-                  className="rounded-lg border border-slate-200 p-1.5 transition hover:bg-slate-50 active:scale-95"
-                  onClick={() => onUpdateQty(bag.shop.slug, line.product.id, line.quantity - 1)}
-                  aria-label="Decrease"
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="w-6 text-center tabular-nums font-medium">{line.quantity}</span>
-                <button
-                  type="button"
-                  className="rounded-lg border border-slate-200 p-1.5 transition hover:bg-slate-50 active:scale-95"
-                  onClick={() => onUpdateQty(bag.shop.slug, line.product.id, line.quantity + 1)}
-                  aria-label="Increase"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-slate-200 p-1.5 text-slate-500 transition hover:text-red-600"
-                  onClick={() => onRemoveLine(bag.shop.slug, line.product.id)}
-                  aria-label="Remove"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </li>
-          ))}
+          {bag.items.map((line) => {
+            const atMax = line.quantity >= SERVICE_QTY_SOFT_CAP;
+            return (
+              <li key={line.product.id} className="flex items-start justify-between gap-2 text-sm">
+                <div className="min-w-0">
+                  <p className="line-clamp-2 font-medium text-slate-900">{line.product.name}</p>
+                  <p className="tabular-nums text-slate-500">
+                    {formatCurrency(Number(line.product.unit_price) * line.quantity, currency)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    title="Decrease quantity"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-400 text-red-500 transition-all hover:border-red-500 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => onUpdateQty(bag.shop.slug, line.product.id, line.quantity - 1)}
+                    aria-label="Decrease quantity"
+                    disabled={busy}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Click to edit quantity"
+                    className="inline-flex w-12 items-center justify-center gap-0.5 text-center text-base font-semibold tabular-nums text-gray-900 transition-colors hover:text-blue-600"
+                    onClick={() => setQtyEdit({
+                      productId: line.product.id,
+                      productName: line.product.name,
+                      currentQty: line.quantity,
+                    })}
+                    disabled={busy}
+                  >
+                    {line.quantity}
+                    <Pencil className="h-3 w-3 text-blue-400" />
+                  </button>
+                  <button
+                    type="button"
+                    title={atMax ? `Max ${SERVICE_QTY_SOFT_CAP}` : 'Increase quantity'}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-sm transition-all ${
+                      atMax
+                        ? 'cursor-not-allowed border-gray-300 text-gray-400'
+                        : 'border-green-400 text-green-600 hover:border-green-500 hover:bg-green-50 hover:text-green-700'
+                    }`}
+                    onClick={() => {
+                      if (!atMax) onUpdateQty(bag.shop.slug, line.product.id, line.quantity + 1);
+                    }}
+                    aria-label="Increase quantity"
+                    disabled={busy || atMax}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove item"
+                    className="flex h-8 w-8 items-center justify-center text-red-500 transition-all hover:bg-red-50 hover:text-red-700"
+                    onClick={() => onRemoveLine(bag.shop.slug, line.product.id)}
+                    aria-label="Remove"
+                    disabled={busy}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
@@ -96,6 +129,8 @@ export function StorefrontBagCheckout({
             customer_name: bag.customer_name,
             customer_phone: bag.customer_phone,
             notes: bag.notes,
+            delivery_address: bag.delivery_address,
+            delivery_city: bag.delivery_city,
           }}
           disabled={busy}
           onChange={(next) => onContactChange(bag.shop.slug, next)}
@@ -140,6 +175,21 @@ export function StorefrontBagCheckout({
           </Link>
         </div>
       </div>
+
+      {qtyEdit ? (
+        <QuantityEditModal
+          open
+          onClose={() => setQtyEdit(null)}
+          productId={qtyEdit.productId}
+          productName={qtyEdit.productName}
+          currentQty={qtyEdit.currentQty}
+          maxQty={SERVICE_QTY_SOFT_CAP}
+          onConfirm={(quantity) => {
+            onUpdateQty(bag.shop.slug, qtyEdit.productId, quantity);
+            setQtyEdit(null);
+          }}
+        />
+      ) : null}
     </>
   );
 }

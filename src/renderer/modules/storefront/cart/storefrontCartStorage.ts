@@ -8,7 +8,21 @@ export function loadStorefrontCarts(): StorefrontCartsBySlug {
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    return parsed as StorefrontCartsBySlug;
+    const out: StorefrontCartsBySlug = {};
+    for (const [slug, bag] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!bag || typeof bag !== 'object') continue;
+      const row = bag as Partial<StorefrontCartsBySlug[string]>;
+      out[slug] = {
+        shop: row.shop as StorefrontCartsBySlug[string]['shop'],
+        items: Array.isArray(row.items) ? row.items : [],
+        notes: typeof row.notes === 'string' ? row.notes : '',
+        customer_name: typeof row.customer_name === 'string' ? row.customer_name : '',
+        customer_phone: typeof row.customer_phone === 'string' ? row.customer_phone : '',
+        delivery_address: typeof row.delivery_address === 'string' ? row.delivery_address : '',
+        delivery_city: typeof row.delivery_city === 'string' ? row.delivery_city : '',
+      };
+    }
+    return out;
   } catch {
     return {};
   }

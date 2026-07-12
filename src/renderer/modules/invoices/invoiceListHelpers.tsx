@@ -43,12 +43,19 @@ export function isReceivedInvoice(inv: Invoice): boolean {
   return inv.direction === 'received';
 }
 
-export function invoicePartyLabel(inv: Invoice): string {
-  if (isReceivedInvoice(inv)) {
-    // Never fall back to customer — that row is the buyer on the seller's books.
-    return inv.party_name
-      ?? inv.seller_business?.name
-      ?? 'Supplier';
+/**
+ * Counterparty for list/modal headers.
+ * `asBuyer` — Discover B2C / supplier view: always the issuing shop, never the customer row.
+ */
+export function invoicePartyLabel(
+  inv: Invoice,
+  opts?: { asBuyer?: boolean },
+): string {
+  if (opts?.asBuyer || isReceivedInvoice(inv)) {
+    // Prefer seller snapshot; party_name is already seller when direction=received.
+    return inv.seller_business?.name
+      ?? inv.party_name
+      ?? 'Shop';
   }
   return inv.party_name ?? inv.customer?.name ?? 'Walk-in';
 }

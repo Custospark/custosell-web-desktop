@@ -10,7 +10,7 @@ interface PrintableReceiptProps {
 
 const PrintableReceipt = React.forwardRef<HTMLDivElement, PrintableReceiptProps>(({ sale, isPrinting }, ref) => {
   const authUser = useAppSelector((s) => s.auth.user);
-  const business = authUser?.business ?? sale.business;
+  const business = sale.business ?? authUser?.business;
   const cashierName = sale.user?.name;
   const customer = sale.customer;
   const currency = business?.currency || 'UGX';
@@ -22,6 +22,9 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, PrintableReceiptProps>
   const netAmount = Math.max(0, Math.round((paidAmount - totalRefunded) * 100) / 100);
   const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
   const timezone = business?.timezone || undefined;
+  const shopPhone = business?.business_phone || business?.phone
+    || (sale.business ? undefined : authUser?.phone);
+  const shopName = business?.name?.trim() || 'Shop';
 
   return (
     <div className={isPrinting ? '' : 'hidden'}>
@@ -34,11 +37,11 @@ const PrintableReceipt = React.forwardRef<HTMLDivElement, PrintableReceiptProps>
         `}</style>
 
         <div className="text-center mb-3">
-          <h2 className="text-lg font-bold text-gray-900 uppercase">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
+          <h2 className="text-lg font-bold text-gray-900 uppercase">{shopName.toUpperCase()}</h2>
           {business?.description && <p className="text-xs text-gray-500 mt-0.5">{business.description}</p>}
-          {(business?.business_phone || business?.phone || authUser?.phone) && (
-            <p className="text-xs text-gray-500 mt-0.5">Call/WhatsApp: {business?.business_phone || business?.phone || authUser?.phone}</p>
-          )}
+          {shopPhone ? (
+            <p className="text-xs text-gray-500 mt-0.5">Call/WhatsApp: {shopPhone}</p>
+          ) : null}
           {business?.business_email && <p className="text-xs text-gray-500">{business.business_email}</p>}
           {location && <p className="text-xs text-gray-400 mt-0.5">{location}</p>}
           <p className="text-xs text-gray-500 uppercase tracking-wider mt-1.5">Sales Receipt</p>

@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Store } from 'lucide-react';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { useToast } from '../../../../app/contexts/useToast';
+import { ROUTES } from '../../../../app/routes/constants/shared.paths';
+import { avatarUrl } from '../../../../shared/utils/avatarUrl';
 import {
   useBusiness,
   useCheckSlugAvailable,
   useUpdateStorefrontProfile,
 } from '../../../settings/api/settings/BusinessQueries';
 import { storefrontShareUrl, whatsappShareUrl } from '../../../storefront/storefrontShare';
+import { StorefrontQrCode } from '../../../storefront/ui/StorefrontQrCode';
 
 /** Business-level public shop switch + shareable @slug. */
 export function BusinessStorefrontCard() {
@@ -30,17 +34,32 @@ export function BusinessStorefrontCard() {
     enabled !== Boolean(business.storefront_enabled)
     || slug.trim() !== (business.slug ?? '');
   const previewUrl = slug.trim() ? storefrontShareUrl(slug.trim()) : '';
+  const logoSrc = avatarUrl(business.logo_path);
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-start gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-          <Store className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
+        {logoSrc ? (
+          <img
+            src={logoSrc}
+            alt=""
+            className="h-12 w-12 rounded-lg border border-gray-200 object-cover"
+          />
+        ) : (
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+            <Store className="h-5 w-5" aria-hidden />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-gray-900">Public shop</h2>
           <p className="mt-0.5 text-sm text-gray-600">
             Share your shop link on TikTok, WhatsApp, or Facebook. Guests browse listed products and send order requests — no online payment.
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            Shop logo appears on Discover.{' '}
+            <Link to={ROUTES.SETTINGS.BUSINESS} className="font-semibold text-blue-700 hover:underline">
+              Change logo in Business settings
+            </Link>
           </p>
         </div>
       </div>
@@ -100,6 +119,21 @@ export function BusinessStorefrontCard() {
           <p className="mt-2 text-xs text-gray-500 break-all">{previewUrl}</p>
         ) : null}
       </div>
+
+      {slug.trim() ? (
+        <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <StorefrontQrCode
+            slug={slug.trim()}
+            size={128}
+            showDownload
+            label="Print or share this QR so customers open your shop"
+            className="shrink-0"
+          />
+          <p className="max-w-xs text-xs text-gray-500 sm:text-right">
+            Download a print-ready PNG for posters, stickers, or table tents. Scanning opens your public shop link.
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button

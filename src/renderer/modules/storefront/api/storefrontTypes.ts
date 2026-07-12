@@ -23,6 +23,9 @@ export interface StorefrontProduct {
   unit: string | null;
   image_path: string | null;
   type?: string;
+  stock_quantity?: number;
+  in_stock?: boolean;
+  availability?: 'always' | 'in_stock' | 'out' | string;
   rating_avg?: number;
   rating_count?: number;
   my_rating?: number | null;
@@ -51,6 +54,8 @@ export interface PlaceStorefrontOrderPayload {
   customer_name: string;
   customer_phone: string;
   notes?: string;
+  delivery_address?: string;
+  delivery_city?: string;
   items: { product_id: number; quantity: number }[];
 }
 
@@ -78,6 +83,8 @@ export interface MyStorefrontOrder {
   items?: MyStorefrontOrderItem[];
   customer_name?: string | null;
   customer_phone?: string | null;
+  delivery_address?: string | null;
+  delivery_city?: string | null;
   notes: string | null;
   created_at: string | null;
   shop_name: string | null;

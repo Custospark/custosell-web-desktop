@@ -16,6 +16,7 @@ import {
   type StorefrontCartBag,
   type StorefrontCartShopMeta,
   type StorefrontCartsBySlug,
+  type StorefrontBagContactPatch,
 } from './storefrontCartTypes';
 
 type MultiCartValue = {
@@ -33,7 +34,7 @@ type MultiCartValue = {
   removeLine: (slug: string, productId: number) => void;
   setBagContact: (
     slug: string,
-    patch: Partial<Pick<StorefrontCartBag, 'customer_name' | 'customer_phone' | 'notes'>>,
+    patch: StorefrontBagContactPatch,
   ) => void;
   clearBag: (slug: string) => void;
   getBag: (slug: string) => StorefrontCartBag | null;
@@ -83,6 +84,8 @@ export function StorefrontMultiCartProvider({ children }: { children: ReactNode 
             shop,
             customer_name: bag.customer_name.trim() || saved.customer_name,
             customer_phone: bag.customer_phone.trim() || saved.customer_phone,
+            delivery_address: bag.delivery_address.trim() || saved.delivery_address,
+            delivery_city: bag.delivery_city.trim() || saved.delivery_city,
           },
         };
       }
@@ -138,16 +141,23 @@ export function StorefrontMultiCartProvider({ children }: { children: ReactNode 
 
   const setBagContact = useCallback((
     slug: string,
-    patch: Partial<Pick<StorefrontCartBag, 'customer_name' | 'customer_phone' | 'notes'>>,
+    patch: StorefrontBagContactPatch,
   ) => {
     setCarts((prev) => {
       const bag = prev[slug];
       if (!bag) return prev;
       const next = { ...bag, ...patch };
-      if (patch.customer_name !== undefined || patch.customer_phone !== undefined) {
+      if (
+        patch.customer_name !== undefined
+        || patch.customer_phone !== undefined
+        || patch.delivery_address !== undefined
+        || patch.delivery_city !== undefined
+      ) {
         saveBuyerContact({
           customer_name: next.customer_name,
           customer_phone: next.customer_phone,
+          delivery_address: next.delivery_address,
+          delivery_city: next.delivery_city,
         });
       }
       return { ...prev, [slug]: next };

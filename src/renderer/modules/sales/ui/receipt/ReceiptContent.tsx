@@ -9,7 +9,9 @@ interface ReceiptContentProps {
 
 const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }, ref) => {
   const authUser = useAppSelector((s) => s.auth.user);
-  const business = authUser?.business ?? sale.business;
+  // Letterhead = issuing shop on the sale. Never prefer the viewer's business
+  // (Discover buyers / multi-shop owners must not see Custosell or their own brand).
+  const business = sale.business ?? authUser?.business;
   const cashierName = sale.user?.name;
   const customer = sale.customer;
   const currency = business?.currency || 'UGX';
@@ -31,6 +33,9 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
     ? (payments[0]?.change_given ?? changeRaw)
     : changeRaw;
   const location = [business?.address, business?.city || business?.state, business?.country].filter(Boolean).join(', ');
+  const shopPhone = business?.business_phone || business?.phone
+    || (sale.business ? undefined : authUser?.phone);
+  const shopName = business?.name?.trim() || 'Shop';
 
   return (
     <div ref={ref} className="receipt-print bg-white border border-gray-200 rounded-xl print:border-0 print:rounded-none print:bg-transparent print:shadow-none text-xs" style={{ maxWidth: '320px' }}>
@@ -41,11 +46,11 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
       `}</style>
       <div className="max-h-[60vh] overflow-y-auto print:overflow-visible p-4 print:px-2 print:py-3">
         <div className="text-center mb-3">
-          <h2 className="text-base font-bold text-gray-900 uppercase">{business?.name?.toUpperCase() || 'CUSTOSELL'}</h2>
+          <h2 className="text-base font-bold text-gray-900 uppercase">{shopName.toUpperCase()}</h2>
           {business?.description && <p className="text-xs text-gray-500 mt-0.5">{business.description}</p>}
-          {(business?.business_phone || business?.phone || authUser?.phone) && (
-            <p className="text-xs text-gray-500 mt-0.5">Call/WhatsApp: {business?.business_phone || business?.phone || authUser?.phone}</p>
-          )}
+          {shopPhone ? (
+            <p className="text-xs text-gray-500 mt-0.5">Call/WhatsApp: {shopPhone}</p>
+          ) : null}
           {business?.business_email && <p className="text-xs text-gray-500">{business.business_email}</p>}
           {location && <p className="text-xs text-gray-400 mt-0.5">{location}</p>}
           <p className="text-xs text-gray-500 uppercase tracking-wider mt-1.5">Sales Receipt</p>

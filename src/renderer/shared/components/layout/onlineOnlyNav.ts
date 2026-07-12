@@ -14,6 +14,16 @@ const DEFAULT_MESSAGE = 'This area needs an internet connection. Reconnect to us
 /** Paths that must not be navigated to while completely offline. Longest prefixes first. */
 export const ONLINE_ONLY_NAV_ENTRIES: OnlineOnlyNavEntry[] = [
   {
+    prefix: ROUTES.DISCOVER_MY_ORDERS,
+    label: 'My Orders',
+    message: 'My Orders need a connection. Reconnect to view or manage orders you placed.',
+  },
+  {
+    prefix: ROUTES.DISCOVER,
+    label: 'Discover',
+    message: 'Discover shops and products are online-only. Reconnect to browse and order.',
+  },
+  {
     prefix: ROUTES.INVENTORY.PURCHASE_ORDERS,
     label: 'Purchase orders',
     message: 'Purchase orders are online-only. Reconnect to create or manage orders.',

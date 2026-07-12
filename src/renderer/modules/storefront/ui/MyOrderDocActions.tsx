@@ -1,4 +1,4 @@
-import { Eye, FileText, Receipt } from 'lucide-react';
+import { Ban, Eye, FileText, Receipt, Trash2 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import type { MyStorefrontOrder } from '../api/storefrontTypes';
 
@@ -6,22 +6,28 @@ interface MyOrderDocActionsProps {
   order: MyStorefrontOrder;
   busy: boolean;
   onView: () => void;
+  onCancel?: () => void;
+  onDelete?: () => void;
   onOpenReceipt: () => void;
   onOpenInvoice: () => void;
   onOpenInvoiceReceipts: () => void;
 }
 
-/** B2C mirror of buyer PO actions — Eye for line items; Receipt/Invoice after fulfillment. */
+/** B2C My Orders actions — Eye, cancel open, delete cancelled, receipts/invoices. */
 export function MyOrderDocActions({
   order,
   busy,
   onView,
+  onCancel,
+  onDelete,
   onOpenReceipt,
   onOpenInvoice,
   onOpenInvoiceReceipts,
 }: MyOrderDocActionsProps) {
   const hasSale = Boolean(order.sale_id);
   const hasInvoice = Boolean(order.invoice_id);
+  const canCancel = order.status === 'open' && Boolean(onCancel);
+  const canDelete = order.status === 'cancelled' && Boolean(onDelete);
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
@@ -34,6 +40,36 @@ export function MyOrderDocActions({
       >
         <Eye className="h-4 w-4" />
       </button>
+
+      {canCancel ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={busy}
+          onClick={onCancel}
+          title="Cancel this open order"
+          className="gap-1"
+        >
+          <Ban className="h-3.5 w-3.5" />
+          Cancel
+        </Button>
+      ) : null}
+
+      {canDelete ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={busy}
+          onClick={onDelete}
+          title="Remove this cancelled order from your list"
+          className="gap-1"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </Button>
+      ) : null}
 
       {hasSale ? (
         <Button

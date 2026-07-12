@@ -7,7 +7,7 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useInvoice } from './api/InvoiceQueries';
 import type { Invoice } from './api/InvoiceTypes';
-import { downloadInvoicePdf, viewInvoicePdf } from './useInvoicePdf';
+import { downloadInvoicePdf, downloadStorefrontBuyerInvoicePdf, viewInvoicePdf, viewStorefrontBuyerInvoicePdf } from './useInvoicePdf';
 import {
   INVOICE_STATUS_LABELS,
   INVOICE_STATUS_STYLES,
@@ -31,6 +31,8 @@ export interface ViewInvoiceModalProps {
   /** Open receipts section first. */
   focus?: 'details' | 'receipts';
   seed?: Invoice | null;
+  /** Required for storefront_buyer PDF (buyer-scoped route uses order id). */
+  storefrontOrderId?: number | null;
 }
 
 export function ViewInvoiceModal({
@@ -40,6 +42,7 @@ export function ViewInvoiceModal({
   role,
   focus = 'details',
   seed = null,
+  storefrontOrderId = null,
 }: ViewInvoiceModalProps) {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -58,6 +61,7 @@ export function ViewInvoiceModal({
   const due = invoice ? balanceDue(invoice) : 0;
   const status = invoice ? displayStatus(invoice) : 'sent';
   const canRecord = role === 'seller' && !received && due > 0.009;
+  const canPdf = !isStorefrontBuyer || Boolean(storefrontOrderId);
 
   const lines = useMemo(() => invoice?.items ?? [], [invoice]);
 
@@ -65,8 +69,15 @@ export function ViewInvoiceModal({
     if (!invoice) return;
     setPdfBusy(true);
     try {
-      if (type === 'view') await viewInvoicePdf(invoice.id);
-      else await downloadInvoicePdf(invoice.id);
+      if (isStorefrontBuyer) {
+        if (!storefrontOrderId) throw new Error('Invoice PDF is not available for this order');
+        if (type === 'view') await viewStorefrontBuyerInvoicePdf(storefrontOrderId);
+        else await downloadStorefrontBuyerInvoicePdf(storefrontOrderId);
+      } else if (type === 'view') {
+        await viewInvoicePdf(invoice.id);
+      } else {
+        await downloadInvoicePdf(invoice.id);
+      }
     } catch (err) {
       showToast('error', err instanceof Error ? err.message : 'Failed to open PDF');
     } finally {
@@ -91,7 +102,7 @@ export function ViewInvoiceModal({
         title={invoice?.invoice_number ?? 'Invoice'}
         subtitle={
           isStorefrontBuyer
-            ? 'Your purchase from this shop — view only.'
+            ? `Your purchase from ${invoice?.seller_business?.name ?? 'this shop'} — view only.`
             : received
               ? 'Supplier invoice — view only. The seller records payments.'
               : 'Sales invoice — you can record payments when balance remains.'
@@ -122,7 +133,10 @@ export function ViewInvoiceModal({
                 </span>
               ) : null}
               <span className="text-sm text-slate-600">
-                {received ? 'From' : 'To'}: <span className="font-medium text-slate-900">{invoicePartyLabel(invoice)}</span>
+                {received ? 'From' : 'To'}:{' '}
+                <span className="font-medium text-slate-900">
+                  {invoicePartyLabel(invoice, { asBuyer: received })}
+                </span>
               </span>
               {invoice.purchase_order?.po_number ? (
                 <span className="text-sm text-slate-600">
@@ -207,7 +221,7 @@ export function ViewInvoiceModal({
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 shrink-0">
               <div className="flex flex-wrap gap-2">
-                {!isStorefrontBuyer ? (
+                {canPdf ? (
                   <>
                     <Button type="button" variant="secondary" size="sm" disabled={pdfBusy} onClick={() => void handlePdf('view')}>
                       <Eye className="mr-1.5 h-3.5 w-3.5" /> View PDF

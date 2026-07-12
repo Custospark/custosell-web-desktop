@@ -113,11 +113,18 @@ export function StorefrontCartHub({
         customer_name: placedName,
         customer_phone: placedPhone,
         notes: bag.notes.trim() || undefined,
+        delivery_address: bag.delivery_address.trim() || undefined,
+        delivery_city: bag.delivery_city.trim() || undefined,
         items: bag.items.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
       },
       {
         onSuccess: (res) => {
-          saveBuyerContact({ customer_name: placedName, customer_phone: placedPhone });
+          saveBuyerContact({
+            customer_name: placedName,
+            customer_phone: placedPhone,
+            delivery_address: bag.delivery_address.trim(),
+            delivery_city: bag.delivery_city.trim(),
+          });
           const currentUser = store.getState().auth.user;
           if (currentUser && placedPhone && currentUser.phone !== placedPhone) {
             dispatch(setUser({ ...currentUser, phone: placedPhone }));

@@ -12,11 +12,20 @@ export type StorefrontCartBag = {
   notes: string;
   customer_name: string;
   customer_phone: string;
+  delivery_address: string;
+  delivery_city: string;
 };
 
 export type StorefrontCartsBySlug = Record<string, StorefrontCartBag>;
 
-/** New bags inherit last saved delivery contact so reorders skip re-typing phone. */
+export type StorefrontBagContactPatch = Partial<
+  Pick<
+    StorefrontCartBag,
+    'customer_name' | 'customer_phone' | 'notes' | 'delivery_address' | 'delivery_city'
+  >
+>;
+
+/** New bags inherit last saved delivery contact so reorders skip re-typing. */
 export function emptyBag(shop: StorefrontCartShopMeta): StorefrontCartBag {
   const saved = loadBuyerContact();
   return {
@@ -25,6 +34,8 @@ export function emptyBag(shop: StorefrontCartShopMeta): StorefrontCartBag {
     notes: '',
     customer_name: saved.customer_name,
     customer_phone: saved.customer_phone,
+    delivery_address: saved.delivery_address,
+    delivery_city: saved.delivery_city,
   };
 }
 

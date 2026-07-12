@@ -11,15 +11,16 @@ Same path for public visitors and logged-in users (Discover shell):
 3. Catalogs stay **warm in React Query** (prefetch + layout warmup, 10 min stale / 1 h gc) so Shops ↔ Products and return-from-shop feel instant.
 4. Open a shop → compact product grid + Add to that shop’s bag.
 5. **Cart** hub → one bag per business; submit one bag at a time. Logged-in buyers auto-fill name/phone from profile.
-6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned. **Eye** opens line items (PO/IO-style). After a shop completes/invoices the sale, buyers open **Receipt** / **Invoice** / **Payments** via existing `ReceiptPreviewModal` and `ViewInvoiceModal` (`role="storefront_buyer"`).
+6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned. **Eye** opens line items (PO/IO-style). After a shop completes/invoices the sale, buyers open **Receipt** / **Invoice** / **Payments** via existing `ReceiptPreviewModal` and `ViewInvoiceModal` (`role="storefront_buyer"`). Receipt and invoice letterheads show the **shop business name** (not Custosell); invoice **View/Download PDF** uses `GET /storefront/my-orders/{id}/invoice/pdf` — see ADR [storefront-buyer-doc-letterhead](../adr/2026-07-12-storefront-buyer-doc-letterhead.md).
 7. **Delivery contact** → Name/phone saved to `custosell.storefront.buyerContact.v1` and to the buyer `User.phone` on place-order so reorders prefill; still editable in the delivery modal.
 7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order — no business setup. They become that shop’s customer on order.
+7b. **Your carts** line qty uses Sales-style circular red (−) / green (+) and tap-to-edit quantity.
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
 Shops show **description, location, phone, email, and star ratings** on browse tiles and on the shop page.
 Products and shops support **optimistic** star ratings (UI updates immediately; rolls back on error).
 Catalog loads keep the first successful page visible if a later page fails; **Retry** refetches. Auto-fetch caps at a few pages so one bad page does not wipe Products.
-Shop pages show a compact **QR code** for the public `/@slug` share URL (HashRouter-safe). Shop list cards show a proportional QR on the **right**.
+Shop pages show a compact **QR code** for the public `/@slug` share URL (HashRouter-safe) with **Download PNG** (512px print-ready). Shop list cards show a proportional QR on the **right** (display only). Settings → **Public shop** also shows QR + download for stickers/posters. See ADR [storefront-qr-download](../adr/2026-07-12-storefront-qr-download.md).
 Strip label stays **Shops** (never the open shop’s name). While on `/discover/shop/:slug`, Shops/Products are not highlighted; clicking them leaves the shop. The matched route always renders through **Outlet** (`DiscoverPage` / `ShopPage` / `MyOrdersPage`) so the URL and visible page stay in sync. See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md) for the blank-main / Outlet-key / shell-header bugs that were fixed.
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
 Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
@@ -92,3 +93,14 @@ Product public payload includes `rating_avg`, `rating_count`, `my_rating`.
 ## Staff fulfillment
 
 Orders page shows **Online** badge for `source=storefront`, guest phone with tel/WhatsApp links. Complete the order into a sale as with held POS orders (no stock reserved until sale).
+
+## Known gaps (remaining)
+
+- MoMo / card pay on place-order (intentional later)
+- Push notifications (email + in-app notify on complete/invoice is live)
+- SEO/OG for `/@slug`, multi-image galleries, text reviews, wishlists, delivery slots/fees
+- Hard stock reservation until sale completes (soft stock signal + place-order check only)
+
+## Furnished this pass
+
+Discover category chips · Online orders filter/alert on Sales → Orders · buyer cancel open / delete cancelled · stock badges · Discover online-only nav · product detail modal · self-hosted QR · Public shop logo preview · delivery address/city · buyer email/in-app notify.

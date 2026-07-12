@@ -1,0 +1,112 @@
+import { Link } from 'react-router-dom';
+import { Modal } from '../../../shared/components/modals/Modal';
+import { Button } from '../../../shared/components/buttons/Button';
+import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import type { StorefrontProduct } from '../api/storefrontTypes';
+import { ProductStarRating } from './ProductStarRating';
+import { productVisual } from './productVisual';
+import { StockAvailabilityBadge } from './StockAvailabilityBadge';
+import { isStorefrontProductOutOfStock } from './storefrontStock';
+
+interface StorefrontProductDetailModalProps {
+  product: StorefrontProduct;
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd?: (product: StorefrontProduct) => void;
+  shopSlug?: string;
+  currency?: string;
+}
+
+/** Product detail — image, description, stock, ratings; Add or open shop. */
+export function StorefrontProductDetailModal({
+  product,
+  isOpen,
+  onClose,
+  onAdd,
+  shopSlug,
+  currency: currencyProp,
+}: StorefrontProductDetailModalProps) {
+  const currency = currencyProp || product.business?.currency || 'UGX';
+  const slug = shopSlug || product.business?.slug;
+  const visual = productVisual(product.name, product.type);
+  const { Icon, wrap, icon } = visual;
+  const outOfStock = isStorefrontProductOutOfStock(product);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={product.name} size="md">
+      <div className="space-y-4 p-4">
+        <div className={`flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl ${wrap}`}>
+          {product.image_path ? (
+            <img
+              src={avatarUrl(product.image_path) ?? undefined}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <Icon className={`h-14 w-14 ${icon}`} aria-hidden />
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-lg font-bold tabular-nums text-teal-900">
+            {formatCurrency(Number(product.unit_price), currency)}
+            {product.unit ? <span className="text-sm font-medium text-slate-500"> / {product.unit}</span> : null}
+          </p>
+          <StockAvailabilityBadge product={product} />
+        </div>
+
+        {product.category?.name ? (
+          <p className="text-xs font-medium text-slate-500">{product.category.name}</p>
+        ) : null}
+
+        {product.description?.trim() ? (
+          <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{product.description}</p>
+        ) : (
+          <p className="text-sm italic text-slate-400">No description yet.</p>
+        )}
+
+        <ProductStarRating
+          avg={Number(product.rating_avg ?? 0)}
+          count={Number(product.rating_count ?? 0)}
+          myRating={product.my_rating}
+          disabled
+        />
+
+        {product.business?.name ? (
+          <p className="text-sm text-slate-600">
+            Sold by <span className="font-semibold text-slate-900">{product.business.name}</span>
+            {product.business.city ? ` · ${product.business.city}` : ''}
+          </p>
+        ) : null}
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          {onAdd ? (
+            <Button
+              type="button"
+              disabled={outOfStock}
+              onClick={() => {
+                onAdd(product);
+                onClose();
+              }}
+            >
+              {outOfStock ? 'Out of stock' : 'Add to cart'}
+            </Button>
+          ) : slug ? (
+            <Link
+              to={ROUTES.SHOP(slug)}
+              onClick={onClose}
+              className="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+            >
+              Open shop
+            </Link>
+          ) : null}
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}

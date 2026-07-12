@@ -64,7 +64,7 @@ const BENEFITS = [
   {
     icon: Layers,
     title: 'Everything in one place',
-    description: 'POS, Inventory, Accounting, HR &amp; Payroll, Projects, Pipeline, Expenses, Financial Forecasting — no more juggling separate apps.',
+    description: 'POS, Inventory &amp; Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting — all connected, no more juggling separate apps.',
     color: 'from-blue-500 to-blue-600',
   },
   {
@@ -122,7 +122,7 @@ export default function LandingPage() {
             </motion.p>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-lg sm:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              <strong>Point of Sale (POS)</strong>, <strong>Inventory</strong>, <strong>Accounting</strong>, <strong>HR &amp; Payroll</strong>, <strong>Invoicing</strong>, <strong>Expenses</strong>, <strong>Project Management</strong>, <strong>Pipeline</strong>, <strong>Financial Forecasting</strong>, and <strong>Document Management</strong> — all in one system that works with or without the internet.
+              <strong>Point of Sale (POS)</strong>, <strong>Inventory &amp; Supply Chain Management</strong>, <strong>Accounting</strong>, <strong>HR &amp; Payroll</strong>, <strong>Invoicing</strong>, <strong>Expenses</strong>, <strong>Project Management</strong>, <strong>Sales Pipeline (CRM)</strong>, <strong>Financial Forecasting</strong>, and <strong>Document Management</strong> — all in one system that works with or without the internet.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">

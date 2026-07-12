@@ -47,7 +47,7 @@ export const LANDING_MODULES: LandingModule[] = [
     color: 'from-sky-500 to-sky-600',
   },
   {
-    title: 'Pipeline',
+    title: 'Sales Pipeline (CRM)',
     description: 'Close more deals. Move leads across boards so nothing slips through the cracks.',
     icon: Kanban,
     color: 'from-indigo-500 to-indigo-600',

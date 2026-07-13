@@ -162,12 +162,17 @@ export default function RegisterPage() {
         <Button type="submit" className="w-full py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
           Create Account
         </Button>
-        <p className="text-center text-sm text-gray-500 pt-1">
-          Already have an account?{' '}
-          <Link to={ROUTES.LOGIN} className="text-blue-600 hover:underline font-medium">
-            Sign in
+        <div className="space-y-3 border-t border-gray-100 pt-5">
+          <p className="text-center text-sm font-medium text-gray-700">
+            Already have an account?
+          </p>
+          <Link
+            to={ROUTES.LOGIN}
+            className="flex w-full items-center justify-center rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+          >
+            Sign In
           </Link>
-        </p>
+        </div>
       </form>
     </AuthLayout>
   );

@@ -109,15 +109,19 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
 
         <main className="flex-1 flex items-center justify-center px-5 py-8 sm:px-8 sm:py-10">
           <div className="w-full max-w-md">
-            <div className="lg:hidden relative h-44 sm:h-48 mb-8 overflow-hidden rounded-2xl shadow-md ring-1 ring-gray-200/80">
-              <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/55 to-blue-900/25" />
-              <div className="absolute inset-x-0 bottom-0 p-5">
-                <p className="text-white text-[11px] font-semibold uppercase tracking-[0.18em] mb-1.5">
+            <div className="relative mb-8 overflow-hidden rounded-2xl shadow-md ring-1 ring-gray-200/80 lg:hidden">
+              <div className="absolute inset-0">
+                <img src={image} alt="" className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-900/80 to-blue-900/40" />
+              </div>
+              <div className="relative space-y-2 px-5 py-5 sm:px-6 sm:py-6">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white">
                   {TAGLINE_SHORT}
                 </p>
-                <p className="text-white text-lg font-bold leading-snug">{TAGLINE}</p>
-                <p className="text-blue-100/80 text-xs mt-2 line-clamp-2">{description}</p>
+                <p className="text-lg font-bold leading-snug text-white sm:text-xl">{TAGLINE}</p>
+                <p className="text-xs leading-relaxed text-blue-100/90 sm:text-sm">
+                  {description}
+                </p>
               </div>
             </div>
 

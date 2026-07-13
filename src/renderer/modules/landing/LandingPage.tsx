@@ -145,29 +145,6 @@ export default function LandingPage() {
               transition={{ delay: 0.15 }}
               className="mx-auto mt-4 max-w-xl lg:mx-0 sm:mt-5"
             >
-              <motion.p
-                initial={{ opacity: 0, letterSpacing: '0.35em' }}
-                animate={{ opacity: 1, letterSpacing: '0.12em' }}
-                transition={{ delay: 0.2, duration: 0.55, ease: 'easeOut' }}
-                className="mb-3 text-left text-[11px] font-bold uppercase text-slate-500 sm:text-xs"
-              >
-                <motion.span
-                  className="inline-block origin-left"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.28, duration: 0.4 }}
-                >
-                  What you get
-                </motion.span>
-                <motion.span
-                  aria-hidden
-                  className="ml-2 inline-block h-px w-8 align-middle bg-gradient-to-r from-blue-500/70 to-transparent sm:w-12"
-                  initial={{ scaleX: 0, opacity: 0 }}
-                  animate={{ scaleX: 1, opacity: 1 }}
-                  transition={{ delay: 0.45, duration: 0.45, ease: 'easeOut' }}
-                  style={{ transformOrigin: 'left' }}
-                />
-              </motion.p>
               <ul className="flex flex-wrap justify-center gap-1.5 sm:gap-2 lg:justify-start">
                 {HERO_CAPABILITIES.map((item, i) => (
                   <motion.li
@@ -182,7 +159,7 @@ export default function LandingPage() {
                   </motion.li>
                 ))}
               </ul>
-              <p className="mt-3 text-sm leading-relaxed text-gray-500 sm:text-base">
+              <p className="mt-3 text-sm font-bold leading-relaxed text-blue-700 sm:text-base">
                 All in one connected system — works with or without the internet.
               </p>
             </motion.div>

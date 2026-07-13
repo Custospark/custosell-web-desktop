@@ -37,6 +37,14 @@ function extractAuthUser(data: ProfileResponse): AuthUser {
   return data as AuthUser;
 }
 
+function withRequiredSettings(mods: BusinessModuleSlug[]): BusinessModuleSlug[] {
+  return mods.includes('settings') ? mods : [...mods, 'settings'];
+}
+
+function modulesSignature(modules: string[]): string {
+  return [...modules].sort().join('|');
+}
+
 const OWNER_MODULE_TILES = BUSINESS_MODULE_SLUGS.map((slug) => {
   const item = MODULE_LAUNCHER_CATALOG.find((entry) => entry.slug === slug);
   if (!item) {
@@ -57,26 +65,39 @@ export default function OwnerModuleAccessForm() {
   useEffect(() => {
     if (!user || !isBusinessOwner(user)) return;
     queueMicrotask(() => {
-      setModules(resolvedOwnerBusinessModules(user));
+      setModules(withRequiredSettings(resolvedOwnerBusinessModules(user)));
       setEstimatesFullAccess(ownerInitialEstimatesFullAccess(user));
       setHrFullAccess(ownerInitialHrFullAccess(user));
     });
   }, [user]);
 
   const resolvedModules = useMemo(
-    () => buildStaffModulesPayload(modules, estimatesFullAccess, hrFullAccess),
+    () => buildStaffModulesPayload(withRequiredSettings(modules), estimatesFullAccess, hrFullAccess),
     [estimatesFullAccess, hrFullAccess, modules],
   );
 
-  const enabledCount = modules.length;
+  const baselineSignature = useMemo(() => {
+    if (!user || !isBusinessOwner(user)) return '';
+    return modulesSignature(
+      buildStaffModulesPayload(
+        withRequiredSettings(resolvedOwnerBusinessModules(user)),
+        ownerInitialEstimatesFullAccess(user),
+        ownerInitialHrFullAccess(user),
+      ),
+    );
+  }, [user]);
+
+  const isDirty = modulesSignature(resolvedModules) !== baselineSignature;
+  const enabledCount = withRequiredSettings(modules).length;
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
     if (module === 'settings') return;
     setModules((prev) => {
-      const removing = prev.includes(module);
+      const base = withRequiredSettings(prev);
+      const removing = base.includes(module);
       if (module === 'estimates' && removing) setEstimatesFullAccess(false);
       if (module === 'hr' && removing) setHrFullAccess(false);
-      return removing ? prev.filter((m) => m !== module) : [...prev, module];
+      return withRequiredSettings(removing ? base.filter((m) => m !== module) : [...base, module]);
     });
   }, []);
 
@@ -95,7 +116,7 @@ export default function OwnerModuleAccessForm() {
     },
     onSuccess: async (freshUser) => {
       dispatch(setUser(freshUser));
-      setModules(resolvedOwnerBusinessModules(freshUser));
+      setModules(withRequiredSettings(resolvedOwnerBusinessModules(freshUser)));
       setEstimatesFullAccess(staffHasFullEstimatesModule(freshUser.modules));
       setHrFullAccess(staffHasFullHrModule(freshUser.modules));
       try {
@@ -116,22 +137,24 @@ export default function OwnerModuleAccessForm() {
     return <Navigate to={ROUTES.SETTINGS.BUSINESS} replace />;
   }
 
+  const saveDisabled = !isDirty || saveMutation.isPending;
+
   return (
-    <div className="mx-auto max-w-4xl pb-8">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="shrink-0 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-md shadow-blue-500/20">
-            <LayoutGrid className="h-6 w-6 text-white" />
+    <div className="relative mx-auto w-full max-w-6xl pb-28 sm:pb-10">
+      <div className="mb-5 flex flex-col gap-4 lg:mb-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <div className="shrink-0 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shadow-md shadow-blue-500/20 sm:rounded-2xl sm:p-3">
+            <LayoutGrid className="h-5 w-5 text-white sm:h-6 sm:w-6" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Module access</h1>
-            <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-500">
-              Choose which workspaces appear for your business — same icons as Apps in the navbar.
-              Account and Custosell Guide stay available to everyone. Settings stays required for owners.
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Module access</h1>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
+              Choose which workspaces appear for your business.
+              Account and Custosell Guide stay available to everyone. Settings stays on for owners and cannot be turned off.
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-3 self-start rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
+        <div className="hidden shrink-0 items-center gap-3 self-stretch rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm sm:flex lg:self-start">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Enabled</p>
             <p className="text-lg font-bold tabular-nums text-slate-900">
@@ -139,15 +162,22 @@ export default function OwnerModuleAccessForm() {
               <span className="text-sm font-medium text-slate-400">/{BUSINESS_MODULE_SLUGS.length}</span>
             </p>
           </div>
-          <Button type="button" onClick={() => saveMutation.mutate()} loading={saveMutation.isPending}>
+          <Button
+            type="button"
+            onClick={() => saveMutation.mutate()}
+            loading={saveMutation.isPending}
+            disabled={saveDisabled}
+            title={isDirty ? 'Save module access' : 'No changes to save'}
+          >
             Save changes
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-2 min-[520px]:gap-3 xl:grid-cols-3">
         {OWNER_MODULE_TILES.map((item) => {
           const slug = item.slug as BusinessModuleSlug;
+          const isSettings = slug === 'settings';
           return (
             <OwnerModuleTile
               key={slug}
@@ -156,8 +186,8 @@ export default function OwnerModuleAccessForm() {
               description={item.description}
               icon={item.icon}
               tone={item.tone}
-              checked={modules.includes(slug)}
-              locked={slug === 'settings'}
+              checked={isSettings || modules.includes(slug)}
+              locked={isSettings}
               disabled={saveMutation.isPending}
               onToggle={() => toggleModule(slug)}
             />
@@ -166,12 +196,12 @@ export default function OwnerModuleAccessForm() {
       </div>
 
       {(modules.includes('estimates') || modules.includes('hr')) && (
-        <div className="mt-6 space-y-3">
+        <div className="mt-5 space-y-3 sm:mt-6">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Workspace depth</h2>
           {modules.includes('estimates') && (
             <label
               className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors',
+                'flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors sm:p-4',
                 estimatesFullAccess
                   ? 'border-violet-200 bg-violet-50/70'
                   : 'border-slate-200 bg-white hover:border-violet-100',
@@ -198,7 +228,7 @@ export default function OwnerModuleAccessForm() {
           {modules.includes('hr') && (
             <label
               className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors',
+                'flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors sm:p-4',
                 hrFullAccess
                   ? 'border-rose-200 bg-rose-50/70'
                   : 'border-slate-200 bg-white hover:border-rose-100',
@@ -225,15 +255,34 @@ export default function OwnerModuleAccessForm() {
         </div>
       )}
 
-      <div className="sticky bottom-4 mt-8 flex justify-end sm:hidden">
-        <Button
-          type="button"
-          className="shadow-lg shadow-blue-500/25"
-          onClick={() => saveMutation.mutate()}
-          loading={saveMutation.isPending}
-        >
-          Save module access
-        </Button>
+      <div
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-20 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md sm:hidden',
+          'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+        )}
+      >
+        <div className="mx-auto flex max-w-6xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Enabled</p>
+            <p className="text-base font-bold tabular-nums text-slate-900">
+              {enabledCount}
+              <span className="text-sm font-medium text-slate-400">/{BUSINESS_MODULE_SLUGS.length}</span>
+              {!isDirty ? (
+                <span className="ml-2 text-xs font-medium normal-case tracking-normal text-slate-400">No changes</span>
+              ) : null}
+            </p>
+          </div>
+          <Button
+            type="button"
+            className="shrink-0 shadow-lg shadow-blue-500/20"
+            onClick={() => saveMutation.mutate()}
+            loading={saveMutation.isPending}
+            disabled={saveDisabled}
+            title={isDirty ? 'Save module access' : 'No changes to save'}
+          >
+            Save changes
+          </Button>
+        </div>
       </div>
     </div>
   );

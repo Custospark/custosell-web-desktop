@@ -75,15 +75,15 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 - Optional **`user_id`** links to Settings → Staff (`User`) for app login — one person, one account.
 - **Auto-mirror:** Creating staff in Settings creates a linked HR employee (`STF-{userId}`). Opening People (`GET /hr/employees`) backfills any staff still missing a profile. Artisan: `hr:backfill-staff-employees`.
 - **Create from HR:** People → Add employee can create an HR-only profile **or** `POST /hr/employees/with-account` (admin/HR sets password, role, modules).
-- **Existing employee login:** `POST /hr/employees/{id}/create-account`, link via `link-user`, disconnect via `unlink-user` (keeps User), or `remove-account` (soft-deletes User).
-- **Delete employee:** optional `remove_account=1` also removes the staff login.
-- **Password:** Admin/HR sets password on create (same as Settings staff drawer). No invite email in v1. HR with-account is online-first.
+- **Existing employee login:** `POST /hr/employees/{id}/create-account` (create-or-attach via BE `resolveStaffAccount`), link via `link-user`, disconnect via `unlink-user` (keeps User on org; clears HR link only), or `remove-account` (**detaches** from organization — login stays, org membership cleared).
+- **Delete employee:** optional `remove_account=1` also **detaches** the staff login from this organization (does not delete the user).
+- **Password:** Admin/HR sets password on create (same as Settings staff drawer). No invite email in v1. HR with-account is online-first. Other-org emails return **409** (surfaced via `sanitizeErrorMessage`).
 
 ## Integrations
 
 | System | Behavior |
 |--------|----------|
-| **Settings Staff** | Create staff → auto HR employee; delete staff → HR profile remains (No login); soft-sync name/email/phone onto linked employee on staff update |
+| **Settings Staff** | Create/attach staff → auto HR employee; detach staff → HR profile remains (No login); soft-sync name/email/phone onto linked employee on staff update |
 | **Estimates timesheets** | Attendance → “Import approved timesheets” mirrors approved hours into HR day minutes (project costing stays on timesheets) |
 | **POS Shifts** | Attendance shows read-only sales-floor shifts for linked users (not merged with HR clock) |
 | **Accounting** | Pay-run **Post** creates accrual JE (Dr 6101 / Cr 2110–2112). **Settle** and **Remit statutory** clear liabilities vs Bank. **Void** reverses linked journals. Fail-hard: no journal → stay `approved` + `posting_note`. See [ADR: payroll accounting bridge](../adr/2026-07-10-hr-payroll-accounting-bridge.md). **Company Assets** share the `fixed_assets` register with Accounting Fixed Assets (custody in HR; depreciation/GL in Accounting). See [ADR: company assets](../adr/2026-07-11-company-assets-hr-accounting.md) |
@@ -117,9 +117,9 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 | Situation | UX |
 |-----------|-----|
 | Validation / API error | Toast via `sanitizeErrorMessage` on mutation `onError` |
-| Duplicate email on with-account | Field/API error; no orphan employee (transaction) |
-| Remove login for business owner | Blocked by UserService delete guards |
-| Destructive delete | `useConfirm` before department, position, employee, leave type, structure, compensation, pay-run delete/post; employee delete asks about login |
+| Duplicate / other-org email on with-account or create-account | Validation or **409** toast via `sanitizeErrorMessage`; no orphan employee (transaction) |
+| Detach business owner / self | Blocked by staff membership detach guards |
+| Destructive delete | `useConfirm` before department, position, employee, leave type, structure, compensation, pay-run delete/post; employee delete asks about org detach |
 | Empty lists | Guided empty states with primary CTA |
 | Missing report filter | Statutory PAYE/NSSF waits until pay run or date range is set |
 | No accounting period for runway | API 422; panel shows create-period guidance |
@@ -143,5 +143,6 @@ pages/  → React Query hooks (useHrQueries) → axiosInstance → /api/v1/hr/*
 
 - ADR: [2026-07-10-hr-payroll-module.md](../adr/2026-07-10-hr-payroll-module.md)
 - ADR: [2026-07-10-hr-payroll-accounting-bridge.md](../adr/2026-07-10-hr-payroll-accounting-bridge.md)
+- ADR: [2026-07-13-staff-detach-attach.md](../adr/2026-07-13-staff-detach-attach.md)
 - ADR: [2026-07-10-payroll-affordability-cash-runway.md](../adr/2026-07-10-payroll-affordability-cash-runway.md)
 - Module access: `src/renderer/shared/utils/moduleAccess.ts` (`hr` slug)

@@ -95,9 +95,10 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
     if (hasLogin) {
       alsoRemoveAccount = Boolean(
         await confirm({
-          title: 'Also remove app login?',
-          message: 'Delete their staff login so they can no longer sign in? Choose Cancel to keep the login (HR profile only is removed).',
-          confirmText: 'Remove login too',
+          title: 'Also detach from organization?',
+          message:
+            'Detach their login from this business too? Their account stays — they just lose access here. Choose Keep login to delete the HR profile only (they stay on the organization).',
+          confirmText: 'Detach from organization',
           cancelText: 'Keep login',
           variant: 'warning',
         }),

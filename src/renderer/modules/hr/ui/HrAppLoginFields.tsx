@@ -14,7 +14,13 @@ interface HrAppLoginFieldsProps {
   onChange: (next: HrAppLoginFormState) => void;
   roles: Array<{ id: number; name: string }>;
   emailRequired?: boolean;
+  /** When false, password fields are hidden (attach existing account). */
+  passwordRequired?: boolean;
   description?: string;
+  emailHint?: string;
+  onEmailBlur?: () => void;
+  emailMessage?: string | null;
+  emailLookingUp?: boolean;
 }
 
 export function HrAppLoginFields({
@@ -22,7 +28,12 @@ export function HrAppLoginFields({
   onChange,
   roles,
   emailRequired = true,
+  passwordRequired = true,
   description = 'You set their password now — share it securely. They can change it later from their profile or forgot-password.',
+  emailHint = 'Creates a new login, or attaches an existing free account. Emails already on another organization are blocked.',
+  onEmailBlur,
+  emailMessage,
+  emailLookingUp = false,
 }: HrAppLoginFieldsProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -41,22 +52,34 @@ export function HrAppLoginFields({
   return (
     <div className="space-y-4">
       <HrFormSection title="App login" icon={KeyRound} description={description}>
-        <HrIconField label="Login email" icon={Mail} required={emailRequired} hint="Must be unique — this is how they sign in.">
+        <HrIconField
+          label="Login email"
+          icon={Mail}
+          required={emailRequired}
+          hint={emailLookingUp ? 'Checking email…' : emailHint}
+        >
           <input
             type="email"
             required={emailRequired}
             value={value.email}
             onChange={(e) => onChange({ ...value, email: e.target.value })}
+            onBlur={() => onEmailBlur?.()}
             placeholder="name@business.com"
             className={hrInputClass}
           />
         </HrIconField>
+        {emailMessage ? (
+          <p className={`text-sm ${emailMessage.startsWith('Attach') || emailMessage.startsWith('Email is free') ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {emailMessage}
+          </p>
+        ) : null}
 
+        {passwordRequired ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <HrIconField label="Password" icon={KeyRound} required hint="At least 6 characters.">
             <input
               type={showPassword ? 'text' : 'password'}
-              required
+              required={passwordRequired}
               minLength={6}
               value={value.password}
               onChange={(e) => onChange({ ...value, password: e.target.value })}
@@ -72,10 +95,10 @@ export function HrAppLoginFields({
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </HrIconField>
-          <HrIconField label="Confirm password" icon={KeyRound} required>
+          <HrIconField label="Confirm password" icon={KeyRound} required={passwordRequired}>
             <input
               type={showConfirm ? 'text' : 'password'}
-              required
+              required={passwordRequired}
               minLength={6}
               value={value.password_confirmation}
               onChange={(e) => onChange({ ...value, password_confirmation: e.target.value })}
@@ -92,6 +115,7 @@ export function HrAppLoginFields({
             </button>
           </HrIconField>
         </div>
+        ) : null}
 
         <HrIconField label="Role" icon={Shield} hint="Controls permissions beyond module access.">
           <select

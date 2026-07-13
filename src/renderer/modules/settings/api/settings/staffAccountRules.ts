@@ -1,9 +1,7 @@
 import type { StaffUser } from './StaffTypes';
 
-export const SELF_DELETE_STAFF_MESSAGE = 'You cannot delete your own account.';
-export const OWNER_DELETE_STAFF_MESSAGE = 'The business owner account cannot be deleted.';
-export const SELF_DEACTIVATE_STAFF_MESSAGE = 'You cannot deactivate your own account.';
-export const OWNER_DEACTIVATE_STAFF_MESSAGE = 'The business owner account cannot be deactivated.';
+export const SELF_DETACH_STAFF_MESSAGE = 'You cannot detach your own account.';
+export const OWNER_DETACH_STAFF_MESSAGE = 'The business owner cannot be detached.';
 export const SELF_ROLE_CHANGE_STAFF_MESSAGE = 'You cannot change your own role.';
 export const OWNER_ROLE_CHANGE_STAFF_MESSAGE = 'The business owner account role cannot be changed.';
 
@@ -23,10 +21,8 @@ export type StaffAccountRuleSummary = {
   isBusinessOwner: boolean;
   isAdmin: boolean;
   labels: string[];
-  canDelete: boolean;
-  deleteBlockedReason: string | null;
-  canDeactivate: boolean;
-  deactivationBlockedReason: string | null;
+  canDetach: boolean;
+  detachBlockedReason: string | null;
   canChangeRole: boolean;
   roleChangeBlockedReason: string | null;
 };
@@ -89,15 +85,10 @@ export function getStaffAccountRules(
     isAdmin && !isBusinessOwner ? 'Admin' : null,
   ].filter(Boolean) as string[];
 
-  const deleteBlockedReason = isCurrentUser
-    ? SELF_DELETE_STAFF_MESSAGE
+  const detachBlockedReason = isCurrentUser
+    ? SELF_DETACH_STAFF_MESSAGE
     : isBusinessOwner
-      ? OWNER_DELETE_STAFF_MESSAGE
-      : null;
-  const deactivationBlockedReason = isCurrentUser
-    ? SELF_DEACTIVATE_STAFF_MESSAGE
-    : isBusinessOwner
-      ? OWNER_DEACTIVATE_STAFF_MESSAGE
+      ? OWNER_DETACH_STAFF_MESSAGE
       : null;
   const roleChangeBlockedReason = isCurrentUser
     ? SELF_ROLE_CHANGE_STAFF_MESSAGE
@@ -110,18 +101,16 @@ export function getStaffAccountRules(
     isBusinessOwner,
     isAdmin,
     labels,
-    canDelete: !deleteBlockedReason,
-    deleteBlockedReason,
-    canDeactivate: !deactivationBlockedReason,
-    deactivationBlockedReason,
+    canDetach: !detachBlockedReason,
+    detachBlockedReason,
     canChangeRole: !roleChangeBlockedReason,
     roleChangeBlockedReason,
   };
 }
 
-export function assertCanDeleteStaffAccount(staffId: number, context: StaffAccountContext): void {
+export function assertCanDetachStaffAccount(staffId: number, context: StaffAccountContext): void {
   const rules = getStaffAccountRules({ id: staffId }, context);
-  if (!rules.canDelete) {
-    throw new Error(rules.deleteBlockedReason ?? 'This staff account cannot be deleted.');
+  if (!rules.canDetach) {
+    throw new Error(rules.detachBlockedReason ?? 'This staff account cannot be detached.');
   }
 }

@@ -290,107 +290,21 @@ export interface HrStatutoryReport {
   totals?: Record<string, number>;
 }
 
-export type HrPayrollAffordabilityStatus = 'healthy' | 'tight' | 'critical' | 'unknown';
-
-export interface HrPayrollAffordabilityPeriod {
-  id: number;
-  name: string;
-  start_date: string;
-  end_date: string;
-  is_closed: boolean;
-}
-
-export interface HrPayrollAffordabilityCash {
-  cash_1101: number;
-  bank_1102: number;
-  cash_available: number;
-}
-
-export interface HrPayrollAffordabilityLiabilities {
-  salaries_payable_2110: number;
-  paye_payable_2111: number;
-  nssf_payable_2112: number;
-  unpaid_payroll_liabilities: number;
-}
-
-export interface HrPayrollAffordabilityBurn {
-  employee_count: number;
-  employees_missing_compensation: number;
-  gross: number;
-  paye: number;
-  nssf_employee: number;
-  nssf_employer: number;
-  other_deductions: number;
-  net: number;
-  monthly_employer_cash_cost: number;
-  monthly_burn: number;
-}
-
-export interface HrPayrollAffordabilityCoverage {
-  cash_after_arrears: number;
-  runway_months: number | null;
-  runway_months_floor: number;
-  can_clear_arrears: boolean;
-  status: HrPayrollAffordabilityStatus;
-}
-
-export interface HrPayrollAffordabilityMonth {
-  offset: number;
-  label: string;
-  month_start: string;
-  need: number;
-  cash_available: number;
-  surplus_deficit: number;
-  can_cover: boolean;
-}
-
-export interface HrPayrollAffordabilityHireCalc {
-  gross: number;
-  paye: number;
-  nssf_employee: number;
-  nssf_employer: number;
-  net: number;
-  employer_cash_cost: number;
-}
-
-export interface HrPayrollAffordabilityHireScenario {
-  incremental_monthly_burn: number;
-  hire_calc: HrPayrollAffordabilityHireCalc;
-  coverage: HrPayrollAffordabilityCoverage;
-  months: HrPayrollAffordabilityMonth[];
-}
-
-export interface HrPayrollAffordability {
-  as_of_date: string;
-  period: HrPayrollAffordabilityPeriod;
-  cash: HrPayrollAffordabilityCash;
-  liabilities: HrPayrollAffordabilityLiabilities;
-  burn: HrPayrollAffordabilityBurn;
-  coverage: HrPayrollAffordabilityCoverage;
-  months: HrPayrollAffordabilityMonth[];
-  warnings: string[];
-  hire_scenario: HrPayrollAffordabilityHireScenario | null;
-}
-
-export type HrPayrollAffordabilityLineItem = {
-  label?: string;
-  amount?: number | string;
-  [key: string]: unknown;
-};
-
-export type HrPayrollAffordabilityHirePayload = {
-  basic_salary: number;
-  allowances?: HrPayrollAffordabilityLineItem[];
-  deductions?: HrPayrollAffordabilityLineItem[];
-  start_month_offset?: number;
-};
-
-export type HrPayrollAffordabilityRequest = {
-  as_of_date?: string | null;
-  period_id?: number | null;
-  horizon_months?: number;
-  hire?: HrPayrollAffordabilityHirePayload | null;
-};
+export type {
+  HrPayrollAffordabilityStatus,
+  HrPayrollAffordabilityPeriod,
+  HrPayrollAffordabilityCash,
+  HrPayrollAffordabilityLiabilities,
+  HrPayrollAffordabilityBurn,
+  HrPayrollAffordabilityCoverage,
+  HrPayrollAffordabilityMonth,
+  HrPayrollAffordabilityHireCalc,
+  HrPayrollAffordabilityHireScenario,
+  HrPayrollAffordability,
+  HrPayrollAffordabilityLineItem,
+  HrPayrollAffordabilityHirePayload,
+  HrPayrollAffordabilityRequest,
+} from './hrPayrollAffordabilityTypes';
 
 export type CreateDepartmentPayload = {
   name: string;
@@ -435,8 +349,8 @@ export type CreateEmployeeWithAccountPayload = CreateEmployeePayload & {
 
 export type CreateEmployeeAccountPayload = {
   email: string;
-  password: string;
-  password_confirmation: string;
+  password?: string;
+  password_confirmation?: string;
   role_id?: number | null;
   modules?: string[];
   phone?: string | null;
@@ -547,125 +461,13 @@ export type CreateReviewPayload = {
 
 export type UpdateReviewPayload = Partial<Omit<CreateReviewPayload, 'employee_id'>>;
 
-export type PerformanceVerdict = 'on_track' | 'at_risk' | 'behind' | 'no_data' | 'unlinked';
-
-export interface HrPerformanceGoalItem {
-  id: number;
-  title: string;
-  type: string;
-  board_id: number;
-  board_name?: string | null;
-  workspace?: string | null;
-  metric_key: string;
-  /** Overall / root goal (e.g. month = 60). */
-  target_value: number;
-  /** Expected for the selected Talent period (e.g. day = 2). */
-  expected_value: number;
-  actual_value: number;
-  unit?: string | null;
-  progress_percent: number;
-  pace_status: string;
-  period_start?: string | null;
-  period_end?: string | null;
-  view_period_type?: string | null;
-  period_slice?: {
-    planning_level?: string;
-    period_start?: string;
-    period_end?: string;
-    view_period_type?: string | null;
-    expected_value: number;
-    expected_to_date?: number;
-    actual_value: number;
-    progress_percent: number;
-    pace_status: string;
-    root_target_value: number;
-  } | null;
-}
-
-export interface HrPerformancePeriod {
-  type: string;
-  start: string;
-  end: string;
-}
-
-export interface HrPerformanceRosterRow {
-  employee_id: number;
-  employee: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    employee_number: string;
-    status: string;
-    user_id?: number | null;
-  };
-  user_id?: number | null;
-  link_status: 'linked' | 'unlinked';
-  verdict: PerformanceVerdict;
-  verdict_label: string;
-  goal_progress_avg: number;
-  goals_on_track: number;
-  goals_total: number;
-  leads_open: number;
-  leads_overdue: number;
-  tasks_open: number;
-  tasks_overdue: number;
-  tasks_done: number;
-  period?: HrPerformancePeriod;
-  evaluated_at: string;
-}
-
-export interface HrPerformanceSnapshot {
-  employee: HrPerformanceRosterRow['employee'];
-  user_id?: number | null;
-  link_status: 'linked' | 'unlinked';
-  verdict: PerformanceVerdict;
-  verdict_label: string;
-  period: HrPerformancePeriod;
-  leads: {
-    total: number;
-    open: number;
-    won: number;
-    lost: number;
-    converted: number;
-    overdue: number;
-    win_rate: number;
-  };
-  project_tasks: {
-    total: number;
-    open: number;
-    done: number;
-    cancelled: number;
-    overdue: number;
-    completion_rate: number;
-  };
-  goals: {
-    total: number;
-    average_progress_percent: number;
-    on_track_count: number;
-    at_risk_count: number;
-    behind_count: number;
-    items: HrPerformanceGoalItem[];
-  };
-  recent_leads: Array<{
-    id: number;
-    title: string;
-    status: string;
-    due_date?: string | null;
-    board_id?: number | null;
-    board_name?: string | null;
-    workspace?: string | null;
-    stage_name?: string | null;
-  }>;
-  recent_tasks: Array<{
-    id: number;
-    name: string;
-    status: string;
-    due_date?: string | null;
-    project_id: number;
-    project_name?: string | null;
-  }>;
-  evaluated_at: string;
-}
+export type {
+  PerformanceVerdict,
+  HrPerformanceGoalItem,
+  HrPerformancePeriod,
+  HrPerformanceRosterRow,
+  HrPerformanceSnapshot,
+} from './hrPerformanceTypes';
 
 export function employeeDisplayName(employee: Pick<HrEmployee, 'first_name' | 'last_name'> | HrEmployeeRef): string {
   return `${employee.first_name} ${employee.last_name}`.trim();

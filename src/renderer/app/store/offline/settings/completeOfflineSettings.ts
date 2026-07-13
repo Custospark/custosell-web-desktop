@@ -283,7 +283,7 @@ export async function completeOfflineUpdatePendingStaffInstant(
     phone: 'phone' in payload ? payload.phone ?? null : existing.phone,
     role_id: payload.role_id ?? existing.role_id,
     role: role ?? existing.role ?? null,
-    is_active: payload.is_active ?? existing.is_active,
+    is_active: existing.is_active,
     updated_at: new Date().toISOString(),
   };
   const nextPayload: CreateStaffData | UpdateStaffData =

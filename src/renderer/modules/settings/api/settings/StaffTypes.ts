@@ -31,6 +31,32 @@ export interface UpdateStaffData {
   password?: string;
   password_confirmation?: string;
   role_id?: number | null;
-  is_active?: boolean;
   modules?: string[];
+}
+
+export interface AttachStaffData {
+  email: string;
+  role_id: number;
+  modules?: string[];
+  name?: string;
+  phone?: string | null;
+}
+
+export type StaffLookupStatus =
+  | 'available'
+  | 'unattached'
+  | 'already_member'
+  | 'other_business'
+  | 'soft_deleted'
+  | 'platform_inactive';
+
+export interface StaffLookupUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface StaffLookupResult {
+  status: StaffLookupStatus;
+  user?: StaffLookupUser;
 }

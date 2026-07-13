@@ -13,7 +13,13 @@ export const BUSINESSES = {
   SLUG_AVAILABLE: '/businesses/slug-available',
 };
 export const ROLES = { BASE: '/roles', BY_ID: (id: number) => `/roles/${id}` };
-export const USERS = { BASE: '/users', BY_ID: (id: number) => `/users/${id}` };
+export const USERS = {
+  BASE: '/users',
+  BY_ID: (id: number) => `/users/${id}`,
+  LOOKUP: '/users/lookup',
+  ATTACH: '/users/attach',
+  DETACH: (id: number) => `/users/${id}/detach`,
+};
 export const CATEGORIES = '/categories';
 export const PRODUCTS = {
   BASE: '/products',

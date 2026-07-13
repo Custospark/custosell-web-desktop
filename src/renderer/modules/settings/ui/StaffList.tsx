@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useStaff, useDeleteStaff } from '../api/settings/StaffQueries';
+import { useStaff, useDetachStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
 import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffAccountRules';
@@ -15,13 +15,13 @@ import { useToast } from '../../../app/contexts/useToast';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import StaffFormDrawer from './StaffFormDrawer';
-import { Users, Plus, Pencil, Trash, BadgeCheck, BadgeX } from 'lucide-react';
+import { Users, Plus, Pencil, UserMinus } from 'lucide-react';
 
 export default function StaffList() {
   const { data: staff, isLoading, error } = useStaff();
   const { data: business } = useBusiness();
   const { data: roles } = useRoles();
-  const deleteMutation = useDeleteStaff();
+  const detachMutation = useDetachStaff();
   const { confirm } = useConfirm();
   const { showToast } = useToast();
   const authUser = useAppSelector((s) => s.auth.user);
@@ -48,22 +48,23 @@ export default function StaffList() {
     setDrawerOpen(true);
   };
 
-  const handleDelete = async (s: StaffWithSyncMeta) => {
+  const handleDetach = async (s: StaffWithSyncMeta) => {
     const rules = getStaffAccountRules(
       { ...s, role: s.role ?? (s.role_id != null ? rolesById.get(s.role_id) : null) ?? null },
       { currentUserId: authUser?.id ?? null, businessOwnerId },
     );
-    if (!rules.canDelete) {
-      showToast('error', rules.deleteBlockedReason ?? 'This staff account cannot be deleted.');
+    if (!rules.canDetach) {
+      showToast('error', rules.detachBlockedReason ?? 'This staff account cannot be detached.');
       return;
     }
 
     const confirmed = await confirm({
-      title: 'Delete Staff',
-      message: `Remove login for "${s.name}"? Their HR profile stays in People (shown as No login). This cannot be undone.`,
-      confirmText: 'Delete', variant: 'danger',
+      title: 'Detach Staff',
+      message: 'Remove from this organization? Their login stays; they won’t access this business.',
+      confirmText: 'Detach',
+      variant: 'danger',
     });
-    if (confirmed) deleteMutation.mutate(s.id);
+    if (confirmed) detachMutation.mutate(s.id);
   };
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
@@ -130,10 +131,6 @@ export default function StaffList() {
                 return phone || <span className="text-gray-400">—</span>;
               } },
             { key: 'role', header: 'Role', render: (item) => item.role?.name || <span className="text-gray-400">—</span> },
-            { key: 'is_active', header: 'Status', render: (item) => (item.is_active ?? true)
-              ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><BadgeCheck className="w-3 h-3" />Active</span>
-              : <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><BadgeX className="w-3 h-3" />Inactive</span>
-            },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
@@ -146,11 +143,11 @@ export default function StaffList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item); }}
-                        title={rules.deleteBlockedReason ?? 'Delete'}
-                        disabled={!rules.canDelete}
+                        onClick={(e) => { e.stopPropagation(); handleDetach(item); }}
+                        title={rules.detachBlockedReason ?? 'Detach'}
+                        disabled={!rules.canDetach || detachMutation.isPending}
                       >
-                        <Trash className="w-4 h-4 text-red-500" />
+                        <UserMinus className="w-4 h-4 text-red-500" />
                       </Button>
                     );
                   })()}

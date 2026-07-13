@@ -19,14 +19,13 @@ import { AUTH } from '../../../../shared/api/endpoints/endpoints';
 import type { AuthUser } from '../../../../app/store/slices/authSlice';
 import {
   completeOfflineCreateStaffInstant,
-  completeOfflineDeleteStaffInstant,
   completeOfflineUpdatePendingStaffInstant,
   completeOfflineUpdateStaffInstant,
 } from '../../../../app/store/offline/settings/completeOfflineSettings';
 import { roleKeys } from './RoleQueries';
 import { businessKeys } from './BusinessQueries';
-import type { StaffUser, CreateStaffData, UpdateStaffData } from './StaffTypes';
-import { assertCanDeleteStaffAccount, getBusinessOwnerId } from './staffAccountRules';
+import type { StaffUser, CreateStaffData, UpdateStaffData, AttachStaffData, StaffLookupResult } from './StaffTypes';
+import { assertCanDetachStaffAccount, getBusinessOwnerId } from './staffAccountRules';
 
 export const staffKeys = {
   all: ['staff'] as const,
@@ -208,6 +207,7 @@ export function useUpdateStaff() {
         return completeOfflineUpdateStaffInstant(existing, data, role);
       }
       try {
+        // Backend rejects is_active on PUT — never send it.
         const { data: r } = await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(id), data);
         return withResolvedRole(r.data) as StaffWithSyncMeta;
       } catch (err: unknown) {
@@ -276,7 +276,52 @@ export function useUpdateStaff() {
   });
 }
 
-export function useDeleteStaff() {
+const OFFLINE_ATTACH_MESSAGE = 'Attach staff requires an online connection.';
+const OFFLINE_DETACH_MESSAGE = 'Detach staff requires an online connection.';
+const OFFLINE_LOOKUP_MESSAGE = 'Email lookup requires an online connection.';
+
+export async function lookupStaffEmail(email: string): Promise<StaffLookupResult> {
+  if (isOfflineMode()) {
+    throw new Error(OFFLINE_LOOKUP_MESSAGE);
+  }
+  const { data: response } = await axiosInstance.get<{ data: StaffLookupResult }>(USERS.LOOKUP, {
+    params: { email: email.trim() },
+  });
+  return response.data;
+}
+
+export function useAttachStaff() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<StaffWithSyncMeta, AxiosError<ApiError>, AttachStaffData>({
+    networkMode: 'always',
+    retry: false,
+    mutationFn: async (payload) => {
+      if (isOfflineMode()) {
+        throw new Error(OFFLINE_ATTACH_MESSAGE);
+      }
+      const { data: r } = await axiosInstance.post<{ data: StaffUser }>(USERS.ATTACH, payload);
+      return withResolvedRole(r.data) as StaffWithSyncMeta;
+    },
+    onSuccess: (staff) => {
+      qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) => {
+        const list = (old ?? []).filter(Boolean);
+        if (list.some((s) => s.id === staff.id || s.email === staff.email)) {
+          return list.map((s) => (s.id === staff.id || s.email === staff.email ? staff : s));
+        }
+        return [staff, ...list];
+      });
+      showToast('success', 'Staff attached to organization');
+      void refreshStaffCatalogSnapshot();
+      qc.invalidateQueries({ queryKey: staffKeys.list() });
+    },
+    onError: (e) => {
+      showToast('error', sanitizeErrorMessage(e, 'Failed to attach staff'));
+    },
+  });
+}
+
+export function useDetachStaff() {
   const qc = useQueryClient();
   const { showToast } = useToast();
   return useMutation<void, AxiosError<ApiError>, number>({
@@ -287,36 +332,13 @@ export function useDeleteStaff() {
       const staff = cached?.filter(Boolean).find((s) => s.id === id);
       const authUser = store.getState().auth.user;
       const business = qc.getQueryData<BusinessWithSyncMeta>(businessKeys.mine());
-      assertCanDeleteStaffAccount(id, {
+      assertCanDetachStaffAccount(id, {
         currentUserId: authUser?.id ?? null,
         businessOwnerId: getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null }),
       });
-      const isPendingOnly = staff?._pendingSync || id < 0;
 
-      if (isPendingOnly) {
-        if (id > 0 && staff?._mutationType !== 'create' && !isOfflineMode()) {
-          try {
-            await axiosInstance.delete(USERS.BY_ID(id));
-            const mutationId = await localStaffStore.removeByStaffId(id);
-            if (mutationId) {
-              await mutationQueue.removeById(mutationId);
-            }
-            return;
-          } catch (err: unknown) {
-            const axiosErr = err as AxiosError;
-            if (axiosErr.response?.status === 404) {
-              const mutationId = await localStaffStore.removeByStaffId(id);
-              if (mutationId) {
-                await mutationQueue.removeById(mutationId);
-              }
-              return;
-            }
-            if (axiosErr.response) {
-              throw err;
-            }
-          }
-        }
-
+      const isPendingCreate = Boolean(staff?._pendingSync && (staff._mutationType === 'create' || id < 0));
+      if (isPendingCreate) {
         const mutationId = await localStaffStore.removeByStaffId(id);
         if (mutationId) {
           await mutationQueue.removeById(mutationId);
@@ -325,29 +347,20 @@ export function useDeleteStaff() {
       }
 
       if (isOfflineMode()) {
-        completeOfflineDeleteStaffInstant(id);
-        return;
+        throw new Error(OFFLINE_DETACH_MESSAGE);
       }
-      try {
-        await axiosInstance.delete(USERS.BY_ID(id));
-      } catch (err: unknown) {
-        const axiosErr = err as AxiosError;
-        if (axiosErr.response?.status === 404) return;
-        if (shouldCompleteMutationLocally()) {
-          completeOfflineDeleteStaffInstant(id);
-          return;
-        }
-        throw err;
-      }
+
+      await axiosInstance.post(USERS.DETACH(id));
     },
     onSuccess: (_data, id) => {
       qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) =>
         (old ?? []).filter(Boolean).filter((s) => s.id !== id),
       );
+      showToast('success', 'Detached from organization. Their login remains; they no longer access this business.');
       void refreshStaffCatalogSnapshot();
     },
     onError: (e) => {
-      showToast('error', sanitizeErrorMessage(e, 'Failed to delete staff'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to detach staff'));
     },
   });
 }

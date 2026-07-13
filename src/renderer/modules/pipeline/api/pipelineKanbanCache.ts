@@ -36,8 +36,12 @@ export function normalizeBoardBackgroundUploadPath(value: string | null | undefi
   return trimmed.replace(/^storage\//, '');
 }
 
-export function pipelineBoardImageBackgroundStyle(imageUrl: string): CSSProperties {
+export function pipelineBoardImageBackgroundStyle(
+  imageUrl: string,
+  fallbackColor?: string | null,
+): CSSProperties {
   return {
+    backgroundColor: fallbackColor ?? '#6366f1',
     backgroundImage: `url(${imageUrl})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
@@ -54,7 +58,7 @@ export function pipelineBoardBackgroundStyleFromBoard(
 
   const imageUrl = resolveBoardBackgroundImageUrl(board.background_type, board.background_value);
   if (imageUrl && (board.background_type === 'gallery' || board.background_type === 'upload')) {
-    return pipelineBoardImageBackgroundStyle(imageUrl);
+    return pipelineBoardImageBackgroundStyle(imageUrl, board.cover_color);
   }
 
   return pipelineBoardBackgroundStyle(board.cover_color);
@@ -97,6 +101,7 @@ export function pipelineBoardCardHeroStyle(
   const imageUrl = resolveBoardBackgroundImageUrl(board.background_type, board.background_value);
   if (imageUrl && (board.background_type === 'gallery' || board.background_type === 'upload')) {
     return {
+      backgroundColor: accent,
       backgroundImage: [
         `linear-gradient(180deg, ${pipelineColorAlpha(accent, 0.12)} 0%, rgba(15,23,42,0.52) 100%)`,
         `url(${imageUrl})`,

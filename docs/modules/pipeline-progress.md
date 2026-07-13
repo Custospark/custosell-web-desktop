@@ -87,3 +87,4 @@ Progress export downloads:
 
 - [2026-07-08-board-progress-targets.md](../adr/2026-07-08-board-progress-targets.md) — v1 Progress canvas
 - [2026-07-08-progress-decomposition-engine.md](../adr/2026-07-08-progress-decomposition-engine.md) — v2 decomposition
+- [2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md](../adr/2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md) — gallery/upload underpaint + board seeds

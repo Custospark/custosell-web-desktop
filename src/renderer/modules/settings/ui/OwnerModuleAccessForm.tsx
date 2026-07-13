@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { staffKeys } from '../api/settings/StaffQueries';
-import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { setUser } from '../../../app/store/slices/authSlice';
@@ -26,6 +25,7 @@ import { LayoutGrid, ShieldCheck } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
+import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 
 type ProfileResponse = { data?: AuthUser } | AuthUser;
 
@@ -75,13 +75,18 @@ export default function OwnerModuleAccessForm() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await axiosInstance.put(AUTH.PROFILE, {
-        name: user?.name ?? '',
-        email: user?.email ?? '',
+      // Modules-only payload — BE ProfileRequest allows modules without name/email.
+      const { data: putData } = await axiosInstance.put<ProfileResponse>(AUTH.PROFILE, {
         modules: resolvedModules,
       });
-      const { data } = await axiosInstance.get<ProfileResponse>(AUTH.ME);
-      return extractAuthUser(data);
+      const putUser = extractAuthUser(putData);
+      // Prefer ME when available; PUT user is enough if ME fails (StaffQueries pattern).
+      try {
+        const { data: meData } = await axiosInstance.get<ProfileResponse>(AUTH.ME);
+        return extractAuthUser(meData);
+      } catch {
+        return putUser;
+      }
     },
     onSuccess: async (freshUser) => {
       dispatch(setUser(freshUser));
@@ -96,8 +101,8 @@ export default function OwnerModuleAccessForm() {
       void queryClient.invalidateQueries({ queryKey: staffKeys.list() });
       showToast('success', 'Module access updated');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
-      showToast('error', err.response?.data?.message ?? 'Could not update module access');
+    onError: (err) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not update module access'));
     },
   });
 

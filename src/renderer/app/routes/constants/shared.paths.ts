@@ -89,7 +89,7 @@ export const ROUTES = {
     FEEDBACK: '/guide/feedback',
     CONTACT: '/guide/contact',
   },
-  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', TAX: '/settings/tax', STAFF: '/settings/staff', ROLES: '/settings/roles', MODULES: '/settings/modules', SUBSCRIPTION: '/settings/subscription' },
+  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', SALES_CHANNELS: '/settings/sales-channels', TAX: '/settings/tax', STAFF: '/settings/staff', ROLES: '/settings/roles', MODULES: '/settings/modules', SUBSCRIPTION: '/settings/subscription' },
   ACCOUNTING: {
     INDEX: '/accounting',
     STATEMENTS: '/accounting/statements',

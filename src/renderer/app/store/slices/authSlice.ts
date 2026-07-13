@@ -39,6 +39,7 @@ export interface BusinessInfo {
   owner_id?: number | null;
   is_open_for_supply?: boolean;
   supply_headline?: string | null;
+  storefront_enabled?: boolean;
 }
 export interface AuthUser {
   id: number;

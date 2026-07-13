@@ -17,7 +17,8 @@ Businesses need shareable links for TikTok / WhatsApp / Facebook so customers ca
 5. Landing **Discover** (`/discover`) searches across listed shops by category/query.
 6. **Public visibility** matches operating businesses: `storefront_enabled` + slug match + status **not** in `config('platform.blocked_business_statuses')` (`restricted` / `suspended`). `warning` / `notified` shops stay public. Scope: `Business::scopePublicStorefront`.
 7. **Enable requires username:** `PATCH storefront-profile` with `storefront_enabled=true` must resolve a valid slug (payload or existing); otherwise 422.
-8. **Settings UX:** Check username (explicit button + debounced check) before Save; Copy / WhatsApp / Open / customer QR use **saved** live slug only after enable + save.
+8. **Settings UX:** Check username (explicit button + debounced check) before Save; Copy / WhatsApp / Open / customer QR use **saved** live slug only after enable + save. Sales channels live at **Settings → Sales channels** (`/settings/sales-channels`), not on the Business profile page.
+9. **Cache after toggle:** Enabling/disabling invalidates storefront shop + discover React Query caches so Open shop reflects the live API (no sticky 404 after enable).
 
 ## Non-goals (v1)
 
@@ -31,6 +32,7 @@ Businesses need shareable links for TikTok / WhatsApp / Facebook so customers ca
 | Case | Behaviour |
 |------|-----------|
 | Shop disabled / bad slug / blocked status | Public 404 (“Shop not found”) |
+| Enabled shop, zero listed products | Shop page loads with empty catalog (“No products listed yet”) — not 404 |
 | Enable without username | 422 `slug`; Save blocked in UI |
 | Username taken / reserved / invalid | Check shows reason; Save blocked until available |
 | Unsaved draft username | Preview labeled unsaved; live link/QR unchanged until Save |

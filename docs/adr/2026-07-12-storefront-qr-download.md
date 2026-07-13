@@ -11,7 +11,7 @@ Merchants need a printable QR for posters, stickers, and table tents. QR was dis
 ## Decision
 
 1. `StorefrontQrCode` accepts `showDownload`. When true, **Download PNG** fetches a 512×512 image of the `/@slug` share URL and saves `{slug}-shop-qr.png`.
-2. Enable download on **Shop page** and **Business → Public shop** settings. Discover shop cards stay display-only.
+2. Enable download on **Shop page** and **Settings → Sales channels** (Public shop card). Discover shop cards stay display-only.
 - Keep the lightweight `api.qrserver.com` image endpoint (no new npm dependency). Toast on success/failure.
 
 ## Update (same day)

@@ -226,8 +226,8 @@ export function useStorefrontShop(slug: string) {
       return data;
     },
     enabled: Boolean(slug),
-    retry: false,
-    staleTime: 60_000,
+    retry: 1,
+    staleTime: 15_000,
   });
 }
 

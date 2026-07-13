@@ -160,7 +160,7 @@ export default function ShopPage() {
     submit();
   };
 
-  if (shopQuery.isLoading || productsQuery.isLoading) {
+  if (shopQuery.isLoading && !shop) {
     return (
       <LoadingSkeleton
         variant="page"
@@ -170,7 +170,8 @@ export default function ShopPage() {
     );
   }
 
-  if (shopQuery.isError || !shop) {
+  // Enabled shop with zero listings is a valid shop — only fail when the shop API itself fails.
+  if (shopQuery.isError || (shopQuery.isFetched && !shop)) {
     return (
       <div className={cn(marketplaceGlassPanel, 'mx-auto max-w-md px-5 py-12 text-center')}>
         <h2 className="text-lg font-bold text-slate-900">Shop not found</h2>
@@ -178,7 +179,8 @@ export default function ShopPage() {
           This shop may be closed, not published yet, or the username in the link is wrong.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          If you own this shop, open Settings → Business → Public shop, check your username, enable the shop, and Save.
+          If you own this shop, open Settings → Sales channels, check your username, enable the public shop, and Save.
+          An enabled shop with no products still opens — it shows an empty catalog, not this message.
         </p>
         <Link
           to={`${ROUTES.DISCOVER}?focus=shops`}
@@ -187,6 +189,16 @@ export default function ShopPage() {
           Browse businesses
         </Link>
       </div>
+    );
+  }
+
+  if (!shop) {
+    return (
+      <LoadingSkeleton
+        variant="page"
+        message="Loading this shop…"
+        detail="Pulling the catalog so you can browse and add to cart."
+      />
     );
   }
 
@@ -255,12 +267,22 @@ export default function ShopPage() {
         </span>
       </div>
 
-      {products.length === 0 ? (
+      {productsQuery.isLoading ? (
+        <LoadingSkeleton
+          variant="page"
+          message="Loading products…"
+          detail="Fetching what this shop has listed."
+        />
+      ) : productsQuery.isError ? (
+        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600')}>
+          Could not load products for this shop. Try refreshing.
+        </div>
+      ) : products.length === 0 ? (
         <div className={cn(marketplaceGlassPanel, 'px-4 py-8')}>
           <EmptyState
             icon={<ShoppingBag className="w-12 h-12" />}
-            title="No products listed"
-            description="This shop has not listed products yet."
+            title="No products listed yet"
+            description="This public shop is open, but the owner has not listed any products for sale online yet."
           />
         </div>
       ) : filtered.length === 0 ? (

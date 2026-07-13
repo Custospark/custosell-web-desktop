@@ -199,16 +199,30 @@ export function BusinessStorefrontCard() {
           }}
         />
         {previewUrl ? (
-          <p className="mt-2 break-all text-xs leading-snug text-gray-500">
+          <p className="mt-2 text-xs leading-snug text-gray-500">
             {slugChanged ? (
               <>
                 <span className="font-medium text-amber-800">Preview (unsaved): </span>
-                {previewUrl}
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="break-all font-medium text-blue-700 underline decoration-blue-200 underline-offset-2 hover:text-blue-800"
+                >
+                  {previewUrl}
+                </a>
               </>
             ) : (
               <>
                 <span className="font-medium text-gray-700">Live link: </span>
-                {previewUrl}
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="break-all font-medium text-blue-700 underline decoration-blue-200 underline-offset-2 hover:text-blue-800"
+                >
+                  {previewUrl}
+                </a>
               </>
             )}
           </p>
@@ -228,7 +242,14 @@ export function BusinessStorefrontCard() {
             label="Scan to open your public shop"
             className="mx-auto"
           />
-          <p className="break-all text-center text-[11px] leading-snug text-gray-500">{liveUrl}</p>
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block break-all text-center text-[11px] font-medium leading-snug text-blue-700 underline decoration-blue-200 underline-offset-2 hover:text-blue-800"
+          >
+            {liveUrl}
+          </a>
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             <StorefrontQrDownloadButton slug={savedSlug} />
             <Button
@@ -287,15 +308,14 @@ export function BusinessStorefrontCard() {
                 onSuccess: (saved) => {
                   setDraft(null);
                   setCheckStatus('own');
-                  setCheckedSlug((saved.slug ?? slugTrimmed).trim());
-                  setSlugHint(null);
                   const live = (saved.slug ?? slugTrimmed).trim();
-                  showToast(
-                    'success',
-                    enabled
-                      ? `Shop settings saved — live at @${live}`
-                      : 'Shop settings saved',
-                  );
+                  setCheckedSlug(live);
+                  setSlugHint(null);
+                  if (saved.storefront_enabled) {
+                    showToast('success', `Public shop is live at @${live}`);
+                  } else {
+                    showToast('success', 'Public shop is turned off — your link will show as closed.');
+                  }
                 },
                 onError: (e) =>
                   showToast('error', sanitizeErrorMessage(e, 'Could not save shop settings')),

@@ -17,13 +17,14 @@ function stripCrossorigin(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     tailwindcss(),
     stripCrossorigin(),
   ],
-  base: './',
+  // Dev/web deep links (`/@slug`) need absolute base. Electron packaged builds use relative `./`.
+  base: command === 'serve' ? '/' : './',
   build: {
     outDir: 'dist/web',
     sourcemap: false,
@@ -42,4 +43,4 @@ export default defineConfig({
       'date-fns', 'framer-motion', 'recharts', 'clsx',
     ],
   },
-})
+}))

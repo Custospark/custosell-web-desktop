@@ -21,7 +21,7 @@ Product tiles use meaningful icons by name/type (flour, software, services, etc.
 Shops show **description, location, phone, email, and star ratings** on browse tiles and on the shop page.
 Products and shops support **optimistic** star ratings (UI updates immediately; rolls back on error).
 Catalog loads keep the first successful page visible if a later page fails; **Retry** refetches. Auto-fetch caps at a few pages so one bad page does not wipe Products.
-Shop pages show a compact **QR code** for the public `/@slug` share URL (HashRouter-safe) with **Download PNG** (512px print-ready). Shop list cards show a proportional QR on the **right** (display only). Settings → **Public shop** also shows QR + download for stickers/posters. See ADR [storefront-qr-download](../adr/2026-07-12-storefront-qr-download.md).
+Shop pages show a compact **QR code** for the public `/@slug` share URL with **Download PNG** (512px print-ready). Shop list cards show a proportional QR on the **right** (display only). Settings → **Sales channels** also shows QR + download for stickers/posters. See ADR [storefront-qr-download](../adr/2026-07-12-storefront-qr-download.md).
 Strip label stays **Shops** (never the open shop’s name). While on `/discover/shop/:slug`, Shops/Products are not highlighted; clicking them leaves the shop. The matched route always renders through **Outlet** (`DiscoverPage` / `ShopPage` / `MyOrdersPage`) so the URL and visible page stay in sync. See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md) for the blank-main / Outlet-key / shell-header bugs that were fixed.
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
 Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
@@ -60,13 +60,14 @@ Header lockup: logo + **Custosell** wordmark. On very narrow phones the wordmark
 
 ## Business setup
 
-Settings → Business → **Public shop** card:
+Settings → **Sales channels** (sidebar):
 
 - Enable shop (requires a valid username)  
 - Edit username (slug) → **Check username** (button + debounced auto-check); Save blocked until available when the username changed  
 - Unsaved draft shows a preview URL; Copy / WhatsApp / Open / customer QR use the **saved** live `@{slug}` only after enable + Save  
 - Public lookup hides shops with platform-blocked status (`restricted` / `suspended`); `warning` / `notified` stay visible  
-- Settings → Business (profile + Sales channels) is responsive: full-width actions on phone, stacked channel cards until `lg`, QR + share controls wrap without horizontal overflow  
+- After Save, shop/discover caches invalidate so **Open shop** loads the live page (or 404 when disabled)  
+- Logo still edited under Settings → **Business**  
 
 API: `PATCH /businesses/storefront-profile`, `GET /businesses/slug-available?slug=`
 

@@ -23,6 +23,7 @@ import {
   shouldCompleteSettingsLocally,
 } from '../../../../app/store/offline/settings/completeOfflineSettings';
 import { businessToAuthInfo } from './businessAuthSync';
+import { storefrontKeys } from '../../../storefront/api/storefrontQueryKeys';
 
 export { businessToAuthInfo, businessToTaxSettings, resolveBusinessForTax, resolveBusinessRecordForTax } from './businessAuthSync';
 
@@ -145,15 +146,31 @@ export function useUpdateStorefrontProfile() {
     networkMode: 'online',
     retry: false,
     mutationFn: async (data) => {
-      const { data: response } = await axiosInstance.patch(BUSINESSES.STOREFRONT_PROFILE, data);
-      const business = (response as { data?: Business }).data ?? (response as Business);
-      return business;
+      const { data: response } = await axiosInstance.patch<{ data: Business }>(
+        BUSINESSES.STOREFRONT_PROFILE,
+        data,
+      );
+      return response.data;
     },
-    onSuccess: (business) => {
+    onSuccess: async (business) => {
       dispatch(setBusiness(businessToAuthInfo(business)));
       qc.setQueryData(businessKeys.mine(), (old: BusinessWithSyncMeta | undefined) =>
         old ? { ...old, ...business, _pendingSync: false } : (business as BusinessWithSyncMeta),
       );
+      // Drop stale 404 / catalog caches so Open shop loads the live page after enable/disable.
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: businessKeys.mine() }),
+        qc.invalidateQueries({ queryKey: storefrontKeys.all }),
+      ]);
+      const slug = (business.slug ?? '').trim();
+      if (slug) {
+        await qc.invalidateQueries({ queryKey: storefrontKeys.shop(slug) });
+        await qc.invalidateQueries({ queryKey: storefrontKeys.products(slug, '') });
+        if (!business.storefront_enabled) {
+          qc.removeQueries({ queryKey: storefrontKeys.shop(slug) });
+          qc.removeQueries({ queryKey: storefrontKeys.products(slug, '') });
+        }
+      }
     },
   });
 }

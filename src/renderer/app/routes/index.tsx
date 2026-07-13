@@ -33,6 +33,7 @@ import CustomerListPage from '../../modules/customers/CustomerListPage';
 import InvoicesPage from '../../modules/invoices/InvoicesPage';
 import SettingsPage from '../../modules/settings/SettingsPage';
 import BusinessSettingsPage from '../../modules/settings/BusinessSettingsPage';
+import SalesChannelsSettingsPage from '../../modules/settings/SalesChannelsSettingsPage';
 import TaxCompliancePage from '../../modules/settings/TaxCompliancePage';
 import ProfileSettingsPage from '../../modules/settings/ProfileSettingsPage';
 import StaffSettingsPage from '../../modules/settings/StaffSettingsPage';
@@ -279,6 +280,7 @@ export function AppRoutes() {
             <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
               <Route index element={<Navigate to={ROUTES.SETTINGS.BUSINESS} replace />} />
               <Route path="business" element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
+              <Route path="sales-channels" element={<SuspenseWrapper><SalesChannelsSettingsPage /></SuspenseWrapper>} />
               <Route path="tax" element={<SuspenseWrapper><TaxCompliancePage /></SuspenseWrapper>} />
               <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
               <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />

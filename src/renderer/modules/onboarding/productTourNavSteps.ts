@@ -31,7 +31,7 @@ const GROUP_INTRO: Record<string, string> = {
   forecasting: 'Cash outlook, budgets, KPIs, and scenarios.',
   documents: 'Business files organized in cabinets and folders.',
   hr: 'People, attendance, leave, and payroll.',
-  settings: 'Business profile, staff, roles, and module access.',
+  settings: 'Business profile, sales channels, staff, roles, and module access.',
   guide: 'Tutorials, FAQs, feedback, and help — learn Custosell at your pace.',
   account: 'Notifications and your profile — keep your account up to date.',
   discover:

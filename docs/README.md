@@ -119,6 +119,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-12-cors-cross-browser-preflight.md](./adr/2026-07-12-cors-cross-browser-preflight.md) | CORS preflight fails on Edge/Firefox; `www.` subdomain + explicit origin vs pattern |
 | [2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md](./adr/2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md) | Board gallery underpaint; owner modules-only save; one-time legacy module grant |
 | [2026-07-13-staff-detach-attach.md](./adr/2026-07-13-staff-detach-attach.md) | Org Detach/Attach replaces staff delete/deactivate; email lookup |
+| [2026-07-13-module-access-and-landing-mobile-tabs.md](./adr/2026-07-13-module-access-and-landing-mobile-tabs.md) | Module Access launcher tiles; landing native mobile bottom tabs |
 
 ## Modules
 

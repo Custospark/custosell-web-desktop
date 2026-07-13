@@ -144,7 +144,7 @@ export default function LandingLayout() {
           <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-6 sm:flex-row">
             <span className="text-xs text-gray-400">{BRAND_LOCKUP}</span>
             <a href="/register" className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline">
-              Start for Free →
+              Create Account →
             </a>
           </div>
         </div>

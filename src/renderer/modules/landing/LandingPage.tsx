@@ -20,8 +20,22 @@ const stats = [
   { value: '99.9%', label: 'Uptime' },
   { value: '24/7', label: 'Works Offline' },
   { value: '10+', label: 'Integrated Tools' },
-  { value: 'Free', label: 'To Get Started' },
+  { value: 'One', label: 'Connected System' },
 ];
+
+const HERO_CAPABILITIES = [
+  'Point of Sale (POS)',
+  'E-commerce Storefront',
+  'Inventory & Supply Chain',
+  'Accounting',
+  'HR & Payroll',
+  'Invoicing',
+  'Expenses',
+  'Project Management',
+  'Sales Pipeline (CRM)',
+  'Financial Forecasting',
+  'Document Management',
+] as const;
 
 const businessTypes = [
   { name: 'Retail', icon: Store, color: 'text-blue-600' },
@@ -101,7 +115,7 @@ export default function LandingPage() {
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600 sm:text-xs sm:tracking-widest"
+                className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 sm:text-xs sm:tracking-widest"
               >
                 {TAGLINE_SHORT}
               </motion.p>
@@ -125,14 +139,29 @@ export default function LandingPage() {
               </motion.p>
             </div>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-500 sm:mt-5 sm:text-base lg:mx-0 lg:text-lg"
+              className="mx-auto mt-4 max-w-xl lg:mx-0 sm:mt-5"
             >
-              <strong className="text-gray-700">Point of Sale (POS)</strong>, <strong className="text-gray-700">E-commerce Storefront</strong>, <strong className="text-gray-700">Inventory &amp; Supply Chain</strong>, <strong className="text-gray-700">Accounting</strong>, <strong className="text-gray-700">HR &amp; Payroll</strong>, <strong className="text-gray-700">Invoicing</strong>, <strong className="text-gray-700">Expenses</strong>, <strong className="text-gray-700">Project Management</strong>, <strong className="text-gray-700">Sales Pipeline (CRM)</strong>, <strong className="text-gray-700">Financial Forecasting</strong>, and <strong className="text-gray-700">Document Management</strong> — all in one connected system that works with or without the internet.
-            </motion.p>
+              <p className="mb-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">
+                What you get
+              </p>
+              <ul className="flex flex-wrap justify-center gap-1.5 sm:gap-2 lg:justify-start">
+                {HERO_CAPABILITIES.map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-lg border border-slate-200/90 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-snug tracking-tight text-slate-700 sm:px-3 sm:py-1.5 sm:text-xs"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-sm leading-relaxed text-gray-500 sm:text-base">
+                All in one connected system — works with or without the internet.
+              </p>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -142,7 +171,7 @@ export default function LandingPage() {
             >
               <button type="button" onClick={() => handleAction('signup')} className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-10 py-4 text-base font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 sm:w-auto">
                 <UserPlus className="mr-2 h-5 w-5" />
-                Start for Free Today
+                Create Account
               </button>
               <button type="button" onClick={() => handleAction('login')} className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-300 px-6 py-3.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 sm:w-auto">
                 <LogIn className="mr-2 h-4 w-4" />
@@ -157,7 +186,9 @@ export default function LandingPage() {
               className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-400 lg:justify-start"
             >
               <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> No credit card</span>
-              <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> Free to use</span>
+              <button type="button" onClick={() => handleAction('signup')} className="inline-flex cursor-pointer items-center gap-1.5 font-medium text-blue-600 transition-colors hover:text-blue-700">
+                <UserPlus className="h-3.5 w-3.5" /> Create Account
+              </button>
               <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> Works offline</span>
             </motion.div>
           </div>
@@ -285,19 +316,19 @@ export default function LandingPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto px-4 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Your business deserves better than chaos</h2>
           <p className="text-gray-600 text-lg max-w-xl mx-auto">
-            Stop juggling separate apps, offline blackouts, and spreadsheet stress. Get everything you need in one system — free to start.
+            Stop juggling separate apps, offline blackouts, and spreadsheet stress. Get everything you need in one connected system.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center w-full sm:w-auto px-10 py-4 text-base font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 cursor-pointer shadow-md">
               <UserPlus className="w-5 h-5 mr-2" />
-              Start for Free Today
+              Create Account
             </button>
             <button type="button" onClick={() => handleAction('login')} className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 text-sm font-medium rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer">
               <LogIn className="w-4 h-4 mr-2" />
               Sign In
             </button>
           </div>
-          <p className="text-sm text-gray-400">No credit card required · Free to use · Works offline</p>
+          <p className="text-sm text-gray-400">No credit card required · Works offline</p>
         </motion.div>
       </section>
     </>

@@ -214,16 +214,16 @@ export default function BusinessSettingsForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full min-h-full space-y-6 pb-28">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
-            <Building2 className="h-7 w-7" aria-hidden />
+    <form onSubmit={handleSubmit} className="relative w-full min-w-0 min-h-full space-y-5 pb-28 sm:space-y-6">
+      <div className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="shrink-0 rounded-xl bg-blue-50 p-2 text-blue-600 sm:p-2.5">
+            <Building2 className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Settings</p>
-            <h1 className="text-2xl font-bold text-gray-900">Business Profile</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Business Profile</h1>
+            <p className="mt-1 text-sm leading-relaxed text-gray-500">
               Manage your business details, tax, payments, and receipts
             </p>
           </div>
@@ -234,13 +234,13 @@ export default function BusinessSettingsForm() {
             onClick={() => setIsEditing(true)}
             disabled={isCompletelyOffline}
             title={isCompletelyOffline ? 'Requires internet connection' : undefined}
-            className="shrink-0"
+            className="w-full shrink-0 sm:w-auto"
           >
             <Pencil className="mr-1.5 h-4 w-4" aria-hidden />
             Edit business
           </Button>
         ) : (
-          <Badge variant="primary">Editing</Badge>
+          <Badge variant="primary" className="self-start lg:self-auto">Editing</Badge>
         )}
       </div>
 
@@ -310,7 +310,7 @@ export default function BusinessSettingsForm() {
                     <Store className="h-8 w-8 text-gray-400" aria-hidden />
                   )}
                 </div>
-                <div className="flex-1 text-center sm:text-left">
+                <div className="min-w-0 flex-1 text-center sm:text-left">
                   <input
                     ref={logoFileRef}
                     type="file"
@@ -319,7 +319,12 @@ export default function BusinessSettingsForm() {
                     className="hidden"
                     aria-label="Upload business logo"
                   />
-                  <Button type="button" variant="outline" onClick={() => logoFileRef.current?.click()}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => logoFileRef.current?.click()}
+                  >
                     <Camera className="mr-1.5 h-4 w-4" aria-hidden />
                     Upload logo
                   </Button>
@@ -395,16 +400,27 @@ export default function BusinessSettingsForm() {
       </div>
 
       {isEditing && (
-        <div className="sticky bottom-0 z-20 -mx-4 border-t-2 border-gray-200 bg-white/95 px-4 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm font-medium text-gray-600">
+        <div className="sticky bottom-0 z-20 -mx-3 border-t-2 border-gray-200 bg-white/95 px-3 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <p className="text-sm font-medium leading-snug text-gray-600">
               {hasChanges ? 'You have unsaved changes' : 'Update your business details, then save'}
             </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="outline" onClick={handleCancel} disabled={mutation.isPending}>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={mutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </Button>
-              <Button type="submit" loading={mutation.isPending} disabled={!canSave}>
+              <Button
+                type="submit"
+                loading={mutation.isPending}
+                disabled={!canSave}
+                className="w-full sm:w-auto"
+              >
                 Save changes
               </Button>
             </div>

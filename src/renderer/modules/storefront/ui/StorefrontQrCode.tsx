@@ -5,20 +5,19 @@ import { useToast } from '../../../app/contexts/useToast';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import { storefrontShareUrl } from '../storefrontShare';
+import { downloadStorefrontQrPng } from './storefrontQrDownload';
 
 interface StorefrontQrCodeProps {
   slug: string;
   size?: number;
   className?: string;
-  label?: string;
+  label?: string | null;
+  /** Kept for Shop page — Download PNG beside the QR. */
   showDownload?: boolean;
 }
 
-const DOWNLOAD_SIZE = 512;
-
 /**
  * Shop QR — self-hosted canvas (no third-party image API).
- * Optional PNG download for print / stickers.
  */
 export function StorefrontQrCode({
   slug,
@@ -48,29 +47,6 @@ export function StorefrontQrCode({
     };
   }, [url, size]);
 
-  const downloadPng = async () => {
-    setDownloading(true);
-    try {
-      const png = await QRCode.toDataURL(url, {
-        width: DOWNLOAD_SIZE,
-        margin: 2,
-        errorCorrectionLevel: 'M',
-      });
-      const a = document.createElement('a');
-      a.href = png;
-      a.download = `${slug}-shop-qr.png`;
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      showToast('success', 'QR code downloaded');
-    } catch {
-      showToast('error', 'Could not download QR — try again.');
-    } finally {
-      setDownloading(false);
-    }
-  };
-
   const qrBlock = (
     <div className="flex flex-col items-center">
       {dataUrl ? (
@@ -89,33 +65,40 @@ export function StorefrontQrCode({
         />
       )}
       {label ? (
-        <p className="mt-1.5 text-center text-[11px] font-medium text-slate-600">
+        <p className="mt-1.5 max-w-[16rem] text-center text-[11px] font-medium leading-snug text-slate-600">
           {label}
         </p>
       ) : null}
     </div>
   );
 
-  const downloadBtn = showDownload ? (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      className="shrink-0 gap-1.5"
-      disabled={downloading || !slug.trim()}
-      loading={downloading}
-      onClick={() => void downloadPng()}
-      title="Download a print-ready PNG"
-    >
-      <Download className="h-3.5 w-3.5" aria-hidden />
-      Download PNG
-    </Button>
-  ) : null;
-
   if (showDownload) {
     return (
-      <figure className={cn('flex flex-row items-center gap-3', className)}>
-        {downloadBtn}
+      <figure
+        className={cn(
+          'flex min-w-0 flex-col items-center gap-3 sm:flex-row sm:items-center',
+          className,
+        )}
+      >
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
+          disabled={downloading || !slug.trim()}
+          loading={downloading}
+          onClick={() => {
+            setDownloading(true);
+            void downloadStorefrontQrPng(slug)
+              .then(() => showToast('success', 'QR code downloaded'))
+              .catch(() => showToast('error', 'Could not download QR — try again.'))
+              .finally(() => setDownloading(false));
+          }}
+          title="Download a print-ready PNG"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden />
+          Download PNG
+        </Button>
         {qrBlock}
       </figure>
     );
@@ -125,5 +108,39 @@ export function StorefrontQrCode({
     <figure className={cn('flex flex-col items-center', className)}>
       {qrBlock}
     </figure>
+  );
+}
+
+/** Compact Download PNG control for settings action rows. */
+export function StorefrontQrDownloadButton({
+  slug,
+  className,
+}: {
+  slug: string;
+  className?: string;
+}) {
+  const { showToast } = useToast();
+  const [downloading, setDownloading] = useState(false);
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      disabled={downloading || !slug.trim()}
+      loading={downloading}
+      className={cn('h-8 gap-1.5 px-2.5 text-xs', className)}
+      title="Download a print-ready PNG"
+      onClick={() => {
+        setDownloading(true);
+        void downloadStorefrontQrPng(slug)
+          .then(() => showToast('success', 'QR code downloaded'))
+          .catch(() => showToast('error', 'Could not download QR — try again.'))
+          .finally(() => setDownloading(false));
+      }}
+    >
+      <Download className="h-3.5 w-3.5" aria-hidden />
+      Download PNG
+    </Button>
   );
 }

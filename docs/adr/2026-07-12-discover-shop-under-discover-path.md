@@ -23,7 +23,7 @@ Opening a specific shop broke Discover strip tabs: URL could change (Shops / Pro
 2. **Nested layout route:** `path="/discover"` → `DiscoverLayout`; children: `index` (DiscoverPage), `shop/:slug`, `my-orders`.
 3. **Visible page = Outlet only:** Always `<Outlet />` in the layout. **Never** put a React `key` on `<Outlet />`.
 4. **Header effects** depend on stable `setHeader` only — never the whole shell context value.
-5. **Public share URLs stay `/@slug`:** `ShopShareRedirect` (last-route `/:shopHandle` requiring leading `@`) → `/discover/shop/:slug`. `storefrontShareUrl` is HashRouter-safe (`#/@slug` in Electron).
+5. **Public share URLs stay `/@slug`:** `ShopShareRedirect` (last-route `/:shopHandle` requiring leading `@`) → `/discover/shop/:slug`. `storefrontShareUrl` always emits path URLs (`{origin}/@{slug}`) — never HashRouter `#/@slug` — so QR / WhatsApp / copy work on phones and the public web.
 6. **QR sizing:** Shop page ~96px; shop list cards ~72px QR on the right.
 7. **Place order → orders UI:** List + strip badge share `useMyStorefrontOrdersList` (same cache). Place-order invalidates/refetches that query — never bump the badge without list data.
 

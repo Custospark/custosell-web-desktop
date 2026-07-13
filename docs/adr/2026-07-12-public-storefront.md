@@ -15,6 +15,9 @@ Businesses need shareable links for TikTok / WhatsApp / Facebook so customers ca
 3. Checkout = **order request** (name, phone, items, notes) — no online payment in v1. **Sign-in required** at submit (see [storefront-multi-cart-submit-auth](./2026-07-12-storefront-multi-cart-submit-auth.md)).
 4. Orders land in existing **Orders** queue with `source=storefront`, attributed to business owner; buyer linked via `storefront_buyer_user_id`.
 5. Landing **Discover** (`/discover`) searches across listed shops by category/query.
+6. **Public visibility** matches operating businesses: `storefront_enabled` + slug match + status **not** in `config('platform.blocked_business_statuses')` (`restricted` / `suspended`). `warning` / `notified` shops stay public. Scope: `Business::scopePublicStorefront`.
+7. **Enable requires username:** `PATCH storefront-profile` with `storefront_enabled=true` must resolve a valid slug (payload or existing); otherwise 422.
+8. **Settings UX:** Check username (explicit button + debounced check) before Save; Copy / WhatsApp / Open / customer QR use **saved** live slug only after enable + save.
 
 ## Non-goals (v1)
 
@@ -27,7 +30,10 @@ Businesses need shareable links for TikTok / WhatsApp / Facebook so customers ca
 
 | Case | Behaviour |
 |------|-----------|
-| Shop disabled / bad slug | Public 404 |
+| Shop disabled / bad slug / blocked status | Public 404 (“Shop not found”) |
+| Enable without username | 422 `slug`; Save blocked in UI |
+| Username taken / reserved / invalid | Check shows reason; Save blocked until available |
+| Unsaved draft username | Preview labeled unsaved; live link/QR unchanged until Save |
 | Unlisted product in cart | 422 on submit |
 | Spam | `throttle:storefront-orders` |
 | Staff offline | Orders appear when app is online |

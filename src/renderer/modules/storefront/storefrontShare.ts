@@ -1,16 +1,14 @@
-/** Absolute share URL for a business shop page (`/@slug`, HashRouter-safe). */
+/**
+ * Absolute customer-facing share URL for a business shop (`/@slug`).
+ * Always path-based (BrowserRouter) — never HashRouter `#/@slug`.
+ * Marketing / QR / WhatsApp links must work on phones and the public web.
+ */
 export function storefrontShareUrl(slug: string): string {
-  const handle = `/@${slug}`;
+  const handle = `/@${String(slug).trim().replace(/^@/, '')}`;
   if (typeof window === 'undefined' || !window.location?.origin) {
     return `https://custosell.custospark.com${handle}`;
   }
-  const { origin, pathname, hash } = window.location;
-  // Electron / HashRouter: app routes live after `#`
-  if (hash.startsWith('#/') || hash === '#') {
-    const basePath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-    return `${origin}${basePath || ''}#${handle}`;
-  }
-  return `${origin}${handle}`;
+  return `${window.location.origin}${handle}`;
 }
 
 export function whatsappShareUrl(text: string): string {

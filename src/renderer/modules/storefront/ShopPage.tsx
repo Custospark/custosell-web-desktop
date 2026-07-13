@@ -174,7 +174,12 @@ export default function ShopPage() {
     return (
       <div className={cn(marketplaceGlassPanel, 'mx-auto max-w-md px-5 py-12 text-center')}>
         <h2 className="text-lg font-bold text-slate-900">Shop not found</h2>
-        <p className="mt-2 text-sm text-slate-600">This shop may be closed or the link is incorrect.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          This shop may be closed, not published yet, or the username in the link is wrong.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          If you own this shop, open Settings → Business → Public shop, check your username, enable the shop, and Save.
+        </p>
         <Link
           to={`${ROUTES.DISCOVER}?focus=shops`}
           className="mt-4 inline-flex text-sm font-semibold text-teal-800 hover:underline"

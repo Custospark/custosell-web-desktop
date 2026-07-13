@@ -62,9 +62,11 @@ Header lockup: logo + **Custosell** wordmark. On very narrow phones the wordmark
 
 Settings → Business → **Public shop** card:
 
-- Enable shop  
-- Edit username (slug)  
-- Copy / WhatsApp share link  
+- Enable shop (requires a valid username)  
+- Edit username (slug) → **Check username** (button + debounced auto-check); Save blocked until available when the username changed  
+- Unsaved draft shows a preview URL; Copy / WhatsApp / Open / customer QR use the **saved** live `@{slug}` only after enable + Save  
+- Public lookup hides shops with platform-blocked status (`restricted` / `suspended`); `warning` / `notified` stay visible  
+- Settings → Business (profile + Sales channels) is responsive: full-width actions on phone, stacked channel cards until `lg`, QR + share controls wrap without horizontal overflow  
 
 API: `PATCH /businesses/storefront-profile`, `GET /businesses/slug-available?slug=`
 

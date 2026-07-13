@@ -24,17 +24,17 @@ const stats = [
 ];
 
 const HERO_CAPABILITIES = [
-  'Point of Sale (POS)',
-  'E-commerce Storefront',
-  'Inventory & Supply Chain',
-  'Accounting',
-  'HR & Payroll',
-  'Invoicing',
-  'Expenses',
-  'Project Management',
-  'Sales Pipeline (CRM)',
-  'Financial Forecasting',
-  'Document Management',
+  { label: 'Point of Sale (POS)', tone: 'border-blue-200/80 bg-blue-50 text-blue-900' },
+  { label: 'E-commerce Storefront', tone: 'border-teal-200/80 bg-teal-50 text-teal-900' },
+  { label: 'Inventory & Supply Chain', tone: 'border-emerald-200/80 bg-emerald-50 text-emerald-900' },
+  { label: 'Accounting', tone: 'border-indigo-200/80 bg-indigo-50 text-indigo-900' },
+  { label: 'HR & Payroll', tone: 'border-rose-200/80 bg-rose-50 text-rose-900' },
+  { label: 'Invoicing', tone: 'border-violet-200/80 bg-violet-50 text-violet-900' },
+  { label: 'Expenses', tone: 'border-amber-200/80 bg-amber-50 text-amber-950' },
+  { label: 'Project Management', tone: 'border-sky-200/80 bg-sky-50 text-sky-900' },
+  { label: 'Sales Pipeline (CRM)', tone: 'border-orange-200/80 bg-orange-50 text-orange-950' },
+  { label: 'Financial Forecasting', tone: 'border-cyan-200/80 bg-cyan-50 text-cyan-900' },
+  { label: 'Document Management', tone: 'border-slate-300/80 bg-slate-100 text-slate-800' },
 ] as const;
 
 const businessTypes = [
@@ -145,17 +145,41 @@ export default function LandingPage() {
               transition={{ delay: 0.15 }}
               className="mx-auto mt-4 max-w-xl lg:mx-0 sm:mt-5"
             >
-              <p className="mb-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">
-                What you get
-              </p>
+              <motion.p
+                initial={{ opacity: 0, letterSpacing: '0.35em' }}
+                animate={{ opacity: 1, letterSpacing: '0.12em' }}
+                transition={{ delay: 0.2, duration: 0.55, ease: 'easeOut' }}
+                className="mb-3 text-left text-[11px] font-bold uppercase text-slate-500 sm:text-xs"
+              >
+                <motion.span
+                  className="inline-block origin-left"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.28, duration: 0.4 }}
+                >
+                  What you get
+                </motion.span>
+                <motion.span
+                  aria-hidden
+                  className="ml-2 inline-block h-px w-8 align-middle bg-gradient-to-r from-blue-500/70 to-transparent sm:w-12"
+                  initial={{ scaleX: 0, opacity: 0 }}
+                  animate={{ scaleX: 1, opacity: 1 }}
+                  transition={{ delay: 0.45, duration: 0.45, ease: 'easeOut' }}
+                  style={{ transformOrigin: 'left' }}
+                />
+              </motion.p>
               <ul className="flex flex-wrap justify-center gap-1.5 sm:gap-2 lg:justify-start">
-                {HERO_CAPABILITIES.map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-lg border border-slate-200/90 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-snug tracking-tight text-slate-700 sm:px-3 sm:py-1.5 sm:text-xs"
+                {HERO_CAPABILITIES.map((item, i) => (
+                  <motion.li
+                    key={item.label}
+                    initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.32 + i * 0.04, duration: 0.35, ease: 'easeOut' }}
+                    whileHover={{ y: -2, transition: { duration: 0.15 } }}
+                    className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold leading-snug tracking-tight shadow-sm sm:rounded-lg sm:px-3 sm:py-1.5 sm:text-xs ${item.tone}`}
                   >
-                    {item}
-                  </li>
+                    {item.label}
+                  </motion.li>
                 ))}
               </ul>
               <p className="mt-3 text-sm leading-relaxed text-gray-500 sm:text-base">
@@ -186,9 +210,6 @@ export default function LandingPage() {
               className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-400 lg:justify-start"
             >
               <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> No credit card</span>
-              <button type="button" onClick={() => handleAction('signup')} className="inline-flex cursor-pointer items-center gap-1.5 font-medium text-blue-600 transition-colors hover:text-blue-700">
-                <UserPlus className="h-3.5 w-3.5" /> Create Account
-              </button>
               <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> Works offline</span>
             </motion.div>
           </div>

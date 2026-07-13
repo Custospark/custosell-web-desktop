@@ -69,7 +69,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Add your details and business."
+      subtitle="Add your details for your business, company, or institution."
       heroImage={AUTH_HERO_IMAGES.register}
     >
       <form onSubmit={handleSubmit} className="space-y-4">

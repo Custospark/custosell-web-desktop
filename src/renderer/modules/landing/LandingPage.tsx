@@ -84,52 +84,89 @@ export default function LandingPage() {
 
   return (
     <>
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="text-center lg:text-left space-y-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full shadow-lg shadow-blue-500/20 mx-auto lg:mx-0">
-              <Sparkles className="w-4 h-4 text-white" />
-              <span className="text-sm font-semibold text-white">Work smarter, grow faster</span>
+      <section className="mx-auto max-w-7xl px-4 pb-14 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pb-20 lg:pt-10">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 px-3.5 py-1.5 shadow-md shadow-blue-500/20 mx-auto lg:mx-0 sm:mb-5 sm:px-4 sm:py-2"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-white sm:h-4 sm:w-4" />
+              <span className="text-xs font-semibold text-white sm:text-sm">Work smarter, grow faster</span>
             </motion.div>
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-sm font-semibold text-blue-600 uppercase tracking-widest">
-              {TAGLINE_SHORT}
-            </motion.p>
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-tight tracking-tight">
-              {PRODUCT_NAME}
-            </motion.h1>
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-xl sm:text-2xl lg:text-3xl font-bold leading-snug tracking-tight -mt-2">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
-                {TAGLINE}
-              </span>
-            </motion.p>
 
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-base sm:text-lg text-gray-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            {/* Brand + tagline stack — tight so Custosell and Business OS read as one unit */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600 sm:text-xs sm:tracking-widest"
+              >
+                {TAGLINE_SHORT}
+              </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl xl:text-7xl"
+              >
+                {PRODUCT_NAME}
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-lg font-bold leading-snug tracking-tight sm:text-xl lg:text-2xl"
+              >
+                <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                  {TAGLINE}
+                </span>
+              </motion.p>
+            </div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-500 sm:mt-5 sm:text-base lg:mx-0 lg:text-lg"
+            >
               <strong className="text-gray-700">Point of Sale (POS)</strong>, <strong className="text-gray-700">E-commerce Storefront</strong>, <strong className="text-gray-700">Inventory &amp; Supply Chain</strong>, <strong className="text-gray-700">Accounting</strong>, <strong className="text-gray-700">HR &amp; Payroll</strong>, <strong className="text-gray-700">Invoicing</strong>, <strong className="text-gray-700">Expenses</strong>, <strong className="text-gray-700">Project Management</strong>, <strong className="text-gray-700">Sales Pipeline (CRM)</strong>, <strong className="text-gray-700">Financial Forecasting</strong>, and <strong className="text-gray-700">Document Management</strong> — all in one connected system that works with or without the internet.
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-              <button type="button" onClick={() => handleAction('signup')} className="inline-flex items-center justify-center w-full sm:w-auto px-10 py-4 text-base font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 cursor-pointer shadow-md">
-                <UserPlus className="w-5 h-5 mr-2" />
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-7 sm:flex-row lg:justify-start"
+            >
+              <button type="button" onClick={() => handleAction('signup')} className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-10 py-4 text-base font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 sm:w-auto">
+                <UserPlus className="mr-2 h-5 w-5" />
                 Start for Free Today
               </button>
-              <button type="button" onClick={() => handleAction('login')} className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 text-sm font-medium rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer">
-                <LogIn className="w-4 h-4 mr-2" />
+              <button type="button" onClick={() => handleAction('login')} className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-300 px-6 py-3.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 sm:w-auto">
+                <LogIn className="mr-2 h-4 w-4" />
                 Sign In
               </button>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center lg:justify-start text-sm text-gray-400">
-              <span className="inline-flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-blue-400" /> No credit card</span>
-              <span className="inline-flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-blue-400" /> Free to use</span>
-              <span className="inline-flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-blue-400" /> Works offline</span>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-400 lg:justify-start"
+            >
+              <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> No credit card</span>
+              <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> Free to use</span>
+              <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-blue-400" /> Works offline</span>
             </motion.div>
           </div>
 
-          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="lg:block">
+          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25, duration: 0.55 }} className="lg:block">
             <div className="relative">
-              <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-100 rounded-2xl -rotate-6 opacity-60" />
-              <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-indigo-100 rounded-2xl rotate-6 opacity-40" />
-              <img src={dashboardImg} alt={`${PRODUCT_NAME} dashboard`} className="relative rounded-2xl shadow-xl border border-gray-200 w-full h-auto" />
+              <div className="absolute -left-4 -top-4 h-24 w-24 -rotate-6 rounded-2xl bg-blue-100 opacity-60" />
+              <div className="absolute -bottom-4 -right-4 h-32 w-32 rotate-6 rounded-2xl bg-indigo-100 opacity-40" />
+              <img src={dashboardImg} alt={`${PRODUCT_NAME} dashboard`} className="relative h-auto w-full rounded-2xl border border-gray-200 shadow-xl" />
             </div>
           </motion.div>
         </div>

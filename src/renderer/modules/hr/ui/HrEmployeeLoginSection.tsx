@@ -139,7 +139,6 @@ export function HrEmployeeLoginSection({
     if (lookupBlocksSubmit) return;
     if (!isAttachMode && loginForm.password !== loginForm.password_confirmation) return;
     if (!isAttachMode && loginForm.password.length < 6) return;
-    if (!loginForm.role_id) return;
 
     await createAccount.mutateAsync({
       id,
@@ -162,7 +161,6 @@ export function HrEmployeeLoginSection({
 
   const canSubmitCreate =
     Boolean(loginForm.email.trim())
-    && Boolean(loginForm.role_id)
     && !lookupBlocksSubmit
     && !lookupLoading
     && (isAttachMode

@@ -17,6 +17,7 @@ Business owners previously soft-deleted or deactivated staff. Deactivate blocked
 5. Staff `DELETE` and `is_active` updates from Settings are rejected. Platform user status APIs unchanged.
 6. HR `remove-account` calls detach (not soft-delete). `unlink-user` still only clears the HR link. Create-account resolves create-or-attach (password optional when attaching).
 7. One-shot migration restores soft-deleted non-owner staff as detached free accounts and reactivates wrongly deactivated org staff.
+8. **`role_id` is optional** on HR create-account / attach and Settings attach. Staff can join the org without a role (“No role assigned”); modules still control launcher access.
 
 ## Consequences
 

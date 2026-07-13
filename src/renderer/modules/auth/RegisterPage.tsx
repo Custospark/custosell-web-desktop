@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
-import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -159,7 +159,8 @@ export default function RegisterPage() {
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
-        <Button type="submit" className="w-full py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
+        <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
+          <UserPlus className="h-4 w-4" aria-hidden />
           Create Account
         </Button>
         <div className="space-y-3 border-t border-gray-100 pt-5">
@@ -168,8 +169,9 @@ export default function RegisterPage() {
           </p>
           <Link
             to={ROUTES.LOGIN}
-            className="flex w-full items-center justify-center rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
           >
+            <LogIn className="h-4 w-4" aria-hidden />
             Sign In
           </Link>
         </div>

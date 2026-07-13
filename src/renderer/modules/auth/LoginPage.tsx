@@ -6,7 +6,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import {
   isNetworkFailure,
   sanitizeErrorMessage,
@@ -53,7 +53,8 @@ export default function LoginPage() {
               : sanitizeErrorMessage(loginMutation.error, 'Invalid credentials')}
           </p>
         )}
-        <Button type="submit" className="w-full py-3.5" loading={loginMutation.isPending}>
+        <Button type="submit" className="w-full gap-2 py-3.5" loading={loginMutation.isPending}>
+          <LogIn className="h-4 w-4" aria-hidden />
           Sign In
         </Button>
         <div className="space-y-3 border-t border-gray-100 pt-5">
@@ -62,8 +63,9 @@ export default function LoginPage() {
           </p>
           <Link
             to={ROUTES.REGISTER}
-            className="flex w-full items-center justify-center rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
           >
+            <UserPlus className="h-4 w-4" aria-hidden />
             Create Account
           </Link>
         </div>

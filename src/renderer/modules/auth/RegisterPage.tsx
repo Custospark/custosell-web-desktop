@@ -68,8 +68,8 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Set Up Your Business"
-      subtitle="Free to use. No credit card needed. Works online and offline."
+      title="Create your account"
+      subtitle="Let's set up your account now."
       heroImage={AUTH_HERO_IMAGES.register}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -160,7 +160,7 @@ export default function RegisterPage() {
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
         <Button type="submit" className="w-full py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
-          Start for Free
+          Create Account
         </Button>
         <p className="text-center text-sm text-gray-500 pt-1">
           Already have an account?{' '}

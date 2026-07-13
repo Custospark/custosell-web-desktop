@@ -98,10 +98,11 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
           <div className="ml-auto">
             <Link
               to={ROUTES.HOME}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              aria-label="Home"
             >
-              <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
+              <Home className="w-4 h-4 shrink-0" />
+              <span>Home</span>
             </Link>
           </div>
         </header>

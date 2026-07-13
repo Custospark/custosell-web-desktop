@@ -14,7 +14,7 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../../app/contexts/useToast';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
-import StaffFormDrawer from './StaffFormDrawer';
+import StaffFormModal from './StaffFormModal';
 import { Users, Plus, Pencil, UserMinus } from 'lucide-react';
 
 export default function StaffList() {
@@ -27,7 +27,7 @@ export default function StaffList() {
   const authUser = useAppSelector((s) => s.auth.user);
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffWithSyncMeta | null>(null);
+  const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
   const businessOwnerId = getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null });
   const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
 
@@ -42,9 +42,14 @@ export default function StaffList() {
 
   const paginated = usePagination(filtered, 10);
 
-  const openCreate = () => { setEditingStaff(null); setDrawerOpen(true); };
+  const editingStaff = useMemo(() => {
+    if (editingStaffId == null) return null;
+    return (staff ?? []).find((s) => s.id === editingStaffId) ?? null;
+  }, [editingStaffId, staff]);
+
+  const openCreate = () => { setEditingStaffId(null); setDrawerOpen(true); };
   const openEdit = (s: StaffWithSyncMeta) => {
-    setEditingStaff(s);
+    setEditingStaffId(s.id);
     setDrawerOpen(true);
   };
 
@@ -167,11 +172,11 @@ export default function StaffList() {
         />
       </Card>
 
-      <StaffFormDrawer
+      <StaffFormModal
         open={drawerOpen}
         onClose={() => {
           setDrawerOpen(false);
-          setEditingStaff(null);
+          setEditingStaffId(null);
         }}
         staff={editingStaff}
       />

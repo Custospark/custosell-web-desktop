@@ -48,8 +48,8 @@ export function StorefrontActionStrip({
   return (
     <nav
       className={cn(
-        'relative z-[10001] mx-2 mb-2 flex shrink-0 items-stretch gap-1 rounded-lg border border-slate-200/90 bg-white/95 p-1.5 shadow-sm backdrop-blur-sm',
-        'sm:mx-0 sm:mb-0 sm:items-center sm:justify-center sm:gap-3 sm:overflow-x-auto sm:overscroll-x-contain sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:p-0 sm:px-3 sm:py-2.5 sm:shadow-none',
+        'relative z-[10001] mx-2 mb-2 flex shrink-0 items-stretch gap-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-md',
+        'sm:mx-0 sm:mb-0 sm:items-center sm:justify-center sm:gap-3 sm:overflow-x-auto sm:overscroll-x-contain sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:bg-white/95 sm:p-0 sm:px-3 sm:py-2.5 sm:shadow-none sm:backdrop-blur-sm',
         className,
       )}
       aria-label="Storefront navigation"
@@ -60,8 +60,9 @@ export function StorefrontActionStrip({
           onClick={onHome}
           title={homeTitle}
           tone="slate"
-          icon={<Home className="h-3.5 w-3.5 shrink-0 text-slate-600 sm:h-4 sm:w-4" />}
+          icon={<Home className="h-4 w-4 shrink-0 text-slate-600 sm:h-4 sm:w-4" />}
           label={homeLabel}
+          shortLabel="Home"
         />
       ) : null}
       <StripButton
@@ -69,16 +70,18 @@ export function StorefrontActionStrip({
         onClick={onDiscover}
         title="Browse products and services across all businesses"
         tone="amber"
-        icon={<Compass className="h-3.5 w-3.5 shrink-0 text-amber-700 sm:h-4 sm:w-4" />}
+        icon={<Compass className="h-4 w-4 shrink-0 text-amber-700 sm:h-4 sm:w-4" />}
         label="Products & Services"
+        shortLabel="Products"
       />
       <StripButton
         active={shopsActive}
         onClick={onBrowse}
         title={shopsTitle}
         tone="teal"
-        icon={<ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-teal-600 sm:h-4 sm:w-4" />}
+        icon={<ArrowLeftRight className="h-4 w-4 shrink-0 text-teal-600 sm:h-4 sm:w-4" />}
         label={shopsLabel}
+        shortLabel="Businesses"
       />
       <StripButton
         active={active === 'cart'}
@@ -87,7 +90,7 @@ export function StorefrontActionStrip({
         tone="emerald"
         icon={(
           <span className="relative inline-flex shrink-0">
-            <ShoppingCart className="h-3.5 w-3.5 text-emerald-600 sm:h-4 sm:w-4" />
+            <ShoppingCart className="h-4 w-4 text-emerald-600 sm:h-4 sm:w-4" />
             {cartCount > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white sm:h-4 sm:min-w-4 sm:text-[9px] sm:ring-2">
                 {cartCount > 99 ? '99+' : cartCount}
@@ -96,6 +99,7 @@ export function StorefrontActionStrip({
           </span>
         )}
         label="Cart"
+        shortLabel="Cart"
       />
       <StripButton
         active={active === 'wishlist'}
@@ -106,7 +110,7 @@ export function StorefrontActionStrip({
           <span className="relative inline-flex shrink-0">
             <Heart
               className={cn(
-                'h-3.5 w-3.5 text-rose-600 sm:h-4 sm:w-4',
+                'h-4 w-4 text-rose-600 sm:h-4 sm:w-4',
                 wishlistCount > 0 && 'fill-rose-500',
               )}
             />
@@ -118,6 +122,7 @@ export function StorefrontActionStrip({
           </span>
         )}
         label="Wishlist"
+        shortLabel="Wishlist"
       />
       <StripButton
         active={active === 'orders'}
@@ -126,7 +131,7 @@ export function StorefrontActionStrip({
         tone="blue"
         icon={(
           <span className="relative inline-flex shrink-0">
-            <LayoutList className="h-3.5 w-3.5 text-blue-600 sm:h-4 sm:w-4" />
+            <LayoutList className="h-4 w-4 text-blue-600 sm:h-4 sm:w-4" />
             {ordersCount > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white sm:h-4 sm:min-w-4 sm:text-[9px] sm:ring-2">
                 {ordersCount > 99 ? '99+' : ordersCount}
@@ -135,6 +140,7 @@ export function StorefrontActionStrip({
           </span>
         )}
         label="Orders"
+        shortLabel="Orders"
       />
     </nav>
   );
@@ -149,6 +155,7 @@ function StripButton({
   tone,
   icon,
   label,
+  shortLabel,
 }: {
   active?: boolean;
   onClick: () => void;
@@ -156,6 +163,7 @@ function StripButton({
   tone: Tone;
   icon: ReactNode;
   label: string;
+  shortLabel: string;
 }) {
   const tones: Record<Tone, string> = {
     slate: active
@@ -190,13 +198,14 @@ function StripButton({
       aria-label={title}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1.5 text-[10px] font-semibold leading-tight shadow-sm transition active:scale-[0.98]',
-        'sm:inline-flex sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-xl sm:border-2 sm:px-4 sm:py-2.5 sm:text-sm sm:hover:-translate-y-0.5 sm:active:translate-y-0',
+        'flex min-h-[3.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md border px-0.5 py-1.5 text-[10px] font-bold leading-none shadow-sm transition active:scale-[0.98]',
+        'sm:inline-flex sm:min-h-0 sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-xl sm:border-2 sm:px-4 sm:py-2.5 sm:text-sm sm:font-semibold sm:hover:-translate-y-0.5 sm:active:translate-y-0',
         tones[tone],
       )}
     >
       {icon}
-      <span className="max-w-full truncate">{label}</span>
+      <span className="max-w-full text-center sm:hidden">{shortLabel}</span>
+      <span className="hidden max-w-full sm:inline">{label}</span>
     </button>
   );
 }

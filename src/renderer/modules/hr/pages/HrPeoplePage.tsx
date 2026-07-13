@@ -1,134 +1,140 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  Briefcase,
-  Building2,
-  Calendar,
-  Hash,
-  KeyRound,
-  Mail,
-  Phone,
-  Plus,
-  Search,
-  User,
-  UserPlus,
-  Users,
-} from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { KeyRound, Pencil, Plus, Search, UserMinus, Users } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { Modal } from '../../../shared/components/modals/Modal';
+import { Card } from '../../../shared/components/cards/Card';
 import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { Table } from '../../../shared/components/tables/Table';
+import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { cn } from '../../../shared/utils/cn';
-import { buildStaffModulesPayload } from '../../../shared/utils/moduleAccess';
 import {
-  useCreateHrEmployee,
-  useCreateHrEmployeeWithAccount,
-  useHrAccountOptions,
-  useHrDepartments,
   useHrEmployees,
-  useHrPositions,
+  useRemoveHrEmployeeAccount,
 } from '../api/useHrQueries';
-import type { CreateEmployeePayload, EmploymentType } from '../api/hrTypes';
+import type { HrEmployee } from '../api/hrTypes';
 import { employeeDisplayName } from '../api/hrTypes';
 import { EmployeeStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader } from '../ui/HrSurface';
-import {
-  HrFormSection,
-  HrIconField,
-  HrModalFooter,
-  HrModalHero,
-  hrInputClass,
-  hrSelectClass,
-} from '../ui/hrFormFields';
-import { emptyAppLoginForm, type HrAppLoginFormState } from '../ui/hrAppLoginForm';
-import { HrAppLoginFields } from '../ui/HrAppLoginFields';
+import { HrAddEmployeeModal } from '../ui/HrAddEmployeeModal';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
-const employmentOptions: { value: EmploymentType; label: string }[] = [
-  { value: 'full_time', label: 'Full time' },
-  { value: 'part_time', label: 'Part time' },
-  { value: 'contract', label: 'Contract' },
-  { value: 'casual', label: 'Casual' },
-];
-
-const emptyForm: CreateEmployeePayload = {
-  employee_number: '',
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone: '',
-  department_id: null,
-  position_id: null,
-  employment_type: 'full_time',
-  status: 'onboarding',
-  hire_date: new Date().toISOString().slice(0, 10),
-};
-
 export default function HrPeoplePage() {
+  const navigate = useNavigate();
+  const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [open, setOpen] = useState(false);
-  const [createLogin, setCreateLogin] = useState(false);
-  const [form, setForm] = useState<CreateEmployeePayload>(emptyForm);
-  const [loginForm, setLoginForm] = useState<HrAppLoginFormState>(emptyAppLoginForm);
 
   const { data: employees = [], isLoading } = useHrEmployees({
     q: search.trim() || undefined,
     status: statusFilter || undefined,
   });
-  const { data: departments = [] } = useHrDepartments();
-  const { data: positions = [] } = useHrPositions(form.department_id);
-  const { data: accountOptions } = useHrAccountOptions(open);
-  const createEmployee = useCreateHrEmployee();
-  const createWithAccount = useCreateHrEmployeeWithAccount();
+  const removeAccount = useRemoveHrEmployeeAccount();
+  const paginated = usePagination(employees, 15);
+  const hasFilters = Boolean(search.trim() || statusFilter);
 
-  const filteredPositions = useMemo(() => {
-    if (!form.department_id) return positions;
-    return positions.filter((p) => p.department_id === form.department_id || !p.department_id);
-  }, [positions, form.department_id]);
+  const handleDetach = useCallback(async (employee: HrEmployee) => {
+    if (!employee.user_id) return;
+    const ok = await confirm({
+      title: 'Detach from organization?',
+      message: `Remove ${employeeDisplayName(employee)} from this business? Their login stays — they just lose access here. The HR profile remains.`,
+      confirmText: 'Detach',
+      variant: 'danger',
+    });
+    if (ok) await removeAccount.mutateAsync(employee.id);
+  }, [confirm, removeAccount]);
 
-  const roles = accountOptions?.roles ?? [];
-  const saving = createEmployee.isPending || createWithAccount.isPending;
-
-  function resetAndClose() {
-    setOpen(false);
-    setCreateLogin(false);
-    setForm(emptyForm);
-    setLoginForm(emptyAppLoginForm());
-  }
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    const base = {
-      ...form,
-      email: (createLogin ? loginForm.email : form.email) || null,
-      phone: form.phone || null,
-      department_id: form.department_id || null,
-      position_id: form.position_id || null,
-    };
-
-    if (createLogin) {
-      if (loginForm.password !== loginForm.password_confirmation) return;
-      await createWithAccount.mutateAsync({
-        ...base,
-        email: loginForm.email.trim(),
-        password: loginForm.password,
-        password_confirmation: loginForm.password_confirmation,
-        role_id: loginForm.role_id ? Number(loginForm.role_id) : null,
-        modules: buildStaffModulesPayload(loginForm.modules, false, loginForm.hrFullAccess),
-      });
-    } else {
-      await createEmployee.mutateAsync(base);
-    }
-    resetAndClose();
-  }
+  const columns = useMemo(
+    () => [
+      {
+        key: 'employee',
+        header: 'Employee',
+        render: (employee: HrEmployee) => (
+          <div className="min-w-0">
+            <p className="font-medium text-slate-900">{employeeDisplayName(employee)}</p>
+            <p className="truncate text-xs text-slate-500">
+              {employee.user?.email || employee.email || 'No email on file'}
+            </p>
+          </div>
+        ),
+      },
+      {
+        key: 'number',
+        header: 'Number',
+        render: (employee: HrEmployee) => (
+          <span className="font-mono text-xs text-slate-600">{employee.employee_number}</span>
+        ),
+      },
+      {
+        key: 'department',
+        header: 'Department',
+        render: (employee: HrEmployee) => (
+          <span className="text-slate-600">{employee.department?.name ?? '—'}</span>
+        ),
+      },
+      {
+        key: 'login',
+        header: 'Login',
+        render: (employee: HrEmployee) =>
+          employee.user_id ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-100">
+              <KeyRound className="h-3 w-3" />
+              Has login
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+              No login
+            </span>
+          ),
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        render: (employee: HrEmployee) => <EmployeeStatusBadge status={employee.status} />,
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        align: 'center' as const,
+        render: (employee: HrEmployee) => (
+          <div className="flex items-center justify-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Edit profile"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(ROUTES.HR.EMPLOYEE(employee.id));
+              }}
+            >
+              <Pencil className="h-4 w-4 text-slate-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              title={employee.user_id ? 'Detach from organization' : 'No login to detach'}
+              disabled={!employee.user_id || removeAccount.isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleDetach(employee);
+              }}
+            >
+              <UserMinus className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [handleDetach, navigate, removeAccount.isPending],
+  );
 
   return (
     <div className="space-y-5">
       <HrPageHeader
         icon={Users}
         title="People"
-        description="Everyone with a staff login appears here automatically. Add HR-only profiles anytime, or create a login when they need to sign in."
+        description="Edit HR profiles anytime (name, role, status, phone). Email and passwords stay locked after create — use Detach to remove org access without deleting the login."
         actions={
           <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
             <Plus className="h-4 w-4" />
@@ -168,14 +174,14 @@ export default function HrPeoplePage() {
       ) : employees.length === 0 ? (
         <HrEmptyState
           icon={<Users className="h-6 w-6" />}
-          title={search || statusFilter ? 'No one matches that search' : 'Your people list is empty'}
+          title={hasFilters ? 'No one matches that search' : 'Your people list is empty'}
           description={
-            search || statusFilter
+            hasFilters
               ? 'Try another name, clear the status filter, or check spelling.'
               : 'Staff added in Settings appear here after sync. Or add your first employee now.'
           }
           action={
-            !search && !statusFilter ? (
+            !hasFilters ? (
               <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Add your first employee
@@ -184,263 +190,25 @@ export default function HrPeoplePage() {
           }
         />
       ) : (
-        <div className={HR_SURFACE.tableWrap}>
-          <table className="min-w-full divide-y divide-gray-100 text-sm">
-            <thead className="bg-white/60 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="px-4 py-3">Employee</th>
-                <th className="px-4 py-3">Number</th>
-                <th className="px-4 py-3">Department</th>
-                <th className="px-4 py-3">Login</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {employees.map((employee) => (
-                <tr key={employee.id} className="transition-colors hover:bg-indigo-50/40">
-                  <td className="px-4 py-3">
-                    <Link
-                      to={ROUTES.HR.EMPLOYEE(employee.id)}
-                      className="font-medium text-indigo-700 hover:underline"
-                    >
-                      {employeeDisplayName(employee)}
-                    </Link>
-                    {employee.email ? (
-                      <p className="text-xs text-gray-500">{employee.email}</p>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600">{employee.employee_number}</td>
-                  <td className="px-4 py-3 text-gray-600">{employee.department?.name ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    {employee.user_id ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        <KeyRound className="h-3 w-3" />
-                        Has login
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                        No login
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <EmployeeStatusBadge status={employee.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card padding={false} className="overflow-hidden p-4 sm:p-6">
+          <Table<HrEmployee>
+            rowKey={(employee) => employee.id}
+            columns={columns}
+            data={paginated.data}
+            onRowClick={(employee) => navigate(ROUTES.HR.EMPLOYEE(employee.id))}
+          />
+          <Pagination
+            currentPage={paginated.page}
+            totalPages={paginated.totalPages}
+            totalItems={paginated.totalItems}
+            pageSize={paginated.pageSize}
+            onPageChange={paginated.setPage}
+            onPageSizeChange={paginated.setPageSize}
+          />
+        </Card>
       )}
 
-      <Modal
-        isOpen={open}
-        onClose={resetAndClose}
-        title="Add employee"
-        subtitle="Create their HR profile. Optionally give them an app login with a password you set."
-        size="lg"
-      >
-        <form onSubmit={(e) => void handleCreate(e)} className="space-y-5">
-          <HrModalHero
-            icon={UserPlus}
-            title="New team member"
-            description="Staff already in Settings are mirrored here automatically. Use this when you’re adding someone new to HR."
-            tone="indigo"
-          />
-
-          <HrFormSection title="Identity" icon={User} description="How they show up across leave, attendance, and pay.">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <HrIconField label="First name" icon={User} required>
-                <input
-                  required
-                  value={form.first_name}
-                  onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
-                  placeholder="Jane"
-                  className={hrInputClass}
-                  autoFocus
-                />
-              </HrIconField>
-              <HrIconField label="Last name" icon={User} required>
-                <input
-                  required
-                  value={form.last_name}
-                  onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
-                  placeholder="Okello"
-                  className={hrInputClass}
-                />
-              </HrIconField>
-              <HrIconField label="Employee number" icon={Hash} required hint="Unique within your business.">
-                <input
-                  required
-                  value={form.employee_number}
-                  onChange={(e) => setForm((f) => ({ ...f, employee_number: e.target.value }))}
-                  placeholder="EMP-001"
-                  className={hrInputClass}
-                />
-              </HrIconField>
-              <HrIconField label="Employment type" icon={Briefcase} required>
-                <select
-                  value={form.employment_type}
-                  onChange={(e) => setForm((f) => ({ ...f, employment_type: e.target.value as EmploymentType }))}
-                  className={hrSelectClass}
-                >
-                  {employmentOptions.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </HrIconField>
-            </div>
-          </HrFormSection>
-
-          {!createLogin ? (
-            <HrFormSection title="Contact" icon={Mail} description="Optional for HR-only profiles.">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <HrIconField label="Email" icon={Mail}>
-                  <input
-                    type="email"
-                    value={form.email ?? ''}
-                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    className={hrInputClass}
-                  />
-                </HrIconField>
-                <HrIconField label="Phone" icon={Phone}>
-                  <input
-                    value={form.phone ?? ''}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                    className={hrInputClass}
-                  />
-                </HrIconField>
-              </div>
-            </HrFormSection>
-          ) : (
-            <HrFormSection title="Contact phone" icon={Phone} description="Login email is set in the App login section below.">
-              <HrIconField label="Phone" icon={Phone}>
-                <input
-                  value={form.phone ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className={hrInputClass}
-                />
-              </HrIconField>
-            </HrFormSection>
-          )}
-
-          <HrFormSection title="Role & start" icon={Building2}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <HrIconField label="Department" icon={Building2}>
-                <select
-                  value={form.department_id ?? ''}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      department_id: e.target.value ? Number(e.target.value) : null,
-                      position_id: null,
-                    }))
-                  }
-                  className={hrSelectClass}
-                >
-                  <option value="">Not assigned yet</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-              </HrIconField>
-              <HrIconField label="Position" icon={Briefcase}>
-                <select
-                  value={form.position_id ?? ''}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, position_id: e.target.value ? Number(e.target.value) : null }))
-                  }
-                  className={hrSelectClass}
-                >
-                  <option value="">Not assigned yet</option>
-                  {filteredPositions.map((p) => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </select>
-              </HrIconField>
-              <HrIconField label="Hire date" icon={Calendar}>
-                <input
-                  type="date"
-                  value={form.hire_date ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, hire_date: e.target.value }))}
-                  className={hrInputClass}
-                />
-              </HrIconField>
-            </div>
-          </HrFormSection>
-
-          <HrFormSection
-            title="Will they sign in?"
-            icon={KeyRound}
-            description="Admin or HR sets the password — same as Settings → Staff."
-          >
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setCreateLogin(false)}
-                className={cn(
-                  'rounded-xl border px-4 py-3 text-left transition-colors',
-                  !createLogin
-                    ? 'border-indigo-300 bg-indigo-50 shadow-sm'
-                    : 'border-gray-200 bg-white hover:bg-gray-50',
-                )}
-              >
-                <p className="text-sm font-semibold text-gray-900">No login yet</p>
-                <p className="mt-0.5 text-xs text-gray-500">HR profile only — they won’t sign in until you add an account.</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCreateLogin(true);
-                  setLoginForm((f) => ({
-                    ...f,
-                    email: f.email || (form.email ?? ''),
-                  }));
-                }}
-                className={cn(
-                  'rounded-xl border px-4 py-3 text-left transition-colors',
-                  createLogin
-                    ? 'border-indigo-300 bg-indigo-50 shadow-sm'
-                    : 'border-gray-200 bg-white hover:bg-gray-50',
-                )}
-              >
-                <p className="text-sm font-semibold text-gray-900">Create login now</p>
-                <p className="mt-0.5 text-xs text-gray-500">Set email, password, role, and modules in one step.</p>
-              </button>
-            </div>
-          </HrFormSection>
-
-          {createLogin ? (
-            <HrAppLoginFields
-              value={loginForm}
-              onChange={setLoginForm}
-              roles={roles}
-            />
-          ) : null}
-
-          {createLogin && loginForm.password && loginForm.password !== loginForm.password_confirmation ? (
-            <p className="text-sm text-red-600">Password confirmation does not match.</p>
-          ) : null}
-
-          <HrModalFooter>
-            <Button type="button" variant="outline" onClick={resetAndClose}>Cancel</Button>
-            <Button
-              type="submit"
-              loading={saving}
-              disabled={
-                createLogin
-                && (
-                  !loginForm.email.trim()
-                  || loginForm.password.length < 6
-                  || loginForm.password !== loginForm.password_confirmation
-                )
-              }
-            >
-              {createLogin ? 'Create employee & login' : 'Create employee'}
-            </Button>
-          </HrModalFooter>
-        </form>
-      </Modal>
+      <HrAddEmployeeModal open={open} onClose={() => setOpen(false)} />
     </div>
   );
 }

@@ -56,12 +56,17 @@ export default function LoginPage() {
         <Button type="submit" className="w-full py-3.5" loading={loginMutation.isPending}>
           Sign In
         </Button>
-        <p className="text-center text-sm text-gray-500 pt-2">
-          Don't have an account?{' '}
-          <Link to={ROUTES.REGISTER} className="text-blue-600 hover:underline font-medium">
-            Start for free
+        <div className="space-y-3 border-t border-gray-100 pt-5">
+          <p className="text-center text-sm font-medium text-gray-700">
+            Don&apos;t have an account?
+          </p>
+          <Link
+            to={ROUTES.REGISTER}
+            className="flex w-full items-center justify-center rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+          >
+            Create Account
           </Link>
-        </p>
+        </div>
       </form>
     </AuthLayout>
   );

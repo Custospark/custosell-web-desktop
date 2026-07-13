@@ -69,12 +69,16 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
   const managerOptions = managers.filter((m) => m.id !== id);
   const hasLogin = Boolean(employee.user_id);
 
+  const lockedEmail = employee.user?.email || employee.email || '';
+
   async function handleSave(e: FormEvent) {
     e.preventDefault();
+    // Email and password are immutable from HR edit — never send email on update.
+    const { email: _omitEmail, ...profile } = form;
+    void _omitEmail;
     await updateEmployee.mutateAsync({
       id,
-      ...form,
-      email: form.email || null,
+      ...profile,
       phone: form.phone || null,
       hire_date: form.hire_date || null,
       termination_date: form.termination_date || null,
@@ -172,10 +176,25 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
           </div>
         </HrFormSection>
 
-        <HrFormSection title="Contact" icon={Mail} description="Optional — helpful for payslips and leave notices.">
+        <HrFormSection
+          title="Contact"
+          icon={Mail}
+          description="Phone can be updated here. Email and password cannot — set them when creating a login, or detach/reattach to change access."
+        >
           <div className="grid gap-4 sm:grid-cols-2">
-            <HrIconField label="Email" icon={Mail}>
-              <input type="email" value={form.email ?? ''} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className={hrInputClass} />
+            <HrIconField
+              label="Email"
+              icon={Mail}
+              hint={lockedEmail ? 'Locked — not editable from HR.' : 'No email on file. Add a login to set one.'}
+            >
+              <input
+                type="email"
+                readOnly
+                disabled
+                value={lockedEmail}
+                placeholder="—"
+                className={`${hrInputClass} cursor-not-allowed bg-slate-50 text-slate-600`}
+              />
             </HrIconField>
             <HrIconField label="Phone" icon={Phone}>
               <input value={form.phone ?? ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className={hrInputClass} />

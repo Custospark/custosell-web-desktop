@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, Home, CreditCard, Shield, LogIn, Compass } from 'lucide-react';
+import { Download, Home, CreditCard, Shield, UserRound, Compass } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
@@ -107,10 +107,12 @@ export default function LandingLayout() {
             <button
               type="button"
               onClick={() => handleAction('login')}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-2 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900 sm:px-4"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-2 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900 sm:px-4"
+              aria-label="Account — go to sign in"
+              title="Account"
             >
-              <LogIn className="h-4 w-4" />
-              <span>Sign In</span>
+              <UserRound className="h-4 w-4" />
+              <span>Account</span>
             </button>
           </motion.div>
         </nav>

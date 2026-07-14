@@ -309,7 +309,7 @@ export function Navbar() {
 
           <GuideHeaderNav />
 
-          <div className="shrink-0 pr-3 sm:pr-0">
+          <div className="shrink-0 pr-3">
             <button
               ref={triggerRef}
               type="button"

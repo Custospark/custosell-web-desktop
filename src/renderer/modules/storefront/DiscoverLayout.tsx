@@ -138,11 +138,11 @@ function DiscoverShellChrome() {
       >
         <header
           className={cn(
-            // Mobile: inset card with small radius
-            'relative z-40 mx-2 mt-2 flex shrink-0 flex-col gap-2 rounded-lg border border-slate-200/90 bg-white/95 px-2.5 py-2 shadow-sm backdrop-blur-sm',
-            // Large: original full-bleed glass header
-            'sm:mx-0 sm:mt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-none sm:border-0 sm:border-b sm:border-slate-200/80 sm:px-4 sm:py-3 sm:shadow-none',
-          )}
+                // Mobile: full-bleed header flush with viewport
+                'relative z-40 flex shrink-0 flex-col gap-2 border-b border-slate-200/80 bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm',
+                // Large: original wide layout
+                'sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3',
+              )}
         >
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <Link

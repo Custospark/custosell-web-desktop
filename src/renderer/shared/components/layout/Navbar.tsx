@@ -15,6 +15,7 @@ import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
 import { resolveBusinessDisplayName, resolveBusinessLogoPath, resolveUserMenuLabel } from '../../utils/shellDisplay';
 import { avatarUrl } from '../../utils/avatarUrl';
+import { initialsFromName } from '../UserAvatar';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
 import {
@@ -319,14 +320,14 @@ export function Navbar() {
               aria-label={`Account menu for ${user?.name ?? 'user'}`}
               className={cn(
                 iconBtn,
-                'gap-1.5 pl-0.5 pr-1 sm:px-1.5 h-11 w-11 sm:h-9 sm:w-auto max-w-[3rem] sm:max-w-[11rem] md:max-w-[14rem]',
+                'gap-1.5 px-1 sm:px-1.5 h-11 w-11 sm:h-9 sm:w-auto sm:max-w-[11rem] md:max-w-[14rem]',
               )}
             >
               {user?.avatar ? (
                 <img src={avatarUrl(user.avatar)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-white" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600 shrink-0 ring-2 ring-white">
-                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0 ring-2 ring-white">
+                  {initialsFromName(user?.name || 'U')}
                 </div>
               )}
               <span className="font-medium text-sm text-gray-700 truncate hidden md:inline max-w-[8rem] lg:max-w-[10rem]">

@@ -69,7 +69,7 @@ export function AppMobileTabBar() {
             >
               <span
                 className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-xl',
+                  'flex h-7 w-7 shrink-0 items-center justify-center sm:rounded-xl',
                   state.sidebarOpen ? 'bg-blue-50' : 'bg-transparent',
                 )}
               >
@@ -98,7 +98,7 @@ export function AppMobileTabBar() {
                     title={onlineOnlyHoverMessage(leaf.to)}
                     className={cn(tabBtnBase, 'w-full cursor-not-allowed text-slate-300')}
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center sm:rounded-xl">
                       <Icon className="h-5 w-5" aria-hidden />
                     </span>
                     <span className="w-full truncate text-[11px] font-bold leading-none tracking-wide">
@@ -123,7 +123,7 @@ export function AppMobileTabBar() {
                 >
                   <span
                     className={cn(
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-xl',
+                      'flex h-7 w-7 shrink-0 items-center justify-center sm:rounded-xl',
                       active ? 'bg-blue-50' : 'bg-transparent',
                     )}
                   >
@@ -152,7 +152,7 @@ export function AppMobileTabBar() {
             >
               <span
                 className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-xl',
+                  'flex h-7 w-7 shrink-0 items-center justify-center sm:rounded-xl',
                   moreActive ? 'bg-blue-50' : 'bg-transparent',
                 )}
               >

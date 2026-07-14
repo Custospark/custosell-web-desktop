@@ -89,7 +89,7 @@ function ModeTab({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition-all',
+        'inline-flex flex-1 items-center justify-center gap-2 sm:rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition-all',
         'hover:-translate-y-0.5 active:translate-y-0',
         tone === 'teal' && (active
           ? 'border-teal-500 bg-teal-100 text-teal-950 shadow-md ring-2 ring-teal-300/50'

@@ -81,7 +81,7 @@ export function DiscoverProductCard({
 
   const media = (
     <div
-      className={cn('relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl', wrap)}
+      className={cn('relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden sm:rounded-xl', wrap)}
       role={onOpenDetail ? 'button' : undefined}
       tabIndex={onOpenDetail ? 0 : undefined}
       onClick={onOpenDetail ? (e) => {

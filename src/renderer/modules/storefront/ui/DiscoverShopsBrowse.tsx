@@ -242,7 +242,7 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
     >
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <Link to={ROUTES.SHOP(shop.slug)} className="flex gap-3 outline-none">
-          <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl', wrap)}>
+          <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden sm:rounded-xl', wrap)}>
             {shop.logo_path ? (
               <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
             ) : (

@@ -48,7 +48,7 @@ export function StorefrontActionStrip({
   return (
     <nav
       className={cn(
-        'relative z-[10001] mx-2 mb-2 flex shrink-0 items-stretch gap-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-md',
+        'relative z-[10001] mx-2 mb-2 flex shrink-0 items-stretch gap-1 sm:rounded-lg border border-slate-200 bg-white p-1.5 shadow-md',
         'sm:mx-0 sm:mb-0 sm:items-center sm:justify-center sm:gap-3 sm:overflow-x-auto sm:overscroll-x-contain sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:bg-white/95 sm:p-0 sm:px-3 sm:py-2.5 sm:shadow-none sm:backdrop-blur-sm',
         className,
       )}

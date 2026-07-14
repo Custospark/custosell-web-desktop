@@ -31,7 +31,7 @@ Managers needed reliable board visibility edits, teammates needed near-live kanb
    **Due Date cells:** Excel date-formatted cells arrive as serial numbers; BE normalizes serials / DateTime / common strings to `YYYY-MM-DD` before validation. Template stores the sample due date as text.
 
 6. **Goal decomposition anchors**  
-   FE sends `anchor_start` / `anchor_end` from the Progress period currently in view (`boardProgressAnchors.ts`), including custom ranges, so BE decomposition is based on that period.
+   FE sends `anchor_start` / `anchor_end` from the target **planning level** via `anchorsForPlanningLevel` (rolling horizon — e.g. decade = Jan 1 this year → Dec 31 year+9). The Progress view chip (Today / This month / …) does **not** drive decomposition; it only scopes the canvas period slice. Day-weighted shares + cumulative fields: [2026-07-14-day-weighted-horizon-decomposition.md](./2026-07-14-day-weighted-horizon-decomposition.md).
 
 7. **Product public shop**  
    Storefront listing state is kept locally after save and parent `editingProduct` is patched to avoid checkbox snap-back. Products table filter: all / listed / unlisted. Thumbnails on products table and POS New Sale search.

@@ -77,6 +77,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-08-staff-drawer-module-access-parity.md](./adr/2026-07-08-staff-drawer-module-access-parity.md) | Staff drawer module access matches Module Access; owner email read-only |
 | [2026-07-14-owner-module-toggles-no-staff-revoke.md](./adr/2026-07-14-owner-module-toggles-no-staff-revoke.md) | Owner personal module off does not strip staff grants |
 | [2026-07-14-board-card-import-sample-formats.md](./adr/2026-07-14-board-card-import-sample-formats.md) | Board Excel import sample dates/values; optional assignee email |
+| [2026-07-14-day-weighted-horizon-decomposition.md](./adr/2026-07-14-day-weighted-horizon-decomposition.md) | Day-weighted decade/year cascade; cumulative + horizon expected |
 | [2026-07-08-board-progress-targets.md](./adr/2026-07-08-board-progress-targets.md) | Board Progress canvas, targets/OKRs, pipeline vs project language |
 | [2026-07-08-progress-decomposition-engine.md](./adr/2026-07-08-progress-decomposition-engine.md) | Column-aware metrics, hybrid goal decomposition, planning hierarchy |
 | [2026-07-10-documents-acl-and-folder-model.md](./adr/2026-07-10-documents-acl-and-folder-model.md) | Documents module ACL, live inheritance, folder tree |

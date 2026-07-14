@@ -22,7 +22,9 @@ Column-aware metrics, goal decomposition, and personal progress for Kanban board
 | Week | `week` | Days |
 | Day | `day` | Leaf |
 
-**Anchor dates** (`anchor_start`, `anchor_end`) define the planning window. Defaults are computed server-side from `planning_level` when omitted.
+**Anchor dates** (`anchor_start`, `anchor_end`) define the planning window. FE always sends them from the target **planning level** (not the Progress view chip). When omitted, BE defaults match FE: decade / five_year roll from Jan 1 of the current year.
+
+**Day-weighted shares:** each child period gets `parent_share × days(slice ∩ parent) / days(parent)`. Preview nodes include `cumulative_expected` (how much of `T` should be hit by that period’s end). For decade / five_year / year targets, `period_slice.horizon_expected_to_date` is the horizon share elapsed through today (shown on the card as “Horizon expected so far”). Existing equal-count allocations need regenerate → save to refresh.
 
 ## Column-aware metrics
 
@@ -87,4 +89,5 @@ Progress export downloads:
 
 - [2026-07-08-board-progress-targets.md](../adr/2026-07-08-board-progress-targets.md) — v1 Progress canvas
 - [2026-07-08-progress-decomposition-engine.md](../adr/2026-07-08-progress-decomposition-engine.md) — v2 decomposition
+- [2026-07-14-day-weighted-horizon-decomposition.md](../adr/2026-07-14-day-weighted-horizon-decomposition.md) — day-weighted cascade, cumulative + horizon expected
 - [2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md](../adr/2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md) — gallery/upload underpaint + board seeds

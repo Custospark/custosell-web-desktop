@@ -49,9 +49,9 @@ export function productVisual(name: string, type?: string | null): Visual {
     return { Icon: Sparkles, wrap: 'bg-fuchsia-100', icon: 'text-fuchsia-700' };
   }
   if (/\b(shop|retail|store)\b/.test(hay)) {
-    return { Icon: ShoppingBag, wrap: 'bg-indigo-100', icon: 'text-indigo-800' };
+    return { Icon: ShoppingBag, wrap: 'bg-teal-100', icon: 'text-teal-800' };
   }
-  return { Icon: Package, wrap: 'bg-indigo-50', icon: 'text-indigo-700' };
+  return { Icon: Package, wrap: 'bg-teal-50', icon: 'text-teal-700' };
 }
 
 export function shopVisual(name: string): Visual {
@@ -65,5 +65,5 @@ export function shopVisual(name: string): Visual {
   if (/\b(farm|agro|grain|mill)\b/.test(hay)) {
     return { Icon: Wheat, wrap: 'bg-amber-100', icon: 'text-amber-800' };
   }
-  return { Icon: ShoppingBag, wrap: 'bg-indigo-100', icon: 'text-indigo-800' };
+  return { Icon: ShoppingBag, wrap: 'bg-teal-100', icon: 'text-teal-800' };
 }

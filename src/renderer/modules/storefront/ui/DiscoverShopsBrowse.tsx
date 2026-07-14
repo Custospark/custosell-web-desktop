@@ -155,7 +155,7 @@ export function DiscoverShopsBrowse() {
       ) : null}
 
       <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5', 'rounded-none sm:rounded-2xl')}>
-        <Search className="h-4 w-4 shrink-0 text-indigo-700" />
+        <Search className="h-4 w-4 shrink-0 text-teal-700" />
         <input
           type="search"
           value={q}
@@ -172,7 +172,7 @@ export function DiscoverShopsBrowse() {
 
       {filtered.length === 0 ? (
         <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center', 'rounded-none sm:rounded-2xl')}>
-          <Store className="h-10 w-10 text-indigo-600" />
+          <Store className="h-10 w-10 text-teal-600" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
             {shops.length === 0 && !searchQ ? 'No businesses yet' : `No businesses match “${q.trim()}”`}
           </p>
@@ -192,7 +192,7 @@ export function DiscoverShopsBrowse() {
           {filtered.length > visible || hasNextPage ? (
             <button
               type="button"
-              className="mx-auto rounded-xl border-2 border-indigo-300/90 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 px-4 py-2 text-sm font-semibold text-indigo-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
+              className="mx-auto rounded-xl border-2 border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-4 py-2 text-sm font-semibold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
               disabled={isFetchingNextPage && filtered.length <= visible}
               onClick={onShowMore}
             >
@@ -237,7 +237,7 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
       className={cn(
         marketplaceGlassPanel,
         'flex gap-2.5 p-3 shadow-md transition-all duration-200 rounded-none sm:rounded-2xl',
-        'hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-900/15',
+        'hover:-translate-y-1 hover:border-teal-400 hover:shadow-xl hover:shadow-teal-900/15',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
@@ -251,7 +251,7 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
-            <p className="truncate text-[11px] text-indigo-800">@{shop.slug}</p>
+            <p className="truncate text-[11px] text-teal-800">@{shop.slug}</p>
             {shop.description ? (
               <p className="mt-1 line-clamp-2 text-xs leading-snug text-slate-600">{shop.description}</p>
             ) : null}
@@ -267,19 +267,19 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
         <div className="space-y-1 border-t border-slate-200/70 pt-2 text-[11px] text-slate-600">
           {location ? (
             <p className="flex items-start gap-1.5">
-              <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-indigo-700" aria-hidden />
+              <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-teal-700" aria-hidden />
               <span className="line-clamp-2">{location}</span>
             </p>
           ) : null}
           {shop.business_phone ? (
             <p className="flex items-center gap-1.5 truncate">
-              <Phone className="h-3 w-3 shrink-0 text-indigo-700" aria-hidden />
+              <Phone className="h-3 w-3 shrink-0 text-teal-700" aria-hidden />
               <span>{shop.business_phone}</span>
             </p>
           ) : null}
           {shop.business_email ? (
             <p className="flex items-center gap-1.5 truncate">
-              <Mail className="h-3 w-3 shrink-0 text-indigo-700" aria-hidden />
+              <Mail className="h-3 w-3 shrink-0 text-teal-700" aria-hidden />
               <span>{shop.business_email}</span>
             </p>
           ) : null}
@@ -287,7 +287,7 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
             <p className="text-slate-400">Explore Offers from this shop</p>
           ) : null}
         </div>
-        <Link to={ROUTES.SHOP(shop.slug)} className="text-xs font-semibold text-indigo-800 hover:underline">
+        <Link to={ROUTES.SHOP(shop.slug)} className="text-xs font-semibold text-teal-800 hover:underline">
           Explore Offers →
         </Link>
       </div>

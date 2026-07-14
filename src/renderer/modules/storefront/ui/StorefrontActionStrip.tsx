@@ -23,12 +23,12 @@ interface StorefrontActionStripProps {
   className?: string;
 }
 
-type Tone = 'slate' | 'amber' | 'indigo' | 'emerald' | 'rose' | 'blue';
+type Tone = 'slate' | 'amber' | 'teal' | 'emerald' | 'rose' | 'blue';
 
 const activeTone: Record<Tone, string> = {
   slate: 'border-slate-500 bg-slate-100 text-slate-950 ring-1 ring-slate-300/50',
   amber: 'border-amber-500 bg-amber-100 text-amber-950 ring-1 ring-amber-300/50',
-  indigo: 'border-indigo-500 bg-indigo-100 text-indigo-950 ring-1 ring-indigo-300/50',
+  teal: 'border-teal-500 bg-teal-100 text-teal-950 ring-1 ring-teal-300/50',
   emerald: 'border-emerald-500 bg-emerald-100 text-emerald-950 ring-1 ring-emerald-300/50',
   rose: 'border-rose-500 bg-rose-100 text-rose-950 ring-1 ring-rose-300/50',
   blue: 'border-blue-500 bg-blue-100 text-blue-950 ring-1 ring-blue-300/50',
@@ -37,7 +37,7 @@ const activeTone: Record<Tone, string> = {
 const inactiveTone: Record<Tone, string> = {
   slate: 'border-slate-200 bg-gradient-to-b from-slate-50 to-white text-slate-800',
   amber: 'border-amber-200 bg-gradient-to-b from-amber-50 to-white text-amber-950',
-  indigo: 'border-indigo-200 bg-gradient-to-b from-indigo-50 to-white text-indigo-900',
+  teal: 'border-teal-200 bg-gradient-to-b from-teal-50 to-white text-teal-900',
   emerald: 'border-emerald-200 bg-gradient-to-b from-emerald-50 to-white text-emerald-900',
   rose: 'border-rose-200 bg-gradient-to-b from-rose-50 to-white text-rose-900',
   blue: 'border-blue-200 bg-gradient-to-b from-blue-50 to-white text-blue-900',
@@ -70,7 +70,7 @@ export function StorefrontActionStrip({
   ];
 
   const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; onClick: () => void }> = [
-    { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'indigo' as Tone, onClick: onBrowse },
+    { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, onClick: onBrowse },
     {
       tab: 'cart' as const,
       icon: <ShoppingCart className="h-4 w-4" aria-hidden />,
@@ -208,7 +208,7 @@ export function StorefrontActionStrip({
           active={shopsActive}
           onClick={onBrowse}
           title={shopsTitle}
-          tone="indigo"
+          tone="teal"
           icon={<ArrowLeftRight className="h-4 w-4 shrink-0" aria-hidden />}
           label={shopsLabel}
         />
@@ -290,12 +290,12 @@ function DesktopTab({
     amber: active
       ? 'ring-2 ring-amber-300/60 bg-amber-100 text-amber-950 shadow-md border-amber-500'
       : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:shadow-md hover:shadow-amber-200/50 text-amber-950',
-    indigo: active
-      ? 'ring-2 ring-indigo-300/60 bg-indigo-100 text-indigo-950 shadow-md border-indigo-500'
-      : 'border-indigo-300/90 bg-gradient-to-r from-indigo-50 via-white to-blue-50 hover:border-indigo-400 hover:from-indigo-100 hover:to-blue-100 hover:shadow-md hover:shadow-indigo-200/50 text-indigo-900',
+    teal: active
+      ? 'ring-2 ring-teal-300/60 bg-teal-100 text-teal-950 shadow-md border-teal-500'
+      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 hover:border-teal-400 hover:from-teal-100 hover:to-cyan-100 hover:shadow-md hover:shadow-teal-200/50 text-teal-900',
     emerald: active
       ? 'ring-2 ring-emerald-300/60 bg-emerald-100 text-emerald-950 shadow-md border-emerald-500'
-      : 'border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 hover:border-emerald-400 hover:from-emerald-100 hover:to-emerald-100 hover:shadow-md hover:shadow-emerald-200/50 text-emerald-900',
+      : 'border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:shadow-md hover:shadow-emerald-200/50 text-emerald-900',
     rose: active
       ? 'ring-2 ring-rose-300/60 bg-rose-100 text-rose-950 shadow-md border-rose-500'
       : 'border-rose-300/90 bg-gradient-to-r from-rose-50 via-white to-pink-50 hover:border-rose-400 hover:from-rose-100 hover:to-pink-100 hover:shadow-md hover:shadow-rose-200/50 text-rose-900',

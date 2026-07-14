@@ -139,7 +139,7 @@ export function StorefrontProductDetailModal({
             <Link
               to={ROUTES.SHOP(slug)}
               onClick={onClose}
-              className="inline-flex items-center rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-800"
+              className="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-800"
             >
               Explore Offers
             </Link>

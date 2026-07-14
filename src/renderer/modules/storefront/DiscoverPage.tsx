@@ -50,7 +50,7 @@ export default function DiscoverPage() {
           icon={<Store className="h-4 w-4" />}
           label="Businesses"
           onClick={() => setFocus('shops')}
-          tone="indigo"
+          tone="teal"
         />
         <ModeTab
           active={focus === 'products'}
@@ -82,7 +82,7 @@ function ModeTab({
   icon: ReactNode;
   label: string;
   onClick: () => void;
-  tone: 'indigo' | 'amber';
+  tone: 'teal' | 'amber';
 }) {
   return (
     <button
@@ -91,9 +91,9 @@ function ModeTab({
       className={cn(
         'inline-flex flex-1 items-center justify-center gap-2 sm:rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition-all',
         'hover:-translate-y-0.5 active:translate-y-0',
-        tone === 'indigo' && (active
-          ? 'border-indigo-500 bg-indigo-100 text-indigo-950 shadow-md ring-2 ring-indigo-300/50'
-          : 'border-transparent bg-white/70 text-indigo-900 hover:border-indigo-300'),
+        tone === 'teal' && (active
+          ? 'border-teal-500 bg-teal-100 text-teal-950 shadow-md ring-2 ring-teal-300/50'
+          : 'border-transparent bg-white/70 text-teal-900 hover:border-teal-300'),
         tone === 'amber' && (active
           ? 'border-amber-500 bg-amber-100 text-amber-950 shadow-md ring-2 ring-amber-300/50'
           : 'border-transparent bg-white/70 text-amber-950 hover:border-amber-300'),

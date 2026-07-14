@@ -44,7 +44,7 @@ export function StorefrontAuthPanel({
   const isError = mode === 'create' ? register.isError : login.isError;
 
   const inputCls = cn(
-    'w-full rounded-xl border border-slate-300 py-3 pl-11 pr-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/25',
+    'w-full rounded-xl border border-slate-300 py-3 pl-11 pr-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/25',
     inputClassName,
   );
 
@@ -80,15 +80,15 @@ export function StorefrontAuthPanel({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="flex rounded-xl border border-indigo-200 bg-indigo-50/50 p-1">
+      <div className="flex rounded-xl border border-teal-200 bg-teal-50/50 p-1">
         <button
           type="button"
           onClick={() => setMode('create')}
           className={cn(
             'flex-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition',
             mode === 'create'
-              ? 'bg-white text-indigo-950 shadow-sm'
-              : 'text-indigo-800/80 hover:text-indigo-950',
+              ? 'bg-white text-teal-950 shadow-sm'
+              : 'text-teal-800/80 hover:text-teal-950',
           )}
         >
           Create account
@@ -99,8 +99,8 @@ export function StorefrontAuthPanel({
           className={cn(
             'flex-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition',
             mode === 'signin'
-              ? 'bg-white text-indigo-950 shadow-sm'
-              : 'text-indigo-800/80 hover:text-indigo-950',
+              ? 'bg-white text-teal-950 shadow-sm'
+              : 'text-teal-800/80 hover:text-teal-950',
           )}
         >
           Sign in

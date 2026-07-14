@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Package } from 'lucide-react';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useHrCompanyAssets } from '../api/useHrCompanyAssetsQueries';
 import { HrEmptyState, HrSectionCard } from './HrSurface';
@@ -30,7 +30,7 @@ export function HrEmployeeAssetsPanel({ employeeId }: { employeeId: number }) {
     >
       {isLoading ? (
         <div className="flex justify-center py-6">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : assets.length === 0 ? (
         <HrEmptyState

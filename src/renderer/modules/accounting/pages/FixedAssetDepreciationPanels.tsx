@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarRange, CheckCircle2, CircleAlert, Play, SkipForward } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
 import {
   PipelineFormSection,
@@ -92,7 +92,7 @@ export function RunDepreciationModal({
       size="lg"
     >
       {isLoading ? (
-        <div className="flex justify-center py-10"><LoadingSpinner /></div>
+        <div className="flex justify-center py-10"><CustosellLoader /></div>
       ) : (
         <form onSubmit={(e) => void handleRun(e)} className="space-y-4">
           <PipelineModalHero
@@ -223,7 +223,7 @@ export function FixedAssetSchedulePanel({
           tone="slate"
         />
         {isLoading ? (
-          <div className="flex justify-center py-8"><LoadingSpinner /></div>
+          <div className="flex justify-center py-8"><CustosellLoader /></div>
         ) : !asset || schedule.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
             No depreciation entries yet. Use Run depreciation for an open period.

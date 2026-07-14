@@ -24,7 +24,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { canViewFullHr } from '../../../shared/utils/moduleAccess';
@@ -398,7 +398,7 @@ export default function HrAttendancePage() {
 
         {loadingHistory ? (
           <div className={cn(TALENT_SURFACE.panel, 'flex justify-center py-16')}>
-            <LoadingSpinner />
+            <CustosellLoader />
           </div>
         ) : (
           <>
@@ -585,7 +585,7 @@ export default function HrAttendancePage() {
                 </div>
                 {loadingMonthEvents ? (
                   <div className="flex justify-center py-8">
-                    <LoadingSpinner />
+                    <CustosellLoader />
                   </div>
                 ) : monthEvents.length === 0 ? (
                   <p className={cn('text-sm', TALENT_SURFACE.textMuted)}>

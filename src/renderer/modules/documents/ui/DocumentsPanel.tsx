@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useToast } from '../../../app/contexts/useToast';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
@@ -941,7 +941,7 @@ export default function DocumentsPanel({
       )}
 
       {loading ? (
-        <div className="flex justify-center py-10"><LoadingSpinner /></div>
+        <div className="flex justify-center py-10"><CustosellLoader /></div>
       ) : (
         <div className={contentLayoutClass}>
           {!showSidebar && subfolders.map((folder) => (

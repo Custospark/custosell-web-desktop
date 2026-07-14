@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Select } from '../../../shared/components/inputs/Select';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBalanceSheet, useAccountingPeriods } from '../api/AccountingQueries';
 import { Printer, BarChart3 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
@@ -48,7 +48,7 @@ export default function BalanceSheetPage() {
       </div>
 
       {isLoading ? (
-        <LoadingSpinner />
+        <CustosellLoader />
       ) : isError ? (
         <Card><p className="text-sm text-red-500">Failed to load balance sheet.</p></Card>
       ) : sheet ? (

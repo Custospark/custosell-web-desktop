@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightLeft, Package, Pencil, Plus, Search, Undo2, UserPlus } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
@@ -80,7 +80,7 @@ export default function HrCompanyAssetsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16"><LoadingSpinner /></div>
+        <div className="flex justify-center py-16"><CustosellLoader /></div>
       ) : assets.length === 0 ? (
         <HrEmptyState
           icon={<Package className="h-6 w-6" />}

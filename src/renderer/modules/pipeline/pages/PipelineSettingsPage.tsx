@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import {
   useCreatePipelineSource,
   useDeletePipelineSource,
@@ -41,7 +41,7 @@ export default function PipelineSettingsPage() {
   if (boardsLoading || sourcesLoading) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

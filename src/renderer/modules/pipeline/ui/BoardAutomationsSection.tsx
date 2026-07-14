@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
 import type { PipelineStage } from '../api/pipelineTypes';
 import { useBoardAutomations, useSyncBoardAutomations } from '../api/usePipelineAutomationQueries';
@@ -79,7 +79,7 @@ export default function BoardAutomationsSection({
   if (isLoading && !drafts.length) {
     return (
       <div className="flex justify-center py-6">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

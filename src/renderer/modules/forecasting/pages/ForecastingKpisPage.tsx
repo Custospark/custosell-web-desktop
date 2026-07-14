@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Target } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { useForecastKpis } from '../api/useForecastingQueries';
 import type { ForecastKpiMode } from '../api/forecastingTypes';
@@ -43,7 +43,7 @@ export default function ForecastingKpisPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : isError || !data ? (
         <ForecastingEmptyState

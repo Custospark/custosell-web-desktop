@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
@@ -836,7 +836,7 @@ export default function BoardResourcesModal({
 
         {showLoading ? (
           <div className="flex justify-center py-12">
-            <LoadingSpinner />
+            <CustosellLoader />
           </div>
         ) : resources.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">

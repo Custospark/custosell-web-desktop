@@ -11,7 +11,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Clock, ShoppingBag, Play, Ban, FileText, ArrowUpDown, Pencil, Check, X, LayoutGrid, Save } from 'lucide-react';
@@ -154,7 +154,7 @@ export default function HeldOrdersModal({ open, onClose }: Props) {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-1 justify-center items-center py-16"><LoadingSpinner /></div>
+          <div className="flex flex-1 justify-center items-center py-16"><CustosellLoader /></div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-16 text-gray-400">
             <Clock className="w-12 h-12 mb-3" />

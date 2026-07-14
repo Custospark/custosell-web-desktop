@@ -4,7 +4,7 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount, useUpdateChartOfAccount, useDeleteChartOfAccount } from '../api/AccountingQueries';
 import type { ChartOfAccount } from '../api/AccountingTypes';
 import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight, Edit3, Trash2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
@@ -211,7 +211,7 @@ export default function ChartOfAccountsPage() {
 
       {treeView ? (
         <Card>
-          {treeLoading ? <LoadingSpinner /> : (
+          {treeLoading ? <CustosellLoader /> : (
             <div className="divide-y divide-gray-100">
               {treeData?.map((node) => renderTree(node))}
             </div>

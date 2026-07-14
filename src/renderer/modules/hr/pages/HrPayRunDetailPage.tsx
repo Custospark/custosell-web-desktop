@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
@@ -85,7 +85,7 @@ export default function HrPayRunDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

@@ -5,7 +5,7 @@ import {
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Card } from '../../../shared/components/cards/Card';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { usePipelineCalendar } from '../api/usePipelineQueries';
 import type { PipelineCalendarDateField, PipelineCalendarLead } from '../api/pipelineTypes';
 import { PipelineStatusBadge } from './pipelineStatusBadge';
@@ -239,7 +239,7 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
 
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center py-12">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:items-start">

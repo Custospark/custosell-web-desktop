@@ -1,5 +1,5 @@
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { usePipelineLead } from '../api/usePipelineQueries';
 import LeadHistoryPanel from './LeadHistoryPanel';
 
@@ -21,7 +21,7 @@ export default function LeadHistoryModal({ leadId, onClose }: LeadHistoryModalPr
     >
       {isLoading || !lead ? (
         <div className="flex justify-center py-12">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : (
         <LeadHistoryPanel

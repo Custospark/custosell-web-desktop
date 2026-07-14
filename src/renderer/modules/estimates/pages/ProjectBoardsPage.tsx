@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { usePipelineBoards } from '../../pipeline/api/usePipelineQueries';
 import { filterBoardsForWorkspace } from '../../pipeline/api/pipelineBoardWorkspace';
@@ -40,7 +40,7 @@ export default function ProjectBoardsPage() {
   if (isLoading || !isFetched) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { BarChart3, Calendar, FileSpreadsheet, Filter } from 'lucide-react';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useHrNssfReport, useHrPayeReport, useHrPayRuns } from '../api/useHrQueries';
 import type { HrNssfReportRow, HrPayeReportRow } from '../api/hrTypes';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
@@ -84,7 +84,7 @@ export default function HrReportsPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <HrSectionCard title="PAYE schedule" description="Income tax withheld per employee for URA.">
             {loadingPaye || fetchingPaye ? (
-              <div className="flex justify-center py-10"><LoadingSpinner /></div>
+              <div className="flex justify-center py-10"><CustosellLoader /></div>
             ) : payeRows.length === 0 ? (
               <p className="text-sm text-gray-500">No PAYE rows for this filter — try a calculated or posted pay run.</p>
             ) : (
@@ -118,7 +118,7 @@ export default function HrReportsPage() {
 
           <HrSectionCard title="NSSF schedule" description="Employee and employer contributions per person.">
             {loadingNssf || fetchingNssf ? (
-              <div className="flex justify-center py-10"><LoadingSpinner /></div>
+              <div className="flex justify-center py-10"><CustosellLoader /></div>
             ) : nssfRows.length === 0 ? (
               <p className="text-sm text-gray-500">No NSSF rows for this filter — try a calculated or posted pay run.</p>
             ) : (

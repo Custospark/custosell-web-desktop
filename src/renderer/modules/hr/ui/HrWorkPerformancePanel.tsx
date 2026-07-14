@@ -9,7 +9,7 @@ import {
   User,
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -94,7 +94,7 @@ export function HrWorkPerformancePanel({
   if (loadingRoster) {
     return (
       <div className={cn(TALENT_SURFACE.panel, 'flex justify-center py-12')}>
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }
@@ -190,7 +190,7 @@ export function HrWorkPerformancePanel({
       {activeId ? (
         loadingDetail ? (
           <div className={cn(TALENT_SURFACE.panel, 'flex justify-center py-10')}>
-            <LoadingSpinner />
+            <CustosellLoader />
           </div>
         ) : detailError || !snapshot ? (
           <div className={cn(TALENT_SURFACE.panel, 'border-red-200/80 bg-red-50/90')}>
@@ -454,7 +454,7 @@ export function HrEmployeePerformanceCard({
   if (isLoading) {
     return (
       <div className={cn(TALENT_SURFACE.panel, 'flex justify-center py-8')}>
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

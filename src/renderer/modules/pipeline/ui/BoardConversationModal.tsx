@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { cn } from '../../../shared/utils/cn';
@@ -529,7 +529,7 @@ export default function BoardConversationModal({
             <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
               {showLoading ? (
                 <div className="flex justify-center py-12">
-                  <LoadingSpinner />
+                  <CustosellLoader />
                 </div>
               ) : threads.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">
@@ -767,7 +767,7 @@ export default function BoardConversationModal({
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
             {activityLoading ? (
               <div className="flex justify-center py-12">
-                <LoadingSpinner />
+                <CustosellLoader />
               </div>
             ) : activity.length === 0 ? (
               <p className="py-8 text-center text-sm text-gray-500">No board activity yet.</p>
@@ -815,7 +815,7 @@ export default function BoardConversationModal({
             </p>
             {automationsLoading ? (
               <div className="flex justify-center py-12">
-                <LoadingSpinner />
+                <CustosellLoader />
               </div>
             ) : automations.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center">

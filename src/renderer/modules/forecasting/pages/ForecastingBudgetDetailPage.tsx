@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, FileText, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { cn } from '../../../shared/utils/cn';
 import {
@@ -106,7 +106,7 @@ export default function ForecastingBudgetDetailPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : isError || !budget ? (
         <ForecastingEmptyState

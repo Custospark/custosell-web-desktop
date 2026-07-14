@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Layers, Play, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
 import {
   useCreateForecastScenario,
@@ -155,7 +155,7 @@ export default function ForecastingScenariosPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : scenarios.length === 0 ? (
         <ForecastingEmptyState

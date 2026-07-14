@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AlignLeft, Briefcase, Building2, FileText, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import {
   useCreateHrDepartment,
@@ -100,7 +100,7 @@ export default function HrDepartmentsPage() {
           }
         >
           {loadingDepts ? (
-            <div className="flex justify-center py-10"><LoadingSpinner /></div>
+            <div className="flex justify-center py-10"><CustosellLoader /></div>
           ) : departments.length === 0 ? (
             <HrEmptyState
               className="border-0 bg-transparent shadow-none backdrop-blur-none"
@@ -145,7 +145,7 @@ export default function HrDepartmentsPage() {
           }
         >
           {loadingPositions ? (
-            <div className="flex justify-center py-10"><LoadingSpinner /></div>
+            <div className="flex justify-center py-10"><CustosellLoader /></div>
           ) : positions.length === 0 ? (
             <HrEmptyState
               className="border-0 bg-transparent shadow-none backdrop-blur-none"

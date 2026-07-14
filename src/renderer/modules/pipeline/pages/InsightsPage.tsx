@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { usePipelineBoards, usePipelineInsights } from '../api/usePipelineQueries';
 import { useBusiness } from '../../settings/api/settings/BusinessQueries';
@@ -31,7 +31,7 @@ export default function InsightsPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

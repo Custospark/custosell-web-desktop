@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { cn } from '../../../shared/utils/cn';
 import {
@@ -63,7 +63,7 @@ type PollEditDraft = {
 function CollaborationLoading() {
   return (
     <div className="flex justify-center py-12">
-      <LoadingSpinner />
+      <CustosellLoader />
     </div>
   );
 }

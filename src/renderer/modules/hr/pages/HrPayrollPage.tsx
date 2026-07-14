@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
@@ -182,7 +182,7 @@ export default function HrPayrollPage() {
           }
         >
           {loadingStructures ? (
-            <div className="flex justify-center py-8"><LoadingSpinner /></div>
+            <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : structures.length === 0 ? (
             <p className="text-sm text-gray-500">
               No structures yet — create one like &ldquo;Standard UGX&rdquo; to organize compensation.
@@ -230,7 +230,7 @@ export default function HrPayrollPage() {
           }
         >
           {loadingComp ? (
-            <div className="flex justify-center py-8"><LoadingSpinner /></div>
+            <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : compensations.length === 0 ? (
             <p className="text-sm text-gray-500">
               Assign basic salary to active employees — then you can run payroll for a period.
@@ -277,7 +277,7 @@ export default function HrPayrollPage() {
 
       <HrSectionCard title="Pay runs" description="Calculate → approve → post — each step locks in the numbers.">
         {loadingRuns ? (
-          <div className="flex justify-center py-8"><LoadingSpinner /></div>
+          <div className="flex justify-center py-8"><CustosellLoader /></div>
         ) : payRuns.length === 0 ? (
           <HrEmptyState
             icon={<Wallet className="h-6 w-6" />}

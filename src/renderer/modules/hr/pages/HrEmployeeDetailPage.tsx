@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useHrEmployee } from '../api/useHrQueries';
 import { HrEmployeeDetailEditor } from './HrEmployeeDetailEditor';
@@ -13,7 +13,7 @@ export default function HrEmployeeDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

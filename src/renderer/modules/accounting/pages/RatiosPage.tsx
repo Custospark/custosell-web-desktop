@@ -6,7 +6,7 @@ import { Card } from '../../../shared/components/cards/Card';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
 import {
   CHART_THEME, ChartTooltipRow, ChartTooltipShell, chartAverage,
@@ -373,7 +373,7 @@ export default function RatiosPage() {
       </div>
 
       {isLoading ? (
-        <LoadingSpinner />
+        <CustosellLoader />
       ) : isError ? (
         <Card><p className="text-sm text-red-500 text-center py-8">Failed to load ratios. Check your connection and try again.</p></Card>
       ) : ratios ? (

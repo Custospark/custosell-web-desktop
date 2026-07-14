@@ -10,7 +10,7 @@ import {
 import { consumeLogoutIntent } from '../store/auth/runAppLogout';
 import { queryClient } from '../api/axiosConfig';
 import { accountKeys } from '../../shared/api/account/AccountQueries';
-import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { isOfflineMode } from '../store/offline/core/offlineQueryUtils';
 import { upgradeLocalSessionIfOnline } from '../store/offline/auth/sessionUpgrade';
 
@@ -64,7 +64,7 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

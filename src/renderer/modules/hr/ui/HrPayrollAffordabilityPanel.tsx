@@ -8,7 +8,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { cn } from '../../../shared/utils/cn';
 import type {
@@ -237,7 +237,7 @@ export function HrPayrollAffordabilityPanel() {
 
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : errorMessage ? (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import DocumentsPanel from '../ui/DocumentsPanel';
 import AllCabinetsPickerModal from '../ui/AllCabinetsPickerModal';
@@ -39,7 +39,7 @@ export default function DocumentsCabinetPage() {
   if (isLoading) {
     return (
       <div className="flex h-full min-h-[12rem] items-center justify-center p-4 sm:p-6">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

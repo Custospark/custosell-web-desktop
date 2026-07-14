@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { usePipelineLeads } from '../api/usePipelineQueries';
 import LeadDetailModal from '../ui/LeadDetailModal';
@@ -20,7 +20,7 @@ export default function MyWorkPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

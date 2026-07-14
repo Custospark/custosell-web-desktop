@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks/useApp';
-import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 
 /**
@@ -16,7 +16,7 @@ export function PublicRoute() {
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

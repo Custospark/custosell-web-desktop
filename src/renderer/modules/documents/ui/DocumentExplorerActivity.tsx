@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useDocumentActivity } from '../api/useDocumentQueries';
 import type { DocumentActivityItem } from '../api/documentTypes';
@@ -66,7 +66,7 @@ export function DocumentExplorerActivity({ cabinetId, enabled = true, className 
         <div className="max-h-28 overflow-y-auto border-t border-white/40 sm:max-h-36">
           {isLoading && (
             <div className="flex justify-center py-4">
-              <LoadingSpinner />
+              <CustosellLoader />
             </div>
           )}
           {!isLoading && isError && (

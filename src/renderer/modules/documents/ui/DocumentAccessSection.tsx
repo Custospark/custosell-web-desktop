@@ -8,7 +8,7 @@ import {
   type AccessVisibilityValue,
 } from '../api/documentAccessLabels';
 import { useDocumentStaffPicker } from '../api/useDocumentStaffPicker';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Button } from '../../../shared/components/buttons/Button';
 
 interface DocumentAccessSectionProps {
@@ -91,7 +91,7 @@ export function DocumentAccessSection({
           <p className="mb-2 text-xs font-medium text-gray-700">Team members</p>
           {isLoading ? (
             <div className="flex justify-center py-6">
-              <LoadingSpinner />
+              <CustosellLoader />
             </div>
           ) : isError ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-4 text-center">

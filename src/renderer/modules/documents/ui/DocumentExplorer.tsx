@@ -18,7 +18,7 @@ import { canCreateSubfolderAtDepth } from '../api/documentConstants';
 import { formatDocumentHoverPath } from '../api/documentFolderPathUtils';
 import { resolveFolderColor } from '../api/documentColorUtils';
 import { DOCUMENT_SURFACE } from '../../../shared/utils/surfaceStyles';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Button } from '../../../shared/components/buttons/Button';
 import {
   ChevronDown,
@@ -422,7 +422,7 @@ function ExplorerFolderNode({
         <div>
           {isLoading && (
             <div className="py-2 pl-8">
-              <LoadingSpinner />
+              <CustosellLoader />
             </div>
           )}
           {subfolders.map((child) => (
@@ -730,7 +730,7 @@ export function DocumentExplorer({
       <div className="min-h-0 flex-1 overflow-y-auto py-1">
         {loading && (
           <div className="flex justify-center py-6">
-            <LoadingSpinner />
+            <CustosellLoader />
           </div>
         )}
 

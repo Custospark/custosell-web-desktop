@@ -1,5 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useProjectBoard } from '../api/useProjectQueries';
 
@@ -12,7 +12,7 @@ export default function ProjectBoardPage() {
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center py-16">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

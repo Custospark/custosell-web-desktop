@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Input } from '../../../shared/components/inputs/Input';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -86,7 +86,7 @@ export default function EstimateDetailPage() {
   if (isLoading || !estimate) {
     return (
       <div className="flex justify-center py-16">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

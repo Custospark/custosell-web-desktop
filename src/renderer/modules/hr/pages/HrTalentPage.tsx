@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import {
   useCreateHrOnboardingTask,
   useCreateHrOnboardingTemplate,
@@ -411,7 +411,7 @@ export default function HrTalentPage() {
               </div>
 
               {loadingTasks ? (
-                <div className="flex justify-center py-10"><LoadingSpinner /></div>
+                <div className="flex justify-center py-10"><CustosellLoader /></div>
               ) : visibleTasks.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-10 text-center">
                   <div className="rounded-xl border border-white/60 bg-white/70 p-3 text-slate-600 shadow-sm">
@@ -495,7 +495,7 @@ export default function HrTalentPage() {
             </div>
 
             {loadingReviews ? (
-              <div className="flex justify-center py-10"><LoadingSpinner /></div>
+              <div className="flex justify-center py-10"><CustosellLoader /></div>
             ) : reviews.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <div className="rounded-xl border border-white/60 bg-white/70 p-3 text-slate-600 shadow-sm">

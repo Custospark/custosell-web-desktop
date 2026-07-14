@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Layers, Plus } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
 import { useCreateForecastBudget, useForecastBudgets } from '../api/useForecastingQueries';
 import type { ForecastBudgetStatus } from '../api/forecastingTypes';
@@ -92,7 +92,7 @@ export default function ForecastingBudgetsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : budgets.length === 0 ? (
         <ForecastingEmptyState

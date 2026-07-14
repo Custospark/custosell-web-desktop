@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass, Shield, Users, Wallet } from 'lucide-react';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useHrAuditLogs } from '../api/useHrQueries';
 import { HrPageHeader, HrSectionCard } from '../ui/HrSurface';
@@ -67,7 +67,7 @@ export default function HrSettingsPage() {
         description="Sensitive HR actions recorded by the API — helpful when you need to trace who changed what."
       >
         {isLoading ? (
-          <div className="flex justify-center py-10"><LoadingSpinner /></div>
+          <div className="flex justify-center py-10"><CustosellLoader /></div>
         ) : logs.length === 0 ? (
           <p className="text-sm text-gray-500">
             No audit entries yet. Creating employees and posting pay runs will show up here as your team uses HR.

@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { useAppSelector } from '../../store/hooks/useApp';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 
 export function PlatformAdminRoute() {
   const user = useAppSelector((state) => state.auth.user);
@@ -10,7 +10,7 @@ export function PlatformAdminRoute() {
   if (!isInitialized) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }

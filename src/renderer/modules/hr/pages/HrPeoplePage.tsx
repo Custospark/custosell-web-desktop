@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { KeyRound, Pencil, Plus, Search, UserMinus, Users } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Card } from '../../../shared/components/cards/Card';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Table } from '../../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
@@ -169,7 +169,7 @@ export default function HrPeoplePage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <LoadingSpinner />
+          <CustosellLoader />
         </div>
       ) : employees.length === 0 ? (
         <HrEmptyState

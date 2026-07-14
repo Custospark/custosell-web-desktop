@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { ArrowLeft, Package, Pencil, Wrench } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
 import {
@@ -29,7 +29,7 @@ export default function HrCompanyAssetDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
-        <LoadingSpinner />
+        <CustosellLoader />
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function HrCompanyAssetDetailPage() {
 
       <HrSectionCard title="Assignment history" description="Assign, transfer, and return events for this asset.">
         {loadingHistory ? (
-          <div className="flex justify-center py-6"><LoadingSpinner /></div>
+          <div className="flex justify-center py-6"><CustosellLoader /></div>
         ) : assignments.length === 0 ? (
           <p className="text-sm text-gray-500">No custody events yet.</p>
         ) : (
@@ -128,7 +128,7 @@ export default function HrCompanyAssetDetailPage() {
         actions={<Wrench className="h-4 w-4 text-gray-400" />}
       >
         {loadingExpenses ? (
-          <div className="flex justify-center py-6"><LoadingSpinner /></div>
+          <div className="flex justify-center py-6"><CustosellLoader /></div>
         ) : expenses.length === 0 ? (
           <p className="text-sm text-gray-500">No linked maintenance expenses.</p>
         ) : (

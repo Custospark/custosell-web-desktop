@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
-import { LoadingSpinner } from '../../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import {
   useApproveHrLeaveRequest,
@@ -201,7 +201,7 @@ export default function HrLeavePage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <HrSectionCard title="Leave types" description="Annual, sick, unpaid — whatever your policy allows.">
           {loadingTypes ? (
-            <div className="flex justify-center py-8"><LoadingSpinner /></div>
+            <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : leaveTypes.length === 0 ? (
             <HrEmptyState
               className="border-0 bg-transparent shadow-none"
@@ -262,7 +262,7 @@ export default function HrLeavePage() {
           description={isFullHr ? 'Used, pending, and entitled days per person.' : 'Your leave balances for this year.'}
         >
           {loadingBalances ? (
-            <div className="flex justify-center py-8"><LoadingSpinner /></div>
+            <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : visibleBalances.length === 0 ? (
             <p className="text-sm text-gray-500">
               Balances appear once leave types exist and people start requesting time off.
@@ -301,7 +301,7 @@ export default function HrLeavePage() {
         description={isFullHr ? 'Pending requests need your approval — approved days sync to attendance.' : 'Your leave requests and their status.'}
       >
         {loadingRequests ? (
-          <div className="flex justify-center py-8"><LoadingSpinner /></div>
+          <div className="flex justify-center py-8"><CustosellLoader /></div>
         ) : visibleRequests.length === 0 ? (
           <HrEmptyState
             className="border-0 bg-transparent shadow-none"

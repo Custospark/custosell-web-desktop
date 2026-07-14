@@ -264,7 +264,7 @@ export function BusinessStorefrontCard() {
               }}
             >
               <Copy className="h-3.5 w-3.5" aria-hidden />
-              Copy link
+              Copy business Link
             </Button>
             <a
               href={whatsappShareUrl(`Order from ${business.name}: ${liveUrl}`)}

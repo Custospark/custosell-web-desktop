@@ -93,7 +93,7 @@ export default function ShopPage() {
             }}
           >
             <span className="sm:hidden">Copy</span>
-            <span className="hidden sm:inline">Copy link</span>
+            <span className="hidden sm:inline">Copy business Link</span>
           </button>
           <a
             href={whatsappShareUrl(`Order from ${shop.name}: ${shareUrl}`)}

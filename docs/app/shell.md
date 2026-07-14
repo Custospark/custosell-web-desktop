@@ -20,15 +20,20 @@ Dismiss state for offline banner: `offline/core/offlinePreferences.ts` + `networ
 
 | Element | Behavior |
 |---------|----------|
-| **Network status** | `online` = emerald, `slow` = orange, `offline` = red (`NETWORK_STATUS_THEME`) |
+| **Hamburger** | **Desktop (`lg+`) only** — collapses/expands the sidebar. On mobile, open the drawer via the bottom **Menu** tab instead. |
+| **Network status** | `online` = emerald, `slow` = orange, `offline` = red (`NETWORK_STATUS_THEME`); larger tap targets on small screens |
 | **Sync chip** | `SyncHeaderChip` — compact % when sync active |
-| **Shift badge** | Shows `shift_clock_in` from auth slice (md+ breakpoint) |
+| **Shift badge** | Shows `shift_clock_in` from auth slice (lg+ in the header; also in the profile menu on small screens) |
 | **Apps launcher** | 9-dot control left of Guide — opens `ModuleLauncherModal` (boards-style) with only modules the signed-in user can access |
 | **Guide nav** | Tutorials, FAQs, notifications (offline dot on notifications when offline) |
 
 Network button calls `checkNetworkConnectivity()` on click (retry probe).
 
 Module launcher catalog: `moduleLauncherCatalog.ts`. Visibility = staff/owner drawer modules + Account/Guide defaults + Platform/Guide Settings for platform admins (see ADR `2026-07-11-navbar-module-launcher`).
+
+## Mobile bottom tabs (auth, below `lg`)
+
+`AppMobileTabBar.tsx` — in-flow thumb bar under Main (not fixed overlay): **Menu** | **first two accessible leaf routes** | **More**. Leaves resolve via `resolveAccessibleNavLeaves`. **More** opens a sheet with Browse the app (friendly copy, no “modules” wording) + quick links. Footer is `lg+` only. See ADR `2026-07-14-auth-mobile-bottom-tabs`.
 
 ## Sidebar
 

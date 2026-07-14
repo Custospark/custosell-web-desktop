@@ -138,7 +138,12 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
   function ensureSidebarForTarget(target: string): boolean {
     const needsSidebar = target.startsWith('sidebar-');
     const isLg = window.innerWidth >= LG_BREAKPOINT;
-    const { sidebarCollapsed, sidebarOpen } = sidebarStateRef.current;
+    const { sidebarCollapsed, sidebarOpen, mobileMoreOpen } = sidebarStateRef.current;
+
+    // More sheet covers tour targets — always dismiss before measuring
+    if (mobileMoreOpen) {
+      appDispatch({ type: 'SET_MOBILE_MORE_OPEN', payload: false });
+    }
 
     if (needsSidebar) {
       if (isLg) {

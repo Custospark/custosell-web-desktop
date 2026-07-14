@@ -15,7 +15,7 @@ export function ModuleLauncherButton() {
         type="button"
         onClick={() => setOpen(true)}
         data-tour="navbar-apps"
-        className={cn(iconBtn, 'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:gap-1.5 xl:px-2.5')}
+        className={cn(iconBtn, 'h-11 w-11 sm:h-8 sm:w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:gap-1.5 xl:px-2.5')}
         title="Switch modules"
         aria-label="Switch modules"
         aria-haspopup="dialog"

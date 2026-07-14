@@ -3,47 +3,31 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { version } from '../../../../../package.json';
 import {
-  ChevronDown, ChevronRight, Kanban, Clock, CalendarDays, ClipboardCheck, Mail, Phone, Headset, X,
+  ChevronDown, ChevronRight, Mail, Phone, Headset, X,
 } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import LogoImage from '../../assets/LogoImage';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
-import { canAccessModule, hasEstimatesBoardsAccess, isBusinessOwner, isLimitedEstimatesUser, isLimitedHrUser, NAV_GROUP_MODULE } from '../../utils/moduleAccess';
+import { NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { cn } from '../../utils/cn';
 import { OfflineDisabledNav } from './OfflineDisabledNav';
 import { isOnlineOnlyNavTarget, onlineOnlyHoverMessage } from './onlineOnlyNav';
 import {
-  baseNavGroups,
   baseSubRoutes,
-  guideSettingsNavGroup,
-  platformNavGroup,
   platformSubRoutes,
   type SidebarNavGroup,
 } from './sidebarNavGroups';
+import {
+  isSidebarSubItemActive,
+  resolveAccessibleNavGroups,
+} from './resolveAccessibleNavLeaves';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
-  if (pathname === itemTo) return true;
-  if (itemTo === ROUTES.PIPELINE.BOARDS) {
-    return /^\/pipeline\/boards\/\d+/.test(pathname);
-  }
-  if (itemTo === ROUTES.ESTIMATES.BOARDS) {
-    return /^\/estimates\/boards\/\d+/.test(pathname) || pathname === ROUTES.ESTIMATES.BOARDS;
-  }
-  if (itemTo === ROUTES.ESTIMATES.PROJECTS) {
-    return /^\/estimates\/projects\/\d+/.test(pathname);
-  }
-  if (itemTo === ROUTES.ESTIMATES.INDEX) {
-    return /^\/estimates\/\d+/.test(pathname);
-  }
-  return pathname.startsWith(`${itemTo}/`);
 }
 
 function getGroupIndexForPath(pathname: string, navGroups: SidebarNavGroup[], allSubRoutes: string[]): number | null {
@@ -62,48 +46,7 @@ function getGroupIndexForPath(pathname: string, navGroups: SidebarNavGroup[], al
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
-  const navGroups = useMemo(() => {
-    const businessGroups = baseNavGroups.filter((group) => {
-      const moduleSlug = NAV_GROUP_MODULE[group.label];
-      if (!moduleSlug) return true;
-      if (group.label === 'Projects & Estimates') {
-        return hasEstimatesBoardsAccess(user);
-      }
-      return canAccessModule(user, moduleSlug);
-    }).map((group) => {
-      if (group.label === 'Projects & Estimates' && isLimitedEstimatesUser(user)) {
-        return {
-          ...group,
-          subItems: [
-            { to: ROUTES.ESTIMATES.BOARDS, label: 'Project boards', icon: Kanban },
-          ],
-        };
-      }
-      if (group.label === 'HR & Payroll' && isLimitedHrUser(user)) {
-        return {
-          ...group,
-          subItems: [
-            { to: ROUTES.HR.ATTENDANCE, label: 'Attendance', icon: Clock },
-            { to: ROUTES.HR.LEAVE, label: 'Leave', icon: CalendarDays },
-            { to: ROUTES.HR.TALENT, label: 'Talent', icon: ClipboardCheck },
-          ],
-        };
-      }
-      if (group.label === 'Settings') {
-        return {
-          ...group,
-          subItems: group.subItems.filter((item) => !item.ownerOnly || isBusinessOwner(user)),
-        };
-      }
-      return group;
-    });
-
-    if (user?.is_platform_admin) {
-      return [...businessGroups, platformNavGroup, guideSettingsNavGroup];
-    }
-
-    return businessGroups;
-  }, [user]);
+  const navGroups = useMemo(() => resolveAccessibleNavGroups(user), [user]);
   const allSubRoutes = useMemo(
     () => (user?.is_platform_admin ? [...baseSubRoutes, ...platformSubRoutes] : baseSubRoutes),
     [user?.is_platform_admin],

@@ -16,6 +16,8 @@ import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 interface ModuleLauncherModalProps {
   open: boolean;
   onClose: () => void;
+  /** Softer user-facing copy (e.g. from mobile More) — avoids "module" wording. */
+  friendlyCopy?: boolean;
 }
 
 function SectionHeading({
@@ -131,7 +133,7 @@ function ModuleGrid({
   );
 }
 
-export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherModalProps) {
+export default function ModuleLauncherModal({ open, onClose, friendlyCopy = false }: ModuleLauncherModalProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
@@ -182,16 +184,29 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
     }
   };
 
+  const title = friendlyCopy ? 'Go anywhere' : 'Switch modules';
+  const subtitle = friendlyCopy
+    ? (isCompletelyOffline
+      ? 'Some places need a connection — tap a greyed tile for details'
+      : 'Open any part of the app you can use')
+    : (isCompletelyOffline
+      ? 'Some modules need a connection — hover a greyed tile for details'
+      : 'Pick a module you can access');
+  const searchPlaceholder = friendlyCopy ? 'Search the app…' : 'Search modules…';
+  const countLabel = friendlyCopy
+    ? `${totalCount} place${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`
+    : `${totalCount} module${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`;
+  const emptyLabel = friendlyCopy
+    ? (query.trim() ? 'Nothing matches your search.' : 'Nothing else is available on your account.')
+    : (query.trim() ? 'No modules match your search.' : 'No modules available for your account.');
+  const workspaceLabel = friendlyCopy ? 'Your workspace' : 'Your modules';
+
   return (
     <Modal
       isOpen={open}
       onClose={handleClose}
-      title="Switch modules"
-      subtitle={
-        isCompletelyOffline
-          ? 'Some modules need a connection — hover a greyed tile for details'
-          : 'Pick a module you can access'
-      }
+      title={title}
+      subtitle={subtitle}
       titleCentered
       size="xl"
       bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4"
@@ -204,28 +219,25 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search modules…"
+              placeholder={searchPlaceholder}
               className="w-full rounded-xl border border-indigo-200/80 bg-indigo-50/30 py-2 pl-10 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
             />
           </div>
           <p className="shrink-0 text-sm text-gray-600 sm:text-right">
-            {totalCount} module{totalCount === 1 ? '' : 's'}
-            {query.trim() ? ' found' : ''}
+            {countLabel}
           </p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 scrollbar-thin">
           {empty ? (
             <p className="py-10 text-center text-sm text-gray-500">
-              {query.trim()
-                ? 'No modules match your search.'
-                : 'No modules available for your account.'}
+              {emptyLabel}
             </p>
           ) : (
             <div className="space-y-4">
               {workspaceItems.length > 0 && (
                 <section className="space-y-2">
-                  <SectionHeading icon={LayoutGrid} label="Your modules" tone="indigo" />
+                  <SectionHeading icon={LayoutGrid} label={workspaceLabel} tone="indigo" />
                   <ModuleGrid
                     items={workspaceItems}
                     activeSlug={activeSlug}

@@ -15,7 +15,7 @@ const guideLinks = [
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     'inline-flex items-center justify-center gap-1 rounded-lg font-medium transition-colors shrink-0',
-    'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
+    'h-11 w-11 sm:h-8 sm:w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
     'text-xs xl:text-sm',
     isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900',
   );
@@ -43,7 +43,7 @@ export function GuideHeaderNav() {
           }}
           className={cn(
             'inline-flex items-center justify-center gap-1 rounded-lg font-medium transition-colors shrink-0',
-            'h-8 w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
+            'h-11 w-11 sm:h-8 sm:w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
             'text-xs xl:text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900',
             'disabled:cursor-not-allowed disabled:opacity-50',
           )}

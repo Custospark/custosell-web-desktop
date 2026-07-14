@@ -86,9 +86,9 @@ function NavbarNetworkStatus({
         data-tour="navbar-network"
         title={latency != null ? `Connected · ${latency}ms latency` : 'Connected'}
         aria-label={latency != null ? `Connected, ${latency} milliseconds latency` : 'Connected'}
-        className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
+        className={cn(networkStatusBtn, theme.button, 'gap-1 px-2 sm:px-2 h-11 w-11 sm:h-9 sm:w-auto')}
       >
-        <Wifi className={cn('w-3.5 h-3.5 shrink-0', theme.icon)} aria-hidden />
+        <Wifi className={cn('w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0', theme.icon)} aria-hidden />
         <span className={cn('hidden sm:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Connected</span>
         {latency != null ? (
           <span className={cn('hidden xl:inline text-xs tabular-nums font-medium', theme.meta)}>{latency}ms</span>
@@ -106,9 +106,9 @@ function NavbarNetworkStatus({
         data-tour="navbar-network"
         title="Slow connection — tap to retry"
         aria-label="Slow internet connection"
-        className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
+        className={cn(networkStatusBtn, theme.button, 'gap-1 px-2 sm:px-2 h-11 w-11 sm:h-9 sm:w-auto')}
       >
-        <SignalMedium className={cn('w-3.5 h-3.5 shrink-0', theme.icon)} aria-hidden />
+        <SignalMedium className={cn('w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0', theme.icon)} aria-hidden />
         <span className={cn('hidden sm:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Slow</span>
         <span className={cn('hidden lg:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Internet</span>
       </button>
@@ -123,7 +123,7 @@ function NavbarNetworkStatus({
       data-tour="navbar-network"
       title="No internet connection — tap to retry"
       aria-label="No internet connection"
-      className={cn(networkStatusBtn, theme.button, 'gap-1 px-1.5 sm:px-2 h-8 sm:h-9')}
+      className={cn(networkStatusBtn, theme.button, 'gap-1 px-2 sm:px-2 h-11 w-11 sm:h-9 sm:w-auto')}
     >
       <WifiOff className={cn('w-3.5 h-3.5 shrink-0', theme.icon)} aria-hidden />
       <span className={cn('hidden sm:inline font-semibold text-xs whitespace-nowrap', theme.label)}>Offline</span>
@@ -224,15 +224,15 @@ export function Navbar() {
       className={cn(
         'sticky top-0 z-10 shrink-0 bg-white border-b border-gray-200',
         SHELL_HEADER_HEIGHT_CLASS,
-        'pl-1 sm:pl-2 lg:pl-3 pr-2 sm:pr-4 lg:pr-6',
+        'pl-3 sm:pl-4 lg:pl-3 pr-3 sm:pr-4 lg:pr-6',
       )}
     >
-      <div className="flex h-full items-center gap-2 sm:gap-3 min-w-0">
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+      <div className="flex h-full items-center gap-3 sm:gap-3 lg:gap-3 min-w-0">
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={handleToggleSidebar}
-            className={cn(iconBtn, 'w-10 h-10 sm:w-9 sm:h-9 shrink-0')}
+            className={cn(iconBtn, 'hidden lg:inline-flex w-10 h-10 sm:w-9 sm:h-9 shrink-0')}
             title={sidebarLabel}
             aria-label={sidebarLabel}
             data-tour="sidebar-hamburger"
@@ -242,17 +242,17 @@ export function Navbar() {
 
           {businessName && (
             <div
-              className="flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2 py-1.5 ring-1 ring-slate-100 sm:px-2.5"
+              className="hidden lg:flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2.5 py-2 ring-1 ring-slate-100 sm:px-2.5 sm:py-1.5"
               title={businessName}
             >
               {businessLogoUrl ? (
                 <img
                   src={businessLogoUrl}
                   alt=""
-                  className="hidden md:block h-7 w-7 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
+                  className="h-7 w-7 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
                 />
               ) : (
-                <Building2 className="hidden md:block h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+                <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
               )}
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[8rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">
@@ -270,8 +270,8 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-0.5 sm:gap-1.5 md:gap-2 shrink-0">
-          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <SyncHeaderChip />
             <NavbarNetworkStatus
               systemStatus={systemStatus}
@@ -297,7 +297,7 @@ export function Navbar() {
               aria-label={`Account menu for ${user?.name ?? 'user'}`}
               className={cn(
                 iconBtn,
-                'gap-1.5 pl-0.5 pr-1 sm:px-1.5 h-9 max-w-[3rem] sm:max-w-[11rem] md:max-w-[14rem]',
+                'gap-1.5 pl-0.5 pr-1 sm:px-1.5 h-11 w-11 sm:h-9 sm:w-auto max-w-[3rem] sm:max-w-[11rem] md:max-w-[14rem]',
               )}
             >
               {user?.avatar ? (

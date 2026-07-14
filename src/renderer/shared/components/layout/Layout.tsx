@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { Main } from './Main';
 import { Footer } from './Footer';
+import { AppMobileTabBar } from './AppMobileTabBar';
 import { OnboardingGate } from '../../../modules/onboarding/OnboardingGate';
 
 export function Layout() {
@@ -32,6 +33,8 @@ export function Layout() {
         <Navbar />
         <Main />
         <Footer />
+        {/* In-flow (not fixed) so Main content is never covered */}
+        <AppMobileTabBar />
       </div>
       <OnboardingGate />
     </div>

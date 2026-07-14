@@ -184,17 +184,17 @@ export default function ModuleLauncherModal({ open, onClose, friendlyCopy = fals
     }
   };
 
-  const title = friendlyCopy ? 'Go anywhere' : 'Switch modules';
+  const title = friendlyCopy ? 'Go anywhere in Custosell' : 'Switch modules';
   const subtitle = friendlyCopy
     ? (isCompletelyOffline
-      ? 'Some places need a connection — tap a greyed tile for details'
-      : 'Open any part of the app you can use')
+      ? 'Some areas need a connection — tap a greyed tile for details'
+      : 'Open any part of Custosell you can use')
     : (isCompletelyOffline
       ? 'Some modules need a connection — hover a greyed tile for details'
       : 'Pick a module you can access');
-  const searchPlaceholder = friendlyCopy ? 'Search the app…' : 'Search modules…';
+  const searchPlaceholder = friendlyCopy ? 'Search Custosell…' : 'Search modules…';
   const countLabel = friendlyCopy
-    ? `${totalCount} place${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`
+    ? `${totalCount} area${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`
     : `${totalCount} module${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`;
   const emptyLabel = friendlyCopy
     ? (query.trim() ? 'Nothing matches your search.' : 'Nothing else is available on your account.')

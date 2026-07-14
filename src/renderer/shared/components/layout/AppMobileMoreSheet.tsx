@@ -70,17 +70,17 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
           <span className="h-1 w-10 rounded-full bg-slate-300" />
         </div>
 
-        <div className="flex shrink-0 items-start justify-between gap-3 px-4 pb-3">
-          <div className="min-w-0">
+        <div className="flex shrink-0 items-center justify-center gap-3 px-4 pb-3">
+          <div className="text-center">
             <p className="text-base font-semibold text-slate-900">More</p>
             <p className="mt-0.5 text-sm text-slate-500">
-              Shortcuts and anywhere else you can go
+              Every part of Custosell at your fingertips
             </p>
           </div>
           <button
             type="button"
             onClick={close}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="absolute right-4 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -97,9 +97,9 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
               <Compass className="h-5 w-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold tracking-tight">Browse the app</span>
+              <span className="block text-sm font-semibold tracking-tight">Browse Custosell</span>
               <span className="mt-0.5 block text-xs text-blue-100">
-                Open any part of the app you can use
+                Open any part of Custosell you can use
               </span>
             </span>
           </button>
@@ -120,8 +120,8 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
           {grouped.length === 0 ? (
             <p className="px-1 py-8 text-center text-sm text-slate-500">
               {filter.trim()
-                ? 'No shortcuts match — try Browse the app, or open Menu.'
-                : 'No extra shortcuts here — use Browse the app, or open Menu for the full list.'}
+                ? 'No shortcuts match — try Browse Custosell, or open Menu.'
+                : 'No extra shortcuts here — use Browse Custosell, or open Menu for the full list.'}
             </p>
           ) : (
             <div className="space-y-4">

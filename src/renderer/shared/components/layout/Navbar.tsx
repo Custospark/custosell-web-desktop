@@ -270,7 +270,7 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-2 shrink-0">
+        <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-2 md:gap-2 shrink-0 w-full lg:w-auto">
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <SyncHeaderChip />
             <NavbarNetworkStatus

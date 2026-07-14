@@ -9,6 +9,7 @@ interface BoardTargetDecompositionSectionProps {
   allocationNodes: TargetAllocation[];
   canPreview: boolean;
   isPending: boolean;
+  horizonLabel?: string;
   onPreview: () => void;
   onOverride: (flatIndex: number, value: number) => void;
 }
@@ -18,6 +19,7 @@ export function BoardTargetDecompositionSection({
   allocationNodes,
   canPreview,
   isPending,
+  horizonLabel,
   onPreview,
   onOverride,
 }: BoardTargetDecompositionSectionProps) {
@@ -25,7 +27,11 @@ export function BoardTargetDecompositionSection({
     <PipelineFormSection
       title="Decomposition preview"
       icon={Layers}
-      description="Review how this target breaks into sub-periods before saving. Edit values to override."
+      description={
+        horizonLabel
+          ? `Breaks the planning horizon (${horizonLabel}) into year / month / week shares before saving.`
+          : 'Review how this target breaks into sub-periods before saving. Edit values to override.'
+      }
     >
       {!previewVisible ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center">

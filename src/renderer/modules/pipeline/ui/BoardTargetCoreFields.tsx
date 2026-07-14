@@ -44,7 +44,7 @@ export function BoardTargetCoreFields({
       <PipelineFormSection
         title="Planning horizon"
         icon={CalendarDays}
-        description="Choose how far this target spans — expectations decompose down to daily contributions."
+        description="How far this target spans. A Decade plan covers this year plus the next nine — expectations split across 2026, 2027, … and down to months/weeks."
       >
         <PipelineIconField label="Planning level" icon={Layers} required>
           <select

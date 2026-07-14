@@ -117,10 +117,56 @@ export default function BoardCardImportModal({
       {!result ? (
         <div className="space-y-5">
           <p className="text-sm text-gray-500">
-            Download the Excel template, fill in rows, then upload. Stage names must match columns on this board.
-            <br />
-            Max 20MB. Large imports (1,000+ rows) may take a few minutes — keep this window open.
+            Download the Excel template (it includes a sample row), fill in your data in the same formats, then upload.
+            Stage names must match columns on this board.
           </p>
+          <ul className="list-disc space-y-1 pl-5 text-xs text-gray-500">
+            <li>
+              <span className="font-medium text-gray-600">Due Date:</span>
+              {' '}
+              use
+              {' '}
+              <code className="rounded bg-gray-100 px-1">YYYY-MM-DD</code>
+              {' '}
+              (example
+              {' '}
+              <code className="rounded bg-gray-100 px-1">2026-07-14</code>
+              ). Excel date cells also work.
+            </li>
+            <li>
+              <span className="font-medium text-gray-600">Priority:</span>
+              {' '}
+              <code className="rounded bg-gray-100 px-1">low</code>
+              ,
+              {' '}
+              <code className="rounded bg-gray-100 px-1">medium</code>
+              ,
+              {' '}
+              <code className="rounded bg-gray-100 px-1">high</code>
+              , or
+              {' '}
+              <code className="rounded bg-gray-100 px-1">urgent</code>
+              .
+            </li>
+            <li>
+              <span className="font-medium text-gray-600">Estimated Value:</span>
+              {' '}
+              numbers only (example
+              {' '}
+              <code className="rounded bg-gray-100 px-1">150000</code>
+              ).
+            </li>
+            <li>
+              <span className="font-medium text-gray-600">Assignee Email</span>
+              {' '}
+              and
+              {' '}
+              <span className="font-medium text-gray-600">Contact Email</span>
+              {' '}
+              are optional — leave blank if unassigned. If you set Assignee Email, it must match a team member&apos;s login email.
+            </li>
+            <li>Delete the blue sample row before importing. Max 20MB; large files may take a few minutes — keep this window open.</li>
+          </ul>
 
           <button
             type="button"

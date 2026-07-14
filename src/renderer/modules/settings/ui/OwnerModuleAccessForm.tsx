@@ -149,7 +149,8 @@ export default function OwnerModuleAccessForm() {
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Module access</h1>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-              Choose which workspaces appear for your business.
+              Choose which workspaces appear in your own account. Staff keep the modules you assigned them —
+              turning something off here does not remove it from your team. Manage staff access in Staff.
               Account and Custosell Guide stay available to everyone. Settings stays on for owners and cannot be turned off.
             </p>
           </div>

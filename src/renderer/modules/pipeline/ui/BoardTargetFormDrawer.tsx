@@ -18,7 +18,7 @@ import {
   type ProgressPeriod,
 } from '../api/pipelineProgressTerms';
 import { useCreateBoardTarget, useDecomposeTargetPreview, useUpdateBoardTarget } from '../api/useBoardProgressQueries';
-import { anchorsForPeriod, periodToPlanningLevel } from '../api/boardProgressAnchors';
+import { anchorsForPlanningLevel, formatAnchorRange, periodToPlanningLevel } from '../api/boardProgressAnchors';
 import { useBoardResourceMembers } from '../api/usePipelineResourceQueries';
 import { useProjectMembers } from '../../estimates/api/useProjectQueries';
 import { resolveTargetAssigneeMembers } from '../api/progressMemberUtils';
@@ -61,8 +61,6 @@ export default function BoardTargetFormDrawer({
   board,
   context,
   period,
-  customFrom = '',
-  customTo = '',
   members,
   stages,
   target,
@@ -98,6 +96,11 @@ export default function BoardTargetFormDrawer({
   const metrics = useMemo(() => metricOptions(context), [context]);
   const periodLabel = PROGRESS_PERIOD_OPTIONS.find((option) => option.value === period)?.label ?? period;
 
+  const planningAnchors = useMemo(
+    () => anchorsForPlanningLevel(form.planning_level),
+    [form.planning_level],
+  );
+
   const canPreviewDecomposition = useMemo(() => {
     if (isEditing) return false;
     const value = Number(form.target_value);
@@ -112,7 +115,7 @@ export default function BoardTargetFormDrawer({
         target_value: Number(form.target_value),
         stage_ids: [Number(form.stage_id)],
         decomposition_mode: form.decomposition_mode,
-        ...anchorsForPeriod(period, form.planning_level, customFrom, customTo),
+        ...planningAnchors,
       },
       {
         onSuccess: (preview) => {
@@ -196,6 +199,8 @@ export default function BoardTargetFormDrawer({
       unit,
       period_type: period,
       planning_level: form.planning_level,
+      anchor_start: planningAnchors.anchor_start,
+      anchor_end: planningAnchors.anchor_end,
       scope: form.scope,
       member_user_id: form.scope === 'member' ? Number(form.member_user_id) : null,
       stage_id: Number(form.stage_id),
@@ -215,6 +220,8 @@ export default function BoardTargetFormDrawer({
             unit: basePayload.unit,
             period_type: basePayload.period_type,
             planning_level: basePayload.planning_level,
+            anchor_start: basePayload.anchor_start,
+            anchor_end: basePayload.anchor_end,
             scope: basePayload.scope,
             member_user_id: basePayload.member_user_id,
             stage_id: form.stage_id ? Number(form.stage_id) : undefined,
@@ -282,14 +289,21 @@ export default function BoardTargetFormDrawer({
           description={heroDescription}
         />
 
-        <div className="flex items-center gap-2 rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-900">
-          <CalendarDays className="h-3.5 w-3.5 shrink-0 text-violet-600" />
-          <span>
-            Period: <span className="font-semibold">{periodLabel}</span>
-            {isEditing && target ? (
-              <span className="text-violet-700/80"> · editing {TARGET_TYPE_LABELS[target.type] ?? target.type}</span>
-            ) : null}
-          </span>
+        <div className="flex flex-col gap-1 rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-900">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-violet-600" />
+            <span>
+              Progress view: <span className="font-semibold">{periodLabel}</span>
+              {isEditing && target ? (
+                <span className="text-violet-700/80"> · editing {TARGET_TYPE_LABELS[target.type] ?? target.type}</span>
+              ) : null}
+            </span>
+          </div>
+          <p className="pl-5 text-violet-800/90">
+            Planning horizon for decomposition:{' '}
+            <span className="font-semibold tabular-nums">{formatAnchorRange(planningAnchors)}</span>
+            {' '}— future years / months / weeks each get their share of the full target.
+          </p>
         </div>
 
         {!isEditing && (

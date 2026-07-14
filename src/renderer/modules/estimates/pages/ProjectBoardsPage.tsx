@@ -89,6 +89,8 @@ export default function ProjectBoardsPage() {
                 key={board.id}
                 board={board}
                 to={ROUTES.ESTIMATES.BOARD(board.id)}
+                showVisibility
+                showRole
               />
             ))}
           </div>
@@ -104,6 +106,8 @@ export default function ProjectBoardsPage() {
                 key={board.id}
                 board={board}
                 to={ROUTES.ESTIMATES.BOARD(board.id)}
+                showVisibility
+                showRole
               />
             ))}
           </div>

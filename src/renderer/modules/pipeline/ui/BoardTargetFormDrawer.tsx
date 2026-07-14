@@ -1,63 +1,42 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import {
-  Activity,
-  BarChart3,
-  CalendarDays,
-  Columns3,
-  Crosshair,
-  FileText,
-  Flag,
-  Gauge,
-  Hash,
-  Layers,
-  Plus,
-  Target,
-  Trash2,
-  Type,
-  User,
-  Users,
-  Eye,
-} from 'lucide-react';
+import { CalendarDays, Target } from 'lucide-react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
-import { Button } from '../../../shared/components/buttons/Button';
 import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
-import { cn } from '../../../shared/utils/cn';
 import type {
   BoardProgressContext,
   BoardProgressMember,
   BoardProgressStage,
   BoardTarget,
-  BoardTargetType,
   CreateBoardTargetPayload,
-  DecompositionMode,
-  GoalTag,
-  PlanningLevel,
   TargetAllocation,
 } from '../api/boardProgressTypes';
 import {
-  METRIC_LABELS,
   PROGRESS_PERIOD_OPTIONS,
-  PROGRESS_METRIC_KEYS,
-  PLANNING_LEVEL_OPTIONS,
   TARGET_TYPE_LABELS,
   metricUnitForKey,
   type ProgressPeriod,
 } from '../api/pipelineProgressTerms';
 import { useCreateBoardTarget, useDecomposeTargetPreview, useUpdateBoardTarget } from '../api/useBoardProgressQueries';
+import { anchorsForPeriod, periodToPlanningLevel } from '../api/boardProgressAnchors';
 import { useBoardResourceMembers } from '../api/usePipelineResourceQueries';
 import { useProjectMembers } from '../../estimates/api/useProjectQueries';
 import { resolveTargetAssigneeMembers } from '../api/progressMemberUtils';
 import type { PipelineBoard } from '../api/pipelineTypes';
-import DecompositionPreviewTree from './DecompositionPreviewTree';
+import { PipelineModalHero } from './pipelineFormFields';
 import {
-  PipelineFormSection,
-  PipelineIconField,
-  PipelineModalHero,
-  pipelineInputClass,
-  pipelineSelectClass,
-} from './pipelineFormFields';
+  emptyBoardTargetForm,
+  emptyKeyResult,
+  goalTagForType,
+  metricOptions,
+  type BoardTargetFormState,
+  type KeyResultDraft,
+} from './boardTargetFormHelpers';
+import { BoardTargetTypeSection } from './BoardTargetTypeSection';
+import { BoardTargetCoreFields } from './BoardTargetCoreFields';
+import { BoardTargetDecompositionSection } from './BoardTargetDecompositionSection';
+import { BoardTargetOwnershipSection } from './BoardTargetOwnershipSection';
+import { BoardTargetKeyResultsSection } from './BoardTargetKeyResultsSection';
 
 interface BoardTargetFormDrawerProps {
   open: boolean;
@@ -67,129 +46,11 @@ interface BoardTargetFormDrawerProps {
   board?: Pick<PipelineBoard, 'members'> | null;
   context: BoardProgressContext;
   period: ProgressPeriod;
+  customFrom?: string;
+  customTo?: string;
   members: BoardProgressMember[];
   stages: BoardProgressStage[];
   target?: BoardTarget | null;
-}
-
-type KeyResultDraft = {
-  title: string;
-  metric_key: string;
-  target_value: string;
-};
-
-type FormState = {
-  type: BoardTargetType;
-  goal_tag: GoalTag;
-  title: string;
-  description: string;
-  metric_key: string;
-  target_value: string;
-  scope: 'board' | 'member';
-  member_user_id: number | '';
-  planning_level: PlanningLevel;
-  stage_id: number | '';
-  decomposition_mode: DecompositionMode;
-};
-
-const TARGET_TYPE_OPTIONS: {
-  value: 'kpi' | 'goal' | 'objective';
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}[] = [
-  {
-    value: 'kpi',
-    label: 'KPI',
-    description: 'Track a core performance number',
-    icon: Gauge,
-  },
-  {
-    value: 'goal',
-    label: 'Goal',
-    description: 'Set a clear outcome to hit',
-    icon: Flag,
-  },
-  {
-    value: 'objective',
-    label: 'Objective',
-    description: 'Bundle key results into an OKR',
-    icon: Crosshair,
-  },
-];
-
-const emptyKeyResult = (): KeyResultDraft => ({
-  title: '',
-  metric_key: 'cards_won',
-  target_value: '',
-});
-
-const emptyForm = (): FormState => ({
-  type: 'kpi',
-  goal_tag: 'kpi',
-  title: '',
-  description: '',
-  metric_key: 'cards_won',
-  target_value: '',
-  scope: 'board',
-  member_user_id: '',
-  planning_level: 'year',
-  stage_id: '',
-  decomposition_mode: 'hybrid',
-});
-
-function periodToPlanningLevel(period: ProgressPeriod): PlanningLevel {
-  if (period === 'day') return 'day';
-  if (period === 'week') return 'week';
-  if (period === 'month') return 'month';
-  if (period === 'quarter') return 'quarter';
-  if (period === 'year') return 'year';
-  return 'month';
-}
-
-function goalTagForType(type: BoardTargetType): GoalTag {
-  if (type === 'objective') return 'objective';
-  if (type === 'goal') return 'goal';
-  return 'kpi';
-}
-
-function metricOptions(ctx: BoardProgressContext) {
-  return PROGRESS_METRIC_KEYS.map((key) => ({
-    value: key,
-    label: METRIC_LABELS[key]?.(ctx) ?? key,
-  }));
-}
-
-function unitLabel(unit: ReturnType<typeof metricUnitForKey>): string {
-  switch (unit) {
-    case 'currency':
-      return 'Amount';
-    case 'percent':
-      return 'Percent';
-    case 'days':
-      return 'Days';
-    default:
-      return 'Count';
-  }
-}
-
-function unitSuffix(unit: ReturnType<typeof metricUnitForKey>, currency: string): string {
-  switch (unit) {
-    case 'currency':
-      return currency;
-    case 'percent':
-      return '%';
-    case 'days':
-      return 'days';
-    default:
-      return '';
-  }
-}
-
-function targetValueIconForUnit(unit: ReturnType<typeof metricUnitForKey>): LucideIcon {
-  if (unit === 'percent') return BarChart3;
-  if (unit === 'days') return CalendarDays;
-  return Hash;
 }
 
 export default function BoardTargetFormDrawer({
@@ -200,6 +61,8 @@ export default function BoardTargetFormDrawer({
   board,
   context,
   period,
+  customFrom = '',
+  customTo = '',
   members,
   stages,
   target,
@@ -213,10 +76,14 @@ export default function BoardTargetFormDrawer({
   const { data: projectMembers = [] } = useProjectMembers(context.is_project_board ? projectId : 0);
   const isSubmitting = createTarget.isPending || updateTarget.isPending;
 
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<BoardTargetFormState>(emptyBoardTargetForm);
   const [keyResults, setKeyResults] = useState<KeyResultDraft[]>([emptyKeyResult()]);
   const [allocationNodes, setAllocationNodes] = useState<TargetAllocation[]>([]);
   const [previewVisible, setPreviewVisible] = useState(false);
+
+  const patchForm = (patch: Partial<BoardTargetFormState>) => {
+    setForm((prev) => ({ ...prev, ...patch }));
+  };
 
   const assigneeMembers = useMemo(
     () => resolveTargetAssigneeMembers({
@@ -229,7 +96,6 @@ export default function BoardTargetFormDrawer({
   );
 
   const metrics = useMemo(() => metricOptions(context), [context]);
-  const metricUnit = metricUnitForKey(form.metric_key);
   const periodLabel = PROGRESS_PERIOD_OPTIONS.find((option) => option.value === period)?.label ?? period;
 
   const canPreviewDecomposition = useMemo(() => {
@@ -246,6 +112,7 @@ export default function BoardTargetFormDrawer({
         target_value: Number(form.target_value),
         stage_ids: [Number(form.stage_id)],
         decomposition_mode: form.decomposition_mode,
+        ...anchorsForPeriod(period, form.planning_level, customFrom, customTo),
       },
       {
         onSuccess: (preview) => {
@@ -283,7 +150,7 @@ export default function BoardTargetFormDrawer({
         setPreviewVisible((target.allocations ?? []).length > 0);
         return;
       }
-      const initial = emptyForm();
+      const initial = emptyBoardTargetForm();
       initial.planning_level = periodToPlanningLevel(period);
       initial.stage_id = stages[0]?.stage_id ?? '';
       setForm(initial);
@@ -426,414 +293,60 @@ export default function BoardTargetFormDrawer({
         </div>
 
         {!isEditing && (
-          <PipelineFormSection
-            title="Target type"
-            icon={Crosshair}
-            description="Choose how this target should be tracked on the board."
-          >
-            <div className="grid gap-2 sm:grid-cols-3">
-              {TARGET_TYPE_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                const selected = form.type === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setForm((prev) => ({
-                      ...prev,
-                      type: option.value,
-                      goal_tag: goalTagForType(option.value),
-                    }))}
-                    className={cn(
-                      'flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all',
-                      selected
-                        ? 'border-violet-500 bg-violet-50 shadow-sm ring-1 ring-violet-500/20'
-                        : 'border-gray-200 bg-white hover:border-violet-200 hover:bg-violet-50/30',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-flex rounded-lg p-2',
-                        selected ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-600',
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span>
-                      <span className="block text-sm font-semibold text-gray-900">{option.label}</span>
-                      <span className="mt-0.5 block text-xs text-gray-500">{option.description}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            {form.type === 'objective' && (
-              <p className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 text-xs text-violet-800">
-                Objectives roll up progress from the key results you add in the last section.
-              </p>
-            )}
-          </PipelineFormSection>
+          <BoardTargetTypeSection
+            type={form.type}
+            onTypeChange={(type) =>
+              patchForm({ type, goal_tag: goalTagForType(type) })
+            }
+          />
         )}
 
-        <PipelineFormSection
-          title="Planning horizon"
-          icon={CalendarDays}
-          description="Choose how far this target spans — expectations decompose down to daily contributions."
-        >
-          <PipelineIconField label="Planning level" icon={Layers} required>
-            <select
-              value={form.planning_level}
-              onChange={(e) => setForm((prev) => ({ ...prev, planning_level: e.target.value as PlanningLevel }))}
-              className={pipelineSelectClass}
-              aria-label="Planning level"
-            >
-              {PLANNING_LEVEL_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label} — {option.description}
-                </option>
-              ))}
-            </select>
-          </PipelineIconField>
-          <PipelineIconField label="Decomposition mode" icon={BarChart3} hint="Hybrid uses column velocity when available.">
-            <select
-              value={form.decomposition_mode}
-              onChange={(e) => setForm((prev) => ({ ...prev, decomposition_mode: e.target.value as DecompositionMode }))}
-              className={pipelineSelectClass}
-              aria-label="Decomposition mode"
-            >
-              <option value="hybrid">Hybrid (velocity-weighted)</option>
-              <option value="velocity">Velocity only</option>
-              <option value="equal">Equal split</option>
-            </select>
-          </PipelineIconField>
-        </PipelineFormSection>
-
-        <PipelineFormSection
-          title="Board column"
-          icon={Columns3}
-          description="Every target must track at least one Kanban column."
-        >
-          {stages.length === 0 ? (
-            <p className="text-sm text-amber-700">Add columns to this board before creating targets.</p>
-          ) : (
-            <PipelineIconField label="Column" icon={Columns3} required>
-              <select
-                value={form.stage_id}
-                onChange={(e) => setForm((prev) => ({
-                  ...prev,
-                  stage_id: e.target.value ? Number(e.target.value) : '',
-                }))}
-                className={pipelineSelectClass}
-                aria-label="Board column"
-              >
-                <option value="">Select column…</option>
-                {stages.map((stage) => (
-                  <option key={stage.stage_id} value={stage.stage_id}>
-                    {stage.stage_name}
-                    {stage.is_won ? ' (won)' : ''}
-                    {stage.is_lost ? ' (lost)' : ''}
-                  </option>
-                ))}
-              </select>
-            </PipelineIconField>
-          )}
-        </PipelineFormSection>
-
-        <PipelineFormSection
-          title="What you're aiming for"
-          icon={Type}
-          description="Give the target a clear name and optional context for the team."
-        >
-          <PipelineIconField label="Title" icon={Type} required>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-              className={pipelineInputClass}
-              placeholder={titlePlaceholder}
-            />
-          </PipelineIconField>
-
-          <PipelineIconField label="Description" icon={FileText} hint="Optional — helps everyone understand why this target matters.">
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              className={cn(pipelineInputClass, 'min-h-[80px] resize-y pl-3')}
-              placeholder="What does success look like?"
-            />
-          </PipelineIconField>
-        </PipelineFormSection>
-
-        <PipelineFormSection
-          title="Measure & target"
-          icon={Activity}
-          description="Pick the metric and the number you want to reach in this period."
-        >
-          <PipelineIconField label="Metric" icon={Activity} required>
-            <select
-              value={form.metric_key}
-              onChange={(e) => setForm((prev) => ({ ...prev, metric_key: e.target.value }))}
-              className={pipelineSelectClass}
-              aria-label="Metric"
-            >
-              {metrics.map((metric) => (
-                <option key={metric.value} value={metric.value}>
-                  {metric.label}
-                </option>
-              ))}
-            </select>
-          </PipelineIconField>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <PipelineIconField label={`Target ${unitLabel(metricUnit).toLowerCase()}`} icon={targetValueIconForUnit(metricUnit)} required>
-              <input
-                type="number"
-                min={0}
-                step="any"
-                value={form.target_value}
-                onChange={(e) => setForm((prev) => ({ ...prev, target_value: e.target.value }))}
-                className={pipelineInputClass}
-                placeholder="0"
-              />
-            </PipelineIconField>
-            <div className="flex items-end">
-              <div className="w-full rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Unit</p>
-                <p className="mt-0.5 font-semibold text-gray-800">
-                  {unitLabel(metricUnit)}
-                  {unitSuffix(metricUnit, context.currency) ? (
-                    <span className="ml-1 font-normal text-gray-500">({unitSuffix(metricUnit, context.currency)})</span>
-                  ) : null}
-                </p>
-              </div>
-            </div>
-          </div>
-        </PipelineFormSection>
+        <BoardTargetCoreFields
+          form={form}
+          context={context}
+          stages={stages}
+          metrics={metrics}
+          titlePlaceholder={titlePlaceholder}
+          onChange={patchForm}
+        />
 
         {!isEditing && (
-          <PipelineFormSection
-            title="Decomposition preview"
-            icon={Layers}
-            description="Review how this target breaks into sub-periods before saving. Edit values to override."
-          >
-            {!previewVisible ? (
-              <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center">
-                <p className="text-sm text-gray-600">
-                  Click below to generate a one-time preview from your planning inputs.
-                </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="inline-flex items-center gap-2"
-                  onClick={runDecompositionPreview}
-                  disabled={!canPreviewDecomposition || decomposePreview.isPending}
-                  loading={decomposePreview.isPending}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Show decomposition preview
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="mb-3 flex justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="inline-flex items-center gap-2 text-gray-600"
-                    onClick={runDecompositionPreview}
-                    disabled={!canPreviewDecomposition || decomposePreview.isPending}
-                    loading={decomposePreview.isPending}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    Regenerate preview
-                  </Button>
-                </div>
-                <DecompositionPreviewTree
-                  nodes={allocationNodes}
-                  loading={decomposePreview.isPending}
-                  onOverride={(flatIndex, value) => {
-                    setAllocationNodes((prev) =>
-                      prev.map((node, i) =>
-                        i === flatIndex ? { ...node, expected_value: value, is_override: true } : node,
-                      ),
-                    );
-                  }}
-                />
-              </>
-            )}
-          </PipelineFormSection>
+          <BoardTargetDecompositionSection
+            previewVisible={previewVisible}
+            allocationNodes={allocationNodes}
+            canPreview={canPreviewDecomposition}
+            isPending={decomposePreview.isPending}
+            onPreview={runDecompositionPreview}
+            onOverride={(flatIndex, value) => {
+              setAllocationNodes((prev) =>
+                prev.map((node, i) =>
+                  i === flatIndex ? { ...node, expected_value: value, is_override: true } : node,
+                ),
+              );
+            }}
+          />
         )}
 
-        <PipelineFormSection
-          title="Ownership"
-          icon={Users}
-          description="Track this target for the whole board or a specific team member."
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, scope: 'board', member_user_id: '' }))}
-              className={cn(
-                'inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
-                form.scope === 'board'
-                  ? 'border-violet-500 bg-violet-50 text-violet-800'
-                  : 'border-gray-200 text-gray-700 hover:bg-gray-50',
-              )}
-            >
-              <Users className="h-4 w-4" />
-              Whole board
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, scope: 'member' }))}
-              className={cn(
-                'inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
-                form.scope === 'member'
-                  ? 'border-violet-500 bg-violet-50 text-violet-800'
-                  : 'border-gray-200 text-gray-700 hover:bg-gray-50',
-              )}
-            >
-              <User className="h-4 w-4" />
-              Individual
-            </button>
-          </div>
-
-          {form.scope === 'member' && (
-            <PipelineIconField label="Team member" icon={User} required>
-              <select
-                value={form.member_user_id}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    member_user_id: e.target.value ? Number(e.target.value) : '',
-                  }))
-                }
-                className={pipelineSelectClass}
-                aria-label="Team member"
-              >
-                <option value="">Select member…</option>
-                {assigneeMembers.map((member) => (
-                  <option key={member.user_id} value={member.user_id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-            </PipelineIconField>
-          )}
-        </PipelineFormSection>
+        <BoardTargetOwnershipSection
+          scope={form.scope}
+          memberUserId={form.member_user_id}
+          assigneeMembers={assigneeMembers}
+          onScopeChange={(scope) =>
+            setForm((prev) => ({
+              ...prev,
+              scope,
+              member_user_id: scope === 'board' ? '' : prev.member_user_id,
+            }))
+          }
+          onMemberChange={(member_user_id) => patchForm({ member_user_id })}
+        />
 
         {!isEditing && form.type === 'objective' && (
-          <PipelineFormSection
-            title="Key results"
-            icon={Target}
-            description="Add measurable outcomes that roll up into this objective."
-            className="border-violet-200"
-          >
-            <div className="space-y-3">
-              {keyResults.map((kr, index) => {
-                const krUnit = metricUnitForKey(kr.metric_key);
-                return (
-                  <div
-                    key={index}
-                    className="rounded-xl border border-violet-100 bg-violet-50/30 p-3"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-[11px] font-bold text-white">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-800">Key result {index + 1}</span>
-                      </div>
-                      {keyResults.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setKeyResults((prev) => prev.filter((_, i) => i !== index))}
-                          className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-white hover:text-red-600"
-                          aria-label={`Remove key result ${index + 1}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      <PipelineIconField label="Title" icon={Type} required>
-                        <input
-                          type="text"
-                          value={kr.title}
-                          onChange={(e) =>
-                            setKeyResults((prev) =>
-                              prev.map((item, i) => (i === index ? { ...item, title: e.target.value } : item)),
-                            )
-                          }
-                          className={pipelineInputClass}
-                          placeholder="e.g. Close 10 won deals"
-                        />
-                      </PipelineIconField>
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <PipelineIconField label="Metric" icon={Activity} required>
-                          <select
-                            value={kr.metric_key}
-                            onChange={(e) =>
-                              setKeyResults((prev) =>
-                                prev.map((item, i) =>
-                                  i === index ? { ...item, metric_key: e.target.value } : item,
-                                ),
-                              )
-                            }
-                            className={pipelineSelectClass}
-                            aria-label={`Key result ${index + 1} metric`}
-                          >
-                            {metrics.map((metric) => (
-                              <option key={metric.value} value={metric.value}>
-                                {metric.label}
-                              </option>
-                            ))}
-                          </select>
-                        </PipelineIconField>
-
-                        <PipelineIconField
-                          label={`Target (${unitLabel(krUnit).toLowerCase()})`}
-                          icon={Hash}
-                          required
-                        >
-                          <input
-                            type="number"
-                            min={0}
-                            step="any"
-                            value={kr.target_value}
-                            onChange={(e) =>
-                              setKeyResults((prev) =>
-                                prev.map((item, i) =>
-                                  i === index ? { ...item, target_value: e.target.value } : item,
-                                ),
-                              )
-                            }
-                            className={pipelineInputClass}
-                            placeholder="0"
-                          />
-                        </PipelineIconField>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="inline-flex items-center gap-2"
-              onClick={() => setKeyResults((prev) => [...prev, emptyKeyResult()])}
-            >
-              <Plus className="h-4 w-4" />
-              Add key result
-            </Button>
-          </PipelineFormSection>
+          <BoardTargetKeyResultsSection
+            keyResults={keyResults}
+            metrics={metrics}
+            onChange={setKeyResults}
+          />
         )}
       </div>
     </SlideDrawer>

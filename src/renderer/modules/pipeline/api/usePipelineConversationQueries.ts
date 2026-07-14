@@ -60,7 +60,7 @@ export function useBoardConversationMessages(boardId: number, enabled = true) {
     },
     enabled: enabled && boardId > 0,
     staleTime: 10_000,
-    refetchInterval: enabled && boardId > 0 ? 20_000 : false,
+    refetchInterval: enabled && boardId > 0 ? PIPELINE_KANBAN_POLL_MS : false,
     refetchIntervalInBackground: false,
   });
 }

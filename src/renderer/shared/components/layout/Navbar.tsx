@@ -249,10 +249,10 @@ export function Navbar() {
                 <img
                   src={businessLogoUrl}
                   alt=""
-                  className="h-7 w-7 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
+                  className="hidden md:block h-7 w-7 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
                 />
               ) : (
-                <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+                <Building2 className="hidden md:block h-4 w-4 shrink-0 text-blue-600" aria-hidden />
               )}
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[8rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">

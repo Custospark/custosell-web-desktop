@@ -70,6 +70,7 @@ function BoardGrid({
           board={board}
           variant="compact"
           showVisibility={showVisibility}
+          showRole={showVisibility}
           isActive={board.id === activeBoardId}
           onSelect={() => onSelect(board.id)}
         />

@@ -6,7 +6,8 @@ import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { addToCart, updateQuantity, removeFromCart, clearCart, setCustomer, setDiscount } from './api/salesSlice';
 import { useOpenOrders } from './api/orders/useOrderQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, Package, RotateCcw, PauseCircle, Pencil, FileText, Save, ListOrdered } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, RotateCcw, PauseCircle, Pencil, FileText, Save, ListOrdered } from 'lucide-react';
+import { ProductSearchThumb } from './ui/ProductSearchThumb';
 import HeldOrdersModal from './ui/HeldOrdersModal';
 import HoldOrderModal from './ui/HoldOrderModal';
 import UpdateOrderModal from './ui/UpdateOrderModal';
@@ -238,15 +239,11 @@ export default function NewSale() {
                               <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors"
                                 onMouseDown={() => isSellable(p) && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class)}>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3">
-                                  <div className="flex items-center gap-2 sm:gap-3">
-                                    <div className="p-1 sm:p-1.5 rounded-lg bg-gray-100 text-gray-500 shrink-0"><Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></div>
-                                    <div className="min-w-0">
-                                      <span className="text-sm font-medium text-gray-800 truncate block">{p.name}</span>
-                                      {isServiceItem(p) && (
-                                        <span className="text-[10px] font-medium uppercase tracking-wide text-blue-600">Service</span>
-                                      )}
-                                    </div>
-                                  </div>
+                                  <ProductSearchThumb
+                                    name={p.name}
+                                    imagePath={p.image_path}
+                                    isService={isServiceItem(p)}
+                                  />
                                 </td>
                                 <td className="px-3 sm:px-4 py-2.5 sm:py-3 hidden sm:table-cell">
                                   {isServiceItem(p) ? (

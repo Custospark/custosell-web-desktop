@@ -19,7 +19,8 @@ import { matchesProductSearch } from '../../../../shared/utils/productSearch';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
 import { isServiceItem, tracksStock } from '../../api/products/ProductTypes';
-import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square, Store } from 'lucide-react';
+import { avatarUrl } from '../../../../shared/utils/avatarUrl';
 import ProductFormModal from './ProductFormModal';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
@@ -33,6 +34,7 @@ export default function ProductList() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
+  const [storefrontFilter, setStorefrontFilter] = useState<'all' | 'listed' | 'unlisted'>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithSyncMeta | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<ProductWithSyncMeta | null>(null);
@@ -55,9 +57,13 @@ export default function ProductList() {
   const filtered = useMemo(() => {
     if (!products) return [];
     const safe = products.filter(Boolean) as ProductWithSyncMeta[];
-    if (!search.trim()) return safe;
-    return safe.filter((p) => matchesProductSearch(p, search));
-  }, [products, search]);
+    return safe.filter((p) => {
+      if (storefrontFilter === 'listed' && !p.listed_for_storefront) return false;
+      if (storefrontFilter === 'unlisted' && p.listed_for_storefront) return false;
+      if (!search.trim()) return true;
+      return matchesProductSearch(p, search);
+    });
+  }, [products, search, storefrontFilter]);
 
   const paginated = usePagination(filtered, 10);
 
@@ -136,10 +142,20 @@ export default function ProductList() {
       <div className="h-6" />
 
       <Card>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex-1">
+        <div className="flex items-center gap-4 mb-4 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
             <SearchInput placeholder="Search by name, SKU, or barcode..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
+          <select
+            value={storefrontFilter}
+            onChange={(e) => setStorefrontFilter(e.target.value as 'all' | 'listed' | 'unlisted')}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            aria-label="Filter by public shop listing"
+          >
+            <option value="all">All shops</option>
+            <option value="listed">Listed on public shop</option>
+            <option value="unlisted">Not listed</option>
+          </select>
           <div className="flex items-center gap-2">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
@@ -164,16 +180,37 @@ export default function ProductList() {
               </button>
             )},
             { key: 'name', header: 'Name', render: (item) => (
-              <div className="flex items-center gap-2">
-                <span>{item.name}</span>
-                {item._syncFailed ? (
-                  <span
-                    className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"
-                    title={item._lastError || 'Sync failed'}
-                  >
-                    Sync failed
-                  </span>
-                ) : item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+              <div className="flex items-center gap-2.5 min-w-0">
+                {item.image_path ? (
+                  <img
+                    src={avatarUrl(item.image_path)}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-gray-200"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400 ring-1 ring-gray-200">
+                    <Package className="h-4 w-4" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium text-gray-900">{item.name}</span>
+                    {item.listed_for_storefront ? (
+                      <span title="Listed on public shop" className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                        <Store className="h-2.5 w-2.5" />
+                        Shop
+                      </span>
+                    ) : null}
+                  </div>
+                  {item._syncFailed ? (
+                    <span
+                      className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"
+                      title={item._lastError || 'Sync failed'}
+                    >
+                      Sync failed
+                    </span>
+                  ) : item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
+                </div>
               </div>
             ) },
             { key: 'barcode', header: 'Barcode', render: (item) => item.barcode || <span className="text-gray-400">—</span> },
@@ -218,6 +255,9 @@ export default function ProductList() {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         product={editingProduct}
+        onProductUpdated={(updated) => {
+          setEditingProduct((prev) => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
+        }}
       />
 
       {adjustingProduct && (

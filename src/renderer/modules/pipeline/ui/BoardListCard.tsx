@@ -5,6 +5,7 @@ import type { PipelineBoard } from '../api/pipelineTypes';
 import { pipelineBoardCardHeroStyle, pipelineColorAlpha } from '../api/pipelineKanbanCache';
 import { boardUsesTaskTerminology } from '../api/pipelineBoardWorkspace';
 import { PIPELINE_VISIBILITY_META } from './pipelineBoardMeta';
+import { BOARD_ROLE_BADGE_CLASS, BOARD_ROLE_LABELS, type BoardMemberRole } from '../api/boardRoleUtils';
 
 export interface BoardListCardProps {
   board: PipelineBoard;
@@ -13,17 +14,34 @@ export interface BoardListCardProps {
   isActive?: boolean;
   /** Show team/private/shared badge (Pipeline module). */
   showVisibility?: boolean;
+  /** Show the current user's role badge (viewer / contributor / manager). */
+  showRole?: boolean;
   variant?: 'default' | 'compact';
+}
+
+function BoardRoleBadge({ role }: { role: BoardMemberRole }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded px-1 py-0.5 text-[10px] font-semibold',
+        BOARD_ROLE_BADGE_CLASS[role],
+      )}
+    >
+      {BOARD_ROLE_LABELS[role]}
+    </span>
+  );
 }
 
 function BoardListCardContent({
   board,
   showVisibility,
+  showRole,
   isActive,
   variant = 'default',
 }: {
   board: PipelineBoard;
   showVisibility: boolean;
+  showRole: boolean;
   isActive?: boolean;
   variant?: 'default' | 'compact';
 }) {
@@ -35,6 +53,7 @@ function BoardListCardContent({
     ? `open task${openCount === 1 ? '' : 's'}`
     : `open lead${openCount === 1 ? '' : 's'}`;
   const vis = showVisibility ? PIPELINE_VISIBILITY_META[board.visibility] : null;
+  const role = showRole ? board.current_member_role : null;
 
   if (variant === 'compact') {
     return (
@@ -72,6 +91,7 @@ function BoardListCardContent({
                 {vis.label}
               </span>
             )}
+            {role && <BoardRoleBadge role={role} />}
             <span className="inline-flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} aria-hidden />
               {openCount} {countNoun}
@@ -124,6 +144,11 @@ function BoardListCardContent({
               {vis.label}
             </span>
           )}
+          {role && (
+            <span className={cn('inline-flex rounded-full px-2 py-0.5 font-medium', BOARD_ROLE_BADGE_CLASS[role])}>
+              {BOARD_ROLE_LABELS[role]}
+            </span>
+          )}
           <span
             className={cn(
               'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium',
@@ -149,6 +174,7 @@ export default function BoardListCard({
   onSelect,
   isActive,
   showVisibility = false,
+  showRole = false,
   variant = 'default',
 }: BoardListCardProps) {
   if (onSelect) {
@@ -161,6 +187,7 @@ export default function BoardListCard({
         <BoardListCardContent
           board={board}
           showVisibility={showVisibility}
+          showRole={showRole}
           isActive={isActive}
           variant={variant}
         />
@@ -175,6 +202,7 @@ export default function BoardListCard({
       <BoardListCardContent
         board={board}
         showVisibility={showVisibility}
+        showRole={showRole}
         isActive={isActive}
         variant={variant}
       />

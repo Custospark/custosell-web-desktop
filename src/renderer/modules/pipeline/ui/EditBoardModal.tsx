@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useUpdatePipelineBoard, useUploadBoardBackground } from '../api/usePipelineQueries';
+import { useUpdatePipelineBoard, useUploadBoardBackground, useDeletePipelineBoard } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
 import { membersFromBoard } from '../api/pipelineBoardMembers';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -25,11 +25,11 @@ import BoardBackgroundSection from './BoardBackgroundSection';
 import BoardAutomationsSection from './BoardAutomationsSection';
 import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import { addBoardUploadHistory, loadBoardUploadHistory } from '../api/boardUploadHistory';
-import { AlignLeft, Archive, Kanban, Type, Users, Zap } from 'lucide-react';
+import { AlignLeft, Kanban, Trash2, Type, Users, Zap } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canManageBoardSettings, canManageProjectTeam, isBusinessOwner } from '../../../shared/utils/moduleAccess';
+import { canManageBoardSettings, canManageProjectTeam } from '../../../shared/utils/moduleAccess';
 import type { BoardWorkspace } from './boardVisibilityOptions';
 
 interface EditBoardModalProps {
@@ -56,9 +56,10 @@ function EditBoardModalForm({
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const updateBoard = useUpdatePipelineBoard();
+  const deleteBoard = useDeletePipelineBoard();
   const uploadBg = useUploadBoardBackground();
   const { confirm } = useConfirm();
-  const [isArchiving, setIsArchiving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [name, setName] = useState(board.name);
   const [description, setDescription] = useState(board.description ?? '');
@@ -96,11 +97,7 @@ function EditBoardModalForm({
   });
   const membersLoadingState = membersLoading || (membersFetching && projectMembers.length === 0);
 
-  const canArchive = isProjectBoard
-    ? isBusinessOwner(user) || user?.id === projectOwnerId
-    : board.visibility === 'private'
-      ? user?.id === board.created_by
-      : isBusinessOwner(user) || user?.id === board.created_by;
+  const canDelete = canManageSettings && !board.is_default;
 
   const handleBgSelect = (type: string, value: string) => {
     setBgType(type);
@@ -146,10 +143,8 @@ function EditBoardModalForm({
       id: board.id,
       name: name.trim(),
       description: description.trim() || undefined,
-      ...(!isProjectBoard && {
-        visibility,
-        members: visibility === 'shared' ? members : [],
-      }),
+      visibility,
+      members: visibility === 'shared' ? members : [],
       cover_color: bgType === 'color' ? bgValue : board.cover_color,
       background_type: bgType,
       background_value: bgType === 'upload' ? normalizeBoardBackgroundUploadPath(bgValue) : bgValue,
@@ -157,17 +152,17 @@ function EditBoardModalForm({
     onClose();
   };
 
-  const handleArchive = async () => {
+  const handleDelete = async () => {
     const ok = await confirm({
-      title: 'Archive board?',
-      message: `"${board.name}" will be hidden from the board list. Cards are preserved.`,
-      confirmText: 'Archive',
+      title: 'Delete board permanently?',
+      message: `"${board.name}" and all its cards will be permanently removed. This cannot be undone.`,
+      confirmText: 'Delete board',
       variant: 'danger',
     });
     if (!ok) return;
-    setIsArchiving(true);
-    await updateBoard.mutateAsync({ id: board.id, is_archived: true });
-    setIsArchiving(false);
+    setIsDeleting(true);
+    await deleteBoard.mutateAsync(board.id);
+    setIsDeleting(false);
     onClose();
     const listRoute = workspace === 'estimates' || isProjectBoard
       ? ROUTES.ESTIMATES.BOARDS
@@ -242,19 +237,19 @@ function EditBoardModalForm({
               canManage={canManageTeam}
             />
           </PipelineFormSection>
-        ) : (
-          <BoardVisibilitySection
-            workspace={workspace}
-            visibility={visibility}
-            savedVisibility={board.visibility}
-            onVisibilityChange={setVisibility}
-            members={members}
-            onMembersChange={setMembers}
-            excludeUserId={board.created_by}
-            lockedUserId={board.created_by}
-            canManage={canManageSettings}
-          />
-        )}
+        ) : null}
+
+        <BoardVisibilitySection
+          workspace={workspace}
+          visibility={visibility}
+          savedVisibility={board.visibility}
+          onVisibilityChange={setVisibility}
+          members={members}
+          onMembersChange={setMembers}
+          excludeUserId={board.created_by}
+          lockedUserId={board.created_by}
+          canManage={canManageSettings}
+        />
 
         {(board.stages?.length ?? 0) > 0 && (
           <PipelineFormSection title="Discussion alerts" icon={Zap}>
@@ -276,16 +271,16 @@ function EditBoardModalForm({
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
-          {!board.is_default && canArchive && (
+          {!board.is_default && canDelete && (
             <Button
               type="button"
               variant="ghost"
-              onClick={handleArchive}
-              loading={isArchiving}
+              onClick={handleDelete}
+              loading={isDeleting}
               className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
-              <Archive className="h-4 w-4" />
-              Archive board
+              <Trash2 className="h-4 w-4" />
+              Delete board
             </Button>
           )}
           <div className="ml-auto flex gap-2">

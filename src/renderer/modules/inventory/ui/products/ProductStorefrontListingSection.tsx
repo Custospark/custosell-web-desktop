@@ -14,9 +14,14 @@ import { useToast } from '../../../../app/contexts/useToast';
 
 interface ProductStorefrontListingSectionProps {
   product: Product;
+  onProductUpdated?: (product: Product) => void;
 }
 
-export function ProductStorefrontListingSection({ product }: ProductStorefrontListingSectionProps) {
+/** Remount via key={product.id} from parent when switching products. */
+export function ProductStorefrontListingSection({
+  product,
+  onProductUpdated,
+}: ProductStorefrontListingSectionProps) {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { showToast } = useToast();
   const { data: business } = useBusiness();
@@ -24,17 +29,19 @@ export function ProductStorefrontListingSection({ product }: ProductStorefrontLi
   const uploadImage = useUploadProductImage();
   const shopEnabled = Boolean(business?.storefront_enabled);
 
-  const [listedDraft, setListedDraft] = useState<boolean | null>(null);
+  const [listed, setListed] = useState(Boolean(product.listed_for_storefront));
+  const [savedListed, setSavedListed] = useState(Boolean(product.listed_for_storefront));
+  const [imagePath, setImagePath] = useState(product.image_path ?? null);
   const [preview, setPreview] = useState<string | null>(null);
-  const listed = listedDraft ?? Boolean(product.listed_for_storefront);
 
-  const imageSrc = preview || (product.image_path ? avatarUrl(product.image_path) : null);
+  const imageSrc = preview || (imagePath ? avatarUrl(imagePath) : null);
+  const dirty = listed !== savedListed;
 
   return (
     <PipelineFormSection title="Public shop" icon={Store}>
       {!shopEnabled ? (
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
-          Enable your public shop under Settings → Business to list products for guests.
+          Enable your public shop under Settings → Sales channels to list products for guests.
         </p>
       ) : null}
 
@@ -65,7 +72,11 @@ export function ProductStorefrontListingSection({ product }: ProductStorefrontLi
                 uploadImage.mutate(
                   { id: product.id, file },
                   {
-                    onSuccess: () => showToast('success', 'Product image updated'),
+                    onSuccess: (updated) => {
+                      setImagePath(updated.image_path ?? null);
+                      onProductUpdated?.(updated);
+                      showToast('success', 'Product image updated');
+                    },
                     onError: () => showToast('error', 'Could not upload image'),
                   },
                 );
@@ -81,7 +92,7 @@ export function ProductStorefrontListingSection({ product }: ProductStorefrontLi
           type="checkbox"
           checked={listed}
           disabled={isOffline || !shopEnabled || !product.is_active || updateListing.isPending}
-          onChange={(e) => setListedDraft(e.target.checked)}
+          onChange={(e) => setListed(e.target.checked)}
           className="rounded border-gray-300 text-blue-600"
         />
         List on my public shop
@@ -95,15 +106,17 @@ export function ProductStorefrontListingSection({ product }: ProductStorefrontLi
             isOffline
             || !shopEnabled
             || updateListing.isPending
-            || listed === Boolean(product.listed_for_storefront)
+            || !dirty
           }
           loading={updateListing.isPending}
           onClick={() => {
             updateListing.mutate(
               { id: product.id, listed_for_storefront: listed },
               {
-                onSuccess: () => {
-                  setListedDraft(null);
+                onSuccess: (updated) => {
+                  setSavedListed(Boolean(updated.listed_for_storefront));
+                  setListed(Boolean(updated.listed_for_storefront));
+                  onProductUpdated?.(updated);
                   showToast('success', listed ? 'Listed on shop' : 'Removed from shop');
                 },
                 onError: () => showToast('error', 'Could not update shop listing'),

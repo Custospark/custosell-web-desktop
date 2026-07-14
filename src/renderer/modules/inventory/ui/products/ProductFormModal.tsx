@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCategories, useCreateProduct, useUpdateProduct } from '../../api/products/ProductQueries';
-import type { CatalogItemType, CreateProductData } from '../../api/products/ProductTypes';
+import type { CatalogItemType, CreateProductData, Product } from '../../api/products/ProductTypes';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
@@ -36,6 +36,7 @@ interface ProductFormModalProps {
   open: boolean;
   onClose: () => void;
   product?: ProductWithSyncMeta | null;
+  onProductUpdated?: (product: Product) => void;
 }
 
 const COMMON_UNITS = [
@@ -86,7 +87,7 @@ function toCreatePayload(f: FormState): CreateProductData {
   };
 }
 
-export default function ProductFormModal({ open, onClose, product }: ProductFormModalProps) {
+export default function ProductFormModal({ open, onClose, product, onProductUpdated }: ProductFormModalProps) {
   const isEditing = !!product;
   const { data: categories } = useCategories();
   const createMutation = useCreateProduct();
@@ -394,7 +395,11 @@ export default function ProductFormModal({ open, onClose, product }: ProductForm
         ) : null}
 
         {isEditing && product ? (
-          <ProductStorefrontListingSection product={product} />
+          <ProductStorefrontListingSection
+            key={product.id}
+            product={product}
+            onProductUpdated={onProductUpdated}
+          />
         ) : null}
 
         <PipelineFormSection

@@ -46,15 +46,15 @@ export const pipelineProgressKeys = {
   config: (boardId: number) => [...pipelineKeys.all, 'progress-config', boardId] as const,
 };
 
-export const PIPELINE_PROGRESS_POLL_MS = 60_000;
+export const PIPELINE_PROGRESS_POLL_MS = 30_000;
 
 export const pipelineTemplateKeys = {
   list: (workspace: 'pipeline' | 'estimates') => [...pipelineKeys.all, 'board-templates', workspace] as const,
 };
 
-export const PIPELINE_KANBAN_POLL_MS = 45_000;
-/** Faster kanban poll for read-only board members (viewers) so they still see team activity. */
-export const PIPELINE_KANBAN_VIEWER_POLL_MS = 20_000;
+/** Poll open kanban boards every 30s so card/column moves sync across teammates. */
+export const PIPELINE_KANBAN_POLL_MS = 30_000;
+export const PIPELINE_KANBAN_VIEWER_POLL_MS = 30_000;
 /** Lighter board GET for visibility/role/permission changes (merged into kanban cache). */
-export const PIPELINE_BOARD_ACCESS_POLL_MS = 15_000;
+export const PIPELINE_BOARD_ACCESS_POLL_MS = 30_000;
 export const PIPELINE_LEAD_POLL_MS = 30_000;

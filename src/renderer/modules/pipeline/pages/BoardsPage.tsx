@@ -64,6 +64,7 @@ export default function BoardsPage() {
             board={board}
             to={ROUTES.PIPELINE.BOARD(board.id)}
             showVisibility
+            showRole
           />
         ))}
       </div>

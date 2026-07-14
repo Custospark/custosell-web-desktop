@@ -54,7 +54,9 @@ export default function IncomingOrdersPage() {
     focus: 'details' | 'receipts';
   } | null>(null);
 
-  const { data, isLoading, isFetching, isError, error, refetch } = useIncomingPurchaseOrders(undefined, !isOffline);
+  const { data, isLoading, isFetching, isError, error, refetch } = useIncomingPurchaseOrders(undefined, !isOffline, {
+    poll: true,
+  });
   const acceptPo = useAcceptPurchaseOrder();
   const fulfillPo = useFulfillPurchaseOrder();
   const deletePo = useDeletePurchaseOrder();

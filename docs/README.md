@@ -123,6 +123,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-13-hr-people-edit-table-pagination.md](./adr/2026-07-13-hr-people-edit-table-pagination.md) | HR People: lock email/password on edit; Table + pagination; list detach |
 | [2026-07-13-staff-form-modal-module-hydrate.md](./adr/2026-07-13-staff-form-modal-module-hydrate.md) | Staff edit Modal; GET detail to hydrate module checkboxes |
 | [2026-07-14-board-poll-delete-import-storefront.md](./adr/2026-07-14-board-poll-delete-import-storefront.md) | Board 30s poll, delete, Excel card import, visibility/role, product shop UX |
+| [2026-07-14-order-lists-30s-poll.md](./adr/2026-07-14-order-lists-30s-poll.md) | PO / Incoming / Sales / Storefront order lists poll every 30s when open |
 
 ## Modules
 

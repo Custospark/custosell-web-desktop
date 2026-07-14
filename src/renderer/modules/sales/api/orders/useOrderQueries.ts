@@ -12,7 +12,7 @@ import {
 } from '../../../../app/store/offline/sales/completeOfflineOrder';
 import { localOrdersStore, toOrderWithSyncMeta } from '../../../../app/store/offline/sales/localOrdersStore';
 import { ORDERS } from './orderEndpoints';
-import { orderKeys } from './orderQueryKeys';
+import { ORDER_LIST_POLL_MS, orderKeys } from './orderQueryKeys';
 import type { CreateOrderPayload, PosOrder, UpdateOrderPayload } from './orderTypes';
 
 function unwrapList<T>(data: unknown): T[] {
@@ -47,7 +47,12 @@ function mergeOrders(base: PosOrder[] = [], local: PosOrder[] = []): PosOrder[] 
   return [...local, ...base.filter((o) => !localIds.has(o.id))];
 }
 
-export function useOrders(filters?: { status?: string; q?: string; source?: string }, enabled = true) {
+export function useOrders(
+  filters?: { status?: string; q?: string; source?: string },
+  enabled = true,
+  options?: { poll?: boolean },
+) {
+  const poll = options?.poll === true && enabled;
   return useQuery({
     queryKey: orderKeys.list(filters),
     queryFn: async () => {
@@ -94,6 +99,8 @@ export function useOrders(filters?: { status?: string; q?: string; source?: stri
       });
     },
     enabled,
+    refetchInterval: poll ? ORDER_LIST_POLL_MS : false,
+    refetchIntervalInBackground: true,
   });
 }
 

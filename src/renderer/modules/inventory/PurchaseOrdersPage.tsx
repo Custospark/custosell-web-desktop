@@ -60,7 +60,9 @@ export default function PurchaseOrdersPage() {
     focus: 'details' | 'receipts';
   } | null>(null);
 
-  const { data, isLoading, isFetching, isError, error, refetch } = usePurchaseOrders(undefined, !isOffline);
+  const { data, isLoading, isFetching, isError, error, refetch } = usePurchaseOrders(undefined, !isOffline, {
+    poll: true,
+  });
   const submitPo = useSubmitPurchaseOrder();
   const cancelPo = useCancelPurchaseOrder();
   const deletePo = useDeletePurchaseOrder();

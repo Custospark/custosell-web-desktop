@@ -82,7 +82,7 @@ export default function MyOrdersPage() {
     isError,
     isFetching,
     refetch,
-  } = useMyStorefrontOrdersList(Boolean(token));
+  } = useMyStorefrontOrdersList(Boolean(token), { poll: true });
 
   const allOrders = useMemo(() => data?.orders ?? [], [data?.orders]);
 

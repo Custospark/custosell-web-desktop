@@ -67,8 +67,8 @@ export default function OrdersPage() {
     [statusTab, search, onlineOnly],
   );
 
-  const { data: orders = [], isLoading, error, refetch, isFetching } = useOrders(filters);
-  const { data: allOrders = [] } = useOrders();
+  const { data: orders = [], isLoading, error, refetch, isFetching } = useOrders(filters, true, { poll: true });
+  const { data: allOrders = [] } = useOrders(undefined, true, { poll: true });
   const statusCounts = useMemo(() => {
     const counts: Record<OrderStatus | 'all', number> = {
       all: allOrders.length,

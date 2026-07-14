@@ -1,3 +1,6 @@
+/** Poll Discover → My Orders every 30s while that page is open. */
+export const STOREFRONT_ORDERS_POLL_MS = 30_000;
+
 export const storefrontKeys = {
   all: ['storefront'] as const,
   discover: (q: string, category: string) => [...storefrontKeys.all, 'discover', q, category] as const,

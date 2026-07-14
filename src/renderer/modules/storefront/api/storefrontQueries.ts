@@ -9,7 +9,7 @@ import type {
   StorefrontProduct,
   StorefrontShop,
 } from './storefrontTypes';
-import { storefrontKeys } from './storefrontQueryKeys';
+import { STOREFRONT_ORDERS_POLL_MS, storefrontKeys } from './storefrontQueryKeys';
 import { optimisticallyRemoveWishlistProducts } from './wishlistQueries';
 
 export { storefrontKeys };
@@ -148,7 +148,8 @@ export function useMyStorefrontOrdersInfinite() {
  * Buyer orders + total — single source for My Orders page and strip badge.
  * (Avoids optimistic count bumps that disagree with an empty list.)
  */
-export function useMyStorefrontOrdersList(enabled = true) {
+export function useMyStorefrontOrdersList(enabled = true, options?: { poll?: boolean }) {
+  const poll = options?.poll === true && enabled;
   return useQuery({
     queryKey: storefrontKeys.myOrdersList(),
     queryFn: async () => {
@@ -162,6 +163,8 @@ export function useMyStorefrontOrdersList(enabled = true) {
     enabled,
     staleTime: 15_000,
     refetchOnMount: 'always',
+    refetchInterval: poll ? STOREFRONT_ORDERS_POLL_MS : false,
+    refetchIntervalInBackground: true,
   });
 }
 

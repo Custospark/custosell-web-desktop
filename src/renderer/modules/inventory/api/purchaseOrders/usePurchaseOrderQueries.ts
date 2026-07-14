@@ -6,7 +6,7 @@ import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
 import { inventoryKeys } from '../products/ProductQueries';
 import { PURCHASE_ORDERS } from './purchaseOrderEndpoints';
-import { purchaseOrderKeys } from './purchaseOrderQueryKeys';
+import { PURCHASE_ORDER_LIST_POLL_MS, purchaseOrderKeys } from './purchaseOrderQueryKeys';
 import type {
   CreatePurchaseOrderPayload,
   PurchaseOrder,
@@ -59,7 +59,12 @@ export async function refetchPurchaseOrderQueries(
   void qc.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
 }
 
-export function usePurchaseOrders(filters?: { status?: string }, enabled = true) {
+export function usePurchaseOrders(
+  filters?: { status?: string },
+  enabled = true,
+  options?: { poll?: boolean },
+) {
+  const poll = options?.poll === true && enabled;
   return useQuery({
     queryKey: purchaseOrderKeys.list(filters),
     queryFn: async () => {
@@ -69,10 +74,17 @@ export function usePurchaseOrders(filters?: { status?: string }, enabled = true)
     enabled,
     retry: false,
     networkMode: 'online',
+    refetchInterval: poll ? PURCHASE_ORDER_LIST_POLL_MS : false,
+    refetchIntervalInBackground: true,
   });
 }
 
-export function useIncomingPurchaseOrders(filters?: { status?: string }, enabled = true) {
+export function useIncomingPurchaseOrders(
+  filters?: { status?: string },
+  enabled = true,
+  options?: { poll?: boolean },
+) {
+  const poll = options?.poll === true && enabled;
   return useQuery({
     queryKey: purchaseOrderKeys.incoming(filters),
     queryFn: async () => {
@@ -81,6 +93,8 @@ export function useIncomingPurchaseOrders(filters?: { status?: string }, enabled
     },
     enabled,
     retry: false,
+    refetchInterval: poll ? PURCHASE_ORDER_LIST_POLL_MS : false,
+    refetchIntervalInBackground: true,
   });
 }
 

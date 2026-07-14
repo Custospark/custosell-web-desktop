@@ -44,7 +44,7 @@ export default function DiscoverPage() {
 
   return (
     <div className="flex w-full flex-col gap-3 pb-2">
-      <div className={cn(marketplaceGlassPanel, 'flex shrink-0 gap-1.5 p-1.5 shadow-md')}>
+      <div className={cn(marketplaceGlassPanel, 'flex shrink-0 gap-1.5 p-1.5 shadow-md', 'rounded-none sm:rounded-2xl')}>
         <ModeTab
           active={focus === 'shops'}
           icon={<Store className="h-4 w-4" />}

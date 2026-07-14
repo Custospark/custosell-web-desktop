@@ -62,15 +62,11 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
         aria-modal="true"
         aria-label="More"
         className={cn(
-          'fixed inset-x-0 bottom-0 z-[46] flex max-h-[min(78vh,36rem)] flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl lg:hidden',
+          'fixed inset-x-0 top-16 bottom-0 z-[46] flex flex-col border-t border-slate-200 bg-white shadow-2xl lg:hidden',
           'pb-[max(0.5rem,env(safe-area-inset-bottom))]',
         )}
       >
-        <div className="flex shrink-0 flex-col items-center pt-2.5 pb-1" aria-hidden>
-          <span className="h-1 w-10 rounded-full bg-slate-300" />
-        </div>
-
-        <div className="flex shrink-0 items-center justify-center gap-3 px-4 pb-3">
+        <div className="flex shrink-0 items-center justify-center gap-3 px-4 py-4">
           <div className="text-center">
             <p className="text-base font-semibold text-slate-900">More</p>
             <p className="mt-0.5 text-sm text-slate-500">

@@ -14,7 +14,7 @@ export default function ExpenseListPage() {
   return (
     <div className="space-y-6">
       <Card>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
               <ClipboardList className="w-5 h-5" />
@@ -24,11 +24,11 @@ export default function ExpenseListPage() {
               <p className="text-sm text-gray-500">View, filter, and manage your expenses</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.CATEGORIES)}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate(ROUTES.EXPENSES.CATEGORIES)}>
               <FolderOpen className="w-4 h-4 mr-1.5" />Categories
             </Button>
-            <Button onClick={() => setFormOpen(true)}>
+            <Button className="w-full sm:w-auto" onClick={() => setFormOpen(true)}>
               <Plus className="w-4 h-4 mr-1.5" />Add Expense
             </Button>
           </div>

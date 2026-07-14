@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -49,6 +49,21 @@ const iconBtn =
 
 const ACCOUNT_MENU_WIDTH_PX = 240;
 const ACCOUNT_MENU_GAP_PX = 6;
+const LG_MQ = '(min-width: 1024px)';
+
+function subscribeLgBreakpoint(onStoreChange: () => void) {
+  const mq = window.matchMedia(LG_MQ);
+  mq.addEventListener('change', onStoreChange);
+  return () => mq.removeEventListener('change', onStoreChange);
+}
+
+function getLgBreakpointSnapshot() {
+  return window.matchMedia(LG_MQ).matches;
+}
+
+function getLgBreakpointServerSnapshot() {
+  return false;
+}
 
 function NavbarShiftBadge({ clockIn, className }: { clockIn: string; className?: string }) {
   return (
@@ -145,6 +160,12 @@ export function Navbar() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: ACCOUNT_MENU_WIDTH_PX });
+  /** Match Layout / ProductTour `lg` (1024) — hamburger + logo stay out of the DOM on mobile. */
+  const isDesktopChrome = useSyncExternalStore(
+    subscribeLgBreakpoint,
+    getLgBreakpointSnapshot,
+    getLgBreakpointServerSnapshot,
+  );
 
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -164,8 +185,9 @@ export function Navbar() {
     }
   };
 
-  const isLargeScreen = window.innerWidth >= 1024;
-  const sidebarLabel = (isLargeScreen ? !state.sidebarCollapsed : state.sidebarOpen) ? 'Hide sidebar' : 'Show sidebar';
+  const sidebarLabel = (isDesktopChrome ? !state.sidebarCollapsed : state.sidebarOpen)
+    ? 'Hide sidebar'
+    : 'Show sidebar';
 
   useLayoutEffect(() => {
     if (!dropdownOpen) return;
@@ -227,8 +249,8 @@ export function Navbar() {
         'pl-3 sm:pl-4 lg:pl-3 pr-3 sm:pr-4 lg:pr-6',
       )}
     >
-      <div className="flex h-full items-center gap-3 sm:gap-3 lg:gap-3 min-w-0">
-        <div className="hidden lg:flex min-w-0 flex-1 items-center gap-3 shrink-0">
+      <div className="flex h-full items-center gap-3 min-w-0">
+        <div className="hidden lg:flex min-w-0 flex-1 items-center gap-3">
           <button
             type="button"
             onClick={handleToggleSidebar}
@@ -240,7 +262,7 @@ export function Navbar() {
             <Menu className="w-6 h-6 sm:w-5 sm:h-5" />
           </button>
 
-          {businessName && (
+          {businessName ? (
             <div
               className="flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2.5 py-2 ring-1 ring-slate-100 sm:px-2.5 sm:py-1.5"
               title={businessName}
@@ -255,22 +277,22 @@ export function Navbar() {
                 <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
               )}
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[8rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">
+                <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[9rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">
                   {businessName}
                 </p>
               </div>
             </div>
-          )}
+          ) : null}
 
-          {user?.shift_clock_in && (
+          {user?.shift_clock_in ? (
             <NavbarShiftBadge
               clockIn={user.shift_clock_in}
-              className="hidden lg:flex max-w-[12rem] xl:max-w-none shrink-0"
+              className="max-w-[12rem] xl:max-w-none shrink-0"
             />
-          )}
+          ) : null}
         </div>
 
-        <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-2 md:gap-2 shrink-0 w-full lg:w-auto">
+        <div className="flex flex-1 items-center justify-center gap-2 sm:gap-2 lg:flex-initial lg:justify-end shrink-0">
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <SyncHeaderChip />
             <NavbarNetworkStatus

@@ -228,11 +228,11 @@ export function Navbar() {
       )}
     >
       <div className="flex h-full items-center gap-3 sm:gap-3 lg:gap-3 min-w-0">
-        <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-3 min-w-0">
+        <div className="hidden lg:flex min-w-0 flex-1 items-center gap-3 shrink-0">
           <button
             type="button"
             onClick={handleToggleSidebar}
-            className={cn(iconBtn, 'hidden lg:inline-flex w-10 h-10 sm:w-9 sm:h-9 shrink-0')}
+            className={cn(iconBtn, 'w-10 h-10 sm:w-9 sm:h-9 shrink-0')}
             title={sidebarLabel}
             aria-label={sidebarLabel}
             data-tour="sidebar-hamburger"
@@ -242,7 +242,7 @@ export function Navbar() {
 
           {businessName && (
             <div
-              className="hidden lg:flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2.5 py-2 ring-1 ring-slate-100 sm:px-2.5 sm:py-1.5"
+              className="flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2.5 py-2 ring-1 ring-slate-100 sm:px-2.5 sm:py-1.5"
               title={businessName}
             >
               {businessLogoUrl ? (

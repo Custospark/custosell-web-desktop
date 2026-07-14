@@ -148,18 +148,18 @@ function CashMonthsTable({ months }: { months: ForecastMonthRow[] }) {
   }
 
   return (
-    <div className={cn(FORECAST_SURFACE.tableWrap, 'max-h-[28rem] overflow-auto')}>
-      <table className="min-w-full text-sm">
-        <thead className="sticky top-0 bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+    <div className={cn(FORECAST_SURFACE.tableWrap, 'max-h-[28rem] overflow-x-auto overflow-y-auto')}>
+      <table className="w-full min-w-[44rem] text-sm">
+        <thead className="sticky top-0 z-10 bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
           <tr>
-            <th className="px-3 py-2">Month</th>
-            <th className="px-3 py-2">Opening</th>
-            <th className="px-3 py-2">Inflows</th>
-            <th className="px-3 py-2">Payroll</th>
-            <th className="px-3 py-2">Opex</th>
-            <th className="px-3 py-2">Net</th>
-            <th className="px-3 py-2">Closing</th>
-            <th className="px-3 py-2">Cover</th>
+            <th className="whitespace-nowrap px-3 py-2">Month</th>
+            <th className="whitespace-nowrap px-3 py-2">Opening</th>
+            <th className="whitespace-nowrap px-3 py-2">Inflows</th>
+            <th className="whitespace-nowrap px-3 py-2">Payroll</th>
+            <th className="whitespace-nowrap px-3 py-2">Opex</th>
+            <th className="whitespace-nowrap px-3 py-2">Net</th>
+            <th className="whitespace-nowrap px-3 py-2">Closing</th>
+            <th className="whitespace-nowrap px-3 py-2">Cover</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -338,9 +338,10 @@ export default function ForecastingOverviewPage() {
           <AssumptionsWarningsPanel assumptions={data?.assumptions} warnings={data?.warnings} />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            <div className="space-y-6 lg:col-span-3">
+            <div className="min-w-0 space-y-6 lg:col-span-3">
               <ForecastingSectionCard
                 title="Cash ladder"
+                className="min-w-0 overflow-hidden"
                 description={`${cash.horizon_months}-month projected cash position`}
                 actions={(
                   <Link

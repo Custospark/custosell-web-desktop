@@ -28,6 +28,8 @@ Guarded by `ModuleAccessMiddleware module="forecasting"`. Sidebar group **Foreca
 
 HR-style surfaces in `ui/ForecastingSurface.tsx` + `forecastingSurfaceStyles.ts`. Status chips: coverage `healthy|tight|critical|unknown`, BvA `over|under|on_track`, ZBB `draft|justified|approved`. Assumptions and warnings panels stay visible on overview, KPIs, and scenario runs. All money amounts use `formatForecastMoney` → shared `formatCurrency` with the business configured currency (same as Sales / Inventory).
 
+Overview **Cash ladder** table: `min-w-0` on the grid column + `overflow-x-auto` / `min-w-[44rem]` on the table so narrow viewports scroll horizontally inside the card instead of blowing out the layout.
+
 ## Product recurring (Phase 3)
 
 `Product.is_recurring` + optional `billing_interval` on create/update (ProductFormDrawer). Enables SaaS KPI mode when recurring products exist.

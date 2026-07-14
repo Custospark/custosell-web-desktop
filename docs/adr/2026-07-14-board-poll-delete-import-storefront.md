@@ -27,7 +27,8 @@ Managers needed reliable board visibility edits, teammates needed near-live kanb
    - `GET /pipeline/boards/{id}/import-template`  
    - `POST /pipeline/boards/{id}/import`  
    FE: `BoardCardImportModal` (download template → upload), contributors+.  
-   **Long processing window (product parity):** FE axios `timeout: 600_000` (10 min); after upload bytes finish, UI shows “Processing on server…” and keeps the modal open. BE `set_time_limit(600)` + `memory_limit` 512M; import uses 100-row DB chunks, cached stage positions/assignees, and `createLead(..., for_import)` which skips per-row notifications and heavy history load.
+   **Long processing window (product parity):** FE axios `timeout: 600_000` (10 min); after upload bytes finish, UI shows “Processing on server…” and keeps the modal open. BE `set_time_limit(600)` + `memory_limit` 512M; import uses 100-row DB chunks, cached stage positions/assignees, and `createLead(..., for_import)` which skips per-row notifications and heavy history load.  
+   **Due Date cells:** Excel date-formatted cells arrive as serial numbers; BE normalizes serials / DateTime / common strings to `YYYY-MM-DD` before validation. Template stores the sample due date as text.
 
 6. **Goal decomposition anchors**  
    FE sends `anchor_start` / `anchor_end` from the Progress period currently in view (`boardProgressAnchors.ts`), including custom ranges, so BE decomposition is based on that period.

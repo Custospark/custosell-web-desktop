@@ -63,12 +63,6 @@ export function StorefrontActionStrip({
   const [moreOpen, setMoreOpen] = useState(false);
   const shopsActive = active === 'browse';
 
-  const primaryTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; tone: Tone; onClick: () => void }> = [
-    ...(onHome ? [{ tab: 'home' as const, icon: <Home className="h-4 w-4" aria-hidden />, tone: 'slate' as Tone, onClick: onHome }] : []),
-    { tab: 'discover' as const, icon: <Compass className="h-4 w-4" aria-hidden />, tone: 'amber' as Tone, onClick: onDiscover },
-    { tab: 'orders' as const, icon: <LayoutList className="h-4 w-4" aria-hidden />, tone: 'blue' as Tone, onClick: onOrders },
-  ];
-
   const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; onClick: () => void }> = [
     { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, onClick: onBrowse },
     {

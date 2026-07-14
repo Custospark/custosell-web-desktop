@@ -12,15 +12,18 @@ import type {
   CreateChecklistPayload,
   CreateChecklistItemPayload,
   PipelineLead,
+  PipelineLeadActivity,
 } from './pipelineTypes';
-import { updateLeadOnKanban } from './pipelineKanbanCache';
+import { updateLeadOnKanban, mergeBoardOnKanban } from './pipelineKanbanCache';
 import { pipelineKeys } from './pipelineQueryKeys';
 import {
   applyLeadChecklistsOptimistic,
+  buildOptimisticSystemEntry,
   computeChecklistCounts,
   mergeServerChecklist,
   mergeServerChecklistItem,
   nextOptimisticId,
+  patchLeadFieldsOptimistic,
   replaceChecklistInLead,
   replaceChecklistItemInLead,
 } from './pipelineOptimisticCache';

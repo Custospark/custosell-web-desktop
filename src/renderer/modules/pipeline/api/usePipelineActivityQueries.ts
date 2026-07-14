@@ -15,6 +15,8 @@ import {
   appendLeadActivitiesOptimistic,
   buildOptimisticComment,
   buildOptimisticSystemEntry,
+  nextOptimisticId,
+  applyLeadMutationToCache,
   removeCommentWithHistoryOptimistic,
   patchLeadActivityOptimistic,
   replaceOptimisticActivity,

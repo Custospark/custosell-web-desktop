@@ -90,7 +90,7 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
             : 'rounded-xl border-2 border-slate-300/90 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-2 py-1.5 text-xs hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md',
         )}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-[10px] font-bold text-teal-800">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-800">
           {initials(user.name)}
         </span>
         <span className="min-w-0 flex-1 text-left">
@@ -122,9 +122,9 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
               type="button"
               role="menuitem"
               onClick={goOrders}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-teal-50"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-indigo-50"
             >
-              <Package className="h-4 w-4 text-teal-700" />
+              <Package className="h-4 w-4 text-indigo-700" />
               My orders
             </button>
             <button

@@ -120,7 +120,7 @@ export function DiscoverProductCard({
       {media}
       <div className="min-w-0 flex-1 space-y-0.5">
         <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900">{product.name}</p>
-        <p className="text-sm font-bold tabular-nums text-teal-900">
+        <p className="text-sm font-bold tabular-nums text-indigo-900">
           <StorefrontProductPrice product={product} currency={currency} size="sm" />
         </p>
         {stars}
@@ -151,7 +151,7 @@ export function DiscoverProductCard({
           {outOfStock ? 'Out of stock' : 'Add'}
         </Button>
       ) : (
-        <span className="mt-auto inline-flex items-center justify-center rounded-lg bg-teal-50 px-2 py-1.5 text-xs font-semibold text-teal-800 ring-1 ring-teal-200/80">
+        <span className="mt-auto inline-flex items-center justify-center rounded-lg bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200/80">
           {onOpenDetail ? 'View details →' : 'View shop →'}
         </span>
       )}
@@ -161,7 +161,7 @@ export function DiscoverProductCard({
   const cardClass = cn(
     marketplaceGlassPanel,
     'flex h-full flex-col gap-2.5 p-2.5 shadow-md transition-all duration-200',
-    'hover:-translate-y-1 hover:border-teal-400 hover:shadow-xl hover:shadow-teal-900/15',
+    'hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-900/15',
     'active:translate-y-0 active:scale-[0.99]',
     outOfStock && 'opacity-90',
     className,

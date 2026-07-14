@@ -147,7 +147,7 @@ function DiscoverShellChrome() {
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <Link
               to={`${ROUTES.DISCOVER}?focus=shops`}
-              className="flex shrink-0 items-center gap-1.5 sm:rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-teal-600/40 sm:gap-2.5"
+              className="flex shrink-0 items-center gap-1.5 sm:rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-600/40 sm:gap-2.5"
               aria-label={`${PRODUCT_NAME} Discover`}
               onClick={() => setCartOpen(false)}
             >
@@ -157,7 +157,7 @@ function DiscoverShellChrome() {
               </span>
             </Link>
             <div className="min-w-0 flex-1 border-l border-slate-300/70 pl-2 sm:pl-3">
-              <p className="hidden text-[11px] font-semibold uppercase tracking-wide text-teal-800 sm:block">
+              <p className="hidden text-[11px] font-semibold uppercase tracking-wide text-indigo-800 sm:block">
                 Discover
               </p>
               <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
@@ -172,8 +172,8 @@ function DiscoverShellChrome() {
                 type="button"
                 onClick={() => openSignIn('general')}
                 className={cn(
-                  'shrink-0 font-semibold text-teal-900 shadow-sm transition sm:hidden',
-                  'rounded-md border border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-2 py-1.5 text-[11px]',
+                  'shrink-0 font-semibold text-indigo-900 shadow-sm transition sm:hidden',
+                  'rounded-md border border-indigo-300/90 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 px-2 py-1.5 text-[11px]',
                 )}
               >
                 Account
@@ -195,7 +195,7 @@ function DiscoverShellChrome() {
               <button
                 type="button"
                 onClick={() => openSignIn('general')}
-                className="rounded-xl border-2 border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-md hover:shadow-teal-200/50"
+                className="rounded-xl border-2 border-indigo-300/90 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-900 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-200/50"
               >
                 Account
               </button>

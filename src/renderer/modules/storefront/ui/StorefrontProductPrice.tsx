@@ -33,7 +33,7 @@ export function StorefrontProductPrice({
     <span className={cn('inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5', className)}>
       {onSale ? (
         <>
-          <span className={cn('tabular-nums text-teal-900', saleClass)}>
+          <span className={cn('tabular-nums text-indigo-900', saleClass)}>
             {formatCurrency(sale, currency)}
           </span>
           <span className={cn('tabular-nums text-slate-400 line-through', strikeClass)}>
@@ -46,7 +46,7 @@ export function StorefrontProductPrice({
           ) : null}
         </>
       ) : (
-        <span className={cn('tabular-nums text-teal-900', saleClass)}>
+        <span className={cn('tabular-nums text-indigo-900', saleClass)}>
           {formatCurrency(regular, currency)}
         </span>
       )}

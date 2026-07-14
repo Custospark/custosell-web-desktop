@@ -26,7 +26,7 @@ export function DiscoverProductRow({ product, currency, shopSlug }: DiscoverProd
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-        <p className="mt-0.5 text-sm font-semibold tabular-nums text-teal-900">
+        <p className="mt-0.5 text-sm font-semibold tabular-nums text-indigo-900">
           <StorefrontProductPrice product={product} currency={currency} size="sm" />
         </p>
         {product.category?.name ? (

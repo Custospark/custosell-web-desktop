@@ -40,7 +40,7 @@ function Section({
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
       <div className="mb-2.5 flex items-start gap-2.5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-teal-700 shadow-sm ring-1 ring-slate-200/80">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200/80">
           <Icon className="h-4 w-4" />
         </span>
         <div className="min-w-0">
@@ -107,7 +107,7 @@ export function StorefrontDeliveryContactField({
   const canSave = Boolean(name.trim() && localPhone.replace(/\D/g, '').length > 0);
 
   const inputCls =
-    'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/25';
+    'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/25';
 
   const locationLine = [value.delivery_address.trim(), value.delivery_city.trim()].filter(Boolean).join(', ');
 
@@ -123,18 +123,18 @@ export function StorefrontDeliveryContactField({
           onClick={openModal}
           className={cn(
             'group flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-teal-600/40 focus:ring-offset-1',
+            'focus:outline-none focus:ring-2 focus:ring-indigo-600/40 focus:ring-offset-1',
             disabled && 'cursor-not-allowed opacity-60',
-            !disabled && 'hover:border-teal-300 hover:shadow-sm',
+            !disabled && 'hover:border-indigo-300 hover:shadow-sm',
             !hasContact && !hasPartial && 'border-amber-200 bg-amber-50/60',
             hasPartial && !hasContact && 'border-amber-300 bg-amber-50/80',
-            hasContact && 'border-teal-200 bg-teal-50/50',
+            hasContact && 'border-indigo-200 bg-indigo-50/50',
           )}
         >
           <span
             className={cn(
               'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-              hasContact ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-800',
+              hasContact ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-800',
             )}
           >
             <MapPin className="h-4 w-4" />
@@ -167,7 +167,7 @@ export function StorefrontDeliveryContactField({
               </>
             )}
           </span>
-          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-teal-700 group-hover:text-teal-800">
+          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:text-indigo-800">
             {hasContact ? 'Change' : 'Add'}
             <ChevronRight className="h-4 w-4" />
           </span>
@@ -206,7 +206,7 @@ export function StorefrontDeliveryContactField({
               required
               showPreview
               label={undefined}
-              inputClassName="rounded-xl border-slate-300 focus:border-teal-600 focus:ring-teal-600/25"
+              inputClassName="rounded-xl border-slate-300 focus:border-indigo-600 focus:ring-indigo-600/25"
               buttonClassName="h-[42px] rounded-xl border-slate-300"
             />
           </Section>

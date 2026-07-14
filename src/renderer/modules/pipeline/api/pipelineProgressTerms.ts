@@ -185,6 +185,7 @@ export function targetDisplayStats(target: Pick<BoardTarget, 'actual_value' | 't
       overallGoal: null as number | null,
       sliceLabel: null as string | null,
       expectedToDate: null as number | null,
+      horizonExpectedToDate: null as number | null,
     };
   }
 
@@ -196,6 +197,11 @@ export function targetDisplayStats(target: Pick<BoardTarget, 'actual_value' | 't
     overallGoal: slice.root_target_value,
     sliceLabel: targetPeriodSliceLabel(slice),
     expectedToDate: slice.expected_to_date,
+    /** Full planning-horizon cumulative expected through today (decade/five_year/year). */
+    horizonExpectedToDate:
+      slice.horizon_expected_to_date != null && Number.isFinite(slice.horizon_expected_to_date)
+        ? slice.horizon_expected_to_date
+        : null,
   };
 }
 

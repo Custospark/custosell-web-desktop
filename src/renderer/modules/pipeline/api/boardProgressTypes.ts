@@ -82,6 +82,8 @@ export type TargetAllocation = {
   period_start: string;
   period_end: string;
   expected_value: number;
+  /** Running sum of period shares through this node’s end (additive; omit if BE not yet shipping). */
+  cumulative_expected?: number;
   expected_to_date?: number;
   actual_value?: number;
   stage_id: number | null;
@@ -98,6 +100,11 @@ export type TargetPeriodSlice = {
   view_period_type?: string | null;
   expected_value: number;
   expected_to_date: number;
+  /**
+   * Cumulative expected across the full planning horizon through “today”
+   * (decade | five_year | year). Distinct from view-window `expected_to_date`.
+   */
+  horizon_expected_to_date?: number | null;
   actual_value: number;
   progress_percent: number;
   pace_status: BoardTargetPaceStatus;

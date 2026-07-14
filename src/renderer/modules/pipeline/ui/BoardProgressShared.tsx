@@ -101,6 +101,11 @@ export function TargetCard({
               Expected by now: {formatMetricValue(stats.expectedToDate, target.unit, ctx.currency)}
             </p>
           ) : null}
+          {stats.horizonExpectedToDate != null ? (
+            <p className="mt-0.5 text-[10px] text-violet-600/80">
+              Horizon expected so far: {formatMetricValue(stats.horizonExpectedToDate, target.unit, ctx.currency)}
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="mt-3 space-y-1.5">

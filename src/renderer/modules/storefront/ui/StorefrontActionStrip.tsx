@@ -28,7 +28,7 @@ type Tone = 'slate' | 'amber' | 'teal' | 'emerald' | 'rose' | 'blue';
 const activeTone: Record<Tone, string> = {
   slate: 'border-slate-500 bg-slate-100 text-slate-950 ring-1 ring-slate-300/50',
   amber: 'border-amber-500 bg-amber-100 text-amber-950 ring-1 ring-amber-300/50',
-  teal: 'border-teal-500 bg-teal-100 text-teal-950 ring-1 ring-teal-300/50',
+  teal: 'border-indigo-500 bg-indigo-100 text-indigo-950 ring-1 ring-indigo-300/50',
   emerald: 'border-emerald-500 bg-emerald-100 text-emerald-950 ring-1 ring-emerald-300/50',
   rose: 'border-rose-500 bg-rose-100 text-rose-950 ring-1 ring-rose-300/50',
   blue: 'border-blue-500 bg-blue-100 text-blue-950 ring-1 ring-blue-300/50',
@@ -37,7 +37,7 @@ const activeTone: Record<Tone, string> = {
 const inactiveTone: Record<Tone, string> = {
   slate: 'border-slate-200 bg-gradient-to-b from-slate-50 to-white text-slate-800',
   amber: 'border-amber-200 bg-gradient-to-b from-amber-50 to-white text-amber-950',
-  teal: 'border-teal-200 bg-gradient-to-b from-teal-50 to-white text-teal-900',
+  teal: 'border-indigo-200 bg-gradient-to-b from-teal-50 to-white text-indigo-900',
   emerald: 'border-emerald-200 bg-gradient-to-b from-emerald-50 to-white text-emerald-900',
   rose: 'border-rose-200 bg-gradient-to-b from-rose-50 to-white text-rose-900',
   blue: 'border-blue-200 bg-gradient-to-b from-blue-50 to-white text-blue-900',
@@ -291,8 +291,8 @@ function DesktopTab({
       ? 'ring-2 ring-amber-300/60 bg-amber-100 text-amber-950 shadow-md border-amber-500'
       : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 hover:border-amber-400 hover:from-amber-100 hover:to-orange-100 hover:shadow-md hover:shadow-amber-200/50 text-amber-950',
     teal: active
-      ? 'ring-2 ring-teal-300/60 bg-teal-100 text-teal-950 shadow-md border-teal-500'
-      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 hover:border-teal-400 hover:from-teal-100 hover:to-cyan-100 hover:shadow-md hover:shadow-teal-200/50 text-teal-900',
+      ? 'ring-2 ring-indigo-300/60 bg-indigo-100 text-indigo-950 shadow-md border-indigo-500'
+      : 'border-indigo-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 hover:border-indigo-400 hover:from-teal-100 hover:to-cyan-100 hover:shadow-md hover:shadow-indigo-200/50 text-indigo-900',
     emerald: active
       ? 'ring-2 ring-emerald-300/60 bg-emerald-100 text-emerald-950 shadow-md border-emerald-500'
       : 'border-emerald-300/90 bg-gradient-to-r from-emerald-50 via-white to-teal-50 hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:shadow-md hover:shadow-emerald-200/50 text-emerald-900',

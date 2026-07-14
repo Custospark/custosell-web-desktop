@@ -183,7 +183,7 @@ export default function ShopPage() {
         </p>
         <Link
           to={`${ROUTES.DISCOVER}?focus=shops`}
-          className="mt-4 inline-flex text-sm font-semibold text-teal-800 hover:underline"
+          className="mt-4 inline-flex text-sm font-semibold text-indigo-800 hover:underline"
         >
           Browse businesses
         </Link>
@@ -212,7 +212,7 @@ export default function ShopPage() {
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-600">
               {locationLine ? (
                 <span className="inline-flex max-w-full items-start gap-1.5">
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" aria-hidden />
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" aria-hidden />
                   <span className="min-w-0">{locationLine}</span>
                 </span>
               ) : null}
@@ -253,7 +253,7 @@ export default function ShopPage() {
       </div>
 
       <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5', 'rounded-none sm:rounded-2xl')}>
-        <Search className="h-4 w-4 shrink-0 text-teal-700" />
+        <Search className="h-4 w-4 shrink-0 text-indigo-700" />
         <input
           type="search"
           value={q}

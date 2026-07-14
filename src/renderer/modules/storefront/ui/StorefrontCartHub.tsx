@@ -253,8 +253,8 @@ export function StorefrontCartHub({
                   className={cn(
                     'inline-flex shrink-0 items-center gap-1 rounded-xl border-2 pl-2.5 pr-1 py-1 text-xs font-semibold transition-all',
                     active
-                      ? 'border-teal-500 bg-teal-50 text-teal-950 ring-2 ring-teal-300/40 shadow-md'
-                      : 'border-teal-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-teal-900',
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300/40 shadow-md'
+                      : 'border-indigo-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 text-indigo-900',
                   )}
                 >
                   <button
@@ -262,7 +262,7 @@ export function StorefrontCartHub({
                     onClick={() => setActiveSlug(bag.shop.slug)}
                     className="inline-flex max-w-[10rem] items-center gap-1.5 hover:-translate-y-0.5"
                   >
-                    <Store className="h-3.5 w-3.5 shrink-0 text-teal-600" />
+                    <Store className="h-3.5 w-3.5 shrink-0 text-indigo-600" />
                     <span className="truncate">{bag.shop.name}</span>
                     <span className="tabular-nums text-slate-500">({bag.items.length})</span>
                   </button>

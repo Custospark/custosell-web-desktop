@@ -71,7 +71,7 @@ export default function WishlistPage() {
         <button
           type="button"
           onClick={() => requestSignIn({ intent: 'general' })}
-          className="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+          className="mt-4 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800"
         >
           Sign in
         </button>
@@ -93,7 +93,7 @@ export default function WishlistPage() {
           type="button"
           onClick={() => void refetch()}
           disabled={isFetching}
-          className="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+          className="mt-4 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
         >
           {isFetching ? 'Retrying…' : 'Retry'}
         </button>

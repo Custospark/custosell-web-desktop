@@ -49,7 +49,7 @@ export function StorefrontBagCheckout({
           <p className="truncate text-sm font-semibold text-slate-900">{bag.shop.name}</p>
           <Link
             to={ROUTES.SHOP(bag.shop.slug)}
-            className="text-xs font-semibold text-teal-800 hover:underline"
+            className="text-xs font-semibold text-indigo-800 hover:underline"
             onClick={onClose}
           >
             @{bag.shop.slug} · View shop
@@ -169,7 +169,7 @@ export function StorefrontBagCheckout({
         <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
           <button
             type="button"
-            className="text-sm font-semibold text-teal-800 hover:underline"
+            className="text-sm font-semibold text-indigo-800 hover:underline"
             onClick={onClose}
           >
             Keep shopping

@@ -25,7 +25,7 @@ Pipeline and project boards need a shared **Progress** experience: metrics, tren
 ### Frontend
 
 - `BoardProgressView` — charts, headline metrics, member table, targets list.
-- `BoardTargetFormDrawer` — create/edit KPI, goal, objective + key results on create.
+- `BoardTargetFormModal` — create/edit KPI, goal, objective + key results on create (centered modal).
 - `pipelineProgressTerms.ts` — board-aware labels for pipeline vs project vs estimates.
 - Progress queries poll every 30s when the Progress canvas is open; pipeline mutations invalidate progress cache.
 

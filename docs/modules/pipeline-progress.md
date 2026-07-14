@@ -78,7 +78,7 @@ Progress export downloads:
 | File | Role |
 |------|------|
 | `BoardProgressView.tsx` | Main canvas |
-| `BoardTargetFormDrawer.tsx` | Target create/edit with decomposition |
+| `BoardTargetFormModal.tsx` | Target create/edit with decomposition (centered modal) |
 | `ProgressColumnSelector.tsx` | Column multi-select |
 | `DecompositionPreviewTree.tsx` | Preview / override UI |
 | `ProgressChartBuilder.tsx` | Saved chart layout |

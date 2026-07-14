@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Target } from 'lucide-react';
-import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { Modal } from '../../../shared/components/modals/Modal';
+import { Button } from '../../../shared/components/buttons/Button';
 import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import type {
@@ -38,7 +39,7 @@ import { BoardTargetDecompositionSection } from './BoardTargetDecompositionSecti
 import { BoardTargetOwnershipSection } from './BoardTargetOwnershipSection';
 import { BoardTargetKeyResultsSection } from './BoardTargetKeyResultsSection';
 
-interface BoardTargetFormDrawerProps {
+interface BoardTargetFormModalProps {
   open: boolean;
   onClose: () => void;
   boardId: number;
@@ -46,14 +47,12 @@ interface BoardTargetFormDrawerProps {
   board?: Pick<PipelineBoard, 'members'> | null;
   context: BoardProgressContext;
   period: ProgressPeriod;
-  customFrom?: string;
-  customTo?: string;
   members: BoardProgressMember[];
   stages: BoardProgressStage[];
   target?: BoardTarget | null;
 }
 
-export default function BoardTargetFormDrawer({
+export default function BoardTargetFormModal({
   open,
   onClose,
   boardId,
@@ -64,7 +63,7 @@ export default function BoardTargetFormDrawer({
   members,
   stages,
   target,
-}: BoardTargetFormDrawerProps) {
+}: BoardTargetFormModalProps) {
   const isEditing = Boolean(target);
   const createTarget = useCreateBoardTarget(boardId);
   const updateTarget = useUpdateBoardTarget(boardId);
@@ -252,7 +251,7 @@ export default function BoardTargetFormDrawer({
     createTarget.mutate(basePayload, { onSuccess: onClose });
   };
 
-  const drawerTitle = isEditing ? 'Edit target' : 'Add target';
+  const modalTitle = isEditing ? 'Edit target' : 'Add target';
   const heroDescription = context.is_project_board
     ? `Define what success looks like on this project board for ${periodLabel.toLowerCase()}.`
     : context.is_pipeline_board
@@ -268,20 +267,25 @@ export default function BoardTargetFormDrawer({
       : 'e.g. Complete 15 tasks this month';
 
   return (
-    <SlideDrawer
-      open={open}
+    <Modal
+      isOpen={open}
       onClose={onClose}
-      title={drawerTitle}
+      title={modalTitle}
       subtitle={
         isEditing
           ? 'Update this target for the selected period.'
           : 'Group your target details below — type, measure, and ownership.'
       }
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      canSubmit={canSubmit}
+      size="xl"
+      bodyClassName="px-6 py-4"
     >
-      <div className="space-y-5">
+      <form
+        className="space-y-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
         <PipelineModalHero
           icon={Target}
           tone="indigo"
@@ -362,7 +366,22 @@ export default function BoardTargetFormDrawer({
             onChange={setKeyResults}
           />
         )}
-      </div>
-    </SlideDrawer>
+
+        <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            loading={isSubmitting}
+            disabled={!canSubmit}
+            className="inline-flex items-center gap-2"
+          >
+            <Target className="h-4 w-4" />
+            {isEditing ? 'Save target' : 'Create target'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

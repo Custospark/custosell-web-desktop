@@ -18,7 +18,7 @@ import {
   useArchiveBoardTarget,
   useMyBoardProgressDisplay,
 } from '../api/useBoardProgressQueries';
-import BoardTargetFormDrawer from './BoardTargetFormDrawer';
+import BoardTargetFormModal from './BoardTargetFormModal';
 import ProgressColumnSelector from './ProgressColumnSelector';
 import BoardMyProgressTab from './BoardMyProgressTab';
 import ProgressChartBuilder from './ProgressChartBuilder';
@@ -67,7 +67,7 @@ export default function BoardProgressView({
   selectedStageIds,
   onSelectedStageIdsChange,
 }: BoardProgressViewProps) {
-  const [targetDrawerOpen, setTargetDrawerOpen] = useState(false);
+  const [targetModalOpen, setTargetModalOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<BoardTarget | null>(null);
   const [progressTab, setProgressTab] = useState<ProgressTab>('team');
   const [funnelMode, setFunnelMode] = useState<'count' | 'value'>('count');
@@ -87,9 +87,9 @@ export default function BoardProgressView({
 
   const canAddTarget = canManageTargets || Boolean(displaySummary?.can_manage_targets);
 
-  const openTargetDrawer = () => {
+  const openTargetModal = () => {
     setEditingTarget(null);
-    setTargetDrawerOpen(true);
+    setTargetModalOpen(true);
   };
 
   const trendData = useMemo(
@@ -156,7 +156,7 @@ export default function BoardProgressView({
               {canAddTarget && (
                 <Button
                   size="sm"
-                  onClick={openTargetDrawer}
+                  onClick={openTargetModal}
                   className="inline-flex shrink-0 items-center gap-2 shadow-sm"
                 >
                   <Plus className="h-4 w-4" />
@@ -323,7 +323,7 @@ export default function BoardProgressView({
             : 'KPIs, goals, objectives, and key results for this board'}
         icon={Target}
         action={canAddTarget ? (
-          <Button size="sm" onClick={openTargetDrawer} className="inline-flex items-center gap-2">
+          <Button size="sm" onClick={openTargetModal} className="inline-flex items-center gap-2">
             <Plus className="h-4 w-4" />
             {progressAddTargetLabel(ctx)}
           </Button>
@@ -339,7 +339,7 @@ export default function BoardProgressView({
               <Button
                 size="sm"
                 className="mt-4"
-                onClick={openTargetDrawer}
+                onClick={openTargetModal}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {progressAddTargetLabel(ctx)}
@@ -356,7 +356,7 @@ export default function BoardProgressView({
                 canManage={canAddTarget}
                 onEdit={() => {
                   setEditingTarget(target);
-                  setTargetDrawerOpen(true);
+                  setTargetModalOpen(true);
                 }}
                 onArchive={() => {
                   if (window.confirm(`Archive "${target.title}"?`)) {
@@ -371,10 +371,10 @@ export default function BoardProgressView({
       </>
       )}
 
-      <BoardTargetFormDrawer
-        open={targetDrawerOpen}
+      <BoardTargetFormModal
+        open={targetModalOpen}
         onClose={() => {
-          setTargetDrawerOpen(false);
+          setTargetModalOpen(false);
           setEditingTarget(null);
         }}
         boardId={boardId}
@@ -382,8 +382,6 @@ export default function BoardProgressView({
         board={board}
         context={ctx}
         period={period}
-        customFrom={customFrom}
-        customTo={customTo}
         members={members}
         stages={stages.length > 0 ? stages : displaySummary?.stages ?? []}
         target={editingTarget}

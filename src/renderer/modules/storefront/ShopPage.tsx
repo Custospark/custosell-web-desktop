@@ -92,8 +92,7 @@ export default function ShopPage() {
               showToast('success', 'Shop link copied');
             }}
           >
-            <span className="sm:hidden">Copy</span>
-            <span className="hidden sm:inline">Copy business Link</span>
+            <span>Copy business Link</span>
           </button>
           <a
             href={whatsappShareUrl(`Order from ${shop.name}: ${shareUrl}`)}

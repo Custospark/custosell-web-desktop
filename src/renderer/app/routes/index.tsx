@@ -19,10 +19,6 @@ import MyShiftPage from '../../modules/shifts/MyShiftPage';
 import DashboardPage from '../../modules/dashboard/DashboardPage';
 import RecordExpensePage from '../../modules/expenses/RecordExpensePage';
 import ExpenseListPage from '../../modules/expenses/ExpenseListPage';
-import LoginPage from '../../modules/auth/LoginPage';
-import RegisterPage from '../../modules/auth/RegisterPage';
-import ForgotPasswordPage from '../../modules/auth/ForgotPasswordPage';
-import ResetPasswordPage from '../../modules/auth/ResetPasswordPage';
 import ProductsPage from '../../modules/inventory/ProductsPage';
 import CategoriesPage from '../../modules/inventory/CategoriesPage';
 import StockLedgerPage from '../../modules/inventory/StockLedgerPage';
@@ -76,15 +72,8 @@ import CabinetsPage from '../../modules/documents/pages/CabinetsPage';
 import DocumentsCabinetPage from '../../modules/documents/pages/DocumentsCabinetPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 // import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
-import LandingLayout from '../../modules/landing/LandingLayout';
-import LandingPage from '../../modules/landing/LandingPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import PricingPage from '../../modules/landing/PricingPage';
-import DiscoverLayout from '../../modules/storefront/DiscoverLayout';
-import DiscoverPage from '../../modules/storefront/DiscoverPage';
-import MyOrdersPage from '../../modules/storefront/MyOrdersPage';
-import WishlistPage from '../../modules/storefront/WishlistPage';
-import ShopPage from '../../modules/storefront/ShopPage';
 import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
 
 const EstimatesLayout = lazy(() => import('../../modules/estimates/pages/EstimatesLayout'));
@@ -117,6 +106,20 @@ const ForecastingBudgetsPage = lazy(() => import('../../modules/forecasting/page
 const ForecastingBudgetDetailPage = lazy(() => import('../../modules/forecasting/pages/ForecastingBudgetDetailPage'));
 const ForecastingKpisPage = lazy(() => import('../../modules/forecasting/pages/ForecastingKpisPage'));
 const ForecastingScenariosPage = lazy(() => import('../../modules/forecasting/pages/ForecastingScenariosPage'));
+
+const DiscoverLayout = lazy(() => import('../../modules/storefront/DiscoverLayout'));
+const DiscoverPage = lazy(() => import('../../modules/storefront/DiscoverPage'));
+const MyOrdersPage = lazy(() => import('../../modules/storefront/MyOrdersPage'));
+const WishlistPage = lazy(() => import('../../modules/storefront/WishlistPage'));
+const ShopPage = lazy(() => import('../../modules/storefront/ShopPage'));
+
+const LandingLayout = lazy(() => import('../../modules/landing/LandingLayout'));
+const LandingPage = lazy(() => import('../../modules/landing/LandingPage'));
+
+const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
+const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (

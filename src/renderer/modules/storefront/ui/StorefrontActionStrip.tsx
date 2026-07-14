@@ -73,32 +73,14 @@ export function StorefrontActionStrip({
     { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, onClick: onBrowse },
     {
       tab: 'cart' as const,
-      icon: (
-        <span className="relative inline-flex shrink-0">
-          <ShoppingCart className="h-4 w-4" aria-hidden />
-          {cartCount > 0 ? (
-            <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white">
-              {cartCount > 99 ? '99+' : cartCount}
-            </span>
-          ) : null}
-        </span>
-      ),
+      icon: <ShoppingCart className="h-4 w-4" aria-hidden />,
       label: 'Cart',
       tone: 'emerald' as Tone,
       onClick: onCart,
     },
     {
       tab: 'wishlist' as const,
-      icon: (
-        <span className="relative inline-flex shrink-0">
-          <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />
-          {wishlistCount > 0 ? (
-            <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white">
-              {wishlistCount > 99 ? '99+' : wishlistCount}
-            </span>
-          ) : null}
-        </span>
-      ),
+      icon: <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />,
       label: 'Wishlist',
       tone: 'rose' as Tone,
       onClick: onWishlist,
@@ -126,7 +108,24 @@ export function StorefrontActionStrip({
         <span className={cn('flex h-7 w-7 items-center justify-center', act ? 'rounded-md bg-white/60' : '')}>
           {icon}
         </span>
-        <span className="w-full truncate">{label}</span>
+        <span className="w-full truncate inline-flex items-center justify-center gap-1">
+          {label}
+          {tab === 'orders' && ordersCount > 0 ? (
+            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold leading-none text-white">
+              {ordersCount > 99 ? '99+' : ordersCount}
+            </span>
+          ) : null}
+          {tab === 'cart' && cartCount > 0 ? (
+            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[8px] font-bold leading-none text-white">
+              {cartCount > 99 ? '99+' : cartCount}
+            </span>
+          ) : null}
+          {tab === 'wishlist' && wishlistCount > 0 ? (
+            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold leading-none text-white">
+              {wishlistCount > 99 ? '99+' : wishlistCount}
+            </span>
+          ) : null}
+        </span>
       </button>
     );
   };
@@ -143,16 +142,7 @@ export function StorefrontActionStrip({
       <div className="grid grid-cols-4 items-stretch lg:hidden">
         {onHome ? tabBtn('home', <Home className="h-4 w-4" aria-hidden />, 'slate', homeLabel, onHome) : null}
         {tabBtn('discover', <Compass className="h-4 w-4" aria-hidden />, 'amber', 'Products', onDiscover)}
-        {tabBtn('orders', (
-          <span className="relative inline-flex shrink-0">
-            <LayoutList className="h-4 w-4" aria-hidden />
-            {ordersCount > 0 ? (
-              <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold leading-none text-white ring-1 ring-white">
-                {ordersCount > 99 ? '99+' : ordersCount}
-              </span>
-            ) : null}
-          </span>
-        ), 'blue', 'Orders', onOrders)}
+        {tabBtn('orders', <LayoutList className="h-4 w-4" aria-hidden />, 'blue', 'Orders', onOrders)}
 
         <button
           type="button"

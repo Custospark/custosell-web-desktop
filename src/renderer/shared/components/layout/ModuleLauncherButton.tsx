@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Grid3X3 } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import ModuleLauncherModal from './ModuleLauncherModal';
 
@@ -21,7 +21,7 @@ export function ModuleLauncherButton() {
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <Grid3X3 className="h-4 w-4 shrink-0" aria-hidden />
+        <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
         <span className="hidden xl:inline truncate text-xs font-medium xl:text-sm">Apps</span>
       </button>
       <ModuleLauncherModal open={open} onClose={() => setOpen(false)} />

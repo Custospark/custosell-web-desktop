@@ -149,4 +149,4 @@ export const marketplaceGlassHeader =
 
 /** Opaque enough for WCAG-friendly text on photo backgrounds */
 export const marketplaceGlassPanel =
-  'rounded-2xl border border-slate-200/90 bg-white/95 shadow-lg shadow-slate-900/15 backdrop-blur-xl backdrop-saturate-150';
+  'rounded-2xl border border-emerald-200/80 bg-white/95 shadow-lg shadow-slate-900/15 backdrop-blur-xl backdrop-saturate-150';

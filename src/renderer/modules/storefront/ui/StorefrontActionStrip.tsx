@@ -134,13 +134,13 @@ export function StorefrontActionStrip({
   return (
     <nav
       className={cn(
-        'lg:hidden relative z-[10001] flex shrink-0 flex-col border-t border-slate-200 bg-white',
+        'relative z-[10001] flex shrink-0 flex-col border-t border-slate-200 bg-white',
         'pb-[max(0.5rem,env(safe-area-inset-bottom))]',
         className,
       )}
       aria-label="Storefront navigation"
     >
-      <div className="grid grid-cols-4 items-stretch">
+      <div className="grid grid-cols-4 items-stretch lg:hidden">
         {onHome ? tabBtn('home', <Home className="h-4 w-4" aria-hidden />, 'slate', homeLabel, onHome) : null}
         {tabBtn('discover', <Compass className="h-4 w-4" aria-hidden />, 'amber', 'Products', onDiscover)}
         {tabBtn('orders', (
@@ -195,7 +195,7 @@ export function StorefrontActionStrip({
       ) : null}
 
       {/* Desktop strip — hidden on mobile, original full-bleed */}
-      <div className="hidden sm:flex sm:items-center sm:justify-center sm:gap-3 sm:overflow-x-auto sm:overscroll-x-contain sm:border-t sm:border-slate-200/80 sm:bg-white/95 sm:px-3 sm:py-2.5 sm:backdrop-blur-sm">
+      <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-3 lg:overflow-x-auto lg:overscroll-x-contain lg:border-t lg:border-slate-200/80 lg:bg-white/95 lg:px-3 lg:py-2.5 lg:backdrop-blur-sm">
         {onHome ? (
           <DesktopTab
             active={active === 'home'}

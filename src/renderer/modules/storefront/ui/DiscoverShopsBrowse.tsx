@@ -154,7 +154,7 @@ export function DiscoverShopsBrowse() {
         />
       ) : null}
 
-      <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5')}>
+      <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5', 'rounded-none sm:rounded-2xl')}>
         <Search className="h-4 w-4 shrink-0 text-teal-700" />
         <input
           type="search"
@@ -171,7 +171,7 @@ export function DiscoverShopsBrowse() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center')}>
+        <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center', 'rounded-none sm:rounded-2xl')}>
           <Store className="h-10 w-10 text-teal-600" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
             {shops.length === 0 && !searchQ ? 'No businesses yet' : `No businesses match “${q.trim()}”`}

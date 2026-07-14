@@ -172,7 +172,7 @@ export default function ShopPage() {
   // Enabled shop with zero listings is a valid shop — only fail when the shop API itself fails.
   if (shopQuery.isError || (shopQuery.isFetched && !shop)) {
     return (
-      <div className={cn(marketplaceGlassPanel, 'mx-auto max-w-md px-5 py-12 text-center')}>
+      <div className={cn(marketplaceGlassPanel, 'mx-auto max-w-md px-5 py-12 text-center', 'rounded-none sm:rounded-2xl')}>
         <h2 className="text-lg font-bold text-slate-900">Shop not found</h2>
         <p className="mt-2 text-sm text-slate-600">
           This shop may be closed, not published yet, or the username in the link is wrong.
@@ -203,7 +203,7 @@ export default function ShopPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className={cn(marketplaceGlassPanel, 'space-y-2.5 px-4 py-3.5')}>
+      <div className={cn(marketplaceGlassPanel, 'space-y-2.5 px-4 py-3.5', 'rounded-none sm:rounded-2xl')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 space-y-2.5">
             {shop.description ? (
@@ -252,7 +252,7 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5')}>
+      <div className={cn(marketplaceGlassPanel, 'flex items-center gap-2 px-3 py-2.5', 'rounded-none sm:rounded-2xl')}>
         <Search className="h-4 w-4 shrink-0 text-teal-700" />
         <input
           type="search"
@@ -273,11 +273,11 @@ export default function ShopPage() {
           detail="Fetching what this shop has listed."
         />
       ) : productsQuery.isError ? (
-        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600')}>
+        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600', 'rounded-none sm:rounded-2xl')}>
           Could not load products for this shop. Try refreshing.
         </div>
       ) : products.length === 0 ? (
-        <div className={cn(marketplaceGlassPanel, 'px-4 py-8')}>
+        <div className={cn(marketplaceGlassPanel, 'px-4 py-8', 'rounded-none sm:rounded-2xl')}>
           <EmptyState
             icon={<ShoppingBag className="w-12 h-12" />}
             title="No products listed yet"
@@ -285,7 +285,7 @@ export default function ShopPage() {
           />
         </div>
       ) : filtered.length === 0 ? (
-        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600')}>
+        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600', 'rounded-none sm:rounded-2xl')}>
           No products match “{q.trim()}”.
         </div>
       ) : (

@@ -8,6 +8,9 @@ import { PIPELINE } from '../../../shared/api/endpoints/endpoints';
 import { pipelineKeys } from '../api/pipelineQueryKeys';
 import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
 
+/** Match product import: 10-minute client wait for server-side row processing. */
+const IMPORT_REQUEST_TIMEOUT_MS = 600_000;
+
 interface ImportResult {
   imported: number;
   errors: { row: number; errors: Record<string, string[]> }[];
@@ -35,6 +38,8 @@ export default function BoardCardImportModal({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
 
+  const labelPlural = `${itemLabel}s`;
+
   const reset = () => {
     setFile(null);
     setResult(null);
@@ -43,6 +48,7 @@ export default function BoardCardImportModal({
   };
 
   const handleClose = () => {
+    if (uploading) return;
     reset();
     onClose();
   };
@@ -76,9 +82,14 @@ export default function BoardCardImportModal({
       formData.append('file', file);
       const { data } = await axiosInstance.post<ImportResult>(PIPELINE.BOARD_IMPORT(boardId), formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 600_000,
+        timeout: IMPORT_REQUEST_TIMEOUT_MS,
         onUploadProgress: (event) => {
           if (!event.total) return;
+          // Bytes fully sent → 100% switches UX to “Processing on server…” while PHP runs.
+          if (event.loaded >= event.total) {
+            setUploadProgress(100);
+            return;
+          }
           setUploadProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
         },
       });
@@ -92,7 +103,7 @@ export default function BoardCardImportModal({
     } catch (err: unknown) {
       const axiosErr = err as { code?: string; response?: { data?: { message?: string } } };
       const message = axiosErr.code === 'ECONNABORTED'
-        ? 'Import timed out — try a smaller file'
+        ? 'Import timed out — try a smaller file or split into multiple uploads'
         : axiosErr.response?.data?.message || 'Import failed';
       showToast('error', message);
     } finally {
@@ -102,17 +113,20 @@ export default function BoardCardImportModal({
   };
 
   return (
-    <Modal isOpen={open} onClose={handleClose} title={`Import ${itemLabel}s`} size="md">
+    <Modal isOpen={open} onClose={handleClose} title={`Import ${labelPlural}`} size="md">
       {!result ? (
         <div className="space-y-5">
           <p className="text-sm text-gray-500">
             Download the Excel template, fill in rows, then upload. Stage names must match columns on this board.
+            <br />
+            Max 20MB. Large imports (1,000+ rows) may take a few minutes — keep this window open.
           </p>
 
           <button
             type="button"
             onClick={handleDownloadTemplate}
-            className="flex w-full items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-left transition-colors hover:bg-indigo-50"
+            disabled={uploading}
+            className="flex w-full items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-left transition-colors hover:bg-indigo-50 disabled:opacity-60"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
               <Download className="h-5 w-5" />
@@ -128,14 +142,19 @@ export default function BoardCardImportModal({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
+              if (uploading) return;
               const dropped = e.dataTransfer.files?.[0];
               if (dropped) setFile(dropped);
             }}
           >
             <FileSpreadsheet className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-            <p className="mb-3 text-sm text-gray-600">
+            <p className="mb-1 text-sm font-medium text-gray-700">
               {file ? file.name : 'Drop an .xlsx / .xls / .csv file here, or browse'}
             </p>
+            {file && (
+              <p className="mb-3 text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+            )}
+            {!file && <p className="mb-3 text-xs text-gray-400">Accepted: .xlsx, .xls, .csv</p>}
             <input
               ref={fileRef}
               type="file"
@@ -146,22 +165,41 @@ export default function BoardCardImportModal({
                 if (next) setFile(next);
               }}
             />
-            <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
               Browse files
             </Button>
           </div>
 
           {uploading && (
-            <div className="space-y-1">
-              <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                <div className="h-full bg-indigo-600 transition-all" style={{ width: `${uploadProgress}%` }} />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{uploadProgress < 100 ? 'Uploading file…' : 'Processing on server…'}</span>
+                {uploadProgress > 0 && uploadProgress < 100 && <span>{uploadProgress}%</span>}
               </div>
-              <p className="text-xs text-gray-500">Uploading… {uploadProgress}%</p>
+              <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className="h-full bg-indigo-600 transition-all duration-300"
+                  style={{ width: uploadProgress < 100 ? `${uploadProgress}%` : '100%' }}
+                />
+              </div>
+              {uploadProgress >= 100 && (
+                <p className="text-xs text-gray-500">
+                  Importing {labelPlural} — this can take a few minutes for large files. Keep this window open.
+                </p>
+              )}
             </div>
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={handleClose}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={handleClose} disabled={uploading}>
+              Cancel
+            </Button>
             <Button
               type="button"
               onClick={handleUpload}
@@ -170,20 +208,30 @@ export default function BoardCardImportModal({
               className="inline-flex items-center gap-2"
             >
               <Upload className="h-4 w-4" />
-              Import
+              Upload & Import
             </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <div
+            className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
+              result.errors.length > 0
+                ? 'border-amber-100 bg-amber-50'
+                : 'border-emerald-100 bg-emerald-50'
+            }`}
+          >
+            {result.errors.length > 0 ? (
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            ) : (
+              <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            )}
             <div>
-              <p className="text-sm font-semibold text-emerald-900">
+              <p className="text-sm font-semibold text-gray-900">
                 Imported {result.imported} of {result.total_rows} row{result.total_rows === 1 ? '' : 's'}
               </p>
               {result.errors.length > 0 && (
-                <p className="mt-1 text-xs text-emerald-800">
+                <p className="mt-1 text-xs text-amber-800">
                   {result.errors.length} row{result.errors.length === 1 ? '' : 's'} had errors and were skipped.
                 </p>
               )}

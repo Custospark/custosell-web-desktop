@@ -26,7 +26,8 @@ Managers needed reliable board visibility edits, teammates needed near-live kanb
    Minimal viable template: Title*, Stage*, Description, Contact Name/Email/Phone, Estimated Value, Due Date, Assignee Email, Priority.  
    - `GET /pipeline/boards/{id}/import-template`  
    - `POST /pipeline/boards/{id}/import`  
-   FE: `BoardCardImportModal` (download template → upload), contributors+.
+   FE: `BoardCardImportModal` (download template → upload), contributors+.  
+   **Long processing window (product parity):** FE axios `timeout: 600_000` (10 min); after upload bytes finish, UI shows “Processing on server…” and keeps the modal open. BE `set_time_limit(600)` + `memory_limit` 512M; import uses 100-row DB chunks, cached stage positions/assignees, and `createLead(..., for_import)` which skips per-row notifications and heavy history load.
 
 6. **Goal decomposition anchors**  
    FE sends `anchor_start` / `anchor_end` from the Progress period currently in view (`boardProgressAnchors.ts`), including custom ranges, so BE decomposition is based on that period.
@@ -42,7 +43,7 @@ Managers needed reliable board visibility edits, teammates needed near-live kanb
 | Flow | Failure / edge |
 |------|----------------|
 | Delete board | 403 if not manager; 422 if default board; confirm cancels with no change |
-| Import | Per-row validation errors returned; partial import allowed; stage must match board columns |
+| Import | Per-row validation errors returned; partial import allowed; stage must match board columns; `ECONNABORTED` → toast to split file; cancel disabled while uploading/processing |
 | Visibility change | Non-managers see read-only section; save disabled |
 | Poll | Stale UI at most ~30s; optimistic moves still apply locally |
 | Storefront save | Online-only; inactive/disabled shop blocks listing |

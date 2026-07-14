@@ -44,6 +44,11 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
         timeout: 600_000,
         onUploadProgress: (event) => {
           if (!event.total) return;
+          // Bytes fully sent → 100% switches UX to “Processing on server…” while PHP runs.
+          if (event.loaded >= event.total) {
+            setUploadProgress(100);
+            return;
+          }
           setUploadProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
         },
       });

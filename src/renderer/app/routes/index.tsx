@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { ROUTES } from './constants/shared.paths';
-import { LoadingSpinner } from '../../shared/components/loading/LoadingSpinner';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { ErrorBoundary } from '../../shared/components/Feedback/ErrorBoundary';
 import { PublicRoute } from './PublicRoute';
 import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
@@ -121,7 +121,7 @@ const ForecastingScenariosPage = lazy(() => import('../../modules/forecasting/pa
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+      <Suspense fallback={<CustosellLoader fullPage />}>{children}</Suspense>
     </ErrorBoundary>
   );
 }

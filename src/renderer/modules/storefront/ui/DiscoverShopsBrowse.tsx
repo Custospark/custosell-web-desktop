@@ -236,13 +236,13 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
     <article
       className={cn(
         marketplaceGlassPanel,
-        'flex gap-2.5 p-3 shadow-md transition-all duration-200',
+        'flex gap-2.5 p-3 shadow-md transition-all duration-200 rounded-none sm:rounded-2xl',
         'hover:-translate-y-1 hover:border-teal-400 hover:shadow-xl hover:shadow-teal-900/15',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <Link to={ROUTES.SHOP(shop.slug)} className="flex gap-3 outline-none">
-          <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden sm:rounded-xl', wrap)}>
+          <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl', wrap)}>
             {shop.logo_path ? (
               <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -284,11 +284,11 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
             </p>
           ) : null}
           {!location && !shop.business_phone && !shop.business_email ? (
-            <p className="text-slate-400">Open shop to browse the catalog</p>
+            <p className="text-slate-400">Explore Offers from this shop</p>
           ) : null}
         </div>
         <Link to={ROUTES.SHOP(shop.slug)} className="text-xs font-semibold text-teal-800 hover:underline">
-          Open shop →
+          Explore Offers →
         </Link>
       </div>
       <StorefrontQrCode

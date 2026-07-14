@@ -277,7 +277,7 @@ export function BusinessStorefrontCard() {
             </a>
             <Link to={ROUTES.SHOP(savedSlug)} className={actionLinkClass}>
               <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-              Open shop
+              Explore Offers
             </Link>
           </div>
         </div>

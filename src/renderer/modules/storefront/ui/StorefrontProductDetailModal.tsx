@@ -141,7 +141,7 @@ export function StorefrontProductDetailModal({
               onClick={onClose}
               className="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-800"
             >
-              Open shop
+              Explore Offers
             </Link>
           ) : null}
           <Button type="button" variant="secondary" onClick={onClose}>

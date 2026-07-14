@@ -24,7 +24,7 @@ export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShop
 
   const body = (
     <>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden sm:rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
         {shop.logo_path ? (
           <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
         ) : (

@@ -12,9 +12,15 @@ const ROLE_OPTIONS: { value: ProjectMemberRole; label: string; hint: string }[] 
   { value: 'manager', label: 'Manager', hint: 'Manage team on this project' },
 ];
 
+export interface ProjectMemberAddPayload {
+  user_id: number;
+  role: ProjectMemberRole;
+  send_notification?: boolean;
+}
+
 interface ProjectMemberPickerProps {
   members: ProjectMember[];
-  onAdd: (userId: number, role: ProjectMemberRole) => void;
+  onAdd: (payload: ProjectMemberAddPayload) => void;
   onRemove: (userId: number) => void;
   onRoleChange: (userId: number, role: ProjectMemberRole) => void;
   lockedUserId?: number;
@@ -36,6 +42,7 @@ export default function ProjectMemberPicker({
   const { data: staff = [] } = useStaff();
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
   const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>('contributor');
+  const [sendNotification, setSendNotification] = useState(true);
   const [search, setSearch] = useState('');
 
   const availableStaff = useMemo(
@@ -54,9 +61,10 @@ export default function ProjectMemberPicker({
 
   const handleAdd = () => {
     if (!selectedUserId) return;
-    onAdd(Number(selectedUserId), selectedRole);
+    onAdd({ user_id: Number(selectedUserId), role: selectedRole, send_notification: sendNotification });
     setSelectedUserId('');
     setSelectedRole('contributor');
+    setSendNotification(true);
   };
 
   if (isLoading) {
@@ -96,6 +104,18 @@ export default function ProjectMemberPicker({
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
+          </div>
+          <div className="flex items-center gap-2 self-end pb-1">
+            <input
+              id="project-send-notification"
+              type="checkbox"
+              checked={sendNotification}
+              onChange={(e) => setSendNotification(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="project-send-notification" className="whitespace-nowrap text-xs text-gray-600">
+              Notify via email
+            </label>
           </div>
           <Button
             type="button"

@@ -228,7 +228,7 @@ function EditBoardModalForm({
             </p>
             <ProjectMemberPicker
               members={projectMembers}
-              onAdd={(userId, role) => addProjectMember.mutate({ user_id: userId, role })}
+              onAdd={(payload) => addProjectMember.mutate(payload)}
               onRemove={(userId) => removeProjectMember.mutate(userId)}
               onRoleChange={(userId, role) => updateProjectMember.mutate({ userId, role })}
               lockedUserId={projectOwnerId ?? undefined}

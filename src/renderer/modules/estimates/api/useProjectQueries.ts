@@ -311,7 +311,7 @@ export function useAddProjectMember(projectId: number) {
   const qc = useQueryClient();
   const { showToast } = useToast();
   return useMutation({
-    mutationFn: async (payload: { user_id: number; role: ProjectMemberRole }) => {
+    mutationFn: async (payload: { user_id: number; role: ProjectMemberRole; send_notification?: boolean }) => {
       const { data } = await axiosInstance.post(PROJECTS.MEMBERS(projectId), payload);
       return unwrapEntity<ProjectMember>(data);
     },

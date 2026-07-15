@@ -439,7 +439,7 @@ export default function ProjectDetailPage() {
               lockedUserId={project.created_by}
               canManage={canManageTeam}
               loading={addMember.isPending || updateMember.isPending || removeMember.isPending}
-              onAdd={(userId, role) => addMember.mutate({ user_id: userId, role })}
+              onAdd={(payload) => addMember.mutate(payload)}
               onRoleChange={(userId, role) => updateMember.mutate({ userId, role })}
               onRemove={(userId) => removeMember.mutate(userId)}
             />

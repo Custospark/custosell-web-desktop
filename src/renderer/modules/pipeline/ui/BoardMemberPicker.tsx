@@ -57,6 +57,7 @@ export default function BoardMemberPicker({
   });
   const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
   const [selectedRole, setSelectedRole] = useState<BoardMemberRole>('contributor');
+  const [sendNotification, setSendNotification] = useState(true);
   const [search, setSearch] = useState('');
   const [staffSearch, setStaffSearch] = useState('');
 
@@ -89,9 +90,10 @@ export default function BoardMemberPicker({
   const handleAdd = () => {
     if (!selectedUserId || !canManage) return;
     const person = teamMembers.find((u) => u.id === selectedUserId);
-    onChange([...value, { user_id: Number(selectedUserId), role: selectedRole, name: person?.name }]);
+    onChange([...value, { user_id: Number(selectedUserId), role: selectedRole, name: person?.name, send_notification: sendNotification }]);
     setSelectedUserId('');
     setSelectedRole('contributor');
+    setSendNotification(true);
   };
 
   const roleMeta = (role: string) => {
@@ -182,6 +184,18 @@ export default function BoardMemberPicker({
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+        <div className="flex items-center gap-2 self-end pb-1">
+          <input
+            id="send-notification"
+            type="checkbox"
+            checked={sendNotification}
+            onChange={(e) => setSendNotification(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <label htmlFor="send-notification" className="whitespace-nowrap text-xs text-gray-600">
+            Notify via email
+          </label>
         </div>
         <Button
           type="button"

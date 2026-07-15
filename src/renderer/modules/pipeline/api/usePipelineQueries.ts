@@ -57,5 +57,6 @@ export {
   useDeleteChecklistItem,
   useUploadPipelineAttachment,
   useDeletePipelineAttachment,
+  useCreatePipelineAttachmentLink,
   useUploadBoardBackground,
 } from './usePipelineChecklistQueries';

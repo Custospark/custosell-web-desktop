@@ -106,7 +106,7 @@ export default function PipelineColorPicker({
     ? createPortal(
         <div
           ref={panelRef}
-          className="fixed z-[10050] w-[240px] rounded-xl border border-gray-200 bg-white p-3 shadow-2xl ring-1 ring-black/5"
+          className="fixed z-[20500] w-[240px] rounded-xl border border-gray-200 bg-white p-3 shadow-2xl ring-1 ring-black/5"
           style={{ top: panelPos.top, left: panelPos.left }}
           onPointerDown={(e) => e.stopPropagation()}
         >

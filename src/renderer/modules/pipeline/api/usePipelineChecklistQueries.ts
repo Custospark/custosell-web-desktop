@@ -400,6 +400,36 @@ export function useDeletePipelineAttachment(leadId: number, boardId: number) {
   });
 }
 
+export function useCreatePipelineAttachmentLink(leadId: number, boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ url, title }: { url: string; title?: string }) => {
+      const { data } = await axiosInstance.post(PIPELINE.LEAD_ATTACHMENT_LINK(leadId), { url, title });
+      return normalizeItem<PipelineAttachment>(data);
+    },
+    onMutate: async () => {
+      const lead = qc.getQueryData<PipelineLead>(pipelineKeys.lead(leadId));
+      patchLeadFieldsOptimistic(
+        qc,
+        leadId,
+        boardId,
+        { attachments_count: (lead?.attachments_count ?? 0) + 1 },
+        undefined,
+      );
+      return { previousLead: lead };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: pipelineKeys.lead(leadId) });
+      showToast('success', 'Link added');
+    },
+    onError: (err: AxiosError<{ message?: string }>, _vars, context) => {
+      if (context?.previousLead) qc.setQueryData(pipelineKeys.lead(leadId), context.previousLead);
+      showToast('error', sanitizeErrorMessage(err, 'Could not add link'));
+    },
+  });
+}
+
 export function useUploadBoardBackground() {
   const qc = useQueryClient();
   const { showToast } = useToast();

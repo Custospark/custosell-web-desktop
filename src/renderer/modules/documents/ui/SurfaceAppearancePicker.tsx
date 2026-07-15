@@ -8,6 +8,7 @@ import {
 import type { DocumentsVaultAppearance } from '../api/documentTypes';
 import { cn } from '../../../shared/utils/cn';
 import { Image, Palette } from 'lucide-react';
+import PipelineColorPicker from '../../pipeline/ui/PipelineColorPicker';
 
 type Mode = 'gradient' | 'color' | 'gallery';
 
@@ -57,24 +58,15 @@ export function SurfaceAppearancePicker({
 
       <div>
         <p className="mb-2 text-sm font-medium text-gray-900">Accent color</p>
-        <div className="flex flex-wrap gap-2">
-          {FOLDER_PRESET_COLORS.map((color) => (
-            <button
-              key={color}
-              type="button"
-              title={color}
-              onClick={() => {
-                setCoverColor(color);
-                emit(color, mode, backgroundValue);
-              }}
-              className={cn(
-                'h-8 w-8 rounded-full ring-2 ring-offset-2 transition',
-                coverColor === color ? 'ring-indigo-500' : 'ring-transparent',
-              )}
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </div>
+        <PipelineColorPicker
+          value={coverColor}
+          presets={FOLDER_PRESET_COLORS}
+          swatchSize="md"
+          onChange={(color) => {
+            setCoverColor(color);
+            emit(color, mode, backgroundValue);
+          }}
+        />
       </div>
 
       <div>

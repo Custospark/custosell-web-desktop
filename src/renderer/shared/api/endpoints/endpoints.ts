@@ -137,6 +137,7 @@ export const PIPELINE = {
   CHECKLIST_ITEMS: (checklistId: number) => `/pipeline/checklists/${checklistId}/items`,
   CHECKLIST_ITEM: (id: number) => `/pipeline/checklist-items/${id}`,
   LEAD_ATTACHMENTS: (leadId: number) => `/pipeline/leads/${leadId}/attachments`,
+  LEAD_ATTACHMENT_LINK: (leadId: number) => `/pipeline/leads/${leadId}/attachments/link`,
   ATTACHMENT: (id: number) => `/pipeline/attachments/${id}`,
   ACTIVITY_REACTION: (id: number) => `/pipeline/activities/${id}/reaction`,
   BOARD_ANNOUNCEMENTS: (boardId: number) => `/pipeline/boards/${boardId}/announcements`,

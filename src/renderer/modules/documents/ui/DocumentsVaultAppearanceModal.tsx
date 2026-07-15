@@ -11,6 +11,7 @@ import {
 import type { DocumentsVaultAppearance } from '../api/documentTypes';
 import { cn } from '../../../shared/utils/cn';
 import { DocumentFormSection, DocumentModalFooter, DocumentModalHero } from './documentFormFields';
+import PipelineColorPicker from '../../pipeline/ui/PipelineColorPicker';
 
 interface DocumentsVaultAppearanceModalProps {
   open: boolean;
@@ -85,21 +86,12 @@ function VaultAppearanceForm({
       </DocumentFormSection>
 
       <DocumentFormSection title="Accent color" icon={Palette}>
-        <div className="flex flex-wrap gap-2">
-          {FOLDER_PRESET_COLORS.map((color) => (
-            <button
-              key={color}
-              type="button"
-              title={color}
-              onClick={() => setCoverColor(color)}
-              className={cn(
-                'h-8 w-8 rounded-full ring-2 ring-offset-2 transition',
-                coverColor === color ? 'ring-indigo-500' : 'ring-transparent',
-              )}
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </div>
+        <PipelineColorPicker
+          value={coverColor}
+          presets={FOLDER_PRESET_COLORS}
+          swatchSize="md"
+          onChange={(color) => setCoverColor(color)}
+        />
       </DocumentFormSection>
 
       <DocumentFormSection title="Canvas style" icon={Image}>

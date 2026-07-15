@@ -2,10 +2,10 @@ import { Palette } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { FOLDER_PRESET_COLORS } from '../../../shared/utils/surfaceStyles';
-import { cn } from '../../../shared/utils/cn';
 import type { DocumentFolder } from '../api/documentTypes';
 import { resolveFolderColor } from '../api/documentColorUtils';
 import { DocumentFormSection, DocumentModalFooter, DocumentModalHero } from './documentFormFields';
+import PipelineColorPicker from '../../pipeline/ui/PipelineColorPicker';
 
 interface DocumentFolderColorModalProps {
   folder: DocumentFolder | null;
@@ -16,7 +16,6 @@ interface DocumentFolderColorModalProps {
 
 export function DocumentFolderColorModal({
   folder,
-  saving = false,
   onClose,
   onSave,
 }: DocumentFolderColorModalProps) {
@@ -35,22 +34,13 @@ export function DocumentFolderColorModal({
         />
 
         <DocumentFormSection title="Color palette" icon={Palette}>
-          <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
-            {FOLDER_PRESET_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                title={color}
-                onClick={() => onSave(color)}
-                disabled={saving}
-                className={cn(
-                  'h-10 w-10 rounded-xl ring-2 ring-offset-2 transition hover:scale-105 disabled:opacity-50',
-                  current === color ? 'ring-indigo-500' : 'ring-transparent',
-                )}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
+          <PipelineColorPicker
+            value={current}
+            presets={FOLDER_PRESET_COLORS}
+            swatchSize="md"
+            onChange={onSave}
+            allowClear={false}
+          />
         </DocumentFormSection>
 
         <DocumentModalFooter>

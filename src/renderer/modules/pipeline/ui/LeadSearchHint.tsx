@@ -7,6 +7,7 @@ const TOKEN_CLASS = {
   overdue: 'font-semibold text-red-600 hover:text-red-800',
   today: 'font-semibold text-blue-600 hover:text-blue-800',
   date: 'font-semibold text-indigo-600 hover:text-indigo-800',
+  me: 'font-semibold text-emerald-600 hover:text-emerald-800',
 } as const;
 
 function todayIsoDate(): string {
@@ -53,12 +54,16 @@ export default function LeadSearchHint({ className, onApplyToken }: LeadSearchHi
 
   return (
     <span className={cn('inline-flex flex-wrap items-center gap-x-1 gap-y-0.5', className)}>
-      <span className={TOKEN_CLASS.muted}>Try</span>
+      <span className={TOKEN_CLASS.muted}>Type to search, or click a filter:</span>
       <HintToken token="@label" className={TOKEN_CLASS.label} onApply={onApplyToken} label="label name" />
       <span className={TOKEN_CLASS.muted}>,</span>
       <HintToken token="!high" className={TOKEN_CLASS.priority} onApply={onApplyToken} label="priority" />
-      <span className={TOKEN_CLASS.muted}>, or</span>
+      <span className={TOKEN_CLASS.muted}>,</span>
       <HintToken token="#overdue" className={TOKEN_CLASS.overdue} onApply={onApplyToken} label="overdue" />
+      <span className={TOKEN_CLASS.muted}>,</span>
+      <HintToken token="@me" className={TOKEN_CLASS.me} onApply={onApplyToken} label="assigned to me" />
+      <span className={TOKEN_CLASS.muted}>,</span>
+      <HintToken token="@me #today" className={TOKEN_CLASS.me} onApply={onApplyToken} label="my tasks due today" />
       <span className={TOKEN_CLASS.muted}>·</span>
       <HintToken token="#today" className={TOKEN_CLASS.today} onApply={onApplyToken} label="due today" />
       <span className={TOKEN_CLASS.muted}>·</span>

@@ -209,12 +209,15 @@ export default function BoardKanbanPage() {
   );
 
   const stages = useMemo(() => {
-    if (!leadQuery.trim()) return allStages;
+    const q = leadQuery.trim();
+    if (!q) return allStages;
     return allStages.map((stage) => ({
       ...stage,
-      leads: (stage.leads ?? []).filter((lead) => leadMatchesSearchQuery(lead, leadQuery)),
+      leads: (stage.leads ?? []).filter((lead) =>
+        leadMatchesSearchQuery(lead, q, user?.id),
+      ),
     }));
-  }, [allStages, leadQuery]);
+  }, [allStages, leadQuery, user?.id]);
 
   const filteredCount = useMemo(
     () => stages.reduce((n, s) => n + (s.leads?.length ?? 0), 0),

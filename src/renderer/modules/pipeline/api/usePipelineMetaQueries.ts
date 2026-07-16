@@ -296,6 +296,39 @@ export function useCreatePipelineLabel(boardId: number) {
   });
 }
 
+export function useUpdatePipelineLabel(boardId: number) {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: number; name?: string; color?: string }) => {
+      const { data } = await axiosInstance.patch(PIPELINE.LABEL(id), payload);
+      return normalizeItem<PipelineLabel>(data);
+    },
+    onMutate: async ({ id, ...payload }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.labels(boardId) });
+      const previous = qc.getQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId));
+      if (previous) {
+        qc.setQueryData(
+          pipelineKeys.labels(boardId),
+          previous.map((l) => (l.id === id ? { ...l, ...payload } : l)),
+        );
+      }
+      return { previous };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: pipelineKeys.labels(boardId) });
+      qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      showToast('success', 'Label updated');
+    },
+    onError: (err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(pipelineKeys.labels(boardId), context.previous);
+      }
+      showToast('error', sanitizeErrorMessage(err, 'Could not update label'));
+    },
+  });
+}
+
 export function useDeletePipelineLabel(boardId: number) {
   const qc = useQueryClient();
   const { showToast } = useToast();

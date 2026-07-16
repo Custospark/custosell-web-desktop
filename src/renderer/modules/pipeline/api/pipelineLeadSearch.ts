@@ -9,6 +9,8 @@ export interface ParsedLeadSearch {
   priority: PipelinePriority | null;
   /** Due-date filter from # tokens */
   dueFilter: 'overdue' | 'today' | 'week' | string | null;
+  /** Assigned-to filter — 'me' means current user */
+  assignedTo: 'me' | null;
 }
 
 const PRIORITY_ALIASES: Record<string, PipelinePriority> = {
@@ -26,17 +28,23 @@ function parseIsoDateToken(raw: string): string | null {
   return Number.isNaN(d.getTime()) ? null : raw;
 }
 
-/** Parse board card search — @label, !priority, #due-date */
+/** Parse board card search — @label, !priority, #due-date, @me */
 export function parseLeadSearchQuery(raw: string): ParsedLeadSearch {
   const labels: string[] = [];
   let priority: PipelinePriority | null = null;
   let dueFilter: ParsedLeadSearch['dueFilter'] = null;
+  let assignedTo: ParsedLeadSearch['assignedTo'] = null;
   const textParts: string[] = [];
 
   for (const token of raw.trim().split(/\s+/)) {
     if (!token) continue;
     if (token.startsWith('@') && token.length > 1) {
-      labels.push(token.slice(1).toLowerCase());
+      const key = token.slice(1).toLowerCase();
+      if (key === 'me') {
+        assignedTo = 'me';
+      } else {
+        labels.push(key);
+      }
       continue;
     }
     if (token.startsWith('!') && token.length > 1) {
@@ -64,51 +72,63 @@ export function parseLeadSearchQuery(raw: string): ParsedLeadSearch {
     labels,
     priority,
     dueFilter,
+    assignedTo,
   };
 }
 
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+function todayUtcDateString(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
-function leadDueDate(lead: PipelineLead): Date | null {
+function leadDueDateString(lead: PipelineLead): string | null {
   const raw = lead.due_date ?? lead.expected_close_date;
   if (!raw) return null;
-  const d = new Date(raw.slice(0, 10));
-  return Number.isNaN(d.getTime()) ? null : d;
+  return raw.slice(0, 10);
 }
 
 function matchesDueFilter(lead: PipelineLead, filter: ParsedLeadSearch['dueFilter']): boolean {
   if (!filter) return true;
-  const due = leadDueDate(lead);
-  const today = startOfDay(new Date());
+  const dueStr = leadDueDateString(lead);
+  const todayStr = todayUtcDateString();
 
   if (filter === 'overdue') {
     if (lead.status !== 'open') return false;
-    return due != null && due < today;
+    return dueStr != null && dueStr < todayStr;
   }
   if (filter === 'today') {
-    if (!due) return false;
-    return due.getTime() === today.getTime();
+    return dueStr === todayStr;
   }
   if (filter === 'week') {
-    if (!due) return false;
-    const end = new Date(today);
-    end.setDate(end.getDate() + 7);
-    return due >= today && due <= end;
+    if (!dueStr) return false;
+    const end = new Date();
+    end.setUTCDate(end.getUTCDate() + 7);
+    const endStr = end.toISOString().slice(0, 10);
+    return dueStr >= todayStr && dueStr <= endStr;
   }
   if (typeof filter === 'string') {
-    if (!due) return false;
-    return due.toISOString().slice(0, 10) === filter;
+    return dueStr === filter;
   }
   return true;
 }
 
-export function leadMatchesParsedSearch(lead: PipelineLead, parsed: ParsedLeadSearch): boolean {
+export function leadMatchesParsedSearch(
+  lead: PipelineLead,
+  parsed: ParsedLeadSearch,
+  currentUserId?: number,
+): boolean {
   if (parsed.priority && lead.priority !== parsed.priority) return false;
   if (!matchesDueFilter(lead, parsed.dueFilter)) return false;
+
+  if (parsed.assignedTo === 'me') {
+    if (!currentUserId) return false;
+    const assignedUserIds = [
+      lead.assigned_to,
+      lead.assignee?.id ?? null,
+      ...(lead.assignees ?? []).map((a) => a.id),
+    ].filter((id): id is number => id != null)
+     .map((id) => Number(id));
+    if (!assignedUserIds.includes(Number(currentUserId))) return false;
+  }
 
   if (parsed.labels.length > 0) {
     const leadLabels = (lead.labels ?? []).map((l) => l.name.toLowerCase());
@@ -132,8 +152,14 @@ export function leadMatchesParsedSearch(lead: PipelineLead, parsed: ParsedLeadSe
   ].some((v) => v?.toLowerCase().includes(q));
 }
 
-export function leadMatchesSearchQuery(lead: PipelineLead, raw: string): boolean {
+export function leadMatchesSearchQuery(
+  lead: PipelineLead,
+  raw: string,
+  currentUserId?: number,
+): boolean {
   const trimmed = raw.trim();
-  if (!trimmed) return true;
-  return leadMatchesParsedSearch(lead, parseLeadSearchQuery(trimmed));
+  if (!trimmed && !currentUserId) return true;
+  const parsed = parseLeadSearchQuery(trimmed);
+  if (!trimmed && parsed.assignedTo !== 'me') return true;
+  return leadMatchesParsedSearch(lead, parsed, currentUserId);
 }

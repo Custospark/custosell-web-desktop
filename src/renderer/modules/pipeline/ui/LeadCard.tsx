@@ -129,7 +129,9 @@ export default function LeadCard({
             )}
           </div>
           {showDragHandle && (
-            <GripVertical className="h-4 w-4 shrink-0 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" />
+            <span className="shrink-0" title={isProjectBoard ? 'Drag card' : 'Drag lead'}>
+              <GripVertical className="h-4 w-4 text-gray-400" />
+            </span>
           )}
           <div className="flex shrink-0 flex-col gap-0.5">
             <button

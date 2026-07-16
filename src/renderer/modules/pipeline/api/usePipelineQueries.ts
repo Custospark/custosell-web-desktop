@@ -45,6 +45,7 @@ export {
   useDeletePipelineSource,
   usePipelineLabels,
   useCreatePipelineLabel,
+  useUpdatePipelineLabel,
   useDeletePipelineLabel,
 } from './usePipelineMetaQueries';
 

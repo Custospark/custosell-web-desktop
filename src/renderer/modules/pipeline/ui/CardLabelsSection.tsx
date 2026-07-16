@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import type { PipelineLead, PipelinePriority } from '../api/pipelineTypes';
-import { usePipelineLabels, useCreatePipelineLabel } from '../api/usePipelineQueries';
+import type { PipelineLead, PipelinePriority, PipelineLabel } from '../api/pipelineTypes';
+import {
+  usePipelineLabels,
+  useCreatePipelineLabel,
+  useUpdatePipelineLabel,
+  useDeletePipelineLabel,
+} from '../api/usePipelineQueries';
 import { PipelineFormSection, pipelineInputClass } from './pipelineFormFields';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import PipelineColorPicker from './PipelineColorPicker';
 import { BOARD_PRESET_COLORS } from './pipelineColorPresets';
-import { Plus, Tag } from 'lucide-react';
+import { Plus, Tag, X, Pencil, Check } from 'lucide-react';
 
 const PRIORITIES: { value: PipelinePriority; label: string; color: string }[] = [
   { value: 'low', label: 'Low', color: '#64748b' },
@@ -25,9 +31,15 @@ interface CardLabelsSectionProps {
 export default function CardLabelsSection({ lead, boardId, canEdit = true, onPatchLead }: CardLabelsSectionProps) {
   const { data: boardLabels = [] } = usePipelineLabels(boardId);
   const createLabel = useCreatePipelineLabel(boardId);
+  const updateLabel = useUpdatePipelineLabel(boardId);
+  const deleteLabel = useDeletePipelineLabel(boardId);
+  const { confirm } = useConfirm();
   const [showCreateLabel, setShowCreateLabel] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState(BOARD_PRESET_COLORS[0]);
+  const [editingLabelId, setEditingLabelId] = useState<number | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
   const selectedLabelIds = new Set((lead.labels ?? []).map((l) => l.id));
 
   const toggleLabel = (labelId: number) => {
@@ -56,25 +68,104 @@ export default function CardLabelsSection({ lead, boardId, canEdit = true, onPat
     );
   };
 
+  const handleDeleteLabel = async (label: PipelineLabel) => {
+    const ok = await confirm({
+      title: 'Delete label?',
+      message: `"${label.name}" will be removed from this board and all cards.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    deleteLabel.mutate(label.id);
+  };
+
+  const startEdit = (label: PipelineLabel) => {
+    setEditingLabelId(label.id);
+    setEditName(label.name);
+    setEditColor(label.color);
+  };
+
+  const saveEdit = () => {
+    if (editingLabelId === null || !editName.trim()) return;
+    updateLabel.mutate({ id: editingLabelId, name: editName.trim(), color: editColor });
+    setEditingLabelId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingLabelId(null);
+    setEditName('');
+    setEditColor('');
+  };
+
   return (
     <PipelineFormSection title="Labels" icon={Tag}>
       {boardLabels.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
-          {boardLabels.map((label) => (
-            <button
-              key={label.id}
-              type="button"
-              disabled={!canEdit}
-              onClick={() => toggleLabel(label.id)}
-              className={cn(
-                'rounded-md px-2.5 py-1 text-xs font-semibold text-white transition-opacity',
-                selectedLabelIds.has(label.id) ? 'opacity-100 ring-2 ring-offset-1 ring-gray-400' : 'opacity-50 hover:opacity-80',
-              )}
-              style={{ backgroundColor: label.color }}
-            >
-              {label.name}
-            </button>
-          ))}
+          {boardLabels.map((label) => {
+            if (editingLabelId === label.id) {
+              return (
+                <div key={label.id} className="w-full rounded-lg border border-gray-200 bg-gray-50/80 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Label name"
+                      className={cn(pipelineInputClass, 'h-8 flex-1 px-2.5 text-sm')}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                    />
+                    <button type="button" onClick={saveEdit} disabled={!editName.trim()} className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-40"><Check className="h-4 w-4" /></button>
+                    <button type="button" onClick={cancelEdit} className="rounded p-1.5 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+                  </div>
+                  <PipelineColorPicker
+                    value={editColor}
+                    presets={BOARD_PRESET_COLORS}
+                    swatchSize="sm"
+                    onChange={setEditColor}
+                  />
+                </div>
+              );
+            }
+            return (
+              <div key={label.id} className="group relative">
+                <button
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => toggleLabel(label.id)}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-xs font-semibold text-white transition-opacity',
+                    selectedLabelIds.has(label.id) ? 'opacity-100 ring-2 ring-offset-1 ring-gray-400' : 'opacity-50 hover:opacity-80',
+                  )}
+                  style={{ backgroundColor: label.color }}
+                >
+                  {label.name}
+                </button>
+                {canEdit && (
+                  <div className="absolute -right-1.5 -top-1.5 hidden gap-0.5 group-hover:flex">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); startEdit(label); }}
+                      className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm ring-1 ring-gray-200 hover:text-blue-600 hover:ring-blue-300"
+                      title="Edit label"
+                    >
+                      <Pencil className="h-2.5 w-2.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); void handleDeleteLabel(label); }}
+                      className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm ring-1 ring-gray-200 hover:text-red-600 hover:ring-red-300"
+                      title="Delete label"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
       {canEdit && (showCreateLabel ? (

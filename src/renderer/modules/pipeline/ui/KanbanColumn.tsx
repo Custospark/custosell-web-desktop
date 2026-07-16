@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { PipelineLead, PipelineStage } from '../api/pipelineTypes';
 import LeadCard from './LeadCard';
 import { cn } from '../../../shared/utils/cn';
@@ -33,6 +33,9 @@ export default function KanbanColumn({
   const [dragOver, setDragOver] = useState(false);
   const [columnDragOver, setColumnDragOver] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropInsertIdx, setDropInsertIdx] = useState<number | null>(null);
+  const [dropInsertBefore, setDropInsertBefore] = useState(true);
+  const columnRef = useRef<HTMLDivElement>(null);
   const leads = stage.leads ?? [];
   const stageColor = stage.color ?? '#64748b';
   const itemNoun = isProjectBoard ? 'card' : 'lead';
@@ -58,20 +61,62 @@ export default function KanbanColumn({
     }
   };
 
+  const handleCardDragOver = (e: React.DragEvent, idx: number) => {
+    if (!canDropLeads) return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    setDropInsertIdx(idx);
+    setDropInsertBefore(y < rect.height / 2);
+  };
+
+  const calcInsertPosition = (): number => {
+    if (dropInsertIdx === null || dropInsertIdx < 0) {
+      return leads.length > 0 ? leads[leads.length - 1].position + 1 : 1;
+    }
+    if (dropInsertBefore) {
+      if (dropInsertIdx === 0) {
+        return leads[0].position / 2;
+      }
+      return (leads[dropInsertIdx - 1].position + leads[dropInsertIdx].position) / 2;
+    }
+    if (dropInsertIdx >= leads.length - 1) {
+      return leads[leads.length - 1].position + 1;
+    }
+    return (leads[dropInsertIdx].position + leads[dropInsertIdx + 1].position) / 2;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(false);
-    setColumnDragOver(false);
 
     const draggedStageId = Number(e.dataTransfer.getData('text/stage-id'));
     if (draggedStageId && draggedStageId !== stage.id && onDropColumn) {
+      setDragOver(false);
+      setColumnDragOver(false);
+      setDropInsertIdx(null);
       onDropColumn(draggedStageId, stage.id);
       return;
     }
 
     const leadId = Number(e.dataTransfer.getData('text/lead-id'));
-    if (!leadId || !onDropLead) return;
-    onDropLead(leadId, stage.id, leads.length + 1);
+    if (!leadId || !onDropLead) {
+      setDragOver(false);
+      setColumnDragOver(false);
+      setDropInsertIdx(null);
+      return;
+    }
+
+    const pos = calcInsertPosition();
+    setDragOver(false);
+    setColumnDragOver(false);
+    setDropInsertIdx(null);
+    onDropLead(leadId, stage.id, pos);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
+    setColumnDragOver(false);
+    setDropInsertIdx(null);
   };
 
   return (
@@ -84,11 +129,9 @@ export default function KanbanColumn({
             ? 'border-blue-300/80 bg-white/75 ring-2 ring-blue-200/80'
             : 'border-white/60 bg-white/55 ring-1 ring-white/50',
       )}
+      ref={columnRef}
       onDragOver={handleDragOver}
-      onDragLeave={() => {
-        setDragOver(false);
-        setColumnDragOver(false);
-      }}
+      onDragLeave={handleDragLeave}
       onDrop={canDropLeads || canReorderColumns ? handleDrop : undefined}
     >
       <div
@@ -193,28 +236,44 @@ export default function KanbanColumn({
             </div>
           )
         ) : (
-          leads.map((lead) => (
-            <div
-              key={lead.id}
-              draggable={canDropLeads}
-              className={cn(canDropLeads && 'cursor-grab active:cursor-grabbing')}
-              onDragStart={canDropLeads ? (e) => {
-                e.dataTransfer.setData('text/lead-id', String(lead.id));
-                e.dataTransfer.effectAllowed = 'move';
-              } : undefined}
-            >
-              <LeadCard
-                lead={lead}
-                stageColor={stageColor}
-                onClick={() => onLeadClick(lead)}
-                onCommentsClick={onLeadCommentsClick}
-                onHistoryClick={onLeadHistoryClick}
-                onToggleComplete={onToggleComplete}
-                showDragHandle={canDropLeads}
-                isProjectBoard={isProjectBoard}
-              />
-            </div>
-          ))
+          <>
+            {leads.map((lead, idx) => (
+              <div key={lead.id}>
+                {dropInsertIdx === idx && dropInsertBefore && (
+                  <div className="mb-0.5 h-0.5 rounded-full bg-blue-500 shadow-sm" />
+                )}
+                <div
+                  draggable={canDropLeads}
+                  className={cn(
+                    'rounded-xl',
+                    canDropLeads && 'cursor-grab active:cursor-grabbing',
+                  )}
+                  onDragStart={canDropLeads ? (e) => {
+                    e.dataTransfer.setData('text/lead-id', String(lead.id));
+                    e.dataTransfer.effectAllowed = 'move';
+                  } : undefined}
+                  onDragOver={canDropLeads ? (e) => handleCardDragOver(e, idx) : undefined}
+                >
+                  <LeadCard
+                    lead={lead}
+                    stageColor={stageColor}
+                    onClick={() => onLeadClick(lead)}
+                    onCommentsClick={onLeadCommentsClick}
+                    onHistoryClick={onLeadHistoryClick}
+                    onToggleComplete={onToggleComplete}
+                    showDragHandle={canDropLeads}
+                    isProjectBoard={isProjectBoard}
+                  />
+                </div>
+                {dropInsertIdx === idx && !dropInsertBefore && (
+                  <div className="mt-0.5 h-0.5 rounded-full bg-blue-500 shadow-sm" />
+                )}
+              </div>
+            ))}
+            {dragOver && dropInsertIdx === null && leads.length > 0 && (
+              <div className="mt-0.5 h-0.5 rounded-full bg-blue-500 shadow-sm" />
+            )}
+          </>
         )}
       </div>
     </div>

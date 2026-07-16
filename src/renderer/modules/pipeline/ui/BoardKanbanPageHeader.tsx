@@ -9,6 +9,40 @@ import type { BoardMemberRole } from '../api/boardRoleUtils';
 import { CalendarDays, Columns3, LayoutGrid, Search, Settings, Upload, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
+interface QueryToken {
+  raw: string;
+  type: 'label' | 'priority' | 'due' | 'me' | 'text';
+}
+
+function tokenizeQuery(query: string): QueryToken[] {
+  const tokens: QueryToken[] = [];
+  for (const raw of query.trim().split(/\s+/)) {
+    if (!raw) continue;
+    if (raw === '@me' || raw === '@Me') {
+      tokens.push({ raw, type: 'me' });
+    } else if (raw.startsWith('@') && raw.length > 1) {
+      tokens.push({ raw, type: 'label' });
+    } else if (raw.startsWith('!') && raw.length > 1) {
+      tokens.push({ raw, type: 'priority' });
+    } else if (raw.startsWith('#') && raw.length > 1) {
+      tokens.push({ raw, type: 'due' });
+    } else {
+      tokens.push({ raw, type: 'text' });
+    }
+  }
+  return tokens;
+}
+
+function tokenClass(type: QueryToken['type']): string {
+  switch (type) {
+    case 'label': return 'bg-violet-100 text-violet-800';
+    case 'priority': return 'bg-amber-100 text-amber-800';
+    case 'due': return 'bg-red-100 text-red-800';
+    case 'me': return 'bg-blue-100 text-blue-800';
+    default: return 'bg-gray-100 text-gray-600';
+  }
+}
+
 type BoardViewMode = 'kanban' | 'calendar' | 'progress';
 
 interface BoardKanbanPageHeaderProps {
@@ -109,10 +143,10 @@ export default function BoardKanbanPageHeader({
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
             <input
               ref={searchInputRef}
-              type="search"
+              type="text"
               value={leadQuery}
               onChange={(e) => onLeadQueryChange(e.target.value)}
-              placeholder={isTaskBoard ? 'Search tasks…' : 'Search leads…'}
+              placeholder={isTaskBoard ? 'Search tasks…  (@label, !high, #today, @me)' : 'Search leads…  (@label, !high, #today, @me)'}
               className="w-full rounded-xl border border-blue-100 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-800 shadow-sm transition-shadow placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             {leadQuery && (
@@ -191,12 +225,29 @@ export default function BoardKanbanPageHeader({
       {viewMode === 'kanban' && (
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
           <span>{allLeadsCount} {itemLabel}{allLeadsCount === 1 ? '' : 's'} on board</span>
+
           {leadQuery.trim() ? (
             <span className="font-medium text-blue-700">
-              {filteredCount} matching &ldquo;{leadQuery.trim()}&rdquo;
+              {filteredCount} matching
             </span>
           ) : (
             <LeadSearchHint className="text-xs" onApplyToken={onApplySearchToken} />
+          )}
+
+          {leadQuery.trim() && (
+            <div className="flex w-full flex-wrap items-center gap-1.5">
+              {tokenizeQuery(leadQuery).map((token) => (
+                <span
+                  key={token.raw}
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium',
+                    tokenClass(token.type),
+                  )}
+                >
+                  {token.raw}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       )}

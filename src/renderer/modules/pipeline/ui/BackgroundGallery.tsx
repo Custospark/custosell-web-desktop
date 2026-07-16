@@ -6,17 +6,27 @@ import { Upload, Image, Palette, History } from 'lucide-react';
 
 const GALLERY_IMAGES = [
   { id: 1, url: 'https://picsum.photos/id/10/1200/800', thumb: 'https://picsum.photos/id/10/400/300' },
-  { id: 15, url: 'https://picsum.photos/id/15/1200/800', thumb: 'https://picsum.photos/id/15/400/300' },
-  { id: 26, url: 'https://picsum.photos/id/26/1200/800', thumb: 'https://picsum.photos/id/26/400/300' },
-  { id: 28, url: 'https://picsum.photos/id/28/1200/800', thumb: 'https://picsum.photos/id/28/400/300' },
-  { id: 36, url: 'https://picsum.photos/id/36/1200/800', thumb: 'https://picsum.photos/id/36/400/300' },
-  { id: 40, url: 'https://picsum.photos/id/40/1200/800', thumb: 'https://picsum.photos/id/40/400/300' },
-  { id: 44, url: 'https://picsum.photos/id/44/1200/800', thumb: 'https://picsum.photos/id/44/400/300' },
-  { id: 48, url: 'https://picsum.photos/id/48/1200/800', thumb: 'https://picsum.photos/id/48/400/300' },
-  { id: 50, url: 'https://picsum.photos/id/50/1200/800', thumb: 'https://picsum.photos/id/50/400/300' },
-  { id: 57, url: 'https://picsum.photos/id/57/1200/800', thumb: 'https://picsum.photos/id/57/400/300' },
-  { id: 63, url: 'https://picsum.photos/id/63/1200/800', thumb: 'https://picsum.photos/id/63/400/300' },
-  { id: 68, url: 'https://picsum.photos/id/68/1200/800', thumb: 'https://picsum.photos/id/68/400/300' },
+  { id: 2, url: 'https://picsum.photos/id/15/1200/800', thumb: 'https://picsum.photos/id/15/400/300' },
+  { id: 3, url: 'https://picsum.photos/id/26/1200/800', thumb: 'https://picsum.photos/id/26/400/300' },
+  { id: 4, url: 'https://picsum.photos/id/28/1200/800', thumb: 'https://picsum.photos/id/28/400/300' },
+  { id: 5, url: 'https://picsum.photos/id/36/1200/800', thumb: 'https://picsum.photos/id/36/400/300' },
+  { id: 6, url: 'https://picsum.photos/id/40/1200/800', thumb: 'https://picsum.photos/id/40/400/300' },
+  { id: 7, url: 'https://picsum.photos/id/44/1200/800', thumb: 'https://picsum.photos/id/44/400/300' },
+  { id: 8, url: 'https://picsum.photos/id/48/1200/800', thumb: 'https://picsum.photos/id/48/400/300' },
+  { id: 9, url: 'https://picsum.photos/id/50/1200/800', thumb: 'https://picsum.photos/id/50/400/300' },
+  { id: 10, url: 'https://picsum.photos/id/57/1200/800', thumb: 'https://picsum.photos/id/57/400/300' },
+  { id: 11, url: 'https://picsum.photos/id/63/1200/800', thumb: 'https://picsum.photos/id/63/400/300' },
+  { id: 12, url: 'https://picsum.photos/id/68/1200/800', thumb: 'https://picsum.photos/id/68/400/300' },
+  { id: 13, url: 'https://picsum.photos/id/100/1200/800', thumb: 'https://picsum.photos/id/100/400/300' },
+  { id: 14, url: 'https://picsum.photos/id/116/1200/800', thumb: 'https://picsum.photos/id/116/400/300' },
+  { id: 15, url: 'https://picsum.photos/id/145/1200/800', thumb: 'https://picsum.photos/id/145/400/300' },
+  { id: 16, url: 'https://picsum.photos/id/164/1200/800', thumb: 'https://picsum.photos/id/164/400/300' },
+  { id: 17, url: 'https://picsum.photos/id/169/1200/800', thumb: 'https://picsum.photos/id/169/400/300' },
+  { id: 18, url: 'https://picsum.photos/id/180/1200/800', thumb: 'https://picsum.photos/id/180/400/300' },
+  { id: 19, url: 'https://picsum.photos/id/191/1200/800', thumb: 'https://picsum.photos/id/191/400/300' },
+  { id: 20, url: 'https://picsum.photos/id/201/1200/800', thumb: 'https://picsum.photos/id/201/400/300' },
+  { id: 21, url: 'https://picsum.photos/id/220/1200/800', thumb: 'https://picsum.photos/id/220/400/300' },
+  { id: 22, url: 'https://picsum.photos/id/236/1200/800', thumb: 'https://picsum.photos/id/236/400/300' },
 ];
 
 type BackgroundMode = 'color' | 'gallery' | 'upload';
@@ -97,21 +107,24 @@ export default function BackgroundGallery({
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600">
           <Image className="h-3 w-3" />
           Gallery images
+          <span className="font-normal text-gray-400">— {GALLERY_IMAGES.length} options</span>
         </p>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-          {GALLERY_IMAGES.map((img) => (
-            <button
-              key={img.id}
-              type="button"
-              onClick={() => onSelect('gallery', img.url)}
-              className={cn(
-                'relative aspect-video overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-1 transition-transform hover:scale-105',
-                currentType === 'gallery' && currentValue === img.url ? 'ring-blue-500' : 'ring-transparent',
-              )}
-            >
-              <img src={img.thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
-            </button>
-          ))}
+        <div className="max-h-56 overflow-y-auto rounded-lg border border-gray-100 p-1.5">
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+            {GALLERY_IMAGES.map((img) => (
+              <button
+                key={img.id}
+                type="button"
+                onClick={() => onSelect('gallery', img.url)}
+                className={cn(
+                  'relative aspect-video overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-1 transition-transform hover:scale-105',
+                  currentType === 'gallery' && currentValue === img.url ? 'ring-blue-500' : 'ring-transparent',
+                )}
+              >
+                <img src={img.thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

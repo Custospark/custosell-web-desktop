@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarDays, Clock, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Building2, Video, XCircle, Copy, Link, Check } from 'lucide-react';
+import { CalendarDays, Clock, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Building2, Video, XCircle, Copy, Link, Check, ChevronDown } from 'lucide-react';
 import { useToast } from '../../../app/contexts/useToast';
 import { cn } from '../../../shared/utils/cn';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBookingInfo, useBookingSlots, useCreateBooking } from '../api/useBookingQueries';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { ensureHttps } from '../ui/bookingHelpers';
+import { countryCodes, type CountryCode } from '../../../shared/utils/countryCodes';
 import type { CreateBookingPayload, TimeSlot } from '../api/useBookingQueries';
 
 function formatTime(hhmm: string): string {
@@ -52,6 +53,21 @@ export default function PublicBookingPage() {
   const [meetingLink, setMeetingLink] = useState('');
   const [notes, setNotes] = useState('');
   const [step, setStep] = useState<'datetime' | 'details' | 'done'>('datetime');
+  const [countryCode, setCountryCode] = useState<CountryCode>(() => countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
+  const [search, setSearch] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const filtered = countryCodes.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) || c.dial_code.includes(search) || c.code.toLowerCase().includes(search),
+  );
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const { data: slotsData, isLoading: slotsLoading } = useBookingSlots(token ?? '', selectedDate);
   const createBooking = useCreateBooking(token ?? '');
@@ -104,7 +120,7 @@ export default function PublicBookingPage() {
       time: selectedTime,
       name: name.trim(),
       email: email.trim() || undefined,
-      phone: phone.trim() || undefined,
+      phone: phone.trim() ? `${countryCode.dial_code}${phone.replace(/\D/g, '')}` : undefined,
       meeting_link: meetingLink.trim() || undefined,
       notes: notes.trim() || 'Agenda, topics, or anything else...',
     };
@@ -375,13 +391,46 @@ export default function PublicBookingPage() {
                   <Phone className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
                   Phone number
                 </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+256 700 000 000"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
+                <div className="flex gap-2">
+                  <div ref={dropdownRef} className="relative shrink-0">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
+                      className="flex h-[42px] items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-sm hover:border-gray-300 transition-colors"
+                    >
+                      <span className="text-lg leading-none">{countryCode.flag}</span>
+                      <span className="text-sm font-medium text-gray-700">{countryCode.dial_code}</span>
+                      <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+                    </button>
+                    {dropdownOpen && (
+                      <div className="absolute top-full mt-1 left-0 w-72 rounded-xl border border-gray-200 bg-white shadow-lg z-50 max-h-60 overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
+                          <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300" autoFocus />
+                        </div>
+                        {filtered.map((c) => (
+                          <button key={c.code} type="button" onClick={() => { setCountryCode(c); setDropdownOpen(false); setSearch(''); }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-xs text-left hover:bg-indigo-50 transition-colors ${c.code === countryCode.code ? 'bg-indigo-50 font-medium' : ''}`}>
+                            <span className="text-lg">{c.flag}</span>
+                            <span className="text-gray-800">{c.name}</span>
+                            <span className="ml-auto text-gray-400">{c.dial_code}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="700 000 000"
+                      className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    />
+                  </div>
+                </div>
+                {phone && (
+                  <p className="mt-1 text-xs text-gray-400">Full number: {countryCode.dial_code} {phone}</p>
+                )}
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-gray-600">

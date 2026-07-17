@@ -74,7 +74,7 @@ export default function LeadCard({
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       className={cn(
-        'group relative w-full cursor-pointer overflow-hidden rounded-xl border border-gray-200/90 bg-white text-left shadow-sm transition-all duration-200',
+        'group relative w-full cursor-pointer rounded-xl border border-gray-200/90 bg-white text-left shadow-sm transition-all duration-200',
         'hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md',
         dragging && 'rotate-1 opacity-60 shadow-lg',
         overdue && 'border-red-200/80',

@@ -23,8 +23,9 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     stripCrossorigin(),
   ],
-  // Dev/web deep links (`/@slug`) need absolute base. Electron packaged builds use relative `./`.
-  base: command === 'serve' ? '/' : './',
+  // Dev needs absolute base (`/`). Electron packaged builds use relative (`./`).
+  // For web deployments on sub‑routes, set VITE_ASSET_BASE=/ in CI.
+  base: command === 'serve' ? '/' : (process.env.VITE_ASSET_BASE || './'),
   build: {
     outDir: 'dist/web',
     sourcemap: false,

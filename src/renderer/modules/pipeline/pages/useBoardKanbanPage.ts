@@ -270,8 +270,6 @@ export function useBoardKanbanPage() {
   const isTaskBoard = board ? boardUsesTaskTerminology(board) : workspace === 'estimates';
   const itemLabel = isTaskBoard ? 'task' : 'lead';
 
-  const boardBgStyle = headerBoard ? pipelineBoardBackgroundStyleFromBoard(headerBoard) : undefined;
-
   return {
     boardBgStyle,
     workspace,

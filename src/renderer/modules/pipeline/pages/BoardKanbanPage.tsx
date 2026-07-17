@@ -92,6 +92,7 @@ export default function BoardKanbanPage() {
     handleOpenCollaboration,
     allStages,
     stages,
+    allLeadsCount,
     filteredCount,
     handleDropColumn,
     handleDropLead,

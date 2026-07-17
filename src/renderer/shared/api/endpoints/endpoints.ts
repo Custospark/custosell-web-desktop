@@ -116,6 +116,7 @@ export const PIPELINE = {
   BOARD_DUPLICATE: (id: number) => `/pipeline/boards/${id}/duplicate`,
   BOARD_KANBAN: (id: number) => `/pipeline/boards/${id}/kanban`,
   BOARD_CALENDAR: (id: number) => `/pipeline/boards/${id}/calendar`,
+  ALL_BOARDS_CALENDAR: '/pipeline/calendar',
   BOARD_BACKGROUND: (id: number) => `/pipeline/boards/${id}/background`,
   BOARD_IMPORT_TEMPLATE: (id: number) => `/pipeline/boards/${id}/import-template`,
   BOARD_IMPORT: (id: number) => `/pipeline/boards/${id}/import`,

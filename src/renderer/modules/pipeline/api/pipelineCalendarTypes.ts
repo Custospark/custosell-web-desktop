@@ -16,6 +16,7 @@ export interface PipelineCalendarLead {
   time?: string | null;
   stage: { id: number; name: string; color: string | null } | null;
   assignee: PipelineUserRef | null;
+  board?: { id: number; name: string } | null;
 }
 
 export interface PipelineCalendarDay {

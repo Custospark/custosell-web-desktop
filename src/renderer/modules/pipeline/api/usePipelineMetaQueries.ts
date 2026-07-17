@@ -187,6 +187,24 @@ export function usePipelineCalendar(
   });
 }
 
+export function useAllBoardsCalendar(
+  year: number,
+  month: number,
+  workspace: 'pipeline' | 'estimates',
+  dateField: PipelineCalendarDateField = 'due',
+) {
+  return useQuery<PipelineCalendarDay[]>({
+    queryKey: [...pipelineKeys.all, 'calendar', 'all', workspace, year, month, dateField],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `${PIPELINE.ALL_BOARDS_CALENDAR}?year=${year}&month=${month}&date_field=${dateField}&workspace=${workspace}`,
+      );
+      return normalizeList<PipelineCalendarDay>(data);
+    },
+    ...listQueryDefaults,
+  });
+}
+
 export function useCreatePipelineSource() {
   const qc = useQueryClient();
   const { showToast } = useToast();

@@ -41,6 +41,7 @@ export {
   usePipelineSources,
   usePipelineInsights,
   usePipelineCalendar,
+  useAllBoardsCalendar,
   useCreatePipelineSource,
   useUpdatePipelineSource,
   useDeletePipelineSource,

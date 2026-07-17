@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertCircle, Briefcase, Calendar, CalendarDays, ChevronLeft, ChevronRight, Kanban,
+  AlertCircle, Briefcase, Calendar, CalendarDays, ChevronLeft, ChevronRight, Kanban, LayoutGrid,
 } from 'lucide-react';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Card } from '../../../shared/components/cards/Card';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
-import { usePipelineCalendar } from '../api/usePipelineQueries';
+import { usePipelineCalendar, useAllBoardsCalendar } from '../api/usePipelineQueries';
 import type { PipelineCalendarDateField, PipelineCalendarLead } from '../api/pipelineTypes';
 import { PipelineStatusBadge } from './pipelineStatusBadge';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
@@ -26,6 +26,7 @@ interface BoardCalendarViewProps {
   boardId: number;
   onLeadClick: (leadId: number) => void;
   isProjectBoard?: boolean;
+  workspace?: 'pipeline' | 'estimates';
 }
 
 const DATE_FIELD_OPTIONS: { value: PipelineCalendarDateField; label: string; shortLabel: string; hint: string }[] = [
@@ -124,15 +125,20 @@ function CalendarLeadChip({
   );
 }
 
-export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard = false }: BoardCalendarViewProps) {
+export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard = false, workspace = 'pipeline' }: BoardCalendarViewProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [dateField, setDateField] = useState<PipelineCalendarDateField>('due');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [scope, setScope] = useState<'board' | 'all'>('board');
   const dayDetailRef = useRef<HTMLDivElement>(null);
 
-  const { data: days = [], isLoading } = usePipelineCalendar(boardId, year, month, dateField);
+  const { data: boardDays = [], isLoading: boardLoading } = usePipelineCalendar(boardId, year, month, dateField);
+  const { data: allDays = [], isLoading: allLoading } = useAllBoardsCalendar(year, month, workspace, dateField);
+
+  const days = scope === 'all' ? allDays : boardDays;
+  const isLoading = scope === 'all' ? allLoading : boardLoading;
 
   const leadsByDate = useMemo(() => {
     const map = new Map<string, PipelineCalendarLead[]>();
@@ -234,6 +240,34 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
             <span className="hidden sm:inline">{opt.label}</span>
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+        <span className="text-xs font-medium text-gray-500">View:</span>
+        <button
+          type="button"
+          onClick={() => setScope('board')}
+          className={cn(
+            'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
+            scope === 'board'
+              ? 'bg-indigo-100 text-indigo-800'
+              : 'text-gray-500 hover:bg-gray-100',
+          )}
+        >
+          This board
+        </button>
+        <button
+          type="button"
+          onClick={() => setScope('all')}
+          className={cn(
+            'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
+            scope === 'all'
+              ? 'bg-indigo-100 text-indigo-800'
+              : 'text-gray-500 hover:bg-gray-100',
+          )}
+        >
+          All {workspace === 'estimates' ? 'project boards' : 'pipeline boards'}
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -402,6 +436,12 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
                       <p className="flex items-center gap-1.5">
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: lead.stage.color ?? '#94a3b8' }} />
                         {lead.stage.name}
+                      </p>
+                    )}
+                    {scope === 'all' && lead.board && (
+                      <p className="flex items-center gap-1.5">
+                        <LayoutGrid className="h-3 w-3 text-gray-400" />
+                        {lead.board.name}
                       </p>
                     )}
                     {lead.assignee && (

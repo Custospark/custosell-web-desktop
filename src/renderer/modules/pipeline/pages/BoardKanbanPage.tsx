@@ -386,7 +386,7 @@ export default function BoardKanbanPage() {
         </div>
       ) : viewMode === 'calendar' ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} />
+          <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} workspace={workspace} />
         </div>
       ) : null}
 

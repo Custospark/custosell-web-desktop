@@ -3,7 +3,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
-  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check, Copy, ArrowRightLeft,
+  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check, Copy, ArrowRightLeft, Pin, PinOff,
 } from 'lucide-react';
 import LeadAssignmentChain from './LeadAssignmentChain';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
@@ -16,6 +16,7 @@ interface LeadCardProps {
   onCopyClick?: (lead: PipelineLead) => void;
   onMoveClick?: (lead: PipelineLead) => void;
   onHistoryClick?: (lead: PipelineLead) => void;
+  onPinClick?: (lead: PipelineLead) => void;
   onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   dragging?: boolean;
   showDragHandle?: boolean;
@@ -48,6 +49,7 @@ export default function LeadCard({
   onCopyClick,
   onMoveClick,
   onHistoryClick,
+  onPinClick,
   onToggleComplete,
   dragging,
   showDragHandle = false,
@@ -143,6 +145,25 @@ export default function LeadCard({
         </div>
 
         <div className="absolute right-3 top-3 flex flex-col gap-0">
+          {onPinClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPinClick(lead);
+              }}
+              className={cn(
+                'rounded-lg p-1 text-gray-400 transition-colors',
+                lead.is_pinned
+                  ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                  : 'hover:bg-amber-50 hover:text-amber-600',
+              )}
+              title={lead.is_pinned ? 'Unpin from top' : 'Pin to top'}
+              aria-label={lead.is_pinned ? 'Unpin' : 'Pin'}
+            >
+              {lead.is_pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {

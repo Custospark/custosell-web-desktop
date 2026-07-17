@@ -257,6 +257,15 @@ export function useBoardKanbanPage() {
     });
   };
 
+  const handlePinClick = (lead: PipelineLead) => {
+    updateLead.mutate({
+      id: lead.id,
+      board_id: boardId,
+      is_pinned: !lead.is_pinned,
+      silent: true,
+    });
+  };
+
   const applySearchToken = (token: string) => {
     setLeadQuery((prev) => (prev.trim() ? `${prev.trim()} ${token}` : token));
     requestAnimationFrame(() => searchInputRef.current?.focus());
@@ -351,6 +360,7 @@ export function useBoardKanbanPage() {
     handleCopyClick,
     handleMoveClick,
     handleToggleComplete,
+    handlePinClick,
     applySearchToken,
     fameBgStyle,
     isTaskBoard,

@@ -8,7 +8,7 @@ import { CustosellLoader } from '../../../shared/components/loading/CustosellLoa
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import {
-  Quote, Megaphone, Trophy, Flag, Pin, Trash2, PinOff, Sparkles, Plus, Calendar, User,
+  Quote, Megaphone, Trophy, Flag, Pin, Trash2, PinOff, Pencil, Sparkles, Plus, Calendar, User,
 } from 'lucide-react';
 
 function timeAgo(dateStr: string): string {
@@ -56,7 +56,7 @@ const TYPE_STYLES: Record<string, { icon: typeof Quote; gradient: string; border
   },
 };
 
-function FameCard({ post, canManage }: { post: WallFamePost; canManage: boolean }) {
+function FameCard({ post, canManage, onEdit }: { post: WallFamePost; canManage: boolean; onEdit?: (post: WallFamePost) => void }) {
   const deletePost = useDeleteWallPost();
   const updatePost = useUpdateWallPost();
   const { confirm } = useConfirm();
@@ -81,7 +81,7 @@ function FameCard({ post, canManage }: { post: WallFamePost; canManage: boolean 
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border bg-white/85 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-lg transition-all hover:shadow-md',
+        'group relative overflow-hidden rounded-xl border bg-white shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition-all hover:shadow-md',
         'border-gray-200/80',
         post.pinned && 'ring-2 ring-amber-400/60',
       )}
@@ -144,6 +144,14 @@ function FameCard({ post, canManage }: { post: WallFamePost; canManage: boolean 
             <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
               <button
                 type="button"
+                onClick={() => onEdit?.(post)}
+                className="rounded p-1 text-gray-400 transition-colors hover:bg-white hover:text-blue-600"
+                title="Edit post"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
                 onClick={handleTogglePin}
                 className="rounded p-1 text-gray-400 transition-colors hover:bg-white hover:text-amber-600"
                 title={post.pinned ? 'Unpin' : 'Pin post'}
@@ -169,6 +177,7 @@ function FameCard({ post, canManage }: { post: WallFamePost; canManage: boolean 
 export default function BoardFameView({ canContribute }: BoardFameViewProps) {
   const { data: posts = [], isLoading } = useWallFamePosts();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<WallFamePost | null>(null);
 
   const pinned = posts.filter((p) => p.pinned);
   const unpinned = posts.filter((p) => !p.pinned);
@@ -179,9 +188,9 @@ export default function BoardFameView({ canContribute }: BoardFameViewProps) {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white/30 backdrop-blur-sm">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {posts.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center rounded-xl bg-white/70 backdrop-blur-md shadow-sm">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center rounded-xl bg-white shadow-sm">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 shadow-inner">
               <Trophy className="h-8 w-8 text-amber-500" />
             </div>
@@ -202,7 +211,7 @@ export default function BoardFameView({ canContribute }: BoardFameViewProps) {
           </div>
         ) : (
           <div className="p-5">
-            <div className="mb-5 flex items-center justify-between rounded-xl bg-white/70 px-4 py-3 backdrop-blur-md shadow-sm">
+            <div className="mb-5 flex items-center justify-between rounded-xl bg-white/90 px-4 py-3 shadow-sm">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Wall of Fame</h2>
                 <p className="text-sm text-gray-500">{posts.length} celebration{posts.length !== 1 ? 's' : ''}</p>
@@ -223,13 +232,13 @@ export default function BoardFameView({ canContribute }: BoardFameViewProps) {
 
             {pinned.length > 0 && (
               <div className="mb-6">
-                <div className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 backdrop-blur-sm shadow-sm">
+                <div className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 shadow-sm">
                   <Pin className="h-3.5 w-3.5" />
                   Pinned
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {pinned.map((post) => (
-                    <FameCard key={post.id} post={post} canManage={canContribute ?? false} />
+                    <FameCard key={post.id} post={post} canManage={canContribute ?? false} onEdit={setEditingPost} />
                   ))}
                 </div>
               </div>
@@ -237,7 +246,7 @@ export default function BoardFameView({ canContribute }: BoardFameViewProps) {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {unpinned.map((post) => (
-                <FameCard key={post.id} post={post} canManage={canContribute ?? false} />
+                <FameCard key={post.id} post={post} canManage={canContribute ?? false} onEdit={setEditingPost} />
               ))}
             </div>
           </div>
@@ -246,6 +255,13 @@ export default function BoardFameView({ canContribute }: BoardFameViewProps) {
 
       {createOpen && (
         <CreateWallPostModal open onClose={() => setCreateOpen(false)} />
+      )}
+      {editingPost && (
+        <CreateWallPostModal
+          open
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+        />
       )}
     </>
   );

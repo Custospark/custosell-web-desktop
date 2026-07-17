@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useCreateWallPost } from '../api/useWallFameQueries';
+import { useCreateWallPost, useUpdateWallPost } from '../api/useWallFameQueries';
 import { pipelineInputClass, PipelineFormSection, PipelineIconField, PipelineModalHero } from './pipelineFormFields';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
@@ -14,6 +14,7 @@ import { cn } from '../../../shared/utils/cn';
 interface CreateWallPostModalProps {
   open: boolean;
   onClose: () => void;
+  post?: WallFamePost | null;
 }
 
 const POST_TYPES = [
@@ -23,18 +24,20 @@ const POST_TYPES = [
   { value: 'milestone', label: 'Milestone', icon: Flag, description: 'Mark a team achievement' },
 ] as const;
 
-export default function CreateWallPostModal({ open, onClose }: CreateWallPostModalProps) {
+export default function CreateWallPostModal({ open, onClose, post }: CreateWallPostModalProps) {
   const createPost = useCreateWallPost();
+  const updatePost = useUpdateWallPost();
+  const isEdit = !!post;
   const { data: staff = [] } = useStaff();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [type, setType] = useState<string>('shoutout');
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [type, setType] = useState<string>(post?.type ?? 'shoutout');
+  const [title, setTitle] = useState(post?.title ?? '');
+  const [content, setContent] = useState(post?.content ?? '');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
-  const [authorName, setAuthorName] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(post?.staff?.id ?? null);
+  const [authorName, setAuthorName] = useState(post?.staff?.name ?? post?.author_name ?? '');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const selectedStaff = selectedStaffId ? staff.find((s) => s.id === selectedStaffId) : null;
@@ -63,34 +66,41 @@ export default function CreateWallPostModal({ open, onClose }: CreateWallPostMod
   };
 
   const handleSubmit = async () => {
-    if (!content.trim() || createPost.isPending) return;
+    if (!content.trim() || createPost.isPending || updatePost.isPending) return;
     setSubmissionError(null);
     try {
-      await createPost.mutateAsync({
+      const payload = {
         type: type as 'quote' | 'shoutout' | 'performer' | 'milestone',
         title: title.trim() || undefined,
         content: content.trim(),
         author_name: authorName.trim() || undefined,
         staff_id: selectedStaffId ?? undefined,
         photo: photoFile,
-      });
+      };
+      if (isEdit && post) {
+        await updatePost.mutateAsync({ id: post.id, ...payload });
+      } else {
+        await createPost.mutateAsync(payload);
+      }
       handleClose();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not create post. Please try again.';
+      const msg = err instanceof Error ? err.message : 'Could not save post. Please try again.';
       setSubmissionError(msg);
     }
   };
 
-  const isSubmitting = createPost.isPending;
+  const isSubmitting = createPost.isPending || updatePost.isPending;
 
   const handleClose = () => {
-    setType('shoutout');
-    setTitle('');
-    setContent('');
-    setAuthorName('');
-    setSelectedStaffId(null);
-    setPhotoFile(null);
-    setPhotoPreview(null);
+    if (!isEdit) {
+      setType('shoutout');
+      setTitle('');
+      setContent('');
+      setAuthorName('');
+      setSelectedStaffId(null);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+    }
     onClose();
   };
 
@@ -99,8 +109,8 @@ export default function CreateWallPostModal({ open, onClose }: CreateWallPostMod
       <div className="space-y-5">
         <PipelineModalHero
           icon={Sparkles}
-          title="Add to Wall of Fame"
-          description="Celebrate wins, recognise people, and mark milestones"
+          title={isEdit ? 'Edit post' : 'Add to Wall of Fame'}
+          description={isEdit ? 'Update the post details' : 'Celebrate wins, recognise people, and mark milestones'}
           tone="emerald"
         />
 
@@ -256,8 +266,8 @@ export default function CreateWallPostModal({ open, onClose }: CreateWallPostMod
             disabled={!content.trim() || isSubmitting}
             className="inline-flex items-center gap-2"
           >
-            <Sparkles className="h-4 w-4" />
-            Post to Wall
+            {isEdit ? <Sparkles className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+            {isEdit ? 'Save changes' : 'Post to Wall'}
           </Button>
         </div>
       </div>

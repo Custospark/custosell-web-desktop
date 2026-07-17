@@ -173,10 +173,18 @@ export function moveLeadOptimistic(
     ...board,
     stages: stagesWithout.map((stage) => {
       if (stage.id !== toStageId) return stage;
-      const nextLeads = [...(stage.leads ?? []), updatedLead].sort((a, b) => a.position - b.position);
-      return { ...stage, leads: nextLeads };
+      return { ...stage, leads: sortLeads([...(stage.leads ?? []), updatedLead]) };
     }),
   };
+}
+
+function sortLeads(leads: PipelineLead[]): PipelineLead[] {
+  return [...leads].sort((a, b) => {
+    if ((a.is_pinned ? 1 : 0) !== (b.is_pinned ? 1 : 0)) {
+      return (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0);
+    }
+    return a.position - b.position;
+  });
 }
 
 export function replaceLeadOnKanban(board: PipelineBoard, lead: PipelineLead): PipelineBoard {
@@ -191,7 +199,7 @@ export function replaceLeadOnKanban(board: PipelineBoard, lead: PipelineLead): P
     ...board,
     stages: without.map((stage) =>
       stage.id === lead.stage_id
-        ? { ...stage, leads: [...(stage.leads ?? []), lead].sort((a, b) => a.position - b.position) }
+        ? { ...stage, leads: sortLeads([...(stage.leads ?? []), lead]) }
         : stage,
     ),
   };
@@ -205,10 +213,13 @@ export function updateLeadOnKanban(
   if (!board.stages?.length) return board;
   return {
     ...board,
-    stages: board.stages.map((stage) => ({
-      ...stage,
-      leads: (stage.leads ?? []).map((lead) => (lead.id === leadId ? { ...lead, ...partial } : lead)),
-    })),
+    stages: board.stages.map((stage) => {
+      const updatedLeads = (stage.leads ?? []).map((lead) => (lead.id === leadId ? { ...lead, ...partial } : lead));
+      if (partial.is_pinned !== undefined) {
+        return { ...stage, leads: sortLeads(updatedLeads) };
+      }
+      return { ...stage, leads: updatedLeads };
+    }),
   };
 }
 
@@ -220,9 +231,7 @@ export function addLeadToKanban(board: PipelineBoard, lead: PipelineLead): Pipel
       stage.id === lead.stage_id
         ? {
             ...stage,
-            leads: [...(stage.leads ?? []).filter((l) => l.id !== lead.id), lead].sort(
-              (a, b) => a.position - b.position,
-            ),
+            leads: sortLeads([...(stage.leads ?? []).filter((l) => l.id !== lead.id), lead]),
           }
         : stage,
     ),

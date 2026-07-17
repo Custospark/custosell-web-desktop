@@ -11,7 +11,6 @@ import BoardSwitcherIcons from '../ui/BoardSwitcherIcons';
 import BoardCalendarView from '../ui/BoardCalendarView';
 import BoardProgressView from '../ui/BoardProgressView';
 import BoardFameView from '../ui/BoardFameView';
-import PetalBackground from '../ui/PetalBackground';
 import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
 import BoardKanbanPageModals from '../ui/BoardKanbanPageModals';
 import BoardKanbanPageHeader from '../ui/BoardKanbanPageHeader';
@@ -99,6 +98,7 @@ export default function BoardKanbanPage() {
     handleCopyClick,
     handleMoveClick,
     handleToggleComplete,
+    handlePinClick,
     applySearchToken,
     fameBgStyle,
     isTaskBoard,
@@ -160,7 +160,6 @@ export default function BoardKanbanPage() {
       className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm transition-opacity duration-200"
       style={boardBgStyle}
     >
-      {viewMode === 'fame' && <PetalBackground />}
       <BoardKanbanPageHeader
         workspaceLabel={workspaceLabel}
         board={board}
@@ -202,6 +201,7 @@ export default function BoardKanbanPage() {
               onLeadCopyClick={canContribute ? handleCopyClick : undefined}
               onLeadMoveClick={canContribute ? handleMoveClick : undefined}
               onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
+              onLeadPinClick={canContribute ? handlePinClick : undefined}
               onToggleComplete={canContribute ? handleToggleComplete : undefined}
               onAddLead={canContribute ? (stageId) => setCreateStageId(stageId) : undefined}
               onDropLead={canContribute ? handleDropLead : undefined}

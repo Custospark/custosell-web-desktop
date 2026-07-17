@@ -223,6 +223,7 @@ export interface PipelineLead {
   due_date: string | null;
   start_date: string | null;
   priority: PipelinePriority | null;
+  is_pinned?: boolean;
   background_color?: string | null;
   checklist_total?: number | null;
   checklist_done?: number | null;

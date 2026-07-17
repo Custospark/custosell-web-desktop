@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarDays, Clock, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Building2, Video, XCircle, Copy, Link } from 'lucide-react';
+import { CalendarDays, Clock, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Building2, Video, XCircle, Copy, Link, Check } from 'lucide-react';
+import { useToast } from '../../../app/contexts/useToast';
+import { cn } from '../../../shared/utils/cn';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBookingInfo, useBookingSlots, useCreateBooking } from '../api/useBookingQueries';
 import type { CreateBookingPayload, TimeSlot } from '../api/useBookingQueries';
@@ -51,6 +53,8 @@ export default function PublicBookingPage() {
 
   const { data: slotsData, isLoading: slotsLoading } = useBookingSlots(token ?? '', selectedDate);
   const createBooking = useCreateBooking(token ?? '');
+  const { showToast } = useToast();
+  const [copied, setCopied] = useState(false);
 
   const info = infoData?.data;
   const allSlots: TimeSlot[] = slotsData?.data?.slots ?? [];
@@ -111,6 +115,14 @@ export default function PublicBookingPage() {
   const referenceCode = bookingResponse?.reference_code;
   const checkUrl = bookingResponse?.check_url;
 
+  const handleCopyLink = () => {
+    if (!checkUrl) return;
+    navigator.clipboard.writeText(checkUrl);
+    setCopied(true);
+    showToast('success', 'Request submitted');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (step === 'done') {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
@@ -156,11 +168,18 @@ export default function PublicBookingPage() {
               />
               <button
                 type="button"
-                onClick={() => navigator.clipboard.writeText(checkUrl)}
-                className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                onClick={handleCopyLink}
+                className={cn(
+                  'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all',
+                  copied ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700',
+                )}
               >
-                <Copy className="my-auto mr-1 inline-block h-3 w-3" />
-                Copy
+                {copied ? (
+                  <Check className="my-auto mr-1 inline-block h-3 w-3" />
+                ) : (
+                  <Copy className="my-auto mr-1 inline-block h-3 w-3" />
+                )}
+                {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
           </div>

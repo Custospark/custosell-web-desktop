@@ -120,7 +120,7 @@ export default function PublicBookingPage() {
     if (!checkUrl) return;
     navigator.clipboard.writeText(checkUrl);
     setCopied(true);
-    showToast('success', 'Request submitted');
+    showToast('success', 'Link copied');
     setTimeout(() => setCopied(false), 2000);
   };
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Calendar, User, Video, CheckCircle, XCircle, Loader2, AlertTriangle, X, CheckCheck,
 } from 'lucide-react';
-import { useApproveBooking, useCompleteBooking, useRejectBooking } from '../api/useBookingQueries';
+import { useApproveBooking, useCompleteBooking, useRejectBooking, useBookingSettings } from '../api/useBookingQueries';
 import type { PipelineLead } from '../api/pipelineTypes';
 import { fmtDate, fmtTime, statusColor } from './bookingHelpers';
 
@@ -15,6 +15,7 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
   const approveBooking = useApproveBooking();
   const completeBooking = useCompleteBooking();
   const rejectBooking = useRejectBooking();
+  const { data: bookingSettings } = useBookingSettings(lead.board_id ?? 0);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -23,6 +24,12 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
   const [copiedCheckUrl, setCopiedCheckUrl] = useState(false);
 
   const status = lead.booking_status!;
+  const approvedData = approveBooking.data?.data;
+  const bookingToken = bookingSettings?.data?.token;
+  const refCode = approvedData?.reference_code ?? lead.reference_code;
+  const checkUrl = bookingToken && refCode
+    ? `${window.location.origin}/book/${bookingToken}/check/${refCode}`
+    : null;
 
   const handleReject = () => {
     if (!rejectReason.trim()) return;
@@ -43,8 +50,6 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
       { onSuccess: () => { setShowApproveModal(false); setApproveLink(''); setApproveNotes(''); } },
     );
   };
-
-  const approvedData = approveBooking.data?.data;
 
   return (
     <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3 text-xs">
@@ -95,7 +100,7 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
         )}
       </div>
 
-      {status === 'approved' && (approvedData?.reference_code ?? lead.reference_code) && (
+      {status === 'approved' && checkUrl && (
         <div className="mt-2 rounded-lg border border-dashed border-emerald-200 bg-emerald-50 p-2.5">
           <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
             <CheckCircle className="h-3 w-3" />
@@ -105,13 +110,13 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
             <input
               type="text"
               readOnly
-              value={`${window.location.origin}/book/${window.location.pathname.split('/')[2] ?? 'token'}/check/${approvedData?.reference_code ?? lead.reference_code}`}
+              value={checkUrl}
               className="min-w-0 flex-1 truncate rounded-lg border border-emerald-200 bg-white px-2 py-1.5 text-[10px] text-emerald-800"
             />
             <button
               type="button"
               onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/book/${window.location.pathname.split('/')[2] ?? 'token'}/check/${approvedData?.reference_code ?? lead.reference_code}`);
+                navigator.clipboard.writeText(checkUrl);
                 setCopiedCheckUrl(true);
                 setTimeout(() => setCopiedCheckUrl(false), 2000);
               }}

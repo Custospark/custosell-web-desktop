@@ -6,6 +6,7 @@ import { cn } from '../../../shared/utils/cn';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBookingInfo, useBookingSlots, useCreateBooking } from '../api/useBookingQueries';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import type { CreateBookingPayload, TimeSlot } from '../api/useBookingQueries';
 
 function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number);

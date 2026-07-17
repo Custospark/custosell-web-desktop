@@ -161,8 +161,9 @@ export function useApproveBooking() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async (leadId: number) => {
-      const { data } = await axiosInstance.post(`/pipeline/leads/${leadId}/approve-booking`);
+    mutationFn: async (payload: { leadId: number; meeting_link?: string; notes?: string }) => {
+      const { leadId, ...body } = payload;
+      const { data } = await axiosInstance.post(`/pipeline/leads/${leadId}/approve-booking`, body);
       return data;
     },
     onSuccess: () => {

@@ -87,7 +87,7 @@ export default function PublicBookingPage() {
   };
 
   const canProceedToDetails = selectedDate && selectedTime;
-  const canSubmit = name.trim() && (meetingLink.trim() || notes.trim());
+  const canSubmit = name.trim().length > 0;
 
   const handleNext = () => {
     if (canProceedToDetails) setStep('details');
@@ -104,7 +104,7 @@ export default function PublicBookingPage() {
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
       meeting_link: meetingLink.trim() || undefined,
-      notes: notes.trim() || undefined,
+      notes: notes.trim() || 'Agenda, topics, or anything else...',
     };
 
     await createBooking.mutateAsync(payload);
@@ -380,7 +380,7 @@ export default function PublicBookingPage() {
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-gray-600">
                   <Link className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Meeting link <span className="text-gray-400 font-normal">or</span> meeting notes <span className="text-red-400">*</span>
+                  Meeting link <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <input
                   type="url"
@@ -389,7 +389,7 @@ export default function PublicBookingPage() {
                   placeholder="https://meet.google.com/xxx"
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 />
-                <p className="mt-1 text-[11px] text-gray-400">Provide a meeting link or meeting notes below</p>
+                <p className="mt-1 text-[11px] text-gray-400">Optional — add a video link so the host can join online</p>
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-gray-600">

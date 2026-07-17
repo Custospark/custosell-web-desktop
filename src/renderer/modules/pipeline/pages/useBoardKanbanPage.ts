@@ -16,7 +16,7 @@ import {
 } from '../api/pipelineBoardWorkspace';
 import { leadMatchesSearchQuery } from '../api/pipelineLeadSearch';
 import { pipelineCollaborationKeys, useBoardAnnouncements, useBoardPolls } from '../api/usePipelineCollaborationQueries';
-import { pipelineBoardBackgroundStyleFromBoard } from '../api/pipelineKanbanCache';
+import { pipelineBoardBackgroundStyleFromBoard, sortLeads } from '../api/pipelineKanbanCache';
 import { useBoardResourcesSummary } from '../api/usePipelineResourceQueries';
 import { useBoardConversationSummary } from '../api/usePipelineConversationQueries';
 import { useBoardProgressSummaryDisplay } from '../api/useBoardProgressQueries';
@@ -193,7 +193,9 @@ export function useBoardKanbanPage() {
   };
 
   const allStages = useMemo(
-    () => [...(board?.stages ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+    () => [...(board?.stages ?? [])]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((stage) => ({ ...stage, leads: sortLeads(stage.leads ?? []) })),
     [board?.stages],
   );
 

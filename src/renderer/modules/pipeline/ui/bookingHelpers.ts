@@ -1,0 +1,23 @@
+export function fmtDate(iso: string | null): string {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+export function fmtTime(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+export const statusColor: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  scheduled: 'bg-amber-100 text-amber-800',
+  approved: 'bg-emerald-100 text-emerald-800',
+  completed: 'bg-blue-100 text-blue-800',
+  rejected: 'bg-red-100 text-red-800',
+  cancelled: 'bg-red-100 text-red-800',
+};

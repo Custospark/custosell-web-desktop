@@ -178,7 +178,7 @@ export function moveLeadOptimistic(
   };
 }
 
-function sortLeads(leads: PipelineLead[]): PipelineLead[] {
+export function sortLeads(leads: PipelineLead[]): PipelineLead[] {
   return [...leads].sort((a, b) => {
     if ((a.is_pinned ? 1 : 0) !== (b.is_pinned ? 1 : 0)) {
       return (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0);

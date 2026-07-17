@@ -11,6 +11,9 @@ export const pipelineKeys = {
   calendar: (boardId: number, year: number, month: number, dateField?: string) =>
     [...pipelineKeys.all, 'calendar', boardId, year, month, dateField ?? 'due'] as const,
   labels: (boardId?: number) => [...pipelineKeys.all, 'labels', boardId ?? 'all'] as const,
+  links: (leadId: number) => [...pipelineKeys.all, 'links', leadId] as const,
+  metaFields: (boardId: number) => [...pipelineKeys.all, 'meta-fields', boardId] as const,
+  leadMetaValues: (leadId: number) => [...pipelineKeys.all, 'lead-meta-values', leadId] as const,
   teamMembers: (
     workspace: 'pipeline' | 'estimates',
     scope: 'workspace' | 'business' = 'workspace',

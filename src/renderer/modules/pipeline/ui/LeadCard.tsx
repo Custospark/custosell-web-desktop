@@ -3,7 +3,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
-  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check,
+  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check, Copy,
 } from 'lucide-react';
 import LeadAssignmentChain from './LeadAssignmentChain';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
@@ -13,6 +13,7 @@ interface LeadCardProps {
   stageColor?: string | null;
   onClick: () => void;
   onCommentsClick?: (lead: PipelineLead) => void;
+  onCopyClick?: (lead: PipelineLead) => void;
   onHistoryClick?: (lead: PipelineLead) => void;
   onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   dragging?: boolean;
@@ -40,6 +41,7 @@ export default function LeadCard({
   stageColor,
   onClick,
   onCommentsClick,
+  onCopyClick,
   onHistoryClick,
   onToggleComplete,
   dragging,
@@ -176,6 +178,20 @@ export default function LeadCard({
                 </span>
               )}
             </button>
+            {onCopyClick && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopyClick(lead);
+                }}
+                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+                title={isProjectBoard ? 'Duplicate card' : 'Duplicate lead'}
+                aria-label="Duplicate"
+              >
+                <Copy className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 

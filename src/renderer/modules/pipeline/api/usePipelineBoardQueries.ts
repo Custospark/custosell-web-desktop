@@ -187,6 +187,30 @@ export function useCreatePipelineBoard() {
   });
 }
 
+export function useDuplicatePipelineBoard() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await axiosInstance.post(PIPELINE.BOARD_DUPLICATE(id));
+      return normalizeItem<PipelineBoard>(data);
+    },
+    onSuccess: (board) => {
+      qc.setQueryData(pipelineKeys.kanban(board.id), (old) =>
+        old ? { ...(old as PipelineBoard), cover_color: board.cover_color, name: board.name } : old,
+      );
+      qc.invalidateQueries({ queryKey: pipelineKeys.boardAccess(board.id) });
+      invalidatePipelineBoardsList(qc);
+      invalidatePipelineBoardScope(qc, board.id);
+      showToast('success', 'Board duplicated');
+    },
+    onError: (err: AxiosError<{ message?: string }>) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not duplicate board'));
+    },
+  });
+}
+
 export function useDeletePipelineBoard() {
   const qc = useQueryClient();
   const { showToast } = useToast();

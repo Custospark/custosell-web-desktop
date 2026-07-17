@@ -106,6 +106,52 @@ export interface PipelineLabel {
   sort_order: number;
 }
 
+export interface PipelineLeadLink {
+  id: number;
+  lead_id: number;
+  linked_lead_id: number | null;
+  linked_board_id: number | null;
+  label: string | null;
+  created_by: number | null;
+  creator?: { id: number; name: string } | null;
+  linked_lead?: {
+    id: number;
+    title: string;
+    card_type: PipelineCardType;
+    board_id: number;
+    stage_id: number;
+    board?: { id: number; name: string } | null;
+    stage?: { id: number; name: string; color: string | null } | null;
+  } | null;
+  linked_board?: {
+    id: number;
+    name: string;
+    workspace?: string | null;
+  } | null;
+  created_at?: string;
+}
+
+export type MetaFieldType = 'text' | 'number' | 'date' | 'select' | 'multi_select';
+
+export interface PipelineBoardMetaField {
+  id: number;
+  board_id: number;
+  name: string;
+  type: MetaFieldType;
+  options?: string[] | null;
+  sort_order: number;
+  required: boolean;
+  created_at?: string;
+}
+
+export interface PipelineLeadMetaValue {
+  id: number;
+  lead_id: number;
+  meta_field_id: number;
+  value: string | null;
+  meta_field?: PipelineBoardMetaField | null;
+}
+
 export interface PipelineChecklistItem {
   id: number;
   checklist_id: number;

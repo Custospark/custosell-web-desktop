@@ -6,7 +6,9 @@ import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQue
 import type {
   CreateLeadPayload,
   PipelineBoard,
+  PipelineLabel,
   PipelineLead,
+  PipelineUserRef,
   UpdateLeadPayload,
 } from './pipelineTypes';
 import {
@@ -84,6 +86,36 @@ export function useCreatePipelineLead() {
       const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
       const tempId = -Date.now();
       const stage = previousKanban?.stages?.find((s) => s.id === payload.stage_id);
+
+      const cachedLabels = qc.getQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId));
+      const labelMap = new Map((cachedLabels ?? []).map((l) => [l.id, l]));
+      const optimisticLabels = (payload.label_ids ?? [])
+        .map((id) => labelMap.get(id))
+        .filter((l): l is PipelineLabel => l != null);
+
+      const optimisticAssignees: PipelineUserRef[] = [];
+      if (payload.assignee_ids?.length) {
+        const cachedBoard = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+        const assigneeIds = payload.assignee_ids;
+        const allKnown = (cachedBoard?.members ?? [])
+          .map((m) => m.user)
+          .filter((u): u is PipelineUserRef => u != null);
+        const creator = cachedBoard?.creator;
+        if (creator && assigneeIds.includes(creator.id)) {
+          optimisticAssignees.push(creator);
+        }
+        for (const m of allKnown) {
+          if (assigneeIds.includes(m.id) && !optimisticAssignees.some((a) => a.id === m.id)) {
+            optimisticAssignees.push(m);
+          }
+        }
+        for (const id of assigneeIds) {
+          if (!optimisticAssignees.some((a) => a.id === id)) {
+            optimisticAssignees.push({ id, name: `User #${id}` });
+          }
+        }
+      }
+
       const optimisticLead: PipelineLead = {
         id: tempId,
         business_id: previousKanban?.business_id ?? 0,
@@ -98,6 +130,7 @@ export function useCreatePipelineLead() {
         customer_id: payload.customer_id ?? null,
         converted_customer_id: null,
         assigned_to: payload.assigned_to ?? null,
+        assignees: optimisticAssignees.length ? optimisticAssignees : undefined,
         source_id: payload.source_id ?? null,
         estimated_value: payload.estimated_value ?? null,
         currency: payload.currency ?? 'UGX',
@@ -105,6 +138,7 @@ export function useCreatePipelineLead() {
         due_date: payload.due_date ?? null,
         start_date: payload.start_date ?? null,
         priority: payload.priority ?? null,
+        labels: optimisticLabels.length ? optimisticLabels : undefined,
         background_color: null,
         status: 'open',
         position: (stage?.leads?.length ?? 0) + 1,

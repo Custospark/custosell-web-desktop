@@ -9,6 +9,7 @@ interface KanbanColumnProps {
   stage: PipelineStage;
   onLeadClick: (lead: PipelineLead) => void;
   onLeadCommentsClick?: (lead: PipelineLead) => void;
+  onLeadCopyClick?: (lead: PipelineLead) => void;
   onLeadHistoryClick?: (lead: PipelineLead) => void;
   onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   onAddLead?: (stageId: number) => void;
@@ -22,6 +23,7 @@ export default function KanbanColumn({
   stage,
   onLeadClick,
   onLeadCommentsClick,
+  onLeadCopyClick,
   onLeadHistoryClick,
   onToggleComplete,
   onAddLead,
@@ -254,16 +256,17 @@ export default function KanbanColumn({
                   } : undefined}
                   onDragOver={canDropLeads ? (e) => handleCardDragOver(e, idx) : undefined}
                 >
-                  <LeadCard
-                    lead={lead}
-                    stageColor={stageColor}
-                    onClick={() => onLeadClick(lead)}
-                    onCommentsClick={onLeadCommentsClick}
-                    onHistoryClick={onLeadHistoryClick}
-                    onToggleComplete={onToggleComplete}
-                    showDragHandle={canDropLeads}
-                    isProjectBoard={isProjectBoard}
-                  />
+                <LeadCard
+                  lead={lead}
+                  stageColor={stageColor}
+                  onClick={() => onLeadClick(lead)}
+                  onCommentsClick={onLeadCommentsClick}
+                  onCopyClick={onLeadCopyClick}
+                  onHistoryClick={onLeadHistoryClick}
+                  onToggleComplete={onToggleComplete}
+                  showDragHandle={canDropLeads}
+                  isProjectBoard={isProjectBoard}
+                />
                 </div>
                 {dropInsertIdx === idx && !dropInsertBefore && (
                   <div className="mt-0.5 h-0.5 rounded-full bg-blue-500 shadow-sm" />

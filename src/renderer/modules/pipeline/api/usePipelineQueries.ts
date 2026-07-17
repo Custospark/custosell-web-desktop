@@ -13,6 +13,7 @@ export {
   useBoardAccessSync,
   useCreatePipelineBoard,
   useDeletePipelineBoard,
+  useDuplicatePipelineBoard,
   useUpdatePipelineBoard,
 } from './usePipelineBoardQueries';
 
@@ -48,6 +49,18 @@ export {
   useUpdatePipelineLabel,
   useDeletePipelineLabel,
 } from './usePipelineMetaQueries';
+
+export {
+  usePipelineLeadLinks,
+  useCreatePipelineLeadLink,
+  useDeletePipelineLeadLink,
+  usePipelineBoardMetaFields,
+  useCreatePipelineBoardMetaField,
+  useUpdatePipelineBoardMetaField,
+  useDeletePipelineBoardMetaField,
+  usePipelineLeadMetaValues,
+  useSyncPipelineLeadMetaValues,
+} from './usePipelineMetaFieldQueries';
 
 export {
   useCreatePipelineChecklist,

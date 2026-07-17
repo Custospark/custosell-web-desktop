@@ -251,7 +251,7 @@ export default function LeadDetailModal({
           </div>
         </PipelineFormSection>
 
-        <CardDetailExtras lead={lead} boardId={resolvedBoardId} canEdit={canEditCard} />
+        <CardDetailExtras lead={lead} boardId={resolvedBoardId} workspace={board?.workspace} canEdit={canEditCard} onNavigate={onClose} />
 
         {isLead && (
         <PipelineFormSection title="Contact" icon={User}>

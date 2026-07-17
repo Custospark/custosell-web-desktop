@@ -3,6 +3,8 @@ import type { PipelineLead } from '../api/pipelineTypes';
 import { useUpdatePipelineLead, useUploadPipelineAttachment, useDeletePipelineAttachment, useCreatePipelineAttachmentLink } from '../api/usePipelineQueries';
 import CardLabelsSection from './CardLabelsSection';
 import CardChecklistsSection from './CardChecklistsSection';
+import CardLinksSection from './CardLinksSection';
+import CardMetaFieldsSection from './CardMetaFieldsSection';
 import { PipelineFormSection, PipelineIconField, pipelineInputClass } from './pipelineFormFields';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
@@ -11,10 +13,12 @@ import { Calendar, Link as LinkIcon, Paperclip, Plus, Trash2, AlignLeft } from '
 interface CardDetailExtrasProps {
   lead: PipelineLead;
   boardId: number;
+  workspace?: 'pipeline' | 'estimates';
   canEdit?: boolean;
+  onNavigate?: () => void;
 }
 
-export default function CardDetailExtras({ lead, boardId, canEdit = true }: CardDetailExtrasProps) {
+export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline', canEdit = true, onNavigate }: CardDetailExtrasProps) {
   const updateLead = useUpdatePipelineLead();
   const patchLead = (payload: Record<string, unknown>) => {
     if (!canEdit) return;
@@ -99,6 +103,10 @@ export default function CardDetailExtras({ lead, boardId, canEdit = true }: Card
 
       <CardLabelsSection lead={lead} boardId={boardId} canEdit={canEdit} onPatchLead={patchLead} />
       <CardChecklistsSection lead={lead} boardId={boardId} canEdit={canEdit} />
+
+      <CardLinksSection leadId={lead.id} boardId={boardId} workspace={workspace} canEdit={canEdit} onNavigate={onNavigate} />
+
+      <CardMetaFieldsSection leadId={lead.id} boardId={boardId} canEdit={canEdit} />
 
       <PipelineFormSection title="Attachments" icon={Paperclip}>
         {canEdit && (

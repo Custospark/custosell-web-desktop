@@ -14,6 +14,7 @@ import {
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { pipelineInputClass } from '../ui/pipelineFormFields';
 import BoardLabelsSettings from '../ui/BoardLabelsSettings';
+import BoardMetaFieldsSettings from '../ui/BoardMetaFieldsSettings';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import {
   Kanban, Plus, Trash2, Users, Lock, Share2, Pencil, Check, X, Tag, Settings2, Layers,
@@ -184,6 +185,18 @@ export default function PipelineSettingsPage() {
           </div>
           <div className="p-5">
             <BoardLabelsSettings />
+          </div>
+        </Card>
+
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/80 px-5 py-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Custom fields</h3>
+              <p className="mt-1 text-xs text-gray-500">Add custom data fields to cards on each board.</p>
+            </div>
+          </div>
+          <div className="p-5">
+            <BoardMetaFieldsSettings />
           </div>
         </Card>
       </div>

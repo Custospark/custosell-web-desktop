@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useUpdatePipelineBoard, useUploadBoardBackground, useDeletePipelineBoard } from '../api/usePipelineQueries';
+import { useUpdatePipelineBoard, useUploadBoardBackground, useDeletePipelineBoard, useDuplicatePipelineBoard } from '../api/usePipelineQueries';
 import type { BoardMemberInput, PipelineBoard, PipelineVisibility } from '../api/pipelineTypes';
 import { membersFromBoard } from '../api/pipelineBoardMembers';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -25,7 +25,7 @@ import BoardBackgroundSection from './BoardBackgroundSection';
 import BoardAutomationsSection from './BoardAutomationsSection';
 import { normalizeBoardBackgroundUploadPath } from '../api/pipelineKanbanCache';
 import { addBoardUploadHistory, loadBoardUploadHistory } from '../api/boardUploadHistory';
-import { AlignLeft, Kanban, Trash2, Type, Users, Zap } from 'lucide-react';
+import { AlignLeft, Kanban, Copy, Trash2, Type, Users, Zap } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -57,9 +57,11 @@ function EditBoardModalForm({
   const user = useAppSelector((s) => s.auth.user);
   const updateBoard = useUpdatePipelineBoard();
   const deleteBoard = useDeletePipelineBoard();
+  const duplicateBoard = useDuplicatePipelineBoard();
   const uploadBg = useUploadBoardBackground();
   const { confirm } = useConfirm();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const [name, setName] = useState(board.name);
   const [description, setDescription] = useState(board.description ?? '');
@@ -170,6 +172,13 @@ function EditBoardModalForm({
     navigate(listRoute);
   };
 
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    await duplicateBoard.mutateAsync(board.id);
+    setIsDuplicating(false);
+    onClose();
+  };
+
   return (
     <Modal isOpen onClose={onClose} title="Board settings" size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -271,18 +280,32 @@ function EditBoardModalForm({
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
-          {!board.is_default && canDelete && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleDelete}
-              loading={isDeleting}
-              className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete board
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {canManageSettings && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleDuplicate}
+                loading={isDuplicating}
+                className="inline-flex items-center gap-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+              >
+                <Copy className="h-4 w-4" />
+                Duplicate Board
+              </Button>
+            )}
+            {!board.is_default && canDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleDelete}
+                loading={isDeleting}
+                className="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete board
+              </Button>
+            )}
+          </div>
           <div className="ml-auto flex gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel

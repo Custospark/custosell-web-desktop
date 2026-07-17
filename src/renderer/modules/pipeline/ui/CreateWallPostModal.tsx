@@ -10,6 +10,7 @@ import {
   Type, MessageSquare, X, Camera,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import type { WallFamePost } from '../api/pipelineTypes';
 
 interface CreateWallPostModalProps {
   open: boolean;

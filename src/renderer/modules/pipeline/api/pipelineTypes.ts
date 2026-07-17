@@ -397,6 +397,7 @@ export interface UpdateLeadPayload {
   priority?: PipelinePriority | null;
   booking_status?: 'pending' | 'approved' | 'rejected' | 'completed' | null;
   meeting_link?: string | null;
+  is_pinned?: boolean;
   background_color?: string | null;
   lost_reason?: string | null;
   label_ids?: number[];

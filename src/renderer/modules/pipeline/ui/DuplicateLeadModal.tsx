@@ -45,6 +45,8 @@ export default function DuplicateLeadModal({
   const resolvedStageId = selectedStageId !== '' ? selectedStageId : stages[0]?.id;
   const stageIsValid = resolvedStageId && stages.some((s) => s.id === resolvedStageId);
 
+  const sameBoard = resolvedBoardId === currentBoardId;
+
   const handleDuplicate = () => {
     if (!lead || !resolvedBoardId || !stageIsValid) return;
     createLead.mutate({
@@ -66,7 +68,7 @@ export default function DuplicateLeadModal({
       estimated_value: lead.estimated_value ?? undefined,
       currency: lead.currency,
       priority: lead.priority ?? undefined,
-      label_ids: (lead.labels ?? []).map((l) => l.id).length
+      label_ids: sameBoard && (lead.labels ?? []).length
         ? (lead.labels ?? []).map((l) => l.id)
         : undefined,
       due_date: lead.due_date ?? undefined,

@@ -13,6 +13,7 @@ export interface PipelineCalendarLead {
   status: PipelineLeadStatus;
   priority?: PipelinePriority | null;
   date_kind?: PipelineCalendarDateKind;
+  time?: string | null;
   stage: { id: number; name: string; color: string | null } | null;
   assignee: PipelineUserRef | null;
 }

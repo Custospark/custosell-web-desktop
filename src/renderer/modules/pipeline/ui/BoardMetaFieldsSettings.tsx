@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
 import {
   usePipelineBoardMetaFields,
+  usePipelineBoards,
   useCreatePipelineBoardMetaField,
   useUpdatePipelineBoardMetaField,
   useDeletePipelineBoardMetaField,
 } from '../api/usePipelineQueries';
 import type { PipelineBoardMetaField, MetaFieldType } from '../api/pipelineTypes';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
-import { PipelineFormSection, pipelineInputClass } from './pipelineFormFields';
+import { pipelineInputClass } from './pipelineFormFields';
 import { cn } from '../../../shared/utils/cn';
 import { Plus, X, Pencil, Check, Trash2, GripVertical } from 'lucide-react';
 
@@ -21,14 +22,17 @@ const FIELD_TYPES: { value: MetaFieldType; label: string }[] = [
 ];
 
 interface BoardMetaFieldsSettingsProps {
-  boardId: number;
+  boardId?: number;
 }
 
-export default function BoardMetaFieldsSettings({ boardId }: BoardMetaFieldsSettingsProps) {
-  const { data: fields = [] } = usePipelineBoardMetaFields(boardId);
-  const createField = useCreatePipelineBoardMetaField(boardId);
-  const updateField = useUpdatePipelineBoardMetaField(boardId);
-  const deleteField = useDeletePipelineBoardMetaField(boardId);
+export default function BoardMetaFieldsSettings({ boardId: fixedBoardId }: BoardMetaFieldsSettingsProps) {
+  const { data: boards = [] } = usePipelineBoards({ salesOnly: true });
+  const [selectedBoardId, setSelectedBoardId] = useState<number | ''>('');
+  const resolvedBoardId = fixedBoardId ?? (selectedBoardId === '' ? boards[0]?.id : selectedBoardId) ?? 0;
+  const { data: fields = [] } = usePipelineBoardMetaFields(resolvedBoardId);
+  const createField = useCreatePipelineBoardMetaField(resolvedBoardId ?? 0);
+  const updateField = useUpdatePipelineBoardMetaField(resolvedBoardId ?? 0);
+  const deleteField = useDeletePipelineBoardMetaField(resolvedBoardId ?? 0);
   const { confirm } = useConfirm();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -93,8 +97,24 @@ export default function BoardMetaFieldsSettings({ boardId }: BoardMetaFieldsSett
     deleteField.mutate(field.id);
   };
 
+  const needsBoardPicker = !fixedBoardId;
+
   return (
     <div className="space-y-4">
+      {needsBoardPicker && (
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-gray-600">Board</label>
+          <select
+            value={resolvedBoardId ?? ''}
+            onChange={(e) => setSelectedBoardId(e.target.value ? Number(e.target.value) : '')}
+            className={pipelineInputClass}
+          >
+            {boards.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
       {fields.length > 0 && (
         <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200">
           {fields.sort((a, b) => a.sort_order - b.sort_order).map((field) => (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertCircle, Briefcase, CalendarDays, ChevronLeft, ChevronRight, Kanban,
+  AlertCircle, Briefcase, Calendar, CalendarDays, ChevronLeft, ChevronRight, Kanban,
 } from 'lucide-react';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -40,6 +40,28 @@ const DATE_KIND_STYLES: Record<string, { ring: string; label: string }> = {
   due: { ring: 'ring-amber-300', label: 'Due' },
   close: { ring: 'ring-violet-300', label: 'Close' },
 };
+
+function formatTimeAmPm(time: string | null | undefined): string | null {
+  if (!time) return null;
+  const m = time.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return time;
+  let h = parseInt(m[1], 10);
+  const min = m[2];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${min} ${ampm}`;
+}
+
+function sortByTime(leads: PipelineCalendarLead[]): PipelineCalendarLead[] {
+  return [...leads].sort((a, b) => {
+    const ta = a.time ?? '';
+    const tb = b.time ?? '';
+    if (ta < tb) return -1;
+    if (ta > tb) return 1;
+    return 0;
+  });
+}
 
 const PRIORITY_DOT: Record<string, string> = {
   urgent: 'bg-red-500',
@@ -89,6 +111,7 @@ function CalendarLeadChip({
         ) : (
           <Briefcase className="h-2.5 w-2.5 shrink-0" />
         )}
+        {formatTimeAmPm(lead.time) && <span className="font-semibold">{formatTimeAmPm(lead.time)}</span>}
         {showDateKind && kind && <span>{kind.label}</span>}
         {lead.priority && (
           <span className={cn('h-1.5 w-1.5 rounded-full', PRIORITY_DOT[lead.priority] ?? 'bg-white/70')} />
@@ -363,7 +386,7 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
               {selectedDate && selectedLeads.length === 0 && (
                 <p className="py-6 text-center text-sm text-gray-500 sm:py-8">Nothing scheduled this day</p>
               )}
-              {selectedLeads.map((lead) => (
+              {sortByTime(selectedLeads).map((lead) => (
                 <button
                   key={`${lead.id}-${lead.date_kind ?? 'detail'}`}
                   type="button"
@@ -391,6 +414,12 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
                     )}
                     {showDateKind && lead.date_kind && (
                       <p>{DATE_KIND_STYLES[lead.date_kind]?.label ?? lead.date_kind} date</p>
+                    )}
+                    {formatTimeAmPm(lead.time) && (
+                      <p className="flex items-center gap-1.5">
+                        <Calendar className="h-3 w-3 text-gray-400" />
+                        {formatTimeAmPm(lead.time)}
+                      </p>
                     )}
                     {lead.estimated_value != null && lead.estimated_value > 0 && (
                       <p className="whitespace-normal break-words font-medium text-emerald-700">

@@ -50,7 +50,7 @@ import { CARD_PRESET_COLORS } from './pipelineColorPresets';
 import { LeadDetailSkeleton } from './KanbanBoardSkeleton';
 import { EvaluateStaffPerformanceLink } from '../../hr/ui/EvaluateStaffPerformanceLink';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { canContributeToBoard, canManageBoardSettings, canViewFullEstimates } from '../../../shared/utils/moduleAccess';
+import { canAccessModule, canContributeToBoard, canManageBoardSettings, canViewFullEstimates, canViewFullHr } from '../../../shared/utils/moduleAccess';
 
 interface LeadDetailModalProps {
   leadId: number;
@@ -59,6 +59,7 @@ interface LeadDetailModalProps {
     created_by?: number | null;
     project_id?: number | null;
     visibility?: string;
+    workspace?: string;
     members?: { user_id: number; role: string }[];
   };
   boardAccess?: {
@@ -251,7 +252,7 @@ export default function LeadDetailModal({
           </div>
         </PipelineFormSection>
 
-        <CardDetailExtras lead={lead} boardId={resolvedBoardId} workspace={board?.workspace} canEdit={canEditCard} onNavigate={onClose} />
+        <CardDetailExtras lead={lead} boardId={resolvedBoardId} workspace={board?.workspace as 'pipeline' | 'estimates' | undefined} canEdit={canEditCard} onNavigate={onClose} />
 
         {isLead && (
         <PipelineFormSection title="Contact" icon={User}>
@@ -337,7 +338,7 @@ export default function LeadDetailModal({
                   });
                 }}
               />
-              {(lead.assignees?.length
+              {canViewFullHr(user) && (lead.assignees?.length
                 ? lead.assignees.map((a) => a.id)
                 : lead.assigned_to
                   ? [lead.assigned_to]
@@ -393,7 +394,7 @@ export default function LeadDetailModal({
           </div>
         )}
 
-        {canEditCard && canCreateProposal && (
+        {canEditCard && canCreateProposal && canAccessModule(user, 'estimates') && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4">
           <div className="flex items-start gap-3">
             <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
@@ -410,7 +411,7 @@ export default function LeadDetailModal({
         </div>
         )}
 
-        {canEditCard && canConvert && (
+        {canEditCard && canConvert && canAccessModule(user, 'pipeline') && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-4">
             <div className="flex items-start gap-3">
               <div className="rounded-lg bg-violet-100 p-2 text-violet-700">

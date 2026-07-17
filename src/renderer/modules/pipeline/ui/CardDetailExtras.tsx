@@ -5,10 +5,11 @@ import CardLabelsSection from './CardLabelsSection';
 import CardChecklistsSection from './CardChecklistsSection';
 import CardLinksSection from './CardLinksSection';
 import CardMetaFieldsSection from './CardMetaFieldsSection';
+import DescriptionModal from './DescriptionModal';
 import { PipelineFormSection, PipelineIconField, pipelineInputClass } from './pipelineFormFields';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
-import { Calendar, Link as LinkIcon, Paperclip, Plus, Trash2, AlignLeft } from 'lucide-react';
+import { Calendar, Link as LinkIcon, Paperclip, Plus, Trash2, AlignLeft, Maximize2 } from 'lucide-react';
 
 interface CardDetailExtrasProps {
   lead: PipelineLead;
@@ -32,6 +33,7 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
   const [showAddLink, setShowAddLink] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
+  const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
 
   const handleAddLink = () => {
     const url = linkUrl.trim();
@@ -49,55 +51,100 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
   return (
     <>
       <PipelineFormSection title="Description" icon={AlignLeft}>
-        <textarea
-          defaultValue={lead.description ?? ''}
-          rows={3}
-          placeholder="Add a more detailed description…"
-          readOnly={!canEdit}
-          disabled={!canEdit}
-          className={cn(pipelineInputClass, 'resize-none pl-3', !canEdit && 'bg-gray-50 text-gray-600')}
-          onBlur={(e) => {
-            const v = e.target.value.trim() || null;
-            if (v !== (lead.description ?? null)) {
-              patchLead({ description: v });
-            }
-          }}
-        />
+        <div className="space-y-2">
+          {lead.description ? (
+            <div
+              onClick={() => canEdit && setDescriptionModalOpen(true)}
+              className={cn(
+                'cursor-pointer rounded-xl border px-4 py-3 text-sm transition-colors',
+                canEdit
+                  ? 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/20'
+                  : 'border-transparent bg-gray-50/50',
+              )}
+            >
+              <div
+                className="prose prose-sm max-w-none text-gray-700 prose-headings:text-gray-900 prose-p:my-1 prose-a:text-indigo-600 prose-strong:text-gray-900 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:text-xs prose-pre:rounded-lg prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-blockquote:border-l-indigo-400 prose-blockquote:text-gray-600 prose-li:my-0.5 prose-li:text-gray-700"
+                dangerouslySetInnerHTML={{ __html: lead.description }}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => canEdit && setDescriptionModalOpen(true)}
+              disabled={!canEdit}
+              className={cn(
+                'w-full rounded-xl border border-dashed border-gray-300 px-4 py-6 text-left text-sm text-gray-400 transition-colors',
+                canEdit && 'hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30',
+              )}
+            >
+              Add a more detailed description…
+            </button>
+          )}
+          {lead.description && canEdit && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDescriptionModalOpen(true)}
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+              >
+                <Maximize2 className="h-3 w-3" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => patchLead({ description: null })}
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
       </PipelineFormSection>
+
+      <DescriptionModal
+        open={descriptionModalOpen}
+        title={lead.title}
+        content={lead.description ?? ''}
+        onSave={(html) => patchLead({ description: html || null })}
+        onClose={() => setDescriptionModalOpen(false)}
+      />
 
       <PipelineFormSection title="Dates" icon={Calendar}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <PipelineIconField label="Start date" icon={Calendar}>
-            <input
-              type="date"
-              defaultValue={lead.start_date?.slice(0, 10) ?? ''}
-              readOnly={!canEdit}
-              disabled={!canEdit}
-              className={cn(pipelineInputClass, !canEdit && 'bg-gray-50')}
-              onBlur={(e) => {
-                const v = e.target.value || null;
-                if (v !== (lead.start_date?.slice(0, 10) ?? null)) {
-                  patchLead({ start_date: v });
-                }
-              }}
-            />
-          </PipelineIconField>
-          <PipelineIconField label="Due date" icon={Calendar}>
-            <input
-              type="date"
-              defaultValue={(lead.due_date ?? lead.expected_close_date)?.slice(0, 10) ?? ''}
-              readOnly={!canEdit}
-              disabled={!canEdit}
-              className={cn(pipelineInputClass, !canEdit && 'bg-gray-50')}
-              onBlur={(e) => {
-                const v = e.target.value || null;
-                const current = (lead.due_date ?? lead.expected_close_date)?.slice(0, 10) ?? null;
-                if (v !== current) {
-                  patchLead({ due_date: v, expected_close_date: isLead ? v : lead.expected_close_date });
-                }
-              }}
-            />
-          </PipelineIconField>
+    <PipelineIconField label="Start" icon={Calendar}>
+              <input
+                type="datetime-local"
+                defaultValue={lead.start_date ? lead.start_date.slice(0, 16) : ''}
+                readOnly={!canEdit}
+                disabled={!canEdit}
+                className={cn(pipelineInputClass, 'text-sm', !canEdit && 'bg-gray-50')}
+                onBlur={(e) => {
+                  const v = e.target.value ? e.target.value.replace('T', ' ') + ':00' : null;
+                  if (v !== (lead.start_date?.slice(0, 19).replace('T', ' ') ?? null)) {
+                    patchLead({ start_date: v });
+                  }
+                }}
+              />
+            </PipelineIconField>
+
+            {/* DUE DATE */}
+            <PipelineIconField label="Due" icon={Calendar}>
+              <input
+                type="datetime-local"
+                defaultValue={(lead.due_date ?? lead.expected_close_date ?? '').slice(0, 16)}
+                readOnly={!canEdit}
+                disabled={!canEdit}
+                className={cn(pipelineInputClass, 'text-sm', !canEdit && 'bg-gray-50')}
+                onBlur={(e) => {
+                  const v = e.target.value ? e.target.value.replace('T', ' ') + ':00' : null;
+                  const current = (lead.due_date ?? lead.expected_close_date)?.slice(0, 19).replace('T', ' ') ?? null;
+                  if (v !== current) {
+                    patchLead({ due_date: v, expected_close_date: isLead ? v : lead.expected_close_date });
+                  }
+                }}
+              />
+            </PipelineIconField>
         </div>
       </PipelineFormSection>
 

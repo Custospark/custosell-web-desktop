@@ -6,7 +6,7 @@ import {
   GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check, Copy,
 } from 'lucide-react';
 import LeadAssignmentChain from './LeadAssignmentChain';
-import { formatShiftDate } from '../../../shared/utils/formatDateTime';
+import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 
 interface LeadCardProps {
   lead: PipelineLead;
@@ -30,10 +30,13 @@ const PRIORITY_COLORS = {
 
 function isOverdue(dateStr: string | null | undefined): boolean {
   if (!dateStr) return false;
-  const d = new Date(dateStr.slice(0, 10));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return d < today;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())) {
+    const d = new Date(dateStr.slice(0, 10));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
+  }
+  return new Date(dateStr) < new Date();
 }
 
 export default function LeadCard({
@@ -124,7 +127,7 @@ export default function LeadCard({
               isComplete && 'text-gray-500 line-through decoration-gray-400',
             )}>{lead.title}</p>
             {lead.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-gray-500">{lead.description}</p>
+              <div className="mt-1 line-clamp-2 text-xs text-gray-500 prose prose-sm max-w-none prose-p:my-0 prose-p:inline prose-p:text-xs prose-strong:text-gray-600 prose-a:text-indigo-600 prose-code:text-xs" dangerouslySetInnerHTML={{ __html: lead.description }} />
             )}
             {!isCard && lead.contact_name && lead.contact_name !== lead.title && (
               <p className="mt-0.5 truncate text-xs text-gray-500">{lead.contact_name}</p>
@@ -227,7 +230,7 @@ export default function LeadCard({
               overdue ? 'bg-red-50 text-red-800 ring-red-200' : 'bg-amber-50 text-amber-800 ring-amber-100',
             )}>
               <Calendar className="h-2.5 w-2.5" />
-              {overdue ? 'Overdue · ' : ''}{formatShiftDate(dueDate)}
+              {overdue ? 'Overdue · ' : ''}{formatShiftDateTime(dueDate)}
             </span>
           )}
           {lead.estimated_value != null && lead.estimated_value > 0 && (

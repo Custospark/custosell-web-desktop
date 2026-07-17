@@ -78,8 +78,8 @@ function BoardListCardContent({
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="flex items-center gap-1 truncate text-sm font-medium text-gray-900 group-hover:text-indigo-800">
-            {board.name}
+          <h3 className="flex items-center gap-1 text-sm font-medium text-gray-900 group-hover:text-indigo-800">
+            <span className="truncate" title={board.name}>{board.name}</span>
             {board.is_default && (
               <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-label="Default board" />
             )}
@@ -126,8 +126,8 @@ function BoardListCardContent({
 
       <div className="flex flex-1 flex-col p-4">
         <div className="min-w-0 flex-1">
-          <h3 className="flex items-center gap-1.5 truncate font-semibold text-gray-900 group-hover:text-blue-700">
-            {board.name}
+          <h3 className="flex items-center gap-1.5 font-semibold text-gray-900 group-hover:text-blue-700">
+            <span className="truncate" title={board.name}>{board.name}</span>
             {board.is_default && (
               <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-label="Default board" />
             )}

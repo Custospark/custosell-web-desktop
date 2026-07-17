@@ -174,9 +174,13 @@ function EditBoardModalForm({
 
   const handleDuplicate = async () => {
     setIsDuplicating(true);
-    await duplicateBoard.mutateAsync(board.id);
+    const newBoard = await duplicateBoard.mutateAsync(board.id);
     setIsDuplicating(false);
     onClose();
+    const boardRoute = workspace === 'estimates' || isProjectBoard
+      ? ROUTES.ESTIMATES.BOARD
+      : ROUTES.PIPELINE.BOARD;
+    navigate(boardRoute(newBoard.id));
   };
 
   return (

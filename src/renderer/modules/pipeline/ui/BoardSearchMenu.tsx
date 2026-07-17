@@ -140,7 +140,7 @@ export default function BoardSearchMenu({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-medium text-gray-900">{board.name}</span>
+                    <span className="truncate text-sm font-medium text-gray-900" title={board.name}>{board.name}</span>
                     {board.is_default && <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" />}
                   </span>
                   {board.description && (
@@ -195,7 +195,7 @@ export default function BoardSearchMenu({
             className="h-3 w-3 shrink-0 rounded-sm shadow-sm ring-1 ring-black/10"
             style={{ backgroundColor: activeBoard.cover_color ?? '#6366f1' }}
           />
-          <span className="truncate text-base font-semibold text-slate-900">{activeBoard.name}</span>
+          <span className="truncate text-base font-semibold text-slate-900" title={activeBoard.name}>{activeBoard.name}</span>
           {activeBoard.is_default && (
             <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-label="Default board" />
           )}

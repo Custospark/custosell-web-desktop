@@ -5,16 +5,12 @@ import { useToast } from '../../../app/contexts/useToast';
 import { PIPELINE } from '../../../shared/api/endpoints/endpoints';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import type {
+  MetaFieldType,
   PipelineBoardMetaField,
   PipelineLeadLink,
   PipelineLeadMetaValue,
 } from './pipelineTypes';
-import {
-  pipelineKeys,
-  PIPELINE_KANBAN_POLL_MS,
-  PIPELINE_BOARD_ACCESS_POLL_MS,
-  PIPELINE_LEAD_POLL_MS,
-} from './pipelineQueryKeys';
+import { pipelineKeys } from './pipelineQueryKeys';
 import {
   listQueryDefaults,
   normalizeItem,
@@ -90,11 +86,33 @@ export function useCreatePipelineBoardMetaField(boardId: number) {
       const { data } = await axiosInstance.post(PIPELINE.BOARD_META_FIELDS(boardId), payload);
       return normalizeItem<PipelineBoardMetaField>(data);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: pipelineKeys.metaFields(boardId) });
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.metaFields(boardId) });
+      const previous = qc.getQueryData<PipelineBoardMetaField[]>(pipelineKeys.metaFields(boardId));
+      const tempId = -Date.now();
+      const optimistic: PipelineBoardMetaField = {
+        id: tempId,
+        board_id: boardId,
+        name: payload.name,
+        type: payload.type as MetaFieldType,
+        options: payload.options ?? null,
+        sort_order: previous?.length ?? 0,
+        required: payload.required ?? false,
+      };
+      qc.setQueryData(pipelineKeys.metaFields(boardId), [...(previous ?? []), optimistic]);
+      return { previous, tempId };
+    },
+    onSuccess: (field, _vars, context) => {
+      qc.setQueryData<PipelineBoardMetaField[]>(pipelineKeys.metaFields(boardId), (old) => {
+        if (!old) return [field];
+        return old.map((f) => (f.id === context?.tempId ? field : f));
+      });
       showToast('success', 'Meta field created');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(pipelineKeys.metaFields(boardId), context.previous);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not create meta field'));
     },
   });
@@ -108,11 +126,25 @@ export function useUpdatePipelineBoardMetaField(boardId: number) {
       const { data } = await axiosInstance.patch(PIPELINE.META_FIELD(id), payload);
       return normalizeItem<PipelineBoardMetaField>(data);
     },
+    onMutate: async ({ id, ...payload }) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.metaFields(boardId) });
+      const previous = qc.getQueryData<PipelineBoardMetaField[]>(pipelineKeys.metaFields(boardId));
+      if (previous) {
+        qc.setQueryData(
+          pipelineKeys.metaFields(boardId),
+          previous.map((f) => (f.id === id ? { ...f, ...payload } : f)),
+        );
+      }
+      return { previous };
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: pipelineKeys.metaFields(boardId) });
       showToast('success', 'Meta field updated');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(pipelineKeys.metaFields(boardId), context.previous);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not update meta field'));
     },
   });
@@ -125,11 +157,25 @@ export function useDeletePipelineBoardMetaField(boardId: number) {
     mutationFn: async (id: number) => {
       await axiosInstance.delete(PIPELINE.META_FIELD(id));
     },
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.metaFields(boardId) });
+      const previous = qc.getQueryData<PipelineBoardMetaField[]>(pipelineKeys.metaFields(boardId));
+      if (previous) {
+        qc.setQueryData(
+          pipelineKeys.metaFields(boardId),
+          previous.filter((f) => f.id !== id),
+        );
+      }
+      return { previous };
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: pipelineKeys.metaFields(boardId) });
       showToast('success', 'Meta field deleted');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(pipelineKeys.metaFields(boardId), context.previous);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not delete meta field'));
     },
   });

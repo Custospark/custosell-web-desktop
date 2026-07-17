@@ -109,6 +109,17 @@ export const PROJECTS = {
   BOARD_KANBAN: (id: number) => `/projects/${id}/board/kanban`,
 };
 
+export const PUBLIC_BOOKING = {
+  INFO: (token: string) => `/public/book/${token}`,
+  SLOTS: (token: string) => `/public/book/${token}/slots`,
+  BOOK: (token: string) => `/public/book/${token}`,
+};
+
+export const PIPELINE_BOOKING = {
+  SETTINGS: (boardId: number) => `/pipeline/boards/${boardId}/booking-settings`,
+  REGENERATE_TOKEN: (boardId: number) => `/pipeline/boards/${boardId}/booking-settings/regenerate-token`,
+};
+
 export const PIPELINE = {
   BOARDS: '/pipeline/boards',
   TEAM_MEMBERS: '/pipeline/team-members',

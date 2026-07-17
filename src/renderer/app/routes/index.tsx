@@ -75,6 +75,7 @@ import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import PricingPage from '../../modules/landing/PricingPage';
 import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
+import BookingLayout from '../../modules/pipeline/ui/BookingLayout';
 
 const EstimatesLayout = lazy(() => import('../../modules/estimates/pages/EstimatesLayout'));
 const EstimatesPage = lazy(() => import('../../modules/estimates/pages/EstimatesPage'));
@@ -107,6 +108,9 @@ const ForecastingBudgetDetailPage = lazy(() => import('../../modules/forecasting
 const ForecastingKpisPage = lazy(() => import('../../modules/forecasting/pages/ForecastingKpisPage'));
 const ForecastingScenariosPage = lazy(() => import('../../modules/forecasting/pages/ForecastingScenariosPage'));
 
+const PublicBookingPage = lazy(() => import('../../modules/pipeline/pages/PublicBookingPage'));
+const PublicBookingCheckPage = lazy(() => import('../../modules/pipeline/pages/PublicBookingCheckPage'));
+
 const DiscoverLayout = lazy(() => import('../../modules/storefront/DiscoverLayout'));
 const DiscoverPage = lazy(() => import('../../modules/storefront/DiscoverPage'));
 const MyOrdersPage = lazy(() => import('../../modules/storefront/MyOrdersPage'));
@@ -138,6 +142,12 @@ export function AppRoutes() {
         <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
         <Route path="wishlist" element={<SuspenseWrapper><WishlistPage /></SuspenseWrapper>} />
         <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
+      </Route>
+
+      {/* Public booking — outside PublicRoute so logged-in sidebar users can preview */}
+      <Route element={<SuspenseWrapper><BookingLayout /></SuspenseWrapper>}>
+        <Route path={ROUTES.BOOKING.BOOK(':token')} element={<SuspenseWrapper><PublicBookingPage /></SuspenseWrapper>} />
+        <Route path={ROUTES.BOOKING.CHECK(':token', ':reference')} element={<SuspenseWrapper><PublicBookingCheckPage /></SuspenseWrapper>} />
       </Route>
 
       <Route element={<PublicRoute />}>

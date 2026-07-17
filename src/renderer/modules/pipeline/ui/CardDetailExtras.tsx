@@ -3,6 +3,7 @@ import type { PipelineLead } from '../api/pipelineTypes';
 import { useUpdatePipelineLead, useUploadPipelineAttachment, useDeletePipelineAttachment, useCreatePipelineAttachmentLink } from '../api/usePipelineQueries';
 import CardLabelsSection from './CardLabelsSection';
 import CardChecklistsSection from './CardChecklistsSection';
+import CardBookingSection from './CardBookingSection';
 import CardLinksSection from './CardLinksSection';
 import CardMetaFieldsSection from './CardMetaFieldsSection';
 import DescriptionModal from './DescriptionModal';
@@ -17,9 +18,10 @@ interface CardDetailExtrasProps {
   workspace?: 'pipeline' | 'estimates';
   canEdit?: boolean;
   onNavigate?: () => void;
+  meetingsLoading?: boolean;
 }
 
-export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline', canEdit = true, onNavigate }: CardDetailExtrasProps) {
+export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline', canEdit = true, onNavigate, meetingsLoading }: CardDetailExtrasProps) {
   const updateLead = useUpdatePipelineLead();
   const patchLead = (payload: Record<string, unknown>) => {
     if (!canEdit) return;
@@ -128,7 +130,6 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
               />
             </PipelineIconField>
 
-            {/* DUE DATE */}
             <PipelineIconField label="Due" icon={Calendar}>
               <input
                 type="datetime-local"
@@ -148,6 +149,7 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
         </div>
       </PipelineFormSection>
 
+      <CardBookingSection lead={lead} boardId={boardId} canEdit={canEdit} meetingsLoading={meetingsLoading} />
       <CardLabelsSection lead={lead} boardId={boardId} canEdit={canEdit} onPatchLead={patchLead} />
       <CardChecklistsSection lead={lead} boardId={boardId} canEdit={canEdit} />
 

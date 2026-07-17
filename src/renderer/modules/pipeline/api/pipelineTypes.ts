@@ -241,6 +241,13 @@ export interface PipelineLead {
   source?: { id: number; name: string } | null;
   customer?: { id: number; name: string; email?: string | null; phone?: string | null } | null;
   converted_customer?: { id: number; name: string; email?: string | null; phone?: string | null } | null;
+  booking_status?: 'pending' | 'approved' | 'rejected' | 'completed' | null;
+  meeting_link?: string | null;
+  reference_code?: string | null;
+  rejection_reason?: string | null;
+  approved_at?: string | null;
+  rejected_at?: string | null;
+  meetings?: PipelineLeadMeeting[];
   labels?: PipelineLabel[];
   checklists?: PipelineChecklist[];
   attachments?: PipelineAttachment[];
@@ -269,6 +276,20 @@ export interface PipelineLeadActivity {
   can_edit?: boolean;
   can_delete?: boolean;
   created_at?: string;
+}
+
+export interface PipelineLeadMeeting {
+  id: number;
+  lead_id: number;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  start_date: string | null;
+  end_date: string | null;
+  meeting_link: string | null;
+  notes: string | null;
+  reference_code: string | null;
+  rejection_reason: string | null;
+  created_by: number | null;
+  created_at: string | null;
 }
 
 export interface PipelineReminder {
@@ -371,6 +392,8 @@ export interface UpdateLeadPayload {
   due_date?: string | null;
   start_date?: string | null;
   priority?: PipelinePriority | null;
+  booking_status?: 'pending' | 'approved' | 'rejected' | 'completed' | null;
+  meeting_link?: string | null;
   background_color?: string | null;
   lost_reason?: string | null;
   label_ids?: number[];

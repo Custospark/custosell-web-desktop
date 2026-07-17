@@ -89,6 +89,7 @@ export const ROUTES = {
     FEEDBACK: '/guide/feedback',
     CONTACT: '/guide/contact',
   },
+  BOOKING: { BOOK: (token: string) => `/book/${token}`, CHECK: (token: string, ref: string) => `/book/${token}/check/${ref}` },
   SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', SALES_CHANNELS: '/settings/sales-channels', TAX: '/settings/tax', STAFF: '/settings/staff', ROLES: '/settings/roles', MODULES: '/settings/modules', SUBSCRIPTION: '/settings/subscription' },
   ACCOUNTING: {
     INDEX: '/accounting',

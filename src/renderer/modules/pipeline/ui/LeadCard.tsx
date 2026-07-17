@@ -275,6 +275,7 @@ export default function LeadCard({
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

@@ -23,6 +23,8 @@ export type {
   PipelineCalendarDay,
 } from './pipelineCalendarTypes';
 
+export type BoardViewMode = 'kanban' | 'calendar' | 'progress' | 'fame';
+
 export type PipelineVisibility = 'team' | 'private' | 'shared';
 
 export type PipelineLeadStatus = 'open' | 'won' | 'lost' | 'converted' | 'archived';
@@ -398,4 +400,37 @@ export interface UpdateLeadPayload {
   lost_reason?: string | null;
   label_ids?: number[];
   status?: PipelineLeadStatus;
+}
+
+export type WallFamePostType = 'quote' | 'shoutout' | 'performer' | 'milestone';
+
+export interface WallFamePost {
+  id: number;
+  business_id: number;
+  board_id: number | null;
+  created_by: number;
+  creator?: { id: number; name: string };
+  type: WallFamePostType;
+  title: string | null;
+  content: string;
+  photo_url: string | null;
+  staff_id: number | null;
+  staff?: { id: number; name: string; avatar?: string | null } | null;
+  author_name: string | null;
+  expires_at: string | null;
+  pinned: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateWallPostPayload {
+  type: WallFamePostType;
+  title?: string;
+  content: string;
+  author_name?: string;
+  staff_id?: number;
+  photo?: File | null;
+  board_id?: number;
+  expires_at?: string;
+  pinned?: boolean;
 }

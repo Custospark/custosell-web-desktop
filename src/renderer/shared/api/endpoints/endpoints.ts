@@ -195,6 +195,8 @@ export const PIPELINE = {
   BOARD_TARGETS_DECOMPOSE_PREVIEW: (boardId: number) => `/pipeline/boards/${boardId}/targets/decompose-preview`,
   BOARD_TARGETS: (boardId: number) => `/pipeline/boards/${boardId}/targets`,
   BOARD_TARGET: (targetId: number) => `/pipeline/targets/${targetId}`,
+  WALL_OF_FAME: '/pipeline/wall-of-fame',
+  WALL_OF_FAME_POST: (id: number) => `/pipeline/wall-of-fame/${id}`,
 };
 
 export const ACCOUNTING = {

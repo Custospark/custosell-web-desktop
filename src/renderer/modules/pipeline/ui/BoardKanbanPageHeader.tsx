@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
-import type { PipelineBoard, PipelineStage } from '../api/pipelineTypes';
+import type { BoardViewMode, PipelineBoard, PipelineStage } from '../api/pipelineTypes';
 import BoardSearchMenu from './BoardSearchMenu';
 import BoardCollaborationButton from './BoardCollaborationButton';
 import BoardAccessBadges from './BoardAccessBadges';
@@ -42,8 +42,6 @@ function tokenClass(type: QueryToken['type']): string {
     default: return 'bg-gray-100 text-gray-600';
   }
 }
-
-type BoardViewMode = 'kanban' | 'calendar' | 'progress';
 
 interface BoardKanbanPageHeaderProps {
   workspaceLabel: string;

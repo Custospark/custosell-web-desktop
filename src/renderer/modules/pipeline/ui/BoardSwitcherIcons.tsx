@@ -1,4 +1,5 @@
-import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp, Trophy } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardSwitcherIconsProps {
@@ -7,6 +8,8 @@ interface BoardSwitcherIconsProps {
   resourcesCount?: number;
   onOpenProgress?: () => void;
   progressActive?: boolean;
+  onOpenFame?: () => void;
+  fameActive?: boolean;
   onOpenConversation?: () => void;
   conversationMessagesCount?: number;
   conversationUnreadCount?: number;
@@ -21,6 +24,8 @@ export default function BoardSwitcherIcons({
   resourcesCount = 0,
   onOpenProgress,
   progressActive = false,
+  onOpenFame,
+  fameActive = false,
   onOpenConversation,
   conversationMessagesCount = 0,
   conversationUnreadCount = 0,
@@ -28,6 +33,16 @@ export default function BoardSwitcherIcons({
   allowCreate = true,
   className,
 }: BoardSwitcherIconsProps) {
+  const queryClient = useQueryClient();
+  const fameData = queryClient.getQueryData<unknown[]>(['wall-of-fame']);
+  const fameCount = Array.isArray(fameData) ? fameData.length : 0;
+
+  const badge = (count: number, color: string) => (
+    <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full ${color} px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white`}>
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+
   return (
     <div
       className={cn(
@@ -63,15 +78,8 @@ export default function BoardSwitcherIcons({
           title="Board resources"
           aria-label={resourcesCount > 0 ? `Board resources (${resourcesCount})` : 'Board resources'}
         >
-          <span className="relative inline-flex shrink-0">
-            <FolderOpen className="h-4 w-4 text-emerald-600" />
-            {resourcesCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                {resourcesCount > 99 ? '99+' : resourcesCount}
-              </span>
-            )}
-          </span>
-          <span className="hidden sm:inline">Resources</span>
+          <FolderOpen className="h-4 w-4 text-emerald-600" />
+          <span className="hidden sm:inline-flex items-center gap-2">Resources{resourcesCount > 0 && badge(resourcesCount, 'bg-emerald-600')}</span>
         </button>
       )}
       {onOpenProgress && (
@@ -92,6 +100,24 @@ export default function BoardSwitcherIcons({
           <span className="hidden sm:inline">Progress</span>
         </button>
       )}
+      {onOpenFame && (
+        <button
+          type="button"
+          onClick={onOpenFame}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]',
+            fameActive
+              ? 'border-amber-500 bg-gradient-to-r from-amber-100 via-white to-yellow-100 text-amber-900 shadow-md shadow-amber-200/50'
+              : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-yellow-50 text-amber-800 hover:border-amber-400 hover:from-amber-100 hover:to-yellow-100 hover:shadow-md hover:shadow-amber-200/50',
+          )}
+          title="Wall of Fame"
+          aria-label="Wall of Fame"
+          aria-pressed={fameActive}
+        >
+          <Trophy className="h-4 w-4 text-amber-600" />
+          <span className="hidden sm:inline-flex items-center gap-2">Fame{fameCount > 0 && badge(fameCount, 'bg-amber-600')}</span>
+        </button>
+      )}
       {onOpenConversation && (
         <button
           type="button"
@@ -110,20 +136,10 @@ export default function BoardSwitcherIcons({
               : 'Board discussion'
           }
         >
-          <span className="relative inline-flex shrink-0">
+          <span className={cn('relative inline-flex shrink-0', conversationUnreadCount > 0 && 'after:absolute after:right-0 after:top-0 after:h-2 after:w-2 after:rounded-full after:bg-blue-500 after:ring-2 after:ring-white')}>
             <MessageSquare className={cn('h-4 w-4', conversationUnreadCount > 0 ? 'text-blue-700' : 'text-blue-600')} />
-            {conversationMessagesCount > 0 && (
-              <span
-                className={cn(
-                  'absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white',
-                  conversationUnreadCount > 0 ? 'bg-blue-700' : 'bg-blue-600',
-                )}
-              >
-                {conversationMessagesCount > 99 ? '99+' : conversationMessagesCount}
-              </span>
-            )}
           </span>
-          <span className="hidden sm:inline">Discussion</span>
+          <span className="hidden sm:inline-flex items-center gap-2">Discussions{conversationMessagesCount > 0 && badge(conversationMessagesCount, conversationUnreadCount > 0 ? 'bg-blue-700' : 'bg-blue-600')}</span>
         </button>
       )}
       {allowCreate && (

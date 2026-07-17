@@ -2,6 +2,7 @@ import CreateLeadModal from './CreateLeadModal';
 import CreateBoardModal from './CreateBoardModal';
 import EditBoardModal from './EditBoardModal';
 import DuplicateLeadModal from './DuplicateLeadModal';
+import MoveLeadModal from './MoveLeadModal';
 import BoardCardImportModal from './BoardCardImportModal';
 import EditStageModal from './EditStageModal';
 import DeleteStageModal from './DeleteStageModal';
@@ -58,6 +59,8 @@ interface BoardKanbanPageModalsProps {
   setSelectedLeadId: (id: number | null) => void;
   copyLeadId: number | null;
   setCopyLeadId: (id: number | null) => void;
+  moveLeadId: number | null;
+  setMoveLeadId: (id: number | null) => void;
   collaborationOpen: boolean;
   collaborationInitialTab: 'notices' | 'polls';
   setCollaborationOpen: (open: boolean) => void;
@@ -107,6 +110,8 @@ export default function BoardKanbanPageModals(props: BoardKanbanPageModalsProps)
     setSelectedLeadId,
     copyLeadId,
     setCopyLeadId,
+    moveLeadId,
+    setMoveLeadId,
     collaborationOpen,
     collaborationInitialTab,
     setCollaborationOpen,
@@ -151,6 +156,16 @@ export default function BoardKanbanPageModals(props: BoardKanbanPageModalsProps)
           boardId={boardId}
           workspace={workspace}
           onClose={() => setCopyLeadId(null)}
+        />
+      )}
+
+      {moveLeadId != null && canContribute && (
+        <MoveLeadModal
+          open
+          lead={findKanbanLead(board, moveLeadId) ?? null}
+          boardId={boardId}
+          workspace={workspace}
+          onClose={() => setMoveLeadId(null)}
         />
       )}
 
@@ -228,6 +243,7 @@ export default function BoardKanbanPageModals(props: BoardKanbanPageModalsProps)
           boardAccess={boardAccess}
           initialLead={findKanbanLead(board, selectedLeadId)}
           onClose={() => setSelectedLeadId(null)}
+          onMoveLead={canContribute ? (leadId) => { setSelectedLeadId(null); setMoveLeadId(leadId); } : undefined}
         />
       )}
 

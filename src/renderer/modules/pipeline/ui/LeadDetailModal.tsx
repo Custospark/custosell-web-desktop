@@ -68,6 +68,7 @@ interface LeadDetailModalProps {
   };
   initialLead?: PipelineLead;
   onClose: () => void;
+  onMoveLead?: (leadId: number) => void;
 }
 
 const STATUS_STYLES: Record<PipelineLeadStatus, string> = {
@@ -85,6 +86,7 @@ export default function LeadDetailModal({
   boardAccess,
   initialLead,
   onClose,
+  onMoveLead,
 }: LeadDetailModalProps) {
   const user = useAppSelector((s) => s.auth.user);
   const { data: lead, isLoading, isFetching } = usePipelineLead(leadId, true, {
@@ -370,8 +372,21 @@ export default function LeadDetailModal({
           )}
         </PipelineFormSection>
 
-        {canArchive && (
-          <div className="flex justify-end border-t border-gray-100 pt-2">
+        <div className="flex justify-between border-t border-gray-100 pt-2">
+          <div className="flex gap-2">
+            {canEditCard && onMoveLead && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => { onMoveLead(lead.id); onClose(); }}
+                className="inline-flex items-center gap-2 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+                Move card
+              </Button>
+            )}
+          </div>
+          {canArchive && (
             <Button
               type="button"
               variant="ghost"
@@ -382,8 +397,8 @@ export default function LeadDetailModal({
               <Trash2 className="h-4 w-4" />
               Archive card
             </Button>
-          </div>
-        )}
+          )}
+        </div>
 
         {lead.customer && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">

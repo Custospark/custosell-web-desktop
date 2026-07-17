@@ -3,7 +3,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
 import {
-  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check, Copy,
+  GripVertical, Calendar, Mail, Phone, Tag, Paperclip, CheckSquare, Briefcase, Kanban, MessageSquare, History, Check, Copy, ArrowRightLeft,
 } from 'lucide-react';
 import LeadAssignmentChain from './LeadAssignmentChain';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
@@ -14,6 +14,7 @@ interface LeadCardProps {
   onClick: () => void;
   onCommentsClick?: (lead: PipelineLead) => void;
   onCopyClick?: (lead: PipelineLead) => void;
+  onMoveClick?: (lead: PipelineLead) => void;
   onHistoryClick?: (lead: PipelineLead) => void;
   onToggleComplete?: (lead: PipelineLead, complete: boolean) => void;
   dragging?: boolean;
@@ -45,6 +46,7 @@ export default function LeadCard({
   onClick,
   onCommentsClick,
   onCopyClick,
+  onMoveClick,
   onHistoryClick,
   onToggleComplete,
   dragging,
@@ -94,7 +96,7 @@ export default function LeadCard({
 
       <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} />
 
-      <div className="p-3 pl-3.5">
+      <div className="relative min-h-[7rem] p-3 pl-3.5 pr-[52px]">
         <div className="flex items-start gap-2">
           {onToggleComplete && (
             <button
@@ -123,7 +125,7 @@ export default function LeadCard({
           </div>
           <div className="min-w-0 flex-1">
             <p className={cn(
-              'line-clamp-2 pr-5 text-sm font-semibold leading-snug text-gray-900',
+              'line-clamp-2 text-sm font-semibold leading-snug text-gray-900',
               isComplete && 'text-gray-500 line-through decoration-gray-400',
             )}>{lead.title}</p>
             {lead.description && (
@@ -138,64 +140,79 @@ export default function LeadCard({
               <GripVertical className="h-4 w-4 text-gray-400" />
             </span>
           )}
-          <div className="flex shrink-0 flex-col gap-0.5">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onHistoryClick?.(lead);
-              }}
-              className={cn(
-                'relative rounded-lg p-1.5 text-gray-400 transition-colors',
-                'hover:bg-violet-50 hover:text-violet-600',
-                historyCount > 0 && 'text-violet-500',
-              )}
-              title={historyCount > 0 ? `${historyCount} histor${historyCount === 1 ? 'y event' : 'y events'}` : 'Card history'}
-              aria-label="View card history"
-            >
-              <History className="h-4 w-4" />
-              {historyCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                  {historyCount > 99 ? '99+' : historyCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCommentsClick?.(lead);
-              }}
-              className={cn(
-                'relative rounded-lg p-1.5 text-gray-400 transition-colors',
-                'hover:bg-blue-50 hover:text-blue-600',
-                commentsCount > 0 && 'text-blue-500',
-              )}
-              title={commentsCount > 0 ? `${commentsCount} comment${commentsCount === 1 ? '' : 's'}` : 'Comments'}
-              aria-label="View comments"
-            >
-              <MessageSquare className="h-4 w-4" />
-              {commentsCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                  {commentsCount > 99 ? '99+' : commentsCount}
-                </span>
-              )}
-            </button>
-            {onCopyClick && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCopyClick(lead);
-                }}
-                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
-                title={isProjectBoard ? 'Duplicate card' : 'Duplicate lead'}
-                aria-label="Duplicate"
-              >
-                <Copy className="h-4 w-4" />
-              </button>
+        </div>
+
+        <div className="absolute right-3 top-3 flex flex-col gap-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onHistoryClick?.(lead);
+            }}
+            className={cn(
+              'relative rounded-lg p-1 text-gray-400 transition-colors',
+              'hover:bg-violet-50 hover:text-violet-600',
+              historyCount > 0 && 'text-violet-500',
             )}
-          </div>
+            title={historyCount > 0 ? `${historyCount} histor${historyCount === 1 ? 'y event' : 'y events'}` : 'Card history'}
+            aria-label="View card history"
+          >
+            <History className="h-4 w-4" />
+            {historyCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-violet-600 px-[3px] text-[8px] font-bold leading-none text-white ring-2 ring-white">
+                {historyCount > 99 ? '99+' : historyCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCommentsClick?.(lead);
+            }}
+            className={cn(
+              'relative rounded-lg p-1 text-gray-400 transition-colors',
+              'hover:bg-blue-50 hover:text-blue-600',
+              commentsCount > 0 && 'text-blue-500',
+            )}
+            title={commentsCount > 0 ? `${commentsCount} comment${commentsCount === 1 ? '' : 's'}` : 'Comments'}
+            aria-label="View comments"
+          >
+            <MessageSquare className="h-4 w-4" />
+            {commentsCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-[3px] text-[8px] font-bold leading-none text-white ring-2 ring-white">
+                {commentsCount > 99 ? '99+' : commentsCount}
+              </span>
+            )}
+          </button>
+          {onMoveClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveClick(lead);
+              }}
+              className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+              title={isProjectBoard ? 'Move card' : 'Move lead'}
+              aria-label="Move"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </button>
+          )}
+          {onCopyClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCopyClick(lead);
+              }}
+              className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+              title={isProjectBoard ? 'Duplicate card' : 'Duplicate lead'}
+              aria-label="Duplicate"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {!isCard && (lead.contact_phone || lead.contact_email) && (

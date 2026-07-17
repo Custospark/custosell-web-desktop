@@ -93,6 +93,7 @@ export default function BoardKanbanPage() {
   const [deleteStage, setDeleteStage] = useState<PipelineStage | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [copyLeadId, setCopyLeadId] = useState<number | null>(null);
+  const [moveLeadId, setMoveLeadId] = useState<number | null>(null);
   const [commentsLeadId, setCommentsLeadId] = useState<number | null>(null);
   const [historyLeadId, setHistoryLeadId] = useState<number | null>(null);
   const [collaborationOpen, setCollaborationOpen] = useState(false);
@@ -251,6 +252,10 @@ export default function BoardKanbanPage() {
     setCopyLeadId(lead.id);
   };
 
+  const handleMoveClick = (lead: PipelineLead) => {
+    setMoveLeadId(lead.id);
+  };
+
   const handleToggleComplete = (lead: PipelineLead, complete: boolean) => {
     updateLead.mutate({
       id: lead.id,
@@ -364,6 +369,7 @@ export default function BoardKanbanPage() {
               onLeadClick={(lead: PipelineLead) => setSelectedLeadId(lead.id)}
               onLeadCommentsClick={(lead) => setCommentsLeadId(lead.id)}
               onLeadCopyClick={canContribute ? handleCopyClick : undefined}
+              onLeadMoveClick={canContribute ? handleMoveClick : undefined}
               onLeadHistoryClick={(lead) => setHistoryLeadId(lead.id)}
               onToggleComplete={canContribute ? handleToggleComplete : undefined}
               onAddLead={canContribute ? (stageId) => setCreateStageId(stageId) : undefined}
@@ -474,6 +480,8 @@ export default function BoardKanbanPage() {
         setSelectedLeadId={setSelectedLeadId}
         copyLeadId={copyLeadId}
         setCopyLeadId={setCopyLeadId}
+        moveLeadId={moveLeadId}
+        setMoveLeadId={setMoveLeadId}
         collaborationOpen={collaborationOpen}
         collaborationInitialTab={collaborationInitialTab}
         setCollaborationOpen={setCollaborationOpen}

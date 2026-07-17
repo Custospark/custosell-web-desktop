@@ -132,6 +132,7 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
   const [dateField, setDateField] = useState<PipelineCalendarDateField>('due');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [scope, setScope] = useState<'board' | 'all'>('board');
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const dayDetailRef = useRef<HTMLDivElement>(null);
 
   const { data: boardDays = [], isLoading: boardLoading } = usePipelineCalendar(boardId, year, month, dateField);
@@ -167,7 +168,39 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
     };
   }, [days, todayKey]);
 
-  const cells = buildMonthCells(year, month);
+  const monthCells = buildMonthCells(year, month);
+
+  const weekStart = useMemo(() => {
+    const d = selectedDate ? new Date(selectedDate + 'T12:00:00') : new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d);
+    monday.setDate(diff);
+    return toDateKey(monday.getFullYear(), monday.getMonth() + 1, monday.getDate());
+  }, [selectedDate]);
+
+  const cells = useMemo(() => {
+    if (viewMode === 'month') return monthCells;
+    const makeDays = (startDate: Date, count: number) => {
+      const result: { day: number; dateKey: string; year: number; month: number }[] = [];
+      for (let i = 0; i < count; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+        result.push({ day, dateKey: toDateKey(y, m, day), year: y, month: m });
+      }
+      return result;
+    };
+    if (viewMode === 'week') {
+      return makeDays(new Date(weekStart + 'T12:00:00'), 7);
+    }
+    if (viewMode === 'day') {
+      const base = selectedDate ? new Date(selectedDate + 'T12:00:00') : new Date();
+      return makeDays(base, 1);
+    }
+    return monthCells;
+  }, [viewMode, monthCells, weekStart, selectedDate, today]);
+
   const selectedLeads = selectedDate ? (leadsByDate.get(selectedDate) ?? []) : [];
   const showDateKind = dateField === 'all';
 
@@ -178,14 +211,34 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
     dayDetailRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [selectedDate, selectedLeads.length]);
 
+  const shiftDate = (days: number) => {
+    const base = selectedDate ? new Date(selectedDate + 'T12:00:00') : new Date();
+    base.setDate(base.getDate() + days);
+    setYear(base.getFullYear());
+    setMonth(base.getMonth() + 1);
+    setSelectedDate(toDateKey(base.getFullYear(), base.getMonth() + 1, base.getDate()));
+  };
+
   const goPrev = () => {
-    if (month === 1) { setYear((y) => y - 1); setMonth(12); } else setMonth((m) => m - 1);
-    setSelectedDate(null);
+    if (viewMode === 'month') {
+      if (month === 1) { setYear((y) => y - 1); setMonth(12); } else setMonth((m) => m - 1);
+      setSelectedDate(null);
+    } else if (viewMode === 'week') {
+      shiftDate(-7);
+    } else {
+      shiftDate(-1);
+    }
   };
 
   const goNext = () => {
-    if (month === 12) { setYear((y) => y + 1); setMonth(1); } else setMonth((m) => m + 1);
-    setSelectedDate(null);
+    if (viewMode === 'month') {
+      if (month === 12) { setYear((y) => y + 1); setMonth(1); } else setMonth((m) => m + 1);
+      setSelectedDate(null);
+    } else if (viewMode === 'week') {
+      shiftDate(7);
+    } else {
+      shiftDate(1);
+    }
   };
 
   const goToday = () => {
@@ -204,7 +257,13 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 sm:text-lg">
             <CalendarDays className="h-5 w-5 shrink-0 text-blue-600" />
-            <span className="truncate">{formatCalendarHeading(year, month)}</span>
+            <span className="truncate">
+              {viewMode === 'day' && selectedDate
+                ? new Date(selectedDate + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+                : viewMode === 'week' && selectedDate
+                  ? `Week of ${new Date(weekStart + 'T12:00:00').toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+                  : formatCalendarHeading(year, month)}
+            </span>
           </h2>
           <p className="mt-0.5 text-xs text-gray-500">
             {DATE_FIELD_OPTIONS.find((o) => o.value === dateField)?.hint}
@@ -223,51 +282,76 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
         </div>
       </div>
 
-      <div className="-mx-2 flex gap-2 overflow-x-auto px-2 pb-1 scrollbar-thin sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-        {DATE_FIELD_OPTIONS.map((opt) => (
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Show</span>
           <button
-            key={opt.value}
             type="button"
-            onClick={() => { setDateField(opt.value); setSelectedDate(null); }}
+            onClick={() => { setScope('board'); setSelectedDate(null); }}
             className={cn(
-              'shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:py-1.5',
-              dateField === opt.value
+              'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+              scope === 'board'
                 ? 'bg-gray-900 text-white shadow-sm'
                 : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
             )}
           >
-            <span className="sm:hidden">{opt.shortLabel}</span>
-            <span className="hidden sm:inline">{opt.label}</span>
+            This board
           </button>
-        ))}
-      </div>
+          <button
+            type="button"
+            onClick={() => { setScope('all'); setSelectedDate(null); }}
+            className={cn(
+              'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+              scope === 'all'
+                ? 'bg-gray-900 text-white shadow-sm'
+                : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
+            )}
+          >
+            All {workspace === 'estimates' ? 'project boards' : 'pipeline boards'}
+          </button>
+        </div>
 
-      <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-        <span className="text-xs font-medium text-gray-500">View:</span>
-        <button
-          type="button"
-          onClick={() => setScope('board')}
-          className={cn(
-            'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
-            scope === 'board'
-              ? 'bg-indigo-100 text-indigo-800'
-              : 'text-gray-500 hover:bg-gray-100',
-          )}
-        >
-          This board
-        </button>
-        <button
-          type="button"
-          onClick={() => setScope('all')}
-          className={cn(
-            'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
-            scope === 'all'
-              ? 'bg-indigo-100 text-indigo-800'
-              : 'text-gray-500 hover:bg-gray-100',
-          )}
-        >
-          All {workspace === 'estimates' ? 'project boards' : 'pipeline boards'}
-        </button>
+        <span className="mx-1 h-4 w-px bg-gray-300" />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Dates</span>
+          {DATE_FIELD_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { setDateField(opt.value); setSelectedDate(null); }}
+              className={cn(
+                'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+                dateField === opt.value
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
+              )}
+            >
+              {opt.shortLabel}
+            </button>
+          ))}
+        </div>
+
+        <span className="mx-1 h-4 w-px bg-gray-300" />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">View</span>
+          {(['month', 'week', 'day'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setViewMode(mode)}
+              className={cn(
+                'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+                viewMode === mode
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
+              )}
+            >
+              {mode === 'month' ? 'Month' : mode === 'week' ? 'Week' : 'Day'}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -301,15 +385,18 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
-              {CALENDAR_WEEKDAYS.map((wd, i) => (
+            <div className={cn('grid border-b border-gray-100 bg-gray-50', viewMode === 'day' ? 'grid-cols-1' : 'grid-cols-7')}>
+              {(viewMode === 'day' ? ['Day'] : CALENDAR_WEEKDAYS).map((wd, i) => (
                 <div key={wd} className="px-0.5 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:px-2 sm:text-[11px]">
-                  <span className="sm:hidden">{CALENDAR_WEEKDAYS_SHORT[i]}</span>
-                  <span className="hidden sm:inline">{wd}</span>
+                  {viewMode === 'day' ? (
+                    selectedDate ? new Date(selectedDate + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) : 'Today'
+                  ) : (
+                    <><span className="sm:hidden">{CALENDAR_WEEKDAYS_SHORT[i]}</span><span className="hidden sm:inline">{wd}</span></>
+                  )}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7">
+            <div className={cn('grid', viewMode === 'day' ? 'grid-cols-1' : 'grid-cols-7')}>
               {cells.map((cell, idx) => {
                 if (cell.day == null) {
                   return (

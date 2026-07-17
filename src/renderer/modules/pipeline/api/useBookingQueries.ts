@@ -121,6 +121,7 @@ export function useRegenerateBookingToken(boardId: number) {
 export interface BookingInfo {
   board_name: string;
   business_name: string;
+  logo_path?: string | null;
   available_days: number[];
   start_time: string;
   end_time: string;

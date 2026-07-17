@@ -1,5 +1,6 @@
 import { isOfflineMode } from '../core/offlineQueryUtils';
 import { mutationQueue } from './mutationQueue';
+import { stockLedger } from '../inventory/stockLedger';
 import { runSyncPipeline } from './syncEngine';
 import { syncAuthMutations } from '../auth/syncAuthEngine';
 import { isAuthMutation } from '../auth/syncAuthEngine';
@@ -151,6 +152,9 @@ export async function runSyncCoordinator(): Promise<PendingSyncResult> {
     if (shouldRefreshCache) {
       await invalidateAfterFullSync();
     }
+
+    await mutationQueue.clearCompleted();
+    await stockLedger.clearSynced();
   }
 
   return {

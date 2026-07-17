@@ -5,7 +5,7 @@ import { useToast } from '../../../app/contexts/useToast';
 import { cn } from '../../../shared/utils/cn';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBookingInfo, useBookingSlots, useCreateBooking } from '../api/useBookingQueries';
-import type { CreateBookingPayload, TimeSlot } from '../api/useBookingQueries';
+import { avatarUrl } from '../../../shared/utils/avatarUrl';
 
 function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number);
@@ -212,8 +212,12 @@ export default function PublicBookingPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200">
-          <CalendarDays className="h-6 w-6 text-white" />
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200">
+          {info.logo_path ? (
+            <img src={avatarUrl(info.logo_path) ?? ''} alt="" className="h-10 w-10 rounded-xl object-cover" />
+          ) : (
+            <CalendarDays className="h-6 w-6 text-white" />
+          )}
         </div>
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Schedule a meeting

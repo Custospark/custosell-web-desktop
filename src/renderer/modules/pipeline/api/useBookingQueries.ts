@@ -238,6 +238,7 @@ export function useRejectBooking() {
 export interface BookingCheckInfo {
   business_name: string;
   board_name: string;
+  logo_path?: string | null;
   business_email: string | null;
   business_phone: string | null;
   business_address: string | null;

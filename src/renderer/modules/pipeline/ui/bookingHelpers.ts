@@ -13,6 +13,12 @@ export function fmtTime(iso: string | null): string {
   return `${hour}:${String(m).padStart(2, '0')} ${period}`;
 }
 
+export function ensureHttps(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `https://${url}`;
+}
+
 export const statusColor: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-800',
   scheduled: 'bg-amber-100 text-amber-800',

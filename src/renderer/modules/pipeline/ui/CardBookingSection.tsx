@@ -13,7 +13,7 @@ interface CardBookingSectionProps {
   meetingsLoading?: boolean;
 }
 
-import { fmtDate, fmtTime, statusColor } from './bookingHelpers';
+import { fmtDate, fmtTime, statusColor, ensureHttps } from './bookingHelpers';
 
 const inp = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100';
 
@@ -120,10 +120,10 @@ function ScheduleButton({ leadId }: { leadId: number }) {
             </p>
           )}
           {saved.link && (
-            <p className="mt-1 flex items-center gap-2 font-medium text-indigo-600">
+            <a href={ensureHttps(saved.link) ?? '#'} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-2 truncate font-medium text-indigo-600 hover:underline">
               <Video className="h-3.5 w-3.5 shrink-0 text-gray-400" />
               {saved.link}
-            </p>
+            </a>
           )}
           {saved.notes && (
             <p className="mt-1 flex items-start gap-2 text-gray-500">
@@ -198,12 +198,13 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
 
   const { data: bookingSettings } = useBookingSettings(boardId ?? 0);
 
+  const ref = meeting.reference_code;
+  const token = bookingSettings?.data?.token;
+  const checkUrl = ref && token ? `${window.location.origin}/book/${token}/check/${ref}` : null;
+
   const handleCopyLink = async () => {
-    const ref = meeting.reference_code;
-    const token = bookingSettings?.data?.token;
-    if (!ref || !token) return;
-    const url = `${window.location.origin}/book/${token}/check/${ref}`;
-    await navigator.clipboard.writeText(url);
+    if (!checkUrl) return;
+    await navigator.clipboard.writeText(checkUrl);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   };
@@ -269,7 +270,7 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
       )}
 
       {meeting.meeting_link && (
-        <a href={meeting.meeting_link} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-2 truncate font-medium text-indigo-600 hover:underline">
+        <a href={ensureHttps(meeting.meeting_link) ?? '#'} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-2 truncate font-medium text-indigo-600 hover:underline">
           <Video className="h-3.5 w-3.5 shrink-0 text-gray-400" />
           {meeting.meeting_link}
         </a>
@@ -281,12 +282,20 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
         </p>
       )}
 
-      <div className="mt-2 flex items-center gap-2">
-        {meeting.reference_code && (
-          <button type="button" onClick={handleCopyLink} className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-emerald-50 hover:text-emerald-600" title="Copy share link">
-            {linkCopied ? <CheckCircle className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+      {checkUrl && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <input type="text" readOnly value={checkUrl} className="min-w-0 flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-[10px] text-gray-600" />
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="shrink-0 rounded-lg bg-emerald-600 px-2 py-1.5 text-[10px] font-medium text-white hover:bg-emerald-700"
+          >
+            {linkCopied ? 'Copied' : 'Copy'}
           </button>
-        )}
+        </div>
+      )}
+
+      <div className="mt-2 flex items-center gap-2">
         {canEdit && meeting.status === 'scheduled' && (
           <button type="button" onClick={() => setEditing(true)} className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-blue-50 hover:text-blue-600" title="Edit meeting">
             <Pencil className="h-3.5 w-3.5" />

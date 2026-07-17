@@ -6,6 +6,7 @@ import { cn } from '../../../shared/utils/cn';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBookingInfo, useBookingSlots, useCreateBooking } from '../api/useBookingQueries';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import { ensureHttps } from '../ui/bookingHelpers';
 import type { CreateBookingPayload, TimeSlot } from '../api/useBookingQueries';
 
 function formatTime(hhmm: string): string {
@@ -193,7 +194,7 @@ export default function PublicBookingPage() {
               Meeting link
             </p>
             <a
-              href={info.meeting_link}
+              href={ensureHttps(info.meeting_link) ?? '#'}
               target="_blank"
               rel="noopener noreferrer"
               className="block truncate text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"

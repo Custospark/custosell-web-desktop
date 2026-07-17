@@ -2,6 +2,8 @@ import { useParams } from 'react-router-dom';
 import { CalendarDays, Clock, User, Mail, Phone, MessageSquare, Video, CheckCircle, XCircle, AlertTriangle, CheckCheck, Building2, MapPin } from 'lucide-react';
 import { useCheckBooking } from '../api/useBookingQueries';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
+import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import { ensureHttps } from '../ui/bookingHelpers';
 
 function formatTime(hhmm: string): string {
   const d = new Date(hhmm);
@@ -79,7 +81,11 @@ export default function PublicBookingCheckPage() {
         {/* Business header */}
         <div className="border-b border-gray-100 px-5 py-3.5">
           <div className="mx-auto mb-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-            <Building2 className="h-5 w-5 text-indigo-500" />
+            {booking.logo_path ? (
+              <img src={avatarUrl(booking.logo_path) ?? ''} alt="" className="h-10 w-10 rounded-xl object-cover" />
+            ) : (
+              <Building2 className="h-5 w-5 text-indigo-500" />
+            )}
           </div>
           <h1 className="text-base font-bold text-gray-900">{booking.business_name}</h1>
         </div>
@@ -121,7 +127,7 @@ export default function PublicBookingCheckPage() {
                 Meeting link
               </p>
               <a
-                href={booking.meeting_link}
+                href={ensureHttps(booking.meeting_link) ?? '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block truncate text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"

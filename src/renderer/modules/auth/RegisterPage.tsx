@@ -178,7 +178,10 @@ export default function RegisterPage() {
             </Link>
           </span>
         </label>
-        <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
+        {!privacyConsent && (
+          <p className="text-xs text-red-500 text-center -mt-1">You must agree to the Data & Privacy Policy to create an account.</p>
+        )}
+        <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch || !privacyConsent}>
           <UserPlus className="h-4 w-4" aria-hidden />
           Create Account
         </Button>

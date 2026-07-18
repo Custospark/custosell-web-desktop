@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Calendar, Clock, Video, CheckCircle, Loader2, Plus, Copy, Pencil, Trash2, AlertTriangle, X,
+  Calendar, Clock, Video, CheckCircle, Loader2, Plus, Copy, Pencil, Trash2, X,
 } from 'lucide-react';
 import { useCreateMeeting, useUpdateMeeting, useDeleteMeeting, useBookingSettings } from '../api/useBookingQueries';
 import LegacyBookingSection from './LegacyBookingSection';

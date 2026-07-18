@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
-  Calendar, User, Video, CheckCircle, XCircle, Loader2, AlertTriangle, X, CheckCheck,
+  Calendar, User, Video, CheckCircle, XCircle, Loader2, AlertTriangle, X, CheckCheck, Trash2,
 } from 'lucide-react';
 import { useApproveBooking, useCompleteBooking, useRejectBooking, useBookingSettings } from '../api/useBookingQueries';
+import { useDeletePipelineLead } from '../api/usePipelineQueries';
 import type { PipelineLead } from '../api/pipelineTypes';
 import { fmtDate, fmtTime, statusColor, ensureHttps } from './bookingHelpers';
 
@@ -15,6 +16,7 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
   const approveBooking = useApproveBooking();
   const completeBooking = useCompleteBooking();
   const rejectBooking = useRejectBooking();
+  const deleteLead = useDeletePipelineLead();
   const { data: bookingSettings } = useBookingSettings(lead.board_id ?? 0);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -22,6 +24,7 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
   const [approveLink, setApproveLink] = useState('');
   const [approveNotes, setApproveNotes] = useState('');
   const [copiedCheckUrl, setCopiedCheckUrl] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const status = lead.booking_status!;
   const approvedData = approveBooking.data?.data;
@@ -96,6 +99,12 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
           <button type="button" onClick={() => completeBooking.mutate(lead.id)} disabled={completeBooking.isPending} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40">
             {completeBooking.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
             Mark completed
+          </button>
+        )}
+        {status === 'completed' && canEdit && (
+          <button type="button" onClick={() => setShowArchiveConfirm(true)} disabled={deleteLead.isPending} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-50 disabled:opacity-40">
+            {deleteLead.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            Archive
           </button>
         )}
       </div>
@@ -196,6 +205,24 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
               <button type="button" onClick={handleReject} disabled={!rejectReason.trim() || rejectBooking.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
                 {rejectBooking.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                 Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showArchiveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setShowArchiveConfirm(false)} role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Archive completed booking?</h3>
+              <button type="button" onClick={() => setShowArchiveConfirm(false)} className="rounded p-1 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-xs text-gray-500">This will archive the card. The lead and its data will be removed from the board.</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setShowArchiveConfirm(false)} className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-200">Cancel</button>
+              <button type="button" onClick={() => { setShowArchiveConfirm(false); deleteLead.mutate({ id: lead.id, board_id: lead.board_id!, card_type: lead.card_type }); }} disabled={deleteLead.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                {deleteLead.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                Archive
               </button>
             </div>
           </div>

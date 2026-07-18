@@ -98,7 +98,7 @@ export default function LeadCard({
 
       <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} />
 
-      <div className="relative min-h-[7rem] p-3 pl-3.5 pr-[52px]">
+      <div className="relative min-h-[9rem] p-3 pl-3.5 pr-[52px]">
         <div className="flex items-start gap-2">
           {onToggleComplete && (
             <button

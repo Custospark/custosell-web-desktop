@@ -332,6 +332,24 @@ export function useDeleteMeeting() {
   });
 }
 
+export function useClearBooking() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (leadId: number) => {
+      await axiosInstance.post(`/pipeline/leads/${leadId}/clear-booking`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pipeline'] });
+      showToast('success', 'Booking cleared');
+    },
+    onError: (err) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not clear booking'));
+    },
+  });
+}
+
 export interface BookingSettingsPayload {
   enabled: boolean;
   available_days: number[];

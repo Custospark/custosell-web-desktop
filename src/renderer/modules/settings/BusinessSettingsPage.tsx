@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertTriangle, Trash2, ShieldAlert, Loader2 } from 'lucide-react';
 import BusinessSettingsForm from './ui/BusinessSettingsForm';
 import { Button } from '../../shared/components/buttons/Button';
@@ -6,28 +6,41 @@ import { Card } from '../../shared/components/cards/Card';
 import { Modal } from '../../shared/components/modals/Modal';
 import { useBusiness, useDeleteBusinessAccount } from './api/settings/BusinessQueries';
 import { inputClass } from '../../shared/utils/inputStyles';
+import { useToast } from '../../app/contexts/useToast';
 
-enum DeleteStep { Confirm, Password }
+const DeleteStep = {
+  Confirm: 0,
+  Password: 1,
+} as const;
+
+type DeleteStep = (typeof DeleteStep)[keyof typeof DeleteStep];
 
 export default function BusinessSettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [step, setStep] = useState<DeleteStep>(DeleteStep.Confirm);
   const [understood, setUnderstood] = useState(false);
   const [password, setPassword] = useState('');
-  const [businessName, setBusinessName] = useState('');
+  const [confirmationText, setConfirmationText] = useState('');
   const deleteMutation = useDeleteBusinessAccount();
   const { data: business } = useBusiness();
+  const { showToast } = useToast();
 
-  const slug = business?.slug ?? '';
-  const nameToType = `/reset ${slug}`;
-  const nameMatch = businessName.trim().toLowerCase() === nameToType.trim().toLowerCase();
-  const canDelete = understood && password.length > 0 && nameMatch;
+  const confirmationKeyword = useMemo(() => {
+    const slug = business?.slug?.trim();
+    if (slug) return slug;
+    const derivedName = business?.name?.trim().toLowerCase().replace(/\s+/g, '-');
+    return derivedName || '';
+  }, [business?.slug, business?.name]);
+
+  const nameToType = confirmationKeyword ? `/reset ${confirmationKeyword}` : '/reset';
+  const nameMatch = confirmationText.trim().toLowerCase() === nameToType.trim().toLowerCase();
+  const canDelete = understood && password.length > 0 && nameMatch && Boolean(confirmationKeyword);
 
   const handleOpenDelete = () => {
     setStep(DeleteStep.Confirm);
     setUnderstood(false);
     setPassword('');
-    setBusinessName('');
+    setConfirmationText('');
     setDeleteOpen(true);
   };
 
@@ -36,8 +49,22 @@ export default function BusinessSettingsPage() {
   };
 
   const handleConfirmDelete = () => {
-    if (!canDelete) return;
-    deleteMutation.mutate({ password });
+    if (!understood) {
+      showToast('error', 'Please confirm that you understand the consequences before deleting your business account.');
+      return;
+    }
+
+    if (!password.trim()) {
+      showToast('error', 'Please enter your password to confirm deletion.');
+      return;
+    }
+
+    if (!confirmationKeyword || !nameMatch) {
+      showToast('error', `Please type "${nameToType}" to confirm deletion.`);
+      return;
+    }
+
+    deleteMutation.mutate({ password, current_password: password });
   };
 
   const handleClose = () => {
@@ -87,7 +114,7 @@ export default function BusinessSettingsPage() {
         </div>
       </Card>
 
-      <Modal open={deleteOpen} onClose={handleClose}>
+      <Modal isOpen={deleteOpen} onClose={handleClose}>
         <div className="p-6 space-y-5 max-w-lg">
           {step === DeleteStep.Confirm && (
             <>
@@ -160,8 +187,8 @@ export default function BusinessSettingsPage() {
                   </label>
                   <input
                     type="text"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
+                    value={confirmationText}
+                    onChange={(e) => setConfirmationText(e.target.value)}
                     placeholder={nameToType}
                     className={inputClass}
                   />

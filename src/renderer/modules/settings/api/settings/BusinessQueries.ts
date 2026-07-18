@@ -286,16 +286,21 @@ export function useBusinessExport() {
 export function useDeleteBusinessAccount() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<{ message: string; logged_out: boolean }, AxiosError<ApiError>, { password: string }>({
+  return useMutation<{ message: string; logged_out: boolean }, AxiosError<ApiError>, { password: string; current_password?: string }>({
     retry: false,
-    mutationFn: async ({ password }) => {
-      const { data } = await axiosInstance.delete(BUSINESSES.DELETE_ACCOUNT, { data: { password } });
+    mutationFn: async ({ password, current_password }) => {
+      const { data } = await axiosInstance.delete(BUSINESSES.DELETE_ACCOUNT, {
+        data: {
+          password,
+          current_password: current_password ?? password,
+        },
+      });
       return data;
     },
     onSuccess: (data) => {
       qc.invalidateQueries();
       showToast('success', data.message);
-      window.location.href = ROUTES.LOGIN;
+      window.location.assign(ROUTES.LOGIN);
     },
     onError: (e) => {
       const message = (e.response?.data as { message?: string })?.message ?? 'Failed to delete business account';

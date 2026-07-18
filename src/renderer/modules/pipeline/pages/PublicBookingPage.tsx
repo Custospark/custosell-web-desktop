@@ -125,8 +125,12 @@ export default function PublicBookingPage() {
       notes: notes.trim() || undefined,
     };
 
-    await createBooking.mutateAsync(payload);
-    setStep('done');
+    try {
+      await createBooking.mutateAsync(payload);
+      setStep('done');
+    } catch {
+      showToast('error', 'Could not confirm booking. Please try again.');
+    }
   };
 
   const bookingResponse = createBooking.data;

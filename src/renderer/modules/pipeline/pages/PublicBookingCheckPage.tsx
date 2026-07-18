@@ -6,21 +6,17 @@ import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { ensureHttps } from '../ui/bookingHelpers';
 
 function formatTime(iso: string): string {
-  const m = iso.match(/(\d{2}):(\d{2})/);
-  if (!m) return iso;
-  let hours = parseInt(m[1], 10);
-  const minutes = m[2];
-  const period = hours >= 12 ? 'PM' : 'AM';
-  if (hours > 12) hours -= 12;
-  if (hours === 0) hours = 12;
-  return `${hours}:${minutes} ${period}`;
+  const d = new Date(iso);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
 }
 
 function formatDate(iso: string): string {
-  const dm = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!dm) return iso;
-  const date = new Date(+dm[1], +dm[2] - 1, +dm[3]);
-  return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function formatAddress(booking: {

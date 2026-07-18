@@ -11,6 +11,7 @@ import { PipelineFormSection, PipelineIconField, pipelineInputClass } from './pi
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
 import { Calendar, Link as LinkIcon, Paperclip, Plus, Trash2, AlignLeft, Maximize2 } from 'lucide-react';
+import { toLocalDatetimeValue, toUtcIso } from './bookingHelpers';
 
 interface CardDetailExtrasProps {
   lead: PipelineLead;
@@ -114,16 +115,17 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
 
       <PipelineFormSection title="Dates" icon={Calendar}>
         <div className="grid gap-4 sm:grid-cols-2">
-    <PipelineIconField label="Start" icon={Calendar}>
+            <PipelineIconField label="Start" icon={Calendar}>
               <input
                 type="datetime-local"
-                defaultValue={lead.start_date ? lead.start_date.slice(0, 16) : ''}
+                defaultValue={toLocalDatetimeValue(lead.start_date)}
                 readOnly={!canEdit}
                 disabled={!canEdit}
                 className={cn(pipelineInputClass, 'text-sm', !canEdit && 'bg-gray-50')}
                 onBlur={(e) => {
-                  const v = e.target.value ? e.target.value.replace('T', ' ') + ':00' : null;
-                  if (v !== (lead.start_date?.slice(0, 19).replace('T', ' ') ?? null)) {
+                  const v = e.target.value ? toUtcIso(e.target.value) : null;
+                  const current = lead.start_date ? toUtcIso(toLocalDatetimeValue(lead.start_date)) : null;
+                  if (v !== current) {
                     patchLead({ start_date: v });
                   }
                 }}
@@ -133,13 +135,14 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
             <PipelineIconField label="Due" icon={Calendar}>
               <input
                 type="datetime-local"
-                defaultValue={(lead.due_date ?? lead.expected_close_date ?? '').slice(0, 16)}
+                defaultValue={toLocalDatetimeValue(lead.due_date ?? lead.expected_close_date)}
                 readOnly={!canEdit}
                 disabled={!canEdit}
                 className={cn(pipelineInputClass, 'text-sm', !canEdit && 'bg-gray-50')}
                 onBlur={(e) => {
-                  const v = e.target.value ? e.target.value.replace('T', ' ') + ':00' : null;
-                  const current = (lead.due_date ?? lead.expected_close_date)?.slice(0, 19).replace('T', ' ') ?? null;
+                  const v = e.target.value ? toUtcIso(e.target.value) : null;
+                  const currentDate = lead.due_date ?? lead.expected_close_date;
+                  const current = currentDate ? toUtcIso(toLocalDatetimeValue(currentDate)) : null;
                   if (v !== current) {
                     patchLead({ due_date: v, expected_close_date: isLead ? v : lead.expected_close_date });
                   }

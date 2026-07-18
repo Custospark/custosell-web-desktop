@@ -13,18 +13,16 @@ interface CardBookingSectionProps {
   meetingsLoading?: boolean;
 }
 
-import { fmtDate, fmtTimeRange, statusColor, ensureHttps } from './bookingHelpers';
+import { fmtDate, fmtTimeRange, toLocalDatetimeValue, toUtcIso, statusColor, ensureHttps } from './bookingHelpers';
 
 const inp = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100';
 
 function computeEndDate(startLocal: string, durationMin: number): string {
-  const base = startLocal.replace('T', ' ') + ':00';
-  const [datePart, timePart] = base.split(' ');
-  const [h, m, s] = timePart.split(':').map(Number);
-  const totalMin = h * 60 + m + (s ?? 0) + durationMin;
-  const eh = Math.floor(totalMin / 60) % 24;
-  const em = totalMin % 60;
-  return `${datePart}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00`;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const d = new Date(startLocal);
+  if (Number.isNaN(d.getTime())) return startLocal;
+  d.setMinutes(d.getMinutes() + durationMin);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function CardBookingSection({ lead, boardId, canEdit = true, meetingsLoading }: CardBookingSectionProps) {
@@ -66,7 +64,7 @@ function ScheduleButton({ leadId, boardId }: { leadId: number; boardId?: number 
   const [schedLink, setSchedLink] = useState('');
   const [schedNotes, setSchedNotes] = useState('');
   const [saved, setSaved] = useState<{
-    meetingId: number; date: string; endDate: string; link: string; notes: string; checkUrl: string;
+    meetingId: number; startIso: string; endIso: string; link: string; notes: string; checkUrl: string;
   } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -86,17 +84,20 @@ function ScheduleButton({ leadId, boardId }: { leadId: number; boardId?: number 
 
   const handleSave = () => {
     if (!schedDate || (!schedLink.trim() && !schedNotes.trim())) return;
-    const startDate = schedDate.replace('T', ' ') + ':00';
-    const dueDate = computeEndDate(schedDate, slotDuration);
+    const endLocal = computeEndDate(schedDate, slotDuration);
+    const startDate = toUtcIso(schedDate);
+    const dueDate = toUtcIso(endLocal);
     createMeeting.mutate(
       { leadId, start_date: startDate, due_date: dueDate, meeting_link: schedLink.trim() || undefined, notes: schedNotes.trim() || undefined },
       {
         onSuccess: (res) => {
           const meeting = res?.data;
+          const startIso = meeting?.start_date ?? toUtcIso(schedDate);
+          const endIso = meeting?.end_date ?? dueDate;
           setSaved({
             meetingId: meeting?.id,
-            date: schedDate,
-            endDate: dueDate,
+            startIso,
+            endIso,
             link: schedLink.trim(),
             notes: schedNotes.trim(),
             checkUrl: res?.check_url ?? '',
@@ -129,10 +130,10 @@ function ScheduleButton({ leadId, boardId }: { leadId: number; boardId?: number 
         </p>
 
         <div className="mb-3 rounded-lg border border-emerald-100 bg-white px-4 py-3 text-xs">
-          {saved.date && (
+          {saved.startIso && (
             <p className="flex items-center gap-2 text-gray-700">
               <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              {fmtDate(saved.date)} · {fmtTimeRange(saved.date, saved.endDate || null)}
+              {fmtDate(saved.startIso)} · {fmtTimeRange(saved.startIso, saved.endIso)}
             </p>
           )}
           {saved.link && (
@@ -227,7 +228,7 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
   const updateMeeting = useUpdateMeeting();
   const deleteMeeting = useDeleteMeeting();
 
-  const [editDate, setEditDate] = useState((meeting.start_date ?? '').slice(0, 16));
+  const [editDate, setEditDate] = useState(toLocalDatetimeValue(meeting.start_date));
   const [editLink, setEditLink] = useState(meeting.meeting_link ?? '');
   const [editNotes, setEditNotes] = useState(meeting.notes ?? '');
   const [linkCopied, setLinkCopied] = useState(false);
@@ -240,8 +241,6 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
   const token = bookingSettings?.data?.token;
   const checkUrl = ref && token ? `${window.location.origin}/book/${token}/check/${ref}` : null;
 
-  const meetingEndDate = meeting.start_date ? computeEndDate(meeting.start_date.slice(0, 16), slotDuration) : null;
-
   const handleCopyLink = async () => {
     if (!checkUrl) return;
     await navigator.clipboard.writeText(checkUrl);
@@ -251,12 +250,11 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
 
   const handleSaveEdit = () => {
     if (!editDate || (!editLink.trim() && !editNotes.trim())) return;
-    const startDate = editDate.replace('T', ' ') + ':00';
-    const dueDate = computeEndDate(editDate, slotDuration);
+    const endLocal = computeEndDate(editDate, slotDuration);
     updateMeeting.mutate({
       meetingId: meeting.id,
-      start_date: startDate,
-      due_date: dueDate,
+      start_date: toUtcIso(editDate),
+      due_date: toUtcIso(endLocal),
       meeting_link: editLink.trim() || undefined,
       notes: editNotes.trim() || undefined,
     });
@@ -307,7 +305,7 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
           <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400" />
           {fmtDate(meeting.start_date)}
           <Clock className="ml-1 h-3.5 w-3.5 shrink-0 text-gray-400" />
-          {fmtTimeRange(meeting.start_date, meeting.end_date ?? meetingEndDate)}
+          {fmtTimeRange(meeting.start_date, meeting.end_date)}
         </p>
       )}
 

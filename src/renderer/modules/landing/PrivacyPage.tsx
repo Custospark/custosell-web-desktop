@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, Lock, Eye, Database, Download, Building2, CheckCircle2, Globe, Clock } from 'lucide-react';
+import { Shield, Lock, Eye, Database, Download, Building2, CheckCircle2, Globe, Clock, Server } from 'lucide-react';
 
 const sections = [
   {
@@ -57,14 +57,25 @@ const sections = [
     icon: Download,
     items: [
       'Full data export at any time — no lock-in, no data hostage',
-      'Export your sales, inventory, customer, and expense data on demand',
+      'Export all business data on demand',
       'No hidden fees or barriers to leaving the platform',
       'Transition assistance available for business accounts',
+      'Receive an export reminder if your account becomes dormant for over 120 days',
+    ],
+  },
+  {
+    title: 'Account Dormancy & Cleanup',
+    icon: Clock,
+    items: [
+      'Accounts inactive for 120+ days are flagged and the owner is notified',
+      'Dormant accounts are periodically reviewed by the platform team',
+      'Extended dormant accounts may be subject to deletion after notice',
+      'Export your data at any time — accounts are never deleted without warning',
     ],
   },
   {
     title: 'Business Continuity',
-    icon: Clock,
+    icon: Server,
     items: [
       'Automated daily backups with 30-day retention',
       'Point-in-time recovery capability for rapid restoration',
@@ -108,6 +119,10 @@ const faqItems = [
   {
     q: 'Can I delete my data when I close my account?',
     a: 'Yes. When you close your account, all your data is permanently deleted within 30 days. You can also request earlier deletion. We recommend exporting your data before account closure.',
+  },
+  {
+    q: 'What happens to dormant accounts?',
+    a: 'Accounts with no activity for 120 days or more are flagged as dormant. The account owner receives a notification and is encouraged to log in to keep the account active. Dormant accounts are periodically reviewed by the platform team. Accounts marked dormant for an extended period may be subject to deletion after review, and the owner will be notified before any action is taken.',
   },
 ];
 
@@ -194,7 +209,7 @@ export default function PrivacyPage() {
 
       {/* Footer */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="text-center text-xs text-gray-400 space-y-1">
-        <p>Last updated: June 2026</p>
+        <p>Last updated: July 2026</p>
         <p>
           Questions about data privacy? Contact{' '}
           <a href="mailto:support@custosell.com" className="text-blue-600 hover:underline font-medium">support@custosell.com</a>

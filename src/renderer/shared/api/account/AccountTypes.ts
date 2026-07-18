@@ -27,6 +27,7 @@ export interface BusinessRegisterRequest {
   password: string;
   password_confirmation: string;
   phone?: string;
+  privacy_consent?: boolean;
 }
 
 export interface ForgotPasswordRequest {

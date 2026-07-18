@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
-import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus, ExternalLink } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [privacyConsent, setPrivacyConsent] = useState(true);
   const [countryCode, setCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -61,6 +62,7 @@ export default function RegisterPage() {
       phone: fullPhone,
       password: form.password,
       password_confirmation: form.password_confirmation,
+      privacy_consent: privacyConsent,
     });
   };
 
@@ -159,6 +161,26 @@ export default function RegisterPage() {
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={privacyConsent}
+            onChange={(e) => setPrivacyConsent(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-600 leading-relaxed">
+            I agree to the{' '}
+            <a
+              href={ROUTES.PRIVACY}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline font-medium inline-flex items-center gap-1"
+            >
+              Data & Privacy Policy
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </span>
+        </label>
         <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>
           <UserPlus className="h-4 w-4" aria-hidden />
           Create Account

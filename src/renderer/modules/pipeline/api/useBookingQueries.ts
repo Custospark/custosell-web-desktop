@@ -265,7 +265,11 @@ export function useCheckBooking(token: string, reference: string) {
     queryKey: bookingKeys.check(token, reference),
     queryFn: () => publicFetch<{ data: BookingCheckInfo }>(`${BOOKING_BASE}/${token}/check/${reference}`),
     enabled: Boolean(token) && Boolean(reference),
-    staleTime: 1000 * 30,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 

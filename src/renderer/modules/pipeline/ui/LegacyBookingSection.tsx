@@ -94,7 +94,7 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
             </button>
           </>
         )}
-        {(status === 'approved' || status === 'scheduled') && canEdit && (
+        {status === 'approved' && canEdit && (
           <button type="button" onClick={() => completeBooking.mutate(lead.id)} disabled={completeBooking.isPending} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40">
             {completeBooking.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
             Mark completed

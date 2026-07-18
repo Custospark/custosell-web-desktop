@@ -128,6 +128,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-13-staff-form-modal-module-hydrate.md](./adr/2026-07-13-staff-form-modal-module-hydrate.md) | Staff edit Modal; GET detail to hydrate module checkboxes |
 | [2026-07-14-board-poll-delete-import-storefront.md](./adr/2026-07-14-board-poll-delete-import-storefront.md) | Board 30s poll, delete, Excel card import, visibility/role, product shop UX |
 | [2026-07-14-order-lists-30s-poll.md](./adr/2026-07-14-order-lists-30s-poll.md) | PO / Incoming / Sales / Storefront order lists poll every 30s when open |
+| [2026-07-18-data-export-and-account-deletion.md](./adr/2026-07-18-data-export-and-account-deletion.md) | Business data export API + self-service account deletion |
 
 ## Modules
 
@@ -138,6 +139,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [modules/forecasting.md](./modules/forecasting.md) | Forecasting — cash runway, budgets, KPIs, scenarios |
 | [modules/inventory-supply-chain.md](./modules/inventory-supply-chain.md) | B2B marketplace, purchase/incoming orders, receive mapping |
 | [modules/storefront.md](./modules/storefront.md) | Public shops, Discover, multi-cart, submit-time auth → Orders |
+| [modules/data-export.md](./modules/data-export.md) | Data & Export page, export API, business account self-deletion |
 
 ## Key source locations
 

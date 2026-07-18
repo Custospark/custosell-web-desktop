@@ -1,16 +1,25 @@
+function pad2(n: number): string { return String(n).padStart(2, '0'); }
+
+function extractDateParts(iso: string): { y: number; mo: number; d: number; h: number; mi: number } | null {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (!m) return null;
+  return { y: +m[1], mo: +m[2], d: +m[3], h: +m[4], mi: +m[5] };
+}
+
 export function fmtDate(iso: string | null): string {
   if (!iso) return '';
-  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const p = extractDateParts(iso);
+  if (!p) return '';
+  return new Date(p.y, p.mo - 1, p.d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export function fmtTime(iso: string | null): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  const h = d.getHours();
-  const m = d.getMinutes();
-  const period = h >= 12 ? 'PM' : 'AM';
-  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  const p = extractDateParts(iso);
+  if (!p) return '';
+  const period = p.h >= 12 ? 'PM' : 'AM';
+  const hour12 = p.h === 0 ? 12 : p.h > 12 ? p.h - 12 : p.h;
+  return `${hour12}:${pad2(p.mi)} ${period}`;
 }
 
 export function fmtTimeRange(startIso: string | null, endIso: string | null): string {

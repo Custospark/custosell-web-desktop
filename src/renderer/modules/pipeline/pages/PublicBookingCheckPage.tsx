@@ -80,13 +80,13 @@ export default function PublicBookingCheckPage() {
       <div className="rounded-xl border border-gray-100 bg-white text-center shadow-sm">
         {/* Business header */}
         <div className="border-b border-gray-100 px-5 py-3.5">
-          <div className="mx-auto mb-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-            {booking.logo_path ? (
-              <img src={avatarUrl(booking.logo_path) ?? ''} alt="" className="h-10 w-10 rounded-xl object-cover" />
-            ) : (
+          {booking.logo_path ? (
+            <img src={avatarUrl(booking.logo_path) ?? ''} alt="" className="mx-auto mb-1.5 h-10 w-10 rounded-xl object-cover" />
+          ) : (
+            <div className="mx-auto mb-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
               <Building2 className="h-5 w-5 text-indigo-500" />
-            )}
-          </div>
+            </div>
+          )}
           <h1 className="text-base font-bold text-gray-900">{booking.business_name}</h1>
         </div>
 
@@ -98,7 +98,8 @@ export default function PublicBookingCheckPage() {
           <h2 className="text-lg font-bold text-gray-900">{statusLabel}</h2>
           {booking.start_date && (
             <p className="mt-1 text-sm text-gray-500">
-              {formatDate(booking.start_date)} at {formatTime(booking.start_date)}
+              {formatDate(booking.start_date)} · {formatTime(booking.start_date)}
+              {booking.end_date && ` — ${formatTime(booking.end_date)}`}
             </p>
           )}
         </div>
@@ -109,7 +110,7 @@ export default function PublicBookingCheckPage() {
               <CalendarDays className="h-4 w-4 shrink-0" />
               <span>{formatDate(booking.start_date)}</span>
               <Clock className="h-4 w-4 shrink-0" />
-              <span>{formatTime(booking.start_date)}</span>
+              <span>{formatTime(booking.start_date)}{booking.end_date ? ` — ${formatTime(booking.end_date)}` : ''}</span>
             </div>
           )}
 
@@ -157,13 +158,17 @@ export default function PublicBookingCheckPage() {
                     {booking.phone}
                   </p>
                 )}
-                {booking.notes && (
-                  <p className="flex items-start gap-2 text-gray-700">
-                    <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
-                    <span>{booking.notes}</span>
-                  </p>
-                )}
               </div>
+            </div>
+          )}
+
+          {booking.notes && (
+            <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="mb-1.5 text-xs font-medium text-gray-600">Meeting notes</p>
+              <p className="flex items-start gap-2 text-sm text-gray-700">
+                <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+                <span>{booking.notes}</span>
+              </p>
             </div>
           )}
 

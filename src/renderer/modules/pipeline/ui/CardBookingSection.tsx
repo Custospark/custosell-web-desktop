@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Calendar, Clock, Video, CheckCircle, Loader2, Plus, Copy, Pencil, Trash2,
+  Calendar, Clock, Video, CheckCircle, Loader2, Plus, Copy, Pencil, Trash2, AlertTriangle, X,
 } from 'lucide-react';
 import { useCreateMeeting, useUpdateMeeting, useDeleteMeeting, useBookingSettings } from '../api/useBookingQueries';
 import LegacyBookingSection from './LegacyBookingSection';
@@ -57,6 +57,7 @@ function ScheduleButton({ leadId }: { leadId: number }) {
     meetingId: number; date: string; link: string; notes: string; checkUrl: string;
   } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!open) {
     return (
@@ -145,7 +146,7 @@ function ScheduleButton({ leadId }: { leadId: number }) {
           {saved.meetingId && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={deleteMeeting.isPending}
               className="shrink-0 rounded-lg bg-white px-2.5 py-2 text-xs font-medium text-red-600 ring-1 ring-red-200 hover:bg-red-50"
               title="Delete meeting"
@@ -154,6 +155,26 @@ function ScheduleButton({ leadId }: { leadId: number }) {
             </button>
           )}
         </div>
+
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setShowDeleteConfirm(false)} role="dialog" aria-modal="true">
+            <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Delete meeting?</h3>
+                <button type="button" onClick={() => setShowDeleteConfirm(false)} className="rounded p-1 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+              </div>
+              <p className="text-xs text-gray-500">This will remove the meeting link, date, and notes. The lead stays intact.</p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setShowDeleteConfirm(false)} className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-200">Cancel</button>
+                <button type="button" onClick={handleDelete} disabled={deleteMeeting.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                  {deleteMeeting.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button type="button" onClick={() => { setOpen(false); setSchedDate(''); setSchedLink(''); setSchedNotes(''); setSaved(null); }} className="mt-2 text-xs text-gray-500 hover:text-gray-700">Schedule another</button>
       </div>
     );
@@ -195,6 +216,7 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
   const [editLink, setEditLink] = useState(meeting.meeting_link ?? '');
   const [editNotes, setEditNotes] = useState(meeting.notes ?? '');
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: bookingSettings } = useBookingSettings(boardId ?? 0);
 
@@ -302,11 +324,30 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
           </button>
         )}
         {canEdit && (meeting.status === 'scheduled' || meeting.status === 'completed' || meeting.status === 'cancelled') && (
-          <button type="button" onClick={() => deleteMeeting.mutate(meeting.id)} className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-50 hover:text-red-600" title="Delete meeting">
+          <button type="button" onClick={() => setShowDeleteConfirm(true)} className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-50 hover:text-red-600" title="Delete meeting">
             {deleteMeeting.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
           </button>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setShowDeleteConfirm(false)} role="dialog" aria-modal="true">
+          <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Delete meeting?</h3>
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="rounded p-1 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-xs text-gray-500">This will remove the meeting link, date, and notes. The lead stays intact.</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-200">Cancel</button>
+              <button type="button" onClick={() => { setShowDeleteConfirm(false); deleteMeeting.mutate(meeting.id); }} disabled={deleteMeeting.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                {deleteMeeting.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

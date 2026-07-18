@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import {
-  Calendar, User, Video, CheckCircle, XCircle, Loader2, AlertTriangle, X, CheckCheck, Trash2,
+  Calendar, User, Video, CheckCircle, XCircle, Loader2, AlertTriangle, X, CheckCheck,
 } from 'lucide-react';
 import { useApproveBooking, useCompleteBooking, useRejectBooking, useBookingSettings } from '../api/useBookingQueries';
-import { useDeletePipelineLead } from '../api/usePipelineQueries';
 import type { PipelineLead } from '../api/pipelineTypes';
 import { fmtDate, fmtTime, statusColor, ensureHttps } from './bookingHelpers';
 
@@ -16,7 +15,6 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
   const approveBooking = useApproveBooking();
   const completeBooking = useCompleteBooking();
   const rejectBooking = useRejectBooking();
-  const deleteLead = useDeletePipelineLead();
   const { data: bookingSettings } = useBookingSettings(lead.board_id ?? 0);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -98,17 +96,6 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
           <button type="button" onClick={() => completeBooking.mutate(lead.id)} disabled={completeBooking.isPending} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40">
             {completeBooking.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
             Mark completed
-          </button>
-        )}
-        {status === 'completed' && canEdit && (
-          <button
-            type="button"
-            onClick={() => deleteLead.mutate({ id: lead.id, board_id: lead.board_id!, card_type: lead.card_type })}
-            disabled={deleteLead.isPending}
-            className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-50 disabled:opacity-40"
-          >
-            {deleteLead.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            Archive
           </button>
         )}
       </div>

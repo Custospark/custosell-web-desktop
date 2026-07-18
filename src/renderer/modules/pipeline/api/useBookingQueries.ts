@@ -267,6 +267,7 @@ export function useCheckBooking(token: string, reference: string) {
     enabled: Boolean(token) && Boolean(reference),
     staleTime: 0,
     gcTime: 0,
+    refetchInterval: 10000,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,

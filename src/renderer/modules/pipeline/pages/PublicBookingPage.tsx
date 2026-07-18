@@ -91,9 +91,9 @@ export default function PublicBookingPage() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100">
           <CalendarDays className="h-6 w-6 text-gray-400" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900">Booking unavailable</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Bookings currently unavailable</h2>
         <p className="mt-2 text-sm text-gray-500">
-          This booking link is invalid or has been disabled.
+          This business is not accepting bookings right now. Please check back later or contact them directly.
         </p>
       </div>
     );
@@ -122,7 +122,7 @@ export default function PublicBookingPage() {
       email: email.trim() || undefined,
       phone: phone.trim() ? `${countryCode.dial_code}${phone.replace(/\D/g, '')}` : undefined,
       meeting_link: meetingLink.trim() || undefined,
-      notes: notes.trim() || 'Agenda, topics, or anything else...',
+      notes: notes.trim() || undefined,
     };
 
     await createBooking.mutateAsync(payload);

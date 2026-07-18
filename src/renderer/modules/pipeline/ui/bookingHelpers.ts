@@ -13,6 +13,14 @@ export function fmtTime(iso: string | null): string {
   return `${hour}:${String(m).padStart(2, '0')} ${period}`;
 }
 
+export function fmtTimeRange(startIso: string | null, endIso: string | null): string {
+  const start = fmtTime(startIso);
+  const end = fmtTime(endIso);
+  if (!start) return '';
+  if (!end) return start;
+  return `${start} — ${end}`;
+}
+
 export function ensureHttps(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;

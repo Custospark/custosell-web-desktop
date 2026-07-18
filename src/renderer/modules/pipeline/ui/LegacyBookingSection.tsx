@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { useApproveBooking, useCompleteBooking, useRejectBooking, useBookingSettings, useClearBooking } from '../api/useBookingQueries';
 import type { PipelineLead } from '../api/pipelineTypes';
-import { fmtDate, fmtTime, statusColor, ensureHttps } from './bookingHelpers';
+import { fmtDate, fmtTimeRange, statusColor, ensureHttps } from './bookingHelpers';
 
 interface LegacyBookingSectionProps {
   lead: PipelineLead;
@@ -63,7 +63,7 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
       {lead.start_date && (
         <p className="mb-1 flex items-center gap-2 text-gray-700">
           <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-          {fmtDate(lead.start_date)} · {fmtTime(lead.start_date)}
+          {fmtDate(lead.start_date)} · {fmtTimeRange(lead.start_date, lead.due_date)}
         </p>
       )}
 

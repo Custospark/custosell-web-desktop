@@ -13,16 +13,26 @@ interface CardBookingSectionProps {
   meetingsLoading?: boolean;
 }
 
-import { fmtDate, fmtTime, statusColor, ensureHttps } from './bookingHelpers';
+import { fmtDate, fmtTimeRange, statusColor, ensureHttps } from './bookingHelpers';
 
 const inp = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100';
+
+function computeEndDate(startLocal: string, durationMin: number): string {
+  const base = startLocal.replace('T', ' ') + ':00';
+  const [datePart, timePart] = base.split(' ');
+  const [h, m, s] = timePart.split(':').map(Number);
+  const totalMin = h * 60 + m + (s ?? 0) + durationMin;
+  const eh = Math.floor(totalMin / 60) % 24;
+  const em = totalMin % 60;
+  return `${datePart}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00`;
+}
 
 export default function CardBookingSection({ lead, boardId, canEdit = true, meetingsLoading }: CardBookingSectionProps) {
   const meetings = lead.meetings ?? [];
 
   return (
     <div className="space-y-3">
-      {canEdit && <ScheduleButton leadId={lead.id} />}
+      {canEdit && <ScheduleButton leadId={lead.id} boardId={boardId} />}
 
       {meetingsLoading ? (
         <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-3 text-xs text-gray-400 shadow-sm">
@@ -45,16 +55,18 @@ export default function CardBookingSection({ lead, boardId, canEdit = true, meet
 }
 
 /* ─── Add meeting button + form ─── */
-function ScheduleButton({ leadId }: { leadId: number }) {
+function ScheduleButton({ leadId, boardId }: { leadId: number; boardId?: number }) {
   const [open, setOpen] = useState(false);
   const createMeeting = useCreateMeeting();
   const deleteMeeting = useDeleteMeeting();
+  const { data: bookingSettings } = useBookingSettings(boardId ?? 0);
+  const slotDuration = bookingSettings?.data?.slot_duration ?? 30;
 
   const [schedDate, setSchedDate] = useState('');
   const [schedLink, setSchedLink] = useState('');
   const [schedNotes, setSchedNotes] = useState('');
   const [saved, setSaved] = useState<{
-    meetingId: number; date: string; link: string; notes: string; checkUrl: string;
+    meetingId: number; date: string; endDate: string; link: string; notes: string; checkUrl: string;
   } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -74,14 +86,17 @@ function ScheduleButton({ leadId }: { leadId: number }) {
 
   const handleSave = () => {
     if (!schedDate || (!schedLink.trim() && !schedNotes.trim())) return;
+    const startDate = schedDate.replace('T', ' ') + ':00';
+    const dueDate = computeEndDate(schedDate, slotDuration);
     createMeeting.mutate(
-      { leadId, start_date: schedDate.replace('T', ' ') + ':00', due_date: schedDate.replace('T', ' ') + ':00', meeting_link: schedLink.trim() || undefined, notes: schedNotes.trim() || undefined },
+      { leadId, start_date: startDate, due_date: dueDate, meeting_link: schedLink.trim() || undefined, notes: schedNotes.trim() || undefined },
       {
         onSuccess: (res) => {
           const meeting = res?.data;
           setSaved({
             meetingId: meeting?.id,
             date: schedDate,
+            endDate: dueDate,
             link: schedLink.trim(),
             notes: schedNotes.trim(),
             checkUrl: res?.check_url ?? '',
@@ -117,7 +132,7 @@ function ScheduleButton({ leadId }: { leadId: number }) {
           {saved.date && (
             <p className="flex items-center gap-2 text-gray-700">
               <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              {fmtDate(saved.date)} · {fmtTime(saved.date)}
+              {fmtDate(saved.date)} · {fmtTimeRange(saved.date, saved.endDate || null)}
             </p>
           )}
           {saved.link && (
@@ -219,10 +234,13 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: bookingSettings } = useBookingSettings(boardId ?? 0);
+  const slotDuration = bookingSettings?.data?.slot_duration ?? 30;
 
   const ref = meeting.reference_code;
   const token = bookingSettings?.data?.token;
   const checkUrl = ref && token ? `${window.location.origin}/book/${token}/check/${ref}` : null;
+
+  const meetingEndDate = meeting.start_date ? computeEndDate(meeting.start_date.slice(0, 16), slotDuration) : null;
 
   const handleCopyLink = async () => {
     if (!checkUrl) return;
@@ -233,10 +251,12 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
 
   const handleSaveEdit = () => {
     if (!editDate || (!editLink.trim() && !editNotes.trim())) return;
+    const startDate = editDate.replace('T', ' ') + ':00';
+    const dueDate = computeEndDate(editDate, slotDuration);
     updateMeeting.mutate({
       meetingId: meeting.id,
-      start_date: editDate.replace('T', ' ') + ':00',
-      due_date: editDate.replace('T', ' ') + ':00',
+      start_date: startDate,
+      due_date: dueDate,
       meeting_link: editLink.trim() || undefined,
       notes: editNotes.trim() || undefined,
     });
@@ -287,7 +307,7 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
           <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400" />
           {fmtDate(meeting.start_date)}
           <Clock className="ml-1 h-3.5 w-3.5 shrink-0 text-gray-400" />
-          {fmtTime(meeting.start_date)}
+          {fmtTimeRange(meeting.start_date, meeting.end_date ?? meetingEndDate)}
         </p>
       )}
 

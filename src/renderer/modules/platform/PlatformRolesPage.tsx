@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   useDeletePlatformRole,
   usePlatformRoles,
-} from './api/PlatformQueries';
+} from './api/PlatformUserQueries';
 import type { PlatformRole } from './api/PlatformTypes';
 import { PlatformRoleFormDrawer } from './components/PlatformRoleFormDrawer';
 import { Button } from '../../shared/components/buttons/Button';
@@ -66,7 +66,7 @@ export default function PlatformRolesPage() {
 
   return (
     <>
-      <PlatformRoleFormDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} role={editingRole} />
+      <PlatformRoleFormDrawer key={editingRole?.id ?? 'create'} open={drawerOpen} onClose={() => setDrawerOpen(false)} role={editingRole} />
 
       <div className="flex items-center justify-between mb-6">
         <div>

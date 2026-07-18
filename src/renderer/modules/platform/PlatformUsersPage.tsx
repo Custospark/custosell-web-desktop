@@ -9,7 +9,7 @@ import {
   usePlatformUsers,
   usePlatformUserStats,
   useUpdatePlatformUserStatus,
-} from './api/PlatformQueries';
+} from './api/PlatformUserQueries';
 import {
   STATUS_DURATION_DAYS,
   USER_ACCOUNT_STATUSES,
@@ -22,7 +22,6 @@ import {
   validateUserStatsDateRange,
 } from './api/platformUserValidation';
 import type { PlatformUser, UserAccountStatus, UserLoginActivity } from './api/PlatformTypes';
-import { PlatformUserGrowthChart } from './PlatformCharts';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
@@ -37,33 +36,21 @@ import { PlatformUserRoleModal } from './components/PlatformUserRoleModal';
 import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
 import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
+import { PlatformUserStatCards } from './components/PlatformUserStatCards';
 import {
-  Users, UserX, TrendingUp, Calendar, Building2, Shield, Mail, AlertTriangle,
-  LogIn, CheckSquare, Square, UserCog, Trash2,
+  Mail, Shield, Trash2, CheckSquare, Square, UserCog,
 } from 'lucide-react';
-
-const cardStyles = {
-  blue: { border: 'border-blue-500', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-  green: { border: 'border-green-500', iconBg: 'bg-green-100', iconColor: 'text-green-600' },
-  amber: { border: 'border-amber-500', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-  red: { border: 'border-red-500', iconBg: 'bg-red-100', iconColor: 'text-red-600' },
-  indigo: { border: 'border-indigo-500', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' },
-  purple: { border: 'border-purple-500', iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
-};
-
 function defaultRange() {
   const to = format(new Date(), 'yyyy-MM-dd');
   const from = format(subDays(new Date(), 29), 'yyyy-MM-dd');
   return { from, to };
 }
-
 function daysInStatus(user: PlatformUser): number | null {
   if (!user.status_changed_at) return null;
   const changed = parseISO(user.status_changed_at);
   if (Number.isNaN(changed.getTime())) return null;
   return differenceInDays(new Date(), changed);
 }
-
 function displayRole(user: PlatformUser): string {
   if (user.is_platform_admin) return 'Platform admin';
   if (user.role_name) return user.role_name;
@@ -71,7 +58,6 @@ function displayRole(user: PlatformUser): string {
   if (platformRoles.length > 0) return platformRoles.join(', ');
   return '—';
 }
-
 type ModalTarget = PlatformUser[];
 
 export default function PlatformUsersPage() {
@@ -93,7 +79,6 @@ export default function PlatformUsersPage() {
     () => validateUserStatsDateRange(dateFrom, dateTo),
     [dateFrom, dateTo],
   );
-
   const statsParams = useMemo((): Record<string, string> => {
     if (!dateValidation.valid) return {};
     return { date_from: dateFrom, date_to: dateTo };
@@ -113,11 +98,10 @@ export default function PlatformUsersPage() {
   const deleteUser = useDeletePlatformUser();
   const bulkDeleteUsers = useBulkDeletePlatformUsers();
   const bulkAssignRoles = useBulkAssignPlatformRoles();
-
   const fallbackStats = useMemo(() => {
     if (!dateValidation.valid || !data?.data) return null;
     return computePlatformUserStatsFromList(data.data, dateFrom, dateTo);
-  }, [data?.data, dateFrom, dateTo, dateValidation.valid]);
+  }, [data, dateFrom, dateTo, dateValidation.valid]);
 
   const stats = apiStats ?? fallbackStats;
   const statsFromClient = !apiStats && Boolean(fallbackStats);
@@ -173,7 +157,6 @@ export default function PlatformUsersPage() {
       return next;
     });
   }, []);
-
   const clearSelection = () => setSelectedIds(new Set());
 
   const handleStatusConfirm = (
@@ -244,20 +227,7 @@ export default function PlatformUsersPage() {
 
   const actionPending = updateStatus.isPending || bulkUpdateStatus.isPending || notifyUsers.isPending
     || deleteUser.isPending || bulkDeleteUsers.isPending || bulkAssignRoles.isPending;
-
   if (listLoading) return <LoadingSkeleton variant="table" />;
-
-  const statCards = stats ? [
-    { label: 'Joined Today', value: String(stats.onboarding.today), hint: 'Prioritize welcome onboarding', icon: Calendar, color: 'blue' as const },
-    { label: 'Joined This Week', value: String(stats.onboarding.this_week), hint: 'Weekly acquisition pace', icon: TrendingUp, color: 'green' as const },
-    { label: 'Joined This Month', value: String(stats.onboarding.this_month), hint: 'Monthly growth signal', icon: Users, color: 'purple' as const },
-    { label: 'In Selected Range', value: String(stats.onboarding.in_range), hint: `${stats.onboarding.range_from} → ${stats.onboarding.range_to}`, icon: Calendar, color: 'indigo' as const },
-    { label: 'With Business', value: String(stats.totals.with_business), hint: 'Linked to a tenant business', icon: Building2, color: 'green' as const },
-    { label: 'Logins (30d)', value: (stats.totals.logins_30d ?? 0).toLocaleString(), hint: 'Users who signed in recently', icon: LogIn, color: 'blue' as const },
-    { label: 'Warnings', value: String(stats.totals.warning ?? 0), hint: 'Account warnings issued', icon: AlertTriangle, color: 'amber' as const },
-    { label: 'Notified', value: String(stats.totals.notified ?? 0), hint: 'Marked after platform notification', icon: Mail, color: 'blue' as const },
-    { label: 'Deactivated', value: String(stats.totals.deactivated), hint: 'Blocked from sign-in', icon: UserX, color: 'red' as const },
-  ] : [];
 
   const rangeLabel = `${stats?.onboarding.range_from ?? dateFrom} to ${stats?.onboarding.range_to ?? dateTo}`;
 
@@ -285,6 +255,7 @@ export default function PlatformUsersPage() {
         onConfirm={handleDeleteConfirm}
       />
       <PlatformUserRoleModal
+        key={roleTargets !== null ? 'open' : 'closed'}
         open={roleTargets !== null}
         users={roleTargets ?? []}
         isPending={bulkAssignRoles.isPending}
@@ -329,57 +300,7 @@ export default function PlatformUsersPage() {
       </div>
 
       {stats && (
-        <>
-          {statsFromClient && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-              Summary stats are computed from the loaded user list (up to 500 rows). Platform-wide totals will appear when the stats API is available.
-            </p>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {statCards.map((card) => {
-              const Icon = card.icon;
-              const s = cardStyles[card.color];
-              return (
-                <div key={card.label} className={`rounded-xl p-5 border-2 bg-white ${s.border}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`p-2.5 rounded-lg ${s.iconBg}`}>
-                      <Icon className={`w-5 h-5 ${s.iconColor}`} />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                  <p className="text-sm font-medium text-gray-700 mt-0.5">{card.label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{card.hint}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <PlatformUserGrowthChart data={stats.growth ?? []} rangeLabel={rangeLabel} />
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                Decision Insights
-              </h3>
-              <ul className="space-y-3">
-                {(stats.decisions ?? []).map((note) => (
-                  <li key={note} className="text-xs text-gray-700 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed">
-                    {note}
-                  </li>
-                ))}
-              </ul>
-              {stats.totals.platform_admins > 0 && (
-                <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg p-3 mt-3 flex items-center gap-2">
-                  <UserCog className="w-3.5 h-3.5 shrink-0" />
-                  {stats.totals.platform_admins} platform operator{stats.totals.platform_admins === 1 ? '' : 's'} in the loaded set
-                </p>
-              )}
-            </div>
-          </div>
-        </>
+        <PlatformUserStatCards stats={stats} statsFromClient={statsFromClient} rangeLabel={rangeLabel} />
       )}
 
       <Card>

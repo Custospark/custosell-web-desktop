@@ -8,6 +8,7 @@ export const PLATFORM = {
   BUSINESS_STATS: '/platform/businesses/stats',
   BUSINESS_STATUS: (id: number) => `/platform/businesses/${id}/status`,
   BUSINESS_DELETE: (id: number) => `/platform/businesses/${id}`,
+  BUSINESS_RESET_DATA: (id: number) => `/platform/businesses/${id}/reset-data`,
   BUSINESSES_BULK_DELETE: '/platform/businesses/bulk-delete',
   BUSINESSES_BULK_STATUS: '/platform/businesses/bulk-status',
   BUSINESSES_NOTIFY: '/platform/businesses/notify',

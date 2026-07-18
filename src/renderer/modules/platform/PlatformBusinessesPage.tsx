@@ -7,6 +7,7 @@ import {
   useNotifyBusinesses,
   usePlatformBusinesses,
   usePlatformBusinessStats,
+  useResetBusinessData,
   useUpdateBusinessStatus,
 } from './api/PlatformQueries';
 import {
@@ -30,21 +31,15 @@ import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { PlatformBusinessStatusModal } from './components/PlatformBusinessStatusModal';
 import { PlatformBusinessNotificationModal } from './components/PlatformBusinessNotificationModal';
 import { PlatformBusinessDeleteModal } from './components/PlatformBusinessDeleteModal';
+import { PlatformBusinessResetModal } from './components/PlatformBusinessResetModal';
 import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
 import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 import {
-  Building2, Ban, TrendingUp, Calendar, DollarSign, Receipt, AlertTriangle,
-  Mail, Shield, Trash2, CheckSquare, Square,
+  AlertTriangle, Mail, Shield, Trash2, RefreshCw, CheckSquare, Square,
 } from 'lucide-react';
 
-const cardStyles = {
-  blue: { border: 'border-blue-500', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
-  green: { border: 'border-green-500', iconBg: 'bg-green-100', iconColor: 'text-green-600', badge: 'bg-green-100 text-green-700' },
-  amber: { border: 'border-amber-500', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' },
-  red: { border: 'border-red-500', iconBg: 'bg-red-100', iconColor: 'text-red-600', badge: 'bg-red-100 text-red-700' },
-  indigo: { border: 'border-indigo-500', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700' },
-};
+import { PlatformBusinessStatCards } from './components/PlatformBusinessStatCards';
 
 function defaultRange() {
   const to = format(new Date(), 'yyyy-MM-dd');
@@ -71,6 +66,7 @@ export default function PlatformBusinessesPage() {
   const [statusTargets, setStatusTargets] = useState<ModalTarget | null>(null);
   const [notifyTargets, setNotifyTargets] = useState<ModalTarget | null>(null);
   const [deleteTargets, setDeleteTargets] = useState<ModalTarget | null>(null);
+  const [resetTargets, setResetTargets] = useState<ModalTarget | null>(null);
 
   const dateValidation = useMemo(
     () => validateBusinessStatsDateRange(dateFrom, dateTo),
@@ -95,6 +91,7 @@ export default function PlatformBusinessesPage() {
   const deleteBusiness = useDeleteBusiness();
   const bulkDelete = useBulkDeleteBusinesses();
   const notifyBusinesses = useNotifyBusinesses();
+  const resetBusinessData = useResetBusinessData();
 
   const rows = useMemo(() => {
     const list = data?.data ?? [];
@@ -195,22 +192,17 @@ export default function PlatformBusinessesPage() {
     }
   };
 
+  const handleResetConfirm = () => {
+    if (!resetTargets?.length) return;
+    resetBusinessData.mutate(resetTargets[0].id, {
+      onSuccess: () => { setResetTargets(null); clearSelection(); },
+    });
+  };
+
   const actionPending = updateStatus.isPending || bulkUpdateStatus.isPending
-    || deleteBusiness.isPending || bulkDelete.isPending || notifyBusinesses.isPending;
+    || deleteBusiness.isPending || bulkDelete.isPending || notifyBusinesses.isPending || resetBusinessData.isPending;
 
   if (statsLoading && listLoading) return <LoadingSkeleton variant="table" />;
-
-  const statCards = stats ? [
-    { label: 'Joined Today', value: String(stats.onboarding.today), hint: 'Prioritize welcome onboarding', icon: Calendar, color: 'blue' as const },
-    { label: 'Joined This Week', value: String(stats.onboarding.this_week), hint: 'Weekly acquisition pace', icon: TrendingUp, color: 'green' as const },
-    { label: 'Joined This Month', value: String(stats.onboarding.this_month), hint: 'Monthly growth signal', icon: Building2, color: 'indigo' as const },
-    { label: 'In Selected Range', value: String(stats.onboarding.in_range), hint: `${stats.onboarding.range_from} → ${stats.onboarding.range_to}`, icon: Calendar, color: 'amber' as const },
-    { label: 'Selling (30d)', value: String(stats.totals.with_gross_sales_30d), hint: 'Businesses with sale transactions', icon: DollarSign, color: 'green' as const },
-    { label: 'Sales Tx (30d)', value: stats.totals.transactions_30d.toLocaleString(), hint: 'Platform-wide sale count from sales table', icon: Receipt, color: 'blue' as const },
-    { label: 'Warnings', value: String(stats.totals.warning ?? 0), hint: 'Account warnings issued', icon: AlertTriangle, color: 'amber' as const },
-    { label: 'Notified', value: String(stats.totals.notified ?? 0), hint: 'Marked after platform notification', icon: Mail, color: 'blue' as const },
-    { label: 'Suspended', value: String(stats.totals.suspended), hint: 'Blocked from sign-in', icon: Ban, color: 'red' as const },
-  ] : [];
 
   const rangeLabel = `${stats?.onboarding.range_from ?? dateFrom} to ${stats?.onboarding.range_to ?? dateTo}`;
 
@@ -236,6 +228,14 @@ export default function PlatformBusinessesPage() {
         isPending={deleteBusiness.isPending || bulkDelete.isPending}
         onClose={() => setDeleteTargets(null)}
         onConfirm={handleDeleteConfirm}
+      />
+      <PlatformBusinessResetModal
+        key={resetTargets ? resetTargets.map((b) => b.id).join(',') : 'closed'}
+        open={resetTargets !== null}
+        businesses={resetTargets ?? []}
+        isPending={resetBusinessData.isPending}
+        onClose={() => setResetTargets(null)}
+        onConfirm={handleResetConfirm}
       />
 
       <div>
@@ -276,24 +276,7 @@ export default function PlatformBusinessesPage() {
 
       {stats && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {statCards.map((card) => {
-              const Icon = card.icon;
-              const s = cardStyles[card.color];
-              return (
-                <div key={card.label} className={`rounded-xl p-5 border-2 bg-white ${s.border}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`p-2.5 rounded-lg ${s.iconBg}`}>
-                      <Icon className={`w-5 h-5 ${s.iconColor}`} />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                  <p className="text-sm font-medium text-gray-700 mt-0.5">{card.label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{card.hint}</p>
-                </div>
-              );
-            })}
-          </div>
+          <PlatformBusinessStatCards stats={stats} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
@@ -397,6 +380,10 @@ export default function PlatformBusinessesPage() {
             <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden />
             Delete
           </Button>
+          <Button variant="secondary" size="sm" onClick={() => setResetTargets(selectedBusinesses)} disabled={actionPending}>
+            <RefreshCw className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Wipe Data
+          </Button>
         </PlatformBulkActionBar>
 
         {listLoading ? (
@@ -478,6 +465,9 @@ export default function PlatformBusinessesPage() {
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setDeleteTargets([b])} disabled={actionPending} title="Delete">
                       <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setResetTargets([b])} disabled={actionPending} title="Wipe transactional data">
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
                     </Button>
                   </div>
                 )},

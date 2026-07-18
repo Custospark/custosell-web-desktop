@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, X } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import type { PlatformUser } from '../api/PlatformTypes';
 import { parseUserEmails } from '../api/platformUserValidation';
-import { usePlatformRoles } from '../api/PlatformQueries';
+import { usePlatformRoles } from '../api/PlatformUserQueries';
 import { selectClass, textareaClass } from '../../../shared/utils/inputStyles';
 
 export interface PlatformUserRoleModalProps {
@@ -24,22 +24,11 @@ export function PlatformUserRoleModal({
 }: PlatformUserRoleModalProps) {
   const { data: roles = [] } = usePlatformRoles();
   const [emailInput, setEmailInput] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState(roles.length > 0 ? roles[0].name : '');
   const [action, setAction] = useState<'assign' | 'revoke'>('assign');
   const [touched, setTouched] = useState(false);
 
   const parsedExtraEmails = useMemo(() => parseUserEmails(emailInput), [emailInput]);
-
-  useEffect(() => {
-    if (open) {
-      setEmailInput('');
-      setAction('assign');
-      setTouched(false);
-      if (roles.length > 0) {
-        setRole(roles[0].name);
-      }
-    }
-  }, [open, users.map((u) => u.id).join(','), roles]);
 
   if (!open) return null;
 

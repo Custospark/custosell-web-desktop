@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
 import { Shield, Hash } from 'lucide-react';
 import type { PlatformRole } from '../api/PlatformTypes';
-import { useCreatePlatformRole, usePlatformPermissions, useUpdatePlatformRole } from '../api/PlatformQueries';
+import { useCreatePlatformRole, usePlatformPermissions, useUpdatePlatformRole } from '../api/PlatformUserQueries';
 import { inputClass } from '../../../shared/utils/inputStyles';
 
 const BUILT_IN_ROLES = ['platform-admin', 'platform-analyst', 'platform-support'];
@@ -20,21 +20,10 @@ export function PlatformRoleFormDrawer({ open, onClose, role }: PlatformRoleForm
   const updateMutation = useUpdatePlatformRole();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const [name, setName] = useState('');
-  const [selected, setSelected] = useState<string[]>([]);
-
+  const [name, setName] = useState(role?.name ?? '');
+  const [selected, setSelected] = useState<string[]>(role?.permissions ?? []);
   const isBuiltIn = role ? BUILT_IN_ROLES.includes(role.name) : false;
   const isAdminRole = role?.name === 'platform-admin';
-
-  useEffect(() => {
-    if (role) {
-      setName(role.name);
-      setSelected(role.permissions);
-    } else {
-      setName('');
-      setSelected([]);
-    }
-  }, [role, open]);
 
   const togglePermission = useCallback((perm: string) => {
     setSelected((prev) => (

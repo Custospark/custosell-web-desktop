@@ -206,20 +206,6 @@ export default function LeadCard({
               </span>
             )}
           </button>
-          {onMoveClick && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveClick(lead);
-              }}
-              className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
-              title={isProjectBoard ? 'Move card' : 'Move lead'}
-              aria-label="Move"
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-            </button>
-          )}
           {onCopyClick && (
             <button
               type="button"
@@ -232,6 +218,20 @@ export default function LeadCard({
               aria-label="Duplicate"
             >
               <Copy className="h-4 w-4" />
+            </button>
+          )}
+          {onMoveClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveClick(lead);
+              }}
+              className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+              title={isProjectBoard ? 'Move card' : 'Move lead'}
+              aria-label="Move"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
             </button>
           )}
         </div>

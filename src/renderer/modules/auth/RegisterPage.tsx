@@ -7,7 +7,7 @@ import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
-import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus, ExternalLink } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -161,23 +161,22 @@ export default function RegisterPage() {
         {form.password_confirmation && !passwordsMatch && (
           <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
-        <label className="flex items-start gap-3 cursor-pointer">
+        <label className="flex items-center justify-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={privacyConsent}
             onChange={(e) => setPrivacyConsent(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <span className="text-sm text-gray-600 leading-relaxed">
+          <span className="text-xs text-gray-400">
             I agree to the{' '}
             <a
               href={ROUTES.PRIVACY}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 underline font-medium inline-flex items-center gap-1"
+              className="text-gray-500 hover:text-blue-600 underline"
             >
               Data & Privacy Policy
-              <ExternalLink className="w-3 h-3" />
             </a>
           </span>
         </label>

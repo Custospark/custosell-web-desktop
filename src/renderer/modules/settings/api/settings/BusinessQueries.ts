@@ -254,7 +254,6 @@ export function useUpdateBusiness() {
 export function useBusinessExport() {
   const { showToast } = useToast();
   return useMutation<Blob, AxiosError<ApiError>, { format: string }>({
-    networkMode: 'online',
     retry: false,
     mutationFn: async ({ format }) => {
       const { data } = await axiosInstance.get(BUSINESSES.EXPORT, {
@@ -288,7 +287,6 @@ export function useDeleteBusinessAccount() {
   const qc = useQueryClient();
   const { showToast } = useToast();
   return useMutation<{ message: string; logged_out: boolean }, AxiosError<ApiError>, { password: string }>({
-    networkMode: 'online',
     retry: false,
     mutationFn: async ({ password }) => {
       const { data } = await axiosInstance.delete(BUSINESSES.DELETE_ACCOUNT, { data: { password } });

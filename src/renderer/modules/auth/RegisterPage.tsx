@@ -170,14 +170,12 @@ export default function RegisterPage() {
           />
           <span className="text-xs text-gray-400">
             I agree to the{' '}
-            <a
-              href={ROUTES.PRIVACY}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to={ROUTES.PRIVACY}
               className="text-gray-500 hover:text-blue-600 underline"
             >
               Data & Privacy Policy
-            </a>
+            </Link>
           </span>
         </label>
         <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending} disabled={form.password_confirmation.length > 0 && !passwordsMatch}>

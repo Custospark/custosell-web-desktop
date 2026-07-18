@@ -5,6 +5,7 @@ import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { BUSINESSES } from '../../../../shared/api/endpoints/endpoints';
+import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 import type {
   Business,
   UpdateBusinessData,
@@ -246,6 +247,61 @@ export function useUpdateBusiness() {
       if (!current?._pendingSync) {
         qc.invalidateQueries({ queryKey: businessKeys.mine() });
       }
+    },
+  });
+}
+
+export function useBusinessExport() {
+  const { showToast } = useToast();
+  return useMutation<Blob, AxiosError<ApiError>, { format: string }>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async ({ format }) => {
+      const { data } = await axiosInstance.get(BUSINESSES.EXPORT, {
+        params: { format },
+        responseType: format === 'json' ? 'json' : 'blob',
+      });
+      if (format === 'json') {
+        return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      }
+      return data as Blob;
+    },
+    onSuccess: (blob, { format }) => {
+      const ext = format === 'csv' ? 'csv' : format === 'xlsx' ? 'xlsx' : 'json';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `business-export.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('success', `Data exported successfully as ${format.toUpperCase()}.`);
+    },
+    onError: (e) => {
+      showToast('error', sanitizeErrorMessage(e, 'Failed to export data'));
+    },
+  });
+}
+
+export function useDeleteBusinessAccount() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<{ message: string; logged_out: boolean }, AxiosError<ApiError>, { password: string }>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async ({ password }) => {
+      const { data } = await axiosInstance.delete(BUSINESSES.DELETE_ACCOUNT, { data: { password } });
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries();
+      showToast('success', data.message);
+      window.location.href = ROUTES.LOGIN;
+    },
+    onError: (e) => {
+      const message = (e.response?.data as { message?: string })?.message ?? 'Failed to delete business account';
+      showToast('error', message);
     },
   });
 }

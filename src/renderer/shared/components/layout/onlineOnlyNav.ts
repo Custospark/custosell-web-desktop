@@ -79,6 +79,11 @@ export const ONLINE_ONLY_NAV_ENTRIES: OnlineOnlyNavEntry[] = [
     message: 'Accounting is online-only. Reconnect to view books and statements.',
   },
   {
+    prefix: ROUTES.SETTINGS.DATA_EXPORT,
+    label: 'Data & Export',
+    message: 'Data export needs an internet connection. Reconnect to export your business data.',
+  },
+  {
     prefix: ROUTES.PLATFORM.INDEX,
     label: 'Platform',
     message: 'Platform admin needs a connection. Reconnect to continue.',

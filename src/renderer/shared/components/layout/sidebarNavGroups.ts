@@ -7,7 +7,7 @@ import {
   BookOpen, BookType, FileText, BarChart3, Percent,
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
-  Store, Truck, PackageCheck, Compass, ShoppingBag,
+  Store, Truck, PackageCheck, Compass, ShoppingBag, Download,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -48,7 +48,7 @@ export const baseSubRoutes = [
   ROUTES.FORECASTING.KPIS, ROUTES.FORECASTING.SCENARIOS,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE,
-  ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SALES_CHANNELS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES, ROUTES.SETTINGS.MODULES,
+  ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SALES_CHANNELS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES, ROUTES.SETTINGS.MODULES, ROUTES.SETTINGS.DATA_EXPORT,
 ];
 
 export const platformSubRoutes = [
@@ -232,6 +232,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
       { to: ROUTES.SETTINGS.MODULES, label: 'Module access', icon: LayoutGrid, ownerOnly: true },
+      { to: ROUTES.SETTINGS.DATA_EXPORT, label: 'Data & Export', icon: Download },
     ],
   },
 ];

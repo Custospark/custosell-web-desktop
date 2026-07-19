@@ -28,24 +28,14 @@ export function formatShiftDate(iso: string | null | undefined): string {
 
 export function formatShiftDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
-  const dateMatch = iso.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (!dateMatch) return '—';
-  const raw = dateMatch[1];
-  const [y, m, d] = raw.split('-').map(Number);
-  const dateObj = new Date(y, m - 1, d);
-  if (Number.isNaN(dateObj.getTime())) return '—';
-  const datePart = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  const d = parseApiDate(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const datePart = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 
-  const timeMatch = iso.match(/T(\d{2}):(\d{2})/);
-  if (!timeMatch) return datePart;
+  const hasTime = /T\d{2}:\d{2}/.test(iso);
+  if (!hasTime) return datePart;
 
-  let hours = parseInt(timeMatch[1], 10);
-  const minutes = timeMatch[2];
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  if (hours > 12) hours -= 12;
-  if (hours === 0) hours = 12;
-
-  return `${datePart} · ${hours}:${minutes} ${ampm}`;
+  return `${datePart} · ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
 }
 
 /** Inclusive range for leave periods, pay runs, etc. */

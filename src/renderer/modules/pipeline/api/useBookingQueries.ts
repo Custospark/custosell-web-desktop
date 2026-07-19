@@ -151,6 +151,7 @@ export interface BookingSettings {
   start_time: string;
   end_time: string;
   slot_duration: number;
+  break_duration: number;
   max_slots_per_day: number;
   meeting_title_prefix: string | null;
   meeting_link: string | null;
@@ -356,6 +357,7 @@ export interface BookingSettingsPayload {
   start_time: string;
   end_time: string;
   slot_duration: number;
+  break_duration: number;
   max_slots_per_day: number;
   meeting_title_prefix: string;
   meeting_link?: string;

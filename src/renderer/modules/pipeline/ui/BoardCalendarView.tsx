@@ -44,14 +44,23 @@ const DATE_KIND_STYLES: Record<string, { ring: string; label: string }> = {
 
 function formatTimeAmPm(time: string | null | undefined): string | null {
   if (!time) return null;
+  if (time.includes('T')) {
+    const d = new Date(time);
+    if (Number.isNaN(d.getTime())) return null;
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  }
   const m = time.match(/^(\d{1,2}):(\d{2})$/);
   if (!m) return time;
   let h = parseInt(m[1], 10);
   const min = m[2];
-  const ampm = h >= 12 ? 'PM' : 'AM';
+  const period = h >= 12 ? 'PM' : 'AM';
   if (h > 12) h -= 12;
   if (h === 0) h = 12;
-  return `${h}:${min} ${ampm}`;
+  return `${h}:${min} ${period}`;
 }
 
 function sortByTime(leads: PipelineCalendarLead[]): PipelineCalendarLead[] {

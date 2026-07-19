@@ -28,6 +28,15 @@ const DURATION_OPTIONS = [
   { value: 120, label: '2 hours' },
 ];
 
+const BREAK_OPTIONS = [
+  { value: 0, label: 'None' },
+  { value: 5, label: '5 min' },
+  { value: 10, label: '10 min' },
+  { value: 15, label: '15 min' },
+  { value: 20, label: '20 min' },
+  { value: 30, label: '30 min' },
+];
+
 interface BookingSettingsSectionProps {
   boardId: number;
   stages: PipelineStage[];
@@ -66,6 +75,7 @@ export default function BookingSettingsSection({ boardId, stages, canManage }: B
     startTime: '09:00',
     endTime: '17:00',
     slotDuration: 30,
+    breakDuration: 0,
     maxSlotsPerDay: 10,
     meetingTitlePrefix: '',
     meetingLink: '',
@@ -83,6 +93,7 @@ export default function BookingSettingsSection({ boardId, stages, canManage }: B
         startTime: settings.start_time ?? '09:00',
         endTime: settings.end_time ?? '17:00',
         slotDuration: settings.slot_duration ?? 30,
+        breakDuration: settings.break_duration ?? 0,
         maxSlotsPerDay: settings.max_slots_per_day ?? 10,
         meetingTitlePrefix: settings.meeting_title_prefix ?? '',
         meetingLink: settings.meeting_link ?? '',
@@ -111,6 +122,7 @@ export default function BookingSettingsSection({ boardId, stages, canManage }: B
       start_time: f.startTime,
       end_time: f.endTime,
       slot_duration: f.slotDuration,
+      break_duration: f.breakDuration,
       max_slots_per_day: f.maxSlotsPerDay,
       meeting_title_prefix: f.meetingTitlePrefix,
       meeting_link: f.meetingLink || undefined,
@@ -243,6 +255,23 @@ export default function BookingSettingsSection({ boardId, stages, canManage }: B
                   className={pipelineInputClass}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Break between slots</label>
+              <select
+                value={f.breakDuration}
+                onChange={(e) => upd({ breakDuration: Number(e.target.value) })}
+                disabled={!canManage}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+              >
+                {BREAK_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="mt-0.5 text-xs text-gray-400">
+                Gap between consecutive booking slots
+              </p>
             </div>
 
             <div>

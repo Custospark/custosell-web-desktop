@@ -21,14 +21,19 @@ interface CardLinksSectionProps {
   onNavigate?: () => void;
 }
 
+function boardLabel(board: { workspace?: string | null; project_id?: number | null }): string {
+  if (board.workspace === 'estimates') return 'Estimates';
+  if (board.project_id) return 'Project';
+  return 'Pipeline';
+}
+
 export default function CardLinksSection({ leadId, boardId, workspace = 'pipeline', canEdit = true, onNavigate }: CardLinksSectionProps) {
   const { data: links = [] } = usePipelineLeadLinks(leadId);
   const createLink = useCreatePipelineLeadLink();
   const deleteLink = useDeletePipelineLeadLink();
-  const boardsQuery = workspace === 'estimates'
-    ? { estimatesWorkspace: true as const }
-    : { salesOnly: true as const };
-  const { data: boards = [] } = usePipelineBoards(boardsQuery);
+  const { data: allBoards = [] } = usePipelineBoards({ salesOnly: false });
+
+  const boards = useMemo(() => allBoards.filter((b) => !b.is_archived), [allBoards]);
 
   const [showAdd, setShowAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,9 +130,9 @@ export default function CardLinksSection({ leadId, boardId, workspace = 'pipelin
                   className="flex-1 truncate font-medium text-amber-700 hover:text-amber-900 hover:underline"
                 >
                   {link.linked_board.name}
-                  {link.linked_board.workspace === 'estimates' && (
-                    <span className="ml-1.5 text-xs font-normal text-gray-500">· Project board</span>
-                  )}
+                  <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wider text-gray-400">
+                    · {boardLabel(link.linked_board)}
+                  </span>
                 </Link>
               ) : (
                 <span className="flex-1 text-gray-500 italic">Board unavailable</span>
@@ -170,6 +175,7 @@ export default function CardLinksSection({ leadId, boardId, workspace = 'pipelin
                   >
                     <span className="font-medium text-gray-800">{lead.title}</span>
                     {lead.stage && <span className="text-gray-500">· {lead.stage.name}</span>}
+                    {lead.board && <span className="ml-auto shrink-0 text-[10px] uppercase tracking-wider text-gray-400">{lead.board.name}</span>}
                   </button>
                 </li>
               ))}
@@ -198,12 +204,22 @@ export default function CardLinksSection({ leadId, boardId, workspace = 'pipelin
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
             >
               <option value="">Select a board</option>
-              {boards.filter((b) => b.id !== boardId).map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-              {boards.find((b) => b.id === boardId) && (
-                <option value={boardId}>{boards.find((b) => b.id === boardId)?.name} (current)</option>
-              )}
+              {(() => {
+                const grouped: Record<string, typeof boards> = {};
+                for (const b of boards) {
+                  if (b.id === boardId) continue;
+                  const label = boardLabel(b);
+                  if (!grouped[label]) grouped[label] = [];
+                  grouped[label].push(b);
+                }
+                return Object.entries(grouped).map(([label, items]) => (
+                  <optgroup key={label} label={label}>
+                    {items.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </optgroup>
+                ));
+              })()}
             </select>
             <div className="mt-2 flex gap-2">
               <Button type="button" size="sm" onClick={handleAddBoardLink} disabled={!selectedBoardLinkId || linkingBoard} loading={linkingBoard} variant="secondary">

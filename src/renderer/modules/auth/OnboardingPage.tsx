@@ -10,7 +10,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { CreditCard, Loader2, CheckCircle, AlertCircle, Home } from 'lucide-react';
+import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home } from 'lucide-react';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ export default function OnboardingPage() {
   const [initiated, setInitiated] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [subscribing, setSubscribing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const { data: plans } = useActivePlans();
   const subscribeMutation = useSubscribe();
@@ -61,6 +62,11 @@ export default function OnboardingPage() {
     }
   }, [redirectCountdown]);
 
+  const handleSelectPlan = (plan: { id: number }) => {
+    setSelectedPlanId(plan.id);
+    setShowModal(true);
+  };
+
   const handleStartPayment = async () => {
     if (!selectedPlanId || !onboardingFee || !user) return;
 
@@ -78,7 +84,7 @@ export default function OnboardingPage() {
 
       initiateMutation.mutate(
         { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone },
-        { onSuccess: (result) => { setPaymentId(result.payment_id); setInitiated(true); } }
+        { onSuccess: (result) => { setPaymentId(result.payment_id); setInitiated(true); setShowModal(false); } }
       );
     } catch {
     } finally {
@@ -87,6 +93,25 @@ export default function OnboardingPage() {
   };
 
   if (!user) return null;
+
+  if (isPaymentDone) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-4">
+          <CheckCircle className="w-14 h-14 text-green-500 mx-auto" />
+          <p className="text-xl font-bold text-gray-900">Payment Successful!</p>
+          <p className="text-sm text-gray-600">
+            {selectedPlan?.trial_days
+              ? `Your ${selectedPlan.trial_days}-day trial period has started.`
+              : 'Your plan is now active.'}
+          </p>
+          {redirectCountdown > 0 && (
+            <p className="text-xs text-gray-400">Redirecting to dashboard in {redirectCountdown}s...</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -108,100 +133,86 @@ export default function OnboardingPage() {
       </header>
 
       <main className="flex-1 px-5 py-8 sm:px-8 sm:py-10">
-        {isPaymentDone ? (
-          <div className="max-w-lg mx-auto">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center space-y-3">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-              <p className="font-semibold text-green-800">Payment Successful!</p>
-              <p className="text-sm text-green-600">
-                {selectedPlan?.trial_days
-                  ? `Your ${selectedPlan.trial_days}-day trial period has started.`
-                  : 'Your plan is now active.'}
-              </p>
-              {redirectCountdown > 0 && (
-                <p className="text-xs text-green-500">Redirecting to dashboard in {redirectCountdown}s...</p>
-              )}
-            </div>
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h2>
+            <p className="text-gray-500">Select a plan to continue with the one-time setup fee.</p>
           </div>
-        ) : (
-          <div className="max-w-6xl mx-auto space-y-8">
+
+          <PlanCards
+            plans={plans ?? []}
+            selectedPlanId={selectedPlanId}
+            onSelect={handleSelectPlan}
+            billingCycle={billingCycle}
+            onBillingCycleChange={setBillingCycle}
+            hideTrialBadge
+          />
+        </div>
+      </main>
+
+      {showModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in duration-200">
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
             <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h2>
-              <p className="text-gray-500">Select a plan and pay the one-time setup fee to get started.</p>
+              <p className="text-sm font-medium text-gray-500">{selectedPlan.name}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
+              </p>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mt-0.5">One-time setup fee</p>
             </div>
 
-            <PlanCards
-              plans={plans ?? []}
-              selectedPlanId={selectedPlanId}
-              onSelect={(plan) => setSelectedPlanId(plan.id)}
-              billingCycle={billingCycle}
-              onBillingCycleChange={setBillingCycle}
-              hideTrialBadge
-            />
+            {selectedPlan.trial_days ? (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-center">
+                <p className="text-sm font-semibold text-blue-700">
+                  {selectedPlan.trial_days}-day trial period starts after payment
+                </p>
+              </div>
+            ) : null}
 
-            {selectedPlanId && !initiated && (
-              <div className="max-w-md mx-auto space-y-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-500">One-time setup fee</span>
-                    <span className="text-lg font-bold text-amber-600">
-                      {Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
-                    </span>
-                  </div>
-                  {selectedPlan?.trial_days ? (
-                    <div className="bg-blue-100/50 rounded-lg px-3 py-2 text-center">
-                      <span className="text-xs font-semibold text-blue-700">
-                        {selectedPlan.trial_days}-day trial period starts after payment
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className="border-t border-gray-100 pt-3">
-                    <p className="text-sm text-gray-600">Mobile Money: <strong>{userPhone || 'No phone on file'}</strong></p>
-                    <p className="text-xs text-gray-400 mt-1">An STK push will be sent to this number.</p>
-                  </div>
-                </div>
+            <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
+              <p className="text-sm text-gray-600">
+                Mobile Money: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
+              </p>
+              <p className="text-xs text-gray-400">An STK push will be sent to this number.</p>
+            </div>
 
-                <Button
-                  type="button"
-                  onClick={handleStartPayment}
-                  className="w-full gap-2 py-3.5 text-base"
-                  loading={subscribing || initiateMutation.isPending}
-                  disabled={!onboardingFee || !userPhone}
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Pay Onboarding Fee
-                </Button>
+            <Button
+              type="button"
+              onClick={handleStartPayment}
+              className="w-full gap-2 py-3 text-sm"
+              loading={subscribing || initiateMutation.isPending}
+              disabled={!onboardingFee || !userPhone}
+            >
+              <CreditCard className="w-4 h-4" />
+              Pay Onboarding Fee
+            </Button>
 
-                {initiateMutation.isError && (
-                  <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
-                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span>{initiateMutation.error?.message || 'Payment initiation failed.'}</span>
-                  </div>
-                )}
+            {initiateMutation.isError && !initiated && (
+              <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{initiateMutation.error?.message || 'Payment initiation failed.'}</span>
               </div>
             )}
 
-            {initiated && !isPaymentDone && (
-              <div className="max-w-md mx-auto space-y-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center space-y-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-amber-500 mx-auto" />
-                  <div>
-                    <p className="font-semibold text-amber-800">Check your phone</p>
-                    <p className="text-sm text-amber-600 mt-1">
-                      An STK push has been sent to <strong>{userPhone}</strong>. Enter your PIN to complete payment.
-                    </p>
-                  </div>
-                </div>
-                {paymentQuery.isFetching && (
-                  <p className="text-center text-xs text-gray-400">Waiting for payment confirmation...</p>
-                )}
+            {initiated && (
+              <div className="text-center space-y-2">
+                <Loader2 className="w-6 h-6 animate-spin text-amber-500 mx-auto" />
+                <p className="text-sm font-medium text-amber-800">Check your phone</p>
+                <p className="text-xs text-amber-600">
+                  Enter your PIN on <strong>{userPhone}</strong> to complete payment.
+                </p>
                 {paymentQuery.data?.status === 'failed' && (
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
-                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                      <span>Payment was not completed.</span>
-                    </div>
-                    <Button type="button" onClick={() => { setPaymentId(null); setInitiated(false); }} variant="outline" className="w-full gap-2">
+                  <div className="space-y-2 pt-2">
+                    <p className="text-xs text-red-600">Payment was not completed.</p>
+                    <Button type="button" onClick={() => { setPaymentId(null); setInitiated(false); }} variant="outline" size="sm">
                       Try Again
                     </Button>
                   </div>
@@ -209,8 +220,8 @@ export default function OnboardingPage() {
               </div>
             )}
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }

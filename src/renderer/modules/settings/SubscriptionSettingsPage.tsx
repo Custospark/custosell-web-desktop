@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useProfile, useSubscriptionChanges } from '../../shared/api/account/AccountQueries';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { BILLING } from '../../shared/api/endpoints/endpoints';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import PlansTab from './PlansTab';
 import {
   CreditCard, CheckCircle, XCircle, Clock,
-  Building2, Loader2, ArrowUp, ArrowDown, History,
+  Building2, ArrowUp, ArrowDown, History,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 
@@ -50,11 +51,7 @@ export default function SubscriptionSettingsPage() {
   const { data: changes, isLoading: changesLoading } = useSubscriptionChanges(subId ? Number(subId) : null);
 
   if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <CustosellLoader fullPage={false} />;
   }
 
   if (!subscription) {
@@ -102,7 +99,7 @@ export default function SubscriptionSettingsPage() {
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Payment History</h3>
           {paymentsLoading ? (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              <CustosellLoader fullPage={false} />
             </div>
           ) : payments && payments.length > 0 ? (
             <div className="divide-y divide-gray-100">
@@ -137,7 +134,7 @@ export default function SubscriptionSettingsPage() {
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Plan Changes</h3>
           {changesLoading ? (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              <CustosellLoader fullPage={false} />
             </div>
           ) : changes && changes.length > 0 ? (
             <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">

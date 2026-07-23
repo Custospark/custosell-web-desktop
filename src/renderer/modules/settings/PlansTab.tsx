@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActivePlans } from '../../shared/components/plans/PlanCards';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { useUpgrade, useDowngrade } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import type { Plan, SubscriptionInfo } from '../../shared/types';
 import {
   CheckCircle, AlertCircle, Clock, CalendarDays,
-  Loader2, Check, Sparkles, ArrowUp, ArrowDown,
+  Check, Sparkles, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 
@@ -155,9 +156,7 @@ export default function PlansTab({ subscription }: PlansTabProps) {
       </div>
 
       {plansLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        </div>
+        <CustosellLoader fullPage={false} />
       ) : (
         <div className="grid gap-5 md:grid-cols-3">
           {sortedPlans.map((plan, index) => {
@@ -331,6 +330,57 @@ export default function PlansTab({ subscription }: PlansTabProps) {
           })}
         </div>
       )}
+
+      <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 overflow-x-auto">
+        <h2 className="text-xl font-bold mb-6 text-center text-gray-900">
+          Feature Comparison
+        </h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b-2 border-gray-200">
+              <th className="text-left py-3 px-2 font-semibold text-gray-700">Feature</th>
+              {sortedPlans.map((p) => (
+                <th key={p.id} className="text-center py-3 px-2 font-semibold text-blue-600">
+                  {p.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(FEATURE_CATALOG).map(([key, { label }]) => (
+              <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
+                <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
+                {sortedPlans.map((p) => {
+                  const has = p.features?.[key] === true;
+                  return (
+                    <td key={p.id} className={`text-center py-2.5 px-2 ${has ? 'text-blue-500 font-bold' : 'text-gray-300'}`}>
+                      {has ? '✓' : '—'}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr className="border-b border-gray-200">
+              <td colSpan={sortedPlans.length + 1} className="py-3 px-2">
+                <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Limits</span>
+              </td>
+            </tr>
+            {Object.entries(LIMIT_LABELS).map(([key, label]) => (
+              <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
+                <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
+                {sortedPlans.map((p) => {
+                  const val = p.limits?.[key];
+                  return (
+                    <td key={p.id} className="text-center py-2.5 px-2 font-semibold text-gray-900">
+                      {val === null || val === undefined ? '—' : Intl.NumberFormat('en-US').format(val)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

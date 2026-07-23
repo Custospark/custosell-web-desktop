@@ -2,6 +2,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  REGISTER_PAYMENT: '/register/payment',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   PRICING: '/pricing',
@@ -118,6 +119,8 @@ export const ROUTES = {
     BUSINESSES: '/platform/businesses',
     USERS: '/platform/users',
     ROLES: '/platform/roles',
+    PLANS: '/platform/plans',
+    SUBSCRIPTIONS: '/platform/subscriptions',
     SENT_MESSAGES: '/platform/sent-messages',
     GUIDE: {
       INDEX: '/platform/guide',

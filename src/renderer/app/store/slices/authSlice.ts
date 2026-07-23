@@ -2,6 +2,16 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { StoredAuthSession } from '../offline/auth/secureStorage';
 import { isLocalSessionToken } from '../offline/auth/secureStorage';
 
+export interface SubscriptionInfo {
+  id: number;
+  plan_id: number;
+  status: string;
+  billing_cycle?: string | null;
+  starts_at?: string | null;
+  trial_ends_at?: string | null;
+  next_billing_date?: string | null;
+  onboarding_fee_paid?: boolean;
+}
 export interface BusinessInfo {
   id: number;
   name: string;
@@ -40,6 +50,7 @@ export interface BusinessInfo {
   is_open_for_supply?: boolean;
   supply_headline?: string | null;
   storefront_enabled?: boolean;
+  subscription?: SubscriptionInfo | null;
 }
 export interface AuthUser {
   id: number;

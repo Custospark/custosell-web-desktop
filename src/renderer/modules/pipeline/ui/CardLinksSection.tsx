@@ -27,7 +27,7 @@ function boardLabel(board: { workspace?: string | null; project_id?: number | nu
   return 'Pipeline';
 }
 
-export default function CardLinksSection({ leadId, boardId, workspace = 'pipeline', canEdit = true, onNavigate }: CardLinksSectionProps) {
+export default function CardLinksSection({ leadId, boardId, canEdit = true, onNavigate }: CardLinksSectionProps) {
   const { data: links = [] } = usePipelineLeadLinks(leadId);
   const createLink = useCreatePipelineLeadLink();
   const deleteLink = useDeletePipelineLeadLink();

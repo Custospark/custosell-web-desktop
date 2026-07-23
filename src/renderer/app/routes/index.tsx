@@ -44,6 +44,8 @@ import PlatformGuideTutorialsPage from '../../modules/platform/PlatformGuideTuto
 import PlatformGuideFaqsPage from '../../modules/platform/PlatformGuideFaqsPage';
 import PlatformGuideFeedbackPage from '../../modules/platform/PlatformGuideFeedbackPage';
 import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessagesPage';
+import PlatformManagePlansPage from '../../modules/platform/PlatformManagePlansPage';
+import PlatformManageSubscriptionsPage from '../../modules/platform/PlatformManageSubscriptionsPage';
 import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
 import ChartOfAccountsPage from '../../modules/accounting/pages/ChartOfAccountsPage';
@@ -72,7 +74,7 @@ import DocumentsLayout from '../../modules/documents/pages/DocumentsLayout';
 import CabinetsPage from '../../modules/documents/pages/CabinetsPage';
 import DocumentsCabinetPage from '../../modules/documents/pages/DocumentsCabinetPage';
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
-// import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
+import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import PricingPage from '../../modules/landing/PricingPage';
 import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
@@ -123,6 +125,7 @@ const LandingPage = lazy(() => import('../../modules/landing/LandingPage'));
 
 const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
+const PaymentPage = lazy(() => import('../../modules/auth/PaymentPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
 
@@ -164,6 +167,7 @@ export function AppRoutes() {
       </Route>
 
       <Route element={<AuthMiddlewareRoute />}>
+        <Route path={ROUTES.REGISTER_PAYMENT} element={<SuspenseWrapper><PaymentPage /></SuspenseWrapper>} />
         <Route element={<AppChrome />}>
         <Route element={<Layout />}>
           <Route path="/app" element={<ModuleLandingRedirect />} />
@@ -300,12 +304,14 @@ export function AppRoutes() {
               <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
               <Route path="modules" element={<SuspenseWrapper><ModuleAccessSettingsPage /></SuspenseWrapper>} />
               <Route path="data-export" element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
-              {/* <Route path="subscription" element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} /> */}
+              <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<PlatformAdminRoute />}>
             <Route path={ROUTES.PLATFORM.INDEX} element={<Navigate to={ROUTES.PLATFORM.OVERVIEW} replace />} />
             <Route path={ROUTES.PLATFORM.OVERVIEW} element={<SuspenseWrapper><PlatformOverviewPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.PLANS} element={<SuspenseWrapper><PlatformManagePlansPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.SUBSCRIPTIONS} element={<SuspenseWrapper><PlatformManageSubscriptionsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.BUSINESSES} element={<SuspenseWrapper><PlatformBusinessesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.USERS} element={<SuspenseWrapper><PlatformUsersPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.ROLES} element={<SuspenseWrapper><PlatformRolesPage /></SuspenseWrapper>} />

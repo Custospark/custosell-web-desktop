@@ -11,6 +11,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { BILLING } from '../endpoints/endpoints';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -221,7 +222,15 @@ export function useRegisterBusiness() {
         showToast('success', 'Business registered successfully');
         void refreshAllServerCatalogSnapshots();
       }
-      navigate(getDefaultRoute(result.user));
+
+      const needsOnboarding = !result.isLocalSession
+        && result.user?.business?.subscription?.onboarding_fee_paid === false;
+
+      if (needsOnboarding) {
+        navigate(ROUTES.REGISTER_PAYMENT);
+      } else {
+        navigate(getDefaultRoute(result.user));
+      }
     },
     onError: (error) => {
       const message = getAuthErrorMessage(error, 'Registration failed');
@@ -328,6 +337,48 @@ export function useResetPassword() {
     },
     onError: (e) => {
       showToast('error', e.response?.data?.message || 'Failed to reset password.');
+    },
+  });
+}
+
+export function useInitiateOnboardingPayment() {
+  const { showToast } = useToast();
+  return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
+    amount: number;
+    currency: string;
+    phone?: string;
+  }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post(BILLING.INITIATE, {
+        gateway_name: 'pesapal',
+        amount: payload.amount,
+        currency: payload.currency,
+        payment_type: 'onboarding',
+        phone: payload.phone,
+      });
+      return data;
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to initiate payment. Please try again.';
+      showToast('error', message);
+    },
+  });
+}
+
+export function useBillingPayment(id: number | null) {
+  return useQuery({
+    queryKey: ['billing', 'payment', id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(BILLING.PAYMENT(id!));
+      return data;
+    },
+    enabled: !!id,
+    refetchInterval: (query) => {
+      const payment = query.state.data;
+      if (payment?.data?.status === 'completed' || payment?.data?.status === 'failed') {
+        return false;
+      }
+      return 3000;
     },
   });
 }

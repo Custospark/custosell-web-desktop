@@ -54,6 +54,11 @@ export const PAYMENTS = {
 };
 export const STOCK_MOVEMENTS = '/stock-movements';
 export const SUBSCRIPTIONS = { BASE: '/subscriptions', UPGRADE: '/subscriptions/upgrade', CANCEL: '/subscriptions/cancel' };
+export const BILLING = {
+  PAYMENTS: '/billing/payments',
+  PAYMENT: (id: number) => `/billing/payments/${id}`,
+  INITIATE: '/billing/payments/initiate',
+};
 export const EXPENSE_CATEGORIES = '/expense-categories';
 export const EXPENSES = '/expenses';
 export const SYNC = { PUSH: '/sync/push', PULL: '/sync/pull', FULL: '/sync/full' };

@@ -348,6 +348,12 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (accessible.has('account')) return MODULE_DEFAULT_ROUTES.account;
   if (accessible.has('guide')) return MODULE_DEFAULT_ROUTES.guide;
 
+  // If business has an unpaid onboarding fee, redirect to payment
+  const subscription = user?.business?.subscription;
+  if (subscription && subscription.onboarding_fee_paid === false) {
+    return ROUTES.REGISTER_PAYMENT;
+  }
+
   return ROUTES.ACCOUNT.NOTIFICATIONS;
 }
 

@@ -28,6 +28,8 @@ export interface BusinessRegisterRequest {
   password_confirmation: string;
   phone?: string;
   privacy_consent?: boolean;
+  plan_id: number;
+  billing_cycle?: 'monthly' | 'yearly';
 }
 
 export interface ForgotPasswordRequest {

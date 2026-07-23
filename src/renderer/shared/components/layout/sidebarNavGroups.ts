@@ -8,6 +8,7 @@ import {
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
   Store, Truck, PackageCheck, Compass, ShoppingBag, Download,
+  CreditCard,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -53,6 +54,8 @@ export const baseSubRoutes = [
 
 export const platformSubRoutes = [
   ROUTES.PLATFORM.OVERVIEW,
+  ROUTES.PLATFORM.PLANS,
+  ROUTES.PLATFORM.SUBSCRIPTIONS,
   ROUTES.PLATFORM.BUSINESSES,
   ROUTES.PLATFORM.USERS,
   ROUTES.PLATFORM.ROLES,
@@ -67,6 +70,8 @@ export const platformNavGroup: SidebarNavGroup = {
   label: 'Platform',
   subItems: [
     { to: ROUTES.PLATFORM.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
+    { to: ROUTES.PLATFORM.PLANS, label: 'Manage Plans', icon: CreditCard },
+    { to: ROUTES.PLATFORM.SUBSCRIPTIONS, label: 'Manage Subscriptions', icon: Receipt },
     { to: ROUTES.PLATFORM.BUSINESSES, label: 'Businesses', icon: Building2 },
     { to: ROUTES.PLATFORM.USERS, label: 'All Users', icon: Users },
     { to: ROUTES.PLATFORM.ROLES, label: 'Platform Roles', icon: Shield },
@@ -232,6 +237,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
       { to: ROUTES.SETTINGS.MODULES, label: 'Module access', icon: LayoutGrid, ownerOnly: true },
+      { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Billing & Subscription', icon: CreditCard, ownerOnly: true },
       { to: ROUTES.SETTINGS.DATA_EXPORT, label: 'Data & Export', icon: Download },
     ],
   },

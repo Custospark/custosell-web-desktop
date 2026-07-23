@@ -1,4 +1,8 @@
+import { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { Main } from './Main';
@@ -8,7 +12,19 @@ import { OnboardingGate } from '../../../modules/onboarding/OnboardingGate';
 
 export function Layout() {
   const { state, dispatch } = useAppContext();
+  const navigate = useNavigate();
+  const location = useLocation();
   const collapsed = state.sidebarCollapsed;
+  const user = useAppSelector((s) => s.auth.user);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const subscription = user?.business?.subscription;
+
+  useEffect(() => {
+    if (!isAuthenticated || location.pathname === ROUTES.ONBOARDING) return;
+    if (subscription?.onboarding_fee_paid) return;
+    if (subscription === undefined) return;
+    navigate(ROUTES.ONBOARDING, { replace: true });
+  }, [isAuthenticated, subscription]);
 
   return (
     <div className="relative flex flex-1 min-h-0 min-w-0 w-full overflow-hidden">

@@ -116,7 +116,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
               key={plan.id}
               onClick={() => onSelect?.(plan)}
               className={cn(
-                'relative rounded-2xl p-6 transition-all flex flex-col overflow-hidden border-2',
+                'relative rounded-2xl p-6 transition-all flex flex-col border-2',
                 accent.bg,
                 selectedPlanId === plan.id
                   ? `${accent.borderSelected} ${accent.ring} shadow-lg`
@@ -125,10 +125,12 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                     : accent.border,
               )}
             >
-              <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${accent.glow}`} />
+              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${accent.glow}`} />
+              </div>
 
               {plan.is_popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
                   <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
                     <Sparkles className="w-3 h-3" />
                     Most Popular
@@ -177,16 +179,16 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                   )}
 
                   {!hideOnboardingFee && onboardingFee ? (
-                    <div className="mt-3 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg px-3 py-2">
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">One time set up fee</p>
-                      <p className="text-sm font-bold text-amber-800">
+                    <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
+                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
+                      <p className="text-sm font-bold text-blue-800">
                         {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
                       </p>
                     </div>
                   ) : !hideOnboardingFee ? (
-                    <div className="mt-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg px-3 py-2">
-                      <p className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">One time set up fee</p>
-                      <p className="text-sm font-bold text-green-800">Free</p>
+                    <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
+                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
+                      <p className="text-sm font-bold text-blue-800">Free</p>
                     </div>
                   ) : null}
                 </div>

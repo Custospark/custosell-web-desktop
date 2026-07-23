@@ -126,6 +126,7 @@ const LandingPage = lazy(() => import('../../modules/landing/LandingPage'));
 const LoginPage = lazy(() => import('../../modules/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../../modules/auth/RegisterPage'));
 const PaymentPage = lazy(() => import('../../modules/auth/PaymentPage'));
+const OnboardingPage = lazy(() => import('../../modules/auth/OnboardingPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
 
@@ -167,6 +168,7 @@ export function AppRoutes() {
       </Route>
 
       <Route element={<AuthMiddlewareRoute />}>
+        <Route path={ROUTES.ONBOARDING} element={<SuspenseWrapper><OnboardingPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER_PAYMENT} element={<SuspenseWrapper><PaymentPage /></SuspenseWrapper>} />
         <Route element={<AppChrome />}>
         <Route element={<Layout />}>

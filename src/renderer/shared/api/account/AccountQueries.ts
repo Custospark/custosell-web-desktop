@@ -11,7 +11,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { BILLING } from '../endpoints/endpoints';
+import { BILLING, SUBSCRIPTIONS } from '../endpoints/endpoints';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -224,10 +224,11 @@ export function useRegisterBusiness() {
       }
 
       const needsOnboarding = !result.isLocalSession
-        && result.user?.business?.subscription?.onboarding_fee_paid === false;
+        && (!result.user?.business?.subscription
+          || result.user?.business?.subscription?.onboarding_fee_paid === false);
 
       if (needsOnboarding) {
-        navigate(ROUTES.REGISTER_PAYMENT);
+        navigate(ROUTES.ONBOARDING);
       } else {
         navigate(getDefaultRoute(result.user));
       }
@@ -337,6 +338,19 @@ export function useResetPassword() {
     },
     onError: (e) => {
       showToast('error', e.response?.data?.message || 'Failed to reset password.');
+    },
+  });
+}
+
+export function useSubscribe() {
+  const { showToast } = useToast();
+  return useMutation<void, AxiosError<ApiError>, { plan_id: number; billing_cycle?: string }>({
+    mutationFn: async (payload) => {
+      await axiosInstance.post(SUBSCRIPTIONS.SUBSCRIBE, payload);
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to create subscription.';
+      showToast('error', message);
     },
   });
 }

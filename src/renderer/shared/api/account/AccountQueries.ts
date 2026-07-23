@@ -396,3 +396,62 @@ export function useBillingPayment(id: number | null) {
     },
   });
 }
+
+export function useUpgrade() {
+  const { showToast } = useToast();
+  return useMutation<{ scheduled_change: unknown; proration: unknown }, AxiosError<ApiError>, {
+    subscriptionId: number;
+    to_plan_id: number;
+    effective?: 'immediate' | 'end_of_period';
+  }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post(SUBSCRIPTIONS.UPGRADE(payload.subscriptionId), {
+        to_plan_id: payload.to_plan_id,
+        effective: payload.effective ?? 'immediate',
+      });
+      return data;
+    },
+    onSuccess: () => {
+      showToast('success', 'Plan upgraded successfully');
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to upgrade plan.';
+      showToast('error', message);
+    },
+  });
+}
+
+export function useDowngrade() {
+  const { showToast } = useToast();
+  return useMutation<{ scheduled_change: unknown; proration: unknown }, AxiosError<ApiError>, {
+    subscriptionId: number;
+    to_plan_id: number;
+    effective?: 'immediate' | 'end_of_period';
+  }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post(SUBSCRIPTIONS.DOWNGRADE(payload.subscriptionId), {
+        to_plan_id: payload.to_plan_id,
+        effective: payload.effective ?? 'end_of_period',
+      });
+      return data;
+    },
+    onSuccess: () => {
+      showToast('success', 'Downgrade scheduled successfully');
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to downgrade plan.';
+      showToast('error', message);
+    },
+  });
+}
+
+export function useSubscriptionChanges(subscriptionId: number | null) {
+  return useQuery({
+    queryKey: ['subscription', 'changes', subscriptionId],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: Record<string, unknown>[] }>(SUBSCRIPTIONS.CHANGES(subscriptionId!));
+      return data.data;
+    },
+    enabled: !!subscriptionId,
+  });
+}

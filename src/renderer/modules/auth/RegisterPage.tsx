@@ -84,7 +84,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle={selectedPlan ? `Sign up for ${selectedPlan.name} — ${billingCycle === 'yearly' ? 'annual' : 'monthly'} billing.` : 'Fill in your details to get started.'}
+      subtitle="Fill in your business details to get started."
       heroImage={AUTH_HERO_IMAGES.register}
     >
       <form onSubmit={handleSubmit} className="space-y-4">

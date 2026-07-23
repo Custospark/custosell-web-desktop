@@ -242,6 +242,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
       </div>
     </div>
   );
+}
 
 export function PlansLoading() {
   return (

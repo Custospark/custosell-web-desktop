@@ -1,5 +1,7 @@
 import type { AxiosError } from 'axios';
+import axios from 'axios';
 import { axiosInstance } from '../../../api/axiosConfig';
+import { API_TIMEOUT } from '../../../api/apiConfig';
 import { store } from '../../store';
 import type { AuthUser } from '../../slices/authSlice';
 import type { AuthResponse, LoginRequest } from '../../../../shared/api/account/AccountTypes';
@@ -83,7 +85,11 @@ async function runSessionUpgrade(): Promise<SessionUpgradeResult> {
     const { data } = await axiosInstance.post<AuthResponse>(
       '/auth/login',
       { email, password } satisfies LoginRequest,
-      { skipAuthRedirect: true, skipSessionUpgrade: true } as never,
+      {
+        skipAuthRedirect: true,
+        skipSessionUpgrade: true,
+        timeout: Math.min(API_TIMEOUT, 5000),
+      } as never,
     );
     const user = extractAuthUser(data);
     await applyServerAuth(user, data.token, password);
@@ -101,7 +107,11 @@ let activeUpgrade: Promise<SessionUpgradeResult> | null = null;
 export async function ensureServerSession(): Promise<void> {
   if (isOfflineMode()) return;
   if (!needsSessionUpgrade()) return;
-  await upgradeLocalSessionIfOnline();
+  const timeout = new Promise<void>((_, reject) =>
+    setTimeout(() => reject(new Error('Session upgrade timed out')), 5000),
+  );
+  await Promise.race([upgradeLocalSessionIfOnline(), timeout]);
+  // swallow — if upgrade fails, let the request proceed without it
 }
 
 /** Silently exchange a device local session for a server session when online. */

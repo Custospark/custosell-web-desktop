@@ -37,11 +37,11 @@ export default function PricingPage() {
   const planSlugs = ['essential', 'professional', 'enterprise'];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-      <div className="text-center mb-12 sm:mb-16">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-12 sm:pb-16">
+      <div className="text-center mb-10 sm:mb-12">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 mb-4">
           Simple, Transparent{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
             Pricing
           </span>
         </h1>
@@ -62,7 +62,7 @@ export default function PricingPage() {
           </button>
           <span className={`text-sm font-semibold ${billingCycle === 'yearly' ? 'text-blue-600' : 'text-gray-400'}`}>
             Annual
-            <span className="ml-1 text-[10px] text-emerald-600 font-bold">Save ~17%</span>
+            <span className="ml-1 text-[10px] text-blue-600 font-bold">Save ~17%</span>
           </span>
         </div>
       </div>
@@ -86,10 +86,9 @@ export default function PricingPage() {
             plans={plans}
             billingCycle={billingCycle}
             hideTrialBadge
-            hideOnboardingFee
           />
 
-          <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 mb-16 overflow-x-auto">
+          <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 mt-12 mb-16 overflow-x-auto">
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">
               Feature Comparison
             </h2>
@@ -112,7 +111,7 @@ export default function PricingPage() {
                   <tr key={feature} className="border-b border-gray-100 odd:bg-gray-50/50">
                     <td className="py-2.5 px-2 font-medium text-gray-700">{feature}</td>
                     {tiers.map((has, i) => (
-                      <td key={i} className={`text-center py-2.5 px-2 ${has ? 'text-emerald-500 font-bold' : 'text-gray-300'}`}>
+                      <td key={i} className={`text-center py-2.5 px-2 ${has ? 'text-blue-500 font-bold' : 'text-gray-300'}`}>
                         {has ? '✓' : '—'}
                       </td>
                     ))}
@@ -168,7 +167,7 @@ export default function PricingPage() {
             <Button
               size="lg"
               onClick={() => navigate(ROUTES.REGISTER)}
-              className="gap-2 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 shadow-lg hover:shadow-xl"
+              className="gap-2 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 shadow-lg hover:shadow-xl"
             >
               Create Account
               <ArrowRight className="w-4 h-4" />

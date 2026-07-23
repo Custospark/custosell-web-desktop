@@ -48,7 +48,7 @@ export function useActivePlans() {
       const { data } = await axiosInstance.get<{ data: Plan[] }>(`${PLANS}/active`);
       return data.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
@@ -89,7 +89,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
               )}
             >
               Yearly
-              <span className="ml-1.5 text-[10px] text-emerald-600 font-bold uppercase">Save</span>
+              <span className="ml-1.5 text-[10px] text-blue-600 font-bold uppercase">Save</span>
             </button>
           </div>
         </div>
@@ -116,7 +116,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
             >
               {plan.is_popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
                     <Sparkles className="w-3 h-3" />
                     Most Popular
                   </span>
@@ -145,6 +145,24 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                     )}
                   </div>
 
+                  {billingCycle === 'yearly' && plan.price_monthly && (
+                    <div className="mt-1 space-y-0.5">
+                      <p className="text-xs text-gray-400">
+                        ~{new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Math.round(Number(plan.price_yearly) / 12))}/mo
+                      </p>
+                      {(() => {
+                        const monthlyTotal = Number(plan.price_monthly) * 12;
+                        const saved = monthlyTotal - Number(plan.price_yearly);
+                        const pct = Math.round((saved / monthlyTotal) * 100);
+                        return (
+                          <p className="text-xs text-blue-600 font-semibold">
+                            Save {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(saved)} ({pct}%)
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {hideOnboardingFee ? null : onboardingFee ? (
                     <span className="inline-block mt-2 text-xs bg-amber-50 text-amber-700 font-semibold px-3 py-1 rounded-full">
                       +{new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))} setup
@@ -165,7 +183,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                 <div className="flex-1 border-t border-gray-100 pt-4 space-y-3">
                   {features.map(([key]) => (
                     <div key={key} className="flex items-start gap-2.5">
-                      <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                      <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                       <div>
                         <span className="text-sm font-medium text-gray-700">{featureLabel(key)}</span>
                         {featureDescription(key) && (

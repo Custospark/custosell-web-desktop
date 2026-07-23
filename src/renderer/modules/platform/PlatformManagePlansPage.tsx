@@ -37,7 +37,7 @@ export default function PlatformManagePlansPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
               {plan.is_popular && (
-                <span className="text-xs font-semibold bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-2 py-0.5 rounded-full">Popular</span>
+                <span className="text-xs font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-white px-2 py-0.5 rounded-full">Popular</span>
               )}
             </div>
             <div className="text-3xl font-extrabold text-gray-900">

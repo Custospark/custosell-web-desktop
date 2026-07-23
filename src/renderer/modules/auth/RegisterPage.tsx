@@ -54,6 +54,7 @@ export default function RegisterPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPlan) return;
+    if (form.password_confirmation.length > 0 && !passwordsMatch) return;
 
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
 
@@ -204,10 +205,7 @@ export default function RegisterPage() {
         {!privacyConsent && (
           <p className="text-xs text-red-500 text-center -mt-1">You must agree to the Data & Privacy Policy to create an account.</p>
         )}
-        {!selectedPlan && plans && plans.length > 0 && (
-          <p className="text-xs text-amber-600 text-center -mt-1">Select a plan above to continue</p>
-        )}
-        <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending} disabled={!selectedPlan || form.password_confirmation.length > 0 && !passwordsMatch || !privacyConsent}>
+        <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending}>
           <UserPlus className="h-4 w-4" aria-hidden />
           Create Account
         </Button>

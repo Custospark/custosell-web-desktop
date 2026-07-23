@@ -32,7 +32,7 @@ export default function OnboardingPage() {
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
   const onboardingFee = selectedPlan?.onboarding_fee_ugx || 0;
   const userPhone = user?.business?.phone || user?.phone || '';
-  const isPaymentDone = paymentQuery.data?.status === 'completed';
+  const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
 
   useEffect(() => {
     if (!user) {
@@ -45,7 +45,7 @@ export default function OnboardingPage() {
   }, []);
 
   useEffect(() => {
-    if (paymentQuery.data?.status === 'completed') {
+    if (paymentQuery.data?.data?.status === 'completed') {
       setRedirectCountdown(3);
     }
   }, [paymentQuery.data?.status]);

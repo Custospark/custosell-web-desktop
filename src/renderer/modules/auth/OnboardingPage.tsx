@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans, PlanCards } from '../../shared/components/plans/PlanCards';
 import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/AccountQueries';
+import { axiosInstance } from '../../app/api/axiosConfig';
+import { SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -19,6 +21,7 @@ export default function OnboardingPage() {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
+  const [subscribing, setSubscribing] = useState(false);
 
   const { data: plans } = useActivePlans();
   const subscribeMutation = useSubscribe();
@@ -58,23 +61,28 @@ export default function OnboardingPage() {
     }
   }, [redirectCountdown]);
 
-  const handleStartPayment = () => {
-    if (!selectedPlanId || !onboardingFee) return;
+  const handleStartPayment = async () => {
+    if (!selectedPlanId || !onboardingFee || !user) return;
 
-    const doPayment = () => {
+    setSubscribing(true);
+
+    try {
+      if (!subscription) {
+        await subscribeMutation.mutateAsync({ plan_id: selectedPlanId, billing_cycle: billingCycle });
+      } else if (subscription.plan_id !== selectedPlanId) {
+        await axiosInstance.post(SUBSCRIPTIONS.UPGRADE(subscription.id), {
+          to_plan_id: selectedPlanId,
+          effective: 'immediate',
+        });
+      }
+
       initiateMutation.mutate(
         { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone },
         { onSuccess: (result) => { setPaymentId(result.payment_id); setInitiated(true); } }
       );
-    };
-
-    if (!subscription) {
-      subscribeMutation.mutate(
-        { plan_id: selectedPlanId, billing_cycle: billingCycle },
-        { onSuccess: doPayment, onError: () => {} }
-      );
-    } else {
-      doPayment();
+    } catch {
+    } finally {
+      setSubscribing(false);
     }
   };
 
@@ -106,48 +114,34 @@ export default function OnboardingPage() {
       heroImage={AUTH_HERO_IMAGES.register}
     >
       <div className="space-y-6">
-        {!subscription && (
-          <PlanCards
-            plans={plans ?? []}
-            selectedPlanId={selectedPlanId}
-            onSelect={(plan) => setSelectedPlanId(plan.id)}
-            billingCycle={billingCycle}
-            onBillingCycleChange={setBillingCycle}
-            hideTrialBadge
-          />
-        )}
+        <PlanCards
+          plans={plans ?? []}
+          selectedPlanId={selectedPlanId}
+          onSelect={(plan) => setSelectedPlanId(plan.id)}
+          billingCycle={billingCycle}
+          onBillingCycleChange={setBillingCycle}
+          hideTrialBadge
+        />
 
-        {subscription && selectedPlan && (
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 space-y-3">
+        {selectedPlanId && !initiated && (
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">Selected Plan</span>
-              <span className="text-lg font-bold text-gray-900">{selectedPlan.name}</span>
-            </div>
-            <div className="flex items-center justify-between border-t border-blue-100 pt-3">
-              <span className="text-sm text-gray-600">Onboarding Fee</span>
+              <span className="text-sm font-medium text-gray-500">One-time setup fee</span>
               <span className="text-lg font-bold text-amber-600">
                 {Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
               </span>
             </div>
-            {selectedPlan.trial_days ? (
+            {selectedPlan?.trial_days ? (
               <div className="bg-blue-100/50 rounded-lg px-3 py-2 text-center">
                 <span className="text-xs font-semibold text-blue-700">
                   {selectedPlan.trial_days}-day trial period starts after payment
                 </span>
               </div>
             ) : null}
-          </div>
-        )}
-
-        {selectedPlanId && !initiated && (
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-            <p className="text-sm font-medium text-gray-700">Mobile Money Number</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {userPhone || 'No phone on file'}
-            </p>
-            <p className="text-xs text-gray-400">
-              An STK push will be sent to this number after you tap Pay.
-            </p>
+            <div className="border-t border-gray-200 pt-3">
+              <p className="text-sm text-gray-600">Mobile Money: <strong>{userPhone || 'No phone on file'}</strong></p>
+              <p className="text-xs text-gray-400 mt-1">An STK push will be sent to this number.</p>
+            </div>
           </div>
         )}
 
@@ -156,11 +150,11 @@ export default function OnboardingPage() {
             type="button"
             onClick={handleStartPayment}
             className="w-full gap-2 py-3.5 text-base"
-            loading={subscribeMutation.isPending || initiateMutation.isPending}
+            loading={subscribing || initiateMutation.isPending}
             disabled={!onboardingFee || !userPhone}
           >
             <CreditCard className="h-4 w-4" />
-            {subscription ? 'Pay Onboarding Fee' : 'Subscribe & Pay'}
+            Pay Onboarding Fee
           </Button>
         )}
 

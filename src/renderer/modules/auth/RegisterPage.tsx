@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
-import { useActivePlans, PlanCards, PlansLoading, PlansError } from '../../shared/components/plans/PlanCards';
+import { useActivePlans } from '../../shared/components/plans/PlanCards';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
@@ -12,6 +12,14 @@ import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPl
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
+  const location = useLocation();
+  const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
+  const { data: plans } = useActivePlans();
+
+  const planId = state?.planId ?? plans?.[0]?.id;
+  const billingCycle = state?.billingCycle ?? 'monthly';
+  const selectedPlan = planId ? plans?.find((p) => p.id === planId) ?? null : null;
+
   const [form, setForm] = useState({
     owner_first_name: '',
     owner_last_name: '',
@@ -25,9 +33,6 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(true);
   const [countryCode, setCountryCode] = useState<CountryCode>(countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
-  const [selectedPlan, setSelectedPlan] = useState<{ id: number; billing_cycle?: 'monthly' | 'yearly' } | null>(null);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const { data: plans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = useActivePlans();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -53,7 +58,7 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPlan) return;
+    if (!planId) return;
     if (form.password_confirmation.length > 0 && !passwordsMatch) return;
 
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
@@ -69,8 +74,8 @@ export default function RegisterPage() {
       password: form.password,
       password_confirmation: form.password_confirmation,
       privacy_consent: privacyConsent,
-      plan_id: selectedPlan.id,
-      billing_cycle: selectedPlan.billing_cycle ?? billingCycle,
+      plan_id: planId,
+      billing_cycle: billingCycle,
     });
   };
 
@@ -79,25 +84,9 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Choose a plan and add your business details to get started."
+      subtitle={selectedPlan ? `Sign up for ${selectedPlan.name} — ${billingCycle === 'yearly' ? 'annual' : 'monthly'} billing.` : 'Fill in your details to get started.'}
       heroImage={AUTH_HERO_IMAGES.register}
     >
-      {(plansLoading) && <PlansLoading />}
-      {(plansError) && <PlansError onRetry={() => refetchPlans()} />}
-      {plans && plans.length > 0 && (
-        <div className="mb-6">
-          <PlanCards
-            plans={plans}
-            selectedPlanId={selectedPlan?.id}
-            onSelect={(plan) => setSelectedPlan({ id: plan.id, billing_cycle: billingCycle })}
-            billingCycle={billingCycle}
-            onBillingCycleChange={(cycle) => {
-              setBillingCycle(cycle);
-              if (selectedPlan) setSelectedPlan((prev) => prev ? { ...prev, billing_cycle: cycle } : null);
-            }}
-          />
-        </div>
-      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="relative">

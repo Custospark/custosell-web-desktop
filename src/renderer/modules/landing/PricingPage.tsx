@@ -86,7 +86,7 @@ export default function PricingPage() {
             plans={plans}
             billingCycle={billingCycle}
             hideTrialBadge
-            onSelect={() => navigate(ROUTES.REGISTER)}
+            onSelect={(plan) => navigate(ROUTES.REGISTER, { state: { planId: plan.id, billingCycle } })}
             ctaLabel="Get Started"
           />
 

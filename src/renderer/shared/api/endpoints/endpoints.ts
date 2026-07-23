@@ -58,6 +58,7 @@ export const BILLING = {
   PAYMENTS: '/billing/payments',
   PAYMENT: (id: number) => `/billing/payments/${id}`,
   INITIATE: '/billing/payments/initiate',
+  CONFIRM: (id: number) => `/billing/payments/${id}/confirm`,
 };
 export const EXPENSE_CATEGORIES = '/expense-categories';
 export const EXPENSES = '/expenses';

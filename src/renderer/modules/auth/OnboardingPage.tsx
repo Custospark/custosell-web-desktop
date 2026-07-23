@@ -4,7 +4,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans, PlanCards } from '../../shared/components/plans/PlanCards';
 import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/AccountQueries';
 import { axiosInstance } from '../../app/api/axiosConfig';
-import { SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
+import { BILLING, SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -22,6 +22,7 @@ export default function OnboardingPage() {
   const [initiated, setInitiated] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [subscribing, setSubscribing] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   const { data: plans } = useActivePlans();
@@ -102,6 +103,18 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleVerifyPayment = async () => {
+    if (!paymentId) return;
+    setVerifying(true);
+    try {
+      await axiosInstance.post(BILLING.CONFIRM(paymentId));
+      paymentQuery.refetch();
+    } catch {
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   if (!user) return null;
 
   if (isPaymentDone) {
@@ -161,11 +174,19 @@ export default function OnboardingPage() {
                 Complete your payment in the opened PesaPal window.
               </p>
             </div>
-            <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
-              <p className="text-xs text-gray-400">
-                This page will update automatically once your payment is confirmed.
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={handleVerifyPayment}
+              disabled={verifying}
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {verifying ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4" />
+              )}
+              {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
+            </button>
             <button
               type="button"
               onClick={() => { setPaymentId(null); setInitiated(false); }}

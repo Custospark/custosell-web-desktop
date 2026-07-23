@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans } from '../../shared/components/plans/PlanCards';
+import { useProfile } from '../../shared/api/account/AccountQueries';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { BILLING } from '../../shared/api/endpoints/endpoints';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
 import {
   CreditCard, CheckCircle, XCircle, AlertCircle,
   ArrowUp, ArrowDown, Clock, CalendarDays,
@@ -56,8 +59,10 @@ const LIMIT_ICONS: Record<string, typeof Users> = {
 };
 
 export default function SubscriptionSettingsPage() {
+  const navigate = useNavigate();
   const user = useAppSelector(state => state.auth.user);
   const subscription = user?.business?.subscription;
+  const { isFetching: profileLoading } = useProfile();
 
   const { data: plans, isLoading: plansLoading } = useActivePlans();
 
@@ -75,12 +80,27 @@ export default function SubscriptionSettingsPage() {
     enabled: !!subscription,
   });
 
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   if (!subscription) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400">
         <Building2 className="w-16 h-16 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-600 mb-1">No active subscription</h2>
-        <p className="text-sm">Your business does not have an active subscription plan.</p>
+        <h2 className="text-xl font-semibold text-gray-600 mb-1">No plan selected</h2>
+        <p className="text-sm mb-6">You haven't chosen a subscription plan yet.</p>
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.ONBOARDING)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Choose a plan
+        </button>
       </div>
     );
   }

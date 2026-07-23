@@ -96,24 +96,37 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
       )}
 
       <div className="grid gap-5 md:grid-cols-3">
-        {sorted.map((plan) => {
+        {sorted.map((plan, index) => {
           const price = billingCycle === 'yearly' && plan.price_yearly
             ? Number(plan.price_yearly) : Number(plan.price_monthly);
           const onboardingFee = plan.onboarding_fee_ugx;
           const features = Object.entries(plan.features).filter(([, v]) => v);
           const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
 
+          const accent = (
+            [
+              { bg: 'bg-gradient-to-br from-white to-green-50/50', border: 'border-green-200', borderHover: 'hover:border-green-300', borderSelected: 'border-green-500', ring: 'ring-green-200', name: 'text-green-800', glow: 'bg-green-500/10', save: 'text-green-600', check: 'text-green-500' },
+              { bg: 'bg-gradient-to-br from-white to-blue-50/50', border: 'border-blue-200', borderHover: 'hover:border-blue-300', borderSelected: 'border-blue-500', ring: 'ring-blue-200', name: 'text-blue-800', glow: 'bg-blue-500/10', save: 'text-blue-600', check: 'text-blue-500' },
+              { bg: 'bg-gradient-to-br from-white to-indigo-50/50', border: 'border-indigo-200', borderHover: 'hover:border-indigo-300', borderSelected: 'border-indigo-500', ring: 'ring-indigo-200', name: 'text-indigo-800', glow: 'bg-indigo-500/10', save: 'text-indigo-600', check: 'text-indigo-500' },
+            ][index] ?? { bg: 'bg-gradient-to-br from-white to-blue-50/50', border: 'border-blue-200', borderHover: 'hover:border-blue-300', borderSelected: 'border-blue-500', ring: 'ring-blue-200', name: 'text-blue-800', glow: 'bg-blue-500/10', save: 'text-blue-600', check: 'text-blue-500' }
+          );
+
           return (
             <div
               key={plan.id}
               onClick={() => onSelect?.(plan)}
               className={cn(
-                'relative bg-white border-2 rounded-2xl p-6 transition-all flex flex-col',
+                'relative rounded-2xl p-6 transition-all flex flex-col overflow-hidden border-2',
+                accent.bg,
                 selectedPlanId === plan.id
-                  ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg'
-                  : onSelect ? 'border-gray-200 hover:border-blue-300 hover:shadow-md cursor-pointer' : 'border-gray-200',
+                  ? `${accent.borderSelected} ${accent.ring} shadow-lg`
+                  : onSelect
+                    ? `${accent.border} ${accent.borderHover} hover:shadow-md cursor-pointer`
+                    : accent.border,
               )}
             >
+              <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${accent.glow}`} />
+
               {plan.is_popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
                   <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
@@ -125,7 +138,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
 
               <div className={cn('space-y-4 flex flex-col flex-1', plan.is_popular && 'pt-2')}>
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                  <h3 className={`text-xl font-bold ${accent.name}`}>{plan.name}</h3>
                   {plan.description && (
                     <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
                   )}
@@ -155,7 +168,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                         const saved = monthlyTotal - Number(plan.price_yearly);
                         const pct = Math.round((saved / monthlyTotal) * 100);
                         return (
-                          <p className="text-xs text-blue-600 font-semibold">
+                          <p className={`text-xs font-semibold ${accent.save}`}>
                             Save {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(saved)} ({pct}%)
                           </p>
                         );
@@ -163,13 +176,19 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                     </div>
                   )}
 
-                  {hideOnboardingFee ? null : onboardingFee ? (
-                    <span className="inline-block mt-2 text-xs bg-amber-50 text-amber-700 font-semibold px-3 py-1 rounded-full">
-                      +{new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))} setup
-                    </span>
-                  ) : (
-                    <p className="mt-2 text-xs text-green-600 font-semibold">No setup fee</p>
-                  )}
+                  {!hideOnboardingFee && onboardingFee ? (
+                    <div className="mt-3 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg px-3 py-2">
+                      <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">One time set up fee</p>
+                      <p className="text-sm font-bold text-amber-800">
+                        {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
+                      </p>
+                    </div>
+                  ) : !hideOnboardingFee ? (
+                    <div className="mt-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg px-3 py-2">
+                      <p className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">One time set up fee</p>
+                      <p className="text-sm font-bold text-green-800">Free</p>
+                    </div>
+                  ) : null}
                 </div>
 
                 {!hideTrialBadge && plan.trial_days ? (
@@ -183,7 +202,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                 <div className="flex-1 border-t border-gray-100 pt-4 space-y-3">
                   {features.map(([key]) => (
                     <div key={key} className="flex items-start gap-2.5">
-                      <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                      <Check className={`w-4 h-4 mt-0.5 shrink-0 ${accent.check}`} />
                       <div>
                         <span className="text-sm font-medium text-gray-700">{featureLabel(key)}</span>
                         {featureDescription(key) && (

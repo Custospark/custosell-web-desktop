@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans, PlanCards } from '../../shared/components/plans/PlanCards';
-import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/AccountQueries';
+import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment, useProfile } from '../../shared/api/account/AccountQueries';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { BILLING, SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
@@ -29,6 +29,7 @@ export default function OnboardingPage() {
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
+  const { refetch: refetchProfile } = useProfile();
 
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
   const onboardingFee = selectedPlan?.onboarding_fee_ugx || 0;
@@ -48,7 +49,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (paymentQuery.data?.data?.status === 'completed') {
-      setRedirectCountdown(10);
+      refetchProfile().then(() => setRedirectCountdown(10));
     }
   }, [paymentQuery.data?.status]);
 

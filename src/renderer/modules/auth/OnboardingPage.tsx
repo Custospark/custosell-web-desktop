@@ -10,7 +10,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home } from 'lucide-react';
+import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home, ArrowRight } from 'lucide-react';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -33,6 +33,7 @@ export default function OnboardingPage() {
   const onboardingFee = selectedPlan?.onboarding_fee_ugx || 0;
   const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
+  const isPaymentFailed = paymentQuery.data?.data?.status === 'failed';
 
   useEffect(() => {
     if (!user) {
@@ -46,7 +47,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (paymentQuery.data?.data?.status === 'completed') {
-      setRedirectCountdown(3);
+      setRedirectCountdown(10);
     }
   }, [paymentQuery.data?.status]);
 
@@ -84,7 +85,16 @@ export default function OnboardingPage() {
 
       initiateMutation.mutate(
         { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone },
-        { onSuccess: (result) => { setPaymentId(result.payment_id); setInitiated(true); setShowModal(false); } }
+        {
+          onSuccess: (result) => {
+            setPaymentId(result.payment_id);
+            setInitiated(true);
+            setShowModal(false);
+            if (result.redirect_url) {
+              window.open(result.redirect_url, '_blank');
+            }
+          },
+        }
       );
     } catch {
     } finally {
@@ -96,19 +106,109 @@ export default function OnboardingPage() {
 
   if (isPaymentDone) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-4">
-          <CheckCircle className="w-14 h-14 text-green-500 mx-auto" />
-          <p className="text-xl font-bold text-gray-900">Payment Successful!</p>
-          <p className="text-sm text-gray-600">
-            {selectedPlan?.trial_days
-              ? `Your ${selectedPlan.trial_days}-day trial period has started.`
-              : 'Your plan is now active.'}
-          </p>
-          {redirectCountdown > 0 && (
-            <p className="text-xs text-gray-400">Redirecting to dashboard in {redirectCountdown}s...</p>
-          )}
-        </div>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
+          <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
+            <LogoImage size="md" />
+            <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-5 py-8">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-5">
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-900">Payment Successful!</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {selectedPlan?.trial_days
+                  ? `Your ${selectedPlan.trial_days}-day trial period has started.`
+                  : 'Your plan is now active.'}
+              </p>
+            </div>
+            {redirectCountdown > 0 && (
+              <p className="text-xs text-gray-400">Redirecting to dashboard in {redirectCountdown}s...</p>
+            )}
+            <button
+              type="button"
+              onClick={() => navigate(getDefaultRoute(user))}
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Go to Dashboard
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (initiated && !isPaymentDone && !isPaymentFailed) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
+          <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
+            <LogoImage size="md" />
+            <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-5 py-8">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-5">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+            <div>
+              <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Complete your payment in the opened PesaPal window.
+              </p>
+            </div>
+            <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+              <p className="text-xs text-gray-400">
+                This page will update automatically once your payment is confirmed.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setPaymentId(null); setInitiated(false); }}
+              className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
+            >
+              Cancel and try again
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isPaymentFailed) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
+          <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
+            <LogoImage size="md" />
+            <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-5 py-8">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-5">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-900">Payment Failed</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Your payment could not be processed. Please try again or contact support.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setPaymentId(null); setInitiated(false); }}
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </main>
       </div>
     );
   }
@@ -209,7 +309,7 @@ export default function OnboardingPage() {
                 <p className="text-xs text-amber-600">
                   Enter your PIN on <strong>{userPhone}</strong> to complete payment.
                 </p>
-                {paymentQuery.data?.status === 'failed' && (
+                {paymentQuery.data?.data?.status === 'failed' && (
                   <div className="space-y-2 pt-2">
                     <p className="text-xs text-red-600">Payment was not completed.</p>
                     <Button type="button" onClick={() => { setPaymentId(null); setInitiated(false); }} variant="outline" size="sm">

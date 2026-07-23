@@ -60,9 +60,10 @@ interface PlanCardsProps {
   onBillingCycleChange?: (cycle: 'monthly' | 'yearly') => void;
   hideTrialBadge?: boolean;
   hideOnboardingFee?: boolean;
+  ctaLabel?: string;
 }
 
-export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'monthly', onBillingCycleChange, hideTrialBadge, hideOnboardingFee }: PlanCardsProps) {
+export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'monthly', onBillingCycleChange, hideTrialBadge, hideOnboardingFee, ctaLabel = 'Get Started' }: PlanCardsProps) {
   const sorted = [...plans].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
@@ -224,6 +225,16 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                     </div>
                   )}
                 </div>
+
+                {onSelect && (
+                  <button
+                    type="button"
+                    onClick={() => onSelect(plan)}
+                    className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:from-blue-700 hover:to-blue-900 active:scale-[0.98] transition-all shadow-md hover:shadow-lg"
+                  >
+                    {ctaLabel}
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -231,7 +242,6 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
       </div>
     </div>
   );
-}
 
 export function PlansLoading() {
   return (

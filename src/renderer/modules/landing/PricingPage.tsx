@@ -86,6 +86,8 @@ export default function PricingPage() {
             plans={plans}
             billingCycle={billingCycle}
             hideTrialBadge
+            onSelect={() => navigate(ROUTES.REGISTER)}
+            ctaLabel="Get Started"
           />
 
           <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 mt-12 mb-16 overflow-x-auto">

@@ -8,7 +8,7 @@ import {
   Kanban, Briefcase, TrendingUp, SlidersHorizontal, FileSpreadsheet, FolderKanban, LayoutTemplate, LayoutGrid, Files,
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
   Store, Truck, PackageCheck, Compass, ShoppingBag, Download,
-  CreditCard,
+  CreditCard, Sparkles,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -27,6 +27,7 @@ export interface SidebarNavGroup {
 
 export const baseSubRoutes = [
   ROUTES.DASHBOARD,
+  ROUTES.SETTINGS.SUBSCRIPTION,
   ROUTES.DISCOVER, ROUTES.DISCOVER_MY_ORDERS,
   ROUTES.SALES.NEW, ROUTES.SALES.ORDERS, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
@@ -94,6 +95,13 @@ export const baseNavGroups: SidebarNavGroup[] = [
     icon: LayoutDashboard,
     label: 'Dashboard',
     subItems: [{ to: ROUTES.DASHBOARD, label: 'Overview', icon: LayoutDashboard }],
+  },
+  {
+    icon: Sparkles,
+    label: 'Plans',
+    subItems: [
+      { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Plans & Billing', icon: CreditCard, ownerOnly: true },
+    ],
   },
   {
     icon: ShoppingCart,

@@ -51,14 +51,15 @@ export function resolveAccessibleNavGroups(user: AuthUser | null | undefined): S
         ],
       };
     }
-    if (group.label === 'Settings') {
+    const hasOwnerOnly = group.subItems.some((item) => item.ownerOnly);
+    if (hasOwnerOnly) {
       return {
         ...group,
         subItems: group.subItems.filter((item) => !item.ownerOnly || isBusinessOwner(user)),
       };
     }
     return group;
-  });
+  }).filter((group) => group.subItems.length > 0);
 
   if (user?.is_platform_admin) {
     return [...businessGroups, platformNavGroup, guideSettingsNavGroup];

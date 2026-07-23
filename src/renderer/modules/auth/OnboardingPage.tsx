@@ -103,13 +103,21 @@ export default function OnboardingPage() {
     }
   };
 
+  const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
+
   const handleVerifyPayment = async () => {
     if (!paymentId) return;
     setVerifying(true);
+    setVerifyMessage(null);
     try {
-      await axiosInstance.post(BILLING.CONFIRM(paymentId));
-      paymentQuery.refetch();
-    } catch {
+      const { data } = await axiosInstance.post(BILLING.CONFIRM(paymentId));
+      if (data.success) {
+        paymentQuery.refetch();
+      } else {
+        setVerifyMessage(data.message || 'Payment not yet confirmed.');
+      }
+    } catch (err: any) {
+      setVerifyMessage(err?.response?.data?.message || 'Could not verify payment. Please try again.');
     } finally {
       setVerifying(false);
     }
@@ -171,7 +179,7 @@ export default function OnboardingPage() {
             <div>
               <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
               <p className="text-sm text-gray-500 mt-1">
-                Complete your payment in the opened PesaPal window.
+                Complete your payment in the opened window.
               </p>
             </div>
             <button
@@ -187,9 +195,15 @@ export default function OnboardingPage() {
               )}
               {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
             </button>
+            {verifyMessage && (
+              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{verifyMessage}</span>
+              </div>
+            )}
             <button
               type="button"
-              onClick={() => { setPaymentId(null); setInitiated(false); }}
+              onClick={() => { setPaymentId(null); setInitiated(false); setVerifyMessage(null); }}
               className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
             >
               Cancel and try again

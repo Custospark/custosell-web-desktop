@@ -5,6 +5,8 @@ import { isLocalSessionToken } from '../offline/auth/secureStorage';
 export interface SubscriptionInfo {
   id: number;
   plan_id: number;
+  plan_name?: string | null;
+  plan_slug?: string | null;
   status: string;
   billing_cycle?: string | null;
   starts_at?: string | null;

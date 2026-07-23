@@ -67,6 +67,17 @@ function getLgBreakpointServerSnapshot() {
   return false;
 }
 
+const PLAN_ABBR: Record<string, { abbr: string; label: string }> = {
+  essential: { abbr: 'Ess', label: 'Essential' },
+  professional: { abbr: 'Pro', label: 'Professional' },
+  enterprise: { abbr: 'Ent', label: 'Enterprise' },
+};
+
+function planAbbreviation(slug?: string | null): { abbr: string; label: string } | null {
+  if (!slug) return null;
+  return PLAN_ABBR[slug] ?? { abbr: slug.slice(0, 3).replace(/^\w/, c => c.toUpperCase()), label: slug };
+}
+
 function NavbarShiftBadge({ clockIn, className }: { clockIn: string; className?: string }) {
   return (
     <div
@@ -354,7 +365,9 @@ export function Navbar() {
 
           <GuideHeaderNav />
 
-          {isBusinessOwner(user) && (
+          {isBusinessOwner(user) && (() => {
+            const planInfo = planAbbreviation(user?.business?.subscription?.plan_slug);
+            return (
             <div className="shrink-0">
               <button
                 ref={plansTriggerRef}
@@ -362,7 +375,7 @@ export function Navbar() {
                 onClick={() => { setPlansOpen((o) => !o); setDropdownOpen(false); }}
                 aria-expanded={plansOpen}
                 aria-haspopup="menu"
-                aria-label="Plans & Billing"
+                aria-label={planInfo ? `${planInfo.label} plan` : 'Plans & Billing'}
                 className={cn(
                   iconBtn,
                   'gap-1 px-1.5 h-11 w-11 sm:h-9 sm:w-auto',
@@ -370,7 +383,14 @@ export function Navbar() {
                 )}
               >
                 <Sparkles className="w-5 h-5 sm:w-4 sm:h-4 shrink-0 text-blue-600" aria-hidden />
-                <span className="hidden xl:inline text-sm font-medium text-gray-700">Plans</span>
+                {planInfo && (
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded hidden sm:inline leading-none">
+                    {planInfo.abbr}
+                  </span>
+                )}
+                <span className="hidden xl:inline text-sm font-medium text-gray-700">
+                  {planInfo ? planInfo.label : 'Plans'}
+                </span>
                 <ChevronDown
                   className={cn(
                     'w-3 h-3 text-gray-400 shrink-0 hidden sm:block transition-transform',
@@ -403,7 +423,8 @@ export function Navbar() {
                 document.body,
               )}
             </div>
-          )}
+          );
+          })()}
 
           <div className="shrink-0 pr-3">
             <button

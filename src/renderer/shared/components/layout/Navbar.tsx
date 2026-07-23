@@ -19,9 +19,10 @@ import { initialsFromName } from '../UserAvatar';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
 import {
-  Menu, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User, Building2,
+  Menu, LogOut, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, User, Building2, Sparkles, CreditCard,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { isBusinessOwner } from '../../utils/moduleAccess';
 
 const NETWORK_STATUS_THEME = {
   online: {
@@ -157,6 +158,11 @@ export function Navbar() {
   const { confirm } = useConfirm();
   const { requestEndShift, isEnding } = useEndShiftAction();
   const { systemStatus, latency, retryConnection } = useNetworkStatus();
+  const [plansOpen, setPlansOpen] = useState(false);
+  const plansTriggerRef = useRef<HTMLButtonElement>(null);
+  const plansMenuRef = useRef<HTMLDivElement>(null);
+  const [plansMenuPos, setPlansMenuPos] = useState({ top: 0, left: 0 });
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -176,6 +182,15 @@ export function Navbar() {
     let left = rect.right - width;
     left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
     setMenuPos({ top: rect.bottom + ACCOUNT_MENU_GAP_PX, left, width });
+  }, []);
+
+  const updatePlansMenuPosition = useCallback(() => {
+    const trigger = plansTriggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    let left = rect.right - 180;
+    left = Math.max(8, Math.min(left, window.innerWidth - 180 - 8));
+    setPlansMenuPos({ top: rect.bottom + ACCOUNT_MENU_GAP_PX, left });
   }, []);
 
   const handleToggleSidebar = () => {
@@ -202,6 +217,18 @@ export function Navbar() {
     };
   }, [dropdownOpen, updateMenuPosition]);
 
+  useLayoutEffect(() => {
+    if (!plansOpen) return;
+    updatePlansMenuPosition();
+    const onReposition = () => updatePlansMenuPosition();
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
+    return () => {
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    };
+  }, [plansOpen, updatePlansMenuPosition]);
+
   useEffect(() => {
     if (!dropdownOpen) return;
     const onPointerDown = (event: MouseEvent) => {
@@ -219,6 +246,24 @@ export function Navbar() {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [dropdownOpen]);
+
+  useEffect(() => {
+    if (!plansOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (plansTriggerRef.current?.contains(target) || plansMenuRef.current?.contains(target)) return;
+      setPlansOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPlansOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [plansOpen]);
 
   const handleLogout = async () => {
     const firstName = getUserFirstName(user?.name);
@@ -308,6 +353,57 @@ export function Navbar() {
           <ModuleLauncherButton />
 
           <GuideHeaderNav />
+
+          {isBusinessOwner(user) && (
+            <div className="shrink-0">
+              <button
+                ref={plansTriggerRef}
+                type="button"
+                onClick={() => { setPlansOpen((o) => !o); setDropdownOpen(false); }}
+                aria-expanded={plansOpen}
+                aria-haspopup="menu"
+                aria-label="Plans & Billing"
+                className={cn(
+                  iconBtn,
+                  'gap-1 px-1.5 h-11 w-11 sm:h-9 sm:w-auto',
+                  plansOpen && 'bg-gray-100',
+                )}
+              >
+                <Sparkles className="w-5 h-5 sm:w-4 sm:h-4 shrink-0 text-blue-600" aria-hidden />
+                <span className="hidden xl:inline text-sm font-medium text-gray-700">Plans</span>
+                <ChevronDown
+                  className={cn(
+                    'w-3 h-3 text-gray-400 shrink-0 hidden sm:block transition-transform',
+                    plansOpen && 'rotate-180',
+                  )}
+                  aria-hidden
+                />
+              </button>
+
+              {plansOpen && typeof document !== 'undefined' && createPortal(
+                <div
+                  ref={plansMenuRef}
+                  role="menu"
+                  className="fixed z-[300] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
+                  style={{ top: plansMenuPos.top, left: plansMenuPos.left, width: 180 }}
+                >
+                  <div className="px-4 py-2.5 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Plans & Billing</p>
+                  </div>
+                  <Link
+                    to={ROUTES.SETTINGS.SUBSCRIPTION}
+                    role="menuitem"
+                    onClick={() => setPlansOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4 shrink-0 text-blue-500" />
+                    Subscription
+                  </Link>
+                </div>,
+                document.body,
+              )}
+            </div>
+          )}
 
           <div className="shrink-0 pr-3">
             <button

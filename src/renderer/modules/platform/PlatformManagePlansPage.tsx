@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { PLANS } from '../../shared/api/endpoints/endpoints';
-import { CreditCard, Users, Package, Building2, Check, X, Loader2 } from 'lucide-react';
+import { Users, Package, Building2, Check, Loader2 } from 'lucide-react';
 import type { Plan } from '../../shared/types';
 
 const FEATURE_LABELS: Record<string, string> = {

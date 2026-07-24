@@ -4,10 +4,11 @@ import { useActivePlans } from '../../shared/components/plans/PlanCards';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { useUpgrade, useDowngrade } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import type { Plan, SubscriptionInfo } from '../../shared/types';
+import type { Plan } from '../../shared/types';
+import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import {
   CheckCircle, AlertCircle, Clock, CalendarDays,
-  Check, Sparkles, ArrowUp, ArrowDown,
+  Check, Sparkles,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 

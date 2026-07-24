@@ -1,5 +1,4 @@
 import type { AxiosError } from 'axios';
-import axios from 'axios';
 import { axiosInstance } from '../../../api/axiosConfig';
 import { API_TIMEOUT } from '../../../api/apiConfig';
 import { store } from '../../store';

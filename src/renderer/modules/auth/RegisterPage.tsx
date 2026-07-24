@@ -18,7 +18,6 @@ export default function RegisterPage() {
 
   const planId = state?.planId ?? plans?.[0]?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';
-  const selectedPlan = planId ? plans?.find((p) => p.id === planId) ?? null : null;
 
   const [form, setForm] = useState({
     owner_first_name: '',

@@ -39,8 +39,8 @@ export default function PlatformManageSubscriptionsPage() {
               <tr><td colSpan={6} className="text-center py-8 text-gray-400">No subscriptions found</td></tr>
             ) : subscriptions.map((sub: Record<string, unknown>) => (
               <tr key={String(sub.id)} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">{String(sub.business?.name ?? sub.business_id ?? '—')}</td>
-                <td className="px-4 py-3 text-gray-600">{String(sub.plan?.name ?? sub.plan_id ?? '—')}</td>
+                <td className="px-4 py-3 font-medium text-gray-900">{String((sub.business as Record<string, unknown>)?.name ?? sub.business_id ?? '—')}</td>
+                <td className="px-4 py-3 text-gray-600">{String((sub.plan as Record<string, unknown>)?.name ?? sub.plan_id ?? '—')}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
                     sub.status === 'active' || sub.status === 'trial' ? 'bg-green-100 text-green-700' :

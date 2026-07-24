@@ -32,7 +32,7 @@ const FAQS = [
 
 export default function PricingPage() {
   const navigate = useNavigate();
-  const { data: plans, isLoading, isError, error, refetch } = useActivePlans();
+  const { data: plans, isLoading, isError, refetch } = useActivePlans();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const planSlugs = ['essential', 'professional', 'enterprise'];
 

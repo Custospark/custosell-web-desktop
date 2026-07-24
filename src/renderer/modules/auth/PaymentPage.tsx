@@ -8,7 +8,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { CreditCard, Smartphone, CheckCircle, ArrowRight, Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
+import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
 
 export default function PaymentPage() {
   const navigate = useNavigate();

@@ -1,4 +1,5 @@
 import type { AuthUser } from '../../slices/authSlice';
+import type { Plan } from '../../../../shared/types';
 import { localAuthStore } from './localAuthStore';
 import { hashPassword } from './passwordVerifier';
 import { saveDeviceLoginPassword } from './deviceLoginSecrets';
@@ -8,6 +9,7 @@ export interface PersistLoginCredentialsInput {
   email: string;
   password: string;
   user: AuthUser;
+  plans: Plan[];
   token: string;
   isLocalSession: boolean;
   pendingAuthSync: boolean;
@@ -21,6 +23,7 @@ export async function persistLoginCredentials(input: PersistLoginCredentialsInpu
   const session: StoredAuthSession = {
     token: input.token,
     user: input.user,
+    plans: input.plans,
     isLocalSession: input.isLocalSession,
     pendingAuthSync: input.pendingAuthSync,
   };

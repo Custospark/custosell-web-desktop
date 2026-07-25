@@ -29,6 +29,7 @@ export async function applyServerAuth(
     email: user.email,
     password,
     user,
+    plans,
     token,
     isLocalSession: false,
     pendingAuthSync: false,

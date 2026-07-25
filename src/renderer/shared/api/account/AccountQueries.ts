@@ -73,6 +73,7 @@ function backupOnlineAuthToOffline(data: AuthResponse, password: string): void {
     email: user.email,
     password,
     user,
+    plans: data.active_plans?.data ?? [],
     token: data.token,
     isLocalSession: false,
     pendingAuthSync: false,

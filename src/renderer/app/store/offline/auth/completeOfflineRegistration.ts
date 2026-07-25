@@ -40,6 +40,7 @@ export async function completeOfflineRegistration(
     email: payload.email,
     password: payload.password,
     user,
+    plans: [],
     token,
     isLocalSession: true,
     pendingAuthSync: true,

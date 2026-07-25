@@ -1,4 +1,5 @@
 import type { AuthUser } from '../../slices/authSlice';
+import type { Plan } from '../../../../shared/types';
 import { getOfflineDb } from '../core/offlineDb';
 import { localAuthStore } from './localAuthStore';
 
@@ -10,6 +11,7 @@ const LEGACY_USER_KEY = 'auth_user';
 export interface StoredAuthSession {
   token: string;
   user: AuthUser;
+  plans?: Plan[];
   isLocalSession: boolean;
   pendingAuthSync: boolean;
 }

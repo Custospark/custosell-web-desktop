@@ -187,6 +187,7 @@ const authSlice = createSlice({
     hydrateAuth(state, action: PayloadAction<StoredAuthSession>) {
       const user = normalizeAuthUser({ ...action.payload.user });
       state.user = user;
+      state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
       state.businessId = user.business_id;
       state.isAuthenticated = true;

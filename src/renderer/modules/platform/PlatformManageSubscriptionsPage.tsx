@@ -170,12 +170,14 @@ export default function PlatformManageSubscriptionsPage() {
               const fee = s.onboarding_fee_ugx;
               return (
                 <div className="flex items-center gap-1.5">
+                  {fee != null && fee > 0 && (
+                    <span className="text-sm font-medium text-gray-900">{formatCurrency(fee)} UGX</span>
+                  )}
                   {s.onboarding_fee_paid
                     ? <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium"><Check className="w-3 h-3" /> Paid</span>
-                    : <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium"><X className="w-3 h-3" /> Unpaid</span>}
-                  {fee != null && fee > 0 && (
-                    <span className="text-xs text-gray-400">{formatCurrency(fee)} UGX</span>
-                  )}
+                    : fee != null && fee > 0
+                      ? <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium"><X className="w-3 h-3" /> Unpaid</span>
+                      : <span className="text-xs text-gray-400">—</span>}
                 </div>
               );
             }},

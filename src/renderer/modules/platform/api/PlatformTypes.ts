@@ -216,7 +216,12 @@ export interface PlatformSubscription {
   business_id: number;
   plan_id: number;
   business?: { id: number; name: string; slug?: string | null };
-  plan?: { id: number; name: string; slug?: string | null };
+  plan?: {
+    id: number; name: string; slug?: string | null;
+    price_monthly?: number | null; price_yearly?: number | null;
+    onboarding_fee_ugx?: number | null; onboarding_fee_usd?: number | null;
+    trial_days?: number | null;
+  };
   status: 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'expired';
   billing_cycle?: string | null;
   starts_at?: string | null;

@@ -36,6 +36,11 @@ function formatDate(iso?: string | null): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function formatCurrency(amount: number | null | undefined): string {
+  if (amount == null) return '—';
+  return Number(amount).toLocaleString('en-UG');
+}
+
 export default function PlatformManageSubscriptionsPage() {
   const { data: subscriptions = [], isLoading, error } = useQuery({
     queryKey: platformKeys.subscriptions(),
@@ -72,6 +77,11 @@ export default function PlatformManageSubscriptionsPage() {
   }, [subscriptions, search, statusFilter]);
 
   const paginated = usePagination(filtered, 10);
+
+  const tableData = useMemo(() =>
+    paginated.data.map((s, i) => ({ ...s, __row: (paginated.page - 1) * paginated.pageSize + i + 1 })),
+    [paginated.data, paginated.page, paginated.pageSize],
+  );
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -124,17 +134,29 @@ export default function PlatformManageSubscriptionsPage() {
           </div>
         </div>
 
-        <Table<PlatformSubscription>
+        <Table<PlatformSubscription & { __row: number }>
           rowKey={(s) => s.id}
           columns={[
-            { key: 'id', header: 'ID', render: (s) => (
-              <span className="font-mono text-sm text-gray-500">#{s.id}</span>
+            { key: '__row', header: '#', render: (s) => (
+              <span className="text-sm text-gray-400 font-mono w-6 text-right">{s.__row}</span>
             )},
             { key: 'business_id', header: 'Business', render: (s) => (
               <span className="font-medium text-gray-900">{s.business?.name ?? `Business #${s.business_id}`}</span>
             )},
             { key: 'plan_id', header: 'Plan', render: (s) => (
               <span className="text-gray-600">{s.plan?.name ?? `Plan #${s.plan_id}`}</span>
+            )},
+            { key: 'price_monthly', header: 'Monthly', render: (s) => (
+              <div className="text-right">
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.plan?.price_monthly)}</span>
+                <span className="text-xs text-gray-400 ml-1">UGX</span>
+              </div>
+            )},
+            { key: 'price_yearly', header: 'Yearly', render: (s) => (
+              <div className="text-right">
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.plan?.price_yearly)}</span>
+                <span className="text-xs text-gray-400 ml-1">UGX</span>
+              </div>
             )},
             { key: 'status', header: 'Status', render: (s) => (
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[s.status] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -144,16 +166,24 @@ export default function PlatformManageSubscriptionsPage() {
             { key: 'billing_cycle', header: 'Cycle', render: (s) => (
               <span className="text-sm text-gray-600 capitalize">{s.billing_cycle ?? '—'}</span>
             )},
-            { key: 'onboarding_fee_paid', header: 'Onboarding', render: (s) => (
-              s.onboarding_fee_paid
-                ? <span className="inline-flex items-center gap-1 text-sm text-green-600 font-medium"><Check className="w-3.5 h-3.5" /> Paid</span>
-                : <span className="inline-flex items-center gap-1 text-sm text-amber-600 font-medium"><X className="w-3.5 h-3.5" /> Unpaid</span>
-            )},
+            { key: 'onboarding', header: 'Onboarding', render: (s) => {
+              const fee = s.plan?.onboarding_fee_ugx;
+              return (
+                <div className="flex items-center gap-1.5">
+                  {s.onboarding_fee_paid
+                    ? <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium"><Check className="w-3 h-3" /> Paid</span>
+                    : <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium"><X className="w-3 h-3" /> Unpaid</span>}
+                  {fee != null && fee > 0 && (
+                    <span className="text-xs text-gray-400">{formatCurrency(fee)} UGX</span>
+                  )}
+                </div>
+              );
+            }},
             { key: 'next_billing_date', header: 'Next Billing', render: (s) => (
               <span className="text-sm text-gray-600">{formatDate(s.next_billing_date)}</span>
             )},
           ]}
-          data={paginated.data}
+          data={tableData}
         />
 
         <Pagination

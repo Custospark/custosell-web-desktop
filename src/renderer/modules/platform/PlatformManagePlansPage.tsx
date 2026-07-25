@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { usePlans, useDeletePlan } from './api/PlanQueries';
-import { PlanFormDrawer } from './components/PlanFormDrawer';
+import { PlanFormModal } from './components/PlanFormModal';
 import type { Plan } from '../../shared/types';
 import { Button } from '../../shared/components/buttons/Button';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
@@ -59,7 +59,7 @@ export default function PlatformManagePlansPage() {
 
   return (
     <>
-      <PlanFormDrawer key={editingPlan?.id ?? 'create'} open={drawerOpen} onClose={() => setDrawerOpen(false)} plan={editingPlan} />
+      <PlanFormModal key={editingPlan?.id ?? 'create'} open={drawerOpen} onClose={() => setDrawerOpen(false)} plan={editingPlan} />
 
       <div className="flex items-center justify-between mb-6">
         <div>

@@ -1,10 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import {
   CreditCard, Info, Coins, DollarSign, Clock, CheckSquare, Sliders, ToggleLeft,
 } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { inputClass, selectClass, labelClass } from '../../../shared/utils/inputStyles';
+import { useCreatePlan, useUpdatePlan, type PlanFormPayload } from '../api/PlanQueries';
+import type { Plan } from '../../../shared/types';
 
 const FEATURES = {
   sales: 'Point of Sale', inventory: 'Inventory', customers: 'Customers',
@@ -24,9 +26,9 @@ function toSlug(name: string): string {
 }
 
 interface SectionProps {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function FormSection({ icon: Icon, title, children }: SectionProps) {

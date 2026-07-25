@@ -1,6 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
-import { axiosInstance } from '../../../app/api/axiosConfig';
-import { PLANS } from '../../api/endpoints/endpoints';
 import { Check, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Plan } from '../../types';
@@ -39,17 +36,6 @@ function featureDescription(key: string): string | null {
 
 function limitLabel(key: string): string {
   return LIMIT_LABELS[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-export function useActivePlans() {
-  return useQuery({
-    queryKey: ['plans', 'active'],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: Plan[] }>(`${PLANS}/active`);
-      return data.data;
-    },
-    staleTime: 0,
-  });
 }
 
 interface PlanCardsProps {

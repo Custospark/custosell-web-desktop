@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { useActivePlans } from '../plans/PlanCards';
+import { useActivePlans } from '../plans/useActivePlans';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
 import {
@@ -133,18 +133,23 @@ export default function SubscriptionDropdown() {
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'flex items-center gap-2 px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
           open ? 'bg-gray-100 ring-gray-300' : 'bg-white ring-gray-200 hover:bg-gray-50',
         )}
       >
         <div className={cn('w-7 h-7 rounded-full flex items-center justify-center ring-1 shrink-0', meta.colors.ring, meta.colors.bg)}>
           <Icon className={cn('w-3.5 h-3.5', meta.colors.text)} />
         </div>
+        {currentSlug && (
+          <span className="lg:hidden text-xs font-semibold text-gray-900">
+            {currentSlug.slice(0, 1).toUpperCase()}{currentSlug.slice(1, 3)}
+          </span>
+        )}
         <div className="hidden lg:block min-w-0 max-w-[140px]">
           <span className="text-xs font-semibold truncate block text-gray-900">{currentPlan.name}</span>
           <span className="block text-xs truncate text-gray-500">{statusLabel}</span>
         </div>
-        <ChevronDown className={cn('hidden lg:block w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
+        <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 
       {open && (

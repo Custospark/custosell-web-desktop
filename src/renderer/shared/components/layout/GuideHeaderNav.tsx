@@ -31,7 +31,7 @@ export function GuideHeaderNav() {
       aria-label="Tutorials, FAQs, feedback, and notifications"
     >
       {/* Tight guide cluster — excludes notifications so the spotlight is exact */}
-      <div className="flex items-center gap-0.5 sm:gap-1" data-tour="navbar-guide">
+      <div className="hidden xl:flex items-center gap-0.5 sm:gap-1" data-tour="navbar-guide">
         <button
           type="button"
           title={isCompletelyOffline ? 'Replay product tour (works offline)' : 'Replay product tour'}

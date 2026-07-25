@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
-import { useActivePlans } from '../../shared/components/plans/PlanCards';
+import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';

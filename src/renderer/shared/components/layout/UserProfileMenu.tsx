@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
-  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell,
+  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles,
 } from 'lucide-react';
 
 interface UserProfileMenuProps {
@@ -15,10 +15,12 @@ interface UserProfileMenuProps {
   isLoggingOut: boolean;
   onEndShift: () => void;
   isEnding: boolean;
+  onReplayTour: () => void;
+  isReplaying: boolean;
 }
 
 export function UserProfileMenu({
-  menuRef, menuPos, open, onClose, onLogout, isLoggingOut, onEndShift, isEnding,
+  menuRef, menuPos, open, onClose, onLogout, isLoggingOut, onEndShift, isEnding, onReplayTour, isReplaying,
 }: UserProfileMenuProps) {
   const user = useAppSelector((s) => s.auth.user);
 
@@ -84,6 +86,16 @@ export function UserProfileMenu({
         <MessageSquareText className="w-4 h-4 shrink-0" />
         Feedback
       </Link>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => { onReplayTour(); onClose(); }}
+        disabled={isReplaying}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+      >
+        <Sparkles className="w-4 h-4 shrink-0" />
+        {isReplaying ? 'Starting tour\u2026' : 'Replay Tour'}
+      </button>
       <Link
         to={ROUTES.ACCOUNT.NOTIFICATIONS}
         role="menuitem"

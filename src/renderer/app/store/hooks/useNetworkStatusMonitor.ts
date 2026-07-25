@@ -7,8 +7,8 @@ import {
   selectSystemStatus,
 } from '../slices/networkSlice';
 
-const ONLINE_CHECK_INTERVAL_MS = 30_000;
-const OFFLINE_CHECK_INTERVAL_MS = 3_000;
+const ONLINE_CHECK_INTERVAL_MS = 120_000;
+const OFFLINE_CHECK_INTERVAL_MS = 15_000;
 
 export function useNetworkStatusMonitor(): void {
   const dispatch = useAppDispatch();

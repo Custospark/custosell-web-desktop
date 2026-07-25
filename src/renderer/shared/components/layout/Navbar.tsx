@@ -8,6 +8,7 @@ import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { SyncHeaderChip } from '../Errors/SyncProgressBanner';
 import { GuideHeaderNav } from './GuideHeaderNav';
 import { ModuleLauncherButton } from './ModuleLauncherButton';
+import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQueries';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
@@ -156,6 +157,7 @@ export function Navbar() {
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
   const { requestEndShift, isEnding } = useEndShiftAction();
+  const replayTour = useUpdateOnboarding();
   const { systemStatus, latency, retryConnection } = useNetworkStatus();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -363,6 +365,8 @@ export function Navbar() {
               isLoggingOut={isLoggingOut}
               onEndShift={handleEndShift}
               isEnding={isEnding}
+              onReplayTour={() => replayTour.mutate({ action: 'replay_tour' })}
+              isReplaying={replayTour.isPending}
             />
           </div>
         </div>

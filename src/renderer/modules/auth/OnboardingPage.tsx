@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { useActivePlans, PlanCards } from '../../shared/components/plans/PlanCards';
+import { useActivePlans } from '../../shared/components/plans/useActivePlans';
+import { PlanCards } from '../../shared/components/plans/PlanCards';
 import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment, useProfile } from '../../shared/api/account/AccountQueries';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { BILLING, SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
@@ -11,6 +12,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home, ArrowRight } from 'lucide-react';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -25,7 +27,7 @@ export default function OnboardingPage() {
   const [verifying, setVerifying] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  const { data: plans } = useActivePlans();
+  const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
@@ -98,8 +100,7 @@ export default function OnboardingPage() {
           },
         }
       );
-    } catch {
-    } finally {
+    } catch { /* keep previous state */ } finally {
       setSubscribing(false);
     }
   };
@@ -117,8 +118,9 @@ export default function OnboardingPage() {
       } else {
         setVerifyMessage(data.message || 'Payment not yet confirmed.');
       }
-    } catch (err: any) {
-      setVerifyMessage(err?.response?.data?.message || 'Could not verify payment. Please try again.');
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } } };
+      setVerifyMessage(apiErr?.response?.data?.message || 'Could not verify payment. Please try again.');
     } finally {
       setVerifying(false);
     }
@@ -275,14 +277,18 @@ export default function OnboardingPage() {
             <p className="text-gray-500">Select a plan to continue with the one-time setup fee.</p>
           </div>
 
-          <PlanCards
-            plans={plans ?? []}
-            selectedPlanId={selectedPlanId}
-            onSelect={handleSelectPlan}
-            billingCycle={billingCycle}
-            onBillingCycleChange={setBillingCycle}
-            hideTrialBadge
-          />
+          {plansLoading ? (
+            <CustosellLoader fullPage={false} />
+          ) : (
+            <PlanCards
+              plans={plans ?? []}
+              selectedPlanId={selectedPlanId}
+              onSelect={handleSelectPlan}
+              billingCycle={billingCycle}
+              onBillingCycleChange={setBillingCycle}
+              hideTrialBadge
+            />
+          )}
         </div>
       </main>
 

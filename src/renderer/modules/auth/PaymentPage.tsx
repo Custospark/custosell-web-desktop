@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { useActivePlans } from '../../shared/components/plans/PlanCards';
+import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/AccountQueries';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -34,11 +34,13 @@ export default function PaymentPage() {
     }
   }, []);
 
+  const paymentStatus = paymentQuery.data?.status;
   useEffect(() => {
-    if (paymentQuery.data?.status === 'completed') {
+    if (paymentStatus === 'completed') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRedirectCountdown(3);
     }
-  }, [paymentQuery.data?.status]);
+  }, [paymentStatus]);
 
   useEffect(() => {
     if (redirectCountdown > 0) {

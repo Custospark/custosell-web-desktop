@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
-import { useActivePlans, PlanCards, PlansLoading } from '../../shared/components/plans/PlanCards';
+import { useActivePlans } from '../../shared/components/plans/useActivePlans';
+import { PlanCards, PlansLoading } from '../../shared/components/plans/PlanCards';
 import { ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 
 const FEATURE_COMPARISON: Record<string, [boolean, boolean, boolean]> = {

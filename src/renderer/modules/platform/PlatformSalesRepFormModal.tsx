@@ -72,38 +72,32 @@ export function SalesRepFormModal({ show, editing, onClose }: {
   onClose: (refetch?: boolean) => void;
 }) {
   const { showToast } = useToast();
-  const [form, setForm] = useState<SalesRepForm>(emptyForm);
-  const [searchedUser, setSearchedUser] = useState<{ id: number; name: string; email: string } | null>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  const [form, setForm] = useState<SalesRepForm>(() => editing ? {
+    email: editing.user?.email ?? '',
+    name: editing.user?.name ?? '',
+    phone: editing.phone ?? '',
+    region: editing.region ?? '',
+    payment_method: editing.payment_method ?? '',
+    mobile_money_provider: editing.mobile_money_provider ?? '',
+    mobile_money_number: editing.mobile_money_number ?? '',
+    mobile_money_name: editing.mobile_money_name ?? '',
+    bank_name: editing.bank_name ?? '',
+    bank_branch: editing.bank_branch ?? '',
+    bank_account_name: editing.bank_account_name ?? '',
+    bank_account_number: editing.bank_account_number ?? '',
+    commission_rate: String(editing.commission_rate),
+    commission_type: editing.commission_type,
+    is_active: editing.is_active,
+  } : emptyForm);
+  const [searchedUser, setSearchedUser] = useState<{ id: number; name: string; email: string } | null>(editing?.user ?? null);
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
-  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const reset = () => {
     setForm(emptyForm);
     setSearchedUser(null);
-    setSearching(false);
-    setSaving(false);
-  };
-
-  const initEdit = (rep: PlatformSalesRep) => {
-    setForm({
-      email: rep.user?.email ?? '',
-      name: rep.user?.name ?? '',
-      phone: rep.phone ?? '',
-      region: rep.region ?? '',
-      payment_method: rep.payment_method ?? '',
-      mobile_money_provider: rep.mobile_money_provider ?? '',
-      mobile_money_number: rep.mobile_money_number ?? '',
-      mobile_money_name: rep.mobile_money_name ?? '',
-      bank_name: rep.bank_name ?? '',
-      bank_branch: rep.bank_branch ?? '',
-      bank_account_name: rep.bank_account_name ?? '',
-      bank_account_number: rep.bank_account_number ?? '',
-      commission_rate: String(rep.commission_rate),
-      commission_type: rep.commission_type,
-      is_active: rep.is_active,
-    });
-    setSearchedUser(rep.user ?? null);
   };
 
   const doSearch = async (email: string) => {
@@ -180,8 +174,6 @@ export function SalesRepFormModal({ show, editing, onClose }: {
       setSaving(false);
     }
   };
-
-  if (show && editing) { initEdit(editing); }
 
   return (
     <Modal isOpen={show} onClose={() => { reset(); onClose(); }} title="" size="lg">

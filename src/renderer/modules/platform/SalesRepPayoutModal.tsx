@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../app/api/axiosConfig';
@@ -6,9 +6,19 @@ import { SALES_REPS } from '../../shared/api/endpoints/endpoints';
 import { useToast } from '../../app/contexts/useToast';
 import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
-import { DollarSign, History, Wallet, Smartphone, Landmark } from 'lucide-react';
+import {
+  DollarSign, History, Wallet, Smartphone, Landmark,
+  Paperclip, X, FileText, Image
+} from 'lucide-react';
 import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
 import type { PlatformSalesRep } from './PlatformSalesRepFormModal';
+
+interface Attachment {
+  path: string;
+  original_name: string;
+  mime_type: string;
+  size: number;
+}
 
 interface Payout {
   id: number;
@@ -16,6 +26,7 @@ interface Payout {
   amount: string;
   payment_method: string | null;
   notes: string | null;
+  attachments: Attachment[] | null;
   paid_at: string;
   paid_by: number | null;
   paid_by_user?: { id: number; name: string };
@@ -24,9 +35,11 @@ interface Payout {
 export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | null; onClose: () => void }) {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
+  const [payoutFiles, setPayoutFiles] = useState<File[]>([]);
 
   const { data: payouts = [] } = useQuery<Payout[]>({
     queryKey: ['sales-reps', rep?.id, 'payouts'],
@@ -44,12 +57,25 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
   const recordMutation = useMutation({
     mutationFn: async () => {
       if (!rep) return;
-      await axiosInstance.post(SALES_REPS.PAYOUTS(rep.id), {
+      const payload: Record<string, unknown> = {
         amount,
         payment_method: paymentMethod || null,
         notes: notes || null,
         paid_at: new Date().toISOString(),
-      });
+      };
+      if (payoutFiles.length > 0) {
+        const fd = new FormData();
+        fd.append('amount', amount);
+        fd.append('payment_method', paymentMethod || '');
+        fd.append('notes', notes || '');
+        fd.append('paid_at', new Date().toISOString());
+        payoutFiles.forEach((f) => fd.append('attachments[]', f));
+        await axiosInstance.post(SALES_REPS.PAYOUTS(rep.id), fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        await axiosInstance.post(SALES_REPS.PAYOUTS(rep.id), payload);
+      }
     },
     onSuccess: () => {
       showToast('success', 'Payout recorded');
@@ -58,6 +84,7 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
       setAmount('');
       setPaymentMethod('');
       setNotes('');
+      setPayoutFiles([]);
     },
     onError: (err: Error) => {
       const axiosErr = err as AxiosError<{ message: string }>;
@@ -128,6 +155,36 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
               placeholder="Optional notes about this payout"
             />
           </PipelineIconField>
+          <PipelineIconField label="Attachments" icon={Paperclip}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                setPayoutFiles((prev) => [...prev, ...files].slice(0, 5));
+              }}
+              className="hidden"
+            />
+            <div className="flex flex-wrap gap-2">
+              {payoutFiles.map((f, i) => (
+                <div key={i} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-700">
+                  {f.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                  <span className="max-w-32 truncate">{f.name}</span>
+                  <button type="button" onClick={() => setPayoutFiles((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              {payoutFiles.length < 5 && (
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600">
+                  + Add file
+                </button>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Images or PDFs, max 5MB each (up to 5 files)</p>
+          </PipelineIconField>
           <div className="flex justify-end pt-1">
             <Button onClick={() => recordMutation.mutate()} disabled={recordMutation.isPending || !amount || Number(amount) <= 0}>
               {recordMutation.isPending ? 'Recording...' : 'Record Payout'}
@@ -152,6 +209,16 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
                       {p.payment_method ? ` · ${p.payment_method.replace('_', ' ')}` : ''}
                     </p>
                     {p.notes && <p className="text-xs text-gray-400 mt-0.5">{p.notes}</p>}
+                    {p.attachments && p.attachments.length > 0 && (
+                      <div className="flex gap-1.5 mt-1.5">
+                        {p.attachments.map((a, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 rounded bg-gray-200/60 px-1.5 py-0.5 text-[10px] text-gray-500">
+                            {a.mime_type?.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                            {a.original_name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <span className="text-xs text-gray-400">#{p.id}</span>
                 </div>

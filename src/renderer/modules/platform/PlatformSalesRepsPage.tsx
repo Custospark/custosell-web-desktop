@@ -153,6 +153,7 @@ export default function PlatformSalesRepsPage() {
       </div>
 
       <SalesRepFormModal
+        key={editing?.id ?? 'new'}
         show={showFormModal}
         editing={editing}
         onClose={(refetch_) => {

@@ -148,13 +148,13 @@ export default function PlatformManageSubscriptionsPage() {
             )},
             { key: 'price_monthly', header: 'Monthly', render: (s) => (
               <div className="text-right">
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.plan?.price_monthly)}</span>
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_monthly)}</span>
                 <span className="text-xs text-gray-400 ml-1">UGX</span>
               </div>
             )},
             { key: 'price_yearly', header: 'Yearly', render: (s) => (
               <div className="text-right">
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.plan?.price_yearly)}</span>
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_yearly)}</span>
                 <span className="text-xs text-gray-400 ml-1">UGX</span>
               </div>
             )},
@@ -167,7 +167,7 @@ export default function PlatformManageSubscriptionsPage() {
               <span className="text-sm text-gray-600 capitalize">{s.billing_cycle ?? '—'}</span>
             )},
             { key: 'onboarding', header: 'Onboarding', render: (s) => {
-              const fee = s.plan?.onboarding_fee_ugx;
+              const fee = s.onboarding_fee_ugx;
               return (
                 <div className="flex items-center gap-1.5">
                   {s.onboarding_fee_paid

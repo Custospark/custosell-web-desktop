@@ -215,6 +215,9 @@ export interface PlatformSubscription {
   id: number;
   business_id: number;
   plan_id: number;
+  price_monthly?: number | null;
+  price_yearly?: number | null;
+  onboarding_fee_ugx?: number | null;
   business?: { id: number; name: string; slug?: string | null };
   plan?: {
     id: number; name: string; slug?: string | null;

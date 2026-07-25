@@ -21,8 +21,8 @@ export function Layout() {
 
   useEffect(() => {
     if (!isAuthenticated || location.pathname === ROUTES.ONBOARDING) return;
-    if (subscription?.onboarding_fee_paid) return;
-    if (subscription === undefined) return;
+    if (!subscription) return;
+    if (subscription.onboarding_fee_paid) return;
     navigate(ROUTES.ONBOARDING, { replace: true });
   }, [isAuthenticated, subscription]);
 

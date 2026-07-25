@@ -155,6 +155,7 @@ export function useLogin(options?: { redirect?: boolean }) {
         pendingAuthSync: data.pendingAuthSync ?? false,
       }));
       storePlans(plans);
+      storePlanFeatures(userData?.business?.subscription?.plan_features);
       if (!isLocal) {
         queryClient.setQueryData(accountKeys.profile(), userData);
       }
@@ -238,6 +239,7 @@ export function useRegisterBusiness() {
         pendingAuthSync: result.pendingAuthSync,
       }));
       storePlans(result.plans);
+      storePlanFeatures(result.user?.business?.subscription?.plan_features);
 
       if (result.isLocalSession) {
         showToast('success', 'Business registered offline. It will sync when you reconnect.');

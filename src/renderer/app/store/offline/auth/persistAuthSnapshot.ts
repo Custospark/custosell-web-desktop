@@ -8,6 +8,7 @@ export async function persistAuthSnapshot(): Promise<void> {
   await saveAuthSession({
     token: auth.token,
     user: auth.user,
+    plans: auth.plans,
     isLocalSession: auth.isLocalSession,
     pendingAuthSync: auth.pendingAuthSync,
   });

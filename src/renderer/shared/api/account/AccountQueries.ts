@@ -242,7 +242,7 @@ export function useRegisterBusiness() {
           || result.user?.business?.subscription?.onboarding_fee_paid === false);
 
       if (needsOnboarding) {
-        navigate(ROUTES.ONBOARDING);
+        navigate(ROUTES.REFERRAL);
       } else {
         navigate(getDefaultRoute(result.user));
       }

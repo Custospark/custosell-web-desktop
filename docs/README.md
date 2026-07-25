@@ -38,6 +38,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [shell.md](./app/shell.md) | Status banners, navbar, layout chrome |
 | [service-worker.md](./app/service-worker.md) | Web production caching (static + API GET) |
+| [referral/README.md](./referral/README.md) | Referral & commission system |
 | [vera-logic.md](./vera-logic.md) | Vera Logic — repo rules & contracts gate (`npm run vera:logic`) |
 
 ## Compliance

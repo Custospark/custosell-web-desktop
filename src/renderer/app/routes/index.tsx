@@ -130,6 +130,8 @@ const PaymentPage = lazy(() => import('../../modules/auth/PaymentPage'));
 const OnboardingPage = lazy(() => import('../../modules/auth/OnboardingPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
+const ReferralEntryPage = lazy(() => import('../../modules/referral/pages/ReferralEntryPage'));
+const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/PipelineReferralsPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -172,6 +174,7 @@ export function AppRoutes() {
       <Route element={<AuthMiddlewareRoute />}>
         <Route path={ROUTES.ONBOARDING} element={<SuspenseWrapper><OnboardingPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER_PAYMENT} element={<SuspenseWrapper><PaymentPage /></SuspenseWrapper>} />
+        <Route path={ROUTES.REFERRAL} element={<SuspenseWrapper><ReferralEntryPage /></SuspenseWrapper>} />
         <Route element={<AppChrome />}>
         <Route element={<Layout />}>
           <Route path="/app" element={<ModuleLandingRedirect />} />
@@ -211,6 +214,7 @@ export function AppRoutes() {
               <Route path={ROUTES.PIPELINE.LEADS} element={<SuspenseWrapper><AllLeadsPage /></SuspenseWrapper>} />
               <Route path={ROUTES.PIPELINE.INSIGHTS} element={<SuspenseWrapper><InsightsPage /></SuspenseWrapper>} />
               <Route path={ROUTES.PIPELINE.SETTINGS} element={<SuspenseWrapper><PipelineSettingsPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.PIPELINE.REFERRALS} element={<SuspenseWrapper><PipelineReferralsPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<EstimatesAccessMiddleware />}>

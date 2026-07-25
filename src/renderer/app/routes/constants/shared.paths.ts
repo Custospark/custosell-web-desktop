@@ -36,7 +36,9 @@ export const ROUTES = {
     LEADS: '/pipeline/leads',
     INSIGHTS: '/pipeline/insights',
     SETTINGS: '/pipeline/settings',
+    REFERRALS: '/pipeline/referrals',
   },
+  REFERRAL: '/referral',
   INVOICES: {
     INDEX: '/invoices',
     SUPPLIER: '/invoices/supplier',

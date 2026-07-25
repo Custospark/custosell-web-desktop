@@ -257,3 +257,8 @@ export const STOREFRONT = {
   WISHLIST_ITEM: (id: number) => `/storefront/wishlist/${id}`,
   WISHLIST_BY_PRODUCT: (productId: number) => `/storefront/wishlist/by-product/${productId}`,
 };
+
+export const REFERRALS = {
+  EARNINGS: '/referrals/earnings/me',
+  APPLY: '/referrals/apply',
+};

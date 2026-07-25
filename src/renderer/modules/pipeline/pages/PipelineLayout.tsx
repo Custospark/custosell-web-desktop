@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../../shared/utils/cn';
-import { Kanban, Briefcase, Users, TrendingUp, SlidersHorizontal } from 'lucide-react';
+import { Kanban, Briefcase, Users, TrendingUp, SlidersHorizontal, Gift } from 'lucide-react';
 
 const tabs = [
   { to: ROUTES.PIPELINE.BOARDS, label: 'Boards', icon: Kanban, exact: true },
@@ -9,6 +9,7 @@ const tabs = [
   { to: ROUTES.PIPELINE.LEADS, label: 'All Leads', icon: Users },
   { to: ROUTES.PIPELINE.INSIGHTS, label: 'Insights', icon: TrendingUp },
   { to: ROUTES.PIPELINE.SETTINGS, label: 'Settings', icon: SlidersHorizontal },
+  { to: ROUTES.PIPELINE.REFERRALS, label: 'Referrals', icon: Gift },
 ];
 
 export default function PipelineLayout() {

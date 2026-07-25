@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -31,14 +31,6 @@ export function PlatformUserDeleteModal({
   const validation = useMemo(() => validateUserStatusReason(reason), [reason]);
   const showReasonError = (touched || submitAttempted) && Boolean(validation.errors.reason);
   const canSubmit = validation.valid && users.length > 0;
-
-  useEffect(() => {
-    if (open) {
-      setReason('');
-      setTouched(false);
-      setSubmitAttempted(false);
-    }
-  }, [open, users.map((u) => u.id).join(',')]);
 
   if (!open || users.length === 0) return null;
 
@@ -83,8 +75,8 @@ export function PlatformUserDeleteModal({
                   Delete {isBulk ? `${users.length} users` : users[0].name}?
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Soft-deletes the user account. Business owners and the last platform admin cannot be deleted.
-                  This action is audited.
+                  Permanently deletes the user account. Business owners and the last platform admin cannot be deleted.
+                  This action is audited and cannot be undone.
                 </p>
               </div>
             </div>
@@ -113,7 +105,7 @@ export function PlatformUserDeleteModal({
 
               <div className="flex items-start gap-2 mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-red-800">Deleted users cannot sign in. Their business data is retained.</p>
+                <p className="text-xs text-red-800">Deleted users are permanently removed from the database. Their business data (if any) is retained under the business owner's account.</p>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">

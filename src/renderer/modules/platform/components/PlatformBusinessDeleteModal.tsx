@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -31,14 +31,6 @@ export function PlatformBusinessDeleteModal({
   const validation = useMemo(() => validateBusinessStatusReason(reason), [reason]);
   const showReasonError = (touched || submitAttempted) && Boolean(validation.errors.reason);
   const canSubmit = validation.valid && businesses.length > 0;
-
-  useEffect(() => {
-    if (open) {
-      setReason('');
-      setTouched(false);
-      setSubmitAttempted(false);
-    }
-  }, [open, businesses.map((b) => b.id).join(',')]);
 
   if (!open || businesses.length === 0) return null;
 
@@ -83,8 +75,8 @@ export function PlatformBusinessDeleteModal({
                   Delete {isBulk ? `${businesses.length} businesses` : businesses[0].name}?
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Permanently removes all sales and sale line items for this business, then soft-deletes the business record.
-                  This action is audited and cannot be undone from the platform UI.
+                  Permanently deletes this business and all associated data (sales, products, customers, staff, and settings).
+                  This action is audited and cannot be undone.
                 </p>
               </div>
             </div>
@@ -113,7 +105,7 @@ export function PlatformBusinessDeleteModal({
 
               <div className="flex items-start gap-2 mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-red-800">All sales history for the selected business(es) will be permanently deleted. Other data (products, staff, etc.) is kept.</p>
+                <p className="text-xs text-red-800">All data for the selected business(es) will be permanently deleted. This includes sales, products, customers, staff, settings, and all associated records.</p>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">

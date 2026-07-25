@@ -73,6 +73,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
+| [2026-07-25-subscription-persistence-businessQueries-overwrite.md](./adr/2026-07-25-subscription-persistence-businessQueries-overwrite.md) | BusinessQueries `setBusiness` overwrite — subscription drop on `GET /businesses/mine` |
 | [2026-07-04-accounting-module-architecture.md](./adr/2026-07-04-accounting-module-architecture.md) | Double-entry accounting module |
 | [2026-07-08-pipeline-board-member-roles.md](./adr/2026-07-08-pipeline-board-member-roles.md) | Pipeline board viewer / contributor / manager roles |
 | [2026-07-08-staff-drawer-module-access-parity.md](./adr/2026-07-08-staff-drawer-module-access-parity.md) | Staff drawer module access matches Module Access; owner email read-only |

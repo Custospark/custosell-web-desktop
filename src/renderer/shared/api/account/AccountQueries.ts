@@ -61,22 +61,11 @@ function resolvePostLoginPath(user: AuthUser, from: unknown): string {
 }
 
 function extractAuthUser(data: AuthResponse): AuthUser {
-  const userData = data.user?.data ?? data.user;
-  if (userData.business && typeof userData.business === 'object' && 'data' in userData.business) {
-    userData.business = (userData.business as { data: AuthUser['business'] }).data;
-  }
-  return userData;
+  return data.user;
 }
 
-/** Extract active_plans from a user object returned by UserResource.
- *  The field is a flat array in practice; defensively handles { data: [...] } too. */
 function extractActivePlans(userData: AuthUser | null | undefined): Plan[] {
-  const plans = userData?.active_plans;
-  if (Array.isArray(plans)) return plans;
-  if (plans && typeof plans === 'object' && 'data' in (plans as object) && Array.isArray((plans as { data: unknown }).data)) {
-    return (plans as { data: Plan[] }).data;
-  }
-  return [];
+  return userData?.active_plans ?? [];
 }
 
 /** Best-effort offline backup after server auth — must not block or replace online login. */
@@ -145,6 +134,7 @@ export function useLogin(options?: { redirect?: boolean }) {
     },
     onSuccess: (data) => {
       const userData = extractAuthUser(data);
+      console.log('[DEBUG] useLogin.onSuccess — extracted user has sub?', Boolean(userData?.business?.subscription), 'features?', Boolean(userData?.business?.subscription?.plan_features), 'userData keys:', Object.keys(userData));
       const isLocal = data.isLocalSession ?? data.token.startsWith('local_');
       const plans = extractActivePlans(userData);
       dispatch(loginSuccess({
@@ -283,7 +273,10 @@ export function useRegister(options?: { redirect?: boolean }) {
     },
     onSuccess: (data) => {
       const userData = extractAuthUser(data);
-      dispatch(registerSuccess({ user: userData, token: data.token, plans: extractActivePlans(userData) }));
+      const plans = extractActivePlans(userData);
+      dispatch(registerSuccess({ user: userData, token: data.token, plans }));
+      storePlans(plans);
+      storePlanFeatures(userData?.business?.subscription?.plan_features);
       showToast('success', 'Account created successfully');
       if (shouldRedirect) {
         navigate(getDefaultRoute(userData));
@@ -314,8 +307,10 @@ export function useProfile() {
   return useQuery({
     queryKey: accountKeys.profile(),
     queryFn: async () => {
+      console.log('[DEBUG] useProfile.queryFn — FETCHING /auth/me');
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
+      console.log('[DEBUG] useProfile.queryFn — /auth/me returned, sub?', Boolean(userData?.business?.subscription), 'features?', Boolean(userData?.business?.subscription?.plan_features));
       const plans = extractActivePlans(userData);
       if (plans.length) {
         dispatch(setPlans(plans));

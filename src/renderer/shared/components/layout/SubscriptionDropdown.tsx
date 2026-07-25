@@ -43,6 +43,7 @@ export default function SubscriptionDropdown() {
   const user = useAppSelector((s) => s.auth.user);
   const plans = useAppSelector((s) => s.auth.plans);
   const subscription = user?.business?.subscription;
+  console.log('[DEBUG] SubscriptionDropdown — has subscription?', Boolean(subscription), 'plan_features?', Boolean(subscription?.plan_features));
 
   const currentPlan = useMemo(() => {
     if (!plans || !subscription) return null;

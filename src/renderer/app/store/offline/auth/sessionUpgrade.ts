@@ -25,20 +25,11 @@ export interface SessionUpgradeResult {
 }
 
 function extractAuthUser(data: AuthResponse): AuthUser {
-  const userData = data.user?.data ?? data.user;
-  if (userData.business && typeof userData.business === 'object' && 'data' in userData.business) {
-    userData.business = (userData.business as { data: AuthUser['business'] }).data;
-  }
-  return userData;
+  return data.user;
 }
 
 function extractActivePlans(userData: AuthUser | null | undefined): Plan[] {
-  const plans = userData?.active_plans;
-  if (Array.isArray(plans)) return plans;
-  if (plans && typeof plans === 'object' && 'data' in (plans as object) && Array.isArray((plans as { data: unknown }).data)) {
-    return (plans as { data: Plan[] }).data;
-  }
-  return [];
+  return userData?.active_plans ?? [];
 }
 
 export function needsSessionUpgrade(): boolean {

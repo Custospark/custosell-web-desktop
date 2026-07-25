@@ -16,6 +16,7 @@ export function usePlanAccessibleModules(): string[] {
   const user = useAppSelector((s) => s.auth.user);
   const accessible = getAccessibleModules(user);
   const features = user?.business?.subscription?.plan_features;
+  console.log('[DEBUG] usePlanAccessibleModules — has user?', Boolean(user), 'has subscription?', Boolean(user?.business?.subscription), 'has features?', Boolean(features));
 
   if (!features) return restrictToSafeModules(accessible);
 

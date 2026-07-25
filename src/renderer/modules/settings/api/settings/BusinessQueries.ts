@@ -107,7 +107,12 @@ export function useBusiness() {
 
   useEffect(() => {
     if (!query.data) return;
-    dispatch(setBusiness(businessToAuthInfo(query.data)));
+    const info = businessToAuthInfo(query.data);
+    const existing = store.getState().auth.user?.business;
+    if (existing?.subscription?.plan_features && !info.subscription?.plan_features) {
+      info.subscription = existing.subscription;
+    }
+    dispatch(setBusiness(info));
   }, [query.data, dispatch]);
 
   return query;

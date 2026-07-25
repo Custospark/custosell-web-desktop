@@ -62,6 +62,7 @@ export const platformSubRoutes = [
   ROUTES.PLATFORM.ROLES,
   ROUTES.PLATFORM.SENT_MESSAGES,
   ROUTES.PLATFORM.GUIDE.TUTORIALS,
+  ROUTES.PLATFORM.SALES_REPS,
   ROUTES.PLATFORM.GUIDE.FAQS,
   ROUTES.PLATFORM.GUIDE.FEEDBACK,
 ];
@@ -77,6 +78,7 @@ export const platformNavGroup: SidebarNavGroup = {
     { to: ROUTES.PLATFORM.USERS, label: 'All Users', icon: Users },
     { to: ROUTES.PLATFORM.ROLES, label: 'Platform Roles', icon: Shield },
     { to: ROUTES.PLATFORM.SENT_MESSAGES, label: 'Sent messages', icon: BellRing },
+    { to: ROUTES.PLATFORM.SALES_REPS, label: 'Sales Reps', icon: Percent },
   ],
 };
 

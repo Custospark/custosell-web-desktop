@@ -262,3 +262,11 @@ export const REFERRALS = {
   EARNINGS: '/referrals/earnings/me',
   APPLY: '/referrals/apply',
 };
+
+export const SALES_REPS = {
+  BASE: '/sales-reps',
+  EARNINGS_ALL: '/sales-reps/earnings/all',
+  EARNINGS_MINE: '/sales-reps/earnings/mine',
+  EARNINGS: (id: number) => `/sales-reps/${id}/earnings`,
+  BY_ID: (id: number) => `/sales-reps/${id}`,
+};

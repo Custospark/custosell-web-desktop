@@ -126,6 +126,7 @@ export const ROUTES = {
     PLANS: '/platform/plans',
     SUBSCRIPTIONS: '/platform/subscriptions',
     SENT_MESSAGES: '/platform/sent-messages',
+    SALES_REPS: '/platform/sales-reps',
     GUIDE: {
       INDEX: '/platform/guide',
       TUTORIALS: '/platform/guide/tutorials',

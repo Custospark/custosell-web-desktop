@@ -1,5 +1,5 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet } from 'lucide-react';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent } from 'lucide-react';
 import { useState } from 'react';
 import { Table } from '../../../shared/components/tables/Table';
 import type { ReferralRecord } from '../api/ReferralTypes';
@@ -106,6 +106,41 @@ export default function PipelineReferralsPage() {
           </div>
           <p className="mt-1 text-sm text-amber-600">
             Rewards are credited when referred businesses complete their first payment.
+          </p>
+        </div>
+      )}
+
+      {/* Sales Rep Commission Section */}
+      {earnings?.is_sales_rep && (
+        <div className="rounded-xl border border-purple-200 bg-purple-50 p-5">
+          <div className="flex items-center gap-2 text-purple-800">
+            <Percent className="h-5 w-5" />
+            <span className="font-semibold">Sales Representative Commission</span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-sm text-purple-600">Rate</p>
+              <p className="text-lg font-semibold text-purple-900">
+                {earnings.commission_type === 'percentage'
+                  ? `${earnings.commission_rate}%`
+                  : `${Number(earnings.commission_rate).toLocaleString('en-UG')} UGX`}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-purple-600">Available to Claim</p>
+              <p className="text-lg font-semibold text-purple-900">
+                {Number(earnings.commission_pending).toLocaleString('en-UG')} UGX
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-purple-600">Total Earned</p>
+              <p className="text-lg font-semibold text-purple-900">
+                {Number(earnings.commission_earned).toLocaleString('en-UG')} UGX
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-purple-600">
+            Contact the Custosell team to claim your pending commission of {Number(earnings.commission_pending).toLocaleString('en-UG')} UGX.
           </p>
         </div>
       )}

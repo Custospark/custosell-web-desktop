@@ -46,6 +46,7 @@ import PlatformGuideFeedbackPage from '../../modules/platform/PlatformGuideFeedb
 import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessagesPage';
 import PlatformManagePlansPage from '../../modules/platform/PlatformManagePlansPage';
 import PlatformManageSubscriptionsPage from '../../modules/platform/PlatformManageSubscriptionsPage';
+import PlatformSalesRepsPage from '../../modules/platform/PlatformSalesRepsPage';
 import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
 import ChartOfAccountsPage from '../../modules/accounting/pages/ChartOfAccountsPage';
@@ -324,6 +325,7 @@ export function AppRoutes() {
             <Route path={ROUTES.PLATFORM.USERS} element={<SuspenseWrapper><PlatformUsersPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.ROLES} element={<SuspenseWrapper><PlatformRolesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.SENT_MESSAGES} element={<SuspenseWrapper><PlatformSentMessagesPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.SALES_REPS} element={<SuspenseWrapper><PlatformSalesRepsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.INDEX} element={<Navigate to={ROUTES.PLATFORM.GUIDE.TUTORIALS} replace />} />
             <Route path={ROUTES.PLATFORM.GUIDE.TUTORIALS} element={<SuspenseWrapper><PlatformGuideTutorialsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.FAQS} element={<SuspenseWrapper><PlatformGuideFaqsPage /></SuspenseWrapper>} />

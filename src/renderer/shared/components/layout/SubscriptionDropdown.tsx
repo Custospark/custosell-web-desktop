@@ -202,7 +202,7 @@ export default function SubscriptionDropdown() {
                             {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', minimumFractionDigits: 0 }).format(Number(p.price_monthly))}/mo
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500">{FEATURE_LABELS[Object.entries(p.features).find(([, v]) => v)?.[0] ?? ''] ?? 'View plan'}</span>
+                        <span className="text-xs text-gray-500">View plan</span>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0">
                         {isHigher && <ArrowUp className="w-3 h-3 text-blue-500" />}

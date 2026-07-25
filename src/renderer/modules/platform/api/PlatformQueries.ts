@@ -37,6 +37,7 @@ export const platformKeys = {
   userStats: (params: Record<string, string>) => [...platformKeys.all, 'user-stats', params] as const,
   roles: () => [...platformKeys.all, 'roles'] as const,
   permissions: () => [...platformKeys.all, 'permissions'] as const,
+  plans: () => [...platformKeys.all, 'plans'] as const,
 };
 
 export function usePlatformOverview() {

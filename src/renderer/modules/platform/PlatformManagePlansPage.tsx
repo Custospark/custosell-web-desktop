@@ -1,79 +1,138 @@
-import { useQuery } from '@tanstack/react-query';
-import { axiosInstance } from '../../app/api/axiosConfig';
-import { PLANS } from '../../shared/api/endpoints/endpoints';
-import { Users, Package, Building2, Check, Loader2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { usePlans, useDeletePlan } from './api/PlanQueries';
+import { PlanFormDrawer } from './components/PlanFormDrawer';
 import type { Plan } from '../../shared/types';
-
-const FEATURE_LABELS: Record<string, string> = {
-  sales: 'Point of Sale', inventory: 'Inventory', customers: 'Customers',
-  expenses: 'Expenses', dashboard: 'Dashboard',
-  pipeline: 'Pipeline', estimates: 'Estimates & Projects', storefront: 'Storefront',
-  marketplace: 'Marketplace', documents: 'Documents', accounting: 'Accounting',
-  hr: 'HR & Payroll', forecasting: 'Forecasting & Budgets',
-};
+import { Button } from '../../shared/components/buttons/Button';
+import { SearchInput } from '../../shared/components/inputs/SearchInput';
+import { Table } from '../../shared/components/tables/Table';
+import { Card } from '../../shared/components/cards/Card';
+import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
+import { EmptyState } from '../../shared/components/cards/EmptyState';
+import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
+import { CreditCard, Plus, Pencil, Trash2, Check } from 'lucide-react';
 
 export default function PlatformManagePlansPage() {
-  const { data: plans, isLoading } = useQuery({
-    queryKey: ['platform', 'plans'],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: Plan[] }>(PLANS);
-      return data.data;
-    },
-  });
+  const { data: plans = [], isLoading, error } = usePlans();
+  const deleteMutation = useDeletePlan();
+  const { confirm } = useConfirm();
+  const [search, setSearch] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
 
-  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+  const filtered = useMemo(() => {
+    if (!search.trim()) return plans;
+    const q = search.toLowerCase();
+    return plans.filter((p) =>
+      p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q),
+    );
+  }, [plans, search]);
+
+  const paginated = usePagination(filtered, 10);
+
+  const openCreate = () => { setEditingPlan(null); setDrawerOpen(true); };
+  const openEdit = (p: Plan) => { setEditingPlan(p); setDrawerOpen(true); };
+
+  const handleDelete = async (p: Plan) => {
+    const confirmed = await confirm({
+      title: 'Delete plan',
+      message: `Delete "${p.name}"? This cannot be undone. Businesses on this plan may be affected.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (confirmed) deleteMutation.mutate(p.id);
+  };
+
+  if (isLoading) return <LoadingSkeleton variant="table" />;
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={<CreditCard className="w-12 h-12" />}
+        title="Failed to load plans"
+        description={error.message || 'An error occurred'}
+        actionLabel="Retry"
+        onAction={() => window.location.reload()}
+      />
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <PlanFormDrawer key={editingPlan?.id ?? 'create'} open={drawerOpen} onClose={() => setDrawerOpen(false)} plan={editingPlan} />
+
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Plans</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage subscription plans and pricing</p>
+          <p className="text-sm text-gray-500 mt-1">Manage subscription plans, pricing, features, and limits</p>
         </div>
+        <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add plan</Button>
       </div>
-      <div className="grid gap-6 md:grid-cols-3">
-        {plans?.map((plan) => (
-          <div key={plan.id} className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-              {plan.is_popular && (
-                <span className="text-xs font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-white px-2 py-0.5 rounded-full">Popular</span>
-              )}
-            </div>
-            <div className="text-3xl font-extrabold text-gray-900">
-              {Number(plan.price_monthly).toLocaleString('en-UG')} <span className="text-sm font-normal text-gray-400">UGX/mo</span>
-            </div>
-            {plan.onboarding_fee_ugx ? (
-              <p className="text-xs text-amber-600 font-semibold">Onboarding: {Number(plan.onboarding_fee_ugx).toLocaleString('en-UG')} UGX</p>
-            ) : null}
-            <div className="border-t border-gray-100 pt-3 space-y-1.5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Limits</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                {plan.limits && Object.entries(plan.limits).map(([key, val]) => (
-                  <div key={key} className="flex items-center gap-1.5 text-gray-600">
-                    {key === 'max_staff' && <Users className="w-3.5 h-3.5" />}
-                    {key === 'max_products' && <Package className="w-3.5 h-3.5" />}
-                    {key === 'max_businesses' && <Building2 className="w-3.5 h-3.5" />}
-                    <span className="capitalize">{key.replace('max_', '')}:</span>
-                    <span className="font-medium">{val ?? '∞'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="border-t border-gray-100 pt-3 space-y-1.5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Features</p>
-              <div className="grid grid-cols-1 gap-1">
-                {Object.entries(plan.features).filter(([, v]) => v).map(([key]) => (
-                  <div key={key} className="flex items-center gap-2 text-sm text-gray-600">
-                    <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                    <span>{FEATURE_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+
+      <Card>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex-1">
+            <SearchInput
+              placeholder="Search plans by name or slug..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClear={() => setSearch('')}
+            />
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+
+        <Table<Plan>
+          rowKey={(p) => p.id}
+          columns={[
+            { key: 'name', header: 'Plan', render: (p) => (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-900">{p.name}</span>
+                {p.is_popular && (
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                    <Check className="w-2.5 h-2.5" /> Popular
+                  </span>
+                )}
+                {!p.is_active && (
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                    Inactive
+                  </span>
+                )}
+              </div>
+            )},
+            { key: 'slug', header: 'Slug', render: (p) => (
+              <span className="text-sm text-gray-500 font-mono">{p.slug}</span>
+            )},
+            { key: 'price_monthly', header: 'Monthly', render: (p) => (
+              <span className="text-sm font-medium text-gray-900">
+                {Number(p.price_monthly).toLocaleString('en-UG')} UGX
+              </span>
+            )},
+            { key: 'trial_days', header: 'Trial', render: (p) => (
+              <span className="text-sm text-gray-600">{p.trial_days ?? '-'} days</span>
+            )},
+            { key: 'actions', header: '', render: (p) => (
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => openEdit(p)} title="Edit plan">
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(p)} disabled={deleteMutation.isPending} title="Delete plan">
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                </Button>
+              </div>
+            )},
+          ]}
+          data={paginated.data}
+        />
+
+        <Pagination
+          currentPage={paginated.page}
+          totalPages={paginated.totalPages}
+          totalItems={paginated.totalItems}
+          pageSize={paginated.pageSize}
+          onPageChange={paginated.setPage}
+          onPageSizeChange={paginated.setPageSize}
+        />
+      </Card>
+    </>
   );
 }

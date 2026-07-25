@@ -35,6 +35,7 @@ import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/cat
 import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/auth/sessionUpgrade';
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
+import { storePlans, storePlanFeatures } from '../../utils/planStorage';
 
 export const accountKeys = {
   all: ['account'] as const,
@@ -145,13 +146,15 @@ export function useLogin(options?: { redirect?: boolean }) {
     onSuccess: (data) => {
       const userData = extractAuthUser(data);
       const isLocal = data.isLocalSession ?? data.token.startsWith('local_');
+      const plans = extractActivePlans(userData);
       dispatch(loginSuccess({
         user: userData,
         token: data.token,
-        plans: extractActivePlans(userData),
+        plans,
         isLocalSession: isLocal,
         pendingAuthSync: data.pendingAuthSync ?? false,
       }));
+      storePlans(plans);
       if (!isLocal) {
         queryClient.setQueryData(accountKeys.profile(), userData);
       }
@@ -232,6 +235,7 @@ export function useRegisterBusiness() {
         isLocalSession: result.isLocalSession,
         pendingAuthSync: result.pendingAuthSync,
       }));
+      storePlans(result.plans);
 
       if (result.isLocalSession) {
         showToast('success', 'Business registered offline. It will sync when you reconnect.');
@@ -309,7 +313,12 @@ export function useProfile() {
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
       const plans = extractActivePlans(userData);
-      if (plans.length) dispatch(setPlans(plans));
+      if (plans.length) {
+        dispatch(setPlans(plans));
+        storePlans(plans);
+      }
+      const features = userData?.business?.subscription?.plan_features;
+      if (features) storePlanFeatures(features);
       dispatch(setUser(userData));
       try {
         await updateStoredAuthUser(userData);
@@ -322,8 +331,8 @@ export function useProfile() {
       return userData;
     },
     placeholderData: cachedUser ?? undefined,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
     retry: false,
     enabled: isInitialized && Boolean(token) && !isLocalSession,
   });

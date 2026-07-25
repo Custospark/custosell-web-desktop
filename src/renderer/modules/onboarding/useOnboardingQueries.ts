@@ -128,7 +128,7 @@ export function useUpdateOnboarding() {
         const state = data.data as OnboardingState;
         qc.setQueryData(onboardingKeys.state(), state);
         if (data.user) {
-          const merged = { ...(data.user as AuthUser), onboarding: state };
+          const merged = { ...(user ?? {}), ...(data.user as AuthUser), onboarding: state };
           dispatch(setUser(merged));
           qc.setQueryData(accountKeys.profile(), merged);
         }

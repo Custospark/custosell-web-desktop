@@ -2,6 +2,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import type { AuthUser } from '../../slices/authSlice';
+import type { Plan } from '../../../../shared/types';
 import type { AuthResponse, BusinessRegisterRequest, LoginRequest } from '../../../../shared/api/account/AccountTypes';
 import { mutationQueue, type QueuedMutation } from '../sync/mutationQueue';
 import { localAuthStore } from './localAuthStore';
@@ -27,6 +28,15 @@ function extractAuthUser(data: AuthResponse): AuthUser {
   return userData;
 }
 
+function extractActivePlans(userData: Record<string, unknown> | null | undefined): Plan[] {
+  const plans = (userData as { active_plans?: unknown })?.active_plans;
+  if (Array.isArray(plans)) return plans;
+  if (plans && typeof plans === 'object' && 'data' in (plans as object) && Array.isArray((plans as { data: unknown }).data)) {
+    return (plans as { data: Plan[] }).data;
+  }
+  return [];
+}
+
 async function processAuthRegister(m: QueuedMutation): Promise<boolean> {
   const payload = m.data as BusinessRegisterRequest;
   const authRecord = await localAuthStore.getByMutationId(m.id);
@@ -44,7 +54,7 @@ async function processAuthRegister(m: QueuedMutation): Promise<boolean> {
 
     const user = extractAuthUser(data);
     const token = data.token;
-    const plans = data.active_plans?.data ?? [];
+    const plans = extractActivePlans(user);
     const oldBusinessId = authRecord?.localBusinessId ?? store.getState().auth.user?.business_id ?? 0;
     const oldUserId = authRecord?.localUserId ?? store.getState().auth.user?.id ?? 0;
 
@@ -82,7 +92,7 @@ async function processAuthLogin(m: QueuedMutation): Promise<boolean> {
     await mutationQueue.markSyncing(m.id);
     const { data } = await axiosInstance.post<AuthResponse>('/auth/login', payload, { skipAuthRedirect: true } as never);
     const user = extractAuthUser(data);
-    await applyServerAuth(user, data.token, payload.password, data.active_plans?.data ?? []);
+    await applyServerAuth(user, data.token, payload.password, extractActivePlans(user));
     await mutationQueue.remove(m.id);
 
     return true;

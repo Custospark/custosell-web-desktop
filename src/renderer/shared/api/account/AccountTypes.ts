@@ -1,4 +1,5 @@
 import type { AuthUser } from '../../../app/store/slices/authSlice';
+import type { Plan } from '../../../shared/types';
 
 export interface LoginRequest {
   email: string;

@@ -12,6 +12,7 @@ import { useToast } from '../../../app/contexts/ToastContext';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { BILLING, SUBSCRIPTIONS } from '../endpoints/endpoints';
+import type { Plan } from '../../../shared/types';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -66,6 +67,17 @@ function extractAuthUser(data: AuthResponse): AuthUser {
   return userData;
 }
 
+/** Extract active_plans from a user object returned by UserResource.
+ *  The field is a flat array in practice; defensively handles { data: [...] } too. */
+function extractActivePlans(userData: Record<string, unknown> | null | undefined): Plan[] {
+  const plans = (userData as { active_plans?: unknown })?.active_plans;
+  if (Array.isArray(plans)) return plans;
+  if (plans && typeof plans === 'object' && 'data' in (plans as object) && Array.isArray((plans as { data: unknown }).data)) {
+    return (plans as { data: Plan[] }).data;
+  }
+  return [];
+}
+
 /** Best-effort offline backup after server auth — must not block or replace online login. */
 function backupOnlineAuthToOffline(data: AuthResponse, password: string): void {
   const user = extractAuthUser(data);
@@ -73,7 +85,7 @@ function backupOnlineAuthToOffline(data: AuthResponse, password: string): void {
     email: user.email,
     password,
     user,
-    plans: data.active_plans?.data ?? [],
+    plans: extractActivePlans(user),
     token: data.token,
     isLocalSession: false,
     pendingAuthSync: false,
@@ -136,7 +148,7 @@ export function useLogin(options?: { redirect?: boolean }) {
       dispatch(loginSuccess({
         user: userData,
         token: data.token,
-        plans: data.active_plans?.data,
+        plans: extractActivePlans(userData),
         isLocalSession: isLocal,
         pendingAuthSync: data.pendingAuthSync ?? false,
       }));
@@ -199,11 +211,12 @@ export function useRegisterBusiness() {
         email: payload.email,
         password: payload.password,
       });
+      const regUser = extractAuthUser(data);
       backupOnlineAuthToOffline(data, payload.password);
       return {
-        user: extractAuthUser(data),
+        user: regUser,
         token: data.token,
-        plans: data.active_plans?.data,
+        plans: extractActivePlans(regUser),
         isLocalSession: false,
         pendingAuthSync: false,
       };
@@ -262,7 +275,7 @@ export function useRegister(options?: { redirect?: boolean }) {
     },
     onSuccess: (data) => {
       const userData = extractAuthUser(data);
-      dispatch(registerSuccess({ user: userData, token: data.token, plans: data.active_plans?.data }));
+      dispatch(registerSuccess({ user: userData, token: data.token, plans: extractActivePlans(userData) }));
       showToast('success', 'Account created successfully');
       if (shouldRedirect) {
         navigate(getDefaultRoute(userData));
@@ -295,9 +308,9 @@ export function useProfile() {
     queryFn: async () => {
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
+      const plans = extractActivePlans(userData);
+      if (plans.length) dispatch(setPlans(plans));
       dispatch(setUser(userData));
-      const plans = data?.active_plans?.data;
-      if (plans?.length) dispatch(setPlans(plans));
       try {
         await updateStoredAuthUser(userData);
         if (userData?.email) {

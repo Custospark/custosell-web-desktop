@@ -140,17 +140,60 @@ Commission flow (sales rep codes only):
   2. **New user** — admin enters email, system detects no user found, admin fills in name, system auto-creates the user account (random password — rep uses "Forgot Password") + sales rep + referral code in one step
 - The user is **never duplicated** — if the email already belongs to a sales rep, the backend rejects with an error message
 
+**Sales rep fields (all editable on create + update):**
+- Contact: name, email, phone, region
+- Payout method: mobile_money (provider, number, name) or bank (name, branch, account name, number)
+- Commission: rate, type (percentage/flat), active status
+
 **Backend:**
 - `SalesRepRequest` accepts `email` (required on create) and `name` (used when creating new user, ignored for existing)
 - `SalesRepService::create()` finds or creates the User, then creates the SalesRep + ReferralCode in a transaction
-- On update (PUT), only commission fields are accepted — the user association is fixed
+- On update (PUT), all fields except email/name are accepted — the user association is fixed
 
 **Frontend:**
 - Create modal has an email input with auto-search (600ms debounce) and a manual "Search" button
 - If a user is found: green card with user info (name + email)
 - If not found: amber card with "New user will be created" message
+- Organized in PipelineFormSection cards: Contact Info, Payout Method, Commission
 - Name field is editable for new users, pre-filled for found users
-- The "Create" button submits `{ email, name?, commission_rate, commission_type, is_active }`
+- Payout method toggles between Mobile Money fields and Bank fields
+
+### Bulk Import
+
+Sales reps can be imported in bulk from an Excel file, following the same pattern as product import.
+
+**Backend:**
+- `GET /sales-reps/import-template` → downloads `.xlsx` template with columns: Name*, Email*, Phone, Region, Commission Rate*, Commission Type
+- `POST /sales-reps/import` → accepts `.xlsx`, `.xls`, or `.csv` (max 20MB, 600s timeout)
+- `SalesRepService::import()` processes rows in batch, validates per row, creates users+reps with auto-generated referral codes
+- Returns `{ imported, errors[], total_rows }`
+
+**Frontend:**
+- "Import" button in the page header next to "Add Sales Rep"
+- `SalesRepImportModal`: download template, select file, upload with progress bar, results display
+- Follows the same pattern as product import (`ImportModal.tsx`)
+
+### Installment Payout System
+
+Instead of a boolean `commission_paid` flag, payouts are tracked individually via a `sales_rep_payouts` table, supporting partial/installment payments.
+
+**Database:**
+- `sales_rep_payouts`: `id`, `sales_rep_id` (FK), `amount`, `payment_method`, `notes`, `paid_at`, `paid_by` (FK→users)
+
+**Calculation:**
+- `paid_commission` = SUM of all `sales_rep_payouts.amount` for that rep
+- `pending_commission` = SUM(`commission_earned` on referrals) - `paid_commission`
+- This naturally supports any number of partial payments
+
+**Backend endpoints:**
+- `GET /sales-reps/{id}/payouts` → list payout history (with payer info)
+- `POST /sales-reps/{id}/payouts` → record a new payout
+
+**Frontend:**
+- "Payouts" button on each sales rep row opens `SalesRepPayoutModal`
+- Shows summary cards: Total Earned, Already Paid, Available to Pay
+- Record form: amount, payment method, notes
+- Payout history list with dates, methods, amounts
 
 ### Story 3: Flat Commission Rate (David)
 
@@ -206,9 +249,10 @@ Commission flow (sales rep codes only):
 **Scenario:**
 1. Sarah opens `/platform/sales-reps`
 2. Sees a summary: 3 active reps, 150,000 UGX total commission owed, 75,000 UGX paid out
-3. Sarah clicks "Edit" on a rep → can change commission rate, type, or deactivate
-4. Sarah sees each rep's pending commission and can reach out to process payouts
-5. When a payout is processed manually, `commission_paid` is set to true on the referral records
+3. Sarah clicks "Edit" on a rep → can change commission rate, type, payout fields, or deactivate
+4. Sarah clicks "Payouts" on a rep → sees payout history with dates, amounts, methods
+5. Sarah records a partial payout of 50,000 UGX via Mobile Money → system updates pending balance to 100,000 UGX
+6. Sarah imports 20 new reps in bulk via Excel download/upload
 
 ---
 
@@ -223,6 +267,8 @@ This runs three new migrations:
 |-----------|---------|
 | `2026_07_25_000003_backfill_referral_codes_for_existing_users` | Creates 6-char codes for all users who don't have one |
 | `2026_07_25_000004_add_commission_to_referrals_table` | Adds `commission_earned` and `commission_paid` columns |
+| `2026_07_25_000005_add_payout_fields_to_sales_reps_table` | Adds phone, region, payout method, MM/bank fields |
+| `2026_07_25_000006_create_sales_rep_payouts_table` | Creates payouts table for installment tracking |
 
 ---
 
@@ -242,9 +288,16 @@ This runs three new migrations:
 | GET | `/api/v1/referrals/earnings/me` | Current user's referral earnings + commission |
 | GET | `/api/v1/referrals` | All referrals (admin) |
 | POST | `/api/v1/sales-reps` | Create a sales rep |
+| GET | `/api/v1/sales-reps` | List all sales reps |
+| PUT | `/api/v1/sales-reps/{id}` | Update sales rep fields |
+| GET | `/api/v1/sales-reps/{id}` | Show single sales rep |
 | GET | `/api/v1/sales-reps/earnings/all` | All sales reps with aggregated commission |
 | GET | `/api/v1/sales-reps/earnings/mine` | Current sales rep's detailed earnings |
-| GET | `/api/v1/sales-reps/{id}/earnings` | Single sales rep's earnings with referral history |
+| GET | `/api/v1/sales-reps/{id}/earnings` | Single sales rep's earnings with referral & payout history |
+| GET | `/api/v1/sales-reps/import-template` | Download bulk import Excel template |
+| POST | `/api/v1/sales-reps/import` | Bulk import sales reps from Excel/CSV |
+| GET | `/api/v1/sales-reps/{id}/payouts` | List payout history for a sales rep |
+| POST | `/api/v1/sales-reps/{id}/payouts` | Record a payout (supports partial/installment) |
 
 ## Key Business Rules
 
@@ -254,3 +307,4 @@ This runs three new migrations:
 4. **Commission triggers on activation** — only calculated when subscription transitions to ACTIVE (payment succeeds)
 5. **Reward/commission calculated at creation** — uses the subscription's monthly price at the time of referral application
 6. **Sales rep commission is separate from referrer reward** — the referrer gets a reward (e.g. free month), and the sales rep gets commission on top
+7. **Installment payouts** — sales rep commissions can be paid in partial amounts; `pending_commission = total_earned - SUM(all payouts)` 

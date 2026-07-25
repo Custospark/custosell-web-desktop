@@ -114,20 +114,43 @@ Commission flow (sales rep codes only):
 
 **Scenario:**
 1. Sarah (platform admin) goes to `/platform/sales-reps` → clicks "Add Sales Rep"
-2. Sarah enters Peter's User ID, sets commission rate to **10% (percentage)**
-3. System creates a ReferralCode owned by `SALES_REP` with code `SALES-M2X7N4`
-4. Peter sees his code on `/pipeline/referrals` and shares it with prospects
-5. Grace registers using Peter's code `SALES-M2X7N4`
-6. Grace's subscription activates → Peter's referral becomes ACTIVE
-7. System auto-calculates: Grace's monthly price is 100,000 UGX.
+2. Sarah enters Peter's email `peter@custosell.com` in the email field. The system searches and finds Peter's existing user account, showing his name + email in green. Sarah sets commission rate to **10% (percentage)** and clicks Create.
+3. If Peter's account doesn't exist yet, Sarah would type the email, see "No user found" in amber, fill in Peter's name, and the system auto-creates the user account + sales rep + referral code in one step.
+4. System creates a ReferralCode owned by `SALES_REP` with code (e.g. `M2X7N4`)
+5. Peter sees his code on `/pipeline/referrals` and shares it with prospects
+6. Grace registers using Peter's code (e.g. `M2X7N4`)
+7. Grace's subscription activates → Peter's referral becomes ACTIVE
+8. System auto-calculates: Grace's monthly price is 100,000 UGX.
    Peter's commission = 10% × 100,000 = **10,000 UGX** → stored as `commission_earned`
-8. Peter visits `/pipeline/referrals`:
+9. Peter visits `/pipeline/referrals`:
    - Sees: "Sales Representative Commission"
    - Rate: 10% | Available to Claim: 10,000 UGX | Total Earned: 10,000 UGX
    - Message: "Contact the Custosell team to claim your pending commission"
-9. Sarah visits `/platform/sales-reps`:
+10. Sarah visits `/platform/sales-reps`:
    - Sees Peter in the list: Code `SALES-M2X7N4`, 1 referral, 10,000 UGX pending, 0 UGX paid out
    - Total commission owed across all reps: 10,000 UGX
+
+### Sales Rep Creation — Email-Based Flow
+
+**Key points:**
+- Sales reps are **users with accounts** — they log into the Pipeline module to see their referral dashboard
+- Creating a sales rep uses **email**, not a raw User ID
+- Two modes:
+  1. **Existing user** — admin enters email, system looks up the user, shows their name, admin selects commission → creates rep
+  2. **New user** — admin enters email, system detects no user found, admin fills in name, system auto-creates the user account (random password — rep uses "Forgot Password") + sales rep + referral code in one step
+- The user is **never duplicated** — if the email already belongs to a sales rep, the backend rejects with an error message
+
+**Backend:**
+- `SalesRepRequest` accepts `email` (required on create) and `name` (used when creating new user, ignored for existing)
+- `SalesRepService::create()` finds or creates the User, then creates the SalesRep + ReferralCode in a transaction
+- On update (PUT), only commission fields are accepted — the user association is fixed
+
+**Frontend:**
+- Create modal has an email input with auto-search (600ms debounce) and a manual "Search" button
+- If a user is found: green card with user info (name + email)
+- If not found: amber card with "New user will be created" message
+- Name field is editable for new users, pre-filled for found users
+- The "Create" button submits `{ email, name?, commission_rate, commission_type, is_active }`
 
 ### Story 3: Flat Commission Rate (David)
 

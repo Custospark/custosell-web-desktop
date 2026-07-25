@@ -1,0 +1,169 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import { axiosInstance } from '../../app/api/axiosConfig';
+import { SALES_REPS } from '../../shared/api/endpoints/endpoints';
+import { useToast } from '../../app/contexts/useToast';
+import { Button } from '../../shared/components/buttons/Button';
+import { Modal } from '../../shared/components/modals/Modal';
+import { DollarSign, History, Wallet, Smartphone, Landmark } from 'lucide-react';
+import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
+import type { PlatformSalesRep } from './PlatformSalesRepFormModal';
+
+interface Payout {
+  id: number;
+  sales_rep_id: number;
+  amount: string;
+  payment_method: string | null;
+  notes: string | null;
+  paid_at: string;
+  paid_by: number | null;
+  paid_by_user?: { id: number; name: string };
+}
+
+export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | null; onClose: () => void }) {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const { data: payouts = [] } = useQuery<Payout[]>({
+    queryKey: ['sales-reps', rep?.id, 'payouts'],
+    queryFn: async () => {
+      if (!rep) return [];
+      const { data } = await axiosInstance.get(SALES_REPS.PAYOUTS(rep.id));
+      return data.data ?? [];
+    },
+    enabled: !!rep,
+  });
+
+  const totalPaid = payouts.reduce((s, p) => s + Number(p.amount), 0);
+  const pending = rep ? Math.max(0, (rep.pending_commission ?? 0)) : 0;
+
+  const recordMutation = useMutation({
+    mutationFn: async () => {
+      if (!rep) return;
+      await axiosInstance.post(SALES_REPS.PAYOUTS(rep.id), {
+        amount,
+        payment_method: paymentMethod || null,
+        notes: notes || null,
+        paid_at: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      showToast('success', 'Payout recorded');
+      queryClient.invalidateQueries({ queryKey: ['sales-reps', rep?.id, 'payouts'] });
+      queryClient.invalidateQueries({ queryKey: ['platform', 'sales-reps'] });
+      setAmount('');
+      setPaymentMethod('');
+      setNotes('');
+    },
+    onError: (err: Error) => {
+      const axiosErr = err as AxiosError<{ message: string }>;
+      showToast('error', axiosErr.response?.data?.message || 'Failed to record payout');
+    },
+  });
+
+  return (
+    <Modal isOpen={!!rep} onClose={onClose} title="" size="lg">
+      <div className="space-y-5">
+        <PipelineModalHero
+          icon={DollarSign}
+          title={`Payouts — ${rep?.user?.name ?? 'Sales Rep'}`}
+          description={`${rep?.user?.email} · ${rep?.referral_code?.code ?? 'No code'}`}
+          tone="emerald"
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-500">Total Earned</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {((rep?.pending_commission ?? 0) + totalPaid).toLocaleString('en-UG')} UGX
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-500">Already Paid</p>
+            <p className="text-lg font-semibold text-green-700">{totalPaid.toLocaleString('en-UG')} UGX</p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm font-medium text-amber-800">
+            Available to Pay: {pending.toLocaleString('en-UG')} UGX
+          </p>
+        </div>
+
+        {/* Record new payout */}
+        <PipelineFormSection title="Record a Payout" icon={Wallet}>
+          <PipelineIconField label="Amount (UGX)" icon={DollarSign} required>
+            <input
+              type="number"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              placeholder="e.g. 50000"
+            />
+          </PipelineIconField>
+          <PipelineIconField label="Payment Method" icon={rep?.payment_method === 'bank' ? Landmark : Smartphone}>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="">Select method</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="bank">Bank Transfer</option>
+              <option value="cash">Cash</option>
+              <option value="other">Other</option>
+            </select>
+          </PipelineIconField>
+          <PipelineIconField label="Notes" icon={History}>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              placeholder="Optional notes about this payout"
+            />
+          </PipelineIconField>
+          <div className="flex justify-end pt-1">
+            <Button onClick={() => recordMutation.mutate()} disabled={recordMutation.isPending || !amount || Number(amount) <= 0}>
+              {recordMutation.isPending ? 'Recording...' : 'Record Payout'}
+            </Button>
+          </div>
+        </PipelineFormSection>
+
+        {/* Payout history */}
+        <PipelineFormSection title="Payout History" icon={History}>
+          {payouts.length === 0 ? (
+            <p className="text-sm text-gray-500 py-2">No payouts recorded yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {payouts.map((p) => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {Number(p.amount).toLocaleString('en-UG')} UGX
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(p.paid_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      {p.payment_method ? ` · ${p.payment_method.replace('_', ' ')}` : ''}
+                    </p>
+                    {p.notes && <p className="text-xs text-gray-400 mt-0.5">{p.notes}</p>}
+                  </div>
+                  <span className="text-xs text-gray-400">#{p.id}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </PipelineFormSection>
+
+        <div className="flex justify-end border-t border-gray-100 pt-4">
+          <Button variant="secondary" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}

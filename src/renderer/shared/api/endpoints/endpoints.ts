@@ -269,4 +269,7 @@ export const SALES_REPS = {
   EARNINGS_MINE: '/sales-reps/earnings/mine',
   EARNINGS: (id: number) => `/sales-reps/${id}/earnings`,
   BY_ID: (id: number) => `/sales-reps/${id}`,
+  IMPORT_TEMPLATE: '/sales-reps/import-template',
+  IMPORT: '/sales-reps/import',
+  PAYOUTS: (id: number) => `/sales-reps/${id}/payouts`,
 };

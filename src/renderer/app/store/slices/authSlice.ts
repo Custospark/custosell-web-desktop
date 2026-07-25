@@ -89,6 +89,7 @@ export interface AuthUser {
     tour_completed_at: string | null;
     tour_skipped_at: string | null;
   } | null;
+  active_plans?: unknown;
 }
 
 interface AuthState {

@@ -43,7 +43,7 @@ export function PlanFormDrawer({ open, onClose, plan }: PlanFormDrawerProps) {
   const [priceYearlyUsd, setPriceYearlyUsd] = useState(plan?.price_yearly_usd ? Number(plan.price_yearly_usd) : null);
   const [onboardingFeeUgx, setOnboardingFeeUgx] = useState(plan?.onboarding_fee_ugx ?? null);
   const [onboardingFeeUsd, setOnboardingFeeUsd] = useState(plan?.onboarding_fee_usd ?? null);
-  const [trialDays, setTrialDays] = useState(plan?.trial_days ?? 14);
+  const [trialDays, setTrialDays] = useState<number | null>(plan?.trial_days ?? 14);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'both'>(plan?.billing_cycle ?? 'monthly');
   const [features, setFeatures] = useState<Record<string, boolean>>(plan?.features ?? {});
   const [limits, setLimits] = useState<Record<string, number | null>>(plan?.limits ?? {});

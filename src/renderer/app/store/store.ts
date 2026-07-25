@@ -6,6 +6,7 @@ export const store = configureStore({
   preloadedState: {
     auth: {
       user: null,
+      plans: [],
       token: null,
       businessId: null,
       isAuthenticated: false,

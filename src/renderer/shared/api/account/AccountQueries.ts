@@ -70,8 +70,8 @@ function extractAuthUser(data: AuthResponse): AuthUser {
 
 /** Extract active_plans from a user object returned by UserResource.
  *  The field is a flat array in practice; defensively handles { data: [...] } too. */
-function extractActivePlans(userData: Record<string, unknown> | null | undefined): Plan[] {
-  const plans = (userData as { active_plans?: unknown })?.active_plans;
+function extractActivePlans(userData: AuthUser | null | undefined): Plan[] {
+  const plans = userData?.active_plans;
   if (Array.isArray(plans)) return plans;
   if (plans && typeof plans === 'object' && 'data' in (plans as object) && Array.isArray((plans as { data: unknown }).data)) {
     return (plans as { data: Plan[] }).data;
@@ -188,6 +188,7 @@ export function useLogin(options?: { redirect?: boolean }) {
 interface RegisterBusinessResult {
   user: AuthUser;
   token: string;
+  plans: Plan[];
   isLocalSession: boolean;
   pendingAuthSync: boolean;
 }
@@ -204,6 +205,7 @@ export function useRegisterBusiness() {
         return {
           user: offline.user,
           token: offline.token,
+          plans: extractActivePlans(offline.user),
           isLocalSession: true,
           pendingAuthSync: true,
         };

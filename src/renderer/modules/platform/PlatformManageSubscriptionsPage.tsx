@@ -137,8 +137,8 @@ export default function PlatformManageSubscriptionsPage() {
         <Table<PlatformSubscription & { __row: number }>
           rowKey={(s) => s.id}
           columns={[
-            { key: '__row', header: '#', render: (s) => (
-              <span className="text-sm text-gray-400 font-mono w-6 text-right">{s.__row}</span>
+            { key: '__row', header: '#', align: 'center', render: (s) => (
+              <span className="text-sm text-gray-400 font-mono">{s.__row}</span>
             )},
             { key: 'business_id', header: 'Business', render: (s) => (
               <span className="font-medium text-gray-900">{s.business?.name ?? `Business #${s.business_id}`}</span>
@@ -146,30 +146,30 @@ export default function PlatformManageSubscriptionsPage() {
             { key: 'plan_id', header: 'Plan', render: (s) => (
               <span className="text-gray-600">{s.plan?.name ?? `Plan #${s.plan_id}`}</span>
             )},
-            { key: 'price_monthly', header: 'Monthly', render: (s) => (
-              <div className="text-right">
+            { key: 'price_monthly', header: 'Monthly', align: 'right', render: (s) => (
+              <>
                 <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_monthly ?? s.plan?.price_monthly)}</span>
                 <span className="text-xs text-gray-400 ml-1">UGX</span>
-              </div>
+              </>
             )},
-            { key: 'price_yearly', header: 'Yearly', render: (s) => (
-              <div className="text-right">
+            { key: 'price_yearly', header: 'Yearly', align: 'right', render: (s) => (
+              <>
                 <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_yearly ?? s.plan?.price_yearly)}</span>
                 <span className="text-xs text-gray-400 ml-1">UGX</span>
-              </div>
+              </>
             )},
-            { key: 'status', header: 'Status', render: (s) => (
+            { key: 'status', header: 'Status', align: 'center', render: (s) => (
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[s.status] ?? 'bg-gray-100 text-gray-600'}`}>
                 {s.status}
               </span>
             )},
-            { key: 'billing_cycle', header: 'Cycle', render: (s) => (
+            { key: 'billing_cycle', header: 'Cycle', align: 'center', render: (s) => (
               <span className="text-sm text-gray-600 capitalize">{s.billing_cycle ?? '—'}</span>
             )},
-            { key: 'onboarding', header: 'Onboarding', render: (s) => {
+            { key: 'onboarding', header: 'Onboarding', align: 'right', render: (s) => {
               const fee = s.onboarding_fee_ugx;
               return (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-end gap-1.5">
                   {fee != null && fee > 0 && (
                     <span className="text-sm font-medium text-gray-900">{formatCurrency(fee)} UGX</span>
                   )}

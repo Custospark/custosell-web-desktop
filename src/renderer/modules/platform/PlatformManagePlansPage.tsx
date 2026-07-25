@@ -102,22 +102,22 @@ export default function PlatformManagePlansPage() {
             { key: 'slug', header: 'Slug', render: (p) => (
               <span className="text-sm text-gray-500 font-mono">{p.slug}</span>
             )},
-            { key: 'price_monthly', header: 'Monthly', render: (p) => (
+            { key: 'price_monthly', header: 'Monthly', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
                 {Number(p.price_monthly).toLocaleString('en-UG')} UGX
               </span>
             )},
-            { key: 'price_yearly', header: 'Yearly', render: (p) => (
+            { key: 'price_yearly', header: 'Yearly', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
                 {p.price_yearly ? `${Number(p.price_yearly).toLocaleString('en-UG')} UGX` : '—'}
               </span>
             )},
-            { key: 'onboarding_fee_ugx', header: 'Onboarding', render: (p) => (
-              <span className="text-sm text-gray-600">
+            { key: 'onboarding_fee_ugx', header: 'Onboarding', align: 'right', render: (p) => (
+              <span className="text-sm font-medium text-gray-900">
                 {p.onboarding_fee_ugx ? `${Number(p.onboarding_fee_ugx).toLocaleString('en-UG')} UGX` : '—'}
               </span>
             )},
-            { key: 'trial_days', header: 'Trial', render: (p) => (
+            { key: 'trial_days', header: 'Trial', align: 'center', render: (p) => (
               <span className="text-sm text-gray-600">{p.trial_days ?? '-'} days</span>
             )},
             { key: 'actions', header: '', render: (p) => (

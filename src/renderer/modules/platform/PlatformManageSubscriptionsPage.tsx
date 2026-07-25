@@ -61,6 +61,8 @@ export default function PlatformManageSubscriptionsPage() {
       list = list.filter((s) =>
         String(s.business_id).includes(q)
         || String(s.plan_id).includes(q)
+        || s.business?.name?.toLowerCase().includes(q)
+        || s.plan?.name?.toLowerCase().includes(q)
         || s.status.toLowerCase().includes(q)
         || s.billing_cycle?.toLowerCase().includes(q),
       );
@@ -98,7 +100,7 @@ export default function PlatformManageSubscriptionsPage() {
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1">
             <SearchInput
-              placeholder="Search by business or plan ID..."
+              placeholder="Search by business or plan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onClear={() => setSearch('')}
@@ -129,10 +131,10 @@ export default function PlatformManageSubscriptionsPage() {
               <span className="font-mono text-sm text-gray-500">#{s.id}</span>
             )},
             { key: 'business_id', header: 'Business', render: (s) => (
-              <span className="font-medium text-gray-900">Business #{s.business_id}</span>
+              <span className="font-medium text-gray-900">{s.business?.name ?? `Business #${s.business_id}`}</span>
             )},
             { key: 'plan_id', header: 'Plan', render: (s) => (
-              <span className="text-gray-600">Plan #{s.plan_id}</span>
+              <span className="text-gray-600">{s.plan?.name ?? `Plan #${s.plan_id}`}</span>
             )},
             { key: 'status', header: 'Status', render: (s) => (
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[s.status] ?? 'bg-gray-100 text-gray-600'}`}>

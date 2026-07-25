@@ -215,6 +215,8 @@ export interface PlatformSubscription {
   id: number;
   business_id: number;
   plan_id: number;
+  business?: { id: number; name: string; slug?: string | null };
+  plan?: { id: number; name: string; slug?: string | null };
   status: 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'expired';
   billing_cycle?: string | null;
   starts_at?: string | null;

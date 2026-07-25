@@ -23,7 +23,7 @@ interface AuthLayoutProps {
 const AUTH_HIGHLIGHTS = [
   { value: 'Offline', label: 'First' },
   { value: '99%', label: 'Uptime' },
-  { value: 'Free', label: 'To Get Started' },
+  { value: '30-day', label: 'Trial' },
 ] as const;
 
 export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
@@ -66,7 +66,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             </div>
 
             <p className="text-blue-200/80 text-sm">
-              No credit card required · Free to use · Works offline
+              No credit card required · 30-day trial · Works offline
             </p>
           </div>
 

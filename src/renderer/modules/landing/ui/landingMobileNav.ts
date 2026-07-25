@@ -1,4 +1,4 @@
-import { Home, CreditCard, Shield, Compass, type LucideIcon } from 'lucide-react';
+import { Home, CreditCard, Shield, Compass, HelpCircle, type LucideIcon } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
 export const LANDING_MOBILE_TABS: ReadonlyArray<{
@@ -11,6 +11,7 @@ export const LANDING_MOBILE_TABS: ReadonlyArray<{
   { label: 'Discover', path: ROUTES.DISCOVER, icon: Compass },
   { label: 'Pricing', path: ROUTES.PRICING, icon: CreditCard },
   { label: 'Privacy', path: ROUTES.PRIVACY, icon: Shield },
+  { label: 'FAQs', path: ROUTES.PUBLIC_FAQS, icon: HelpCircle },
 ];
 
 export function scrollLandingToTop() {

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, Home, CreditCard, Shield, UserRound, Compass } from 'lucide-react';
+import { Download, Home, CreditCard, Shield, UserRound, Compass, HelpCircle } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { useToast } from '../../app/contexts/ToastContext';
 import LogoImage from '../../shared/assets/LogoImage';
@@ -19,6 +19,7 @@ const navLinks = [
   { label: 'Discover', path: ROUTES.DISCOVER, icon: Compass },
   { label: 'Pricing', path: ROUTES.PRICING, icon: CreditCard },
   { label: 'Privacy', path: ROUTES.PRIVACY, icon: Shield },
+  { label: 'FAQs', path: ROUTES.PUBLIC_FAQS, icon: HelpCircle },
 ] as const;
 
 export default function LandingLayout() {

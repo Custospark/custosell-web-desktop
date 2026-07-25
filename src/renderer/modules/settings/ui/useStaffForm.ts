@@ -27,6 +27,7 @@ import {
   staffHasFullHrModule,
   type BusinessModuleSlug,
 } from '../../../shared/utils/moduleAccess';
+import { usePlanAccessibleModules } from '../../../shared/utils/usePlanAccessibleModules';
 import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 
@@ -224,9 +225,20 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
   const emailLocked = Boolean(accountRules?.isBusinessOwner);
   const settingsRequired = Boolean(accountRules?.isBusinessOwner);
   const modulesLocked = false;
+  const planModules = usePlanAccessibleModules();
   const assignableModules = useMemo(
-    () => (authUser && isBusinessOwner(authUser) ? assignableStaffModuleSlugs(authUser) : [...BUSINESS_MODULE_SLUGS]),
-    [authUser],
+    () => {
+      let base: BusinessModuleSlug[];
+      if (authUser && isBusinessOwner(authUser)) {
+        base = assignableStaffModuleSlugs(authUser);
+      } else {
+        base = [...BUSINESS_MODULE_SLUGS];
+      }
+      return planModules
+        ? base.filter((m) => planModules.includes(m) || !BUSINESS_MODULE_SLUGS.includes(m))
+        : base;
+    },
+    [authUser, planModules],
   );
 
   useEffect(() => {
@@ -234,6 +246,9 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
     queueMicrotask(() => {
       setForm((prev) => {
         let allowed = intersectStaffModulesWithOwner(prev.modules, authUser);
+        if (planModules) {
+          allowed = allowed.filter((m) => planModules.includes(m) || !BUSINESS_MODULE_SLUGS.includes(m));
+        }
         if (settingsRequired && !allowed.includes('settings')) {
           allowed = [...allowed, 'settings'];
         }
@@ -250,7 +265,7 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
         return { ...prev, modules: allowed, estimatesFullAccess, hrFullAccess };
       });
     });
-  }, [authUser, assignableModules, modulesLocked, open, settingsRequired]);
+  }, [authUser, assignableModules, modulesLocked, open, planModules, settingsRequired]);
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
     if (modulesLocked) return;

@@ -12,6 +12,7 @@ import {
 } from './moduleLauncherCatalog';
 import { isOnlineOnlyLauncherSlug, launcherOfflineMessage } from './onlineOnlyNav';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
+import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 
 interface ModuleLauncherModalProps {
   open: boolean;
@@ -138,11 +139,12 @@ export default function ModuleLauncherModal({ open, onClose, friendlyCopy = fals
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
   const { isCompletelyOffline } = useNetworkStatus();
+  const planModules = usePlanAccessibleModules();
   const [query, setQuery] = useState('');
 
   const accessible = useMemo(
-    () => sortLauncherModules(getLauncherModulesForUser(user)),
-    [user],
+    () => sortLauncherModules(getLauncherModulesForUser(user, planModules)),
+    [user, planModules],
   );
 
   const filtered = useMemo(() => {

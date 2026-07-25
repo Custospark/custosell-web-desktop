@@ -14,6 +14,7 @@ import {
 import { AppMobileMoreSheet } from './AppMobileMoreSheet';
 import { isOnlineOnlyNavTarget, onlineOnlyHoverMessage } from './onlineOnlyNav';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
+import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 
 const tabBtnBase =
   'flex h-full min-w-0 flex-col items-center justify-center gap-1 px-0.5 text-center transition-colors';
@@ -28,7 +29,8 @@ export function AppMobileTabBar() {
   const location = useLocation();
   const { isCompletelyOffline } = useNetworkStatus();
 
-  const leaves = useMemo(() => resolveAccessibleNavLeaves(user), [user]);
+  const planModules = usePlanAccessibleModules();
+  const leaves = useMemo(() => resolveAccessibleNavLeaves(user, planModules), [user, planModules]);
   const pinTabs = leaves.slice(0, 2);
   const remainingLeaves = leaves.slice(2);
   const moreActive =

@@ -8,6 +8,7 @@ import {
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
+import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 import LogoImage from '../../assets/LogoImage';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { NAV_GROUP_MODULE } from '../../utils/moduleAccess';
@@ -46,7 +47,8 @@ function getGroupIndexForPath(pathname: string, navGroups: SidebarNavGroup[], al
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
-  const navGroups = useMemo(() => resolveAccessibleNavGroups(user), [user]);
+  const planModules = usePlanAccessibleModules();
+  const navGroups = useMemo(() => resolveAccessibleNavGroups(user, planModules), [user, planModules]);
   const allSubRoutes = useMemo(
     () => (user?.is_platform_admin ? [...baseSubRoutes, ...platformSubRoutes] : baseSubRoutes),
     [user?.is_platform_admin],

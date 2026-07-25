@@ -11,6 +11,7 @@ import { useToast } from '../../../app/contexts/useToast';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
 import { MODULE_LAUNCHER_CATALOG } from '../../../shared/components/layout/moduleLauncherCatalog';
+import { usePlanAccessibleModules } from '../../../shared/utils/usePlanAccessibleModules';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
@@ -58,6 +59,14 @@ export default function OwnerModuleAccessForm() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
+  const planModules = usePlanAccessibleModules();
+  const planSlugs = new Set(planModules);
+
+  const planAllowedTiles = useMemo(
+    () => OWNER_MODULE_TILES.filter((t) => planSlugs.has(t.slug)),
+    [planModules],
+  );
+
   const [modules, setModules] = useState<BusinessModuleSlug[]>([]);
   const [estimatesFullAccess, setEstimatesFullAccess] = useState(false);
   const [hrFullAccess, setHrFullAccess] = useState(false);
@@ -65,11 +74,12 @@ export default function OwnerModuleAccessForm() {
   useEffect(() => {
     if (!user || !isBusinessOwner(user)) return;
     queueMicrotask(() => {
-      setModules(withRequiredSettings(resolvedOwnerBusinessModules(user)));
-      setEstimatesFullAccess(ownerInitialEstimatesFullAccess(user));
-      setHrFullAccess(ownerInitialHrFullAccess(user));
+      const stored = resolvedOwnerBusinessModules(user);
+      setModules(withRequiredSettings(stored.filter((m) => planSlugs.has(m))));
+      setEstimatesFullAccess(ownerInitialEstimatesFullAccess(user) && planSlugs.has('estimates'));
+      setHrFullAccess(ownerInitialHrFullAccess(user) && planSlugs.has('hr'));
     });
-  }, [user]);
+  }, [user, planSlugs]);
 
   const resolvedModules = useMemo(
     () => buildStaffModulesPayload(withRequiredSettings(modules), estimatesFullAccess, hrFullAccess),
@@ -78,16 +88,19 @@ export default function OwnerModuleAccessForm() {
 
   const baselineSignature = useMemo(() => {
     if (!user || !isBusinessOwner(user)) return '';
+    const stored = resolvedOwnerBusinessModules(user);
+    const clamped = withRequiredSettings(stored.filter((m) => planSlugs.has(m)));
     return modulesSignature(
       buildStaffModulesPayload(
-        withRequiredSettings(resolvedOwnerBusinessModules(user)),
-        ownerInitialEstimatesFullAccess(user),
-        ownerInitialHrFullAccess(user),
+        clamped,
+        ownerInitialEstimatesFullAccess(user) && planSlugs.has('estimates'),
+        ownerInitialHrFullAccess(user) && planSlugs.has('hr'),
       ),
     );
-  }, [user]);
+  }, [user, planSlugs]);
 
   const isDirty = modulesSignature(resolvedModules) !== baselineSignature;
+  const planModuleCount = planAllowedTiles.length;
   const enabledCount = withRequiredSettings(modules).length;
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
@@ -160,7 +173,7 @@ export default function OwnerModuleAccessForm() {
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Enabled</p>
             <p className="text-lg font-bold tabular-nums text-slate-900">
               {enabledCount}
-              <span className="text-sm font-medium text-slate-400">/{BUSINESS_MODULE_SLUGS.length}</span>
+              <span className="text-sm font-medium text-slate-400">/{planModuleCount}</span>
             </p>
           </div>
           <Button
@@ -176,7 +189,7 @@ export default function OwnerModuleAccessForm() {
       </div>
 
       <div className="grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-2 min-[520px]:gap-3 xl:grid-cols-3">
-        {OWNER_MODULE_TILES.map((item) => {
+        {planAllowedTiles.map((item) => {
           const slug = item.slug as BusinessModuleSlug;
           const isSettings = slug === 'settings';
           return (
@@ -199,7 +212,7 @@ export default function OwnerModuleAccessForm() {
       {(modules.includes('estimates') || modules.includes('hr')) && (
         <div className="mt-5 space-y-3 sm:mt-6">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Workspace depth</h2>
-          {modules.includes('estimates') && (
+          {planSlugs.has('estimates') && modules.includes('estimates') && (
             <label
               className={cn(
                 'flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors sm:p-4',
@@ -226,7 +239,7 @@ export default function OwnerModuleAccessForm() {
               />
             </label>
           )}
-          {modules.includes('hr') && (
+          {planSlugs.has('hr') && modules.includes('hr') && (
             <label
               className={cn(
                 'flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors sm:p-4',
@@ -267,7 +280,7 @@ export default function OwnerModuleAccessForm() {
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Enabled</p>
             <p className="text-base font-bold tabular-nums text-slate-900">
               {enabledCount}
-              <span className="text-sm font-medium text-slate-400">/{BUSINESS_MODULE_SLUGS.length}</span>
+              <span className="text-sm font-medium text-slate-400">/{planModuleCount}</span>
               {!isDirty ? (
                 <span className="ml-2 text-xs font-medium normal-case tracking-normal text-slate-400">No changes</span>
               ) : null}

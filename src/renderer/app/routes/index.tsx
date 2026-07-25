@@ -76,6 +76,7 @@ import DocumentsCabinetPage from '../../modules/documents/pages/DocumentsCabinet
 import { PlatformAdminRoute } from './middleware/PlatformAdminRoute';
 import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSettingsPage';
 import PrivacyPage from '../../modules/landing/PrivacyPage';
+import FaqPage from '../../modules/landing/FaqPage';
 import PricingPage from '../../modules/landing/PricingPage';
 import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
 import BookingLayout from '../../modules/pipeline/ui/BookingLayout';
@@ -160,6 +161,7 @@ export function AppRoutes() {
           <Route path="/" element={<SuspenseWrapper><LandingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRICING} element={<SuspenseWrapper><PricingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRIVACY} element={<SuspenseWrapper><PrivacyPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.PUBLIC_FAQS} element={<SuspenseWrapper><FaqPage /></SuspenseWrapper>} />
         </Route>
         <Route path={ROUTES.LOGIN} element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
         <Route path={ROUTES.REGISTER} element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />

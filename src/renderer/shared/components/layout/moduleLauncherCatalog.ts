@@ -213,18 +213,25 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
  * Modules shown in the launcher for this user:
  * defaults (account, guide) + staff/owner form-drawer modules + platform tiles when admin.
  * Also includes Projects & Estimates for project collaborators (same as sidebar).
+ * When `planModules` is provided, it filters results by the user's subscription plan features.
  */
-export function getLauncherModulesForUser(user: AuthUser | null | undefined): ModuleLauncherItem[] {
-  const accessible = new Set(getAccessibleModules(user));
+export function getLauncherModulesForUser(
+  user: AuthUser | null | undefined,
+  planModules?: string[],
+): ModuleLauncherItem[] {
+  const baseAccessible = getAccessibleModules(user);
+  const accessible = planModules ?? baseAccessible;
+
+  const accessibleSet = new Set(accessible);
   if (hasEstimatesBoardsAccess(user)) {
-    accessible.add('estimates');
+    accessibleSet.add('estimates');
   }
 
   return MODULE_LAUNCHER_CATALOG.filter((item) => {
     if (item.slug === 'estimates') {
       return hasEstimatesBoardsAccess(user) || canAccessModule(user, 'estimates');
     }
-    return accessible.has(item.slug);
+    return accessibleSet.has(item.slug);
   });
 }
 

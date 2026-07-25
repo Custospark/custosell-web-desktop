@@ -6,7 +6,7 @@ import type { Plan } from '../../shared/types';
 
 const FEATURE_LABELS: Record<string, string> = {
   sales: 'Point of Sale', inventory: 'Inventory', customers: 'Customers',
-  expenses: 'Expenses', dashboard: 'Dashboard', invoices: 'Invoicing',
+  expenses: 'Expenses', dashboard: 'Dashboard',
   pipeline: 'Pipeline', estimates: 'Estimates & Projects', storefront: 'Storefront',
   marketplace: 'Marketplace', documents: 'Documents', accounting: 'Accounting',
   hr: 'HR & Payroll', forecasting: 'Forecasting & Budgets',

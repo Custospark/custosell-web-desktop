@@ -135,6 +135,7 @@ export function useLogin(options?: { redirect?: boolean }) {
       dispatch(loginSuccess({
         user: userData,
         token: data.token,
+        plans: data.active_plans?.data,
         isLocalSession: isLocal,
         pendingAuthSync: data.pendingAuthSync ?? false,
       }));
@@ -201,6 +202,7 @@ export function useRegisterBusiness() {
       return {
         user: extractAuthUser(data),
         token: data.token,
+        plans: data.active_plans?.data,
         isLocalSession: false,
         pendingAuthSync: false,
       };
@@ -212,6 +214,7 @@ export function useRegisterBusiness() {
       dispatch(registerSuccess({
         user: result.user,
         token: result.token,
+        plans: result.plans,
         isLocalSession: result.isLocalSession,
         pendingAuthSync: result.pendingAuthSync,
       }));
@@ -258,7 +261,7 @@ export function useRegister(options?: { redirect?: boolean }) {
     },
     onSuccess: (data) => {
       const userData = extractAuthUser(data);
-      dispatch(registerSuccess({ user: userData, token: data.token }));
+      dispatch(registerSuccess({ user: userData, token: data.token, plans: data.active_plans?.data }));
       showToast('success', 'Account created successfully');
       if (shouldRedirect) {
         navigate(getDefaultRoute(userData));

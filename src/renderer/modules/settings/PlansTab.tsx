@@ -18,10 +18,9 @@ const FEATURE_CATALOG: Record<string, { label: string; description: string }> = 
   customers: { label: 'Customer Management', description: 'Customer profiles & purchase history' },
   expenses: { label: 'Expense Tracking', description: 'Record and categorize expenses' },
   dashboard: { label: 'Dashboard & Analytics', description: 'Real-time business performance' },
-  invoices: { label: 'Invoicing', description: 'Create and send invoices' },
+  storefront: { label: 'Online Storefront', description: 'Sell online with custom storefront' },
   pipeline: { label: 'Sales Pipeline', description: 'Boards, leads & team collaboration' },
   estimates: { label: 'Estimates & Projects', description: 'Quotes, projects & templates' },
-  storefront: { label: 'Online Storefront', description: 'Sell online with custom storefront' },
   marketplace: { label: 'Supply Marketplace', description: 'Source products from other businesses' },
   documents: { label: 'Document Management', description: 'Secure file storage & e-signatures' },
   accounting: { label: 'Full Accounting', description: 'Chart of accounts & financial reports' },
@@ -256,7 +255,7 @@ export default function PlansTab({ subscription }: PlansTabProps) {
                   {plan.trial_days && (
                     <div className="text-center">
                       <span className="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-4 py-1.5 rounded-full">
-                        {plan.trial_days}-day free trial after setup
+                        {plan.trial_days}-day trial after setup
                       </span>
                     </div>
                   )}

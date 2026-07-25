@@ -1,6 +1,7 @@
 import { store } from '../../store';
 import { loginSuccess } from '../../slices/authSlice';
 import type { AuthUser } from '../../slices/authSlice';
+import type { Plan } from '../../../../shared/types';
 import { persistLoginCredentials } from './deviceCredentials';
 import { remapBusinessContext } from '../core/remapBusinessContext';
 import { postSessionUpgradeRefresh } from './sessionRefresh';
@@ -17,6 +18,7 @@ export async function applyServerAuth(
   user: AuthUser,
   token: string,
   password: string,
+  plans: Plan[],
   remap?: ServerAuthRemap,
 ): Promise<void> {
   if (remap) {
@@ -36,6 +38,7 @@ export async function applyServerAuth(
     loginSuccess({
       user,
       token,
+      plans,
       isLocalSession: false,
       pendingAuthSync: false,
     }),

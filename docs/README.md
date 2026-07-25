@@ -6,6 +6,7 @@ Technical documentation for the Custosell frontend (Electron + React + TypeScrip
 
 | If you need… | Start here |
 |--------------|------------|
+| Sales pitch / closing the deal | [product/sales-faq.md](./product/sales-faq.md) |
 | Offline system overview | [offline/architecture.md](./offline/architecture.md) |
 | Login, reconnect, 401 fix | [offline/auth.md](./offline/auth.md) |
 | Manual test plan | [offline/testing.md](./offline/testing.md) |

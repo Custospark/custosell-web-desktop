@@ -18,6 +18,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: { data: AuthUser };
   token: string;
+  active_plans?: { data: Plan[] };
 }
 
 export interface BusinessRegisterRequest {

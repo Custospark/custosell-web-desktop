@@ -8,6 +8,7 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   PRICING: '/pricing',
   PRIVACY: '/privacy',
+  PUBLIC_FAQS: '/faqs',
   DISCOVER: '/discover',
   DISCOVER_MY_ORDERS: '/discover/my-orders',
   DISCOVER_WISHLIST: '/discover/wishlist',

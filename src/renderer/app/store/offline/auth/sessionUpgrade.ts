@@ -91,7 +91,7 @@ async function runSessionUpgrade(): Promise<SessionUpgradeResult> {
       } as never,
     );
     const user = extractAuthUser(data);
-    await applyServerAuth(user, data.token, password);
+    await applyServerAuth(user, data.token, password, data.active_plans?.data ?? []);
     return { upgraded: true };
   } catch (err) {
     const status = (err as AxiosError).response?.status;

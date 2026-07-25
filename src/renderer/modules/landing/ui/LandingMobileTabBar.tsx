@@ -9,7 +9,7 @@ export function LandingMobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(15,23,42,0.1)] md:hidden"
       aria-label="Mobile primary"
     >
-      <ul className="mx-auto grid h-16 max-w-lg grid-cols-4 items-stretch px-1">
+      <ul className="mx-auto grid h-16 max-w-lg grid-cols-5 items-stretch px-1">
         {LANDING_MOBILE_TABS.map((link) => {
           const Icon = link.icon;
           return (

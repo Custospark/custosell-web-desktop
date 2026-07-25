@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { Plan } from '../../../shared/types';
 import type { StoredAuthSession } from '../offline/auth/secureStorage';
 import { isLocalSessionToken } from '../offline/auth/secureStorage';
 
@@ -7,6 +8,7 @@ export interface SubscriptionInfo {
   plan_id: number;
   plan_name?: string | null;
   plan_slug?: string | null;
+  plan_features?: Record<string, boolean> | null;
   status: string;
   billing_cycle?: string | null;
   starts_at?: string | null;
@@ -91,6 +93,7 @@ export interface AuthUser {
 
 interface AuthState {
   user: AuthUser | null;
+  plans: Plan[];
   token: string | null;
   businessId: number | null;
   isAuthenticated: boolean;
@@ -103,6 +106,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
+  plans: [],
   token: null,
   businessId: null,
   isAuthenticated: false,
@@ -131,9 +135,10 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
+    loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; plans?: Plan[]; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
       const user = normalizeAuthUser({ ...action.payload.user });
       state.user = user;
+      state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
       state.businessId = user.business_id;
       state.isAuthenticated = true;
@@ -151,9 +156,10 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    registerSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
+    registerSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; plans?: Plan[]; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
       const user = normalizeAuthUser({ ...action.payload.user });
       state.user = user;
+      state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
       state.businessId = user.business_id;
       state.isAuthenticated = true;
@@ -205,6 +211,9 @@ const authSlice = createSlice({
       state.user.shift_id = action.payload.shift_id;
       state.user.shift_clock_in = action.payload.shift_clock_in;
     },
+    setPlans(state, action: PayloadAction<Plan[]>) {
+      state.plans = action.payload;
+    },
     setBusiness(state, action: PayloadAction<BusinessInfo>) {
       if (state.user) {
         state.user.business = action.payload;
@@ -223,7 +232,7 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, hydrateAuth, setUser, setBusiness, setInitialized, clearError, updateShiftContext,
+  logout, hydrateAuth, setUser, setPlans, setBusiness, setInitialized, clearError, updateShiftContext,
 } = authSlice.actions;
 
 export default authSlice.reducer;

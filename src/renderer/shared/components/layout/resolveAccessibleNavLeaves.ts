@@ -23,15 +23,28 @@ export interface AccessibleNavLeaf extends SidebarSubItem {
   groupLabel: string;
 }
 
-/** Same group filter as Sidebar — module access, limited HR/estimates, owner-only settings. */
-export function resolveAccessibleNavGroups(user: AuthUser | null | undefined): SidebarNavGroup[] {
+/** Same group filter as Sidebar — module access, limited HR/estimates, owner-only settings.
+ *  When `planAccessibleModules` is passed, it replaces `canAccessModule` for business module
+ *  gating so the sidebar respects the user's subscription plan features. */
+export function resolveAccessibleNavGroups(
+  user: AuthUser | null | undefined,
+  planAccessibleModules?: string[],
+): SidebarNavGroup[] {
+  const hasModule = planAccessibleModules
+    ? (slug: string) => planAccessibleModules.includes(slug)
+    : (slug: string) => canAccessModule(user, slug);
+
   const businessGroups = baseNavGroups.filter((group) => {
     const moduleSlug = NAV_GROUP_MODULE[group.label];
     if (!moduleSlug) return true;
     if (group.label === 'Projects & Estimates') {
+      if (!hasModule('estimates')) return false;
       return hasEstimatesBoardsAccess(user);
     }
-    return canAccessModule(user, moduleSlug);
+    if (group.label === 'Discover & My Orders') return true;
+    if (group.label === 'Custosell Guide') return true;
+    if (group.label === 'Account') return true;
+    return hasModule(moduleSlug);
   }).map((group) => {
     if (group.label === 'Projects & Estimates' && isLimitedEstimatesUser(user)) {
       return {
@@ -68,9 +81,12 @@ export function resolveAccessibleNavGroups(user: AuthUser | null | undefined): S
 }
 
 /** Flatten accessible groups in catalog order into leaf destinations. */
-export function resolveAccessibleNavLeaves(user: AuthUser | null | undefined): AccessibleNavLeaf[] {
+export function resolveAccessibleNavLeaves(
+  user: AuthUser | null | undefined,
+  planAccessibleModules?: string[],
+): AccessibleNavLeaf[] {
   const leaves: AccessibleNavLeaf[] = [];
-  for (const group of resolveAccessibleNavGroups(user)) {
+  for (const group of resolveAccessibleNavGroups(user, planAccessibleModules)) {
     for (const item of group.subItems) {
       leaves.push({ ...item, groupLabel: group.label });
     }

@@ -44,18 +44,19 @@ async function processAuthRegister(m: QueuedMutation): Promise<boolean> {
 
     const user = extractAuthUser(data);
     const token = data.token;
+    const plans = data.active_plans?.data ?? [];
     const oldBusinessId = authRecord?.localBusinessId ?? store.getState().auth.user?.business_id ?? 0;
     const oldUserId = authRecord?.localUserId ?? store.getState().auth.user?.id ?? 0;
 
     if (typeof oldBusinessId === 'number' && oldBusinessId < 0 && user.business_id && user.id) {
-      await applyServerAuth(user, token, payload.password, {
+      await applyServerAuth(user, token, payload.password, plans, {
         oldBusinessId,
         newBusinessId: user.business_id,
         oldUserId,
         newUserId: user.id,
       });
     } else {
-      await applyServerAuth(user, token, payload.password);
+      await applyServerAuth(user, token, payload.password, plans);
     }
 
     await mutationQueue.remove(m.id);
@@ -81,7 +82,7 @@ async function processAuthLogin(m: QueuedMutation): Promise<boolean> {
     await mutationQueue.markSyncing(m.id);
     const { data } = await axiosInstance.post<AuthResponse>('/auth/login', payload, { skipAuthRedirect: true } as never);
     const user = extractAuthUser(data);
-    await applyServerAuth(user, data.token, payload.password);
+    await applyServerAuth(user, data.token, payload.password, data.active_plans?.data ?? []);
     await mutationQueue.remove(m.id);
 
     return true;

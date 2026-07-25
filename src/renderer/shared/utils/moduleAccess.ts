@@ -167,6 +167,21 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
   return [...modules];
 }
 
+/** Intersect the user's accessible modules with their subscription plan's features.
+ *  Non-module slugs (account, guide, discover, platform) and `settings` are always kept.
+ *  Uses plan_features from the subscription response (always available after login). */
+export function getPlanAccessibleModules(user: AuthUser | null | undefined): string[] {
+  const accessible = getAccessibleModules(user);
+  const features = user?.business?.subscription?.plan_features;
+  if (!features) return accessible;
+
+  return accessible.filter((mod) => {
+    if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
+    if (mod === 'settings') return true;
+    return features[mod] === true;
+  });
+}
+
 export function canAccessModule(user: AuthUser | null | undefined, module: string): boolean {
   return getAccessibleModules(user).includes(module);
 }
@@ -182,9 +197,11 @@ export function isProjectCollaboratorOnly(user: AuthUser | null | undefined): bo
   return (user.project_member_ids?.length ?? 0) > 0;
 }
 
-/** Full Projects & Estimates workspace (estimates, projects, insights, templates, costing). */
+/** Full Projects & Estimates workspace (estimates, projects, insights, templates, costing).
+ *  Business owners with estimates access see the full module; staff need the `estimates_full` flag. */
 export function canViewFullEstimates(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
+  if (isBusinessOwner(user) && canAccessModule(user, 'estimates')) return true;
   return staffHasFullEstimatesModule(user.modules);
 }
 
@@ -192,9 +209,11 @@ export function staffHasFullEstimatesModule(modules: string[] | undefined): bool
   return (modules ?? []).includes(ESTIMATES_FULL_MODULE);
 }
 
-/** Full HR & Payroll workspace (people admin, departments, payroll, reports). Same as estimates: requires `hr_full`. */
+/** Full HR & Payroll workspace (people admin, departments, payroll, reports).
+ *  Business owners with hr access see the full module; staff need the `hr_full` flag. */
 export function canViewFullHr(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
+  if (isBusinessOwner(user) && canAccessModule(user, 'hr')) return true;
   return staffHasFullHrModule(user.modules);
 }
 
@@ -321,7 +340,7 @@ export function canAccessHrArea(
 export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (!user) return ROUTES.LOGIN;
 
-  const accessible = new Set(getAccessibleModules(user));
+  const accessible = new Set(getPlanAccessibleModules(user));
   const priority = isBusinessOwner(user) ? OWNER_LANDING_PRIORITY : STAFF_LANDING_PRIORITY;
 
   for (const mod of priority) {

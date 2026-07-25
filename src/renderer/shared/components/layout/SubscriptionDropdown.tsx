@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { useActivePlans } from '../plans/useActivePlans';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
 import {
   Crown, Sparkles, Building2, CheckCircle2, ChevronDown,
-  CreditCard, Settings, ArrowUp, ArrowDown, Loader2,
+  CreditCard, Settings, ArrowUp, ArrowDown,
 } from 'lucide-react';
 
 const PLAN_META: Record<string, { icon: typeof Crown; colors: { bg: string; ring: string; text: string } }> = {
@@ -30,7 +29,6 @@ const FEATURE_LABELS: Record<string, string> = {
   customers: 'Customer Management',
   expenses: 'Expense Tracking',
   dashboard: 'Dashboard & Analytics',
-  invoices: 'Invoicing',
   pipeline: 'Sales Pipeline',
   estimates: 'Estimates & Projects',
   storefront: 'Online Storefront',
@@ -43,8 +41,8 @@ export default function SubscriptionDropdown() {
   const ref = useRef<HTMLDivElement>(null);
 
   const user = useAppSelector((s) => s.auth.user);
+  const plans = useAppSelector((s) => s.auth.plans);
   const subscription = user?.business?.subscription;
-  const { data: plans, isLoading } = useActivePlans();
 
   const currentPlan = useMemo(() => {
     if (!plans || !subscription) return null;
@@ -88,25 +86,15 @@ export default function SubscriptionDropdown() {
     : subscription?.status ?? '';
 
   const features = useMemo(() => {
-    if (!currentPlan) return [];
-    return Object.entries(currentPlan.features)
+    const fts = currentPlan?.features ?? subscription?.plan_features;
+    if (!fts) return [];
+    return Object.entries(fts)
       .filter(([, v]) => v)
       .map(([k]) => FEATURE_LABELS[k] ?? k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()))
       .slice(0, 5);
-  }, [currentPlan]);
+  }, [currentPlan, subscription?.plan_features]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg ring-1 ring-gray-200 bg-gray-50 opacity-70">
-        <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-gray-200 bg-gray-100">
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
-        </div>
-        <span className="hidden lg:block text-xs font-semibold text-gray-400">Loading...</span>
-      </div>
-    );
-  }
-
-  if (!subscription || !currentPlan) {
+  if (!subscription) {
     return (
       <div className="relative">
         <button
@@ -146,7 +134,7 @@ export default function SubscriptionDropdown() {
           </span>
         )}
         <div className="hidden lg:block min-w-0 max-w-[140px]">
-          <span className="text-xs font-semibold truncate block text-gray-900">{currentPlan.name}</span>
+          <span className="text-xs font-semibold truncate block text-gray-900">{currentPlan?.name ?? subscription?.plan_name ?? 'Essential'}</span>
           <span className="block text-xs truncate text-gray-500">{statusLabel}</span>
         </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
@@ -161,7 +149,7 @@ export default function SubscriptionDropdown() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-bold truncate text-gray-900">{currentPlan.name}</span>
+                  <span className="text-sm font-bold truncate text-gray-900">{currentPlan?.name ?? subscription?.plan_name ?? 'Essential'}</span>
                   <span className={cn(
                     'px-2 py-0.5 text-xs font-bold rounded-full shrink-0',
                     subscription.status === 'trial' ? 'bg-amber-100 text-amber-800'

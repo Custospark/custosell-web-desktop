@@ -211,6 +211,22 @@ export interface PlatformRole {
   permissions: string[];
 }
 
+export interface PlatformSubscription {
+  id: number;
+  business_id: number;
+  plan_id: number;
+  status: 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'expired';
+  billing_cycle?: string | null;
+  starts_at?: string | null;
+  trial_ends_at?: string | null;
+  ends_at?: string | null;
+  next_billing_date?: string | null;
+  cancelled_at?: string | null;
+  suspended_at?: string | null;
+  onboarding_fee_paid?: boolean;
+  created_at?: string | null;
+}
+
 export type PlatformDispatchType = 'message' | 'status_change';
 export type PlatformDispatchTargetKind = 'user' | 'business';
 

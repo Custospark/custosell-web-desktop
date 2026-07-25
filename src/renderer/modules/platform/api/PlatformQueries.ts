@@ -38,6 +38,7 @@ export const platformKeys = {
   roles: () => [...platformKeys.all, 'roles'] as const,
   permissions: () => [...platformKeys.all, 'permissions'] as const,
   plans: () => [...platformKeys.all, 'plans'] as const,
+  subscriptions: () => [...platformKeys.all, 'subscriptions'] as const,
 };
 
 export function usePlatformOverview() {

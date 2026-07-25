@@ -148,13 +148,13 @@ export default function PlatformManageSubscriptionsPage() {
             )},
             { key: 'price_monthly', header: 'Monthly', render: (s) => (
               <div className="text-right">
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_monthly)}</span>
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_monthly ?? s.plan?.price_monthly)}</span>
                 <span className="text-xs text-gray-400 ml-1">UGX</span>
               </div>
             )},
             { key: 'price_yearly', header: 'Yearly', render: (s) => (
               <div className="text-right">
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_yearly)}</span>
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_yearly ?? s.plan?.price_yearly)}</span>
                 <span className="text-xs text-gray-400 ml-1">UGX</span>
               </div>
             )},

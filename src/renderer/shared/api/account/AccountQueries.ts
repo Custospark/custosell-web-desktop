@@ -134,7 +134,6 @@ export function useLogin(options?: { redirect?: boolean }) {
     },
     onSuccess: (data) => {
       const userData = extractAuthUser(data);
-      console.log('[DEBUG] useLogin.onSuccess — extracted user has sub?', Boolean(userData?.business?.subscription), 'features?', Boolean(userData?.business?.subscription?.plan_features), 'userData keys:', Object.keys(userData));
       const isLocal = data.isLocalSession ?? data.token.startsWith('local_');
       const plans = extractActivePlans(userData);
       dispatch(loginSuccess({
@@ -307,10 +306,8 @@ export function useProfile() {
   return useQuery({
     queryKey: accountKeys.profile(),
     queryFn: async () => {
-      console.log('[DEBUG] useProfile.queryFn — FETCHING /auth/me');
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
-      console.log('[DEBUG] useProfile.queryFn — /auth/me returned, sub?', Boolean(userData?.business?.subscription), 'features?', Boolean(userData?.business?.subscription?.plan_features));
       const plans = extractActivePlans(userData);
       if (plans.length) {
         dispatch(setPlans(plans));

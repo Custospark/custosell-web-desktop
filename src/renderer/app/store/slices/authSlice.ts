@@ -138,7 +138,6 @@ const authSlice = createSlice({
     },
     loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; plans?: Plan[]; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
       const user = normalizeAuthUser({ ...action.payload.user });
-      console.log('[DEBUG] loginSuccess — user has business.subscription?', Boolean(user?.business?.subscription), 'plan_features?', Boolean(user?.business?.subscription?.plan_features));
       state.user = user;
       state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
@@ -201,7 +200,6 @@ const authSlice = createSlice({
     },
     setUser(state, action: PayloadAction<AuthUser>) {
       const user = normalizeAuthUser({ ...action.payload });
-      console.log('[DEBUG] setUser — user has business.subscription?', Boolean(user?.business?.subscription), 'plan_features?', Boolean(user?.business?.subscription?.plan_features), 'caller:', new Error().stack?.split('\n').slice(2).join('\n'));
       state.user = user;
       state.businessId = user.business_id;
       state.isAuthenticated = true;

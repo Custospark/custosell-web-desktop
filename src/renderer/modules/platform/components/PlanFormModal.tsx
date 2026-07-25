@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
+import {
+  CreditCard, Info, Coins, DollarSign, Clock, CheckSquare, Sliders, ToggleLeft,
+} from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { inputClass, selectClass, labelClass } from '../../../shared/utils/inputStyles';
-import { useCreatePlan, useUpdatePlan, type PlanFormPayload } from '../api/PlanQueries';
-import type { Plan } from '../../../shared/types';
 
 const FEATURES = {
   sales: 'Point of Sale', inventory: 'Inventory', customers: 'Customers',
@@ -20,6 +21,26 @@ const LIMIT_LABELS: Record<string, string> = {
 
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+interface SectionProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  children: React.ReactNode;
+}
+
+function FormSection({ icon: Icon, title, children }: SectionProps) {
+  return (
+    <fieldset className="border border-gray-200 rounded-lg p-4">
+      <legend className="flex items-center gap-1.5 px-2 text-sm font-semibold text-gray-700">
+        <Icon className="w-4 h-4 text-gray-400" />
+        {title}
+      </legend>
+      <div className="space-y-3 mt-1">
+        {children}
+      </div>
+    </fieldset>
+  );
 }
 
 interface PlanFormModalProps {
@@ -107,27 +128,36 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
       subtitle={isEditing ? 'Modify plan details, pricing, features, and limits' : 'Create a new subscription plan'}
       size="2xl"
     >
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Basic info</legend>
-          <div className="space-y-3">
-            <div>
-              <label className={labelClass}>Plan name</label>
-              <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} placeholder="e.g. Essential" className={inputClass} disabled={isSubmitting} />
-            </div>
-            <div>
-              <label className={labelClass}>Slug</label>
-              <input type="text" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} placeholder="e.g. essential" className={inputClass} disabled={isSubmitting} />
-            </div>
-            <div>
-              <label className={labelClass}>Description</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of this plan" className={`${inputClass} resize-y min-h-[60px]`} disabled={isSubmitting} />
-            </div>
-          </div>
-        </fieldset>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Pricing (UGX)</legend>
+        <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-lg">
+          <div className="p-2 rounded-full bg-indigo-100 shrink-0">
+            <CreditCard className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-indigo-900">{isEditing ? `Editing ${plan?.name}` : 'New subscription plan'}</h3>
+            <p className="text-xs text-indigo-700 mt-0.5">
+              {isEditing ? 'Update pricing, features, and availability for this plan.' : 'Define pricing, features, usage limits, and availability for a new plan.'}
+            </p>
+          </div>
+        </div>
+
+        <FormSection icon={Info} title="Basic info">
+          <div>
+            <label className={labelClass}>Plan name</label>
+            <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} placeholder="e.g. Essential" className={inputClass} disabled={isSubmitting} />
+          </div>
+          <div>
+            <label className={labelClass}>Slug</label>
+            <input type="text" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} placeholder="e.g. essential" className={inputClass} disabled={isSubmitting} />
+          </div>
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of this plan" className={`${inputClass} resize-y min-h-[60px]`} disabled={isSubmitting} />
+          </div>
+        </FormSection>
+
+        <FormSection icon={Coins} title="Pricing (UGX)">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Monthly price (UGX) *</label>
@@ -138,10 +168,9 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
               <input type="number" min={0} value={priceYearly ?? ''} onChange={(e) => setPriceYearly(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
             </div>
           </div>
-        </fieldset>
+        </FormSection>
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Pricing (USD)</legend>
+        <FormSection icon={DollarSign} title="Pricing (USD)">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Monthly price (USD)</label>
@@ -152,10 +181,9 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
               <input type="number" min={0} step="0.01" value={priceYearlyUsd ?? ''} onChange={(e) => setPriceYearlyUsd(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
             </div>
           </div>
-        </fieldset>
+        </FormSection>
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Fees & billing</legend>
+        <FormSection icon={Clock} title="Fees & billing">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Onboarding fee (UGX)</label>
@@ -178,10 +206,9 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
               </select>
             </div>
           </div>
-        </fieldset>
+        </FormSection>
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Features</legend>
+        <FormSection icon={CheckSquare} title="Features">
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(FEATURES).map(([key, label]) => (
               <label key={key} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -190,10 +217,9 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
               </label>
             ))}
           </div>
-        </fieldset>
+        </FormSection>
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Limits</legend>
+        <FormSection icon={Sliders} title="Limits">
           <div className="grid grid-cols-2 gap-3">
             {LIMIT_KEYS.map((key) => (
               <div key={key}>
@@ -210,10 +236,9 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
               </div>
             ))}
           </div>
-        </fieldset>
+        </FormSection>
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900 mb-3">Status & ordering</legend>
+        <FormSection icon={ToggleLeft} title="Status & ordering">
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} disabled={isSubmitting} className="rounded border-gray-300" />
@@ -228,7 +253,7 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
             <label className={labelClass}>Sort order</label>
             <input type="number" min={0} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} className={`${inputClass} w-32`} disabled={isSubmitting} />
           </div>
-        </fieldset>
+        </FormSection>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>

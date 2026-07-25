@@ -107,6 +107,16 @@ export default function PlatformManagePlansPage() {
                 {Number(p.price_monthly).toLocaleString('en-UG')} UGX
               </span>
             )},
+            { key: 'price_yearly', header: 'Yearly', render: (p) => (
+              <span className="text-sm font-medium text-gray-900">
+                {p.price_yearly ? `${Number(p.price_yearly).toLocaleString('en-UG')} UGX` : '—'}
+              </span>
+            )},
+            { key: 'onboarding_fee_ugx', header: 'Onboarding', render: (p) => (
+              <span className="text-sm text-gray-600">
+                {p.onboarding_fee_ugx ? `${Number(p.onboarding_fee_ugx).toLocaleString('en-UG')} UGX` : '—'}
+              </span>
+            )},
             { key: 'trial_days', header: 'Trial', render: (p) => (
               <span className="text-sm text-gray-600">{p.trial_days ?? '-'} days</span>
             )},

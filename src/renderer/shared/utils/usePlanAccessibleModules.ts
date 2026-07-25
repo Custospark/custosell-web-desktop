@@ -2,22 +2,22 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { getAccessibleModules } from './moduleAccess';
 import { BUSINESS_MODULE_SLUGS } from './moduleAccess';
 
+/** Keep only non-business slugs + settings — hides all business modules.
+ *  Used when plan_features is unavailable to prevent sidebar flash. */
+function restrictToSafeModules(accessible: string[]): string[] {
+  return accessible.filter((mod) => {
+    if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
+    if (mod === 'settings') return true;
+    return false;
+  });
+}
+
 export function usePlanAccessibleModules(): string[] {
   const user = useAppSelector((s) => s.auth.user);
   const accessible = getAccessibleModules(user);
   const features = user?.business?.subscription?.plan_features;
-  const hasSubscription = !!user?.business?.subscription;
 
-  if (!features) {
-    if (hasSubscription) {
-      return accessible.filter((mod) => {
-        if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
-        if (mod === 'settings') return true;
-        return false;
-      });
-    }
-    return accessible;
-  }
+  if (!features) return restrictToSafeModules(accessible);
 
   return accessible.filter((mod) => {
     if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;

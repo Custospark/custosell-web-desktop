@@ -6,7 +6,18 @@ export function usePlanAccessibleModules(): string[] {
   const user = useAppSelector((s) => s.auth.user);
   const accessible = getAccessibleModules(user);
   const features = user?.business?.subscription?.plan_features;
-  if (!features) return accessible;
+  const hasSubscription = !!user?.business?.subscription;
+
+  if (!features) {
+    if (hasSubscription) {
+      return accessible.filter((mod) => {
+        if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
+        if (mod === 'settings') return true;
+        return false;
+      });
+    }
+    return accessible;
+  }
 
   return accessible.filter((mod) => {
     if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;

@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp'
 import {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  setUser,
+  setUser, setPlans,
 } from '../../../app/store/slices/authSlice';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
@@ -296,6 +296,8 @@ export function useProfile() {
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
       dispatch(setUser(userData));
+      const plans = data?.active_plans?.data;
+      if (plans?.length) dispatch(setPlans(plans));
       try {
         await updateStoredAuthUser(userData);
         if (userData?.email) {

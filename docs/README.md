@@ -133,6 +133,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-14-board-poll-delete-import-storefront.md](./adr/2026-07-14-board-poll-delete-import-storefront.md) | Board 30s poll, delete, Excel card import, visibility/role, product shop UX |
 | [2026-07-14-order-lists-30s-poll.md](./adr/2026-07-14-order-lists-30s-poll.md) | PO / Incoming / Sales / Storefront order lists poll every 30s when open |
 | [2026-07-18-data-export-and-account-deletion.md](./adr/2026-07-18-data-export-and-account-deletion.md) | Business data export API + self-service account deletion |
+| [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency via client-side exchange rate conversion |
 
 ## Modules
 

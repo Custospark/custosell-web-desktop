@@ -27,6 +27,7 @@ export default function OnboardingPage() {
   const [subscribing, setSubscribing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
 
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
@@ -77,6 +78,7 @@ export default function OnboardingPage() {
     if (!selectedPlanId || !onboardingFee || !user) return;
 
     setSubscribing(true);
+    setPopupBlocked(false);
 
     try {
       if (!subscription) {
@@ -88,20 +90,25 @@ export default function OnboardingPage() {
         });
       }
 
+      const metadata = { action: 'subscribe', plan_id: selectedPlanId };
+
       initiateMutation.mutate(
-        { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone },
+        { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone, metadata },
         {
           onSuccess: (result) => {
             setPaymentId(result.payment_id);
             setInitiated(true);
             setShowModal(false);
             if (result.redirect_url) {
-              window.open(result.redirect_url, '_blank');
+              const win = window.open(result.redirect_url, '_blank');
+              if (!win || win.closed || typeof win.closed === 'undefined') {
+                setPopupBlocked(true);
+              }
             }
           },
-        }
+        },
       );
-    } catch { /* keep previous state */ } finally {
+    } catch {
       setSubscribing(false);
     }
   };
@@ -186,6 +193,11 @@ export default function OnboardingPage() {
                 Complete your payment in the opened window.
               </p>
             </div>
+            {popupBlocked && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
+                Pop-up was blocked. Please allow pop-ups for this site and try again.
+              </div>
+            )}
             <button
               type="button"
               onClick={handleVerifyPayment}

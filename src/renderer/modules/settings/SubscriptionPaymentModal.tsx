@@ -30,7 +30,10 @@ export default function SubscriptionPaymentModal({
   const isDone = paymentQuery.data?.data?.status === 'completed';
   const isFailed = paymentQuery.data?.data?.status === 'failed';
 
+  const [popupBlocked, setPopupBlocked] = useState(false);
+
   const handlePay = () => {
+    setPopupBlocked(false);
     initiateMutation.mutate(
       { amount, currency, phone: userPhone, metadata },
       {
@@ -38,7 +41,10 @@ export default function SubscriptionPaymentModal({
           setPaymentId(result.payment_id);
           setInitiated(true);
           if (result.redirect_url) {
-            window.open(result.redirect_url, '_blank');
+            const win = window.open(result.redirect_url, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              setPopupBlocked(true);
+            }
           }
         },
       },
@@ -81,6 +87,12 @@ export default function SubscriptionPaymentModal({
               An STK push will be sent to <span className="font-semibold">{userPhone}</span>
             </p>
           </div>
+          {popupBlocked && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
+              Pop-up was blocked. Please allow pop-ups for this site or use the link below manually.
+            </div>
+          )}
+
           {paymentQuery.data?.data?.status === 'failed' && (
             <div className="space-y-2 pt-2">
               <p className="text-xs text-red-600">Payment was not completed.</p>

@@ -73,6 +73,7 @@ export function useInitiateOnboardingPayment() {
     amount: number;
     currency: string;
     phone?: string;
+    metadata?: Record<string, unknown>;
   }>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post(BILLING.INITIATE, {
@@ -81,6 +82,8 @@ export function useInitiateOnboardingPayment() {
         currency: payload.currency,
         payment_type: 'onboarding',
         phone: payload.phone,
+        metadata: payload.metadata ?? null,
+        idempotency_key: generateIdempotencyKey(),
       });
       return data;
     },

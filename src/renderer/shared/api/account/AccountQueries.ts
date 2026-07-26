@@ -291,6 +291,7 @@ export function useLogout() {
 
 export function useProfile() {
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const token = useAppSelector((state) => state.auth.token);
   const isLocalSession = useAppSelector((state) => state.auth.isLocalSession);
   const isInitialized = useAppSelector((state) => state.auth.isInitialized);
@@ -309,6 +310,9 @@ export function useProfile() {
       const features = userData?.business?.subscription?.plan_features;
       if (features) storePlanFeatures(features);
       dispatch(setUser(userData));
+
+      queryClient.invalidateQueries({ queryKey: ['subscription', 'access'] });
+
       try {
         await updateStoredAuthUser(userData);
         if (userData?.email) {

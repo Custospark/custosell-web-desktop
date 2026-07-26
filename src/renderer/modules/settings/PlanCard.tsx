@@ -21,7 +21,7 @@ interface PlanCardProps {
   downgradeConfirmed: boolean;
   downgradeMutation: { isPending: boolean };
   handleAction: (plan: Plan, action: PlanAction) => void;
-  handleDowngradeAction: (plan: Plan, effective: 'immediate' | 'end_of_period') => void;
+  handleDowngradeAction: (plan: Plan) => void;
   setDowngradePlan: (plan: Plan | null) => void;
   setDowngradeConfirmed: (confirmed: boolean) => void;
 }
@@ -259,15 +259,11 @@ export default function PlanCard({
 
         {action.type === 'downgrade' && downgradePlan?.id === plan.id && downgradeConfirmed && (
           <div className="space-y-2 mt-3">
-            <p className="text-xs text-gray-500 text-center">Choose when to apply the downgrade:</p>
-            <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan, 'immediate')}
+            <p className="text-xs text-gray-500 text-center">The downgrade will take effect at the end of your current billing period.</p>
+            <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan)}
               className="w-full flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
               <ArrowDown className="w-4 h-4" />
-              Downgrade Now
-            </button>
-            <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan, 'end_of_period')}
-              className="w-full bg-white text-gray-700 text-sm font-medium py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50">
-              Schedule for Period End
+              Schedule Downgrade
             </button>
             <button type="button" onClick={() => { setDowngradePlan(null); setDowngradeConfirmed(false); }}
               className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>

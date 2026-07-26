@@ -104,9 +104,9 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     }
   };
 
-  const handleDowngradeAction = (plan: Plan, effective: 'immediate' | 'end_of_period') => {
+  const handleDowngradeAction = (plan: Plan) => {
     downgradeMutation.mutate(
-      { subscriptionId: Number(subscription.id), to_plan_id: plan.id, effective },
+      { subscriptionId: Number(subscription.id), to_plan_id: plan.id, effective: 'end_of_period' },
       { onSuccess: () => { setDowngradePlan(null); setDowngradeConfirmed(false); } },
     );
   };

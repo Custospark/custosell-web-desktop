@@ -12,7 +12,6 @@ interface PlanCardProps {
   index: number;
   billingCycle: 'monthly' | 'yearly';
   currency: string;
-  monthlyPrice: (plan: Plan) => number;
   onboardingFee: (plan: Plan) => number;
   subscription: SubscriptionInfo;
   currentPlan: Plan | null;
@@ -34,7 +33,6 @@ export default function PlanCard({
   index,
   billingCycle,
   currency,
-  monthlyPrice,
   onboardingFee,
   subscription,
   currentPlan,
@@ -51,13 +49,13 @@ export default function PlanCard({
   onCancelScheduledChange,
 }: PlanCardProps) {
   const action = getPlanAction(plan, subscription, currentPlanSortOrder);
-  const price = isCurrentPlan && subscription.price_yearly && subscription.price_monthly
-    ? (billingCycle === 'yearly' ? Number(subscription.price_yearly) : Number(subscription.price_monthly))
-    : (billingCycle === 'yearly' && plan.price_yearly ? Number(plan.price_yearly) : monthlyPrice(plan));
+  const isCurrentPlan = plan.id === subscription.plan_id;
+  const subPriceYearly = isCurrentPlan && subscription.price_yearly ? Number(subscription.price_yearly) : Number(plan.price_yearly ?? 0);
+  const subPriceMonthly = isCurrentPlan && subscription.price_monthly ? Number(subscription.price_monthly) : Number(plan.price_monthly ?? 0);
+  const price = billingCycle === 'yearly' ? subPriceYearly : subPriceMonthly;
   const fee = onboardingFee(plan);
   const features = Object.entries(plan.features).filter(([, v]) => v);
   const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
-  const isCurrentPlan = plan.id === subscription.plan_id;
 
   const isDowngradeScheduledForThisPlan =
     pendingChange?.change_type === 'downgrade'
@@ -138,14 +136,14 @@ export default function PlanCard({
             )}
           </div>
 
-          {billingCycle === 'yearly' && plan.price_monthly && (
+          {billingCycle === 'yearly' && subPriceMonthly > 0 && (
             <div className="mt-1 space-y-0.5">
               <p className="text-xs text-gray-400">
-                ~{formatCurrency(Math.round(Number(plan.price_yearly) / 12), currency)}/mo
+                ~{formatCurrency(Math.round(subPriceYearly / 12), currency)}/mo
               </p>
               {(() => {
-                const monthlyTotal = Number(plan.price_monthly) * 12;
-                const saved = monthlyTotal - Number(plan.price_yearly);
+                const monthlyTotal = subPriceMonthly * 12;
+                const saved = monthlyTotal - subPriceYearly;
                 const pct = Math.round((saved / monthlyTotal) * 100);
                 return (
                   <p className={`text-xs font-semibold ${accent.save}`}>

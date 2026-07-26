@@ -108,7 +108,7 @@ export function useLogin(options?: { redirect?: boolean }) {
         const offline = await completeOfflineLogin(credentials);
         return {
           token: offline.token,
-          user: { data: offline.user },
+          user: offline.user,
           isLocalSession: true,
           pendingAuthSync: offline.pendingAuthSync,
         };

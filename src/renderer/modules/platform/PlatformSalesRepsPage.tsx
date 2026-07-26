@@ -40,11 +40,11 @@ export default function PlatformSalesRepsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => axiosInstance.delete(SALES_REPS.BY_ID(id)),
     onSuccess: () => {
-      showToast('Sales rep deleted', 'success');
+      showToast('success', 'Sales rep deleted');
       refetch();
     },
     onError: () => {
-      showToast('Failed to delete sales rep', 'error');
+      showToast('error', 'Failed to delete sales rep');
     },
   });
 

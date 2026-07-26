@@ -272,6 +272,9 @@ export const REFERRALS = {
   APPLY: '/referrals/apply',
 };
 
+export const CURRENCY = {
+  CONVERT: '/currencies/convert',
+};
 export const SALES_REPS = {
   BASE: '/sales-reps',
   EARNINGS_ALL: '/sales-reps/earnings/all',

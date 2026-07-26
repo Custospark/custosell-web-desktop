@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { axiosInstance } from '../axiosConfig';
+import { axiosInstance } from '../../../app/api/axiosConfig';
 import { CURRENCY } from '../endpoints/endpoints';
 
 interface ConvertResponse {

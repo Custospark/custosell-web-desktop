@@ -42,6 +42,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const { currency, monthlyPrice, onboardingFee } = useDisplayPrices();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
+  const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
 
@@ -70,6 +71,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     if (!action.requiresPayment) {
       if (action.type === 'downgrade') {
         setDowngradePlan(plan);
+        setDowngradeConfirmed(false);
       }
       return;
     }
@@ -96,7 +98,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const handleDowngradeAction = (plan: Plan, effective: 'immediate' | 'end_of_period') => {
     downgradeMutation.mutate(
       { subscriptionId: Number(subscription.id), to_plan_id: plan.id, effective },
-      { onSuccess: () => setDowngradePlan(null) },
+      { onSuccess: () => { setDowngradePlan(null); setDowngradeConfirmed(false); } },
     );
   };
 
@@ -272,17 +274,69 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             </button>
           )}
 
-          {action.type === 'downgrade' && downgradePlan?.id === plan.id && (
-            <div className="space-y-2">
+          {action.type === 'downgrade' && downgradePlan?.id === plan.id && !downgradeConfirmed && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Downgrading will restrict access</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    You will lose features and limits available in your current plan. Review what changes below:
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1.5 text-xs text-amber-800">
+                {Object.entries(plan.features).map(([key, enabled]) => {
+                  if (!enabled && currentPlan?.features?.[key]) {
+                    const info = FEATURE_CATALOG[key];
+                    return (
+                      <div key={key} className="flex items-start gap-1.5">
+                        <X className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
+                        <span><strong>{info?.label ?? key}</strong> — {info?.description ?? 'Feature removed'}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+                {Object.entries(plan.limits).map(([key, value]) => {
+                  const currentValue = currentPlan?.limits?.[key];
+                  if (currentValue != null && (value == null || Number(value) < Number(currentValue))) {
+                    return (
+                      <div key={key} className="flex items-start gap-1.5">
+                        <X className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
+                        <span><strong>{LIMIT_LABELS[key] ?? key}</strong> reduced from {currentValue} to {value ?? '0'}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={() => setDowngradeConfirmed(true)}
+                  className="flex-1 bg-amber-500 text-white text-sm font-semibold py-2 px-3 rounded-xl hover:bg-amber-600 transition-colors">
+                  Continue Downgrade
+                </button>
+                <button type="button" onClick={() => { setDowngradePlan(null); setDowngradeConfirmed(false); }}
+                  className="flex-1 bg-white text-gray-600 text-sm font-medium py-2 px-3 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {action.type === 'downgrade' && downgradePlan?.id === plan.id && downgradeConfirmed && (
+            <div className="space-y-2 mt-3">
+              <p className="text-xs text-gray-500 text-center">Choose when to apply the downgrade:</p>
               <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan, 'immediate')}
-                className="w-full bg-amber-500 text-white text-sm font-semibold py-2 px-4 rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
+                <ArrowDown className="w-4 h-4" />
                 Downgrade Now
               </button>
               <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan, 'end_of_period')}
-                className="w-full bg-white text-gray-700 text-sm font-medium py-2 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50">
-                Schedule Downgrade
+                className="w-full bg-white text-gray-700 text-sm font-medium py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50">
+                Schedule for Period End
               </button>
-              <button type="button" onClick={() => setDowngradePlan(null)}
+              <button type="button" onClick={() => { setDowngradePlan(null); setDowngradeConfirmed(false); }}
                 className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
             </div>
           )}

@@ -18,8 +18,8 @@ export function useCampaignCodes(params?: Record<string, string>) {
   return useQuery({
     queryKey: campaignKeys.list(params),
     queryFn: async () => {
-      const { data } = await axiosInstance.get<{ data: CampaignCode[] }>(PLATFORM.CAMPAIGN_CODES, { params });
-      return data.data;
+      const { data } = await axiosInstance.get(PLATFORM.CAMPAIGN_CODES, { params });
+      return (data?.data?.data ?? data?.data ?? []) as CampaignCode[];
     },
     ...freshQuery,
   });

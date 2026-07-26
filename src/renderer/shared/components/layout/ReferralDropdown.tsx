@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useReferralEarnings, useGenerateReferralCode } from '../../../modules/referral/api/useReferralQueries';
@@ -6,9 +6,10 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../utils/cn';
 import { formatUSD } from '../../utils/formatCurrency';
 import { canAccessModule } from '../../utils/moduleAccess';
+import QRCodeLib from 'qrcode';
 import {
   Gift, Copy, Check, ExternalLink, Users, UserCheck, DollarSign,
-  TrendingUp, Clock, Sparkles, ChevronDown,
+  TrendingUp, Clock, Sparkles, ChevronDown, QrCode, Download, X, Share2,
 } from 'lucide-react';
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
@@ -28,6 +29,42 @@ export default function ReferralDropdown() {
 
   const code = earnings?.referral_code;
   const generateCode = useGenerateReferralCode();
+  const [qrModal, setQrModal] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrDownloading, setQrDownloading] = useState(false);
+  const referralUrl = code ? `${window.location.origin}/auth/register?ref=${code}` : '';
+
+  useEffect(() => {
+    if (qrModal && referralUrl && !qrDataUrl) {
+      QRCodeLib.toDataURL(referralUrl, {
+        width: 240,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+      }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
+    }
+  }, [qrModal, referralUrl, qrDataUrl]);
+
+  const handleQrDownload = useCallback(() => {
+    if (!qrDataUrl) return;
+    setQrDownloading(true);
+    const link = document.createElement('a');
+    link.download = `custosell-referral-${code}.png`;
+    link.href = qrDataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setQrDownloading(false);
+  }, [qrDataUrl, code]);
+
+  const handleQrShare = useCallback(async () => {
+    if (!qrDataUrl || !navigator.share) return;
+    try {
+      const blob = await (await fetch(qrDataUrl)).blob();
+      const file = new File([blob], `custosell-referral-${code}.png`, { type: 'image/png' });
+      await navigator.share({ title: 'Join Custosell', text: `Use my referral code ${code}`, files: [file] });
+    } catch { /* user cancelled share */ }
+  }, [qrDataUrl, code]);
+
   const isSalesRep = earnings?.is_sales_rep ?? false;
   const recentReferrals = useMemo(
     () => (earnings?.referrals ?? []).slice(0, 3),
@@ -120,22 +157,32 @@ export default function ReferralDropdown() {
           ) : (
             <>
               <div className="px-4 py-3 border-b border-gray-100">
-                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-                  <code className="text-sm font-bold text-gray-900 tracking-wider select-all">{code}</code>
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className={cn(
-                      'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer',
-                      copied
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200',
-                    )}
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
+                  <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                    <code className="text-sm font-bold text-gray-900 tracking-wider select-all">{code}</code>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setQrModal(true)}
+                        className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        QR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopy}
+                        className={cn(
+                          'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer',
+                          copied
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200',
+                        )}
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
               </div>
 
               <div className="px-4 py-3 border-b border-gray-100">
@@ -166,7 +213,7 @@ export default function ReferralDropdown() {
                       {formatUSD(creditBalance)} available credit
                     </span>
                     <span className="text-[10px] text-green-600 ml-auto">
-                      Auto-applies to renewals
+                      Available for payout
                     </span>
                   </div>
                 </div>
@@ -241,6 +288,43 @@ export default function ReferralDropdown() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {qrModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 space-y-5 relative">
+            <button type="button" onClick={() => { setQrModal(false); setQrDataUrl(null); }}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 cursor-pointer">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Share Your Code</p>
+              <p className="text-lg font-bold text-gray-900 mt-1">{code}</p>
+            </div>
+            <div className="flex justify-center">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="Referral QR" width={240} height={240} className="rounded-xl border border-gray-200 p-2" />
+              ) : (
+                <div className="w-[240px] h-[240px] rounded-xl bg-gray-50 animate-pulse" />
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button type="button" onClick={handleQrDownload} disabled={!qrDataUrl || qrDownloading}
+                className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors cursor-pointer">
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+              {navigator.share && (
+                <button type="button" onClick={handleQrShare} disabled={!qrDataUrl}
+                  className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors cursor-pointer">
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 text-center break-all">{referralUrl}</p>
+          </div>
         </div>
       )}
     </div>

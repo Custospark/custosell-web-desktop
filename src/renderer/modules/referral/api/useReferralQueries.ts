@@ -55,8 +55,16 @@ export function useGenerateReferralCode() {
       });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       showToast('success', 'Referral code generated');
+      const newCode = result?.data?.code;
+      if (newCode) {
+        queryClient.setQueryData<ReferralEarnings>(referralKeys.earnings(), (old) => {
+          if (!old) return undefined;
+          return { ...old, referral_code: newCode };
+        });
+      }
+      // Also refetch in background to sync full server state
       queryClient.invalidateQueries({ queryKey: referralKeys.earnings() });
     },
     onError: (error) => {

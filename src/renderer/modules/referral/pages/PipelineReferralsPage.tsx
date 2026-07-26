@@ -1,6 +1,6 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
 import { formatUSD } from '../../../shared/utils/formatCurrency';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, DollarSign, RefreshCw, QrCode } from 'lucide-react';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, DollarSign, RefreshCw, QrCode, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QRCodeLib from 'qrcode';
 import { Table } from '../../../shared/components/tables/Table';
@@ -83,6 +83,21 @@ export default function PipelineReferralsPage() {
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                   <img src={qrDataUrl} alt="Referral QR code" width={160} height={160} className="rounded-lg" />
                   <p className="text-[11px] text-gray-500">Scan to open signup with your code</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.download = `custosell-referral-${earnings?.referral_code}.png`;
+                      link.href = qrDataUrl;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 mt-1"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download QR
+                  </button>
                   <p className="text-[10px] text-gray-400 break-all text-center max-w-[220px]">{referralUrl}</p>
                 </div>
               </div>
@@ -144,7 +159,7 @@ export default function PipelineReferralsPage() {
           <div className="mt-2 flex items-center gap-4 text-sm text-green-700">
             <span className="flex items-center gap-1">
               <RefreshCw className="h-3.5 w-3.5" />
-              Auto-applies to renewals
+              Available for payout
             </span>
           </div>
         </div>

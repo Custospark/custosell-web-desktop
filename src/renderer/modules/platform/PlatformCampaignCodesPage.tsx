@@ -3,9 +3,16 @@ import { useCampaignCodes, useCreateCampaignCode, useDeleteCampaignCode } from '
 import { Button } from '../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Table } from '../../shared/components/tables/Table';
-import { Plus, Percent, DollarSign, Gift, Trash2 } from 'lucide-react';
+import { Plus, Percent, DollarSign, Gift, Trash2, Shuffle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { CampaignCode } from './api/PlatformTypes';
+
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function generateCode(): string {
+  let code = '';
+  for (let i = 0; i < 8; i++) code += CHARS[(Math.random() * CHARS.length) | 0];
+  return code;
+}
 
 export default function PlatformCampaignCodesPage() {
   const [showForm, setShowForm] = useState(false);
@@ -63,13 +70,24 @@ export default function PlatformCampaignCodesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500">Code</label>
-              <input
-                type="text"
-                value={newCode.code}
-                onChange={(e) => setNewCode({ ...newCode, code: e.target.value.toUpperCase() })}
-                placeholder="e.g. FESTIVE20"
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+              <div className="mt-1 flex gap-2">
+                <input
+                  type="text"
+                  value={newCode.code}
+                  onChange={(e) => setNewCode({ ...newCode, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+                  placeholder="e.g. FESTIVE20"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setNewCode({ ...newCode, code: generateCode() })}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                  title="Generate random code"
+                >
+                  <Shuffle className="h-3.5 w-3.5" />
+                  Generate
+                </button>
+              </div>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Discount</label>

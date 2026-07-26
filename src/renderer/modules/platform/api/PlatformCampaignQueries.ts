@@ -57,8 +57,9 @@ export function useCreateCampaignCode() {
       const { data } = await axiosInstance.post<{ data: CampaignCode }>(PLATFORM.CAMPAIGN_CODES, payload);
       return data;
     },
-    onSuccess: () => {
-      showToast('success', 'Campaign code created');
+    onSuccess: (result) => {
+      const code = result?.data?.code;
+      showToast('success', `Campaign code "${code}" created`);
       qc.invalidateQueries({ queryKey: campaignKeys.all });
     },
     onError: (e) => {

@@ -51,8 +51,9 @@ export default function PlanCard({
   onCancelScheduledChange,
 }: PlanCardProps) {
   const action = getPlanAction(plan, subscription, currentPlanSortOrder);
-  const price = billingCycle === 'yearly' && plan.price_yearly
-    ? Number(plan.price_yearly) : monthlyPrice(plan);
+  const price = isCurrentPlan && subscription.price_yearly && subscription.price_monthly
+    ? (billingCycle === 'yearly' ? Number(subscription.price_yearly) : Number(subscription.price_monthly))
+    : (billingCycle === 'yearly' && plan.price_yearly ? Number(plan.price_yearly) : monthlyPrice(plan));
   const fee = onboardingFee(plan);
   const features = Object.entries(plan.features).filter(([, v]) => v);
   const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];

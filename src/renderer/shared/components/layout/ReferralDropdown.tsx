@@ -59,6 +59,8 @@ export default function ReferralDropdown() {
 
   const hasReferralCode = !!code;
   const totalEarned = (earnings?.total_earned ?? 0) + (earnings?.commission_earned ?? 0);
+  const creditBalance = earnings?.available_credit ?? 0;
+  const showCredit = creditBalance > 0;
 
   return (
     <div ref={ref} className="relative">
@@ -146,6 +148,20 @@ export default function ReferralDropdown() {
                   </div>
                 </div>
               </div>
+
+              {showCredit && (
+                <div className="px-4 py-2.5 bg-green-50 border-b border-green-100">
+                  <div className="flex items-center gap-2 text-xs">
+                    <DollarSign className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                    <span className="text-green-800 font-medium">
+                      {formatUSD(creditBalance)} available credit
+                    </span>
+                    <span className="text-[10px] text-green-600 ml-auto">
+                      Auto-applies to renewals
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {(earnings?.pending_rewards ?? 0) > 0 && (
                 <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100">

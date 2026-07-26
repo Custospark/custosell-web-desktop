@@ -1,6 +1,6 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
-import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent } from 'lucide-react';
+import { formatUSD } from '../../../shared/utils/formatUSD';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, DollarSign, RefreshCw, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { Table } from '../../../shared/components/tables/Table';
 import type { ReferralRecord } from '../api/ReferralTypes';
@@ -89,12 +89,31 @@ export default function PipelineReferralsPage() {
             <div>
               <p className="text-sm text-gray-500">Total Earned</p>
               <p className="text-xl font-semibold text-gray-900">
-                {earnings ? formatCurrency(earnings.total_earned) : formatCurrency(0)}
+                {earnings ? formatUSD(earnings.total_earned) : formatUSD(0)}
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Available Credit */}
+      {(earnings?.available_credit ?? 0) > 0 && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-green-800">
+              <DollarSign className="h-5 w-5" />
+              <span className="font-semibold">Available Credit</span>
+            </div>
+            <span className="text-lg font-bold text-green-700">{formatUSD(earnings!.available_credit)}</span>
+          </div>
+          <div className="mt-2 flex items-center gap-4 text-sm text-green-700">
+            <span className="flex items-center gap-1">
+              <RefreshCw className="h-3.5 w-3.5" />
+              Auto-applies to renewals
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Pending Rewards */}
       {(earnings?.pending_rewards ?? 0) > 0 && (
@@ -102,7 +121,7 @@ export default function PipelineReferralsPage() {
           <div className="flex items-center gap-2 text-amber-800">
             <Wallet className="h-5 w-5" />
             <span className="font-medium">
-              Pending rewards: {formatCurrency(earnings!.pending_rewards)}
+              Pending rewards: {formatUSD(earnings!.pending_rewards)}
             </span>
           </div>
           <p className="mt-1 text-sm text-amber-600">
@@ -124,24 +143,24 @@ export default function PipelineReferralsPage() {
               <p className="text-lg font-semibold text-purple-900">
                 {earnings.commission_type === 'percentage'
                   ? `${earnings.commission_rate}%`
-                  : formatCurrency(earnings.commission_rate ?? 0)}
+                  : formatUSD(earnings.commission_rate ?? 0)}
               </p>
             </div>
             <div>
               <p className="text-sm text-purple-600">Available to Claim</p>
               <p className="text-lg font-semibold text-purple-900">
-                {formatCurrency(earnings.commission_pending)}
+                {formatUSD(earnings.commission_pending)}
               </p>
             </div>
             <div>
               <p className="text-sm text-purple-600">Total Earned</p>
               <p className="text-lg font-semibold text-purple-900">
-                {formatCurrency(earnings.commission_earned)}
+                {formatUSD(earnings.commission_earned)}
               </p>
             </div>
           </div>
           <p className="mt-3 text-sm text-purple-600">
-            Contact the Custosell team to claim your pending commission of {formatCurrency(earnings.commission_pending)}.
+            Contact the Custosell team to claim your pending commission of {formatUSD(earnings.commission_pending)}.
           </p>
         </div>
       )}
@@ -173,7 +192,7 @@ export default function PipelineReferralsPage() {
               }},
               { key: 'reward', header: 'Reward', render: (r: ReferralRecord) => (
                 <span className="text-sm text-gray-600">
-                  {r.reward_amount ? formatCurrency(r.reward_amount) : '—'}
+                  {r.reward_amount ? formatUSD(r.reward_amount) : '—'}
                 </span>
               )},
               { key: 'date', header: 'Date', render: (r: ReferralRecord) => (

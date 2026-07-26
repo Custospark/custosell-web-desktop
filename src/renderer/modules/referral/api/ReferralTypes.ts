@@ -11,6 +11,10 @@ export interface ReferralEarnings {
   commission_paid: number;
   total_referrals: number;
   active_referrals: number;
+  available_credit: number;
+  business_credit: number;
+  user_credit: number;
+  currency: string;
   referrals: ReferralRecord[];
 }
 

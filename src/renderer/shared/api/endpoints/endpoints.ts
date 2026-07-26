@@ -58,6 +58,7 @@ export const SUBSCRIPTIONS = {
   ACCESS: '/subscriptions/access',
   SUBSCRIBE: '/subscriptions/subscribe',
   UPGRADE: (id: number) => `/subscriptions/${id}/upgrade`,
+  PRORATION_QUOTE: (id: number) => `/subscriptions/${id}/proration-quote`,
   DOWNGRADE: (id: number) => `/subscriptions/${id}/downgrade`,
   CHANGES: (id: number) => `/subscriptions/${id}/changes`,
   CANCEL: (id: number) => `/subscriptions/${id}/cancel`,

@@ -4,18 +4,16 @@ import { CustosellLoader } from '../../shared/components/loading/CustosellLoader
 import { useDowngrade } from '../../shared/api/account/SubscriptionQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
-import { getPlanAction, getPaymentType } from './planActionMatrix';
+import UpgradeFlowModal from './UpgradeFlowModal';
+import { getPaymentType } from './planActionMatrix';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { PlanAction } from './planActionMatrix';
-import {
-  CheckCircle, AlertCircle, Clock, CalendarDays,
-  Check, Sparkles, Star,
-} from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, CalendarDays } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
+import PlanCard from './PlanCard';
 
 interface SubscriptionPaymentState {
   planName: string;
@@ -45,6 +43,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
+  const [upgradeFlowPlan, setUpgradeFlowPlan] = useState<Plan | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const downgradeMutation = useDowngrade();
@@ -74,6 +73,10 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         setDowngradePlan(plan);
         setDowngradeConfirmed(false);
       }
+      return;
+    }
+    if (action.type === 'upgrade') {
+      setUpgradeFlowPlan(plan);
       return;
     }
     const price = billingCycle === 'yearly' && plan.price_yearly
@@ -114,242 +117,6 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   };
 
   const statusInfo = STATUS_STYLES[subscription.status] || STATUS_STYLES.active;
-
-  const renderPlanCard = (plan: Plan, index: number) => {
-    const action = getPlanAction(plan, subscription, currentPlanSortOrder);
-    const price = billingCycle === 'yearly' && plan.price_yearly
-      ? Number(plan.price_yearly) : monthlyPrice(plan);
-    const fee = onboardingFee(plan);
-    const features = Object.entries(plan.features).filter(([, v]) => v);
-    const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
-    const isCurrentPlan = plan.id === subscription.plan_id;
-
-    const accent = (
-      [
-        { bg: 'bg-gradient-to-br from-white to-green-50/50', border: 'border-green-200', borderHover: 'hover:border-green-300', borderSelected: 'border-green-500', ring: 'ring-green-200', name: 'text-green-800', glow: 'bg-green-500/10', save: 'text-green-600', check: 'text-green-500', btn: 'from-blue-600 to-blue-800', btnHover: 'hover:from-blue-700 hover:to-blue-900' },
-        { bg: 'bg-gradient-to-br from-white to-blue-50/50', border: 'border-blue-200', borderHover: 'hover:border-blue-300', borderSelected: 'border-blue-500', ring: 'ring-blue-200', name: 'text-blue-800', glow: 'bg-blue-500/10', save: 'text-blue-600', check: 'text-blue-500', btn: 'from-blue-600 to-blue-800', btnHover: 'hover:from-blue-700 hover:to-blue-900' },
-        { bg: 'bg-gradient-to-br from-white to-indigo-50/50', border: 'border-indigo-200', borderHover: 'hover:border-indigo-300', borderSelected: 'border-indigo-500', ring: 'ring-indigo-200', name: 'text-indigo-800', glow: 'bg-indigo-500/10', save: 'text-indigo-600', check: 'text-indigo-500', btn: 'from-blue-600 to-blue-800', btnHover: 'hover:from-blue-700 hover:to-blue-900' },
-      ][index] ?? { bg: 'bg-gradient-to-br from-white to-blue-50/50', border: 'border-blue-200', borderHover: 'hover:border-blue-300', borderSelected: 'border-blue-500', ring: 'ring-blue-200', name: 'text-blue-800', glow: 'bg-blue-500/10', save: 'text-blue-600', check: 'text-blue-500', btn: 'from-blue-600 to-blue-800', btnHover: 'hover:from-blue-700 hover:to-blue-900' }
-    );
-
-    return (
-      <div
-        key={plan.id}
-        className={cn(
-          'relative rounded-2xl p-6 transition-all flex flex-col border-2',
-          accent.bg,
-          isCurrentPlan
-            ? `${accent.borderSelected} ring-2 ${accent.ring} shadow-lg`
-            : `${accent.border} ${accent.borderHover} hover:shadow-md`,
-        )}
-      >
-        {isCurrentPlan && (
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
-              <Star className="w-3 h-3 fill-white" />
-              Current Plan
-            </span>
-          </div>
-        )}
-
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${accent.glow}`} />
-        </div>
-
-        {plan.is_popular && !isCurrentPlan && action.type !== 'resubscribe' && (
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
-              <Sparkles className="w-3 h-3" />
-              Most Popular
-            </span>
-          </div>
-        )}
-
-        <div className={cn('space-y-4 flex flex-col flex-1', plan.is_popular && !isCurrentPlan && action.type !== 'resubscribe' && 'pt-2')}>
-          <div className="text-center">
-            <h3 className={`text-xl font-bold ${accent.name}`}>{plan.name}</h3>
-            {plan.description && <p className="text-sm text-gray-500 mt-1">{plan.description}</p>}
-          </div>
-
-          <div className="text-center">
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                {price > 0
-                  ? formatCurrency(price, currency)
-                  : 'Free'}
-              </span>
-              {price > 0 && (
-                <span className="text-sm text-gray-400 font-medium">
-                  /{billingCycle === 'yearly' ? 'yr' : 'mo'}
-                </span>
-              )}
-            </div>
-
-            {billingCycle === 'yearly' && plan.price_monthly && (
-              <div className="mt-1 space-y-0.5">
-                <p className="text-xs text-gray-400">
-                  ~{formatCurrency(Math.round(Number(plan.price_yearly) / 12), currency)}/mo
-                </p>
-                {(() => {
-                  const monthlyTotal = Number(plan.price_monthly) * 12;
-                  const saved = monthlyTotal - Number(plan.price_yearly);
-                  const pct = Math.round((saved / monthlyTotal) * 100);
-                  return (
-                    <p className={`text-xs font-semibold ${accent.save}`}>
-                      Save {formatCurrency(saved, currency)} ({pct}%)
-                    </p>
-                  );
-                })()}
-              </div>
-            )}
-
-            {fee ? (
-              <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
-                <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
-                <p className="text-sm font-bold text-blue-800">
-                  {formatCurrency(fee, currency)}
-                </p>
-              </div>
-            ) : (
-              <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
-                <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
-                <p className="text-sm font-bold text-blue-800">Free</p>
-              </div>
-            )}
-          </div>
-
-          {plan.trial_days && (
-            <div className="text-center">
-              <span className="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-4 py-1.5 rounded-full">
-                {plan.trial_days}-day trial after setup
-              </span>
-            </div>
-          )}
-
-          <div className="flex-1 border-t border-gray-100 pt-4 space-y-3">
-            {features.map(([key]) => {
-              const feature = FEATURE_CATALOG[key];
-              return (
-                <div key={key} className="flex items-start gap-2.5">
-                  <Check className={`w-4 h-4 mt-0.5 shrink-0 ${accent.check}`} />
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">{feature?.label ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
-                    {feature?.description && <p className="text-xs text-gray-400 leading-tight">{feature.description}</p>}
-                  </div>
-                </div>
-              );
-            })}
-            {limits.length > 0 && (
-              <div className="border-t border-gray-50 pt-3 mt-3 space-y-1.5">
-                {limits.map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between text-xs text-gray-400">
-                    <span>{LIMIT_LABELS[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
-                    <span className="font-semibold text-gray-600">{value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {isCurrentPlan && action.type === 'current' && (
-            <div className="mt-4 text-center">
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100 px-4 py-2 rounded-xl">
-                <CheckCircle className="w-3.5 h-3.5" />
-                Current Plan
-              </span>
-            </div>
-          )}
-
-          {action.type !== 'current' && (
-            <button
-              type="button"
-              disabled={action.type === 'downgrade' && downgradeMutation.isPending}
-              onClick={() => handleAction(plan, action)}
-              className={cn(
-                'mt-4 w-full text-sm font-semibold py-2.5 px-4 rounded-xl active:scale-[0.98] transition-all',
-                action.type === 'downgrade'
-                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  : 'bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900 shadow-md hover:shadow-lg',
-                action.type === 'downgrade' && downgradeMutation.isPending
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'cursor-pointer',
-              )}
-            >
-              {action.type === 'downgrade' && downgradeMutation.isPending ? 'Downgrading...'
-                : action.label}
-            </button>
-          )}
-
-          {action.type === 'downgrade' && downgradePlan?.id === plan.id && !downgradeConfirmed && (
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left space-y-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-900">Downgrading will restrict access</p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    You will lose features and limits available in your current plan. Review what changes below:
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-1.5 text-xs text-amber-800">
-                {Object.entries(plan.features).map(([key, enabled]) => {
-                  if (!enabled && currentPlan?.features?.[key]) {
-                    const info = FEATURE_CATALOG[key];
-                    return (
-                      <div key={key} className="flex items-start gap-1.5">
-                        <X className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
-                        <span><strong>{info?.label ?? key}</strong> — {info?.description ?? 'Feature removed'}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-                {Object.entries(plan.limits).map(([key, value]) => {
-                  const currentValue = currentPlan?.limits?.[key];
-                  if (currentValue != null && (value == null || Number(value) < Number(currentValue))) {
-                    return (
-                      <div key={key} className="flex items-start gap-1.5">
-                        <X className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
-                        <span><strong>{LIMIT_LABELS[key] ?? key}</strong> reduced from {currentValue} to {value ?? '0'}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button type="button" onClick={() => setDowngradeConfirmed(true)}
-                  className="flex-1 bg-amber-500 text-white text-sm font-semibold py-2 px-3 rounded-xl hover:bg-amber-600 transition-colors">
-                  Continue Downgrade
-                </button>
-                <button type="button" onClick={() => { setDowngradePlan(null); setDowngradeConfirmed(false); }}
-                  className="flex-1 bg-white text-gray-600 text-sm font-medium py-2 px-3 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {action.type === 'downgrade' && downgradePlan?.id === plan.id && downgradeConfirmed && (
-            <div className="space-y-2 mt-3">
-              <p className="text-xs text-gray-500 text-center">Choose when to apply the downgrade:</p>
-              <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan, 'immediate')}
-                className="w-full flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
-                <ArrowDown className="w-4 h-4" />
-                Downgrade Now
-              </button>
-              <button type="button" disabled={downgradeMutation.isPending} onClick={() => handleDowngradeAction(plan, 'end_of_period')}
-                className="w-full bg-white text-gray-700 text-sm font-medium py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50">
-                Schedule for Period End
-              </button>
-              <button type="button" onClick={() => { setDowngradePlan(null); setDowngradeConfirmed(false); }}
-                className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -429,7 +196,9 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <CustosellLoader fullPage={false} />
       ) : (
         <div className="grid gap-5 md:grid-cols-3">
-          {sortedPlans.map((plan, index) => renderPlanCard(plan, index))}
+          {sortedPlans.map((plan, index) => (
+            <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} monthlyPrice={monthlyPrice} onboardingFee={onboardingFee} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} />
+          ))}
         </div>
       )}
 
@@ -479,6 +248,18 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           </tbody>
         </table>
       </div>
+
+      {upgradeFlowPlan && (
+        <UpgradeFlowModal
+          plan={upgradeFlowPlan}
+          subscription={subscription}
+          billingCycle={billingCycle}
+          currency={currency}
+          userPhone={userPhone}
+          onClose={() => setUpgradeFlowPlan(null)}
+          onComplete={handlePaymentComplete}
+        />
+      )}
 
       {subscriptionPayment && pendingPayment && (
         <SubscriptionPaymentModal

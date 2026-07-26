@@ -112,9 +112,43 @@ export function useBillingPayment(id: number | null) {
   });
 }
 
+export interface ProrationDetails {
+  proration_due: number;
+  days_remaining: number;
+  days_in_period: number;
+  credit: number;
+  charge: number;
+  old_price: number;
+  new_price: number;
+  old_price_usd: number;
+  new_price_usd: number;
+}
+
+export interface UpgradeQuote {
+  current_plan: { id: number; name: string; price_monthly: number; price_yearly: number };
+  new_plan: { id: number; name: string; price_monthly: number; price_yearly: number };
+  billing_cycle: string;
+  next_billing_date: string;
+  proration: ProrationDetails;
+}
+
+export function useUpgradeQuote(subscriptionId: number | null, toPlanId: number | null) {
+  return useQuery({
+    queryKey: ['subscription', 'upgrade-quote', subscriptionId, toPlanId],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: UpgradeQuote }>(
+        SUBSCRIPTIONS.PRORATION_QUOTE(subscriptionId!),
+        { params: { to_plan_id: toPlanId! } },
+      );
+      return data.data;
+    },
+    enabled: !!subscriptionId && !!toPlanId,
+  });
+}
+
 export function useUpgrade() {
   const { showToast } = useToast();
-  return useMutation<{ scheduled_change: unknown; proration: unknown }, AxiosError<ApiError>, {
+  return useMutation<{ scheduled_change: unknown; proration: UpgradeQuote }, AxiosError<ApiError>, {
     subscriptionId: number;
     to_plan_id: number;
     effective?: 'immediate' | 'end_of_period';

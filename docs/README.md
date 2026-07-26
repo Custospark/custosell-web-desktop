@@ -134,6 +134,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-14-order-lists-30s-poll.md](./adr/2026-07-14-order-lists-30s-poll.md) | PO / Incoming / Sales / Storefront order lists poll every 30s when open |
 | [2026-07-18-data-export-and-account-deletion.md](./adr/2026-07-18-data-export-and-account-deletion.md) | Business data export API + self-service account deletion |
 | [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency via client-side exchange rate conversion |
+| [2026-07-26-upgrade-flow-proration.md](./adr/2026-07-26-upgrade-flow-proration.md) | Upgrade flow fix — proration display, metadata validation, cross-stack |
 
 ## Modules
 

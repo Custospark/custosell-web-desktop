@@ -76,7 +76,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
   return (
     <aside
       className={cn(
-        'absolute left-0 top-0 bottom-0 z-30 flex h-full flex-col',
+        'absolute left-0 top-0 bottom-0 z-40 lg:z-30 flex h-full flex-col',
         'border-r border-gray-200 bg-white transition-all duration-200 transform',
         collapsed ? 'w-[64px]' : 'w-[247px]',
         isOpen ? 'translate-x-0' : '-translate-x-full',

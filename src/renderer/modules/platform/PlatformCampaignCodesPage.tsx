@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   useCampaignCodes, useCreateCampaignCode, useUpdateCampaignCode, useDeleteCampaignCode,
 } from './api/PlatformCampaignQueries';
@@ -7,7 +7,8 @@ import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeleton
 import { Table } from '../../shared/components/tables/Table';
 import PlatformCampaignCodeFormModal from './PlatformCampaignCodeFormModal';
 import { formatDistanceToNow } from 'date-fns';
-import { Plus, Percent, DollarSign, Gift, Trash2, Pencil, Eye } from 'lucide-react';
+import QRCodeLib from 'qrcode';
+import { Plus, Percent, DollarSign, Gift, Trash2, Pencil, Eye, QrCode, Download, X, Share2 } from 'lucide-react';
 import type { CampaignCode } from './api/PlatformTypes';
 
 export default function PlatformCampaignCodesPage() {
@@ -19,6 +20,7 @@ export default function PlatformCampaignCodesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CampaignCode | null>(null);
   const [viewing, setViewing] = useState<CampaignCode | null>(null);
+  const [qrCode, setQrCode] = useState<CampaignCode | null>(null);
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -113,9 +115,12 @@ export default function PlatformCampaignCodesPage() {
               },
               {
                 key: 'actions',
-                header: '',
+                header: 'Actions',
                 render: (r: CampaignCode) => (
                   <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => setQrCode(r)} className="p-1 text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer" title="QR code">
+                      <QrCode className="w-4 h-4" />
+                    </button>
                     <button type="button" onClick={() => setViewing(r)} className="p-1 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer" title="View usage">
                       <Eye className="w-4 h-4" />
                     </button>
@@ -160,6 +165,8 @@ export default function PlatformCampaignCodesPage() {
         } : null}
       />
 
+      {qrCode && <CampaignCodeQrModal code={qrCode} onClose={() => setQrCode(null)} />}
+
       {viewing && (
         <UsageModal code={viewing} onClose={() => setViewing(null)} />
       )}
@@ -202,6 +209,73 @@ function UsageModal({ code, onClose }: { code: CampaignCode; onClose: () => void
         <div className="flex justify-end">
           <Button type="button" variant="outline" onClick={onClose}>Close</Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function CampaignCodeQrModal({ code, onClose }: { code: CampaignCode; onClose: () => void }) {
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const url = `${window.location.origin}/auth/register?campaign=${code.code}`;
+
+  useEffect(() => {
+    QRCodeLib.toDataURL(url, { width: 240, margin: 2, errorCorrectionLevel: 'M' })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [url]);
+
+  const download = () => {
+    if (!qrDataUrl) return;
+    const link = document.createElement('a');
+    link.download = `custosell-campaign-${code.code}.png`;
+    link.href = qrDataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const share = async () => {
+    if (!qrDataUrl || !navigator.share) return;
+    try {
+      const blob = await (await fetch(qrDataUrl)).blob();
+      const file = new File([blob], `custosell-campaign-${code.code}.png`, { type: 'image/png' });
+      await navigator.share({ title: 'Join Custosell', text: `Use promo code ${code.code}`, files: [file] });
+    } catch { /* user cancelled */ }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 space-y-5 relative" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 cursor-pointer">
+          <X className="w-5 h-5" />
+        </button>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Campaign Code</p>
+          <p className="text-lg font-bold text-gray-900 mt-1 font-mono">{code.code}</p>
+        </div>
+        <div className="flex justify-center">
+          {qrDataUrl ? (
+            <img src={qrDataUrl} alt="Campaign QR" width={240} height={240} className="rounded-xl border border-gray-200 p-2" />
+          ) : (
+            <div className="w-[240px] h-[240px] rounded-xl bg-gray-50 animate-pulse" />
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button type="button" onClick={download} disabled={!qrDataUrl}
+            className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors cursor-pointer">
+            <Download className="w-4 h-4" />
+            Download
+          </button>
+          {navigator.share && (
+            <button type="button" onClick={share} disabled={!qrDataUrl}
+              className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors cursor-pointer">
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+          )}
+        </div>
+        <p className="text-[11px] text-gray-400 text-center break-all">{url}</p>
       </div>
     </div>
   );

@@ -212,9 +212,6 @@ export default function ReferralDropdown() {
                     <span className="text-green-800 font-medium">
                       {formatUSD(creditBalance)} available credit
                     </span>
-                    <span className="text-[10px] text-green-600 ml-auto">
-                      Available for payout
-                    </span>
                   </div>
                 </div>
               )}

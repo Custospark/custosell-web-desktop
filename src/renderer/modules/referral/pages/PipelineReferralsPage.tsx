@@ -1,9 +1,10 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
 import { formatUSD } from '../../../shared/utils/formatCurrency';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, DollarSign, RefreshCw, QrCode, Download } from 'lucide-react';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, QrCode, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QRCodeLib from 'qrcode';
 import { Table } from '../../../shared/components/tables/Table';
+import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import type { ReferralRecord } from '../api/ReferralTypes';
 
 export default function PipelineReferralsPage() {
@@ -15,6 +16,9 @@ export default function PipelineReferralsPage() {
   const referralUrl = earnings?.referral_code
     ? `${window.location.origin}/auth/register?ref=${earnings.referral_code}`
     : '';
+
+  const referrals = earnings?.referrals ?? [];
+  const paginated = usePagination(referrals, 10);
 
   useEffect(() => {
     if (showQr && referralUrl && !qrDataUrl) {
@@ -146,25 +150,6 @@ export default function PipelineReferralsPage() {
         </div>
       </div>
 
-      {/* Available Credit */}
-      {(earnings?.available_credit ?? 0) > 0 && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-green-800">
-              <DollarSign className="h-5 w-5" />
-              <span className="font-semibold">Available Credit</span>
-            </div>
-            <span className="text-lg font-bold text-green-700">{formatUSD(earnings!.available_credit)}</span>
-          </div>
-          <div className="mt-2 flex items-center gap-4 text-sm text-green-700">
-            <span className="flex items-center gap-1">
-              <RefreshCw className="h-3.5 w-3.5" />
-              Available for payout
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Pending Rewards */}
       {(earnings?.pending_rewards ?? 0) > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
@@ -220,39 +205,51 @@ export default function PipelineReferralsPage() {
         <div className="border-b border-gray-200 px-6 py-4">
           <h3 className="text-base font-semibold text-gray-900">Referral History</h3>
         </div>
-        {earnings?.referrals && earnings.referrals.length > 0 ? (
-          <Table
-            columns={[
-              { key: 'business', header: 'Business', render: (r: ReferralRecord) => (
-                <span className="text-sm font-medium text-gray-900">
-                  {r.referred_business?.name ?? 'Unknown'}
-                </span>
-              )},
-              { key: 'status', header: 'Status', render: (r: ReferralRecord) => {
-                const colors: Record<string, string> = {
-                  pending: 'bg-yellow-100 text-yellow-800',
-                  active: 'bg-green-100 text-green-800',
-                  rewarded: 'bg-blue-100 text-blue-800',
-                };
-                return (
-                  <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${colors[r.status] ?? 'bg-gray-100 text-gray-800'}`}>
-                    {r.status}
+        {referrals.length > 0 ? (
+          <>
+            <Table
+              columns={[
+                { key: 'business', header: 'Business', render: (r: ReferralRecord) => (
+                  <span className="text-sm font-medium text-gray-900">
+                    {r.referred_business?.name ?? 'Unknown'}
                   </span>
-                );
-              }},
-              { key: 'reward', header: 'Reward', render: (r: ReferralRecord) => (
-                <span className="text-sm text-gray-600">
-                  {r.reward_amount ? formatUSD(r.reward_amount) : '—'}
-                </span>
-              )},
-              { key: 'date', header: 'Date', render: (r: ReferralRecord) => (
-                <span className="text-sm text-gray-500">
-                  {new Date(r.created_at).toLocaleDateString('en-UG')}
-                </span>
-              )},
-            ]}
-            data={earnings.referrals}
-          />
+                )},
+                { key: 'status', header: 'Status', render: (r: ReferralRecord) => {
+                  const colors: Record<string, string> = {
+                    pending: 'bg-yellow-100 text-yellow-800',
+                    active: 'bg-green-100 text-green-800',
+                    rewarded: 'bg-blue-100 text-blue-800',
+                  };
+                  return (
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${colors[r.status] ?? 'bg-gray-100 text-gray-800'}`}>
+                      {r.status}
+                    </span>
+                  );
+                }},
+                { key: 'reward', header: 'Reward', render: (r: ReferralRecord) => (
+                  <span className="text-sm text-gray-600">
+                    {r.reward_amount ? formatUSD(r.reward_amount) : '—'}
+                  </span>
+                )},
+                { key: 'date', header: 'Date', render: (r: ReferralRecord) => (
+                  <span className="text-sm text-gray-500">
+                    {new Date(r.created_at).toLocaleDateString('en-UG')}
+                  </span>
+                )},
+              ]}
+              data={paginated.data}
+            />
+            <div className="border-t border-gray-200 px-6 py-3">
+              <Pagination
+                currentPage={paginated.page}
+                totalPages={paginated.totalPages}
+                totalItems={paginated.totalItems}
+                pageSize={paginated.pageSize}
+                onPageChange={paginated.setPage}
+                onPageSizeChange={paginated.setPageSize}
+              />
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
             <Gift className="h-10 w-10 text-gray-300" />

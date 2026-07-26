@@ -159,14 +159,14 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
           </div>
         </FormSection>
 
-        <FormSection icon={Coins} title="Pricing (UGX)">
+        <FormSection icon={Coins} title="Pricing (Local)">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Monthly price (UGX) *</label>
+              <label className={labelClass}>Monthly price *</label>
               <input type="number" min={0} value={priceMonthly} onChange={(e) => setPriceMonthly(Number(e.target.value))} className={inputClass} disabled={isSubmitting} />
             </div>
             <div>
-              <label className={labelClass}>Yearly price (UGX)</label>
+              <label className={labelClass}>Yearly price</label>
               <input type="number" min={0} value={priceYearly ?? ''} onChange={(e) => setPriceYearly(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
             </div>
           </div>
@@ -188,7 +188,7 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
         <FormSection icon={Clock} title="Fees & billing">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Onboarding fee (UGX)</label>
+              <label className={labelClass}>Onboarding fee</label>
               <input type="number" min={0} value={onboardingFeeUgx ?? ''} onChange={(e) => setOnboardingFeeUgx(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
             </div>
             <div>

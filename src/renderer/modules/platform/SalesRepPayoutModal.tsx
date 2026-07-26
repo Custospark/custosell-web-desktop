@@ -6,6 +6,7 @@ import { SALES_REPS } from '../../shared/api/endpoints/endpoints';
 import { useToast } from '../../app/contexts/useToast';
 import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 import {
   DollarSign, History, Wallet, Smartphone, Landmark,
   Paperclip, X, FileText, Image
@@ -106,24 +107,24 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <p className="text-xs text-gray-500">Total Earned</p>
             <p className="text-lg font-semibold text-gray-900">
-              {((rep?.pending_commission ?? 0) + totalPaid).toLocaleString('en-UG')} UGX
+              {formatCurrency((rep?.pending_commission ?? 0) + totalPaid)}
             </p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <p className="text-xs text-gray-500">Already Paid</p>
-            <p className="text-lg font-semibold text-green-700">{totalPaid.toLocaleString('en-UG')} UGX</p>
+            <p className="text-lg font-semibold text-green-700">{formatCurrency(totalPaid)}</p>
           </div>
         </div>
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
           <p className="text-sm font-medium text-amber-800">
-            Available to Pay: {pending.toLocaleString('en-UG')} UGX
+            Available to Pay: {formatCurrency(pending)}
           </p>
         </div>
 
         {/* Record new payout */}
         <PipelineFormSection title="Record a Payout" icon={Wallet}>
-          <PipelineIconField label="Amount (UGX)" icon={DollarSign} required>
+          <PipelineIconField label="Amount" icon={DollarSign} required>
             <input
               type="number"
               step="0.01"
@@ -202,7 +203,7 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
                 <div key={p.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 p-3">
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {Number(p.amount).toLocaleString('en-UG')} UGX
+                      {formatCurrency(p.amount)}
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(p.paid_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })}

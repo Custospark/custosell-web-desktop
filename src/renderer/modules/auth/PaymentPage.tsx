@@ -6,6 +6,8 @@ import { useInitiateOnboardingPayment, useBillingPayment } from '../../shared/ap
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
+import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
@@ -18,6 +20,7 @@ export default function PaymentPage() {
   const [initiated, setInitiated] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
 
+  const { currency, onboardingFee } = useDisplayPrices();
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const plan = plans?.find((p) => p.id === subscription?.plan_id);
 
@@ -54,15 +57,15 @@ export default function PaymentPage() {
     }
   }, [redirectCountdown]);
 
-  const onboardingFee = plan?.onboarding_fee_ugx || 0;
+  const fee = plan ? onboardingFee(plan) : 0;
   const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.status === 'completed';
 
   const handlePay = () => {
-    if (!onboardingFee) return;
+    if (!fee) return;
 
     initiateMutation.mutate(
-      { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone },
+      { amount: Number(fee), currency, phone: userPhone },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
@@ -101,7 +104,7 @@ export default function PaymentPage() {
             <div className="flex items-center justify-between border-t border-blue-100 pt-3">
               <span className="text-sm text-gray-600">Onboarding Fee</span>
               <span className="text-lg font-bold text-amber-600">
-                {Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
+                {formatCurrency(Number(fee), currency)}
               </span>
             </div>
             {plan.trial_days ? (
@@ -133,7 +136,7 @@ export default function PaymentPage() {
             onClick={handlePay}
             className="w-full gap-2 py-3.5 text-base"
             loading={initiateMutation.isPending}
-            disabled={!onboardingFee || !userPhone}
+            disabled={!fee || !userPhone}
           >
             <CreditCard className="h-4 w-4" />
             Pay Onboarding Fee

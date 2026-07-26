@@ -32,7 +32,7 @@ const FAQ_CATEGORIES: { label: string; icon: typeof HelpCircle; items: FaqItem[]
     items: [
       {
         q: 'How much does Custosell cost?',
-        a: 'Essential is UGX 75,000/month, Professional is UGX 200,000/month, and Enterprise is UGX 500,000/month. Each plan has a one-time onboarding fee. All plans include a 30-day trial after setup.',
+        a: 'Essential starts at 75,000/month, Professional at 200,000/month, and Enterprise at 500,000/month. Each plan has a one-time onboarding fee. All plans include a 30-day trial after setup.',
       },
       {
         q: 'Is there a free version?',

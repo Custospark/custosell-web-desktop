@@ -10,6 +10,8 @@ import { BILLING, SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
+import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home, ArrowRight } from 'lucide-react';
@@ -29,6 +31,7 @@ export default function OnboardingPage() {
   const [showModal, setShowModal] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
 
+  const { currency, onboardingFee } = useDisplayPrices();
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
@@ -36,7 +39,7 @@ export default function OnboardingPage() {
   const { refetch: refetchProfile } = useProfile();
 
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
-  const onboardingFee = selectedPlan?.onboarding_fee_ugx || 0;
+  const fee = selectedPlan ? onboardingFee(selectedPlan) : 0;
   const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
   const isPaymentFailed = paymentQuery.data?.data?.status === 'failed';
@@ -75,7 +78,7 @@ export default function OnboardingPage() {
   };
 
   const handleStartPayment = async () => {
-    if (!selectedPlanId || !onboardingFee || !user) return;
+    if (!selectedPlanId || !fee || !user) return;
 
     setSubscribing(true);
     setPopupBlocked(false);
@@ -93,7 +96,7 @@ export default function OnboardingPage() {
       const metadata = { action: 'subscribe', plan_id: selectedPlanId };
 
       initiateMutation.mutate(
-        { amount: Number(onboardingFee), currency: 'UGX', phone: userPhone, metadata },
+        { amount: Number(fee), currency, phone: userPhone, metadata },
         {
           onSuccess: (result) => {
             setPaymentId(result.payment_id);
@@ -319,7 +322,7 @@ export default function OnboardingPage() {
             <div className="text-center">
               <p className="text-sm font-medium text-gray-500">{selectedPlan.name}</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
+                {formatCurrency(Number(fee), currency)}
               </p>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mt-0.5">One-time setup fee</p>
             </div>
@@ -344,7 +347,7 @@ export default function OnboardingPage() {
               onClick={handleStartPayment}
               className="w-full gap-2 py-3 text-sm"
               loading={subscribing || initiateMutation.isPending}
-              disabled={!onboardingFee || !userPhone}
+              disabled={!fee || !userPhone}
             >
               <CreditCard className="w-4 h-4" />
               Pay Onboarding Fee

@@ -13,6 +13,8 @@ import {
   Check, Sparkles, Star,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
+import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
 
 interface SubscriptionPaymentState {
@@ -37,6 +39,7 @@ interface PendingPayment {
 
 export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabProps) {
   const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
+  const { currency, monthlyPrice, onboardingFee } = useDisplayPrices();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
@@ -71,7 +74,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       return;
     }
     const price = billingCycle === 'yearly' && plan.price_yearly
-      ? Number(plan.price_yearly) : Number(plan.price_monthly);
+      ? Number(plan.price_yearly) : monthlyPrice(plan);
     const paymentType = getPaymentType(action.type);
     setPendingPayment({ plan, action, amount: price });
     setSubscriptionPayment({
@@ -107,8 +110,8 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const renderPlanCard = (plan: Plan, index: number) => {
     const action = getPlanAction(plan, subscription, currentPlanSortOrder);
     const price = billingCycle === 'yearly' && plan.price_yearly
-      ? Number(plan.price_yearly) : Number(plan.price_monthly);
-    const onboardingFee = plan.onboarding_fee_ugx;
+      ? Number(plan.price_yearly) : monthlyPrice(plan);
+    const fee = onboardingFee(plan);
     const features = Object.entries(plan.features).filter(([, v]) => v);
     const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
     const isCurrentPlan = plan.id === subscription.plan_id;
@@ -164,7 +167,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             <div className="flex items-baseline justify-center gap-1">
               <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
                 {price > 0
-                  ? new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(price)
+                  ? formatCurrency(price, currency)
                   : 'Free'}
               </span>
               {price > 0 && (
@@ -177,7 +180,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             {billingCycle === 'yearly' && plan.price_monthly && (
               <div className="mt-1 space-y-0.5">
                 <p className="text-xs text-gray-400">
-                  ~{new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Math.round(Number(plan.price_yearly) / 12))}/mo
+                  ~{formatCurrency(Math.round(Number(plan.price_yearly) / 12), currency)}/mo
                 </p>
                 {(() => {
                   const monthlyTotal = Number(plan.price_monthly) * 12;
@@ -185,18 +188,18 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                   const pct = Math.round((saved / monthlyTotal) * 100);
                   return (
                     <p className={`text-xs font-semibold ${accent.save}`}>
-                      Save {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(saved)} ({pct}%)
+                      Save {formatCurrency(saved, currency)} ({pct}%)
                     </p>
                   );
                 })()}
               </div>
             )}
 
-            {onboardingFee ? (
+            {fee ? (
               <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
                 <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
                 <p className="text-sm font-bold text-blue-800">
-                  {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
+                  {formatCurrency(fee, currency)}
                 </p>
               </div>
             ) : (
@@ -423,7 +426,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           planPrice={subscriptionPayment.planPrice}
           billingCycle={subscriptionPayment.billingCycle}
           amount={subscriptionPayment.amount}
-          currency="UGX"
+          currency={currency}
           userPhone={userPhone}
           actionLabel={subscriptionPayment.actionLabel}
           paymentType={subscriptionPayment.paymentType}

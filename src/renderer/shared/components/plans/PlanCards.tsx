@@ -1,5 +1,7 @@
 import { Check, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useDisplayPrices } from '../../utils/useDisplayPrices';
+import { formatCurrency } from '../../utils/formatCurrency';
 import type { Plan } from '../../types';
 import { CustosellLoader } from '../loading/CustosellLoader';
 
@@ -49,6 +51,7 @@ interface PlanCardsProps {
 }
 
 export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'monthly', onBillingCycleChange, hideTrialBadge, hideOnboardingFee, ctaLabel = 'Get Started' }: PlanCardsProps) {
+  const { currency, monthlyPrice, onboardingFee } = useDisplayPrices();
   const sorted = [...plans].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
@@ -84,8 +87,8 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
       <div className="grid gap-5 md:grid-cols-3">
         {sorted.map((plan, index) => {
           const price = billingCycle === 'yearly' && plan.price_yearly
-            ? Number(plan.price_yearly) : Number(plan.price_monthly);
-          const onboardingFee = plan.onboarding_fee_ugx;
+            ? Number(plan.price_yearly) : monthlyPrice(plan);
+          const fee = onboardingFee(plan);
           const features = Object.entries(plan.features).filter(([, v]) => v);
           const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
 
@@ -136,7 +139,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
                       {price > 0
-                        ? new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(price)
+                        ? formatCurrency(price, currency)
                         : 'Free'}
                     </span>
                     {price > 0 && (
@@ -149,7 +152,7 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                   {billingCycle === 'yearly' && plan.price_monthly && (
                     <div className="mt-1 space-y-0.5">
                       <p className="text-xs text-gray-400">
-                        ~{new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Math.round(Number(plan.price_yearly) / 12))}/mo
+                        ~{formatCurrency(Math.round(Number(plan.price_yearly) / 12), currency)}/mo
                       </p>
                       {(() => {
                         const monthlyTotal = Number(plan.price_monthly) * 12;
@@ -157,18 +160,18 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                         const pct = Math.round((saved / monthlyTotal) * 100);
                         return (
                           <p className={`text-xs font-semibold ${accent.save}`}>
-                            Save {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(saved)} ({pct}%)
+                            Save {formatCurrency(saved, currency)} ({pct}%)
                           </p>
                         );
                       })()}
                     </div>
                   )}
 
-                  {!hideOnboardingFee && onboardingFee ? (
+                  {!hideOnboardingFee && fee ? (
                     <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
                       <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
                       <p className="text-sm font-bold text-blue-800">
-                        {new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(Number(onboardingFee))}
+                        {formatCurrency(fee, currency)}
                       </p>
                     </div>
                   ) : !hideOnboardingFee ? (

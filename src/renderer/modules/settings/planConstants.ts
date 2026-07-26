@@ -30,8 +30,11 @@ export const STATUS_STYLES: Record<string, { bg: string; text: string; label: st
   expired: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Expired' },
 };
 
-export function formatCurrency(amount: number, currency = 'UGX'): string {
+import { getBusinessCurrency } from '../../shared/utils/formatCurrency';
+
+export function formatCurrency(amount: number, currency?: string): string {
+  const cur = currency || getBusinessCurrency();
   return new Intl.NumberFormat('en-UG', {
-    style: 'currency', currency, maximumFractionDigits: 0,
+    style: 'currency', currency: cur, maximumFractionDigits: 0,
   }).format(amount);
 }

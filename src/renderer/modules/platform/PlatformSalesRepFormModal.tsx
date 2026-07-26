@@ -386,7 +386,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
                 className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               >
                 <option value="percentage">Percentage (%)</option>
-                <option value="flat">Flat (UGX)</option>
+                <option value="flat">Flat</option>
               </select>
             </PipelineIconField>
           </div>

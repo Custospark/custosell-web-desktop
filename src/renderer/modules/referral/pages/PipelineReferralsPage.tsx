@@ -1,4 +1,5 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent } from 'lucide-react';
 import { useState } from 'react';
 import { Table } from '../../../shared/components/tables/Table';
@@ -88,7 +89,7 @@ export default function PipelineReferralsPage() {
             <div>
               <p className="text-sm text-gray-500">Total Earned</p>
               <p className="text-xl font-semibold text-gray-900">
-                {earnings ? Number(earnings.total_earned).toLocaleString('en-UG') : 0} UGX
+                {earnings ? formatCurrency(earnings.total_earned) : formatCurrency(0)}
               </p>
             </div>
           </div>
@@ -101,7 +102,7 @@ export default function PipelineReferralsPage() {
           <div className="flex items-center gap-2 text-amber-800">
             <Wallet className="h-5 w-5" />
             <span className="font-medium">
-              Pending rewards: {Number(earnings!.pending_rewards).toLocaleString('en-UG')} UGX
+              Pending rewards: {formatCurrency(earnings!.pending_rewards)}
             </span>
           </div>
           <p className="mt-1 text-sm text-amber-600">
@@ -123,24 +124,24 @@ export default function PipelineReferralsPage() {
               <p className="text-lg font-semibold text-purple-900">
                 {earnings.commission_type === 'percentage'
                   ? `${earnings.commission_rate}%`
-                  : `${Number(earnings.commission_rate).toLocaleString('en-UG')} UGX`}
+                  : formatCurrency(earnings.commission_rate)}
               </p>
             </div>
             <div>
               <p className="text-sm text-purple-600">Available to Claim</p>
               <p className="text-lg font-semibold text-purple-900">
-                {Number(earnings.commission_pending).toLocaleString('en-UG')} UGX
+                {formatCurrency(earnings.commission_pending)}
               </p>
             </div>
             <div>
               <p className="text-sm text-purple-600">Total Earned</p>
               <p className="text-lg font-semibold text-purple-900">
-                {Number(earnings.commission_earned).toLocaleString('en-UG')} UGX
+                {formatCurrency(earnings.commission_earned)}
               </p>
             </div>
           </div>
           <p className="mt-3 text-sm text-purple-600">
-            Contact the Custosell team to claim your pending commission of {Number(earnings.commission_pending).toLocaleString('en-UG')} UGX.
+            Contact the Custosell team to claim your pending commission of {formatCurrency(earnings.commission_pending)}.
           </p>
         </div>
       )}
@@ -172,7 +173,7 @@ export default function PipelineReferralsPage() {
               }},
               { key: 'reward', header: 'Reward', render: (r: ReferralRecord) => (
                 <span className="text-sm text-gray-600">
-                  {r.reward_amount ? `${Number(r.reward_amount).toLocaleString('en-UG')} UGX` : '—'}
+                  {r.reward_amount ? formatCurrency(r.reward_amount) : '—'}
                 </span>
               )},
               { key: 'date', header: 'Date', render: (r: ReferralRecord) => (

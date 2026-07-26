@@ -34,6 +34,7 @@ import { employeeDisplayName, type HrSalaryStructure } from '../api/hrTypes';
 import { PayRunStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { formatShiftDate, formatShiftDateRange } from '../../../shared/utils/formatDateTime';
+import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import {
   HrFormSection,
   HrIconField,
@@ -62,7 +63,6 @@ export default function HrPayrollPage() {
   const deleteComp = useDeleteHrCompensation();
   const createRun = useCreateHrPayRun();
   const deleteRun = useDeleteHrPayRun();
-
   const [structureOpen, setStructureOpen] = useState(false);
   const [editingStructure, setEditingStructure] = useState<HrSalaryStructure | null>(null);
   const [compOpen, setCompOpen] = useState(false);
@@ -97,7 +97,8 @@ export default function HrPayrollPage() {
     if (editingStructure) {
       await updateStructure.mutateAsync({ id: editingStructure.id, name, currency: editingStructure.currency });
     } else {
-      await createStructure.mutateAsync({ name, currency: 'UGX' });
+      await createStructure.mutateAsync({ name, currency: getBusinessCurrency() });
+
     }
     setStructureOpen(false);
     setEditingStructure(null);
@@ -174,7 +175,7 @@ export default function HrPayrollPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <HrSectionCard
           title="Salary structures"
-          description="Templates for how you pay — currency defaults to UGX."
+          description="Templates for how you pay."
           actions={
             <Button size="sm" variant="outline" onClick={openCreateStructure} className="inline-flex items-center gap-1.5">
               <Plus className="h-3.5 w-3.5" /> Add structure
@@ -185,7 +186,7 @@ export default function HrPayrollPage() {
             <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : structures.length === 0 ? (
             <p className="text-sm text-gray-500">
-              No structures yet — create one like &ldquo;Standard UGX&rdquo; to organize compensation.
+              No structures yet — create one to organize compensation.
             </p>
           ) : (
             <ul className="divide-y divide-gray-100 text-sm">
@@ -349,7 +350,7 @@ export default function HrPayrollPage() {
           <HrModalHero
             icon={Layers}
             title={editingStructure ? 'Edit salary structure' : 'New salary structure'}
-            description="Currency defaults to UGX for Uganda-first payroll — you can assign it when setting compensation."
+            description="The currency is set per business — you can assign it when setting compensation."
             tone="blue"
           />
           <HrFormSection title="Structure" icon={Layers}>
@@ -358,7 +359,7 @@ export default function HrPayrollPage() {
                 required
                 value={structureName}
                 onChange={(e) => setStructureName(e.target.value)}
-                placeholder="Standard UGX"
+                placeholder="Standard"
                 className={hrInputClass}
                 autoFocus
               />
@@ -423,7 +424,7 @@ export default function HrPayrollPage() {
               </select>
             </HrIconField>
             <div className="grid gap-4 sm:grid-cols-2">
-              <HrIconField label="Basic salary (UGX)" icon={Coins} required>
+              <HrIconField label="Basic salary" icon={Coins} required>
                 <input
                   type="number"
                   min={0}

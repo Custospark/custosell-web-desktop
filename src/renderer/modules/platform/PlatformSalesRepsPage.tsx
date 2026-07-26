@@ -6,6 +6,7 @@ import { Table } from '../../shared/components/tables/Table';
 import { Button } from '../../shared/components/buttons/Button';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../app/contexts/useToast';
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { Search, Plus, Users, TrendingUp, DollarSign, Upload, Trash2 } from 'lucide-react';
 import { SalesRepFormModal } from './PlatformSalesRepFormModal';
 import { SalesRepPayoutModal } from './SalesRepPayoutModal';
@@ -95,7 +96,7 @@ export default function PlatformSalesRepsPage() {
             <div>
               <p className="text-sm text-gray-500">Total Commission Owed</p>
               <p className="text-xl font-semibold">
-                {reps.reduce((s, r) => s + (r.pending_commission ?? 0), 0).toLocaleString('en-UG')} UGX
+                {formatCurrency(reps.reduce((s, r) => s + (r.pending_commission ?? 0), 0))}
               </p>
             </div>
           </div>
@@ -108,7 +109,7 @@ export default function PlatformSalesRepsPage() {
             <div>
               <p className="text-sm text-gray-500">Total Paid Out</p>
               <p className="text-xl font-semibold">
-                {reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0).toLocaleString('en-UG')} UGX
+                {formatCurrency(reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0))}
               </p>
             </div>
           </div>
@@ -140,7 +141,7 @@ export default function PlatformSalesRepsPage() {
             )},
             { key: 'rate', header: 'Commission', align: 'center', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-gray-900">
-                {r.commission_type === 'percentage' ? `${r.commission_rate}%` : `${Number(r.commission_rate).toLocaleString('en-UG')} UGX`}
+                {r.commission_type === 'percentage' ? `${r.commission_rate}%` : formatCurrency(r.commission_rate)}
               </span>
             )},
             { key: 'referrals', header: 'Referrals', align: 'center', render: (r: PlatformSalesRep) => (
@@ -148,12 +149,12 @@ export default function PlatformSalesRepsPage() {
             )},
             { key: 'pending', header: 'Pending', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm font-medium text-amber-700">
-                {(r.pending_commission ?? 0) > 0 ? `${(r.pending_commission ?? 0).toLocaleString('en-UG')} UGX` : '—'}
+                {(r.pending_commission ?? 0) > 0 ? formatCurrency(r.pending_commission) : '—'}
               </span>
             )},
             { key: 'paid', header: 'Paid Out', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-green-700">
-                {(r.paid_commission ?? 0) > 0 ? `${(r.paid_commission ?? 0).toLocaleString('en-UG')} UGX` : '—'}
+                {(r.paid_commission ?? 0) > 0 ? formatCurrency(r.paid_commission) : '—'}
               </span>
             )},
             { key: 'status', header: 'Active', align: 'center', render: (r: PlatformSalesRep) => (

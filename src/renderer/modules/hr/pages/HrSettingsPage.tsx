@@ -37,7 +37,7 @@ export default function HrSettingsPage() {
             <li className="flex gap-3">
               <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
               <span>
-                Payroll is Uganda-first (UGX, PAYE, NSSF). Assign compensation, then calculate → approve → post a pay run.
+                Payroll is Uganda-first (PAYE, NSSF). Assign compensation, then calculate → approve → post a pay run.
               </span>
             </li>
             <li className="flex gap-3">

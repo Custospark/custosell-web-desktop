@@ -1,3 +1,4 @@
+import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import type { BoardProgressContext, BoardTarget, TargetPeriodSlice } from './boardProgressTypes';
 import type { PipelineBoard } from './pipelineTypes';
 import { boardUsesTaskTerminology } from './pipelineBoardWorkspace';
@@ -64,7 +65,7 @@ export function resolveProgressContext(
     board_kind: board?.project_id ? 'project' : (board?.workspace === 'estimates' ? 'estimates' : 'pipeline'),
     won_label: usesTaskLanguage ? 'completed' : 'won',
     lost_label: usesTaskLanguage ? 'cancelled' : 'lost',
-    currency: 'UGX',
+    currency: getBusinessCurrency(),
   };
 }
 

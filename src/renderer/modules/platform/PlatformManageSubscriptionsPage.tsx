@@ -36,10 +36,7 @@ function formatDate(iso?: string | null): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatCurrency(amount: number | null | undefined): string {
-  if (amount == null) return '—';
-  return Number(amount).toLocaleString('en-UG');
-}
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 
 export default function PlatformManageSubscriptionsPage() {
   const { data: subscriptions = [], isLoading, error } = useQuery({
@@ -149,13 +146,11 @@ export default function PlatformManageSubscriptionsPage() {
             { key: 'price_monthly', header: 'Monthly', align: 'right', render: (s) => (
               <>
                 <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_monthly ?? s.plan?.price_monthly)}</span>
-                <span className="text-xs text-gray-400 ml-1">UGX</span>
               </>
             )},
             { key: 'price_yearly', header: 'Yearly', align: 'right', render: (s) => (
               <>
                 <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_yearly ?? s.plan?.price_yearly)}</span>
-                <span className="text-xs text-gray-400 ml-1">UGX</span>
               </>
             )},
             { key: 'status', header: 'Status', align: 'center', render: (s) => (
@@ -171,7 +166,7 @@ export default function PlatformManageSubscriptionsPage() {
               return (
                 <div className="flex items-center justify-end gap-1.5">
                   {fee != null && fee > 0 && (
-                    <span className="text-sm font-medium text-gray-900">{formatCurrency(fee)} UGX</span>
+                    <span className="text-sm font-medium text-gray-900">{formatCurrency(fee)}</span>
                   )}
                   {s.onboarding_fee_paid
                     ? <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium"><Check className="w-3 h-3" /> Paid</span>

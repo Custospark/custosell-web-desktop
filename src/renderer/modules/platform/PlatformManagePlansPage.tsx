@@ -10,6 +10,7 @@ import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeleton
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
+import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { CreditCard, Plus, Pencil, Trash2, Check } from 'lucide-react';
 
 export default function PlatformManagePlansPage() {
@@ -104,17 +105,17 @@ export default function PlatformManagePlansPage() {
             )},
             { key: 'price_monthly', header: 'Monthly', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {Number(p.price_monthly).toLocaleString('en-UG')} UGX
+                {formatCurrency(p.price_monthly)}
               </span>
             )},
             { key: 'price_yearly', header: 'Yearly', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {p.price_yearly ? `${Number(p.price_yearly).toLocaleString('en-UG')} UGX` : '—'}
+                {p.price_yearly ? formatCurrency(p.price_yearly) : '—'}
               </span>
             )},
             { key: 'onboarding_fee_ugx', header: 'Onboarding', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {p.onboarding_fee_ugx ? `${Number(p.onboarding_fee_ugx).toLocaleString('en-UG')} UGX` : '—'}
+                {p.onboarding_fee_ugx ? formatCurrency(p.onboarding_fee_ugx) : '—'}
               </span>
             )},
             { key: 'trial_days', header: 'Trial', align: 'center', render: (p) => (

@@ -136,7 +136,7 @@ export function PlatformActivityTrendChart({ data }: { data: PlatformMetricDay[]
                 const num = typeof value === 'number' ? value : Number(value ?? 0);
                 if (name === 'Gross sales') {
                   const gross = (item?.payload as { gross_sales_num?: number })?.gross_sales_num ?? num * 1_000_000;
-                  return [formatCurrency(gross, 'UGX'), name];
+                  return [formatCurrency(gross), name];
                 }
                 return [num, name];
               }}

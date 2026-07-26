@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
+import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp } from 'lucide-react';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 
 interface UpgradeFlowModalProps {
   plan: Plan;
@@ -27,6 +27,7 @@ export default function UpgradeFlowModal({
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [prorationDue, setProrationDue] = useState(0);
+  const [prorationDueUsd, setProrationDueUsd] = useState(0);
 
   const { data: quote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
     subscription.id, plan.id,
@@ -46,8 +47,10 @@ export default function UpgradeFlowModal({
       {
         onSuccess: (result) => {
           const due = result.proration?.proration?.proration_due ?? prorationDue;
+          const dueUsd = result.proration?.proration?.proration_due_usd ?? 0;
           if (due > 0) {
             setProrationDue(due);
+            setProrationDueUsd(dueUsd);
             setStep('paying');
           } else {
             setStep('done');
@@ -63,10 +66,14 @@ export default function UpgradeFlowModal({
 
   const handlePay = () => {
     setStep('polling');
+    const paymentCurrency = getPaymentCurrency();
+    const amount = paymentCurrency === 'USD'
+      ? (prorationDueUsd || prorationDue)
+      : prorationDue;
     initiateMutation.mutate(
       {
-        amount: prorationDue,
-        currency,
+        amount,
+        currency: paymentCurrency,
         phone: userPhone,
         metadata: { action: 'upgrade', to_plan_id: plan.id },
       },
@@ -225,9 +232,11 @@ export default function UpgradeFlowModal({
               </span>
             </div>
             <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
-              <span className="font-semibold text-gray-700">Prorated amount due today</span>
+              <span className="font-semibold text-gray-700">Amount due today</span>
               <span className="font-bold text-blue-700 text-base">
-                {formatCurrency(prorationDue, currency)}
+                {getPaymentCurrency() === 'USD'
+                  ? formatUSD(prorationDueUsd || prorationDue)
+                  : formatCurrency(prorationDue, getPaymentCurrency())}
               </span>
             </div>
           </div>
@@ -241,7 +250,7 @@ export default function UpgradeFlowModal({
 
           <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm"
             loading={initiateMutation.isPending}>
-            Pay {formatCurrency(prorationDue, currency)}
+            Pay {formatUSD(prorationDueUsd || prorationDue)}
           </Button>
 
           {initiateMutation.isError && (
@@ -307,7 +316,7 @@ export default function UpgradeFlowModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
             <p className="text-sm text-gray-500 mt-1">
-              Complete the payment of {formatCurrency(prorationDue, currency)} via Mobile Money.
+              Complete the payment of {formatUSD(prorationDueUsd || prorationDue)} via Mobile Money.
             </p>
             <p className="text-xs text-gray-400 mt-2">
               An STK push will be sent to <span className="font-semibold">{userPhone}</span>

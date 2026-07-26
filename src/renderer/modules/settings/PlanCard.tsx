@@ -1,6 +1,6 @@
 import { ArrowDown, X, Check, Sparkles, Star, AlertCircle, CheckCircle, CalendarX } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { getPlanAction } from './planActionMatrix';
 import { FEATURE_CATALOG, LIMIT_LABELS } from './planConstants';
 import type { Plan } from '../../shared/types';
@@ -13,6 +13,8 @@ interface PlanCardProps {
   billingCycle: 'monthly' | 'yearly';
   currency: string;
   onboardingFee: (plan: Plan) => number;
+  monthlyPriceFn: (plan: Plan) => number;
+  yearlyPriceFn: (plan: Plan) => number;
   subscription: SubscriptionInfo;
   currentPlan: Plan | null;
   currentPlanSortOrder: number;
@@ -34,6 +36,8 @@ export default function PlanCard({
   billingCycle,
   currency,
   onboardingFee,
+  monthlyPriceFn,
+  yearlyPriceFn,
   subscription,
   currentPlan,
   currentPlanSortOrder,
@@ -50,9 +54,14 @@ export default function PlanCard({
 }: PlanCardProps) {
   const action = getPlanAction(plan, subscription, currentPlanSortOrder);
   const isCurrentPlan = plan.id === subscription.plan_id;
-  const subPriceYearly = isCurrentPlan && subscription.price_yearly ? Number(subscription.price_yearly) : Number(plan.price_yearly ?? 0);
-  const subPriceMonthly = isCurrentPlan && subscription.price_monthly ? Number(subscription.price_monthly) : Number(plan.price_monthly ?? 0);
-  const price = billingCycle === 'yearly' ? subPriceYearly : subPriceMonthly;
+  const isYearly = billingCycle === 'yearly';
+
+  const subPriceUsdYearly = isCurrentPlan && subscription.price_yearly_usd ? Number(subscription.price_yearly_usd) : Number(plan.price_yearly_usd ?? 0);
+  const subPriceUsdMonthly = isCurrentPlan && subscription.price_monthly_usd ? Number(subscription.price_monthly_usd) : Number(plan.price_monthly_usd ?? 0);
+  const usdPrice = isYearly ? subPriceUsdYearly : subPriceUsdMonthly;
+  const usdMonthlyPriceVal = subPriceUsdMonthly;
+
+  const localPrice = isYearly ? yearlyPriceFn(plan) : monthlyPriceFn(plan);
   const fee = onboardingFee(plan);
   const features = Object.entries(plan.features).filter(([, v]) => v);
   const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
@@ -125,41 +134,48 @@ export default function PlanCard({
         <div className="text-center">
           <div className="flex items-baseline justify-center gap-1">
             <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-              {price > 0
-                ? formatCurrency(price, currency)
+              {usdPrice > 0
+                ? formatUSD(usdPrice)
                 : 'Free'}
             </span>
-            {price > 0 && (
+            {usdPrice > 0 && (
               <span className="text-sm text-gray-400 font-medium">
-                /{billingCycle === 'yearly' ? 'yr' : 'mo'}
+                /{isYearly ? 'yr' : 'mo'}
               </span>
             )}
           </div>
 
-          {billingCycle === 'yearly' && subPriceMonthly > 0 && (
+          {localPrice > 0 && currency !== 'USD' && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              ≈ {formatCurrency(localPrice, currency)}/{isYearly ? 'yr' : 'mo'}
+            </p>
+          )}
+
+          {isYearly && usdMonthlyPriceVal > 0 && (
             <div className="mt-1 space-y-0.5">
               <p className="text-xs text-gray-400">
-                ~{formatCurrency(Math.round(subPriceYearly / 12), currency)}/mo
+                ~{formatUSD(usdMonthlyPriceVal)}/mo
               </p>
               {(() => {
-                const monthlyTotal = subPriceMonthly * 12;
-                const saved = monthlyTotal - subPriceYearly;
-                const pct = Math.round((saved / monthlyTotal) * 100);
+                const monthlyUsdTotal = usdMonthlyPriceVal * 12;
+                const saved = monthlyUsdTotal - usdPrice;
+                const pct = Math.round((saved / monthlyUsdTotal) * 100);
                 return (
                   <p className={`text-xs font-semibold ${accent.save}`}>
-                    Save {formatCurrency(saved, currency)} ({pct}%)
+                    Save {formatUSD(saved)} ({pct}%)
                   </p>
                 );
               })()}
             </div>
           )}
 
-          {fee ? (
+          {(isCurrentPlan ? subscription.onboarding_fee_usd : plan.onboarding_fee_usd) ? (
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
               <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
-              <p className="text-sm font-bold text-blue-800">
-                {formatCurrency(fee, currency)}
-              </p>
+              <p className="text-sm font-bold text-blue-800">{formatUSD(Number(isCurrentPlan ? subscription.onboarding_fee_usd : plan.onboarding_fee_usd))}</p>
+              {currency !== 'USD' && fee > 0 && (
+                <p className="text-[11px] text-blue-600">≈ {formatCurrency(fee, currency)}</p>
+              )}
             </div>
           ) : (
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">

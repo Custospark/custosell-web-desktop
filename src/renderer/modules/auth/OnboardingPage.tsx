@@ -31,7 +31,7 @@ export default function OnboardingPage() {
   const [showModal, setShowModal] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
 
-  const { currency, onboardingFee } = useDisplayPrices();
+  const { currency, onboardingFee, usdOnboardingFee } = useDisplayPrices();
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
@@ -40,6 +40,7 @@ export default function OnboardingPage() {
 
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
   const fee = selectedPlan ? onboardingFee(selectedPlan) : 0;
+  const feeUsd = selectedPlan ? usdOnboardingFee(selectedPlan) : 0;
   const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
   const isPaymentFailed = paymentQuery.data?.data?.status === 'failed';
@@ -96,7 +97,7 @@ export default function OnboardingPage() {
       const metadata = { action: 'subscribe', plan_id: selectedPlanId };
 
       initiateMutation.mutate(
-        { amount: Number(fee), currency, phone: userPhone, metadata },
+        { amount: Number(feeUsd), currency: 'USD', phone: userPhone, metadata },
         {
           onSuccess: (result) => {
             setPaymentId(result.payment_id);

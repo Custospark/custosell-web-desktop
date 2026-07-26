@@ -4,12 +4,12 @@ Mirrors the backend [billing-scenarios.md](../../../Backend/docs/billing-scenari
 
 ## Characters
 
-| Person | Business | Location | Plan |
-|--------|----------|----------|------|
-| **Oscar** | Kikuubo Retail Ltd | Kampala, UGX | Essential → Professional |
-| **Grace** | Sino Hardware & General Supplies | Gulu, UGX | Professional |
-| **David** | Pearl Tech Solutions | Kampala, USD | Enterprise |
-| **Sarah** | Mama K's Foods | Jinja, UGX | Essential (trial only) |
+| Person | Business | Location | Plan | Currency |
+|--------|----------|----------|------|----------|
+| **Oscar** | Kikuubo Retail Ltd | Kampala, UGX | Essential → Professional | UGX |
+| **Grace** | Sino Hardware & General Supplies | Gulu, UGX | Professional | UGX |
+| **David** | Pearl Tech Solutions | Kampala, USD | Enterprise | USD |
+| **Sarah** | Mama K's Foods | Jinja, UGX | Essential (trial only) | UGX |
 
 ---
 
@@ -416,6 +416,57 @@ The `discount_applied` field on the Referral model is **informational/tracking o
 ### Grace period
 
 Grace is granted **once per subscription lifecycle**. The `grace_used` boolean on the Subscription model is set when `markPastDue()` is called, and subsequent calls throw `RuntimeException`. Since each business can have at most one active subscription, this effectively means once per business.
+
+---
+
+## Scenario 9: Multi-Currency Payment — USD Primary, Local Equivalent
+
+Oscar (Kikuubo Retail Ltd, UGX) sees plan prices in USD with UGX equivalent. David (Pearl Tech Solutions, USD) sees prices in USD only.
+
+### What the user sees
+
+| User | Currency | Essential display |
+|------|----------|-------------------|
+| Oscar | UGX | `$20.00/mo` (big) + `≈ UGX 75,000/mo` (small) |
+| David | USD | `$135.00/mo` (big, no local equivalent needed) |
+| Kenyan business | KES | `$20.00/mo` (big) + `≈ KES 2,600/mo` (small) |
+
+### How payment currency is routed
+
+1. `getPaymentCurrency()` checks business currency against `{UGX, KES, TZS}`
+2. If match → payment submitted in that currency (e.g. UGX via mobile money)
+3. If no match → payment submitted in USD (card/default)
+
+### Example: Oscar pays in UGX
+
+```
+POST /billing/payments/initiate
+{ "amount": 75000, "currency": "UGX", "payment_type": "subscription" }
+```
+
+Backend validates 75,000 UGX against subscription snapshot (75,000 UGX) and forwards to PesaPal in UGX. Oscar pays via MTN Mobile Money.
+
+### Example: David pays in USD
+
+```
+POST /billing/payments/initiate
+{ "amount": 135, "currency": "USD", "payment_type": "subscription" }
+```
+
+Backend validates $135 against subscription snapshot ($135 USD) and forwards to PesaPal in USD.
+
+### Failure states
+
+| Condition | Result |
+|-----------|--------|
+| Business has no currency set | Defaults to `UGX` in DB, payment in UGX |
+| Amount doesn't match snapshot | Backend rejects with ±2% tolerance |
+| Exchange rate API down | Display falls back to raw USD price; validation uses subscription snapshot directly |
+| Unsupported currency (RWF, etc.) | Payment routed to USD fallback |
+
+### Key difference from earlier scenarios
+
+All earlier scenarios show UGX prices. With multi-currency, prices display in USD as the primary reference. The payment amount and currency are selected dynamically based on the business's configured currency.
 
 ---
 

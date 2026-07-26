@@ -58,6 +58,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
 | [intent-and-tour.md](./product/intent-and-tour.md) | Post-register intent cards + shell product tour |
 | [subscription-user-stories.md](./product/subscription-user-stories.md) | Frontend subscription guard, overlay, user stories per status |
+| [billing-currency.md](./product/billing-currency.md) | Multi-currency pricing display, payment currency routing, backend validation |
 
 ## Future work
 
@@ -133,7 +134,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-14-board-poll-delete-import-storefront.md](./adr/2026-07-14-board-poll-delete-import-storefront.md) | Board 30s poll, delete, Excel card import, visibility/role, product shop UX |
 | [2026-07-14-order-lists-30s-poll.md](./adr/2026-07-14-order-lists-30s-poll.md) | PO / Incoming / Sales / Storefront order lists poll every 30s when open |
 | [2026-07-18-data-export-and-account-deletion.md](./adr/2026-07-18-data-export-and-account-deletion.md) | Business data export API + self-service account deletion |
-| [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency via client-side exchange rate conversion |
+| [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency pricing & payment routing — USD-primary display, payment currency selection, backend validation |
 | [2026-07-26-upgrade-flow-proration.md](./adr/2026-07-26-upgrade-flow-proration.md) | Upgrade flow fix — proration display, metadata validation, cross-stack |
 
 ## Modules

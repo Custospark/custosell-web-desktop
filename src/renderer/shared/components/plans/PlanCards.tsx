@@ -1,7 +1,7 @@
 import { Check, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useDisplayPrices } from '../../utils/useDisplayPrices';
-import { formatCurrency } from '../../utils/formatCurrency';
+import { formatCurrency, formatUSD } from '../../utils/formatCurrency';
 import type { Plan } from '../../types';
 import { CustosellLoader } from '../loading/CustosellLoader';
 
@@ -51,7 +51,7 @@ interface PlanCardsProps {
 }
 
 export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'monthly', onBillingCycleChange, hideTrialBadge, hideOnboardingFee, ctaLabel = 'Get Started' }: PlanCardsProps) {
-  const { currency, monthlyPrice, onboardingFee } = useDisplayPrices();
+  const { currency, monthlyPrice, yearlyPrice, onboardingFee, usdMonthlyPrice, usdYearlyPrice, usdOnboardingFee } = useDisplayPrices();
   const sorted = [...plans].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
@@ -86,9 +86,11 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
 
       <div className="grid gap-5 md:grid-cols-3">
         {sorted.map((plan, index) => {
-          const price = billingCycle === 'yearly' && plan.price_yearly
-            ? Number(plan.price_yearly) : monthlyPrice(plan);
+          const isYearly = billingCycle === 'yearly';
+          const usdPrice = isYearly ? usdYearlyPrice(plan) : usdMonthlyPrice(plan);
+          const localPrice = isYearly ? yearlyPrice(plan) : monthlyPrice(plan);
           const fee = onboardingFee(plan);
+          const usdFee = usdOnboardingFee(plan);
           const features = Object.entries(plan.features).filter(([, v]) => v);
           const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
 
@@ -138,41 +140,48 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
                 <div className="text-center">
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                      {price > 0
-                        ? formatCurrency(price, currency)
+                      {usdPrice > 0
+                        ? formatUSD(usdPrice)
                         : 'Free'}
                     </span>
-                    {price > 0 && (
+                    {usdPrice > 0 && (
                       <span className="text-sm text-gray-400 font-medium">
-                        /{billingCycle === 'yearly' ? 'yr' : 'mo'}
+                        /{isYearly ? 'yr' : 'mo'}
                       </span>
                     )}
                   </div>
 
-                  {billingCycle === 'yearly' && plan.price_monthly && (
+                  {localPrice > 0 && currency !== 'USD' && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      ≈ {formatCurrency(localPrice, currency)}/{isYearly ? 'yr' : 'mo'}
+                    </p>
+                  )}
+
+                  {isYearly && usdMonthlyPrice(plan) > 0 && (
                     <div className="mt-1 space-y-0.5">
                       <p className="text-xs text-gray-400">
-                        ~{formatCurrency(Math.round(Number(plan.price_yearly) / 12), currency)}/mo
+                        ~{formatUSD(usdMonthlyPrice(plan))}/mo
                       </p>
                       {(() => {
-                        const monthlyTotal = Number(plan.price_monthly) * 12;
-                        const saved = monthlyTotal - Number(plan.price_yearly);
-                        const pct = Math.round((saved / monthlyTotal) * 100);
+                        const monthlyUsdTotal = usdMonthlyPrice(plan) * 12;
+                        const saved = monthlyUsdTotal - usdYearlyPrice(plan);
+                        const pct = Math.round((saved / monthlyUsdTotal) * 100);
                         return (
                           <p className={`text-xs font-semibold ${accent.save}`}>
-                            Save {formatCurrency(saved, currency)} ({pct}%)
+                            Save {formatUSD(saved)} ({pct}%)
                           </p>
                         );
                       })()}
                     </div>
                   )}
 
-                  {!hideOnboardingFee && fee ? (
+                  {!hideOnboardingFee && usdFee ? (
                     <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
                       <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
-                      <p className="text-sm font-bold text-blue-800">
-                        {formatCurrency(fee, currency)}
-                      </p>
+                      <p className="text-sm font-bold text-blue-800">{formatUSD(usdFee)}</p>
+                      {currency !== 'USD' && fee > 0 && (
+                        <p className="text-[11px] text-blue-600">≈ {formatCurrency(fee, currency)}</p>
+                      )}
                     </div>
                   ) : !hideOnboardingFee ? (
                     <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">

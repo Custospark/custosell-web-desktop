@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
-import { formatCurrency } from '../../utils/formatCurrency';
+import { formatCurrency, formatUSD } from '../../utils/formatCurrency';
+import { useDisplayPrices } from '../../utils/useDisplayPrices';
 import {
   Crown, Sparkles, Building2, CheckCircle2, ChevronDown,
   CreditCard, Settings, ArrowUp, ArrowDown,
@@ -44,6 +45,7 @@ export default function SubscriptionDropdown() {
   const user = useAppSelector((s) => s.auth.user);
   const plans = useAppSelector((s) => s.auth.plans);
   const subscription = user?.business?.subscription;
+  const { currency, monthlyPrice } = useDisplayPrices();
 
   const currentPlan = useMemo(() => {
     if (!plans || !subscription) return null;
@@ -200,10 +202,12 @@ export default function SubscriptionDropdown() {
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-semibold truncate text-gray-900">{p.name}</span>
                           <span className="text-xs shrink-0 text-gray-500">
-                            {formatCurrency(Number(p.price_monthly))}/mo
+                            {formatUSD(Number(p.price_monthly_usd ?? 0))}/mo
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500">View plan</span>
+                        <span className="text-xs text-gray-500">
+                          {currency !== 'USD' ? `≈ ${formatCurrency(monthlyPrice(p), currency)}/mo` : 'View plan'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-0.5 shrink-0">
                         {isHigher && <ArrowUp className="w-3 h-3 text-blue-500" />}

@@ -3,6 +3,21 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { BILLING, SUBSCRIPTIONS } from '../endpoints/endpoints';
+import { store } from '../../../app/store/store';
+
+const PESAPAL_SUPPORTED_CURRENCIES = ['UGX', 'KES', 'TZS'];
+
+export function getPaymentCurrency(): string {
+  try {
+    const state = store.getState();
+    const currency = (state as { auth?: { user?: { business?: { currency?: string } } } }).auth?.user?.business?.currency;
+    const upper = (currency || 'UGX').toUpperCase();
+    if (PESAPAL_SUPPORTED_CURRENCIES.includes(upper)) return upper;
+    return 'USD';
+  } catch {
+    return 'USD';
+  }
+}
 
 export function useSubscribe() {
   const { showToast } = useToast();
@@ -44,7 +59,7 @@ export function useInitiatePayment(paymentType: string) {
   const { showToast } = useToast();
   return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
     amount: number;
-    currency: string;
+    currency?: string;
     phone?: string;
     metadata?: Record<string, unknown>;
   }>({
@@ -52,7 +67,7 @@ export function useInitiatePayment(paymentType: string) {
       const { data } = await axiosInstance.post(BILLING.INITIATE, {
         gateway_name: 'pesapal',
         amount: payload.amount,
-        currency: payload.currency,
+        currency: payload.currency ?? 'USD',
         payment_type: paymentType,
         phone: payload.phone,
         metadata: payload.metadata ?? null,
@@ -71,7 +86,7 @@ export function useInitiateOnboardingPayment() {
   const { showToast } = useToast();
   return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
     amount: number;
-    currency: string;
+    currency?: string;
     phone?: string;
     metadata?: Record<string, unknown>;
   }>({
@@ -79,7 +94,7 @@ export function useInitiateOnboardingPayment() {
       const { data } = await axiosInstance.post(BILLING.INITIATE, {
         gateway_name: 'pesapal',
         amount: payload.amount,
-        currency: payload.currency,
+        currency: payload.currency ?? 'USD',
         payment_type: 'onboarding',
         phone: payload.phone,
         metadata: payload.metadata ?? null,
@@ -122,6 +137,9 @@ export interface ProrationDetails {
   new_price: number;
   old_price_usd: number;
   new_price_usd: number;
+  proration_due_usd: number;
+  credit_usd: number;
+  charge_usd: number;
 }
 
 export interface UpgradeQuote {

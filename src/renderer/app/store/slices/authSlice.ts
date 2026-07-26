@@ -11,6 +11,9 @@ export interface SubscriptionInfo {
   plan_features?: Record<string, boolean> | null;
   price_monthly?: string | null;
   price_yearly?: string | null;
+  price_monthly_usd?: string | null;
+  price_yearly_usd?: string | null;
+  onboarding_fee_usd?: string | null;
   status: string;
   billing_cycle?: string | null;
   starts_at?: string | null;

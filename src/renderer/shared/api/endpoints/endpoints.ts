@@ -274,6 +274,10 @@ export const REFERRALS = {
   APPLY: '/referrals/apply',
 };
 
+export const REFERRAL_CODES = {
+  BASE: '/referral-codes',
+};
+
 export const CURRENCY = {
   CONVERT: '/currencies/convert',
 };

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
+import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp, Wallet } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
+import { cn } from '../../shared/utils/cn';
 
 interface UpgradeFlowModalProps {
   plan: Plan;
@@ -32,6 +34,12 @@ export default function UpgradeFlowModal({
   const { data: quote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
     subscription.id, plan.id,
   );
+
+  const { data: earnings } = useReferralEarnings();
+  const availableCredit = earnings?.available_credit ?? 0;
+  const creditAfterProration = availableCredit > 0
+    ? Math.min(availableCredit, prorationDueUsd || prorationDue)
+    : 0;
 
   const upgradeMutation = useUpgrade();
   const initiateMutation = useInitiatePayment('upgrade_proration');
@@ -183,10 +191,31 @@ export default function UpgradeFlowModal({
               <span className="text-gray-600">Charge for remaining days</span>
               <span className="font-semibold text-gray-900">{formatCurrency(pr.charge, currency)}</span>
             </div>
-            <div className="border-t border-amber-300 pt-2 flex justify-between text-sm">
+            {availableCredit > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 flex items-center gap-1">
+                  <Wallet className="w-3.5 h-3.5 text-green-600" />
+                  Credit applied
+                </span>
+                <span className="font-semibold text-green-700">-{formatUSD(creditAfterProration)}</span>
+              </div>
+            )}
+            <div className={cn(
+              'border-t pt-2 flex justify-between text-sm',
+              availableCredit > 0 ? 'border-amber-300' : 'border-amber-300',
+            )}>
               <span className="font-bold text-gray-800">Amount due today</span>
-              <span className="font-bold text-blue-700 text-base">{formatCurrency(pr.proration_due, currency)}</span>
+              <span className="font-bold text-blue-700 text-base">
+                {availableCredit > 0
+                  ? formatUSD(Math.max(0, (pr.proration_due_usd ?? 0) - creditAfterProration))
+                  : formatCurrency(pr.proration_due, currency)}
+              </span>
             </div>
+            {availableCredit > 0 && (
+              <p className="text-[10px] text-green-700 text-center pt-1">
+                {formatUSD(availableCredit)} credit available — {formatUSD(creditAfterProration)} applied
+              </p>
+            )}
           </div>
 
           <Button type="button" onClick={handleConfirm} className="w-full gap-2 py-3 text-sm"
@@ -231,12 +260,23 @@ export default function UpgradeFlowModal({
                 {formatCurrency(quote?.new_price ?? 0, currency)}/{billingCycle === 'yearly' ? 'yr' : 'mo'}
               </span>
             </div>
+            {creditAfterProration > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 flex items-center gap-1">
+                  <Wallet className="w-3.5 h-3.5 text-green-600" />
+                  Credit applied
+                </span>
+                <span className="font-semibold text-green-700">-{formatUSD(creditAfterProration)}</span>
+              </div>
+            )}
             <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
               <span className="font-semibold text-gray-700">Amount due today</span>
               <span className="font-bold text-blue-700 text-base">
-                {getPaymentCurrency() === 'USD'
-                  ? formatUSD(prorationDueUsd || prorationDue)
-                  : formatCurrency(prorationDue, getPaymentCurrency())}
+                {creditAfterProration > 0
+                  ? formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - creditAfterProration))
+                  : getPaymentCurrency() === 'USD'
+                    ? formatUSD(prorationDueUsd || prorationDue)
+                    : formatCurrency(prorationDue, getPaymentCurrency())}
               </span>
             </div>
           </div>

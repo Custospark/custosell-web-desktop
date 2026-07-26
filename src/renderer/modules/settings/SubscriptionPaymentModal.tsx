@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
+import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 import { Button } from '../../shared/components/buttons/Button';
-import { Loader2, CheckCircle, AlertCircle, ArrowRight, X } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet } from 'lucide-react';
+import { formatUSD } from '../../shared/utils/formatCurrency';
 
 interface SubscriptionPaymentModalProps {
   planName: string;
@@ -24,6 +26,11 @@ export default function SubscriptionPaymentModal({
 }: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
+
+  const { data: earnings } = useReferralEarnings();
+  const availableCredit = paymentType === 'renewal' ? (earnings?.available_credit ?? 0) : 0;
+  const creditApplied = Math.min(availableCredit, amount);
+  const amountAfterCredit = amount - creditApplied;
 
   const initiateMutation = useInitiatePayment(paymentType);
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
@@ -173,25 +180,36 @@ export default function SubscriptionPaymentModal({
           <h3 className="text-xl font-bold text-gray-900 mt-1">{planName}</h3>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl px-4 py-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Billing cycle</span>
-            <span className="font-semibold text-gray-900 capitalize">{billingCycle}</span>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl px-4 py-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Billing cycle</span>
+              <span className="font-semibold text-gray-900 capitalize">{billingCycle}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Plan price</span>
+              <span className="font-semibold text-gray-900">
+                {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(planPrice)}
+                <span className="text-xs text-gray-400 font-normal">/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span>
+              </span>
+            </div>
+            {creditApplied > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 flex items-center gap-1">
+                  <Wallet className="w-3.5 h-3.5 text-green-600" />
+                  Credit applied
+                </span>
+                <span className="font-semibold text-green-700">-{formatUSD(creditApplied)}</span>
+              </div>
+            )}
+            <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
+              <span className="font-semibold text-gray-700">Total due today</span>
+              <span className="font-bold text-blue-700 text-base">
+                {creditApplied > 0
+                  ? formatUSD(amountAfterCredit)
+                  : new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)}
+              </span>
+            </div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Plan price</span>
-            <span className="font-semibold text-gray-900">
-              {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(planPrice)}
-              <span className="text-xs text-gray-400 font-normal">/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span>
-            </span>
-          </div>
-          <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
-            <span className="font-semibold text-gray-700">Total due today</span>
-            <span className="font-bold text-blue-700 text-base">
-              {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)}
-            </span>
-          </div>
-        </div>
 
         <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
           <p className="text-sm text-gray-600">

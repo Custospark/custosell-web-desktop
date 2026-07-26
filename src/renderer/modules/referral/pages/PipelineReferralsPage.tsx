@@ -1,13 +1,30 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
-import { formatUSD } from '../../../shared/utils/formatUSD';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, DollarSign, RefreshCw, Clock } from 'lucide-react';
-import { useState } from 'react';
+import { formatUSD } from '../../../shared/utils/formatCurrency';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, DollarSign, RefreshCw, QrCode } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import QRCodeLib from 'qrcode';
 import { Table } from '../../../shared/components/tables/Table';
 import type { ReferralRecord } from '../api/ReferralTypes';
 
 export default function PipelineReferralsPage() {
   const { data: earnings, isLoading } = useReferralEarnings();
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  const referralUrl = earnings?.referral_code
+    ? `${window.location.origin}/auth/register?ref=${earnings.referral_code}`
+    : '';
+
+  useEffect(() => {
+    if (showQr && referralUrl && !qrDataUrl) {
+      QRCodeLib.toDataURL(referralUrl, {
+        width: 160,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+      }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
+    }
+  }, [showQr, referralUrl, qrDataUrl]);
 
   const copyCode = () => {
     if (earnings?.referral_code) {
@@ -30,8 +47,8 @@ export default function PipelineReferralsPage() {
     <div className="space-y-6">
       {/* Referral Code Card */}
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-500">Your Referral Code</p>
             {earnings?.referral_code ? (
               <div className="mt-1 flex items-center gap-3">
@@ -45,16 +62,34 @@ export default function PipelineReferralsPage() {
                   {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   {copied ? 'Copied' : 'Copy'}
                 </button>
+                {earnings.referral_code && (
+                  <button
+                    onClick={() => setShowQr(!showQr)}
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-gray-500 hover:bg-gray-100"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    {showQr ? 'Hide QR' : 'QR'}
+                  </button>
+                )}
               </div>
             ) : (
               <p className="mt-1 text-sm text-gray-400">No referral code available</p>
             )}
+            <p className="mt-2 text-sm text-gray-500">
+              Share your code with new businesses signing up. You earn rewards when they subscribe!
+            </p>
+            {showQr && qrDataUrl && (
+              <div className="mt-4 flex justify-center">
+                <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <img src={qrDataUrl} alt="Referral QR code" width={160} height={160} className="rounded-lg" />
+                  <p className="text-[11px] text-gray-500">Scan to open signup with your code</p>
+                  <p className="text-[10px] text-gray-400 break-all text-center max-w-[220px]">{referralUrl}</p>
+                </div>
+              </div>
+            )}
           </div>
-          <Gift className="h-8 w-8 text-blue-600" />
+          <Gift className="h-8 w-8 shrink-0 text-blue-600" />
         </div>
-        <p className="mt-2 text-sm text-gray-500">
-          Share your code with new businesses signing up. You earn rewards when they subscribe!
-        </p>
       </div>
 
       {/* Stats Cards */}

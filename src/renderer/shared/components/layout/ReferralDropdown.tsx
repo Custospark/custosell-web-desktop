@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { useReferralEarnings } from '../../../modules/referral/api/useReferralQueries';
+import { useReferralEarnings, useGenerateReferralCode } from '../../../modules/referral/api/useReferralQueries';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../utils/cn';
 import { formatUSD } from '../../utils/formatCurrency';
@@ -27,6 +27,7 @@ export default function ReferralDropdown() {
   const hasPipelineAccess = canAccessModule(user, 'pipeline');
 
   const code = earnings?.referral_code;
+  const generateCode = useGenerateReferralCode();
   const isSalesRep = earnings?.is_sales_rep ?? false;
   const recentReferrals = useMemo(
     () => (earnings?.referrals ?? []).slice(0, 3),
@@ -103,10 +104,18 @@ export default function ReferralDropdown() {
           {isLoading ? (
             <div className="px-4 py-6 text-center text-sm text-gray-400">Loading...</div>
           ) : !hasReferralCode ? (
-            <div className="px-4 py-6 text-center space-y-2">
+            <div className="px-4 py-6 text-center space-y-3">
               <Sparkles className="w-8 h-8 mx-auto text-indigo-300" />
               <p className="text-sm text-gray-500">No referral code yet</p>
-              <p className="text-xs text-gray-400">Start referring businesses to earn rewards</p>
+              <p className="text-xs text-gray-400">Generate your code to start earning rewards</p>
+              <button
+                type="button"
+                onClick={() => generateCode.mutate()}
+                disabled={generateCode.isPending}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              >
+                {generateCode.isPending ? 'Generating...' : 'Generate Code'}
+              </button>
             </div>
           ) : (
             <>

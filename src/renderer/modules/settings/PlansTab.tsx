@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { useSubscribe, useReactivate, useUpgrade, useDowngrade } from '../../shared/api/account/SubscriptionQueries';
+import { useDowngrade } from '../../shared/api/account/SubscriptionQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import { getPlanAction, getPaymentType } from './planActionMatrix';
@@ -42,9 +42,6 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
 
-  const subscribeMutation = useSubscribe();
-  const reactivateMutation = useReactivate();
-  const upgradeMutation = useUpgrade();
   const downgradeMutation = useDowngrade();
 
   const { data: plans, isLoading: plansLoading } = useActivePlans();
@@ -87,28 +84,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     });
   };
 
-  const handlePaymentComplete = async () => {
-    if (!pendingPayment) return;
-    const { plan, action } = pendingPayment;
-    try {
-      switch (action.type) {
-        case 'subscribe':
-        case 'resubscribe':
-          await subscribeMutation.mutateAsync({ plan_id: plan.id, billing_cycle: billingCycle });
-          break;
-        case 'reactivate':
-          await reactivateMutation.mutateAsync({ subscriptionId: Number(subscription.id) });
-          break;
-        case 'upgrade':
-          await upgradeMutation.mutateAsync({ subscriptionId: Number(subscription.id), to_plan_id: plan.id });
-          break;
-        case 'renew':
-        case 'pay_onboarding':
-          break;
-      }
-    } catch {
-      return;
-    }
+  const handlePaymentComplete = () => {
     setSubscriptionPayment(null);
     setPendingPayment(null);
     onUpgradeComplete?.();
@@ -276,30 +252,19 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           {action.type !== 'current' && (
             <button
               type="button"
-              disabled={
-                (action.type === 'upgrade' && upgradeMutation.isPending)
-                || (action.type === 'downgrade' && downgradeMutation.isPending)
-                || ((action.type === 'subscribe' || action.type === 'resubscribe') && subscribeMutation.isPending)
-                || ((action.type === 'reactivate' || action.type === 'renew') && reactivateMutation.isPending)
-              }
+              disabled={action.type === 'downgrade' && downgradeMutation.isPending}
               onClick={() => handleAction(plan, action)}
               className={cn(
                 'mt-4 w-full text-sm font-semibold py-2.5 px-4 rounded-xl active:scale-[0.98] transition-all',
                 action.type === 'downgrade'
                   ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   : 'bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900 shadow-md hover:shadow-lg',
-                (action.type === 'upgrade' && upgradeMutation.isPending)
-                || (action.type === 'downgrade' && downgradeMutation.isPending)
-                || ((action.type === 'subscribe' || action.type === 'resubscribe') && subscribeMutation.isPending)
-                || ((action.type === 'reactivate' || action.type === 'renew') && reactivateMutation.isPending)
+                action.type === 'downgrade' && downgradeMutation.isPending
                   ? 'opacity-50 cursor-not-allowed'
                   : 'cursor-pointer',
               )}
             >
-              {action.type === 'upgrade' && upgradeMutation.isPending ? 'Upgrading...'
-                : action.type === 'downgrade' && downgradeMutation.isPending ? 'Downgrading...'
-                : (action.type === 'subscribe' || action.type === 'resubscribe') && subscribeMutation.isPending ? 'Processing...'
-                : (action.type === 'reactivate' || action.type === 'renew') && reactivateMutation.isPending ? 'Processing...'
+              {action.type === 'downgrade' && downgradeMutation.isPending ? 'Downgrading...'
                 : action.label}
             </button>
           )}

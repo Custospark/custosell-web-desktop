@@ -149,12 +149,12 @@ export default function PlatformSalesRepsPage() {
             )},
             { key: 'pending', header: 'Pending', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm font-medium text-amber-700">
-                {(r.pending_commission ?? 0) > 0 ? formatCurrency(r.pending_commission) : '—'}
+                {(r.pending_commission ?? 0) > 0 ? formatCurrency(r.pending_commission ?? 0) : '—'}
               </span>
             )},
             { key: 'paid', header: 'Paid Out', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-green-700">
-                {(r.paid_commission ?? 0) > 0 ? formatCurrency(r.paid_commission) : '—'}
+                {(r.paid_commission ?? 0) > 0 ? formatCurrency(r.paid_commission ?? 0) : '—'}
               </span>
             )},
             { key: 'status', header: 'Active', align: 'center', render: (r: PlatformSalesRep) => (

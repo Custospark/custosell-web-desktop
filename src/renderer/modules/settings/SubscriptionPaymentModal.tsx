@@ -20,7 +20,7 @@ interface SubscriptionPaymentModalProps {
 
 export default function SubscriptionPaymentModal({
   planName, planPrice, billingCycle, amount, currency, userPhone,
-  actionLabel, paymentType, metadata, onClose, onComplete,
+  actionLabel, paymentType, metadata, refreshing, onClose, onComplete,
 }: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);

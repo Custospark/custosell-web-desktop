@@ -1,7 +1,9 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks/useApp';
-import { canAccessModule, getDefaultRoute } from '../../../shared/utils/moduleAccess';
+import { getPlanAccessibleModules, getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import type { BusinessModuleSlug } from '../../../shared/utils/moduleAccess';
+import { useToast } from '../../../app/contexts/useToast';
 
 interface ModuleAccessMiddlewareProps {
   module: BusinessModuleSlug | 'account' | 'guide' | 'platform' | 'guide_settings';
@@ -10,14 +12,24 @@ interface ModuleAccessMiddlewareProps {
 export function ModuleAccessMiddleware({ module }: ModuleAccessMiddlewareProps) {
   const user = useAppSelector((s) => s.auth.user);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  if (!user) {
-    return null;
-  }
+  useEffect(() => {
+    if (!user) return;
+    const planModules = getPlanAccessibleModules(user);
+    if (!planModules.includes(module)) {
+      showToast('warning', `"${module}" is not included in your current plan.`);
+      navigate(getDefaultRoute(user), { replace: true, state: { from: location.pathname } });
+    }
+  }, [user, module, location.pathname, navigate, showToast]);
 
-  if (canAccessModule(user, module)) {
+  if (!user) return null;
+
+  const planModules = getPlanAccessibleModules(user);
+  if (planModules.includes(module)) {
     return <Outlet />;
   }
 
-  return <Navigate to={getDefaultRoute(user)} replace state={{ from: location.pathname }} />;
+  return null;
 }

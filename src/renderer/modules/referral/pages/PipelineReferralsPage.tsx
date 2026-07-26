@@ -124,7 +124,7 @@ export default function PipelineReferralsPage() {
               <p className="text-lg font-semibold text-purple-900">
                 {earnings.commission_type === 'percentage'
                   ? `${earnings.commission_rate}%`
-                  : formatCurrency(earnings.commission_rate)}
+                  : formatCurrency(earnings.commission_rate ?? 0)}
               </p>
             </div>
             <div>

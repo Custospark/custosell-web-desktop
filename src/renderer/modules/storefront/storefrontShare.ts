@@ -2,13 +2,21 @@
  * Absolute customer-facing share URL for a business shop (`/@slug`).
  * Always path-based (BrowserRouter) — never HashRouter `#/@slug`.
  * Marketing / QR / WhatsApp links must work on phones and the public web.
+ * Priority: VITE_APP_URL > browser origin (http/https only) > hardcoded fallback.
  */
 export function storefrontShareUrl(slug: string): string {
   const handle = `/@${String(slug).trim().replace(/^@/, '')}`;
-  if (typeof window === 'undefined' || !window.location?.origin) {
-    return `https://custosell.custospark.com${handle}`;
+  const configured = import.meta.env.VITE_APP_URL as string | undefined;
+  if (configured) {
+    return `${configured.replace(/\/+$/, '')}${handle}`;
   }
-  return `${window.location.origin}${handle}`;
+  const origin =
+    typeof window !== 'undefined' &&
+    typeof window.location?.origin === 'string' &&
+    /^https?:\/\//.test(window.location.origin)
+      ? window.location.origin
+      : 'https://custosell.custospark.com';
+  return `${origin}${handle}`;
 }
 
 export function whatsappShareUrl(text: string): string {

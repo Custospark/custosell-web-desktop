@@ -28,7 +28,7 @@ interface SubscriptionPaymentState {
 
 interface PlansTabProps {
   subscription: SubscriptionInfo;
-  onUpgradeComplete?: () => void;
+  onUpgradeComplete?: () => Promise<void>;
 }
 
 interface PendingPayment {
@@ -45,6 +45,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const downgradeMutation = useDowngrade();
 
@@ -89,10 +90,15 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     });
   };
 
-  const handlePaymentComplete = () => {
-    setSubscriptionPayment(null);
-    setPendingPayment(null);
-    onUpgradeComplete?.();
+  const handlePaymentComplete = async () => {
+    setRefreshing(true);
+    try {
+      await onUpgradeComplete?.();
+    } finally {
+      setRefreshing(false);
+      setSubscriptionPayment(null);
+      setPendingPayment(null);
+    }
   };
 
   const handleDowngradeAction = (plan: Plan, effective: 'immediate' | 'end_of_period') => {
@@ -485,6 +491,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           actionLabel={subscriptionPayment.actionLabel}
           paymentType={subscriptionPayment.paymentType}
           metadata={getPaymentMetadata(pendingPayment.action, pendingPayment.plan)}
+          refreshing={refreshing}
           onClose={closePaymentModal}
           onComplete={handlePaymentComplete}
         />

@@ -13,6 +13,7 @@ interface SubscriptionPaymentModalProps {
   actionLabel: string;
   paymentType: string;
   metadata?: Record<string, unknown>;
+  refreshing?: boolean;
   onClose: () => void;
   onComplete: () => void;
 }
@@ -55,19 +56,33 @@ export default function SubscriptionPaymentModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
-          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900">Payment Successful!</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Your {actionLabel.toLowerCase()} to <span className="font-semibold">{planName}</span> is complete.
-            </p>
-          </div>
-          <Button type="button" onClick={onComplete} className="w-full gap-2">
-            Continue
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+          {refreshing ? (
+            <>
+              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mx-auto">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900">Updating...</p>
+                <p className="text-sm text-gray-500 mt-1">Refreshing your plan information.</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900">Payment Successful!</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Your {actionLabel.toLowerCase()} to <span className="font-semibold">{planName}</span> is complete.
+                </p>
+              </div>
+              <Button type="button" onClick={onComplete} className="w-full gap-2">
+                Continue
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     );

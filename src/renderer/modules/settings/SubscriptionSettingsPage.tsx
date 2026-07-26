@@ -93,7 +93,7 @@ export default function SubscriptionSettingsPage() {
         ))}
       </nav>
 
-      {activeTab === 'plans' && <PlansTab subscription={subscription} onUpgradeComplete={() => refetchProfile()} />}
+      {activeTab === 'plans' && <PlansTab subscription={subscription} onUpgradeComplete={async () => { await refetchProfile(); }} />}
 
       {activeTab === 'payments' && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">

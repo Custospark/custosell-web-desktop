@@ -37,7 +37,7 @@ interface PendingPayment {
 
 export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabProps) {
   const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
-  const { currency, exchangeRate, monthlyPrice, yearlyPrice, onboardingFee } = useDisplayPrices();
+  const { currency, monthlyPrice, yearlyPrice, onboardingFee } = useDisplayPrices();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
@@ -128,21 +128,6 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     setPendingPayment(null);
   };
 
-  const subUsdBase = Number(subscription.price_monthly_usd) || 0;
-  const subUsdYearlyBase = Number(subscription.price_yearly_usd) || subUsdBase * 10;
-  const convertUsd = (usdAmount: number) =>
-    exchangeRate !== null ? Math.round(usdAmount * exchangeRate * 100) / 100 : usdAmount;
-
-  const currentPlanMonthlyPrice = (plan: Plan) =>
-    plan.id === subscription.plan_id && subUsdBase > 0
-      ? convertUsd(subUsdBase)
-      : monthlyPrice(plan);
-
-  const currentPlanYearlyPrice = (plan: Plan) =>
-    plan.id === subscription.plan_id && subUsdYearlyBase > 0
-      ? convertUsd(subUsdYearlyBase)
-      : yearlyPrice(plan);
-
   const statusInfo = STATUS_STYLES[subscription.status] || STATUS_STYLES.active;
 
   return (
@@ -224,7 +209,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       ) : (
         <div className="grid gap-5 md:grid-cols-3">
           {sortedPlans.map((plan, index) => (
-            <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={currentPlanMonthlyPrice} yearlyPriceFn={currentPlanYearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
+            <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
           ))}
         </div>
       )}

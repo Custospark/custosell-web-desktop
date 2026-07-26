@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Bell, GraduationCap, HelpCircle, MessageSquareHeart, Sparkles } from 'lucide-react';
+import { Bell, GraduationCap, Sparkles } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useNotificationUnreadCount } from '../../../modules/notifications/api/NotificationQueries';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
@@ -8,8 +8,6 @@ import { cn } from '../../utils/cn';
 
 const guideLinks = [
   { to: ROUTES.GUIDE.TUTORIALS, label: 'Tutorials', icon: GraduationCap },
-  { to: ROUTES.GUIDE.FAQS, label: 'FAQs', icon: HelpCircle },
-  { to: ROUTES.GUIDE.FEEDBACK, label: 'Feedback', icon: MessageSquareHeart },
 ] as const;
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>

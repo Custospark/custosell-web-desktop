@@ -18,6 +18,7 @@ import { initialsFromName } from '../UserAvatar';
 import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
 import { UserProfileMenu } from './UserProfileMenu';
 import SubscriptionDropdown from './SubscriptionDropdown';
+import ReferralDropdown from './ReferralDropdown';
 import {
   Menu, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, Building2,
 } from 'lucide-react';
@@ -320,6 +321,8 @@ export function Navbar() {
           <ModuleLauncherButton />
 
           <GuideHeaderNav />
+
+          <ReferralDropdown />
 
           {isBusinessOwner(user) && <SubscriptionDropdown />}
 

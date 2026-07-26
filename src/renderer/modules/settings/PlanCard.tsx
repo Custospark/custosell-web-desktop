@@ -56,10 +56,8 @@ export default function PlanCard({
   const isCurrentPlan = plan.id === subscription.plan_id;
   const isYearly = billingCycle === 'yearly';
 
-  const subPriceUsdYearly = isCurrentPlan && subscription.price_yearly_usd ? Number(subscription.price_yearly_usd) : Number(plan.price_yearly_usd ?? 0);
-  const subPriceUsdMonthly = isCurrentPlan && subscription.price_monthly_usd ? Number(subscription.price_monthly_usd) : Number(plan.price_monthly_usd ?? 0);
-  const usdPrice = isYearly ? subPriceUsdYearly : subPriceUsdMonthly;
-  const usdMonthlyPriceVal = subPriceUsdMonthly;
+  const usdPrice = isYearly ? Number(plan.price_yearly_usd ?? 0) : Number(plan.price_monthly_usd ?? 0);
+  const usdMonthlyPriceVal = Number(plan.price_monthly_usd ?? 0);
 
   const localPrice = isYearly ? yearlyPriceFn(plan) : monthlyPriceFn(plan);
   const fee = onboardingFee(plan);
@@ -169,10 +167,10 @@ export default function PlanCard({
             </div>
           )}
 
-          {(isCurrentPlan ? subscription.onboarding_fee_usd : plan.onboarding_fee_usd) ? (
+          {plan.onboarding_fee_usd ? (
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
               <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
-              <p className="text-sm font-bold text-blue-800">{formatUSD(Number(isCurrentPlan ? subscription.onboarding_fee_usd : plan.onboarding_fee_usd))}</p>
+              <p className="text-sm font-bold text-blue-800">{formatUSD(Number(plan.onboarding_fee_usd))}</p>
               {currency !== 'USD' && fee > 0 && (
                 <p className="text-[11px] text-blue-600">≈ {formatCurrency(fee, currency)}</p>
               )}

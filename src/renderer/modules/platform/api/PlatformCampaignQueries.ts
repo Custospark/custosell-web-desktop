@@ -12,7 +12,7 @@ export const campaignKeys = {
   detail: (id: number) => [...campaignKeys.all, 'detail', id] as const,
 };
 
-const freshQuery = { staleTime: 0, gcTime: 0, networkMode: 'always' as const };
+const freshQuery = { staleTime: 0, gcTime: 300_000, networkMode: 'always' as const };
 
 export function useCampaignCodes(params?: Record<string, string>) {
   return useQuery({
@@ -60,7 +60,7 @@ export function useCreateCampaignCode() {
     onSuccess: (result) => {
       const code = result?.data?.code;
       showToast('success', `Campaign code "${code}" created`);
-      qc.invalidateQueries({ queryKey: campaignKeys.all });
+      qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
       showToast('error', e.response?.data?.message || 'Failed to create campaign code');
@@ -79,7 +79,7 @@ export function useUpdateCampaignCode() {
     },
     onSuccess: () => {
       showToast('success', 'Campaign code updated');
-      qc.invalidateQueries({ queryKey: campaignKeys.all });
+      qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
       showToast('error', e.response?.data?.message || 'Failed to update campaign code');
@@ -97,7 +97,7 @@ export function useDeleteCampaignCode() {
     },
     onSuccess: () => {
       showToast('success', 'Campaign code deleted');
-      qc.invalidateQueries({ queryKey: campaignKeys.all });
+      qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
       showToast('error', e.response?.data?.message || 'Failed to delete campaign code');

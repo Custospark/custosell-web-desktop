@@ -55,7 +55,7 @@ export function useGenerateReferralCode() {
       });
       return data;
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       showToast('success', 'Referral code generated');
       const newCode = result?.data?.code;
       if (newCode) {
@@ -64,8 +64,7 @@ export function useGenerateReferralCode() {
           return { ...old, referral_code: newCode };
         });
       }
-      // Also refetch in background to sync full server state
-      queryClient.invalidateQueries({ queryKey: referralKeys.earnings() });
+      await queryClient.invalidateQueries({ queryKey: referralKeys.earnings(), refetchType: 'all' });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Failed to generate referral code';

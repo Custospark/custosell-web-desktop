@@ -36,19 +36,16 @@ import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/auth/ses
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { storePlans, storePlanFeatures } from '../../utils/planStorage';
-
 export const accountKeys = {
   all: ['account'] as const,
   profile: () => ['account', 'profile'] as const,
 };
-
 const AUTH_ENTRY_PATHS: ReadonlySet<string> = new Set([
   ROUTES.LOGIN,
   ROUTES.REGISTER,
   ROUTES.FORGOT_PASSWORD,
   ROUTES.RESET_PASSWORD,
 ]);
-
 /** Prefer the pre-login route when safe; otherwise the user's default module (dashboard). */
 function resolvePostLoginPath(user: AuthUser, from: unknown): string {
   if (typeof from === 'string'
@@ -59,15 +56,12 @@ function resolvePostLoginPath(user: AuthUser, from: unknown): string {
   }
   return getDefaultRoute(user);
 }
-
 function extractAuthUser(data: AuthResponse): AuthUser {
   return data.user;
 }
-
 function extractActivePlans(userData: AuthUser | null | undefined): Plan[] {
   return userData?.active_plans ?? [];
 }
-
 /** Best-effort offline backup after server auth — must not block or replace online login. */
 function backupOnlineAuthToOffline(data: AuthResponse, password: string): void {
   const user = extractAuthUser(data);
@@ -374,6 +368,30 @@ export function useSubscribe() {
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Failed to create subscription.';
+      showToast('error', message);
+    },
+  });
+}
+
+export function useInitiatePayment(paymentType: string) {
+  const { showToast } = useToast();
+  return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
+    amount: number;
+    currency: string;
+    phone?: string;
+  }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post(BILLING.INITIATE, {
+        gateway_name: 'pesapal',
+        amount: payload.amount,
+        currency: payload.currency,
+        payment_type: paymentType,
+        phone: payload.phone,
+      });
+      return data;
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to initiate payment. Please try again.';
       showToast('error', message);
     },
   });

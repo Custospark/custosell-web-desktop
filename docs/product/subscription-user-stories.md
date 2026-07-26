@@ -374,6 +374,51 @@ The SubscriptionGuard polls every 30s. If the subscription is suspended mid-sess
           └──────────────┘
 ```
 
+---
+
+## Referral ↔ Subscription Integration
+
+When a business subscribes using a referral code, the system tracks the referral discount but **does not reduce the subscription price**. The discount is informational only.
+
+### How it works
+
+1. `SubscriptionService::subscribe()` records the referral via `ReferralService::processReferral()`
+2. `processReferral()` calculates `discount_applied` based on the referral code's discount type:
+   - **Percentage**: `price_monthly × value ÷ 100`
+   - **Flat**: `discount_value` directly
+   - **Free month**: equals `price_monthly`
+3. The subscription's `price_monthly` is **never modified** — the business pays full price
+4. On activation, `activateForSubscription()` calls `markActive()` which:
+   - Calculates `reward_amount` for the referrer (based on **full** price_monthly)
+   - Calculates `commission_earned` for sales reps (based on **full** price_monthly)
+   - Does NOT reduce the referred business's subscription price
+
+### Design decision
+
+The `discount_applied` field on the Referral model is **informational/tracking only**. The actual billing/pricing pipeline does not read this field. If discount application is needed in the future, the plumbing would need to be wired from `discount_applied` into:
+- Invoice generation (reduce amount due)
+- Payment initiation (charge less)
+- Subscription `price_monthly` or a new `effective_price` field
+
+### User stories tested
+
+| # | Story | What's validated |
+|---|-------|------------------|
+| 1 | Percentage discount | `discount_applied` = 10% of price, `price_monthly` unchanged |
+| 2 | Flat discount | `discount_applied` = 50,000 UGX, `price_monthly` unchanged |
+| 3 | Free month discount | `discount_applied` = price_monthly, `price_monthly` unchanged |
+| 4 | Full lifecycle (subscribe → referral → activate) | Referral created in PENDING, reward=0 before activation, discount set |
+| 5 | Reward on full price | `reward_amount` calculated on full `price_monthly`, not discounted value |
+| 6 | Commission on full price | Sales rep commission calculated on full `price_monthly`, not discounted |
+| 7 | All discount types leave price unchanged | Percentage, flat, and free month all result in same full price |
+| 8 | Grace once per subscription | `grace_used` flag prevents second grace period |
+
+### Grace period
+
+Grace is granted **once per subscription lifecycle**. The `grace_used` boolean on the Subscription model is set when `markPastDue()` is called, and subsequent calls throw `RuntimeException`. Since each business can have at most one active subscription, this effectively means once per business.
+
+---
+
 ## Key Source Files
 
 | File | Purpose |

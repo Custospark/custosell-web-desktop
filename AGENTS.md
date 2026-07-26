@@ -217,6 +217,18 @@ Component (.tsx) → Query hooks + types → axiosConfig.ts → Backend API
 
 ---
 
+## Defensive Patterns
+
+| Pattern | Rule |
+|---------|------|
+| **Toast variant fallback** | Always `colorMap[variant] ?? colorMap.info` — never assume variant is valid at runtime |
+| **Network interval** | Use `useRef` for interval ID, separate initial probe from interval effect — never let `systemStatus` changes cascade into probe bursts |
+| **Referral code reuse** | Check cross-code in `processReferral()` — one referral per business lifetime, not just per code |
+| **Grace period** | One per subscription lifecycle — `grace_used` boolean guard in `markPastDue()`; reset to active throws `RuntimeException` |
+| **Discount vs price** | Referral `discount_applied` is informational only — `price_monthly` is NEVER reduced; reward/commission always on full price |
+
+---
+
 ## The Golden Rule
 
 > **Ask first. Never assume. Report after each agent — with context. Keep it conversational, not robotic.**

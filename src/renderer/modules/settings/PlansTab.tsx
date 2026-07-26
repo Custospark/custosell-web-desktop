@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { useUpgrade, useDowngrade } from '../../shared/api/account/AccountQueries';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
+import UpgradePaymentModal from './UpgradePaymentModal';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import {
@@ -55,14 +57,22 @@ function getPlanAction(plan: Plan, subscription: SubscriptionInfo | undefined, c
   return { type: 'subscribe', label: 'Subscribe' };
 }
 
-interface PlansTabProps {
-  subscription: SubscriptionInfo;
+interface UpgradePaymentState {
+  planName: string;
+  amount: number;
 }
 
-export default function PlansTab({ subscription }: PlansTabProps) {
+interface PlansTabProps {
+  subscription: SubscriptionInfo;
+  onUpgradeComplete?: () => void;
+}
+
+export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabProps) {
   const navigate = useNavigate();
+  const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
+  const [upgradePayment, setUpgradePayment] = useState<UpgradePaymentState | null>(null);
   const upgradeMutation = useUpgrade();
   const downgradeMutation = useDowngrade();
 
@@ -75,8 +85,18 @@ export default function PlansTab({ subscription }: PlansTabProps) {
   const currentPlan = sortedPlans.find(p => p.id === subscription.plan_id) ?? null;
   const currentPlanSortOrder = currentPlan?.sort_order ?? 0;
 
-  const handleUpgrade = (plan: Plan) => {
-    upgradeMutation.mutate({ subscriptionId: Number(subscription.id), to_plan_id: plan.id });
+  const handleUpgrade = async (plan: Plan) => {
+    try {
+      const result = await upgradeMutation.mutateAsync({ subscriptionId: Number(subscription.id), to_plan_id: plan.id });
+      const due = (result as { proration?: { proration_due?: number } }).proration?.proration_due ?? 0;
+      if (due > 0) {
+        setUpgradePayment({ planName: plan.name, amount: due });
+      } else {
+        onUpgradeComplete?.();
+      }
+    } catch {
+      console.warn('Upgrade mutation failed — already handled by mutation onError');
+    }
   };
 
   const handleDowngrade = (plan: Plan, effective: 'immediate' | 'end_of_period') => {
@@ -381,6 +401,16 @@ export default function PlansTab({ subscription }: PlansTabProps) {
           </tbody>
         </table>
       </div>
+      {upgradePayment && (
+        <UpgradePaymentModal
+          planName={upgradePayment.planName}
+          amount={upgradePayment.amount}
+          currency="UGX"
+          userPhone={userPhone}
+          onClose={() => setUpgradePayment(null)}
+          onComplete={() => { setUpgradePayment(null); onUpgradeComplete?.(); }}
+        />
+      )}
     </div>
   );
 }

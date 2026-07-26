@@ -38,8 +38,8 @@ export function Toast({ variant, message, duration = 5000, onClose, className = 
     if (duration > 0) { const t = setTimeout(onClose, duration); return () => clearTimeout(t); }
   }, [duration, onClose]);
 
-  const Icon = iconMap[variant];
-  const colors = colorMap[variant];
+  const colors = colorMap[variant] ?? colorMap.info;
+  const Icon = iconMap[variant] ?? Info;
   const anim = getAnimation(position);
 
   return (

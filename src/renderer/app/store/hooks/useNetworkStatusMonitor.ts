@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from './useApp';
 import {
   checkNetworkConnectivity,
   setBrowserOffline,
   setBrowserOnline,
-  selectSystemStatus,
 } from '../slices/networkSlice';
 
 const ONLINE_CHECK_INTERVAL_MS = 120_000;
@@ -12,7 +11,7 @@ const OFFLINE_CHECK_INTERVAL_MS = 15_000;
 
 export function useNetworkStatusMonitor(): void {
   const dispatch = useAppDispatch();
-  const systemStatus = useAppSelector(selectSystemStatus);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const handleOffline = () => dispatch(setBrowserOffline());
@@ -31,20 +30,33 @@ export function useNetworkStatusMonitor(): void {
   }, [dispatch]);
 
   useEffect(() => {
-    const initialId = window.setTimeout(() => {
-      void dispatch(checkNetworkConnectivity());
-    }, 0);
-
-    const intervalMs =
-      systemStatus === 'offline' ? OFFLINE_CHECK_INTERVAL_MS : ONLINE_CHECK_INTERVAL_MS;
-
-    const intervalId = window.setInterval(() => {
-      void dispatch(checkNetworkConnectivity());
-    }, intervalMs);
+    void dispatch(checkNetworkConnectivity());
 
     return () => {
-      window.clearTimeout(initialId);
-      window.clearInterval(intervalId);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [dispatch]);
+
+  const systemStatus = useAppSelector((s) => s.network.systemStatus);
+
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    const ms = systemStatus === 'offline' ? OFFLINE_CHECK_INTERVAL_MS : ONLINE_CHECK_INTERVAL_MS;
+    intervalRef.current = setInterval(() => {
+      void dispatch(checkNetworkConnectivity());
+    }, ms);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, [dispatch, systemStatus]);
 }

@@ -36,7 +36,7 @@ export default function SubscriptionSettingsPage() {
   const [activeTab, setActiveTab] = useState<SubscriptionTab>('plans');
   const user = useAppSelector(state => state.auth.user);
   const subscription = user?.business?.subscription;
-  const { isFetching: profileLoading } = useProfile();
+  const { isFetching: profileLoading, refetch: refetchProfile } = useProfile();
 
   const { data: payments, isLoading: paymentsLoading } = useQuery({
     queryKey: ['billing', 'payments'],
@@ -92,7 +92,7 @@ export default function SubscriptionSettingsPage() {
         ))}
       </nav>
 
-      {activeTab === 'plans' && <PlansTab subscription={subscription} />}
+      {activeTab === 'plans' && <PlansTab subscription={subscription} onUpgradeComplete={() => refetchProfile()} />}
 
       {activeTab === 'payments' && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">

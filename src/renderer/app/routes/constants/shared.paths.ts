@@ -127,6 +127,7 @@ export const ROUTES = {
     SUBSCRIPTIONS: '/platform/subscriptions',
     SENT_MESSAGES: '/platform/sent-messages',
     SALES_REPS: '/platform/sales-reps',
+    CAMPAIGN_CODES: '/platform/campaign-codes',
     GUIDE: {
       INDEX: '/platform/guide',
       TUTORIALS: '/platform/guide/tutorials',

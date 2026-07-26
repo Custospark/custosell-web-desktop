@@ -282,3 +282,37 @@ export interface PlatformNotificationDispatchDetail extends PlatformNotification
   metadata: Record<string, unknown> | null;
 }
 
+export interface CampaignCode {
+  id: number;
+  code: string;
+  owner_type: string;
+  owner_user_id: number | null;
+  owner_business_id: number | null;
+  discount_type: string;
+  discount_value: number | null;
+  discount_duration_months: number;
+  reward_type: string | null;
+  reward_value: number | null;
+  max_uses: number | null;
+  is_active: boolean;
+  expires_at: string | null;
+  usage_count?: number;
+  created_at: string;
+  updated_at: string;
+  owner_user?: { id: number; name: string; email: string } | null;
+}
+
+export interface CampaignCodeUsage {
+  code: CampaignCode;
+  usage_count: number;
+  active_count: number;
+  total_discount_given: number;
+  referrals: Array<{
+    id: number;
+    referred_business: { id: number; name: string } | null;
+    status: string;
+    discount_applied: string | null;
+    created_at: string;
+  }>;
+}
+

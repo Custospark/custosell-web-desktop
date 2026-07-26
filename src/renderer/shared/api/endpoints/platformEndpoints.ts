@@ -23,6 +23,9 @@ export const PLATFORM = {
   ROLES: '/platform/roles',
   ROLE: (id: number) => `/platform/roles/${id}`,
   PERMISSIONS: '/platform/permissions',
+  CAMPAIGN_CODES: '/platform/referral-codes',
+  CAMPAIGN_CODE: (id: number) => `/platform/referral-codes/${id}`,
+  CAMPAIGN_CODE_USAGE: (id: number) => `/platform/referral-codes/${id}/usage`,
   GUIDE: {
     TUTORIALS: '/platform/guide/tutorials',
     TUTORIAL: (id: number) => `/platform/guide/tutorials/${id}`,

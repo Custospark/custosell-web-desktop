@@ -3,18 +3,22 @@ import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X } from 'lucide-react';
 
-interface UpgradePaymentModalProps {
+interface SubscriptionPaymentModalProps {
   planName: string;
+  planPrice: number;
+  billingCycle: string;
   amount: number;
   currency: string;
   userPhone: string;
+  actionLabel: string;
   onClose: () => void;
   onComplete: () => void;
 }
 
-export default function UpgradePaymentModal({
-  planName, amount, currency, userPhone, onClose, onComplete,
-}: UpgradePaymentModalProps) {
+export default function SubscriptionPaymentModal({
+  planName, planPrice, billingCycle, amount, currency, userPhone,
+  actionLabel, onClose, onComplete,
+}: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
 
@@ -49,11 +53,11 @@ export default function UpgradePaymentModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Payment Successful!</p>
             <p className="text-sm text-gray-500 mt-1">
-              Your upgrade to <span className="font-semibold">{planName}</span> is complete.
+              Your {actionLabel.toLowerCase()} to <span className="font-semibold">{planName}</span> is complete.
             </p>
           </div>
           <Button type="button" onClick={onComplete} className="w-full gap-2">
-            Done
+            Continue
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -69,7 +73,10 @@ export default function UpgradePaymentModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
             <p className="text-sm text-gray-500 mt-1">
-              Complete your payment in the opened window.
+              Complete the payment in the opened window.
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              An STK push will be sent to <span className="font-semibold">{userPhone}</span>
             </p>
           </div>
           {paymentQuery.data?.data?.status === 'failed' && (
@@ -102,7 +109,7 @@ export default function UpgradePaymentModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Payment Failed</p>
             <p className="text-sm text-gray-500 mt-1">
-              Your payment could not be processed. The upgrade is on hold. Please try again or contact support.
+              Your payment could not be processed. Please try again or contact support.
             </p>
           </div>
           <Button type="button" onClick={() => { setPaymentId(null); setInitiated(false); }} className="w-full gap-2">
@@ -133,11 +140,28 @@ export default function UpgradePaymentModal({
         </button>
 
         <div className="text-center">
-          <p className="text-sm font-medium text-gray-500">Upgrade to {planName}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">
-            {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)}
-          </p>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">Prorated upgrade fee</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{actionLabel}</p>
+          <h3 className="text-xl font-bold text-gray-900 mt-1">{planName}</h3>
+        </div>
+
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl px-4 py-4 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Billing cycle</span>
+            <span className="font-semibold text-gray-900 capitalize">{billingCycle}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Plan price</span>
+            <span className="font-semibold text-gray-900">
+              {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(planPrice)}
+              <span className="text-xs text-gray-400 font-normal">/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span>
+            </span>
+          </div>
+          <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
+            <span className="font-semibold text-gray-700">Total due today</span>
+            <span className="font-bold text-blue-700 text-base">
+              {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)}
+            </span>
+          </div>
         </div>
 
         <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
@@ -154,7 +178,7 @@ export default function UpgradePaymentModal({
           loading={initiateMutation.isPending}
           disabled={!amount || !userPhone}
         >
-          Pay Upgrade Fee
+          Pay Now
         </Button>
 
         {initiateMutation.isError && !initiated && (

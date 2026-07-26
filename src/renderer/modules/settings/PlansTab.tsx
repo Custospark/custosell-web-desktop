@@ -5,7 +5,7 @@ import { CustosellLoader } from '../../shared/components/loading/CustosellLoader
 import { useUpgrade, useDowngrade } from '../../shared/api/account/AccountQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import UpgradePaymentModal from './UpgradePaymentModal';
+import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import {
@@ -46,20 +46,28 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   expired: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Expired' },
 };
 
+const NON_ACTIVE_STATUSES = new Set(['expired', 'suspended', 'cancelled']);
+
 function getPlanAction(plan: Plan, subscription: SubscriptionInfo | undefined, currentPlanSortOrder: number): {
-  type: 'subscribe' | 'upgrade' | 'downgrade' | 'current';
+  type: 'subscribe' | 'resubscribe' | 'upgrade' | 'downgrade' | 'current';
   label: string;
 } {
   if (!subscription) return { type: 'subscribe', label: 'Subscribe' };
+  if (NON_ACTIVE_STATUSES.has(subscription.status) && plan.id === subscription.plan_id) {
+    return { type: 'resubscribe', label: 'Re-subscribe' };
+  }
   if (plan.id === subscription.plan_id) return { type: 'current', label: 'Current Plan' };
   if (plan.sort_order > currentPlanSortOrder) return { type: 'upgrade', label: 'Upgrade' };
   if (plan.sort_order < currentPlanSortOrder) return { type: 'downgrade', label: 'Downgrade' };
   return { type: 'subscribe', label: 'Subscribe' };
 }
 
-interface UpgradePaymentState {
+interface SubscriptionPaymentState {
   planName: string;
+  planPrice: number;
+  billingCycle: string;
   amount: number;
+  actionLabel: string;
 }
 
 interface PlansTabProps {
@@ -72,7 +80,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
-  const [upgradePayment, setUpgradePayment] = useState<UpgradePaymentState | null>(null);
+  const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
   const upgradeMutation = useUpgrade();
   const downgradeMutation = useDowngrade();
 
@@ -90,13 +98,27 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       const result = await upgradeMutation.mutateAsync({ subscriptionId: Number(subscription.id), to_plan_id: plan.id });
       const due = (result as { proration?: { proration_due?: number } }).proration?.proration_due ?? 0;
       if (due > 0) {
-        setUpgradePayment({ planName: plan.name, amount: due });
+        const price = billingCycle === 'yearly' && plan.price_yearly
+          ? Number(plan.price_yearly) : Number(plan.price_monthly);
+        setSubscriptionPayment({
+          planName: plan.name, planPrice: price, billingCycle,
+          amount: due, actionLabel: 'Upgrade',
+        });
       } else {
         onUpgradeComplete?.();
       }
     } catch {
       console.warn('Upgrade mutation failed — already handled by mutation onError');
     }
+  };
+
+  const handleResubscribe = (plan: Plan) => {
+    const price = billingCycle === 'yearly' && plan.price_yearly
+      ? Number(plan.price_yearly) : Number(plan.price_monthly);
+    setSubscriptionPayment({
+      planName: plan.name, planPrice: price, billingCycle,
+      amount: price, actionLabel: 'Re-subscribe',
+    });
   };
 
   const handleDowngrade = (plan: Plan, effective: 'immediate' | 'end_of_period') => {
@@ -210,7 +232,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                   <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${accent.glow}`} />
                 </div>
 
-                {plan.is_popular && action.type !== 'current' && (
+                  {plan.is_popular && action.type !== 'current' && action.type !== 'resubscribe' && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
                     <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
                       <Sparkles className="w-3 h-3" />
@@ -219,7 +241,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                   </div>
                 )}
 
-                <div className={cn('space-y-4 flex flex-col flex-1', plan.is_popular && action.type !== 'current' && 'pt-2')}>
+                <div className={cn('space-y-4 flex flex-col flex-1', plan.is_popular && action.type !== 'current' && action.type !== 'resubscribe' && 'pt-2')}>
                   <div className="text-center">
                     <h3 className={`text-xl font-bold ${accent.name}`}>{plan.name}</h3>
                     {plan.description && <p className="text-sm text-gray-500 mt-1">{plan.description}</p>}
@@ -316,6 +338,13 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                     </button>
                   )}
 
+                  {action.type === 'resubscribe' && (
+                    <button type="button" onClick={() => handleResubscribe(plan)}
+                      className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:from-blue-700 hover:to-blue-900 active:scale-[0.98] transition-all shadow-md hover:shadow-lg">
+                      Re-subscribe
+                    </button>
+                  )}
+
                   {action.type === 'upgrade' && (
                     <button type="button" disabled={upgradeMutation.isPending} onClick={() => handleUpgrade(plan)}
                       className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:from-blue-700 hover:to-blue-900 active:scale-[0.98] transition-all shadow-md hover:shadow-lg disabled:opacity-50">
@@ -401,14 +430,17 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           </tbody>
         </table>
       </div>
-      {upgradePayment && (
-        <UpgradePaymentModal
-          planName={upgradePayment.planName}
-          amount={upgradePayment.amount}
+      {subscriptionPayment && (
+        <SubscriptionPaymentModal
+          planName={subscriptionPayment.planName}
+          planPrice={subscriptionPayment.planPrice}
+          billingCycle={subscriptionPayment.billingCycle}
+          amount={subscriptionPayment.amount}
           currency="UGX"
           userPhone={userPhone}
-          onClose={() => setUpgradePayment(null)}
-          onComplete={() => { setUpgradePayment(null); onUpgradeComplete?.(); }}
+          actionLabel={subscriptionPayment.actionLabel}
+          onClose={() => setSubscriptionPayment(null)}
+          onComplete={() => { setSubscriptionPayment(null); onUpgradeComplete?.(); }}
         />
       )}
     </div>

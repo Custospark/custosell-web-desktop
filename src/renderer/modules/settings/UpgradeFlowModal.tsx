@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
-import type { UpgradeQuote } from '../../shared/api/account/SubscriptionQueries';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
@@ -18,19 +17,18 @@ interface UpgradeFlowModalProps {
   onComplete: () => Promise<void>;
 }
 
-type Step = 'loading' | 'confirm' | 'upgrading' | 'paying' | 'polling' | 'done' | 'failed';
+type Step = 'confirm' | 'upgrading' | 'paying' | 'polling' | 'done' | 'failed';
 
 export default function UpgradeFlowModal({
   plan, subscription, billingCycle, currency, userPhone,
   onClose, onComplete,
 }: UpgradeFlowModalProps) {
-  const [step, setStep] = useState<Step>('loading');
+  const [step, setStep] = useState<Step>('confirm');
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [prorationDue, setProrationDue] = useState(0);
-  const [quote, setQuote] = useState<UpgradeQuote | null>(null);
 
-  const { data: fetchedQuote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
+  const { data: quote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
     subscription.id, plan.id,
   );
 
@@ -40,17 +38,6 @@ export default function UpgradeFlowModal({
 
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
   const isPaymentFailed = paymentQuery.data?.data?.status === 'failed';
-
-  if (!quoteLoading && !quoteError && fetchedQuote && step === 'loading') {
-    setQuote(fetchedQuote);
-    setProrationDue(fetchedQuote.proration.proration_due);
-    setStep('confirm');
-  }
-
-  if (quoteError && step === 'loading') {
-    setErrorMessage('Failed to load upgrade quote. Please try again.');
-    setStep('failed');
-  }
 
   const handleConfirm = () => {
     setStep('upgrading');
@@ -100,22 +87,46 @@ export default function UpgradeFlowModal({
     onClose();
   };
 
-  const pr = quote?.proration;
-
-  if (step === 'loading' || step === 'upgrading') {
+  if (step === 'upgrading') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
           <CustosellLoader fullPage={false} />
-          <p className="text-sm text-gray-500">
-            {step === 'upgrading' ? 'Upgrading your plan...' : 'Loading upgrade details...'}
-          </p>
+          <p className="text-sm text-gray-500">Upgrading your plan...</p>
         </div>
       </div>
     );
   }
 
-  if (step === 'confirm' && pr) {
+  if (step === 'confirm') {
+    if (quoteLoading) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
+            <CustosellLoader fullPage={false} />
+            <p className="text-sm text-gray-500">Loading upgrade details...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (quoteError) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <p className="text-sm text-gray-500">Failed to load upgrade quote. Please try again.</p>
+            <Button type="button" onClick={onClose} variant="outline">Close</Button>
+          </div>
+        </div>
+      );
+    }
+
+    const pr = quote?.proration;
+    if (!pr) return null;
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-5 relative">
@@ -210,7 +221,7 @@ export default function UpgradeFlowModal({
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Plan price</span>
               <span className="font-semibold text-gray-900">
-                {formatCurrency(pr?.new_price ?? 0, currency)}/{billingCycle === 'yearly' ? 'yr' : 'mo'}
+                {formatCurrency(quote?.new_price ?? 0, currency)}/{billingCycle === 'yearly' ? 'yr' : 'mo'}
               </span>
             </div>
             <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
@@ -245,10 +256,7 @@ export default function UpgradeFlowModal({
   }
 
   if (step === 'polling') {
-    const isDone = isPaymentDone;
-    const isFailed = isPaymentFailed;
-
-    if (isDone) {
+    if (isPaymentDone) {
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
@@ -270,7 +278,7 @@ export default function UpgradeFlowModal({
       );
     }
 
-    if (isFailed) {
+    if (isPaymentFailed) {
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">

@@ -4,6 +4,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useReferralEarnings } from '../../../modules/referral/api/useReferralQueries';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../utils/cn';
+import { formatUSD } from '../../utils/formatCurrency';
 import { canAccessModule } from '../../utils/moduleAccess';
 import {
   Gift, Copy, Check, ExternalLink, Users, UserCheck, DollarSign,
@@ -78,7 +79,7 @@ export default function ReferralDropdown() {
         </div>
         <div className="hidden lg:block min-w-0 max-w-[140px]">
           <span className="text-xs font-semibold truncate block text-gray-900">Refer &amp; Earn</span>
-          <span className="block text-xs truncate text-gray-500">{hasReferralCode ? (totalEarned > 0 ? `$${totalEarned.toFixed(2)} earned` : 'Get your referral code') : 'Start referring'}</span>
+          <span className="block text-xs truncate text-gray-500">{hasReferralCode ? (totalEarned > 0 ? `${formatUSD(totalEarned)} earned` : 'Get your referral code') : 'Start referring'}</span>
         </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
@@ -140,7 +141,7 @@ export default function ReferralDropdown() {
                   </div>
                   <div className="text-center">
                     <DollarSign className="w-4 h-4 mx-auto text-gray-400 mb-1" />
-                    <p className="text-lg font-bold text-gray-900">{totalEarned.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-gray-900">{formatUSD(totalEarned)}</p>
                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Earned</p>
                   </div>
                 </div>
@@ -151,7 +152,7 @@ export default function ReferralDropdown() {
                   <div className="flex items-center gap-2 text-xs">
                     <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                     <span className="text-amber-800 font-medium">
-                      {earnings!.pending_rewards.toFixed(2)} pending rewards
+                      {formatUSD(earnings!.pending_rewards)} pending rewards
                     </span>
                   </div>
                 </div>
@@ -169,8 +170,8 @@ export default function ReferralDropdown() {
                     )}
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Earned: <strong className="text-gray-900">{(earnings?.commission_earned ?? 0).toFixed(2)}</strong></span>
-                    <span className="text-gray-500">Pending: <strong className="text-amber-700">{(earnings?.commission_pending ?? 0).toFixed(2)}</strong></span>
+                    <span className="text-gray-500">Earned: <strong className="text-gray-900">{formatUSD(earnings?.commission_earned ?? 0)}</strong></span>
+                    <span className="text-gray-500">Pending: <strong className="text-amber-700">{formatUSD(earnings?.commission_pending ?? 0)}</strong></span>
                   </div>
                 </div>
               )}

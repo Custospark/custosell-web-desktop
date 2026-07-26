@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { useDowngrade } from '../../shared/api/account/SubscriptionQueries';
+import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges } from '../../shared/api/account/SubscriptionQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
@@ -47,6 +47,13 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [refreshing, setRefreshing] = useState(false);
 
   const downgradeMutation = useDowngrade();
+  const cancelChangeMutation = useCancelScheduledChange();
+  const { data: changes } = useSubscriptionChanges(Number(subscription.id));
+  const pendingChange = useMemo(() => {
+    if (!changes) return null;
+    const pending = changes.find((c: Record<string, unknown>) => c.status === 'pending');
+    return pending ?? null;
+  }, [changes]);
 
   const { data: plans, isLoading: plansLoading } = useActivePlans();
 
@@ -197,7 +204,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       ) : (
         <div className="grid gap-5 md:grid-cols-3">
           {sortedPlans.map((plan, index) => (
-            <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} monthlyPrice={monthlyPrice} onboardingFee={onboardingFee} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} />
+            <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} monthlyPrice={monthlyPrice} onboardingFee={onboardingFee} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
           ))}
         </div>
       )}

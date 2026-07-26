@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
@@ -169,6 +169,7 @@ export function useUpgrade() {
 
 export function useDowngrade() {
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   return useMutation<{ scheduled_change: unknown; proration: unknown }, AxiosError<ApiError>, {
     subscriptionId: number;
     to_plan_id: number;
@@ -181,11 +182,31 @@ export function useDowngrade() {
       });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       showToast('success', 'Downgrade scheduled successfully');
+      queryClient.invalidateQueries({ queryKey: ['subscription', 'changes', variables.subscriptionId] });
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Failed to downgrade plan.';
+      showToast('error', message);
+    },
+  });
+}
+
+export function useCancelScheduledChange() {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  return useMutation<{ message: string }, AxiosError<ApiError>, { subscriptionId: number }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post(SUBSCRIPTIONS.CANCEL_CHANGE(payload.subscriptionId));
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      showToast('success', 'Scheduled downgrade cancelled');
+      queryClient.invalidateQueries({ queryKey: ['subscription', 'changes', variables.subscriptionId] });
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to cancel scheduled change.';
       showToast('error', message);
     },
   });

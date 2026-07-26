@@ -1,4 +1,4 @@
-import { ArrowDown, X, Check, Sparkles, Star, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowDown, X, Check, Sparkles, Star, AlertCircle, CheckCircle, CalendarX } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { getPlanAction } from './planActionMatrix';
@@ -24,6 +24,9 @@ interface PlanCardProps {
   handleDowngradeAction: (plan: Plan) => void;
   setDowngradePlan: (plan: Plan | null) => void;
   setDowngradeConfirmed: (confirmed: boolean) => void;
+  pendingChange: Record<string, unknown> | null;
+  cancelChangeLoading: boolean;
+  onCancelScheduledChange: () => void;
 }
 
 export default function PlanCard({
@@ -43,6 +46,9 @@ export default function PlanCard({
   handleDowngradeAction,
   setDowngradePlan,
   setDowngradeConfirmed,
+  pendingChange,
+  cancelChangeLoading,
+  onCancelScheduledChange,
 }: PlanCardProps) {
   const action = getPlanAction(plan, subscription, currentPlanSortOrder);
   const price = billingCycle === 'yearly' && plan.price_yearly
@@ -51,6 +57,16 @@ export default function PlanCard({
   const features = Object.entries(plan.features).filter(([, v]) => v);
   const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
   const isCurrentPlan = plan.id === subscription.plan_id;
+
+  const isDowngradeScheduledForThisPlan =
+    pendingChange?.change_type === 'downgrade'
+    && pendingChange?.status === 'pending'
+    && Number(pendingChange.to_plan_id) === plan.id
+    && !isCurrentPlan;
+
+  const scheduledEffectiveDate = pendingChange?.effective_at
+    ? new Date(pendingChange.effective_at as string).toLocaleDateString()
+    : null;
 
   const accent = (
     [
@@ -75,6 +91,15 @@ export default function PlanCard({
           <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
             <Star className="w-3 h-3 fill-white" />
             Current Plan
+          </span>
+        </div>
+      )}
+
+      {isDowngradeScheduledForThisPlan && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
+          <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+            <ArrowDown className="w-3 h-3" />
+            Downgrade scheduled
           </span>
         </div>
       )}
@@ -178,7 +203,7 @@ export default function PlanCard({
           )}
         </div>
 
-        {isCurrentPlan && action.type === 'current' && (
+        {isCurrentPlan && action.type === 'current' && !isDowngradeScheduledForThisPlan && (
           <div className="mt-4 text-center">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100 px-4 py-2 rounded-xl">
               <CheckCircle className="w-3.5 h-3.5" />
@@ -187,7 +212,26 @@ export default function PlanCard({
           </div>
         )}
 
-        {action.type !== 'current' && (
+        {isDowngradeScheduledForThisPlan && scheduledEffectiveDate && (
+          <div className="mt-4 space-y-2">
+            <div className="text-center">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-100 px-4 py-2 rounded-xl">
+                <CalendarX className="w-3.5 h-3.5" />
+                Takes effect {scheduledEffectiveDate}
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={cancelChangeLoading}
+              onClick={onCancelScheduledChange}
+              className="w-full text-sm font-semibold py-2.5 px-4 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 transition-colors disabled:opacity-50"
+            >
+              {cancelChangeLoading ? 'Cancelling...' : 'Cancel Scheduled Downgrade'}
+            </button>
+          </div>
+        )}
+
+        {action.type !== 'current' && !isDowngradeScheduledForThisPlan && (
           <button
             type="button"
             disabled={action.type === 'downgrade' && downgradeMutation.isPending}
@@ -202,7 +246,7 @@ export default function PlanCard({
                 : 'cursor-pointer',
             )}
           >
-            {action.type === 'downgrade' && downgradeMutation.isPending ? 'Downgrading...'
+            {action.type === 'downgrade' && downgradeMutation.isPending ? 'Scheduling...'
               : action.label}
           </button>
         )}
@@ -212,9 +256,9 @@ export default function PlanCard({
             <div className="flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-amber-900">Downgrading will restrict access</p>
+                <p className="text-sm font-semibold text-amber-900">Scheduled downgrade</p>
                 <p className="text-xs text-amber-700 mt-1">
-                  You will lose features and limits available in your current plan. Review what changes below:
+                  Your access stays the same until the end of the billing period. After that, these changes take effect:
                 </p>
               </div>
             </div>
@@ -247,7 +291,7 @@ export default function PlanCard({
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={() => setDowngradeConfirmed(true)}
                 className="flex-1 bg-amber-500 text-white text-sm font-semibold py-2 px-3 rounded-xl hover:bg-amber-600 transition-colors">
-                Continue Downgrade
+                Schedule Downgrade
               </button>
               <button type="button" onClick={() => { setDowngradePlan(null); setDowngradeConfirmed(false); }}
                 className="flex-1 bg-white text-gray-600 text-sm font-medium py-2 px-3 rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors">

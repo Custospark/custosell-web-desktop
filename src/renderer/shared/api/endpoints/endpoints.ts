@@ -61,6 +61,7 @@ export const SUBSCRIPTIONS = {
   PRORATION_QUOTE: (id: number) => `/subscriptions/${id}/proration-quote`,
   DOWNGRADE: (id: number) => `/subscriptions/${id}/downgrade`,
   CHANGES: (id: number) => `/subscriptions/${id}/changes`,
+  CANCEL_CHANGE: (id: number) => `/subscriptions/${id}/cancel-change`,
   CANCEL: (id: number) => `/subscriptions/${id}/cancel`,
   REACTIVATE: (id: number) => `/subscriptions/${id}/reactivate`,
 };

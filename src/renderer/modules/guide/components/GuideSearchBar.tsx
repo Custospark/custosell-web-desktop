@@ -25,7 +25,7 @@ export function GuideSearchBar({
     <div className="relative w-full">
       <div className="relative rounded-lg p-[2px]">
         <motion.div
-          className="absolute inset-0 z-0 rounded-lg"
+          className="absolute inset-0 rounded-lg"
           style={{
             background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)',
             backgroundSize: '300% 100%',
@@ -33,7 +33,7 @@ export function GuideSearchBar({
           animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
           transition={{ duration: isFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
         />
-        <div className="relative z-10 overflow-hidden rounded-[6px] bg-white">
+        <div className="relative overflow-hidden rounded-[6px] bg-white">
           <Search
             className={cn(
               'absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors',

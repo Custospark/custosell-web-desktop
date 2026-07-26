@@ -57,6 +57,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [design-system.md](./product/design-system.md) | Colors, typography, UI patterns |
 | [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
 | [intent-and-tour.md](./product/intent-and-tour.md) | Post-register intent cards + shell product tour |
+| [subscription-user-stories.md](./product/subscription-user-stories.md) | Frontend subscription guard, overlay, user stories per status |
 
 ## Future work
 

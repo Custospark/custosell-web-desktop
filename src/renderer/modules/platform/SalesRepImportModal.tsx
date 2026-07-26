@@ -8,7 +8,7 @@ import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from 'luc
 
 interface ImportResult {
   imported: number;
-  errors: { row: number; errors: string[] }[];
+  errors: { row: number; errors: Record<string, string[]> }[];
   total_rows: number;
 }
 
@@ -168,7 +168,7 @@ export default function SalesRepImportModal({ open, onClose, onImported }: Sales
                 <div key={e.row} className="p-3 bg-red-50 rounded-lg text-sm">
                   <p className="font-medium text-red-800 mb-1">Row {e.row > 0 ? e.row : '(general)'}</p>
                   <ul className="list-disc list-inside text-red-600 text-xs space-y-0.5">
-                    {e.errors.map((msg, i) => <li key={i}>{msg}</li>)}
+                    {Object.values(e.errors).flat().map((msg, i) => <li key={i}>{msg}</li>)}
                   </ul>
                 </div>
               ))}

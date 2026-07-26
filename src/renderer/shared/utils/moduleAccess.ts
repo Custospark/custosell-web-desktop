@@ -373,6 +373,10 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
     return ROUTES.REGISTER_PAYMENT;
   }
 
+  if (subscription && ['expired', 'suspended', 'cancelled'].includes(subscription.status as string)) {
+    return ROUTES.SETTINGS.SUBSCRIPTION;
+  }
+
   return ROUTES.ACCOUNT.NOTIFICATIONS;
 }
 

@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useState, type RefObject } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
 import type { BoardViewMode, PipelineBoard, PipelineStage } from '../api/pipelineTypes';
 import BoardSearchMenu from './BoardSearchMenu';
@@ -6,7 +6,7 @@ import BoardCollaborationButton from './BoardCollaborationButton';
 import BoardAccessBadges from './BoardAccessBadges';
 import LeadSearchHint from './LeadSearchHint';
 import type { BoardMemberRole } from '../api/boardRoleUtils';
-import { CalendarDays, Columns3, LayoutGrid, Search, Settings, Upload, UserPlus, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronUp, Columns3, LayoutGrid, Search, Settings, Upload, UserPlus, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface QueryToken {
@@ -102,9 +102,10 @@ export default function BoardKanbanPageHeader({
   onAddCard,
   onApplySearchToken,
 }: BoardKanbanPageHeaderProps) {
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   return (
-    <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/85 px-3 py-3 backdrop-blur-sm sm:px-4">
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80">
+    <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/85 px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3">
+      <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80 sm:mb-2">
         <span>{workspaceLabel}</span>
         <BoardAccessBadges
           visibility={board.visibility}
@@ -112,7 +113,7 @@ export default function BoardKanbanPageHeader({
           className="normal-case tracking-normal"
         />
       </div>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center sm:gap-3">
         <div className="flex shrink-0 items-center gap-2 lg:min-w-[200px]">
           <BoardSearchMenu
             boards={switcherBoards}
@@ -134,94 +135,104 @@ export default function BoardKanbanPageHeader({
               <Settings className="h-4 w-4" />
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setMobileExpanded((v) => !v)}
+            className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 lg:hidden"
+            aria-label={mobileExpanded ? 'Collapse header' : 'Expand header'}
+          >
+            {mobileExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
         </div>
 
-        {viewMode === 'kanban' && (
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={leadQuery}
-              onChange={(e) => onLeadQueryChange(e.target.value)}
-              placeholder={isTaskBoard ? 'Search tasks…  (@label, !high, #today, @me)' : 'Search leads…  (@label, !high, #today, @me)'}
-              className="w-full rounded-xl border border-blue-100 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-800 shadow-sm transition-shadow placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            {leadQuery && (
+        <div className={cn('contents lg:contents', !mobileExpanded && 'hidden lg:flex')}>
+          {viewMode === 'kanban' && (
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={leadQuery}
+                onChange={(e) => onLeadQueryChange(e.target.value)}
+                placeholder={isTaskBoard ? 'Search tasks…  (@label, !high, #today, @me)' : 'Search leads…  (@label, !high, #today, @me)'}
+                className="w-full rounded-xl border border-blue-100 bg-white py-2 pl-10 pr-10 text-sm text-slate-800 shadow-sm transition-shadow placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:py-2.5"
+              />
+              {leadQuery && (
+                <button
+                  type="button"
+                  onClick={() => onLeadQueryChange('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-blue-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-lg border border-blue-100 bg-white p-0.5 shadow-sm">
               <button
                 type="button"
-                onClick={() => onLeadQueryChange('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-blue-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
-                aria-label="Clear search"
+                onClick={() => onViewModeChange('kanban')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  viewMode === 'kanban' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
+                )}
               >
-                <X className="h-4 w-4" />
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Board
               </button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange('calendar')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  viewMode === 'calendar' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
+                )}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                Calendar
+              </button>
+            </div>
+
+            {viewMode === 'kanban' && (
+              <>
+                {showBoardManagementControls && (
+                  <Button variant="secondary" onClick={onAddStage} className="inline-flex items-center gap-2">
+                    <Columns3 className="h-4 w-4" />
+                    Add column
+                  </Button>
+                )}
+                {canContribute && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={onImport}
+                      className="inline-flex items-center gap-2"
+                      disabled={!allStages.length}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Import
+                    </Button>
+                    <Button
+                      onClick={onAddCard}
+                      className="inline-flex items-center gap-2 shadow-sm"
+                      disabled={!allStages.length}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      {isTaskBoard ? 'Add task' : 'Add card'}
+                    </Button>
+                  </>
+                )}
+              </>
             )}
           </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg border border-blue-100 bg-white p-0.5 shadow-sm">
-            <button
-              type="button"
-              onClick={() => onViewModeChange('kanban')}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                viewMode === 'kanban' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
-              )}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Board
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewModeChange('calendar')}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                viewMode === 'calendar' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
-              )}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Calendar
-            </button>
-          </div>
-
-          {viewMode === 'kanban' && (
-            <>
-              {showBoardManagementControls && (
-                <Button variant="secondary" onClick={onAddStage} className="inline-flex items-center gap-2">
-                  <Columns3 className="h-4 w-4" />
-                  Add column
-                </Button>
-              )}
-              {canContribute && (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={onImport}
-                    className="inline-flex items-center gap-2"
-                    disabled={!allStages.length}
-                  >
-                    <Upload className="h-4 w-4" />
-                    Import
-                  </Button>
-                  <Button
-                    onClick={onAddCard}
-                    className="inline-flex items-center gap-2 shadow-sm"
-                    disabled={!allStages.length}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    {isTaskBoard ? 'Add task' : 'Add card'}
-                  </Button>
-                </>
-              )}
-            </>
-          )}
         </div>
       </div>
 
       {viewMode === 'kanban' && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+        <div className={cn('mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 sm:mt-2', !mobileExpanded && 'hidden lg:flex')}>
           <span>{allLeadsCount} {itemLabel}{allLeadsCount === 1 ? '' : 's'} on board</span>
 
           {leadQuery.trim() ? (

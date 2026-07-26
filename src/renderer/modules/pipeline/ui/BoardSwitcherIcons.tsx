@@ -46,7 +46,7 @@ export default function BoardSwitcherIcons({
   return (
     <div
       className={cn(
-        'relative z-30 flex shrink-0 items-center justify-center gap-3 border-t border-white/40 bg-white/85 px-3 py-2.5 backdrop-blur-sm',
+        'relative z-30 flex shrink-0 items-center justify-center gap-1.5 border-t border-white/40 bg-white/85 px-2 py-1.5 backdrop-blur-sm sm:gap-3 sm:px-3 sm:py-2.5',
         className,
       )}
     >
@@ -54,7 +54,7 @@ export default function BoardSwitcherIcons({
         type="button"
         onClick={onOpenAll}
         className={cn(
-          'inline-flex items-center gap-2 rounded-xl border-2 border-indigo-300/90 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all',
+          'inline-flex items-center gap-2 rounded-xl border-2 border-indigo-300/90 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all sm:px-4 sm:py-2.5',
           'bg-gradient-to-r from-indigo-50 via-white to-blue-50 text-indigo-800',
           'hover:border-indigo-400 hover:from-indigo-100 hover:to-blue-100 hover:shadow-md hover:shadow-indigo-200/50',
           'active:scale-[0.98]',
@@ -70,7 +70,7 @@ export default function BoardSwitcherIcons({
           type="button"
           onClick={onOpenResources}
           className={cn(
-            'relative inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300/90 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all',
+            'relative inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300/90 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all sm:px-4 sm:py-2.5',
             'bg-gradient-to-r from-emerald-50 via-white to-teal-50 text-emerald-800',
             'hover:border-emerald-400 hover:from-emerald-100 hover:to-teal-100 hover:shadow-md hover:shadow-emerald-200/50',
             'active:scale-[0.98]',
@@ -87,7 +87,7 @@ export default function BoardSwitcherIcons({
           type="button"
           onClick={onOpenProgress}
           className={cn(
-            'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]',
+            'inline-flex items-center gap-2 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] sm:px-4 sm:py-2.5',
             progressActive
               ? 'border-violet-500 bg-gradient-to-r from-violet-100 via-white to-fuchsia-100 text-violet-900 shadow-md shadow-violet-200/50'
               : 'border-violet-300/90 bg-gradient-to-r from-violet-50 via-white to-fuchsia-50 text-violet-800 hover:border-violet-400 hover:from-violet-100 hover:to-fuchsia-100 hover:shadow-md hover:shadow-violet-200/50',
@@ -105,7 +105,7 @@ export default function BoardSwitcherIcons({
           type="button"
           onClick={onOpenFame}
           className={cn(
-            'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]',
+            'inline-flex items-center gap-2 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] sm:px-4 sm:py-2.5',
             fameActive
               ? 'border-amber-500 bg-gradient-to-r from-amber-100 via-white to-yellow-100 text-amber-900 shadow-md shadow-amber-200/50'
               : 'border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-yellow-50 text-amber-800 hover:border-amber-400 hover:from-amber-100 hover:to-yellow-100 hover:shadow-md hover:shadow-amber-200/50',
@@ -123,7 +123,7 @@ export default function BoardSwitcherIcons({
           type="button"
           onClick={onOpenConversation}
           className={cn(
-            'relative inline-flex items-center gap-2 rounded-xl border-2 border-blue-300/90 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all',
+            'relative inline-flex items-center gap-2 rounded-xl border-2 border-blue-300/90 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all sm:px-4 sm:py-2.5',
             'bg-gradient-to-r from-blue-50 via-white to-sky-50 text-blue-800',
             'hover:border-blue-400 hover:from-blue-100 hover:to-sky-100 hover:shadow-md hover:shadow-blue-200/50',
             'active:scale-[0.98]',
@@ -147,7 +147,7 @@ export default function BoardSwitcherIcons({
           type="button"
           onClick={onCreateNew}
           className={cn(
-            'inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-violet-400/90 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all',
+            'inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-violet-400/90 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all sm:px-4 sm:py-2.5',
             'bg-gradient-to-r from-violet-50 via-white to-fuchsia-50 text-violet-800',
             'hover:border-violet-500 hover:from-violet-100 hover:to-fuchsia-100 hover:shadow-md hover:shadow-violet-200/50',
             'active:scale-[0.98]',

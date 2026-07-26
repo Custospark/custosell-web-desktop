@@ -160,9 +160,6 @@ export function useUpgrade() {
       });
       return data;
     },
-    onSuccess: () => {
-      showToast('success', 'Plan upgraded successfully');
-    },
     onError: (error) => {
       const message = error.response?.data?.message || 'Failed to upgrade plan.';
       showToast('error', message);

@@ -5,6 +5,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useProfile } from '../../shared/api/account/AccountQueries';
 import { useSubscriptionChanges } from '../../shared/api/account/SubscriptionQueries';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { BILLING } from '../../shared/api/endpoints/endpoints';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -50,6 +51,9 @@ export default function SubscriptionSettingsPage() {
 
   const subId = subscription?.id ?? null;
   const { data: changes, isLoading: changesLoading } = useSubscriptionChanges(subId ? Number(subId) : null);
+
+  const paymentsPaginated = usePagination(payments ?? [], 10);
+  const changesPaginated = usePagination(changes ?? [], 10);
 
   if (profileLoading) {
     return <CustosellLoader fullPage={false} />;
@@ -104,7 +108,7 @@ export default function SubscriptionSettingsPage() {
             </div>
           ) : payments && payments.length > 0 ? (
             <div className="divide-y divide-gray-100">
-              {payments.map(payment => {
+              {paymentsPaginated.data.map(payment => {
                 const StatusIcon = payment.status === 'completed' ? CheckCircle : payment.status === 'failed' ? XCircle : Clock;
                 return (
                   <div key={payment.id} className="flex items-center justify-between py-3">
@@ -127,6 +131,18 @@ export default function SubscriptionSettingsPage() {
           ) : (
             <p className="text-sm text-gray-400 text-center py-6">No payment records found.</p>
           )}
+          {payments && payments.length > 0 && (
+            <div className="mt-4">
+              <Pagination
+                currentPage={paymentsPaginated.page}
+                totalPages={paymentsPaginated.totalPages}
+                totalItems={paymentsPaginated.totalItems}
+                pageSize={paymentsPaginated.pageSize}
+                onPageChange={paymentsPaginated.setPage}
+                onPageSizeChange={paymentsPaginated.setPageSize}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -139,7 +155,7 @@ export default function SubscriptionSettingsPage() {
             </div>
           ) : changes && changes.length > 0 ? (
             <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
-              {changes.map((change: Record<string, unknown>) => {
+              {changesPaginated.data.map((change: Record<string, unknown>) => {
                 const status = change.status as string;
                 const changeType = change.change_type as string;
                 const effectiveAt = change.effective_at as string;
@@ -187,6 +203,18 @@ export default function SubscriptionSettingsPage() {
             </div>
           ) : (
             <p className="text-sm text-gray-400 text-center py-6">No plan changes recorded.</p>
+          )}
+          {changes && changes.length > 0 && (
+            <div className="mt-4">
+              <Pagination
+                currentPage={changesPaginated.page}
+                totalPages={changesPaginated.totalPages}
+                totalItems={changesPaginated.totalItems}
+                pageSize={changesPaginated.pageSize}
+                onPageChange={changesPaginated.setPage}
+                onPageSizeChange={changesPaginated.setPageSize}
+              />
+            </div>
           )}
         </div>
       )}

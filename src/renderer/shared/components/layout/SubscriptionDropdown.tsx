@@ -235,7 +235,7 @@ export default function SubscriptionDropdown() {
             </button>
             <button
               type="button"
-              onClick={() => { navigate(ROUTES.ONBOARDING); setOpen(false); }}
+              onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
               className="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs hover:text-gray-900 cursor-pointer text-gray-500"
             >
               Compare all features

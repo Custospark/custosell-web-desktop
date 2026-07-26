@@ -211,7 +211,17 @@ const authSlice = createSlice({
     },
     setUser(state, action: PayloadAction<AuthUser>) {
       const user = normalizeAuthUser({ ...action.payload });
-      state.user = user;
+      state.user = {
+        ...state.user,
+        ...user,
+        business: user.business
+          ? {
+              ...state.user?.business,
+              ...user.business,
+              subscription: user.business.subscription ?? state.user?.business?.subscription,
+            }
+          : state.user?.business,
+      };
       state.businessId = user.business_id;
       state.isAuthenticated = true;
       state.isInitialized = true;
@@ -229,8 +239,13 @@ const authSlice = createSlice({
     },
     setBusiness(state, action: PayloadAction<BusinessInfo>) {
       if (state.user) {
-        state.user.business = action.payload;
-        state.user.business_name = action.payload.name;
+        const incoming = action.payload;
+        state.user.business = {
+          ...state.user.business,
+          ...incoming,
+          subscription: incoming.subscription ?? state.user.business?.subscription,
+        };
+        state.user.business_name = incoming.name;
       }
     },
     setInitialized(state) {

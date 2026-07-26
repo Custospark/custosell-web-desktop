@@ -7,7 +7,7 @@ import { cn } from '../../utils/cn';
 import { canAccessModule } from '../../utils/moduleAccess';
 import {
   Gift, Copy, Check, ExternalLink, Users, UserCheck, DollarSign,
-  TrendingUp, Clock, Sparkles,
+  TrendingUp, Clock, Sparkles, ChevronDown,
 } from 'lucide-react';
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
@@ -65,19 +65,22 @@ export default function ReferralDropdown() {
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'inline-flex items-center justify-center rounded-lg font-medium transition-colors shrink-0 cursor-pointer',
-          'h-11 w-11 sm:h-9 sm:w-auto sm:px-2.5 sm:gap-1.5',
-          'text-xs sm:text-sm',
-          open
-            ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200'
-            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900',
+          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'text-xs lg:text-sm',
+          open ? 'bg-gray-100 ring-gray-300' : 'bg-white ring-gray-200 hover:bg-gray-50',
         )}
-        title="Referral Program"
+        title={hasReferralCode ? `Referral code: ${code}` : 'Referral Program'}
         aria-label="Referral Program"
         aria-expanded={open}
       >
-        <Gift className="h-4 w-4 shrink-0" />
-        <span className="hidden sm:inline truncate">Refer</span>
+        <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-indigo-200 bg-indigo-50 shrink-0">
+          <Gift className="w-3.5 h-3.5 text-indigo-600" />
+        </div>
+        <div className="hidden lg:block min-w-0 max-w-[140px]">
+          <span className="text-xs font-semibold truncate block text-gray-900">Refer &amp; Earn</span>
+          <span className="block text-xs truncate text-gray-500">{hasReferralCode ? (totalEarned > 0 ? `$${totalEarned.toFixed(2)} earned` : 'Get your referral code') : 'Start referring'}</span>
+        </div>
+        <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 
       {open && (

@@ -33,12 +33,20 @@ export function useReactivate() {
   });
 }
 
+let idempotencyCounter = 0;
+
+function generateIdempotencyKey(): string {
+  idempotencyCounter++;
+  return `pay_${Date.now()}_${idempotencyCounter}_${crypto.randomUUID?.()?.slice(0, 8) ?? Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function useInitiatePayment(paymentType: string) {
   const { showToast } = useToast();
   return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
     amount: number;
     currency: string;
     phone?: string;
+    metadata?: Record<string, unknown>;
   }>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post(BILLING.INITIATE, {
@@ -47,6 +55,8 @@ export function useInitiatePayment(paymentType: string) {
         currency: payload.currency,
         payment_type: paymentType,
         phone: payload.phone,
+        metadata: payload.metadata ?? null,
+        idempotency_key: generateIdempotencyKey(),
       });
       return data;
     },

@@ -12,13 +12,14 @@ interface SubscriptionPaymentModalProps {
   userPhone: string;
   actionLabel: string;
   paymentType: string;
+  metadata?: Record<string, unknown>;
   onClose: () => void;
   onComplete: () => void;
 }
 
 export default function SubscriptionPaymentModal({
   planName, planPrice, billingCycle, amount, currency, userPhone,
-  actionLabel, paymentType, onClose, onComplete,
+  actionLabel, paymentType, metadata, onClose, onComplete,
 }: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
@@ -31,7 +32,7 @@ export default function SubscriptionPaymentModal({
 
   const handlePay = () => {
     initiateMutation.mutate(
-      { amount, currency, phone: userPhone },
+      { amount, currency, phone: userPhone, metadata },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);

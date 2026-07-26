@@ -5,15 +5,48 @@ import { axiosInstance } from '../../api/axiosConfig';
 import { SUBSCRIPTIONS } from '../../../shared/api/endpoints/endpoints';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useAppSelector } from '../../store/hooks/useApp';
+import { selectIsOnline } from '../../store/slices/networkSlice';
 import { Building2, CreditCard, RefreshCw } from 'lucide-react';
 
 interface AccessResponse {
   has_access: boolean;
 }
 
+function computeOfflineAccess(subscription: {
+  status?: string | null;
+  trial_ends_at?: string | null;
+  grace_period_ends_at?: string | null;
+  ends_at?: string | null;
+  metadata?: { cancel_at_period_end?: boolean } | null;
+}): boolean {
+  const status = subscription?.status;
+  if (!status) return false;
+
+  if (status === 'active') {
+    const cancelAtPeriodEnd = subscription?.metadata?.cancel_at_period_end ?? false;
+    if (cancelAtPeriodEnd && subscription?.ends_at) {
+      return new Date(subscription.ends_at).getTime() > Date.now();
+    }
+    return true;
+  }
+
+  if (status === 'trial') {
+    if (!subscription?.trial_ends_at) return true;
+    return new Date(subscription.trial_ends_at).getTime() > Date.now();
+  }
+
+  if (status === 'past_due') {
+    if (!subscription?.grace_period_ends_at) return false;
+    return new Date(subscription.grace_period_ends_at).getTime() > Date.now();
+  }
+
+  return false;
+}
+
 function useSubscriptionAccess() {
   const user = useAppSelector((s) => s.auth.user);
   const subscription = user?.business?.subscription;
+  const isOnline = useAppSelector(selectIsOnline);
 
   return useQuery({
     queryKey: ['subscription', 'access'],
@@ -23,7 +56,13 @@ function useSubscriptionAccess() {
     },
     staleTime: 30_000,
     retry: false,
-    enabled: !!subscription || user?.business_id != null,
+    enabled: isOnline !== false && (!!subscription || user?.business_id != null),
+    placeholderData: () => {
+      if (!isOnline && subscription) {
+        return computeOfflineAccess(subscription);
+      }
+      return undefined;
+    },
   });
 }
 
@@ -35,10 +74,6 @@ const SUB_STATUS_INFO: Record<string, { title: string; description: string }> = 
   cancelled: {
     title: 'Subscription cancelled',
     description: 'Your subscription has been cancelled. Choose a new plan to continue using Custosell.',
-  },
-  expired: {
-    title: 'Trial expired',
-    description: 'Your free trial has ended. Subscribe to a plan to continue using Custosell.',
   },
   past_due: {
     title: 'Payment required',

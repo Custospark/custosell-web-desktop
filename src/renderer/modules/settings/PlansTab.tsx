@@ -13,38 +13,7 @@ import {
   Check, Sparkles, Star,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
-
-const FEATURE_CATALOG: Record<string, { label: string; description: string }> = {
-  sales: { label: 'Point of Sale', description: 'Complete POS with orders, history & refunds' },
-  inventory: { label: 'Inventory Management', description: 'Products, stock ledger & supply chain' },
-  customers: { label: 'Customer Management', description: 'Customer profiles & purchase history' },
-  expenses: { label: 'Expense Tracking', description: 'Record and categorize expenses' },
-  dashboard: { label: 'Dashboard & Analytics', description: 'Real-time business performance' },
-  storefront: { label: 'Online Storefront', description: 'Sell online with custom storefront' },
-  pipeline: { label: 'Sales Pipeline', description: 'Boards, leads & team collaboration' },
-  estimates: { label: 'Estimates & Projects', description: 'Quotes, projects & templates' },
-  marketplace: { label: 'Supply Marketplace', description: 'Source products from other businesses' },
-  documents: { label: 'Document Management', description: 'Secure file storage & e-signatures' },
-  accounting: { label: 'Full Accounting', description: 'Chart of accounts & financial reports' },
-  hr: { label: 'HR & Payroll', description: 'Employee mgmt, attendance & payroll' },
-  forecasting: { label: 'Forecasting & Budgets', description: 'Financial projections & budgets' },
-};
-
-const LIMIT_LABELS: Record<string, string> = {
-  max_staff: 'Staff accounts',
-  max_products: 'Products',
-  max_businesses: 'Business locations',
-};
-
-const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  active: { bg: 'bg-green-100', text: 'text-green-800', label: 'Active' },
-  trialing: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Trial' },
-  trial: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Trial' },
-  past_due: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Past Due' },
-  suspended: { bg: 'bg-red-100', text: 'text-red-800', label: 'Suspended' },
-  cancelled: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Cancelled' },
-  expired: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Expired' },
-};
+import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
 
 interface SubscriptionPaymentState {
   planName: string;
@@ -86,6 +55,16 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
   const currentPlan = sortedPlans.find(p => p.id === subscription.plan_id) ?? null;
   const currentPlanSortOrder = currentPlan?.sort_order ?? 0;
+
+  const getPaymentMetadata = (action: PlanAction, plan: Plan): Record<string, unknown> | undefined => {
+    if (action.type === 'upgrade') {
+      return { action: 'upgrade', to_plan_id: plan.id };
+    }
+    if (action.type === 'subscribe' || action.type === 'resubscribe') {
+      return { action: 'subscribe', plan_id: plan.id };
+    }
+    return undefined;
+  };
 
   const handleAction = (plan: Plan, action: PlanAction) => {
     if (!action.requiresPayment) {
@@ -483,6 +462,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           userPhone={userPhone}
           actionLabel={subscriptionPayment.actionLabel}
           paymentType={subscriptionPayment.paymentType}
+          metadata={getPaymentMetadata(pendingPayment.action, pendingPayment.plan)}
           onClose={closePaymentModal}
           onComplete={handlePaymentComplete}
         />

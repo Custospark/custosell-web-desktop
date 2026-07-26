@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/AccountQueries';
+import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X } from 'lucide-react';
 
@@ -11,18 +11,19 @@ interface SubscriptionPaymentModalProps {
   currency: string;
   userPhone: string;
   actionLabel: string;
+  paymentType: string;
   onClose: () => void;
   onComplete: () => void;
 }
 
 export default function SubscriptionPaymentModal({
   planName, planPrice, billingCycle, amount, currency, userPhone,
-  actionLabel, onClose, onComplete,
+  actionLabel, paymentType, onClose, onComplete,
 }: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
 
-  const initiateMutation = useInitiatePayment('upgrade_proration');
+  const initiateMutation = useInitiatePayment(paymentType);
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
 
   const isDone = paymentQuery.data?.data?.status === 'completed';

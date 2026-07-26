@@ -15,6 +15,12 @@ export interface SubscriptionInfo {
   trial_ends_at?: string | null;
   next_billing_date?: string | null;
   onboarding_fee_paid?: boolean;
+  payment_action?: {
+    required: boolean;
+    intent: string | null;
+    label: string | null;
+    message: string | null;
+  };
 }
 export interface BusinessInfo {
   id: number;

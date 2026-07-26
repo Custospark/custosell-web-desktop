@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
-import { useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/AccountQueries';
+import { useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';

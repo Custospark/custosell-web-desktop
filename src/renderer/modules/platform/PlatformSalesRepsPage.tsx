@@ -1,10 +1,12 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { SALES_REPS } from '../../shared/api/endpoints/endpoints';
 import { Table } from '../../shared/components/tables/Table';
 import { Button } from '../../shared/components/buttons/Button';
-import { Search, Plus, Users, TrendingUp, DollarSign, Upload } from 'lucide-react';
+import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
+import { useToast } from '../../app/contexts/useToast';
+import { Search, Plus, Users, TrendingUp, DollarSign, Upload, Trash2 } from 'lucide-react';
 import { SalesRepFormModal } from './PlatformSalesRepFormModal';
 import { SalesRepPayoutModal } from './SalesRepPayoutModal';
 import SalesRepImportModal from './SalesRepImportModal';
@@ -12,6 +14,8 @@ import type { PlatformSalesRep } from './PlatformSalesRepFormModal';
 
 export default function PlatformSalesRepsPage() {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [showFormModal, setShowFormModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -32,6 +36,27 @@ export default function PlatformSalesRepsPage() {
   );
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['platform', 'sales-reps'] });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => axiosInstance.delete(SALES_REPS.BY_ID(id)),
+    onSuccess: () => {
+      showToast('Sales rep deleted', 'success');
+      refetch();
+    },
+    onError: () => {
+      showToast('Failed to delete sales rep', 'error');
+    },
+  });
+
+  const handleDelete = async (r: PlatformSalesRep) => {
+    const confirmed = await confirm({
+      title: 'Delete sales rep',
+      message: `Permanently delete "${r.user?.name ?? r.user?.email}"? Their referral code will be deactivated and this cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (confirmed) deleteMutation.mutate(r.id);
+  };
 
   return (
     <div className="space-y-6">
@@ -136,13 +161,16 @@ export default function PlatformSalesRepsPage() {
                 {r.is_active ? 'Active' : 'Inactive'}
               </span>
             )},
-            { key: 'actions', header: '', render: (r: PlatformSalesRep) => (
+             { key: 'actions', header: '', render: (r: PlatformSalesRep) => (
               <div className="flex items-center gap-2">
                 <button onClick={() => { setEditing(r); setShowFormModal(true); }} className="text-sm font-medium text-blue-600 hover:text-blue-800">
                   Edit
                 </button>
                 <button onClick={() => setPayoutRep(r)} className="text-sm font-medium text-green-600 hover:text-green-800">
                   Payouts
+                </button>
+                <button onClick={() => handleDelete(r)} disabled={deleteMutation.isPending} className="text-sm font-medium text-red-600 hover:text-red-800" title="Delete sales rep">
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             )},

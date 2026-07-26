@@ -53,7 +53,7 @@ export const PAYMENTS = {
   EMAIL: (id: number) => `/payments/${id}/email`,
 };
 export const STOCK_MOVEMENTS = '/stock-movements';
-export const SUBSCRIPTIONS = { BASE: '/subscriptions', SUBSCRIBE: '/subscriptions/subscribe', UPGRADE: (id: number) => `/subscriptions/${id}/upgrade`, DOWNGRADE: (id: number) => `/subscriptions/${id}/downgrade`, CHANGES: (id: number) => `/subscriptions/${id}/changes`, CANCEL: '/subscriptions/cancel' };
+export const SUBSCRIPTIONS = { BASE: '/subscriptions', SUBSCRIBE: '/subscriptions/subscribe', UPGRADE: (id: number) => `/subscriptions/${id}/upgrade`, DOWNGRADE: (id: number) => `/subscriptions/${id}/downgrade`, CHANGES: (id: number) => `/subscriptions/${id}/changes`, CANCEL: (id: number) => `/subscriptions/${id}/cancel`, REACTIVATE: (id: number) => `/subscriptions/${id}/reactivate` };
 export const BILLING = {
   PAYMENTS: '/billing/payments',
   PAYMENT: (id: number) => `/billing/payments/${id}`,

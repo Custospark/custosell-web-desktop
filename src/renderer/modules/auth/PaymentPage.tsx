@@ -36,7 +36,7 @@ export default function PaymentPage() {
     if (subscription.onboarding_fee_paid) {
       navigate(getDefaultRoute(user), { replace: true });
     }
-  }, []);
+  }, [user, subscription, navigate]);
 
   useEffect(() => {
     if (paymentQuery.data?.data?.status === 'completed') {

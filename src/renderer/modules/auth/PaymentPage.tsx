@@ -9,9 +9,10 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight } from 'lucide-react';
+import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet } from 'lucide-react';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export default function PaymentPage() {
   const [initiated, setInitiated] = useState(false);
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
+  const { data: earnings } = useReferralEarnings();
+  const availableCredit = earnings?.available_credit ?? 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const plan = plans?.find((p) => p.id === subscription?.plan_id);
 
@@ -114,6 +117,15 @@ export default function PaymentPage() {
                 </span>
               </div>
             ) : null}
+            {availableCredit > 0 && (
+              <div className="flex items-center justify-between border-t border-blue-100 pt-3">
+                <div className="flex items-center gap-1.5">
+                  <Wallet className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-green-700">Promo credit</span>
+                </div>
+                <span className="text-sm font-bold text-green-700">-{formatCurrency(availableCredit, 'USD')}</span>
+              </div>
+            )}
           </div>
         )}
 

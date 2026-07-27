@@ -10,7 +10,7 @@ import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes'
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins, Tag } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -267,6 +267,15 @@ export default function RegisterPage() {
                 )}
               </div>
             </div>
+
+            {referralCode && (
+              <div className="flex items-center gap-2 rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-2.5">
+                <Tag className="w-4 h-4 text-indigo-600 shrink-0" />
+                <p className="text-xs font-medium text-indigo-700">
+                  Promo code <span className="font-mono font-bold">{referralCode}</span> applied
+                </p>
+              </div>
+            )}
 
             <label className="flex items-center justify-center gap-2 cursor-pointer">
               <input

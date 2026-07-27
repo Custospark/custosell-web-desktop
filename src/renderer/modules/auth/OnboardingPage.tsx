@@ -14,8 +14,9 @@ import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home, ArrowRight } from 'lucide-react';
+import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home, ArrowRight, Wallet } from 'lucide-react';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
+import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -31,6 +32,8 @@ export default function OnboardingPage() {
   const [popupBlocked, setPopupBlocked] = useState(false);
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
+  const { data: earnings } = useReferralEarnings();
+  const availableCredit = earnings?.available_credit ?? 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
@@ -331,6 +334,16 @@ export default function OnboardingPage() {
               </p>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mt-0.5">One-time setup fee</p>
             </div>
+
+            {availableCredit > 0 && (
+              <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-green-700 font-medium">Promo credit available</span>
+                </div>
+                <span className="text-sm font-bold text-green-700">{formatCurrency(availableCredit, 'USD')}</span>
+              </div>
+            )}
 
             {selectedPlan.trial_days ? (
               <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-center">

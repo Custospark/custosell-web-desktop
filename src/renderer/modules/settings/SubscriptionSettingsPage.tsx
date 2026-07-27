@@ -12,9 +12,10 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import PlansTab from './PlansTab';
 import {
   CreditCard, CheckCircle, XCircle, Clock,
-  Building2, ArrowUp, ArrowDown, History,
+  Building2, ArrowUp, ArrowDown, History, Wallet,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
+import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 
 type SubscriptionTab = 'plans' | 'payments' | 'history';
 
@@ -51,6 +52,8 @@ export default function SubscriptionSettingsPage() {
 
   const subId = subscription?.id ?? null;
   const { data: changes, isLoading: changesLoading } = useSubscriptionChanges(subId ? Number(subId) : null);
+  const { data: earnings } = useReferralEarnings();
+  const availableCredit = earnings?.available_credit ?? 0;
 
   const paymentsPaginated = usePagination(payments ?? [], 10);
   const changesPaginated = usePagination(changes ?? [], 10);
@@ -78,6 +81,16 @@ export default function SubscriptionSettingsPage() {
 
   return (
     <div className="space-y-6">
+      {availableCredit > 0 && (
+        <div className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-green-600" />
+            <span className="text-sm font-medium text-green-700">Available credit from promo codes</span>
+          </div>
+          <span className="text-sm font-bold text-green-700">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(availableCredit)}</span>
+        </div>
+      )}
+
       <nav className="flex gap-1 border-b border-gray-200">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button

@@ -55,6 +55,7 @@ function useSubscriptionAccess() {
       return data.has_access;
     },
     staleTime: 30_000,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: false,
     enabled: isOnline !== false && (!!subscription || user?.business_id != null),

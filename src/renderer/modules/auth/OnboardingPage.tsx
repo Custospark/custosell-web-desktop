@@ -4,7 +4,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { PlanCards } from '../../shared/components/plans/PlanCards';
 import { useProfile } from '../../shared/api/account/AccountQueries';
-import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
+import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { BILLING, SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
@@ -88,7 +88,7 @@ export default function OnboardingPage() {
       const metadata = { action: 'subscribe', plan_id: selectedPlanId };
 
       initiateMutation.mutate(
-        { amount: Number(feeUsd), currency: 'USD', phone: userPhone, metadata },
+        { amount: Number(feeUsd), currency: getPaymentCurrency(), phone: userPhone, metadata },
         {
           onSuccess: (result) => {
             setPaymentId(result.payment_id);

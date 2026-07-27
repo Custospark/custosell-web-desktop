@@ -33,6 +33,7 @@ export interface BusinessRegisterRequest {
   plan_id: number;
   billing_cycle?: 'monthly' | 'yearly';
   referral_code?: string;
+  currency?: string;
 }
 
 export interface ForgotPasswordRequest {

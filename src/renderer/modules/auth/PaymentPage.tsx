@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { useProfile } from '../../shared/api/account/AccountQueries';
-import { useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
+import { useInitiateOnboardingPayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -56,7 +56,7 @@ export default function PaymentPage() {
     if (!fee) return;
 
     initiateMutation.mutate(
-      { amount: Number(fee), currency, phone: userPhone },
+      { amount: Number(fee), currency: getPaymentCurrency(), phone: userPhone },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);

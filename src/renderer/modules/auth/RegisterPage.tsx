@@ -8,7 +8,8 @@ import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
-import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { CURRENCIES } from '../../shared/utils/currencies';
+import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -37,6 +38,10 @@ export default function RegisterPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [currency, setCurrency] = useState('UGX');
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState('');
+  const currencyRef = useRef<HTMLDivElement>(null);
 
   const filtered = countryCodes.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) || c.dial_code.includes(search) || c.code.toLowerCase().includes(search)
@@ -46,6 +51,9 @@ export default function RegisterPage() {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) {
+        setCurrencyOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -78,6 +86,7 @@ export default function RegisterPage() {
       plan_id: planId,
       billing_cycle: billingCycle,
       referral_code: referralCode,
+      currency,
     });
   };
 
@@ -157,6 +166,57 @@ export default function RegisterPage() {
           {form.phone && (
             <p className="text-xs text-gray-400 mt-1">Full number: {countryCode.dial_code} {form.phone}</p>
           )}
+        </div>
+
+        <div ref={currencyRef}>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
+          <div className="relative">
+            <Coins className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <button
+              type="button"
+              onClick={() => setCurrencyOpen(!currencyOpen)}
+              className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white py-3.5 pl-11 pr-3 text-left text-sm transition-colors hover:border-gray-400 cursor-pointer"
+            >
+              <span className={currency ? 'text-gray-900' : 'text-gray-400'}>
+                {currency ? `${currency} ${CURRENCIES.find((c) => c.code === currency)?.symbol ?? ''}` : 'Select currency'}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+            </button>
+            {currencyOpen && (
+              <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="sticky top-0 border-b border-gray-100 bg-white p-2">
+                  <input
+                    type="text"
+                    placeholder="Search currency..."
+                    value={currencySearch}
+                    onChange={(e) => setCurrencySearch(e.target.value)}
+                    className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                </div>
+                {CURRENCIES.filter(
+                  (c) =>
+                    c.code.toLowerCase().includes(currencySearch.toLowerCase())
+                    || c.name.toLowerCase().includes(currencySearch.toLowerCase()),
+                ).map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => {
+                      setCurrency(c.code);
+                      setCurrencyOpen(false);
+                      setCurrencySearch('');
+                    }}
+                    className={`flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-blue-50 ${currency === c.code ? 'bg-blue-50 font-medium' : ''}`}
+                  >
+                    <span className="text-gray-800">{c.code}</span>
+                    <span className="text-gray-400">{c.symbol}</span>
+                    <span className="ml-auto truncate text-gray-500">{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="relative">

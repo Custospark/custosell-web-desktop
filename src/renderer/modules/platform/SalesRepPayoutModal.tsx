@@ -19,6 +19,7 @@ interface Attachment {
   original_name: string;
   mime_type: string;
   size: number;
+  file_url?: string | null;
 }
 
 interface Payout {
@@ -271,10 +272,16 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
                     {p.attachments && p.attachments.length > 0 && (
                       <div className="flex gap-1.5 mt-1.5">
                         {p.attachments.map((a, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 rounded bg-gray-200/60 px-1.5 py-0.5 text-[10px] text-gray-500">
+                          <a
+                            key={i}
+                            href={a.file_url ?? '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded bg-gray-200/60 px-1.5 py-0.5 text-[10px] text-gray-500 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                          >
                             {a.mime_type?.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                             {a.original_name}
-                          </span>
+                          </a>
                         ))}
                       </div>
                     )}

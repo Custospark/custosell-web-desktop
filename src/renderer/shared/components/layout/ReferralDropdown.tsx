@@ -254,20 +254,24 @@ export default function ReferralDropdown() {
                 </div>
               )}
 
-              <div className="p-2">
-                {hasPipelineAccess ? (
+              <div className="p-2 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => handleNavigate(ROUTES.ACCOUNT.REFERRALS)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer text-indigo-600 font-semibold"
+                >
+                  <span>Referral Dashboard</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+                {hasPipelineAccess && (
                   <button
                     type="button"
                     onClick={() => handleNavigate(ROUTES.PIPELINE.REFERRALS)}
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer text-indigo-600 font-semibold"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer text-gray-600 font-medium"
                   >
-                    <span>View full details</span>
+                    <span>Pipeline Referrals</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
-                ) : (
-                  <p className="px-3 py-2 text-xs text-center text-gray-400">
-                    Upgrade to a plan with Pipeline to view full referral details
-                  </p>
                 )}
               </div>
             </>

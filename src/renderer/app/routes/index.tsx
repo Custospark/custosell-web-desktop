@@ -136,6 +136,7 @@ const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordP
 const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
 const ReferralEntryPage = lazy(() => import('../../modules/referral/pages/ReferralEntryPage'));
 const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/PipelineReferralsPage'));
+const AccountReferralsPage = lazy(() => import('../../modules/account/AccountReferralsPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -246,6 +247,7 @@ export function AppRoutes() {
                 <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
                 <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
                 <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+                <Route path="referrals" element={<SuspenseWrapper><AccountReferralsPage /></SuspenseWrapper>} />
               </Route>
             </Route>
             <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />

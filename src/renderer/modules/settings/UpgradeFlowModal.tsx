@@ -290,7 +290,7 @@ export default function UpgradeFlowModal({
 
           <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm"
             loading={initiateMutation.isPending}>
-            Pay {formatUSD(prorationDueUsd || prorationDue)}
+            Pay {formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - creditAfterProration))}
           </Button>
 
           {initiateMutation.isError && (
@@ -356,7 +356,7 @@ export default function UpgradeFlowModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
             <p className="text-sm text-gray-500 mt-1">
-              Complete the payment of {formatUSD(prorationDueUsd || prorationDue)} via Mobile Money.
+              Complete the payment of {formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - creditAfterProration))} via Mobile Money.
             </p>
             <p className="text-xs text-gray-400 mt-2">
               An STK push will be sent to <span className="font-semibold">{userPhone}</span>

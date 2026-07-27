@@ -9,7 +9,7 @@ import { Modal } from '../../shared/components/modals/Modal';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import {
   DollarSign, History, Wallet, Smartphone, Landmark,
-  Paperclip, X, FileText, Image
+  CalendarDays, Paperclip, X, FileText, Image
 } from 'lucide-react';
 import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
 import type { PlatformSalesRep } from './PlatformSalesRepFormModal';
@@ -40,6 +40,8 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
+  const [isImmediate, setIsImmediate] = useState(true);
+  const [scheduledAt, setScheduledAt] = useState('');
   const [payoutFiles, setPayoutFiles] = useState<File[]>([]);
 
   const { data: payouts = [] } = useQuery<Payout[]>({
@@ -58,18 +60,23 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
   const recordMutation = useMutation({
     mutationFn: async () => {
       if (!rep) return;
+      const scheduled = !isImmediate && scheduledAt ? scheduledAt : null;
       const payload: Record<string, unknown> = {
         amount,
         payment_method: paymentMethod || null,
         notes: notes || null,
-        paid_at: new Date().toISOString(),
+        ...(scheduled ? { scheduled_at: scheduled } : { paid_at: new Date().toISOString() }),
       };
       if (payoutFiles.length > 0) {
         const fd = new FormData();
         fd.append('amount', amount);
         fd.append('payment_method', paymentMethod || '');
         fd.append('notes', notes || '');
-        fd.append('paid_at', new Date().toISOString());
+        if (scheduled) {
+          fd.append('scheduled_at', scheduled);
+        } else {
+          fd.append('paid_at', new Date().toISOString());
+        }
         payoutFiles.forEach((f) => fd.append('attachments[]', f));
         await axiosInstance.post(SALES_REPS.PAYOUTS(rep.id), fd, {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -85,6 +92,8 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
       setAmount('');
       setPaymentMethod('');
       setNotes('');
+      setIsImmediate(true);
+      setScheduledAt('');
       setPayoutFiles([]);
     },
     onError: (err: Error) => {
@@ -147,6 +156,24 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
               <option value="other">Other</option>
             </select>
           </PipelineIconField>
+          <PipelineIconField label="When" icon={CalendarDays}>
+            <div className="flex gap-3 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" checked={isImmediate} onChange={() => setIsImmediate(true)} className="accent-emerald-600" />
+                <span className="text-sm text-gray-700">Now</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" checked={!isImmediate} onChange={() => setIsImmediate(false)} className="accent-emerald-600" />
+                <span className="text-sm text-gray-700">Schedule</span>
+              </label>
+            </div>
+            {!isImmediate && (
+              <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-200 bg-white py-2.5 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            )}
+          </PipelineIconField>
+
           <PipelineIconField label="Notes" icon={History}>
             <textarea
               value={notes}
@@ -187,8 +214,8 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
             <p className="mt-1 text-xs text-gray-400">Images or PDFs, max 5MB each (up to 5 files)</p>
           </PipelineIconField>
           <div className="flex justify-end pt-1">
-            <Button onClick={() => recordMutation.mutate()} disabled={recordMutation.isPending || !amount || Number(amount) <= 0}>
-              {recordMutation.isPending ? 'Recording...' : 'Record Payout'}
+            <Button onClick={() => recordMutation.mutate()} disabled={recordMutation.isPending || !amount || Number(amount) <= 0 || (!isImmediate && !scheduledAt)}>
+              {recordMutation.isPending ? 'Recording...' : isImmediate ? 'Record Payout' : 'Schedule Payout'}
             </Button>
           </div>
         </PipelineFormSection>

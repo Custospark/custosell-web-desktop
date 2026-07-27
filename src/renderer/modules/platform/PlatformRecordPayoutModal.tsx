@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRecordPayout } from './api/PlatformPayoutQueries';
 import { Button } from '../../shared/components/buttons/Button';
+import { Modal } from '../../shared/components/modals/Modal';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
-  X, DollarSign, Mail, Phone, Check,
+  Wallet, DollarSign, Mail, Phone, Check, Smartphone, Landmark,
+  Paperclip, X, FileText, Image, CalendarDays,
 } from 'lucide-react';
+import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
 interface Props {
@@ -12,8 +15,16 @@ interface Props {
   onClose: () => void;
 }
 
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  mobile_money: 'Mobile Money',
+  bank: 'Bank Transfer',
+  cash: 'Cash',
+  other: 'Other',
+};
+
 export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
   const recordMutation = useRecordPayout();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [amount, setAmount] = useState(String(entity.pending));
   const useConfigured = !!(entity.payment_method);
   const [overrideMethod, setOverrideMethod] = useState('');
@@ -21,7 +32,7 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
   const [notes, setNotes] = useState('');
   const [isImmediate, setIsImmediate] = useState(true);
   const [scheduledAt, setScheduledAt] = useState('');
-  const [files, setFiles] = useState<FileList | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
 
   const handleSubmit = () => {
     const fd = new FormData();
@@ -31,146 +42,151 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
     fd.append('payment_method', showOverride && overrideMethod.trim() ? overrideMethod.trim() : (entity.payment_method ?? ''));
     if (notes) fd.append('notes', notes);
     if (!isImmediate && scheduledAt) fd.append('scheduled_at', scheduledAt);
-    if (files) {
-      for (let i = 0; i < files.length; i++) {
-        fd.append('attachments[]', files[i]);
-      }
-    }
+    files.forEach((f) => fd.append('attachments[]', f));
     recordMutation.mutate(fd, { onSuccess: () => onClose() });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Record Payout</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
-            <X className="w-5 h-5" />
-          </button>
+    <Modal isOpen onClose={onClose} title="" size="lg">
+      <div className="space-y-5">
+        <PipelineModalHero
+          icon={DollarSign}
+          title={`Record Payout — ${entity.name}`}
+          description={
+            `${entity.type === 'sales_rep' ? 'Sales Rep' : 'User'} · ${entity.email ?? ''}${entity.code ? ` · ${entity.code}` : ''}`
+          }
+          tone="emerald"
+        />
+
+        <div className="grid grid-cols-2 gap-3 px-1">
+          <div className="rounded-lg border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-500">Pending</p>
+            <p className="text-lg font-semibold text-amber-700">{formatUSD(entity.pending)}</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-500">Paid to Date</p>
+            <p className="text-lg font-semibold text-green-700">{formatUSD(entity.total_paid)}</p>
+          </div>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="rounded-xl bg-gray-50 p-4 space-y-2">
-            <p className="text-sm font-semibold text-gray-900">{entity.name}</p>
-            <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-full ${entity.type === 'sales_rep' ? 'text-purple-700 bg-purple-100' : 'text-blue-700 bg-blue-100'}`}>
-              {entity.type === 'sales_rep' ? 'Sales Rep' : 'User'}
-            </span>
-            <div className="pt-2 space-y-1.5 text-sm text-gray-600">
-              {entity.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <span>{entity.email}</span>
-                </div>
+        {useConfigured && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-2 mx-1">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 mb-2">
+              <Check className="w-3.5 h-3.5" />
+              Configured Payment Method
+            </div>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p><span className="text-gray-400">Method:</span> {PAYMENT_METHOD_LABELS[entity.payment_method ?? ''] ?? entity.payment_method}</p>
+              {entity.mobile_money_provider && entity.mobile_money_number && (
+                <p><span className="text-gray-400">Mobile:</span> {entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</p>
               )}
-              {entity.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <span>{entity.phone}</span>
-                </div>
+              {(entity.bank_name && entity.bank_account_name) && (
+                <p><span className="text-gray-400">Bank:</span> {entity.bank_name} — {entity.bank_account_name}</p>
               )}
             </div>
-            <div className="pt-2 border-t border-gray-200 mt-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Pending:</span>
-                <strong className="text-amber-700">{formatUSD(entity.pending)}</strong>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Paid to date:</span>
-                <span className="text-gray-700">{formatUSD(entity.total_paid)}</span>
-              </div>
-            </div>
+            {!showOverride && (
+              <button type="button" onClick={() => setShowOverride(true)}
+                className="text-xs text-gray-500 underline hover:text-gray-700 mt-1">
+                Override payment method
+              </button>
+            )}
           </div>
+        )}
 
-          {useConfigured && (
-            <div className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 mb-2">
-                <Check className="w-3.5 h-3.5" />
-                Configured Payment Method
-              </div>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p><span className="text-gray-400">Method:</span> {entity.payment_method}</p>
-                {entity.mobile_money_provider && entity.mobile_money_number && (
-                  <p><span className="text-gray-400">Mobile:</span> {entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</p>
-                )}
-                {(entity.bank_name && entity.bank_account_name) && (
-                  <p><span className="text-gray-400">Bank:</span> {entity.bank_name} — {entity.bank_account_name}</p>
-                )}
-              </div>
-              {!showOverride && (
-                <button type="button" onClick={() => setShowOverride(true)}
-                  className="text-xs text-gray-500 underline hover:text-gray-700 mt-1">
-                  Override payment method
-                </button>
-              )}
-            </div>
-          )}
+        <PipelineFormSection title="Payout Details" icon={Wallet}>
+          <PipelineIconField label="Amount (USD)" icon={DollarSign} required>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              max={entity.pending}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              placeholder="0.00"
+            />
+          </PipelineIconField>
 
           {(!useConfigured || showOverride) && (
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Payment Method {useConfigured ? '(override)' : ''}
-              </label>
-              <input type="text" value={overrideMethod} onChange={(e) => setOverrideMethod(e.target.value)}
-                placeholder="e.g. Mobile Money, Bank Transfer"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            <PipelineIconField label={`Payment Method${useConfigured ? ' (override)' : ''}`} icon={entity.payment_method === 'bank' ? Landmark : Smartphone}>
+              <input
+                type="text"
+                value={overrideMethod}
+                onChange={(e) => setOverrideMethod(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder={useConfigured ? 'Override payment method…' : 'e.g. Mobile Money, Bank Transfer'}
               />
-            </div>
+            </PipelineIconField>
           )}
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Amount (USD)</label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="number" step="0.01" min="0.01" max={entity.pending} value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">When</label>
-            <div className="flex gap-3">
+          <PipelineIconField label="When" icon={CalendarDays}>
+            <div className="flex gap-3 pt-1">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={isImmediate} onChange={() => setIsImmediate(true)} className="accent-indigo-600" />
+                <input type="radio" checked={isImmediate} onChange={() => setIsImmediate(true)} className="accent-emerald-600" />
                 <span className="text-sm text-gray-700">Now</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={!isImmediate} onChange={() => setIsImmediate(false)} className="accent-indigo-600" />
+                <input type="radio" checked={!isImmediate} onChange={() => setIsImmediate(false)} className="accent-emerald-600" />
                 <span className="text-sm text-gray-700">Schedule</span>
               </label>
             </div>
             {!isImmediate && (
               <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="mt-2 w-full rounded-lg border border-gray-200 bg-white py-2.5 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             )}
-          </div>
+          </PipelineIconField>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+          <PipelineIconField label="Notes" icon={Mail}>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              placeholder="Optional notes about this payout"
             />
-          </div>
+          </PipelineIconField>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Attachments (receipts, contracts)</label>
-            <input type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-              onChange={(e) => setFiles(e.target.files)}
-              className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+          <PipelineIconField label="Attachments" icon={Paperclip}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+              onChange={(e) => {
+                const incoming = Array.from(e.target.files ?? []);
+                setFiles((prev) => [...prev, ...incoming].slice(0, 5));
+              }}
+              className="hidden"
             />
-          </div>
-        </div>
+            <div className="flex flex-wrap gap-2">
+              {files.map((f, i) => (
+                <div key={i} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-700">
+                  {f.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                  <span className="max-w-32 truncate">{f.name}</span>
+                  <button type="button" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              {files.length < 5 && (
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600">
+                  + Add file
+                </button>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Images or PDFs, max 5MB each (up to 5 files)</p>
+          </PipelineIconField>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="button" onClick={handleSubmit} loading={recordMutation.isPending}
-            disabled={!amount || Number(amount) <= 0 || (!isImmediate && !scheduledAt)}>
-            {isImmediate ? 'Record Payment' : 'Schedule Payment'}
-          </Button>
-        </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button onClick={handleSubmit} loading={recordMutation.isPending}
+              disabled={!amount || Number(amount) <= 0 || (!isImmediate && !scheduledAt)}>
+              {isImmediate ? 'Record Payment' : 'Schedule Payment'}
+            </Button>
+          </div>
+        </PipelineFormSection>
       </div>
-    </div>
+    </Modal>
   );
 }

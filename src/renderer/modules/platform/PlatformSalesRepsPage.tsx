@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { SALES_REPS } from '../../shared/api/endpoints/endpoints';
 import { Table } from '../../shared/components/tables/Table';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { Button } from '../../shared/components/buttons/Button';
+import { Card } from '../../shared/components/cards/Card';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../app/contexts/useToast';
 import { formatUSD } from '../../shared/utils/formatCurrency';
@@ -59,6 +61,13 @@ export default function PlatformSalesRepsPage() {
     if (confirmed) deleteMutation.mutate(r.id);
   };
 
+  const totalOwed = reps.reduce((s, r) => s + (r.pending_commission ?? 0), 0);
+  const totalPaid = reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0);
+  const activeCount = reps.filter((r) => r.is_active).length;
+  const page = usePagination(filtered, 10);
+  const totalPaid = reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0);
+  const activeCount = reps.filter((r) => r.is_active).length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -77,57 +86,65 @@ export default function PlatformSalesRepsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-              <Users className="h-5 w-5 text-blue-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Reps</p>
-              <p className="text-xl font-semibold">{reps.length}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Total Reps</p>
+              <p className="text-2xl font-bold text-gray-900">{reps.length}</p>
+              <p className="text-xs text-gray-400">{activeCount} active</p>
             </div>
           </div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        </Card>
+        <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50">
+              <TrendingUp className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Commission Owed</p>
-              <p className="text-xl font-semibold">
-                {formatUSD(reps.reduce((s, r) => s + (r.pending_commission ?? 0), 0))}
-              </p>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Commission Owed</p>
+              <p className="text-2xl font-bold text-gray-900">{formatUSD(totalOwed)}</p>
+              <p className="text-xs text-gray-400">pending payouts</p>
             </div>
           </div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        </Card>
+        <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50">
-              <DollarSign className="h-5 w-5 text-amber-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50">
+              <DollarSign className="h-6 w-6 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Paid Out</p>
-              <p className="text-xl font-semibold">
-                {formatUSD(reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0))}
-              </p>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Paid Out</p>
+              <p className="text-2xl font-bold text-gray-900">{formatUSD(totalPaid)}</p>
+              <p className="text-xs text-gray-400">lifetime</p>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
+      <Card className="p-4">
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-blue-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+            <Search className="h-4 w-4 shrink-0 text-gray-400" />
+            <input
+              type="search"
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+            />
+            {filtered.length < reps.length && (
+              <span className="shrink-0 text-xs font-medium tabular-nums text-gray-500">
+                {filtered.length} / {reps.length}
+              </span>
+            )}
+          </div>
+        </div>
+      </Card>
 
-      <div className="rounded-xl border border-gray-200 bg-white">
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <Table
           columns={[
             { key: 'user', header: 'Name', render: (r: PlatformSalesRep) => (
@@ -162,7 +179,7 @@ export default function PlatformSalesRepsPage() {
                 {r.is_active ? 'Active' : 'Inactive'}
               </span>
             )},
-             { key: 'actions', header: '', render: (r: PlatformSalesRep) => (
+            { key: 'actions', header: 'Actions', render: (r: PlatformSalesRep) => (
               <div className="flex items-center gap-2">
                 <button onClick={() => { setEditing(r); setShowFormModal(true); }} className="text-sm font-medium text-blue-600 hover:text-blue-800">
                   Edit
@@ -176,9 +193,18 @@ export default function PlatformSalesRepsPage() {
               </div>
             )},
           ]}
-          data={filtered}
+          data={page.page}
           loading={isLoading}
         />
+        <div className="border-t border-gray-100 px-4 py-3">
+          <Pagination
+            currentPage={page.pageNum}
+            totalPages={page.totalPages}
+            onPageChange={page.setPage}
+            totalItems={filtered.length}
+            pageSize={page.pageSize}
+          />
+        </div>
       </div>
 
       <SalesRepFormModal

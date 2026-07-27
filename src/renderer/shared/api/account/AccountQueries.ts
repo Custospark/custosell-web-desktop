@@ -212,7 +212,7 @@ export function useRegisterBusiness() {
     onMutate: () => {
       dispatch(registerStart());
     },
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       dispatch(registerSuccess({
         user: result.user,
         token: result.token,

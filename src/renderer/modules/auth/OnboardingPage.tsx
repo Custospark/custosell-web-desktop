@@ -25,7 +25,6 @@ export default function OnboardingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [subscribing, setSubscribing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -36,7 +35,7 @@ export default function OnboardingPage() {
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
-  const { refetch: refetchProfile } = useProfile();
+  const { refetch: refetchProfile, isRefetching } = useProfile();
 
   const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
   const fee = selectedPlan ? onboardingFee(selectedPlan) : 0;
@@ -57,21 +56,13 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (paymentQuery.data?.data?.status === 'completed') {
-      refetchProfile().then(() => setRedirectCountdown(10));
+      refetchProfile();
     }
-  }, [paymentQuery.data?.status]);
+  }, [paymentQuery.data?.data?.status, refetchProfile]);
 
-  useEffect(() => {
-    if (redirectCountdown > 0) {
-      const timer = setTimeout(() => {
-        setRedirectCountdown((c) => c - 1);
-      }, 1000);
-      if (redirectCountdown === 1) {
-        navigate(getDefaultRoute(user));
-      }
-      return () => clearTimeout(timer);
-    }
-  }, [redirectCountdown]);
+  const handleContinue = () => {
+    navigate(getDefaultRoute(user));
+  };
 
   const handleSelectPlan = (plan: { id: number }) => {
     setSelectedPlanId(plan.id);
@@ -151,28 +142,34 @@ export default function OnboardingPage() {
         </header>
         <main className="flex-1 flex items-center justify-center px-5 py-8">
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-5">
-            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-gray-900">Payment Successful!</p>
-              <p className="text-sm text-gray-500 mt-1">
-                {selectedPlan?.trial_days
-                  ? `Your ${selectedPlan.trial_days}-day trial period has started.`
-                  : 'Your plan is now active.'}
-              </p>
-            </div>
-            {redirectCountdown > 0 && (
-              <p className="text-xs text-gray-400">Redirecting to dashboard in {redirectCountdown}s...</p>
+            {isRefetching ? (
+              <>
+                <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+                <p className="text-sm font-medium text-gray-700">Updating your account...</p>
+              </>
+            ) : (
+              <>
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-gray-900">Payment Successful!</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedPlan?.trial_days
+                      ? `Your ${selectedPlan.trial_days}-day trial period has started.`
+                      : 'Your plan is now active.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Continue
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </>
             )}
-            <button
-              type="button"
-              onClick={() => navigate(getDefaultRoute(user))}
-              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Go to Dashboard
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
         </main>
       </div>

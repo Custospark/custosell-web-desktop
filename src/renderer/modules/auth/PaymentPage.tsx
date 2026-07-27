@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
+import { useProfile } from '../../shared/api/account/AccountQueries';
 import { useInitiateOnboardingPayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -10,7 +11,7 @@ import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
+import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight } from 'lucide-react';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -18,12 +19,12 @@ export default function PaymentPage() {
   const subscription = user?.business?.subscription;
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(0);
 
   const { currency, onboardingFee } = useDisplayPrices();
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const plan = plans?.find((p) => p.id === subscription?.plan_id);
 
+  const { refetch: refetchProfile, isRefetching } = useProfile();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
 
@@ -37,29 +38,19 @@ export default function PaymentPage() {
     }
   }, []);
 
-  const paymentStatus = paymentQuery.data?.status;
   useEffect(() => {
-    if (paymentStatus === 'completed') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRedirectCountdown(3);
+    if (paymentQuery.data?.data?.status === 'completed') {
+      refetchProfile();
     }
-  }, [paymentStatus]);
+  }, [paymentQuery.data?.data?.status, refetchProfile]);
 
-  useEffect(() => {
-    if (redirectCountdown > 0) {
-      const timer = setTimeout(() => {
-        setRedirectCountdown((c) => c - 1);
-      }, 1000);
-      if (redirectCountdown === 1) {
-        navigate(getDefaultRoute(user));
-      }
-      return () => clearTimeout(timer);
-    }
-  }, [redirectCountdown]);
+  const handleContinue = () => {
+    navigate(getDefaultRoute(user));
+  };
 
   const fee = plan ? onboardingFee(plan) : 0;
   const userPhone = user?.business?.phone || user?.phone || '';
-  const isPaymentDone = paymentQuery.data?.status === 'completed';
+  const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
 
   const handlePay = () => {
     if (!fee) return;
@@ -166,7 +157,7 @@ export default function PaymentPage() {
               <p className="text-center text-xs text-gray-400">Waiting for payment confirmation...</p>
             )}
 
-            {paymentQuery.data?.status === 'failed' && (
+            {paymentQuery.data?.data?.status === 'failed' && (
               <div className="space-y-3">
                 <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
                   <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -182,16 +173,24 @@ export default function PaymentPage() {
 
         {isPaymentDone && (
           <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center space-y-2">
-              <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
-              <p className="font-semibold text-green-800">Payment Successful!</p>
-              <p className="text-sm text-green-600">
-                Your plan is now active{plan?.trial_days ? `. Your ${plan.trial_days}-day trial period has started.` : '.'}
-              </p>
-              {redirectCountdown > 0 && (
-                <p className="text-xs text-green-500">Redirecting to dashboard in {redirectCountdown}s...</p>
-              )}
-            </div>
+            {isRefetching ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center space-y-2">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
+                <p className="text-sm font-medium text-blue-800">Updating your account...</p>
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center space-y-3">
+                <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
+                <p className="font-semibold text-green-800">Payment Successful!</p>
+                <p className="text-sm text-green-600">
+                  Your plan is now active{plan?.trial_days ? `. Your ${plan.trial_days}-day trial period has started.` : '.'}
+                </p>
+                <Button type="button" onClick={handleContinue} className="w-full gap-2">
+                  Continue
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

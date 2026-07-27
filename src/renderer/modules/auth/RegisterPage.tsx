@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -13,8 +13,10 @@ import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPl
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
   const { data: plans } = useActivePlans();
+  const referralCode = searchParams.get('ref') ?? undefined;
 
   const planId = state?.planId ?? plans?.[0]?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';
@@ -75,6 +77,7 @@ export default function RegisterPage() {
       privacy_consent: privacyConsent,
       plan_id: planId,
       billing_cycle: billingCycle,
+      referral_code: referralCode,
     });
   };
 

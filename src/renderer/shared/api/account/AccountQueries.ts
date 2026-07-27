@@ -235,7 +235,11 @@ export function useRegisterBusiness() {
           || result.user?.business?.subscription?.onboarding_fee_paid === false);
 
       if (needsOnboarding) {
-        navigate(ROUTES.REFERRAL);
+        if (variables.referral_code) {
+          navigate(ROUTES.ONBOARDING);
+        } else {
+          navigate(ROUTES.REFERRAL);
+        }
       } else {
         navigate(getDefaultRoute(result.user));
       }

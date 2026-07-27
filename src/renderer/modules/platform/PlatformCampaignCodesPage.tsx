@@ -48,7 +48,7 @@ export default function PlatformCampaignCodesPage() {
   }, [editing, createMutation, updateMutation, closeModal]);
 
   const handleToggleActive = useCallback((c: CampaignCode) => {
-    updateMutation.mutate({ id: c.id, data: { is_active: !c.is_active } });
+    updateMutation.mutate({ id: c.id, data: { is_active: !c.is_active, owner_type: c.owner_type, discount_type: c.discount_type } });
   }, [updateMutation]);
 
   const handleCopyLink = useCallback(async (code: string) => {

@@ -191,16 +191,17 @@ export default function PlatformSalesRepsPage() {
               </div>
             )},
           ]}
-          data={page.page}
+          data={page.data}
           loading={isLoading}
         />
         <div className="border-t border-gray-100 px-4 py-3">
           <Pagination
-            currentPage={page.pageNum}
+            currentPage={page.page}
             totalPages={page.totalPages}
-            onPageChange={page.setPage}
-            totalItems={filtered.length}
+            totalItems={page.totalItems}
             pageSize={page.pageSize}
+            onPageChange={page.setPage}
+            onPageSizeChange={page.setPageSize}
           />
         </div>
       </div>

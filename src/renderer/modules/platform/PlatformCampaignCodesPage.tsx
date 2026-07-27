@@ -171,6 +171,7 @@ export default function PlatformCampaignCodesPage() {
       </div>
 
       <PlatformCampaignCodeFormModal
+        key={editing?.id ?? 'create'}
         isOpen={modalOpen}
         onClose={closeModal}
         onSubmit={handleSubmit}

@@ -48,6 +48,7 @@ import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessage
 import PlatformManagePlansPage from '../../modules/platform/PlatformManagePlansPage';
 import PlatformManageSubscriptionsPage from '../../modules/platform/PlatformManageSubscriptionsPage';
 import PlatformSalesRepsPage from '../../modules/platform/PlatformSalesRepsPage';
+import PlatformPayoutsPage from '../../modules/platform/PlatformPayoutsPage';
 import PlatformCampaignCodesPage from '../../modules/platform/PlatformCampaignCodesPage';
 import AccountPage from '../../modules/account/AccountPage';
 import NotificationsPage from '../../modules/notifications/NotificationsPage';
@@ -330,6 +331,7 @@ export function AppRoutes() {
             <Route path={ROUTES.PLATFORM.ROLES} element={<SuspenseWrapper><PlatformRolesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.SENT_MESSAGES} element={<SuspenseWrapper><PlatformSentMessagesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.SALES_REPS} element={<SuspenseWrapper><PlatformSalesRepsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.PAYOUTS} element={<SuspenseWrapper><PlatformPayoutsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.CAMPAIGN_CODES} element={<SuspenseWrapper><PlatformCampaignCodesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.INDEX} element={<Navigate to={ROUTES.PLATFORM.GUIDE.TUTORIALS} replace />} />
             <Route path={ROUTES.PLATFORM.GUIDE.TUTORIALS} element={<SuspenseWrapper><PlatformGuideTutorialsPage /></SuspenseWrapper>} />

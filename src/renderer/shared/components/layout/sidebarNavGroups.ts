@@ -9,6 +9,7 @@ import {
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
   Store, Truck, PackageCheck, Compass, ShoppingBag, Download,
   CreditCard,
+  DollarSign,
   Gift,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -63,6 +64,7 @@ export const platformSubRoutes = [
   ROUTES.PLATFORM.SENT_MESSAGES,
   ROUTES.PLATFORM.GUIDE.TUTORIALS,
   ROUTES.PLATFORM.SALES_REPS,
+  ROUTES.PLATFORM.PAYOUTS,
   ROUTES.PLATFORM.CAMPAIGN_CODES,
   ROUTES.PLATFORM.GUIDE.FAQS,
   ROUTES.PLATFORM.GUIDE.FEEDBACK,
@@ -80,6 +82,7 @@ export const platformNavGroup: SidebarNavGroup = {
     { to: ROUTES.PLATFORM.ROLES, label: 'Platform Roles', icon: Shield },
     { to: ROUTES.PLATFORM.SENT_MESSAGES, label: 'Sent messages', icon: BellRing },
     { to: ROUTES.PLATFORM.SALES_REPS, label: 'Sales Reps', icon: Percent },
+    { to: ROUTES.PLATFORM.PAYOUTS, label: 'Payouts', icon: DollarSign },
     { to: ROUTES.PLATFORM.CAMPAIGN_CODES, label: 'Campaign Codes', icon: Gift },
   ],
 };

@@ -26,6 +26,13 @@ export const PLATFORM = {
   CAMPAIGN_CODES: '/platform/referral-codes',
   CAMPAIGN_CODE: (id: number) => `/platform/referral-codes/${id}`,
   CAMPAIGN_CODE_USAGE: (id: number) => `/platform/referral-codes/${id}/usage`,
+  PAYOUTS: {
+    PAYABLES: '/platform/payouts/payables',
+    BASE: '/platform/payouts',
+    HISTORY: '/platform/payouts/history',
+    SCHEDULE: '/platform/payouts/schedule',
+    CANCEL: (id: number) => `/platform/payouts/${id}/cancel`,
+  },
   GUIDE: {
     TUTORIALS: '/platform/guide/tutorials',
     TUTORIAL: (id: number) => `/platform/guide/tutorials/${id}`,

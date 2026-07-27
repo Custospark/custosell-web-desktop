@@ -72,7 +72,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
   onClose: (refetch?: boolean) => void;
 }) {
   const { showToast } = useToast();
-  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [form, setForm] = useState<SalesRepForm>(() => editing ? {
     email: editing.user?.email ?? '',

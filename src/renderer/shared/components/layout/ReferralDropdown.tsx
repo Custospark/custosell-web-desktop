@@ -325,7 +325,7 @@ export default function ReferralDropdown() {
                 <Download className="w-4 h-4" />
                 Download
               </button>
-              {navigator.share && (
+              {'share' in navigator && (
                 <button type="button" onClick={handleQrShare} disabled={!qrDataUrl}
                   className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors cursor-pointer">
                   <Share2 className="w-4 h-4" />

@@ -257,7 +257,7 @@ export default function UpgradeFlowModal({
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Plan price</span>
               <span className="font-semibold text-gray-900">
-                {formatCurrency(quote?.new_price ?? 0, currency)}/{billingCycle === 'yearly' ? 'yr' : 'mo'}
+                {formatCurrency(quote?.new_plan.price_monthly ?? 0, currency)}/{billingCycle === 'yearly' ? 'yr' : 'mo'}
               </span>
             </div>
             {creditAfterProration > 0 && (

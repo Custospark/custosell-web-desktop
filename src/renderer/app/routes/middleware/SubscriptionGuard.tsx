@@ -102,7 +102,7 @@ export function SubscriptionGuard() {
     return <Outlet />;
   }
 
-  const info = (status && SUB_STATUS_INFO[status]) ?? {
+  const info = (status ? SUB_STATUS_INFO[status] : undefined) ?? {
     title: 'No active subscription',
     description: 'You do not have an active subscription. Choose a plan to get started.',
   };

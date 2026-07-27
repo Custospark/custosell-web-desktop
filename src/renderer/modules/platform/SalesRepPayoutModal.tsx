@@ -24,7 +24,6 @@ interface Attachment {
 
 interface Payout {
   id: number;
-  sales_rep_id: number;
   amount: string;
   payment_method: string | null;
   notes: string | null;
@@ -53,6 +52,8 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
       return data.data ?? [];
     },
     enabled: !!rep,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const totalEarned = rep?.total_commission ?? 0;
@@ -246,7 +247,7 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
             <p className="mt-1 text-xs text-gray-400">Images or PDFs, max 5MB each (up to 5 files)</p>
           </PipelineIconField>
           <div className="flex justify-end pt-1">
-            <Button onClick={() => recordMutation.mutate()} disabled={recordMutation.isPending || !amount || Number(amount) <= 0 || (!isImmediate && !scheduledAt)}>
+            <Button onClick={() => recordMutation.mutate()} disabled={recordMutation.isPending || !amount || Number(amount) <= 0 || Number(amount) > pending || (!isImmediate && !scheduledAt)}>
               {recordMutation.isPending ? 'Recording...' : isImmediate ? 'Record Payout' : 'Schedule Payout'}
             </Button>
           </div>

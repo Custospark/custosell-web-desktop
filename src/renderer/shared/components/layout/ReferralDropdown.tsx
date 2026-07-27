@@ -8,8 +8,8 @@ import { formatUSD } from '../../utils/formatCurrency';
 import { canAccessModule } from '../../utils/moduleAccess';
 import QRCodeLib from 'qrcode';
 import {
-  Gift, Copy, Check, ExternalLink, Users, UserCheck, DollarSign,
-  TrendingUp, Clock, Sparkles, ChevronDown, QrCode, Download, X, Share2,
+  Gift, Copy, Check, ExternalLink, Users, DollarSign,
+  TrendingUp, Sparkles, ChevronDown, QrCode, Download, X, Share2,
 } from 'lucide-react';
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
@@ -184,35 +184,29 @@ export default function ReferralDropdown() {
               </div>
 
               <div className="px-4 py-3 border-b border-gray-100">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                   <div className="text-center">
                     <Users className="w-4 h-4 mx-auto text-gray-400 mb-1" />
                     <p className="text-lg font-bold text-gray-900">{earnings?.total_referrals ?? 0}</p>
                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Referrals</p>
                   </div>
                   <div className="text-center">
-                    <UserCheck className="w-4 h-4 mx-auto text-gray-400 mb-1" />
-                    <p className="text-lg font-bold text-gray-900">{earnings?.active_referrals ?? 0}</p>
-                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Active</p>
-                  </div>
-                  <div className="text-center">
                     <DollarSign className="w-4 h-4 mx-auto text-gray-400 mb-1" />
                     <p className="text-lg font-bold text-gray-900">{formatUSD(totalEarned)}</p>
                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Earned</p>
                   </div>
-                </div>
-              </div>
-
-              {(earnings?.pending_rewards ?? 0) > 0 && (
-                <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span className="text-amber-800 font-medium">
-                      {formatUSD(earnings!.pending_rewards)} pending rewards
-                    </span>
+                  <div className="text-center">
+                    <DollarSign className="w-4 h-4 mx-auto text-green-600 mb-1" />
+                    <p className="text-lg font-bold text-green-700">{formatUSD(earnings?.rewards_paid ?? 0)}</p>
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Paid</p>
+                  </div>
+                  <div className="text-center">
+                    <DollarSign className="w-4 h-4 mx-auto text-gray-400 mb-1" />
+                    <p className="text-lg font-bold text-gray-900">{formatUSD(totalEarned - (earnings?.rewards_paid ?? 0))}</p>
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Bal.</p>
                   </div>
                 </div>
-              )}
+              </div>
 
               {isSalesRep && (
                 <div className="px-4 py-2.5 border-b border-gray-100">

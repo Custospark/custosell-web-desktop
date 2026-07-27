@@ -31,6 +31,8 @@ export default function PlatformSalesRepsPage() {
       const { data } = await axiosInstance.get(SALES_REPS.EARNINGS_ALL);
       return data.data ?? [];
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const filtered = reps.filter((r) =>
@@ -104,7 +106,7 @@ export default function PlatformSalesRepsPage() {
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Commission Owed</p>
               <p className="text-2xl font-bold text-gray-900">{formatUSD(totalOwed)}</p>
-              <p className="text-xs text-gray-400">pending payouts</p>
+              <p className="text-xs text-gray-400">due payouts</p>
             </div>
           </div>
         </Card>
@@ -162,7 +164,7 @@ export default function PlatformSalesRepsPage() {
             { key: 'referrals', header: 'Referrals', align: 'center', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-gray-900">{r.total_referrals ?? 0}</span>
             )},
-            { key: 'pending', header: 'Pending', align: 'right', render: (r: PlatformSalesRep) => (
+            { key: 'pending', header: 'Due', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm font-medium text-amber-700">
                 {(r.pending_commission ?? 0) > 0 ? formatUSD(r.pending_commission ?? 0) : '—'}
               </span>

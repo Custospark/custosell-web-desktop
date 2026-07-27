@@ -93,7 +93,7 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
             </div>
             <div className="rounded-lg bg-amber-50 p-3 text-center">
               <p className="text-lg font-bold text-amber-700">{formatUSD(entity.pending)}</p>
-              <p className="text-[10px] text-amber-600">Pending</p>
+              <p className="text-[10px] text-amber-600">Due</p>
             </div>
           </div>
 

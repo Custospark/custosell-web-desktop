@@ -18,7 +18,8 @@ export function usePayables() {
       const { data } = await axiosInstance.get<{ data: PayableEntity[] }>(PLATFORM.PAYOUTS.PAYABLES);
       return data.data ?? [];
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 
@@ -32,6 +33,8 @@ export function usePayoutHistory(type: string, id: number) {
       return data.data ?? [];
     },
     enabled: !!type && !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 

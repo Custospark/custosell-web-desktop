@@ -1,6 +1,6 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
 import { formatUSD } from '../../../shared/utils/formatCurrency';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet, Percent, QrCode, Download } from 'lucide-react';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, DollarSign, Percent, QrCode, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QRCodeLib from 'qrcode';
 import { Table } from '../../../shared/components/tables/Table';
@@ -112,26 +112,15 @@ export default function PipelineReferralsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <Users className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Referrals</p>
+              <p className="text-sm text-gray-500">Referrals</p>
               <p className="text-xl font-semibold text-gray-900">{earnings?.total_referrals ?? 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Active Referrals</p>
-              <p className="text-xl font-semibold text-gray-900">{earnings?.active_referrals ?? 0}</p>
             </div>
           </div>
         </div>
@@ -141,29 +130,36 @@ export default function PipelineReferralsPage() {
               <Wallet className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Earned</p>
+              <p className="text-sm text-gray-500">Earned</p>
               <p className="text-xl font-semibold text-gray-900">
                 {earnings ? formatUSD(earnings.total_earned) : formatUSD(0)}
               </p>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Pending Rewards */}
-      {(earnings?.pending_rewards ?? 0) > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2 text-amber-800">
-            <Wallet className="h-5 w-5" />
-            <span className="font-medium">
-              Pending rewards: {formatUSD(earnings!.pending_rewards)}
-            </span>
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+              <DollarSign className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-green-600">Paid</p>
+              <p className="text-xl font-semibold text-green-700">{formatUSD(earnings?.rewards_paid ?? 0)}</p>
+            </div>
           </div>
-          <p className="mt-1 text-sm text-amber-600">
-            Rewards are credited when referred businesses complete their first payment.
-          </p>
         </div>
-      )}
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+              <TrendingUp className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm text-purple-600">Bal.</p>
+              <p className="text-xl font-semibold text-purple-700">{formatUSD((earnings?.total_earned ?? 0) - (earnings?.rewards_paid ?? 0))}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Sales Rep Commission Section */}
       {earnings?.is_sales_rep && (
@@ -182,20 +178,20 @@ export default function PipelineReferralsPage() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-purple-600">Available to Claim</p>
+              <p className="text-sm text-purple-600">Bal.</p>
               <p className="text-lg font-semibold text-purple-900">
-                {formatUSD(earnings.commission_pending)}
+                {formatUSD((earnings.commission_earned ?? 0) - (earnings.commission_paid ?? 0))}
               </p>
             </div>
             <div>
-              <p className="text-sm text-purple-600">Total Earned</p>
+              <p className="text-sm text-purple-600">Earned</p>
               <p className="text-lg font-semibold text-purple-900">
                 {formatUSD(earnings.commission_earned)}
               </p>
             </div>
           </div>
           <p className="mt-3 text-sm text-purple-600">
-            Contact the Custosell team to claim your pending commission of {formatUSD(earnings.commission_pending)}.
+            Contact the Custosell team to claim your pending balance of {formatUSD((earnings.commission_earned ?? 0) - (earnings.commission_paid ?? 0))}.
           </p>
         </div>
       )}

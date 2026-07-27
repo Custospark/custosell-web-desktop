@@ -4,8 +4,9 @@ import type { ReferralEarnings } from '../referral/api/ReferralTypes';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import {
-  Users, UserCheck, DollarSign, Clock, TrendingUp, Wallet, Smartphone, Landmark,
+  Users, DollarSign, Clock, TrendingUp, Wallet, Smartphone, Landmark,
   ChevronDown, ChevronUp, Receipt, Check, X, Building2, ChevronLeft, ChevronRight,
+  FileText, Image,
 } from 'lucide-react';
 
 const PAGE_SIZE = 10;
@@ -93,19 +94,19 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
           <p className="text-xs text-gray-500 font-medium">Referrals</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <UserCheck className="w-5 h-5 mx-auto text-gray-400 mb-1" />
-          <p className="text-2xl font-bold text-gray-900">{earnings?.active_referrals ?? 0}</p>
-          <p className="text-xs text-gray-500 font-medium">Active</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
           <DollarSign className="w-5 h-5 mx-auto text-gray-400 mb-1" />
           <p className="text-2xl font-bold text-gray-900">{formatUSD(totalEarned)}</p>
-          <p className="text-xs text-gray-500 font-medium">Total Earned</p>
+          <p className="text-xs text-gray-500 font-medium">Earned</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-4 text-center">
+          <Wallet className="w-5 h-5 mx-auto text-green-500 mb-1" />
+          <p className="text-2xl font-bold text-green-700">{formatUSD(earnings?.rewards_paid ?? 0)}</p>
+          <p className="text-xs text-green-600 font-medium">Paid</p>
         </div>
         <div className="bg-amber-50 rounded-lg p-4 text-center">
-          <Clock className="w-5 h-5 mx-auto text-amber-400 mb-1" />
-          <p className="text-2xl font-bold text-amber-700">{formatUSD(earnings?.pending_rewards ?? 0)}</p>
-          <p className="text-xs text-amber-600 font-medium">Pending</p>
+          <TrendingUp className="w-5 h-5 mx-auto text-amber-400 mb-1" />
+          <p className="text-2xl font-bold text-amber-700">{formatUSD(totalEarned - (earnings?.rewards_paid ?? 0))}</p>
+          <p className="text-xs text-amber-600 font-medium">Bal.</p>
         </div>
       </div>
 
@@ -122,7 +123,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
           </div>
           <div className="flex gap-4 text-sm">
             <span className="text-gray-500">Earned: <strong className="text-gray-900">{formatUSD(earnings.commission_earned ?? 0)}</strong></span>
-            <span className="text-gray-500">Pending: <strong className="text-amber-700">{formatUSD(earnings.commission_pending ?? 0)}</strong></span>
+            <span className="text-gray-500">Bal.: <strong className="text-amber-700">{formatUSD((earnings.commission_earned ?? 0) - (earnings.commission_paid ?? 0))}</strong></span>
             <span className="text-gray-500">Paid: <strong className="text-green-700">{formatUSD(earnings.commission_paid ?? 0)}</strong></span>
           </div>
         </div>
@@ -353,9 +354,25 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
                       </p>
                     </div>
                   </div>
-                  {payout.notes && (
-                    <span className="text-xs text-gray-400 max-w-[160px] truncate">{payout.notes}</span>
-                  )}
+                      {payout.notes && (
+                        <span className="text-xs text-gray-400 max-w-[160px] truncate">{payout.notes}</span>
+                      )}
+                      {payout.attachments && payout.attachments.length > 0 && (
+                        <div className="flex gap-1 mt-1">
+                          {payout.attachments.map((a, i) => (
+                            <a
+                              key={i}
+                              href={a.file_url ?? '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded bg-gray-200/60 px-1.5 py-0.5 text-[10px] text-gray-500 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                            >
+                              {a.mime_type?.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                              {a.original_name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                 </div>
               );
             })}

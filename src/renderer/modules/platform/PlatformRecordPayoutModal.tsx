@@ -4,7 +4,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
-  Wallet, DollarSign, Mail, Phone, Check, Smartphone, Landmark,
+  Wallet, DollarSign, Mail, Check, Smartphone, Landmark,
   Paperclip, X, FileText, Image, CalendarDays,
 } from 'lucide-react';
 import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
@@ -60,7 +60,7 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
 
         <div className="grid grid-cols-2 gap-3 px-1">
           <div className="rounded-lg border border-gray-200 bg-white p-3">
-            <p className="text-xs text-gray-500">Pending</p>
+            <p className="text-xs text-gray-500">Due</p>
             <p className="text-lg font-semibold text-amber-700">{formatUSD(entity.pending)}</p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-3">
@@ -181,7 +181,7 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button onClick={handleSubmit} loading={recordMutation.isPending}
-              disabled={!amount || Number(amount) <= 0 || (!isImmediate && !scheduledAt)}>
+              disabled={!amount || Number(amount) <= 0 || Number(amount) > entity.pending || (!isImmediate && !scheduledAt)}>
               {isImmediate ? 'Record Payment' : 'Schedule Payment'}
             </Button>
           </div>

@@ -17,6 +17,9 @@ export function useReferralEarnings() {
       const { data } = await axiosInstance.get<ReferralEarnings>(REFERRALS.EARNINGS);
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchInterval: 5 * 60 * 1000,
     retry: false,
   });
 }

@@ -18,6 +18,14 @@ export interface PaymentInfoPayload {
   bank_branch?: string;
 }
 
+export interface PayoutAttachment {
+  path: string;
+  original_name: string;
+  mime_type: string;
+  size: number;
+  file_url?: string | null;
+}
+
 export interface PayoutRecord {
   id: number;
   amount: number;
@@ -25,6 +33,7 @@ export interface PayoutRecord {
   status: 'paid' | 'scheduled' | 'cancelled';
   payment_method: string | null;
   notes: string | null;
+  attachments: PayoutAttachment[] | null;
   scheduled_at: string | null;
   paid_at: string | null;
   paid_by_user: { id: number; name: string } | null;

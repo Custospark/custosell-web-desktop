@@ -28,7 +28,7 @@ const TYPE_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
-  { value: 'pending', label: 'Has Pending' },
+  { value: 'pending', label: 'Has Due' },
   { value: 'paid', label: 'Fully Paid' },
   { value: 'overdue', label: 'Overdue Schedule' },
 ] as const;
@@ -117,7 +117,7 @@ export default function PlatformPayoutsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pending', key: 'totalPending' as const, icon: DollarSign, color: 'amber' as const, badge: 'Awaiting', format: true, val: stats.totalPending },
+          { label: 'Total Due', key: 'totalPending' as const, icon: DollarSign, color: 'amber' as const, badge: 'Awaiting', format: true, val: stats.totalPending },
           { label: 'Total Paid', key: 'totalPaid' as const, icon: Wallet, color: 'green' as const, badge: 'Lifetime', format: true, val: stats.totalPaid },
           { label: 'Active Payees', key: 'activePayees' as const, icon: Users, color: 'blue' as const, badge: 'Owed', format: false, val: stats.activePayees, sub: `of ${payables.length} total` },
           { label: 'Overdue Schedules', key: 'overdue' as const, icon: AlertTriangle, color: 'red' as const, badge: 'Past due', format: false, val: stats.overdue },
@@ -147,7 +147,7 @@ export default function PlatformPayoutsPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-5 lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-semibold text-gray-800">Top Payees by Pending Amount</h3>
+            <h3 className="text-sm font-semibold text-gray-800">Top Payees by Due Amount</h3>
             {topPayees.length > 0 && (
               <span className="ml-auto text-xs text-gray-400">Top {topPayees.length}</span>
             )}
@@ -166,7 +166,7 @@ export default function PlatformPayoutsPage() {
                         const d = payload[0].payload;
                         return (
                           <ChartTooltipShell title={d.name}>
-                            <ChartTooltipRow label="Pending" value={formatUSD(d.pending)} accent />
+                            <ChartTooltipRow label="Due" value={formatUSD(d.pending)} accent />
                           </ChartTooltipShell>
                         );
                       }}
@@ -177,14 +177,14 @@ export default function PlatformPayoutsPage() {
               )}
             </ChartContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-sm text-gray-400">No pending amounts</div>
+            <div className="flex items-center justify-center h-64 text-sm text-gray-400">No due amounts</div>
           )}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <PieIcon className="w-4 h-4 text-purple-600" />
-            <h3 className="text-sm font-semibold text-gray-800">Pending by Type</h3>
+            <h3 className="text-sm font-semibold text-gray-800">Due by Type</h3>
           </div>
           {typeDistribution.some((d) => d.value > 0) ? (
             <ChartContainer className="h-64" minHeight={256}>
@@ -212,7 +212,7 @@ export default function PlatformPayoutsPage() {
               )}
             </ChartContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-sm text-gray-400">No pending amounts</div>
+            <div className="flex items-center justify-center h-64 text-sm text-gray-400">No due amounts</div>
           )}
           <div className="flex justify-center gap-6 mt-3">
             {typeDistribution.map((d, i) => (
@@ -277,7 +277,7 @@ export default function PlatformPayoutsPage() {
                 { key: 'total_earned', header: 'Earned', align: 'right', render: (r: PayableEntity) => <span className="text-sm font-medium text-gray-900">{formatUSD(r.total_earned)}</span> },
                 { key: 'total_paid', header: 'Paid', align: 'right', render: (r: PayableEntity) => <span className="text-sm text-gray-600">{formatUSD(r.total_paid)}</span> },
                 {
-                  key: 'pending', header: 'Pending', align: 'right',
+                  key: 'pending', header: 'Due', align: 'right',
                   render: (r: PayableEntity) => (
                     <span className={`text-sm font-semibold ${r.pending > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
                       {formatUSD(r.pending)}
@@ -347,7 +347,7 @@ export default function PlatformPayoutsPage() {
             <DollarSign className="w-12 h-12 text-gray-300 mb-3" />
             <p className="text-sm text-gray-500">
               {search || typeFilter !== 'all' || statusFilter !== 'all'
-                ? 'No payables match your filters' : 'No pending payables'}
+                ? 'No payables match your filters' : 'No due payables'}
             </p>
             <p className="text-xs text-gray-400 mt-1">Sales rep commissions and referral rewards will appear here</p>
           </div>

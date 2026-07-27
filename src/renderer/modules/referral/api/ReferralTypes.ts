@@ -6,6 +6,7 @@ export interface ReferralEarnings {
   total_earned: number;
   pending_rewards: number;
   rewarded_amount: number;
+  rewards_paid: number;
   commission_earned: number;
   commission_pending: number;
   commission_paid: number;

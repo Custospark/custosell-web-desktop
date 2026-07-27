@@ -9,7 +9,7 @@ import { canAccessModule } from '../../utils/moduleAccess';
 import QRCodeLib from 'qrcode';
 import {
   Gift, Copy, Check, ExternalLink, Users, DollarSign,
-  TrendingUp, Sparkles, ChevronDown, QrCode, Download, X, Share2,
+  TrendingUp, Sparkles, ChevronDown, QrCode, Download, X, Share2, Link,
 } from 'lucide-react';
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
@@ -22,6 +22,7 @@ export default function ReferralDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const user = useAppSelector((s) => s.auth.user);
   const { data: earnings, isLoading } = useReferralEarnings();
@@ -77,6 +78,17 @@ export default function ReferralDropdown() {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback — ignore
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!referralUrl) return;
+    try {
+      await navigator.clipboard.writeText(referralUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
     } catch {
       // fallback — ignore
     }
@@ -181,6 +193,22 @@ export default function ReferralDropdown() {
                       </button>
                     </div>
                   </div>
+                  <div className="flex items-center justify-between mt-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                    <span className="text-xs text-gray-500 truncate mr-2 select-all">{referralUrl}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className={cn(
+                        'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0',
+                        linkCopied
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200',
+                      )}
+                    >
+                      {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Link className="w-3.5 h-3.5" />}
+                      {linkCopied ? 'Copied' : 'Link'}
+                    </button>
+                  </div>
               </div>
 
               <div className="px-4 py-3 border-b border-gray-100">
@@ -274,7 +302,7 @@ export default function ReferralDropdown() {
       )}
 
       {qrModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 space-y-5 relative">
             <button type="button" onClick={() => { setQrModal(false); setQrDataUrl(null); }}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 cursor-pointer">
@@ -305,7 +333,22 @@ export default function ReferralDropdown() {
                 </button>
               )}
             </div>
-            <p className="text-[11px] text-gray-400 text-center break-all">{referralUrl}</p>
+            <div className="flex items-center justify-between gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+              <span className="text-xs text-gray-500 truncate select-all">{referralUrl}</span>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className={cn(
+                  'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0',
+                  linkCopied
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200',
+                )}
+              >
+                {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {linkCopied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
           </div>
         </div>
       )}

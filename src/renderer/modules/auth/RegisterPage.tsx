@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
   const { data: plans } = useActivePlans();
-  const referralCode = searchParams.get('ref') ?? undefined;
+  const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
   const planId = state?.planId ?? plans?.[0]?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';

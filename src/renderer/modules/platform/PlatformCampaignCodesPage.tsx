@@ -8,7 +8,8 @@ import { Table } from '../../shared/components/tables/Table';
 import PlatformCampaignCodeFormModal from './PlatformCampaignCodeFormModal';
 import { formatDistanceToNow } from 'date-fns';
 import QRCodeLib from 'qrcode';
-import { Plus, Percent, DollarSign, Gift, Trash2, Pencil, Eye, QrCode, Download, X, Share2 } from 'lucide-react';
+import { cn } from '../../shared/utils/cn';
+import { Plus, Percent, DollarSign, Gift, Trash2, Pencil, Eye, QrCode, Download, X, Share2, Copy, Check, Link } from 'lucide-react';
 import type { CampaignCode } from './api/PlatformTypes';
 
 export default function PlatformCampaignCodesPage() {
@@ -21,6 +22,7 @@ export default function PlatformCampaignCodesPage() {
   const [editing, setEditing] = useState<CampaignCode | null>(null);
   const [viewing, setViewing] = useState<CampaignCode | null>(null);
   const [qrCode, setQrCode] = useState<CampaignCode | null>(null);
+  const [copiedLinkCode, setCopiedLinkCode] = useState<string | null>(null);
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -48,6 +50,15 @@ export default function PlatformCampaignCodesPage() {
   const handleToggleActive = useCallback((c: CampaignCode) => {
     updateMutation.mutate({ id: c.id, data: { is_active: !c.is_active } });
   }, [updateMutation]);
+
+  const handleCopyLink = useCallback(async (code: string) => {
+    const url = `${window.location.origin}/register?campaign=${code}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLinkCode(code);
+      setTimeout(() => setCopiedLinkCode(null), 2000);
+    } catch { /* ignore */ }
+  }, []);
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -120,6 +131,17 @@ export default function PlatformCampaignCodesPage() {
                   <div className="flex items-center gap-1">
                     <button type="button" onClick={() => setQrCode(r)} className="p-1 text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer" title="QR code">
                       <QrCode className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(r.code)}
+                      className={cn(
+                        'p-1 transition-colors cursor-pointer',
+                        copiedLinkCode === r.code ? 'text-green-600' : 'text-gray-400 hover:text-indigo-600',
+                      )}
+                      title="Copy link"
+                    >
+                      {copiedLinkCode === r.code ? <Check className="w-4 h-4" /> : <Link className="w-4 h-4" />}
                     </button>
                     <button type="button" onClick={() => setViewing(r)} className="p-1 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer" title="View usage">
                       <Eye className="w-4 h-4" />
@@ -216,6 +238,7 @@ function UsageModal({ code, onClose }: { code: CampaignCode; onClose: () => void
 
 function CampaignCodeQrModal({ code, onClose }: { code: CampaignCode; onClose: () => void }) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const url = `${window.location.origin}/register?campaign=${code.code}`;
 
   useEffect(() => {
@@ -243,8 +266,16 @@ function CampaignCodeQrModal({ code, onClose }: { code: CampaignCode; onClose: (
     } catch { /* user cancelled */ }
   };
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 space-y-5 relative" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 cursor-pointer">
@@ -275,7 +306,22 @@ function CampaignCodeQrModal({ code, onClose }: { code: CampaignCode; onClose: (
             </button>
           )}
         </div>
-        <p className="text-[11px] text-gray-400 text-center break-all">{url}</p>
+        <div className="flex items-center justify-between gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+          <span className="text-xs text-gray-500 truncate select-all">{url}</span>
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className={cn(
+              'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0',
+              linkCopied
+                ? 'bg-green-100 text-green-700'
+                : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200',
+            )}
+          >
+            {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {linkCopied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
       </div>
     </div>
   );

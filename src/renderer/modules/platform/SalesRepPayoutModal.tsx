@@ -6,7 +6,7 @@ import { SALES_REPS } from '../../shared/api/endpoints/endpoints';
 import { useToast } from '../../app/contexts/useToast';
 import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
   DollarSign, History, Wallet, Smartphone, Landmark,
   CalendarDays, Paperclip, X, FileText, Image
@@ -116,18 +116,18 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <p className="text-xs text-gray-500">Total Earned</p>
             <p className="text-lg font-semibold text-gray-900">
-              {formatCurrency((rep?.pending_commission ?? 0) + totalPaid)}
+              {formatUSD((rep?.pending_commission ?? 0) + totalPaid)}
             </p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <p className="text-xs text-gray-500">Already Paid</p>
-            <p className="text-lg font-semibold text-green-700">{formatCurrency(totalPaid)}</p>
+            <p className="text-lg font-semibold text-green-700">{formatUSD(totalPaid)}</p>
           </div>
         </div>
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
           <p className="text-sm font-medium text-amber-800">
-            Available to Pay: {formatCurrency(pending)}
+            Available to Pay: {formatUSD(pending)}
           </p>
         </div>
 
@@ -230,7 +230,7 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
                 <div key={p.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 p-3">
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {formatCurrency(p.amount)}
+                      {formatUSD(p.amount)}
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(p.paid_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })}

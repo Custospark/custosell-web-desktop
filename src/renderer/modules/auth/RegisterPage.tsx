@@ -9,7 +9,7 @@ import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
-import { Store, Mail, Lock, User, Phone, ChevronDown, Eye, EyeOff, LogIn, UserPlus, Coins } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -31,6 +31,7 @@ export default function RegisterPage() {
     password: '',
     password_confirmation: '',
   });
+  const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(true);
@@ -64,6 +65,11 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const passwordsMatch = form.password === form.password_confirmation;
+
+  const handleProceed = () => {
+    if (!form.owner_first_name || !form.owner_last_name || !form.name || !form.email) return;
+    setStep(2);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,179 +105,219 @@ export default function RegisterPage() {
       heroImage={AUTH_HERO_IMAGES.register}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input
-              placeholder="First name"
-              value={form.owner_first_name}
-              onChange={handleChange('owner_first_name')}
-              required
-              className={inputCls}
-            />
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-gray-400">Step {step} of 2</span>
+          <div className="flex gap-1">
+            <div className={`h-1.5 w-8 rounded-full transition-colors ${step === 1 ? 'bg-blue-600' : 'bg-blue-200'}`} />
+            <div className={`h-1.5 w-8 rounded-full transition-colors ${step === 2 ? 'bg-blue-600' : 'bg-blue-200'}`} />
           </div>
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input
-              placeholder="Last name"
-              value={form.owner_last_name}
-              onChange={handleChange('owner_last_name')}
-              required
-              className={inputCls}
-            />
-          </div>
-        </div>
-        <div className="relative">
-          <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input placeholder="Business, Company, or Institution name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
-        </div>
-        <div className="relative">
-          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
         </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone <span className="text-red-500">*</span></label>
-          <div className="flex gap-2">
-            <div ref={dropdownRef} className="relative shrink-0">
-              <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1.5 h-[46px] px-3 border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors cursor-pointer">
-                <span className="text-lg">{countryCode.flag}</span>
-                <span className="text-sm font-medium text-gray-700">{countryCode.dial_code}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-              </button>
-              {dropdownOpen && (
-                <div className="absolute top-full mt-1 left-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
-                    <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
-                  </div>
-                  {filtered.map((c) => (
-                    <button key={c.code} type="button" onClick={() => { setCountryCode(c); setDropdownOpen(false); setSearch(''); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-blue-50 transition-colors cursor-pointer ${c.code === countryCode.code ? 'bg-blue-50 font-medium' : ''}`}>
-                      <span className="text-lg">{c.flag}</span>
-                      <span className="text-gray-800">{c.name}</span>
-                      <span className="ml-auto text-gray-400">{c.dial_code}</span>
-                    </button>
-                  ))}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                <input
+                  placeholder="First name"
+                  value={form.owner_first_name}
+                  onChange={handleChange('owner_first_name')}
+                  required
+                  className={inputCls}
+                />
+              </div>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                <input
+                  placeholder="Last name"
+                  value={form.owner_last_name}
+                  onChange={handleChange('owner_last_name')}
+                  required
+                  className={inputCls}
+                />
+              </div>
+            </div>
+            <div className="relative">
+              <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              <input placeholder="Business, Company, or Institution name" value={form.name} onChange={handleChange('name')} required className={inputCls} />
+            </div>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone <span className="text-red-500">*</span></label>
+              <div className="flex gap-2">
+                <div ref={dropdownRef} className="relative shrink-0">
+                  <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-1.5 h-[46px] px-3 border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors cursor-pointer">
+                    <span className="text-lg">{countryCode.flag}</span>
+                    <span className="text-sm font-medium text-gray-700">{countryCode.dial_code}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute top-full mt-1 left-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                      <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
+                        <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
+                          className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                      </div>
+                      {filtered.map((c) => (
+                        <button key={c.code} type="button" onClick={() => { setCountryCode(c); setDropdownOpen(false); setSearch(''); }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-blue-50 transition-colors cursor-pointer ${c.code === countryCode.code ? 'bg-blue-50 font-medium' : ''}`}>
+                          <span className="text-lg">{c.flag}</span>
+                          <span className="text-gray-800">{c.name}</span>
+                          <span className="ml-auto text-gray-400">{c.dial_code}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                  <input type="tel" placeholder={getPhonePlaceholder(countryCode)} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d\s\-()]/g, '') }))}
+                    className="w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm" />
+                </div>
+              </div>
+              {form.phone && (
+                <p className="text-xs text-gray-400 mt-1">Full number: {countryCode.dial_code} {form.phone}</p>
               )}
             </div>
-            <div className="relative flex-1">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input type="tel" placeholder={getPhonePlaceholder(countryCode)} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d\s\-()]/g, '') }))}
-                className="w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm" />
+
+            <div ref={currencyRef}>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
+              <div className="relative">
+                <Coins className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={() => setCurrencyOpen(!currencyOpen)}
+                  className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white py-3.5 pl-11 pr-3 text-left text-sm transition-colors hover:border-gray-400 cursor-pointer"
+                >
+                  <span className={currency ? 'text-gray-900' : 'text-gray-400'}>
+                    {currency ? `${currency} ${CURRENCIES.find((c) => c.code === currency)?.symbol ?? ''}` : 'Select currency'}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                </button>
+                {currencyOpen && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div className="sticky top-0 border-b border-gray-100 bg-white p-2">
+                      <input
+                        type="text"
+                        placeholder="Search currency..."
+                        value={currencySearch}
+                        onChange={(e) => setCurrencySearch(e.target.value)}
+                        className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoFocus
+                      />
+                    </div>
+                    {CURRENCIES.filter(
+                      (c) =>
+                        c.code.toLowerCase().includes(currencySearch.toLowerCase())
+                        || c.name.toLowerCase().includes(currencySearch.toLowerCase()),
+                    ).map((c) => (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => {
+                          setCurrency(c.code);
+                          setCurrencyOpen(false);
+                          setCurrencySearch('');
+                        }}
+                        className={`flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-blue-50 ${currency === c.code ? 'bg-blue-50 font-medium' : ''}`}
+                      >
+                        <span className="text-gray-800">{c.code}</span>
+                        <span className="text-gray-400">{c.symbol}</span>
+                        <span className="ml-auto truncate text-gray-500">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleProceed}
+              className="w-full gap-2 py-3.5"
+              disabled={!form.owner_first_name || !form.owner_last_name || !form.name || !form.email}
+            >
+              Proceed
+              <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
+            </Button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              <input type={showPassword ? 'text' : 'password'} placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={`${inputCls} pr-12`} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={`${inputCls} pr-12`} />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {form.password_confirmation && !passwordsMatch && (
+              <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
+            )}
+            <label className="flex items-center justify-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={privacyConsent}
+                onChange={(e) => setPrivacyConsent(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-xs text-gray-400">
+                I agree to the{' '}
+                <Link
+                  to={ROUTES.PRIVACY}
+                  className="text-gray-500 hover:text-blue-600 underline"
+                >
+                  Data & Privacy Policy
+                </Link>
+              </span>
+            </label>
+            {!privacyConsent && (
+              <p className="text-xs text-red-500 text-center -mt-1">You must agree to the Data & Privacy Policy to create an account.</p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </button>
+              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={registerMutation.isPending}>
+                <UserPlus className="h-4 w-4" aria-hidden />
+                Create Account
+              </Button>
             </div>
           </div>
-          {form.phone && (
-            <p className="text-xs text-gray-400 mt-1">Full number: {countryCode.dial_code} {form.phone}</p>
-          )}
-        </div>
-
-        <div ref={currencyRef}>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
-          <div className="relative">
-            <Coins className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <button
-              type="button"
-              onClick={() => setCurrencyOpen(!currencyOpen)}
-              className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white py-3.5 pl-11 pr-3 text-left text-sm transition-colors hover:border-gray-400 cursor-pointer"
-            >
-              <span className={currency ? 'text-gray-900' : 'text-gray-400'}>
-                {currency ? `${currency} ${CURRENCIES.find((c) => c.code === currency)?.symbol ?? ''}` : 'Select currency'}
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-            </button>
-            {currencyOpen && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                <div className="sticky top-0 border-b border-gray-100 bg-white p-2">
-                  <input
-                    type="text"
-                    placeholder="Search currency..."
-                    value={currencySearch}
-                    onChange={(e) => setCurrencySearch(e.target.value)}
-                    className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
-                  />
-                </div>
-                {CURRENCIES.filter(
-                  (c) =>
-                    c.code.toLowerCase().includes(currencySearch.toLowerCase())
-                    || c.name.toLowerCase().includes(currencySearch.toLowerCase()),
-                ).map((c) => (
-                  <button
-                    key={c.code}
-                    type="button"
-                    onClick={() => {
-                      setCurrency(c.code);
-                      setCurrencyOpen(false);
-                      setCurrencySearch('');
-                    }}
-                    className={`flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-blue-50 ${currency === c.code ? 'bg-blue-50 font-medium' : ''}`}
-                  >
-                    <span className="text-gray-800">{c.code}</span>
-                    <span className="text-gray-400">{c.symbol}</span>
-                    <span className="ml-auto truncate text-gray-500">{c.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="relative">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input type={showPassword ? 'text' : 'password'} placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={`${inputCls} pr-12`} />
-          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        </div>
-        <div className="relative">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-          <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={`${inputCls} pr-12`} />
-          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        </div>
-        {form.password_confirmation && !passwordsMatch && (
-          <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
         )}
-        <label className="flex items-center justify-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={privacyConsent}
-            onChange={(e) => setPrivacyConsent(e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-xs text-gray-400">
-            I agree to the{' '}
+
+        {step === 1 && (
+          <div className="space-y-3 border-t border-gray-100 pt-5">
+            <p className="text-center text-sm font-medium text-gray-700">
+              Already have an account?
+            </p>
             <Link
-              to={ROUTES.PRIVACY}
-              className="text-gray-500 hover:text-blue-600 underline"
+              to={ROUTES.LOGIN}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
             >
-              Data & Privacy Policy
+              <LogIn className="h-4 w-4" aria-hidden />
+              Sign In
             </Link>
-          </span>
-        </label>
-        {!privacyConsent && (
-          <p className="text-xs text-red-500 text-center -mt-1">You must agree to the Data & Privacy Policy to create an account.</p>
+          </div>
         )}
-        <Button type="submit" className="w-full gap-2 py-3.5" loading={registerMutation.isPending}>
-          <UserPlus className="h-4 w-4" aria-hidden />
-          Create Account
-        </Button>
-        <div className="space-y-3 border-t border-gray-100 pt-5">
-          <p className="text-center text-sm font-medium text-gray-700">
-            Already have an account?
-          </p>
-          <Link
-            to={ROUTES.LOGIN}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-          >
-            <LogIn className="h-4 w-4" aria-hidden />
-            Sign In
-          </Link>
-        </div>
       </form>
     </AuthLayout>
   );

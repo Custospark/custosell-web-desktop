@@ -110,6 +110,16 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
         </div>
       </div>
 
+      {(earnings?.available_credit ?? 0) > 0 && (
+        <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-green-600" />
+            <span className="text-sm font-medium text-green-800">Promo credit available</span>
+          </div>
+          <span className="text-sm font-bold text-green-700">{formatUSD(earnings!.available_credit)}</span>
+        </div>
+      )}
+
       {earnings?.is_sales_rep && (
         <div className="bg-indigo-50 rounded-lg p-4 space-y-2">
           <div className="flex items-center gap-1.5">

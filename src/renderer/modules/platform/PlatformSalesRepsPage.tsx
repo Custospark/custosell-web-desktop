@@ -65,8 +65,6 @@ export default function PlatformSalesRepsPage() {
   const totalPaid = reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0);
   const activeCount = reps.filter((r) => r.is_active).length;
   const page = usePagination(filtered, 10);
-  const totalPaid = reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0);
-  const activeCount = reps.filter((r) => r.is_active).length;
 
   return (
     <div className="space-y-6">

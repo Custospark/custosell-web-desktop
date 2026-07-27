@@ -4,6 +4,7 @@ export interface PayableEntity {
   user_id: number;
   name: string;
   email: string | null;
+  phone: string | null;
   total_earned: number;
   total_paid: number;
   pending: number;
@@ -13,6 +14,7 @@ export interface PayableEntity {
   payment_method: string | null;
   mobile_money_provider: string | null;
   mobile_money_number: string | null;
+  mobile_money_name: string | null;
   bank_name: string | null;
   bank_account_name: string | null;
 }

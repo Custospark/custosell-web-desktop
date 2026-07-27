@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useRecordPayout } from './api/PlatformPayoutQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatUSD } from '../../shared/utils/formatCurrency';
-import { X, DollarSign } from 'lucide-react';
+import {
+  X, DollarSign, Mail, Phone, Smartphone, Building2,
+} from 'lucide-react';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
 interface Props {
@@ -46,10 +48,47 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="rounded-lg bg-gray-50 p-3 text-sm space-y-1">
-            <p><span className="text-gray-500">Payee:</span> <strong>{entity.name}</strong> <span className="text-xs text-gray-400">({entity.type === 'sales_rep' ? 'Sales Rep' : 'User'})</span></p>
-            <p><span className="text-gray-500">Pending:</span> <strong className="text-amber-700">{formatUSD(entity.pending)}</strong></p>
-            {entity.payment_method && <p><span className="text-gray-500">Method:</span> {entity.payment_method}</p>}
+          <div className="rounded-xl bg-gray-50 p-4 space-y-2">
+            <p className="text-sm font-semibold text-gray-900">{entity.name}</p>
+            <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-full ${entity.type === 'sales_rep' ? 'text-purple-700 bg-purple-100' : 'text-blue-700 bg-blue-100'}`}>
+              {entity.type === 'sales_rep' ? 'Sales Rep' : 'User'}
+            </span>
+            <div className="pt-2 space-y-1.5 text-sm text-gray-600">
+              {entity.email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <span>{entity.email}</span>
+                </div>
+              )}
+              {entity.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <span>{entity.phone}</span>
+                </div>
+              )}
+              {entity.mobile_money_provider && entity.mobile_money_number && (
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <span>{entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</span>
+                </div>
+              )}
+              {(entity.bank_name && entity.bank_account_name) && (
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <span>{entity.bank_name} — {entity.bank_account_name}</span>
+                </div>
+              )}
+            </div>
+            <div className="pt-2 border-t border-gray-200 mt-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Pending:</span>
+                <strong className="text-amber-700">{formatUSD(entity.pending)}</strong>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Paid to date:</span>
+                <span className="text-gray-700">{formatUSD(entity.total_paid)}</span>
+              </div>
+            </div>
           </div>
 
           <div>

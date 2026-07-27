@@ -1,7 +1,9 @@
 import { usePayoutHistory } from './api/PlatformPayoutQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatUSD } from '../../shared/utils/formatCurrency';
-import { X, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  X, Clock, CheckCircle2, XCircle, Mail, Phone, Smartphone, Building2,
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
@@ -17,6 +19,12 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'text-red-400',
 };
 
+const STATUS_BG: Record<string, string> = {
+  paid: 'bg-green-50 border-green-100',
+  scheduled: 'bg-amber-50 border-amber-100',
+  cancelled: 'bg-red-50 border-red-100',
+};
+
 interface Props {
   entity: PayableEntity;
   onClose: () => void;
@@ -27,12 +35,50 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <h2 className="text-lg font-bold text-gray-900">Payout History</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        <div className="px-6 py-4 border-b border-gray-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{entity.name}</p>
+              <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${entity.type === 'sales_rep' ? 'text-purple-700 bg-purple-50' : 'text-blue-700 bg-blue-50'}`}>
+                {entity.type === 'sales_rep' ? 'Sales Rep' : 'User'}
+              </span>
+            </div>
+            <div className="text-right space-y-1">
+              {entity.email && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 justify-end">
+                  <Mail className="w-3 h-3" />
+                  <span>{entity.email}</span>
+                </div>
+              )}
+              {entity.phone && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 justify-end">
+                  <Phone className="w-3 h-3" />
+                  <span>{entity.phone}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {entity.mobile_money_provider && entity.mobile_money_number && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
+              <Smartphone className="w-3 h-3" />
+              <span>{entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</span>
+            </div>
+          )}
+          {(entity.bank_name && entity.bank_account_name) && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
+              <Building2 className="w-3 h-3" />
+              <span>{entity.bank_name} — {entity.bank_account_name}</span>
+            </div>
+          )}
         </div>
 
         <div className="p-4">
@@ -60,16 +106,23 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
               {payouts.map((p) => {
                 const Icon = STATUS_ICONS[p.status] ?? Clock;
                 const color = STATUS_COLORS[p.status] ?? 'text-gray-400';
+                const bg = STATUS_BG[p.status] ?? 'border-gray-100';
                 return (
-                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Icon className={`w-4 h-4 ${color}`} />
+                  <div key={p.id} className={`flex items-start justify-between rounded-lg border ${bg} px-4 py-3`}>
+                    <div className="flex items-start gap-3">
+                      <Icon className={`w-4 h-4 mt-0.5 ${color}`} />
                       <div>
                         <p className="text-sm font-semibold text-gray-900">{formatUSD(p.amount)}</p>
                         <p className="text-[11px] text-gray-400 capitalize">{p.status}</p>
+                        {p.notes && (
+                          <p className="text-[11px] text-gray-500 mt-1 italic">{p.notes}</p>
+                        )}
+                        {p.payment_method && (
+                          <p className="text-[10px] text-gray-400 mt-0.5">{p.payment_method}</p>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-xs text-gray-500">
                         {p.paid_at
                           ? formatDistanceToNow(new Date(p.paid_at), { addSuffix: true })

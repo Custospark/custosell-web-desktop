@@ -5,8 +5,10 @@ import { formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import {
   Users, UserCheck, DollarSign, Clock, TrendingUp, Wallet, Smartphone, Landmark,
-  ChevronDown, ChevronUp, Receipt, Check, X, Building2,
+  ChevronDown, ChevronUp, Receipt, Check, X, Building2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
+
+const PAGE_SIZE = 10;
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
   pending: { dot: 'bg-amber-400', label: 'Pending' },
@@ -76,6 +78,10 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
     .reduce((sum, p) => sum + p.amount, 0);
 
   const referrals = earnings?.referrals ?? [];
+  const [page, setPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(referrals.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageReferrals = referrals.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -136,7 +142,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
           </p>
         ) : (
           <div className="space-y-2">
-            {referrals.map((r) => {
+            {pageReferrals.map((r) => {
               const st = STATUS_STYLES[r.status] ?? { dot: 'bg-gray-400', label: r.status };
               return (
                 <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
@@ -161,6 +167,45 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
                 </div>
               );
             })}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-xs text-gray-400">
+                  Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, referrals.length)} of {referrals.length}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={safePage === 0}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPage(i)}
+                      className={cn(
+                        'w-7 h-7 text-xs font-medium rounded-md cursor-pointer',
+                        safePage === i ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100',
+                      )}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={safePage === totalPages - 1}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>

@@ -123,7 +123,7 @@ export default function ReferralDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 rounded-xl border border-gray-200 bg-white shadow-xl z-50">
+        <div className="absolute left-1/2 -translate-x-1/2 lg:left-auto lg:right-0 lg:translate-x-0 mt-2 w-80 max-sm:w-[calc(100vw-32px)] rounded-xl border border-gray-200 bg-white shadow-xl z-50">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center gap-2.5 mb-1">
               <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center ring-1 ring-indigo-200 shrink-0">

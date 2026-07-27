@@ -3,7 +3,7 @@ import { useRecordPayout } from './api/PlatformPayoutQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
-  X, DollarSign, Mail, Phone, Smartphone, Building2,
+  X, DollarSign, Mail, Phone, Check,
 } from 'lucide-react';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
@@ -15,7 +15,9 @@ interface Props {
 export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
   const recordMutation = useRecordPayout();
   const [amount, setAmount] = useState(String(entity.pending));
-  const [paymentMethod, setPaymentMethod] = useState(entity.payment_method ?? '');
+  const useConfigured = !!(entity.payment_method);
+  const [overrideMethod, setOverrideMethod] = useState('');
+  const [showOverride, setShowOverride] = useState(false);
   const [notes, setNotes] = useState('');
   const [isImmediate, setIsImmediate] = useState(true);
   const [scheduledAt, setScheduledAt] = useState('');
@@ -26,7 +28,7 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
     fd.append('payable_type', entity.type);
     fd.append('payable_id', String(entity.id));
     fd.append('amount', amount);
-    if (paymentMethod) fd.append('payment_method', paymentMethod);
+    fd.append('payment_method', showOverride && overrideMethod.trim() ? overrideMethod.trim() : (entity.payment_method ?? ''));
     if (notes) fd.append('notes', notes);
     if (!isImmediate && scheduledAt) fd.append('scheduled_at', scheduledAt);
     if (files) {
@@ -66,18 +68,6 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
                   <span>{entity.phone}</span>
                 </div>
               )}
-              {entity.mobile_money_provider && entity.mobile_money_number && (
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <span>{entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</span>
-                </div>
-              )}
-              {(entity.bank_name && entity.bank_account_name) && (
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <span>{entity.bank_name} — {entity.bank_account_name}</span>
-                </div>
-              )}
             </div>
             <div className="pt-2 border-t border-gray-200 mt-2">
               <div className="flex justify-between text-sm">
@@ -91,6 +81,42 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
             </div>
           </div>
 
+          {useConfigured && (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 mb-2">
+                <Check className="w-3.5 h-3.5" />
+                Configured Payment Method
+              </div>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p><span className="text-gray-400">Method:</span> {entity.payment_method}</p>
+                {entity.mobile_money_provider && entity.mobile_money_number && (
+                  <p><span className="text-gray-400">Mobile:</span> {entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</p>
+                )}
+                {(entity.bank_name && entity.bank_account_name) && (
+                  <p><span className="text-gray-400">Bank:</span> {entity.bank_name} — {entity.bank_account_name}</p>
+                )}
+              </div>
+              {!showOverride && (
+                <button type="button" onClick={() => setShowOverride(true)}
+                  className="text-xs text-gray-500 underline hover:text-gray-700 mt-1">
+                  Override payment method
+                </button>
+              )}
+            </div>
+          )}
+
+          {(!useConfigured || showOverride) && (
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Payment Method {useConfigured ? '(override)' : ''}
+              </label>
+              <input type="text" value={overrideMethod} onChange={(e) => setOverrideMethod(e.target.value)}
+                placeholder="e.g. Mobile Money, Bank Transfer"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Amount (USD)</label>
             <div className="relative">
@@ -100,14 +126,6 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
                 className="w-full rounded-lg border border-gray-300 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Payment Method</label>
-            <input type="text" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}
-              placeholder="e.g. Mobile Money, Bank Transfer"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
           </div>
 
           <div>

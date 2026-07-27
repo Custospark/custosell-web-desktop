@@ -9,6 +9,7 @@ import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
+import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -100,8 +101,8 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Fill in your business details to get started."
+      title="Create Account"
+      subtitle={`Get started with ${PRODUCT_NAME}`}
       heroImage={AUTH_HERO_IMAGES.register}
     >
       <form onSubmit={handleSubmit} className="space-y-4">

@@ -185,6 +185,38 @@ export default function RegisterPage() {
               )}
             </div>
 
+            <Button
+              type="button"
+              onClick={handleProceed}
+              className="w-full gap-2 py-3.5"
+              disabled={!form.owner_first_name || !form.owner_last_name || !form.name || !form.email}
+            >
+              Proceed
+              <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
+            </Button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              <input type={showPassword ? 'text' : 'password'} placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={`${inputCls} pr-12`} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={`${inputCls} pr-12`} />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {form.password_confirmation && !passwordsMatch && (
+              <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
+            )}
+
             <div ref={currencyRef}>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
               <div className="relative">
@@ -236,37 +268,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <Button
-              type="button"
-              onClick={handleProceed}
-              className="w-full gap-2 py-3.5"
-              disabled={!form.owner_first_name || !form.owner_last_name || !form.name || !form.email}
-            >
-              Proceed
-              <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input type={showPassword ? 'text' : 'password'} placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={`${inputCls} pr-12`} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={`${inputCls} pr-12`} />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            {form.password_confirmation && !passwordsMatch && (
-              <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
-            )}
             <label className="flex items-center justify-center gap-2 cursor-pointer">
               <input
                 type="checkbox"

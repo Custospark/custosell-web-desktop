@@ -54,8 +54,9 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
     enabled: !!rep,
   });
 
+  const totalEarned = rep?.total_commission ?? 0;
   const totalPaid = payouts.reduce((s, p) => s + Number(p.amount), 0);
-  const pending = rep ? Math.max(0, (rep.pending_commission ?? 0)) : 0;
+  const pending = Math.max(0, totalEarned - totalPaid);
 
   const recordMutation = useMutation({
     mutationFn: async () => {
@@ -116,7 +117,7 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <p className="text-xs text-gray-500">Total Earned</p>
             <p className="text-lg font-semibold text-gray-900">
-              {formatUSD((rep?.pending_commission ?? 0) + totalPaid)}
+              {formatUSD(totalEarned)}
             </p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-3">

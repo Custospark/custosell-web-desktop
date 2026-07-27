@@ -32,7 +32,7 @@ export default function AccountReferralsPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrDownloading, setQrDownloading] = useState(false);
 
-  const referralUrl = code ? `${window.location.origin}/auth/register?ref=${code}` : '';
+  const referralUrl = code ? `${window.location.origin}/register?ref=${code}` : '';
 
   useEffect(() => {
     if (qrModal && referralUrl && !qrDataUrl) {

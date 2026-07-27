@@ -14,7 +14,7 @@ export default function PipelineReferralsPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const referralUrl = earnings?.referral_code
-    ? `${window.location.origin}/auth/register?ref=${earnings.referral_code}`
+    ? `${window.location.origin}/register?ref=${earnings.referral_code}`
     : '';
 
   const referrals = earnings?.referrals ?? [];

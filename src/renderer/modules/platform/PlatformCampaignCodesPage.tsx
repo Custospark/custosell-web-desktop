@@ -216,7 +216,7 @@ function UsageModal({ code, onClose }: { code: CampaignCode; onClose: () => void
 
 function CampaignCodeQrModal({ code, onClose }: { code: CampaignCode; onClose: () => void }) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const url = `${window.location.origin}/auth/register?campaign=${code.code}`;
+  const url = `${window.location.origin}/register?campaign=${code.code}`;
 
   useEffect(() => {
     QRCodeLib.toDataURL(url, { width: 240, margin: 2, errorCorrectionLevel: 'M' })

@@ -20,7 +20,7 @@ export default function PaymentPage() {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
 
-  const { currency, onboardingFee } = useDisplayPrices();
+  const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const plan = plans?.find((p) => p.id === subscription?.plan_id);
 
@@ -55,8 +55,16 @@ export default function PaymentPage() {
   const handlePay = () => {
     if (!fee) return;
 
+    const feeUsdValue = plan ? usdOnboardingFee(plan) : 0;
+    const paymentCurrency = getPaymentCurrency();
+    const canPayLocal = paymentCurrency !== 'USD' && exchangeRate !== null;
+    const paymentAmount = canPayLocal
+      ? Math.round(Number(feeUsdValue) * exchangeRate! * 100) / 100
+      : Number(fee);
+    const effectiveCurrency = canPayLocal ? paymentCurrency : 'USD';
+
     initiateMutation.mutate(
-      { amount: Number(fee), currency: getPaymentCurrency(), phone: userPhone },
+      { amount: paymentAmount, currency: effectiveCurrency, phone: userPhone },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);

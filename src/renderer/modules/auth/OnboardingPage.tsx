@@ -30,7 +30,7 @@ export default function OnboardingPage() {
   const [showModal, setShowModal] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
 
-  const { currency, onboardingFee, usdOnboardingFee } = useDisplayPrices();
+  const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
@@ -85,10 +85,16 @@ export default function OnboardingPage() {
         });
       }
 
+      const paymentCurrency = getPaymentCurrency();
+      const canPayLocal = paymentCurrency !== 'USD' && exchangeRate !== null;
+      const paymentAmount = canPayLocal
+        ? Math.round(Number(feeUsd) * exchangeRate! * 100) / 100
+        : Number(feeUsd);
+      const effectiveCurrency = canPayLocal ? paymentCurrency : 'USD';
       const metadata = { action: 'subscribe', plan_id: selectedPlanId };
 
       initiateMutation.mutate(
-        { amount: Number(feeUsd), currency: getPaymentCurrency(), phone: userPhone, metadata },
+        { amount: paymentAmount, currency: effectiveCurrency, phone: userPhone, metadata },
         {
           onSuccess: (result) => {
             setPaymentId(result.payment_id);

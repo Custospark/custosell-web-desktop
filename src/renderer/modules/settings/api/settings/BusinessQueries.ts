@@ -109,9 +109,8 @@ export function useBusiness() {
     if (!query.data) return;
     const info = businessToAuthInfo(query.data);
     const existing = store.getState().auth.user?.business;
-    if (existing?.subscription?.plan_features && !info.subscription?.plan_features) {
-      info.subscription = existing.subscription;
-    }
+    // Business endpoint subscription is never the source of truth — preserve /auth/me data
+    info.subscription = existing?.subscription ?? info.subscription;
     dispatch(setBusiness(info));
   }, [query.data, dispatch]);
 

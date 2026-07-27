@@ -243,7 +243,8 @@ const authSlice = createSlice({
         state.user.business = {
           ...state.user.business,
           ...incoming,
-          subscription: incoming.subscription ?? state.user.business?.subscription,
+          // Never let business endpoint overwrite subscription — /auth/me is the source of truth
+          subscription: state.user.business?.subscription ?? incoming.subscription,
         };
         state.user.business_name = incoming.name;
       }

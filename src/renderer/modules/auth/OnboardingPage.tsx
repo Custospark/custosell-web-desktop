@@ -60,8 +60,9 @@ export default function OnboardingPage() {
     }
   }, [paymentQuery.data?.data?.status, refetchProfile]);
 
-  const handleContinue = () => {
-    navigate(getDefaultRoute(user));
+  const handleContinue = async () => {
+    const profile = await refetchProfile();
+    navigate(getDefaultRoute(profile.data ?? user));
   };
 
   const handleSelectPlan = (plan: { id: number }) => {

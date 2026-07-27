@@ -84,13 +84,13 @@ const SUB_STATUS_INFO: Record<string, { title: string; description: string }> = 
 };
 
 export function SubscriptionGuard() {
-  const { data: hasAccess, isLoading } = useSubscriptionAccess();
+  const { data: hasAccess, isLoading, isFetching } = useSubscriptionAccess();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const subscription = user?.business?.subscription;
   const status = subscription?.status as string | undefined;
 
-  if (isLoading) {
+  if (isLoading || (isFetching && hasAccess !== true)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <CustosellLoader />

@@ -44,8 +44,9 @@ export default function PaymentPage() {
     }
   }, [paymentQuery.data?.data?.status, refetchProfile]);
 
-  const handleContinue = () => {
-    navigate(getDefaultRoute(user));
+  const handleContinue = async () => {
+    const profile = await refetchProfile();
+    navigate(getDefaultRoute(profile.data ?? user));
   };
 
   const fee = plan ? onboardingFee(plan) : 0;

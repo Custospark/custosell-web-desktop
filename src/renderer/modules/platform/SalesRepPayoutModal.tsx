@@ -9,7 +9,7 @@ import { Modal } from '../../shared/components/modals/Modal';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
   DollarSign, History, Wallet, Smartphone, Landmark,
-  CalendarDays, Paperclip, X, FileText, Image
+  CalendarDays, Paperclip, X, FileText, Image, Phone, Check,
 } from 'lucide-react';
 import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
 import type { PlatformSalesRep } from './PlatformSalesRepFormModal';
@@ -130,6 +130,36 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
             Available to Pay: {formatUSD(pending)}
           </p>
         </div>
+
+        {/* Contact & configured payment info */}
+        {(rep?.phone || rep?.payment_method) && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 mb-2">
+              <Check className="w-3.5 h-3.5" />
+              Sales Rep Details
+            </div>
+            <div className="text-sm text-gray-600 space-y-1.5">
+              {rep?.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <span>{rep.phone}</span>
+                </div>
+              )}
+              {rep?.region && (
+                <p><span className="text-gray-400">Region:</span> {rep.region}</p>
+              )}
+              {rep?.payment_method && (
+                <p><span className="text-gray-400">Payout Method:</span> {rep.payment_method === 'mobile_money' ? 'Mobile Money' : rep.payment_method === 'bank' ? 'Bank Transfer' : rep.payment_method}</p>
+              )}
+              {rep?.mobile_money_provider && rep?.mobile_money_number && (
+                <p><span className="text-gray-400">Mobile Money:</span> {rep.mobile_money_provider} — {rep.mobile_money_number}{rep.mobile_money_name ? ` (${rep.mobile_money_name})` : ''}</p>
+              )}
+              {(rep?.bank_name && rep?.bank_account_name) && (
+                <p><span className="text-gray-400">Bank:</span> {rep.bank_name} — {rep.bank_account_name}{rep.bank_account_number ? ` · ${rep.bank_account_number}` : ''}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Record new payout */}
         <PipelineFormSection title="Record a Payout" icon={Wallet}>

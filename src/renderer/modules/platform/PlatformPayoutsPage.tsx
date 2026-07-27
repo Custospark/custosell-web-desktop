@@ -255,7 +255,10 @@ export default function PlatformPayoutsPage() {
                   key: 'name', header: 'Payee',
                   render: (r: PayableEntity) => (
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{r.name}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {r.name}
+                        {r.code && <span className="text-xs text-gray-400 ml-1">({r.code})</span>}
+                      </p>
                       <div className="flex flex-wrap gap-x-3 text-xs text-gray-400">
                         {r.email && <span>{r.email}</span>}
                         {r.phone && <span>{r.phone}</span>}

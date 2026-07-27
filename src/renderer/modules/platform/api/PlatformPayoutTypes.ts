@@ -3,6 +3,7 @@ export interface PayableEntity {
   id: number;
   user_id: number;
   name: string;
+  code: string | null;
   email: string | null;
   phone: string | null;
   total_earned: number;

@@ -158,7 +158,7 @@ export default function RegisterPage() {
                     <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                   </button>
                   {dropdownOpen && (
-                    <div className="absolute top-full mt-1 left-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    <div className="absolute top-full mt-1 left-0 min-w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                       <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
                         <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
                           className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />

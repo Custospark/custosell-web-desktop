@@ -182,4 +182,3 @@
 - **Code audit:** 14/14 gap checks — PASS
 
 
-in our migration file, are legacy businesses assigned trial and expectated to pay onboarding fees?copy the env currency exchnage values for custocare to custosell,currency to convert plan amount to the businesses's cnfigured currency and default to ugx because on plans pages/ pricing pages on custocare, we users are provided with option to select currency in which they want to see the plans prices.

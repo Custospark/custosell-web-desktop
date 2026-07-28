@@ -6,6 +6,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { MODAL_Z_INDEX_CLASS } from '../../shared/components/modals/Modal';
 import { useAppContext } from '../../app/contexts/AppContext';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { usePlanAccessibleModules } from '../../shared/utils/usePlanAccessibleModules';
 import { cn } from '../../shared/utils/cn';
 import {
   placeTourCard,
@@ -103,10 +104,14 @@ function TourCaret({ placement }: { placement: CardPlacement }) {
 
 export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: ProductTourProps) {
   const user = useAppSelector((s) => s.auth.user);
+  const planModules = usePlanAccessibleModules();
   const { state: appState, dispatch: appDispatch } = useAppContext();
   const navigate = useNavigate();
   const update = useUpdateOnboarding();
-  const steps = useMemo(() => resolveTourSteps(user), [user]);
+  const steps = useMemo(() => resolveTourSteps(user, planModules),
+    // Tour is linear — no need to recompute steps when planModules reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user]);
   const [index, setIndex] = useState(() => Math.min(startStep, Math.max(0, steps.length - 1)));
   const [spot, setSpot] = useState<SpotRect | null>(null);
   const [viewportTick, setViewportTick] = useState(0);
@@ -186,14 +191,6 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
       expandSidebarGroup(step.expandGroup);
       await new Promise((r) => setTimeout(r, 40));
 
-      if (step.route) {
-        navigate(step.route);
-        await new Promise((r) => setTimeout(r, 100));
-        ensureSidebarForTarget(step.target);
-        await new Promise((r) => setTimeout(r, 60));
-        expandSidebarGroup(step.expandGroup);
-      }
-
       if (gen !== focusGenRef.current) return;
       const measured = await measureTourTargetStable(step.target, { attempts: 6, settleMs: 20 });
       if (gen !== focusGenRef.current) return;
@@ -236,6 +233,19 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
       setCardHeight(h);
     }
   }, [open, step, index, placement.width, cardHeight, viewportTick]);
+
+  /** Navigate when step changes — kept separate from layout effect to avoid re-render cascade. */
+  useEffect(() => {
+    if (!open || !step?.route) return;
+    navigate(step.route);
+    const navId = setTimeout(() => {
+      ensureSidebarForTarget(step.target);
+      expandSidebarGroup(step.expandGroup);
+    }, 150);
+    return () => clearTimeout(navId);
+    // step identity is intentionally excluded — navigation should not re-trigger on step reference change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step?.route, step?.expandGroup, step?.target]);
 
   const fireSave = useCallback((action: string, tourStep?: number) => {
     update.mutate({ action, tour_step: tourStep } as never, {

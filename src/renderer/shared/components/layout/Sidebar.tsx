@@ -207,7 +207,11 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                     const childBlocked = isCompletelyOffline && isOnlineOnlyNavTarget(item.to);
                     const modulesAttr = item.to === ROUTES.SETTINGS.MODULES
                       ? { 'data-tour': 'sidebar-settings-modules' }
-                      : {};
+                      : item.to === ROUTES.SETTINGS.SUBSCRIPTION
+                        ? { 'data-tour': 'sidebar-settings-subscription' }
+                        : item.to === ROUTES.ACCOUNT.REFERRALS
+                          ? { 'data-tour': 'sidebar-account-referrals' }
+                          : {};
                     if (childBlocked) {
                       return (
                         <OfflineDisabledNav

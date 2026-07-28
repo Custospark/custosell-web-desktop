@@ -7,8 +7,10 @@ import {
   PanelLeft,
   Headset,
   Sparkles,
+  Menu,
+  CreditCard,
+  Gift,
 } from 'lucide-react';
-import { ROUTES } from '../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import { canAccessModule, isBusinessOwner } from '../../shared/utils/moduleAccess';
 import { navTourStepsForUser } from './productTourNavSteps';
@@ -17,6 +19,14 @@ import type { ProductTourStep } from './productTourTypes';
 export type { ProductTourStep } from './productTourTypes';
 
 const SHELL_STEPS: ProductTourStep[] = [
+  {
+    id: 'hamburger',
+    target: 'sidebar-hamburger',
+    title: 'Sidebar menu',
+    body: 'Toggle the sidebar open or closed — keeps your workspace uncluttered when you need more room.',
+    icon: Menu,
+    tone: 'bg-slate-50 text-slate-600 ring-slate-200',
+  },
   {
     id: 'apps',
     target: 'navbar-apps',
@@ -40,6 +50,23 @@ const SHELL_STEPS: ProductTourStep[] = [
     body: 'Tutorials, FAQs, and Replay Tour live here whenever you want a refresher.',
     icon: GraduationCap,
     tone: 'bg-violet-50 text-violet-600 ring-violet-100',
+  },
+  {
+    id: 'referral',
+    target: 'navbar-referral',
+    title: 'Refer & Earn',
+    body: 'Share your referral code, invite businesses, and earn rewards — all from this dropdown.',
+    icon: Gift,
+    tone: 'bg-rose-50 text-rose-600 ring-rose-100',
+  },
+  {
+    id: 'subscription',
+    target: 'navbar-subscription',
+    title: 'Your plan',
+    body: 'See your current plan, compare options, and manage billing right from the navbar.',
+    icon: CreditCard,
+    tone: 'bg-sky-50 text-sky-600 ring-sky-100',
+    when: (user) => isBusinessOwner(user),
   },
   {
     id: 'profile',
@@ -73,11 +100,10 @@ const CLOSING_STEPS: ProductTourStep[] = [
     target: 'sidebar-settings-modules',
     title: 'Module access',
     body: 'Owners turn modules on for the team here. Intent never changes permissions for you.',
-    route: ROUTES.SETTINGS.MODULES,
     expandGroup: 'Settings',
     icon: Settings,
     tone: 'bg-slate-100 text-slate-600 ring-slate-200',
-    when: (user) => isBusinessOwner(user) && canAccessModule(user, 'settings'),
+    when: (user, planModules) => isBusinessOwner(user) && (planModules ? planModules.includes('settings') : canAccessModule(user, 'settings')),
   },
   {
     id: 'workspace',
@@ -98,10 +124,15 @@ export function filterStepsWithTargets(steps: ProductTourStep[]): ProductTourSte
 /**
  * Shell + one step per accessible module (Account & Guide included;
  * each module expands so sub-nav sits inside the spotlight) + closing.
+ * When planAccessibleModules is provided, nav and closing steps are filtered
+ * by both permission AND plan — same logic as the sidebar.
  */
-export function resolveTourSteps(user: AuthUser | null | undefined): ProductTourStep[] {
-  const shell = SHELL_STEPS.filter((step) => !step.when || step.when(user));
-  const nav = navTourStepsForUser(user);
-  const closing = CLOSING_STEPS.filter((step) => !step.when || step.when(user));
+export function resolveTourSteps(
+  user: AuthUser | null | undefined,
+  planAccessibleModules?: string[],
+): ProductTourStep[] {
+  const shell = SHELL_STEPS.filter((step) => !step.when || step.when(user, planAccessibleModules));
+  const nav = navTourStepsForUser(user, planAccessibleModules);
+  const closing = CLOSING_STEPS.filter((step) => !step.when || step.when(user, planAccessibleModules));
   return [...shell, ...nav, ...closing];
 }

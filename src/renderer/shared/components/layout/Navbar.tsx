@@ -322,9 +322,9 @@ export function Navbar() {
 
           <GuideHeaderNav />
 
-          <ReferralDropdown />
+          <div data-tour="navbar-referral"><ReferralDropdown /></div>
 
-          {isBusinessOwner(user) && <SubscriptionDropdown />}
+          {isBusinessOwner(user) && <div data-tour="navbar-subscription"><SubscriptionDropdown /></div>}
 
           <div className="shrink-0 pr-3">
             <button

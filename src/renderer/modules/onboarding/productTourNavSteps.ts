@@ -47,15 +47,25 @@ function launcherMeta(slug: string): { icon: ElementType; tone: string } | null 
   return { icon: item.icon, tone: item.tone };
 }
 
-/** Same visibility rules as Sidebar — tour only covers what the user can open. */
-export function tourNavGroupsForUser(user: AuthUser | null | undefined): SidebarNavGroup[] {
+/** Same visibility rules as Sidebar — tour only covers what the user can open.
+ *  Accepts planAccessibleModules (permission + plan) or falls back to permission-only check.
+ *  Mirrors resolveAccessibleNavGroups() used by the sidebar. */
+export function tourNavGroupsForUser(
+  user: AuthUser | null | undefined,
+  planAccessibleModules?: string[],
+): SidebarNavGroup[] {
+  const hasModule = (slug: string): boolean => {
+    if (planAccessibleModules) return planAccessibleModules.includes(slug);
+    return canAccessModule(user, slug);
+  };
+
   return baseNavGroups.filter((group) => {
     const moduleSlug = NAV_GROUP_MODULE[group.label];
     if (!moduleSlug) return true;
     if (group.label === 'Projects & Estimates') {
       return hasEstimatesBoardsAccess(user);
     }
-    return canAccessModule(user, moduleSlug);
+    return hasModule(moduleSlug);
   }).map((group) => {
     if (group.label === 'Projects & Estimates' && isLimitedEstimatesUser(user)) {
       return {
@@ -101,10 +111,13 @@ function groupBody(slug: string, group: SidebarNavGroup): string {
  * One step per accessible module (incl. Account & Custosell Guide).
  * Spotlight targets the expanded group so header + sub-nav show together.
  */
-export function navTourStepsForUser(user: AuthUser | null | undefined): ProductTourStep[] {
+export function navTourStepsForUser(
+  user: AuthUser | null | undefined,
+  planAccessibleModules?: string[],
+): ProductTourStep[] {
   const steps: ProductTourStep[] = [];
 
-  for (const group of tourNavGroupsForUser(user)) {
+  for (const group of tourNavGroupsForUser(user, planAccessibleModules)) {
     const slug = NAV_GROUP_MODULE[group.label];
     if (!slug || slug === 'platform' || slug === 'guide_settings') continue;
 

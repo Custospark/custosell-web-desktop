@@ -10,5 +10,5 @@ export interface ProductTourStep {
   expandGroup?: string;
   icon?: ElementType;
   tone?: string;
-  when?: (user: AuthUser | null | undefined) => boolean;
+  when?: (user: AuthUser | null | undefined, planModules?: string[]) => boolean;
 }

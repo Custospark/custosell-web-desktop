@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { useToast } from '../../../../app/contexts/useToast';
+import { API_BASE_URL } from '../../../../app/api/apiConfig';
 import { FileSpreadsheet, FileText, Download } from 'lucide-react';
 
 interface ExportModalProps {
@@ -18,8 +19,7 @@ export default function ExportModal({ open, onClose }: ExportModalProps) {
     setDownloading(true);
     try {
       const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-      const url = `${baseUrl}/products/export${format === 'xlsx' ? '?format=xlsx' : ''}`;
+      const url = `${API_BASE_URL}/products/export${format === 'xlsx' ? '?format=xlsx' : ''}`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       const blob = await res.blob();
       const ext = format === 'xlsx' ? 'xlsx' : 'csv';

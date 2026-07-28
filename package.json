@@ -13,6 +13,8 @@
     "dev:electron": "npm run transpile:electron && cross-env NODE_ENV=development electron .",
     "react:build": "tsc -b && vite build",
     "react:build:web": "tsc -b && cross-env VITE_ASSET_BASE=/ vite build",
+    "react:build:staging": "tsc -b && cross-env VITE_ASSET_BASE=/ vite build --mode staging",
+    "build:staging:web": "npm run react:build:staging",
     "build:react": "npm run react:build",
     "lint": "eslint .",
     "vera:fast": "node scripts/vera-fast.mjs",

@@ -15,7 +15,7 @@ export function storefrontShareUrl(slug: string): string {
     typeof window.location?.origin === 'string' &&
     /^https?:\/\//.test(window.location.origin)
       ? window.location.origin
-      : 'https://custosell.custospark.com';
+      : 'https://custosell.com';
   return `${origin}${handle}`;
 }
 

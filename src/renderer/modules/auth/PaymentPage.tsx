@@ -136,7 +136,7 @@ export default function PaymentPage() {
                     <Wallet className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700">Promo credit</span>
                   </div>
-                  <span className="text-sm font-bold text-green-700">-{formatCurrency(availableCredit, 'USD')}</span>
+                    <span className="text-sm font-bold text-green-700">-{formatCurrency(creditConverted, displayCurrency)}</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-blue-200 pt-2">
                   <span className="text-sm font-semibold text-gray-800">Total due today</span>

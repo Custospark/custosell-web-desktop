@@ -307,7 +307,7 @@ export default function RegisterPage() {
                 <ChevronLeft className="h-4 w-4" />
                 Back
               </button>
-              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={registerMutation.isPending}>
+              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={registerMutation.isPending} disabled={!planId}>
                 <UserPlus className="h-4 w-4" aria-hidden />
                 Create Account
               </Button>

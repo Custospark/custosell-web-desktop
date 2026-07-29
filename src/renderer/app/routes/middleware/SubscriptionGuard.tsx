@@ -30,7 +30,7 @@ function computeOfflineAccess(subscription: {
     return true;
   }
 
-  if (status === 'trial') {
+  if (status === 'trial' || status === 'trialing') {
     if (!subscription?.trial_ends_at) return true;
     return new Date(subscription.trial_ends_at).getTime() > Date.now();
   }
@@ -80,6 +80,10 @@ const SUB_STATUS_INFO: Record<string, { title: string; description: string }> = 
   past_due: {
     title: 'Payment required',
     description: 'Your subscription payment is past due. Make a payment to restore full access.',
+  },
+  expired: {
+    title: 'Trial expired',
+    description: 'Your trial has ended. Choose a plan to continue using Custosell.',
   },
 };
 

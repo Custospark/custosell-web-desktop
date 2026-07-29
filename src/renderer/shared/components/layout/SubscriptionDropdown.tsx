@@ -5,6 +5,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
 import { formatCurrency, formatUSD } from '../../utils/formatCurrency';
 import { useDisplayPrices } from '../../utils/useDisplayPrices';
+import { STATUS_STYLES } from '../../../modules/settings/planConstants';
 import {
   Crown, Sparkles, Building2, CheckCircle2, ChevronDown,
   CreditCard, Settings, ArrowUp, ArrowDown,
@@ -83,9 +84,9 @@ export default function SubscriptionDropdown() {
   const Icon = meta.icon;
 
   const statusLabel = subscription?.status === 'trial' ? `Trial till ${formatDate(subscription.trial_ends_at)}`
-    : subscription?.next_billing_date ? `Active till ${formatDate(subscription.next_billing_date)}`
-    : subscription?.status === 'past_due' ? 'Payment due'
+    : subscription?.status === 'active' && subscription?.next_billing_date ? `Active till ${formatDate(subscription.next_billing_date)}`
     : subscription?.status === 'active' ? 'Active'
+    : subscription?.status === 'past_due' ? 'Payment due'
     : subscription?.status ?? '';
 
   const features = useMemo(() => {
@@ -155,14 +156,10 @@ export default function SubscriptionDropdown() {
                   <span className="text-sm font-bold truncate text-gray-900">{currentPlan?.name ?? subscription?.plan_name ?? 'Essential'}</span>
                   <span className={cn(
                     'px-2 py-0.5 text-xs font-bold rounded-full shrink-0',
-                    subscription.status === 'trial' ? 'bg-amber-100 text-amber-800'
-                      : subscription.status === 'past_due' ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-green-100 text-green-800',
+                    (STATUS_STYLES[subscription.status] ?? STATUS_STYLES.active).bg,
+                    (STATUS_STYLES[subscription.status] ?? STATUS_STYLES.active).text,
                   )}>
-                    {subscription.status === 'trial' ? 'Trial'
-                      : subscription.status === 'past_due' ? 'Past due'
-                      : subscription.status === 'active' ? 'Active'
-                      : subscription.status ?? 'Active'}
+                    {(STATUS_STYLES[subscription.status] ?? STATUS_STYLES.active).label}
                   </span>
                 </div>
                 <span className="text-xs text-gray-500">{statusLabel}</span>

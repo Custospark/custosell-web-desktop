@@ -16,6 +16,7 @@ export interface SubscriptionInfo {
   billing_cycle?: string | null;
   starts_at?: string | null;
   trial_ends_at?: string | null;
+  grace_period_ends_at?: string | null;
   next_billing_date?: string | null;
   onboarding_fee_paid?: boolean;
   payment_action?: {

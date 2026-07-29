@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
+import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, getPaymentCurrency, useChangeBillingCycle } from '../../shared/api/account/SubscriptionQueries';
+import { useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
@@ -9,7 +10,7 @@ import { getPaymentType } from './planActionMatrix';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { PlanAction } from './planActionMatrix';
-import { CheckCircle, AlertCircle, Clock, CalendarDays } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, CalendarDays, Tag, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
@@ -39,6 +40,9 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
   const { currency, monthlyPrice, yearlyPrice, onboardingFee } = useDisplayPrices();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [pendingCycle, setPendingCycle] = useState<'monthly' | 'yearly' | null>(null);
+  const [referralCode, setReferralCode] = useState('');
+  const [showReferralInput, setShowReferralInput] = useState(false);
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
@@ -48,6 +52,8 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
   const downgradeMutation = useDowngrade();
   const cancelChangeMutation = useCancelScheduledChange();
+  const changeBillingCycleMutation = useChangeBillingCycle();
+  const applyReferralMutation = useApplyReferralCode();
   const { data: changes } = useSubscriptionChanges(Number(subscription.id));
   const pendingChange = useMemo(() => {
     if (!changes) return null;
@@ -180,7 +186,14 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <div className="inline-flex gap-1 bg-gray-100 p-1 rounded-xl">
           <button
             type="button"
-            onClick={() => setBillingCycle('monthly')}
+            onClick={() => {
+              if (subscription.billing_cycle === 'monthly') return;
+              if (subscription.billing_cycle) {
+                setPendingCycle('monthly');
+              } else {
+                setBillingCycle('monthly');
+              }
+            }}
             className={cn(
               'px-5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
               billingCycle === 'monthly' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700',
@@ -190,7 +203,14 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           </button>
           <button
             type="button"
-            onClick={() => setBillingCycle('yearly')}
+            onClick={() => {
+              if (subscription.billing_cycle === 'yearly') return;
+              if (subscription.billing_cycle) {
+                setPendingCycle('yearly');
+              } else {
+                setBillingCycle('yearly');
+              }
+            }}
             className={cn(
               'px-5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
               billingCycle === 'yearly' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700',
@@ -211,6 +231,43 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           ))}
         </div>
       )}
+
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <button
+          type="button"
+          onClick={() => setShowReferralInput((v) => !v)}
+          className="flex items-center justify-between w-full text-sm font-medium text-gray-700 cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <Tag className="w-4 h-4 text-blue-500" />
+            Have a referral or promo code?
+          </span>
+          {showReferralInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {showReferralInput && (
+          <div className="mt-3 flex gap-2">
+            <input
+              type="text"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
+              placeholder="Enter code"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (referralCode.trim()) {
+                  applyReferralMutation.mutate({ referral_code: referralCode.trim() });
+                }
+              }}
+              disabled={!referralCode.trim() || applyReferralMutation.isPending}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            >
+              {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 overflow-x-auto">
         <h2 className="text-xl font-bold mb-6 text-center text-gray-900">Feature Comparison</h2>
@@ -258,6 +315,47 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           </tbody>
         </table>
       </div>
+
+      {pendingCycle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">Switch to {pendingCycle === 'yearly' ? 'Yearly' : 'Monthly'} Billing?</h3>
+            <p className="text-sm text-gray-600">
+              {pendingCycle === 'yearly'
+                ? 'You\'ll be charged the yearly rate immediately, with credit applied for unused days in your current month.'
+                : 'This change will take effect at the end of your current billing period.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingCycle(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  changeBillingCycleMutation.mutate(
+                    { subscriptionId: Number(subscription.id), billing_cycle: pendingCycle },
+                    {
+                      onSuccess: () => {
+                        setBillingCycle(pendingCycle);
+                        setPendingCycle(null);
+                      },
+                      onError: () => setPendingCycle(null),
+                    },
+                  );
+                }}
+                disabled={changeBillingCycleMutation.isPending}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+              >
+                {changeBillingCycleMutation.isPending ? 'Switching...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {upgradeFlowPlan && (
         <UpgradeFlowModal

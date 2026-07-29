@@ -230,6 +230,32 @@ export function useCancelScheduledChange() {
   });
 }
 
+export function useChangeBillingCycle() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<{ message: string; data: unknown }, AxiosError<ApiError>, {
+    subscriptionId: number;
+    billing_cycle: 'monthly' | 'yearly';
+    effective?: 'immediate' | 'end_of_period';
+  }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post(
+        SUBSCRIPTIONS.BILLING_CYCLE(payload.subscriptionId),
+        { billing_cycle: payload.billing_cycle, effective: payload.effective },
+      );
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message || 'Billing cycle updated');
+      queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Failed to change billing cycle';
+      showToast('error', message);
+    },
+  });
+}
+
 export function useSubscriptionChanges(subscriptionId: number | null) {
   return useQuery({
     queryKey: ['subscription', 'changes', subscriptionId],

@@ -63,6 +63,7 @@ export const SUBSCRIPTIONS = {
   CHANGES: (id: number) => `/subscriptions/${id}/changes`,
   CANCEL_CHANGE: (id: number) => `/subscriptions/${id}/cancel-change`,
   CANCEL: (id: number) => `/subscriptions/${id}/cancel`,
+  BILLING_CYCLE: (id: number) => `/subscriptions/${id}/billing-cycle`,
   REACTIVATE: (id: number) => `/subscriptions/${id}/reactivate`,
 };
 export const BILLING = {

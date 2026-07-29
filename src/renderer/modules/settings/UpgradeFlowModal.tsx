@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
-import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
+import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
+import { useProfile } from '../../shared/api/account/AccountQueries';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp, Wallet } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 
@@ -30,6 +31,11 @@ export default function UpgradeFlowModal({
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [prorationDue, setProrationDue] = useState(0);
   const [prorationDueUsd, setProrationDueUsd] = useState(0);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
+  const [showPromoInput, setShowPromoInput] = useState(false);
+  const applyReferralMutation = useApplyReferralCode();
+  const { refetch: refetchProfile } = useProfile();
 
   const { data: quote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
     subscription.id, plan.id,
@@ -218,6 +224,69 @@ export default function UpgradeFlowModal({
             )}
           </div>
 
+          {!subscription.referral?.code && !promoCodeSuccess && (
+            <div className="border-t border-gray-100 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowPromoInput((v) => !v)}
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 hover:text-gray-800 cursor-pointer py-1"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-blue-500" />
+                  Have a promo or referral code?
+                </span>
+                {showPromoInput ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+              {showPromoInput && (
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="text"
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                    placeholder="Enter code"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (promoCodeInput.trim()) {
+                        setPromoCodeSuccess(null);
+                        applyReferralMutation.mutate(
+                          { referral_code: promoCodeInput.trim() },
+                          {
+                            onSuccess: () => {
+                              setPromoCodeSuccess('Code applied successfully');
+                              setPromoCodeInput('');
+                              setShowPromoInput(false);
+                              refetchProfile();
+                            },
+                          },
+                        );
+                      }
+                    }}
+                    disabled={!promoCodeInput.trim() || applyReferralMutation.isPending}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                  </button>
+                </div>
+              )}
+              {applyReferralMutation.isError && (
+                <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {applyReferralMutation.error?.response?.data?.message || 'Failed to apply code'}
+                </p>
+              )}
+            </div>
+          )}
+
+          {promoCodeSuccess && (
+            <div className="flex items-center gap-1.5 text-sm text-green-700">
+              <CheckCircle className="w-4 h-4" />
+              {promoCodeSuccess}
+            </div>
+          )}
+
           <Button type="button" onClick={handleConfirm} className="w-full gap-2 py-3 text-sm"
             loading={upgradeMutation.isPending}>
             Confirm Upgrade
@@ -283,9 +352,9 @@ export default function UpgradeFlowModal({
 
           <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
             <p className="text-sm text-gray-600">
-              Mobile Money: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
+              Phone: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
             </p>
-            <p className="text-xs text-gray-400">An STK push will be sent to this number.</p>
+            <p className="text-xs text-gray-400">You'll choose your payment method when you proceed.</p>
           </div>
 
           <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm"
@@ -356,10 +425,10 @@ export default function UpgradeFlowModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
             <p className="text-sm text-gray-500 mt-1">
-              Complete the payment of {formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - creditAfterProration))} via Mobile Money.
+              Complete the payment of {formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - creditAfterProration))}.
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              An STK push will be sent to <span className="font-semibold">{userPhone}</span>
+              Follow the prompts on your phone <span className="font-semibold">{userPhone}</span> to complete the payment.
             </p>
           </div>
           <button type="button" onClick={onClose}

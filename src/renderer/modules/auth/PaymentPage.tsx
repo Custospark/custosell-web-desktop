@@ -53,22 +53,34 @@ export default function PaymentPage() {
   };
 
   const fee = plan ? onboardingFee(plan) : 0;
+  const feeUsd = plan ? usdOnboardingFee(plan) : 0;
   const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
 
-  const handlePay = () => {
-    if (!fee) return;
+  const paymentCurrency = getPaymentCurrency();
+  const canPayLocal = paymentCurrency !== 'USD' && exchangeRate !== null;
 
-    const feeUsdValue = plan ? usdOnboardingFee(plan) : 0;
-    const paymentCurrency = getPaymentCurrency();
-    const canPayLocal = paymentCurrency !== 'USD' && exchangeRate !== null;
+  // When business currency isn't natively supported (UGX/KES/TZS only), show prices in USD
+  const displayCurrency = canPayLocal ? currency : 'USD';
+  const displayedFee = canPayLocal ? fee : feeUsd;
+
+  // Convert available credit (USD) to display currency for the total
+  const creditConverted = canPayLocal && availableCredit > 0 && exchangeRate !== null
+    ? Math.round(availableCredit * exchangeRate * 100) / 100
+    : availableCredit;
+  const totalDue = Math.max(0, displayedFee - creditConverted);
+  const canPay = canPayLocal ? !!fee : !!feeUsd;
+
+  const handlePay = () => {
+    if (!canPay) return;
+
     const paymentAmount = canPayLocal
-      ? Math.round(Number(feeUsdValue) * exchangeRate! * 100) / 100
-      : Number(fee);
-    const effectiveCurrency = canPayLocal ? paymentCurrency : 'USD';
+      ? Math.round(Number(feeUsd) * exchangeRate! * 100) / 100
+      : Number(feeUsd);
+    const sendCurrency = canPayLocal ? paymentCurrency : 'USD';
 
     initiateMutation.mutate(
-      { amount: paymentAmount, currency: effectiveCurrency, phone: userPhone },
+      { amount: paymentAmount, currency: sendCurrency, phone: userPhone },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
@@ -107,7 +119,7 @@ export default function PaymentPage() {
             <div className="flex items-center justify-between border-t border-blue-100 pt-3">
               <span className="text-sm text-gray-600">Onboarding Fee</span>
               <span className="text-lg font-bold text-amber-600">
-                {formatCurrency(Number(fee), currency)}
+                {formatCurrency(Number(displayedFee), displayCurrency)}
               </span>
             </div>
             {plan.trial_days ? (
@@ -118,13 +130,21 @@ export default function PaymentPage() {
               </div>
             ) : null}
             {availableCredit > 0 && (
-              <div className="flex items-center justify-between border-t border-blue-100 pt-3">
-                <div className="flex items-center gap-1.5">
-                  <Wallet className="w-4 h-4 text-green-600" />
-                  <span className="text-sm text-green-700">Promo credit</span>
+              <>
+                <div className="flex items-center justify-between border-t border-blue-100 pt-3">
+                  <div className="flex items-center gap-1.5">
+                    <Wallet className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700">Promo credit</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-700">-{formatCurrency(availableCredit, 'USD')}</span>
                 </div>
-                <span className="text-sm font-bold text-green-700">-{formatCurrency(availableCredit, 'USD')}</span>
-              </div>
+                <div className="flex items-center justify-between border-t border-blue-200 pt-2">
+                  <span className="text-sm font-semibold text-gray-800">Total due today</span>
+                  <span className="text-base font-bold text-blue-700">
+                    {formatCurrency(totalDue, displayCurrency)}
+                  </span>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -148,7 +168,7 @@ export default function PaymentPage() {
             onClick={handlePay}
             className="w-full gap-2 py-3.5 text-base"
             loading={initiateMutation.isPending}
-            disabled={!fee || !userPhone}
+            disabled={!canPay || !userPhone}
           >
             <CreditCard className="h-4 w-4" />
             Pay Onboarding Fee

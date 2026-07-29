@@ -6,20 +6,22 @@ import type { Plan } from '../../types';
 import { CustosellLoader } from '../loading/CustosellLoader';
 
 const FEATURE_CATALOG: Record<string, { label: string; description: string }> = {
-  sales: { label: 'Point of Sale', description: 'Complete POS with orders, history & refunds' },
-  inventory: { label: 'Inventory Management', description: 'Products, stock ledger & supply chain' },
+  sales: { label: 'Point of Sale', description: 'Complete point of sale with orders, history & refunds' },
+  storefront: { label: 'Online Storefront', description: 'Sell online with your own custom storefront' },
+  inventory: { label: 'Inventory & Supply Chain', description: 'Products, stock ledger & supply chain management' },
+  accounting: { label: 'Full Accounting', description: 'Chart of accounts, financial reports & reconciliations' },
+  hr: { label: 'HR & Payroll', description: 'Employee management, attendance & payroll processing' },
+  expenses: { label: 'Expense Tracking', description: 'Record, categorize and analyse expenses' },
+  estimates: { label: 'Project Management', description: 'Quotes, projects & reusable templates' },
+  pipeline: { label: 'Sales Pipeline (CRM)', description: 'CRM boards, leads & team collaboration' },
+  forecasting: { label: 'Financial Forecasting', description: 'Financial projections, budgets & cash flow' },
+  documents: { label: 'Document Management', description: 'Secure file storage, sharing & e-signatures' },
   customers: { label: 'Customer Management', description: 'Customer profiles & purchase history' },
-  expenses: { label: 'Expense Tracking', description: 'Record and categorize expenses' },
-  dashboard: { label: 'Dashboard & Analytics', description: 'Real-time business performance' },
-  storefront: { label: 'Online Storefront', description: 'Sell online with custom storefront' },
-  pipeline: { label: 'Sales Pipeline', description: 'Boards, leads & team collaboration' },
-  estimates: { label: 'Estimates & Projects', description: 'Quotes, projects & templates' },
+  dashboard: { label: 'Dashboard & Analytics', description: 'Real-time business performance metrics' },
   marketplace: { label: 'Supply Marketplace', description: 'Source products from other businesses' },
-  documents: { label: 'Document Management', description: 'Secure file storage & e-signatures' },
-  accounting: { label: 'Full Accounting', description: 'Chart of accounts & financial reports' },
-  hr: { label: 'HR & Payroll', description: 'Employee mgmt, attendance & payroll' },
-  forecasting: { label: 'Forecasting & Budgets', description: 'Financial projections & budgets' },
 };
+
+const FEATURE_ORDER = Object.keys(FEATURE_CATALOG);
 
 const LIMIT_LABELS: Record<string, string> = {
   max_staff: 'Staff accounts',
@@ -91,7 +93,9 @@ export function PlanCards({ plans, selectedPlanId, onSelect, billingCycle = 'mon
           const localPrice = isYearly ? yearlyPrice(plan) : monthlyPrice(plan);
           const fee = onboardingFee(plan);
           const usdFee = usdOnboardingFee(plan);
-          const features = Object.entries(plan.features).filter(([, v]) => v);
+          const features = Object.entries(plan.features)
+            .filter(([, v]) => v)
+            .sort(([a], [b]) => FEATURE_ORDER.indexOf(a) - FEATURE_ORDER.indexOf(b));
           const limits = Object.entries(plan.limits).filter(([, v]) => v !== null) as [string, number][];
 
           const accent = (

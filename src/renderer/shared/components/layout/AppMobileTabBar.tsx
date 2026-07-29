@@ -21,7 +21,7 @@ const tabBtnBase =
 
 /**
  * Auth shell mobile bottom tabs: Menu | first two accessible leaves | More.
- * In-flow below Main (not fixed) so content is never covered. `lg:hidden`.
+ * Fixed to bottom so it's always visible regardless of scroll position. `lg:hidden`.
  */
 export function AppMobileTabBar() {
   const { state, dispatch } = useAppContext();
@@ -49,7 +49,7 @@ export function AppMobileTabBar() {
     <>
       <nav
         className={cn(
-          'shrink-0 border-t border-slate-200 bg-white',
+          'fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white',
           'pb-[max(0.5rem,env(safe-area-inset-bottom))]',
           'lg:hidden',
         )}

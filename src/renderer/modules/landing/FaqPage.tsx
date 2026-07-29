@@ -76,11 +76,11 @@ const FAQ_CATEGORIES: { label: string; icon: typeof HelpCircle; items: FaqItem[]
     items: [
       {
         q: 'What modules are included in each plan?',
-        a: 'Essential includes POS, inventory, customers, expenses, dashboard, and a public online storefront. Professional adds pipeline, estimates, documents, and marketplace. Enterprise adds accounting, HR & payroll, and forecasting.',
+        a: 'Essential includes point of sale, inventory, customers, expenses, dashboard, and a public online storefront. Professional adds pipeline, estimates, documents, and marketplace. Enterprise adds accounting, HR & payroll, and forecasting.',
       },
       {
         q: 'Can I control what my staff see?',
-        a: 'Yes. You control which modules each staff member can access. A cashier sees only the POS. Your inventory manager sees only stock-related sections.',
+        a: 'Yes. You control which modules each staff member can access. A cashier sees only the point of sale. Your inventory manager sees only stock-related sections.',
       },
       {
         q: 'Are receipts tax-compliant?',
@@ -88,7 +88,7 @@ const FAQ_CATEGORIES: { label: string; icon: typeof HelpCircle; items: FaqItem[]
       },
       {
         q: 'Can I sell online with Custosell?',
-        a: 'Yes. Every business gets a public storefront with a shareable link. Customers browse products and place orders. You fulfil from your POS. Share the link on WhatsApp, TikTok, or Facebook.',
+        a: 'Yes. Every business gets a public storefront with a shareable link. Customers browse products and place orders. You fulfil from your point of sale. Share the link on WhatsApp, TikTok, or Facebook.',
       },
     ],
   },

@@ -8,18 +8,18 @@ import { ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 
 const FEATURE_COMPARISON: Record<string, [boolean, boolean, boolean]> = {
   'Point of Sale': [true, true, true],
-  'Inventory Management': [true, true, true],
-  'Customer Management': [true, true, true],
-  'Expense Tracking': [true, true, true],
-  'Dashboard & Analytics': [true, true, true],
   'Online Storefront': [true, true, true],
-  'Sales Pipeline': [false, true, true],
-  'Estimates & Projects': [false, true, true],
+  'Inventory & Supply Chain': [true, true, true],
+  'Customer Management': [true, true, true],
+  'Dashboard & Analytics': [true, true, true],
+  'Expense Tracking': [true, true, true],
+  'Sales Pipeline (CRM)': [false, true, true],
+  'Project Management': [false, true, true],
   'Supply Marketplace': [false, true, true],
   'Document Management': [false, true, true],
   'Full Accounting': [false, false, true],
   'HR & Payroll': [false, false, true],
-  'Forecasting & Budgets': [false, false, true],
+  'Financial Forecasting': [false, false, true],
 };
 
 const FAQS = [
@@ -46,7 +46,7 @@ export default function PricingPage() {
           </span>
         </h1>
         <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto">
-          One platform for your entire business. Pay a one-time setup fee, then choose your plan.
+          Point of sale, e-commerce, inventory, accounting, HR, CRM, projects &amp; more — one platform, one subscription. Pay a one-time setup fee, then choose your plan.
         </p>
 
         <div className="flex items-center justify-center gap-3 mt-8">

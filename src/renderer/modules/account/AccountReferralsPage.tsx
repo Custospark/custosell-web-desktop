@@ -5,7 +5,7 @@ import { cn } from '../../shared/utils/cn';
 import QRCodeLib from 'qrcode';
 
 import {
-  Gift, Copy, Check, Sparkles, QrCode, Download, Share2, X,
+  Gift, Copy, Check, Sparkles, QrCode, Download, Share2, X, Link,
   Trophy, ScrollText, LifeBuoy,
 } from 'lucide-react';
 import AccountReferralsWinsTab from './AccountReferralsWinsTab';
@@ -129,7 +129,22 @@ export default function AccountReferralsPage() {
                 </button>
               </div>
             </div>
-            <p className="text-xs text-gray-400 break-all">{referralUrl}</p>
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+              <span className="text-xs text-gray-500 truncate mr-2 select-all">{referralUrl}</span>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className={cn(
+                  'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0',
+                  linkCopied
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-gray-200',
+                )}
+              >
+                {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Link className="w-3.5 h-3.5" />}
+                {linkCopied ? 'Copied' : 'Link'}
+              </button>
+            </div>
           </>
         )}
       </section>

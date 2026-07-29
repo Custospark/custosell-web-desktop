@@ -43,6 +43,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [pendingCycle, setPendingCycle] = useState<'monthly' | 'yearly' | null>(null);
   const [referralCode, setReferralCode] = useState('');
   const [showReferralInput, setShowReferralInput] = useState(false);
+  const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
@@ -245,27 +246,56 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           {showReferralInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
         {showReferralInput && (
-          <div className="mt-3 flex gap-2">
-            <input
-              type="text"
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
-              placeholder="Enter code"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                if (referralCode.trim()) {
-                  applyReferralMutation.mutate({ referral_code: referralCode.trim() });
-                }
-              }}
-              disabled={!referralCode.trim() || applyReferralMutation.isPending}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-            >
-              {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
-            </button>
-          </div>
+          <>
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                placeholder="Enter code"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (referralCode.trim()) {
+                    setReferralSuccess(null);
+                    applyReferralMutation.mutate(
+                      { referral_code: referralCode.trim() },
+                      {
+                        onSuccess: (data) => {
+                          const discount = data?.referral?.discount_applied;
+                          const num = Number(discount);
+                          if (num > 0) {
+                            setReferralSuccess('$' + num.toFixed(2) + '/mo discount applied');
+                          } else {
+                            setReferralSuccess('Code applied successfully');
+                          }
+                          setReferralCode('');
+                        },
+                      },
+                    );
+                  }
+                }}
+                disabled={!referralCode.trim() || applyReferralMutation.isPending}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+              >
+                {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+              </button>
+            </div>
+            {referralSuccess && (
+              <div className="mt-2 flex items-center gap-1.5 text-sm text-green-700">
+                <CheckCircle className="w-4 h-4" />
+                {referralSuccess}
+              </div>
+            )}
+            {applyReferralMutation.isError && (
+              <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
+                <AlertCircle className="w-4 h-4" />
+                {applyReferralMutation.error?.response?.data?.message || 'Failed to apply code'}
+              </div>
+            )}
+          </>
         )}
       </div>
 

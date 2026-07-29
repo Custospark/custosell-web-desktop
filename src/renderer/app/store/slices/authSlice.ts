@@ -25,6 +25,14 @@ export interface SubscriptionInfo {
     label: string | null;
     message: string | null;
   };
+  referral?: {
+    code: string | null;
+    discount_type: string | null;
+    discount_value: string | null;
+    discount_duration_months: number | null;
+    discount_applied: string | null;
+    status: string | null;
+  } | null;
 }
 export interface BusinessInfo {
   id: number;

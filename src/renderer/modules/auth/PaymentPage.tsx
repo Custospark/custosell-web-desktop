@@ -9,10 +9,10 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
+import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet } from 'lucide-react';
+import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -20,6 +20,10 @@ export default function PaymentPage() {
   const subscription = user?.business?.subscription;
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
+  const [showPromoInput, setShowPromoInput] = useState(false);
+  const applyReferralMutation = useApplyReferralCode();
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
@@ -129,6 +133,23 @@ export default function PaymentPage() {
                 </span>
               </div>
             ) : null}
+            {subscription?.referral?.code && (
+              <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="text-xs font-semibold text-indigo-700">
+                    Promo code <span className="font-mono">{subscription.referral.code}</span> applied
+                  </span>
+                </div>
+                <p className="text-[11px] text-indigo-600/80 pl-5">
+                  {subscription.referral.discount_type === 'percentage'
+                    ? `${subscription.referral.discount_value}% off your subscription for ${subscription.referral.discount_duration_months} month${subscription.referral.discount_duration_months > 1 ? 's' : ''}`
+                    : subscription.referral.discount_type === 'free_month'
+                      ? 'One month free on your subscription'
+                      : 'Discount applied to your subscription'}
+                </p>
+              </div>
+            )}
             {availableCredit > 0 && (
               <>
                 <div className="flex items-center justify-between border-t border-blue-100 pt-3">
@@ -159,15 +180,78 @@ export default function PaymentPage() {
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <Smartphone className="w-4 h-4 text-gray-400" />
-            Mobile Money Number
+            Phone Number
           </div>
           <p className="text-lg font-semibold text-gray-900">
             {userPhone || 'No phone on file'}
           </p>
           <p className="text-xs text-gray-400">
-            An STK push will be sent to this number. Ensure it is registered on mobile money.
+            You'll choose your payment method when you proceed.
           </p>
         </div>
+
+        {!subscription?.referral?.code && !promoCodeSuccess && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowPromoInput((v) => !v)}
+              className="flex items-center justify-between w-full text-sm font-medium text-gray-600 hover:text-gray-800 cursor-pointer py-1"
+            >
+              <span className="flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-blue-500" />
+                Have a promo or referral code?
+              </span>
+              {showPromoInput ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+            {showPromoInput && (
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  value={promoCodeInput}
+                  onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                  placeholder="Enter code"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (promoCodeInput.trim()) {
+                      setPromoCodeSuccess(null);
+                      applyReferralMutation.mutate(
+                        { referral_code: promoCodeInput.trim() },
+                        {
+                          onSuccess: () => {
+                            setPromoCodeSuccess('Code applied successfully');
+                            setPromoCodeInput('');
+                            setShowPromoInput(false);
+                            refetchProfile();
+                          },
+                        },
+                      );
+                    }
+                  }}
+                  disabled={!promoCodeInput.trim() || applyReferralMutation.isPending}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                </button>
+              </div>
+            )}
+            {applyReferralMutation.isError && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {applyReferralMutation.error?.response?.data?.message || 'Failed to apply code'}
+              </p>
+            )}
+          </div>
+        )}
+
+        {promoCodeSuccess && (
+          <div className="flex items-center gap-1.5 text-sm text-green-700">
+            <CheckCircle className="w-4 h-4" />
+            {promoCodeSuccess}
+          </div>
+        )}
 
         {!initiated && !isPaymentDone && (
           <Button

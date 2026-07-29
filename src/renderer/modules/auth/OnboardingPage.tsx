@@ -39,6 +39,9 @@ export default function OnboardingPage() {
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
   const availableCredit = earnings?.available_credit ?? 0;
+  const referralDiscountUsd = subscription?.referral?.discount_applied
+    ? Number(subscription.referral.discount_applied)
+    : 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
@@ -53,10 +56,14 @@ export default function OnboardingPage() {
   const isPaymentFailed = paymentQuery.data?.data?.status === 'failed';
   const paymentCurrency = getPaymentCurrency();
   const canPayLocal = paymentCurrency !== 'USD' && exchangeRate !== null;
+  const referralDiscountConverted = referralDiscountUsd > 0 && canPayLocal && exchangeRate !== null
+    ? Math.round(referralDiscountUsd * exchangeRate * 100) / 100
+    : referralDiscountUsd;
   const creditConverted = canPayLocal && availableCredit > 0 && exchangeRate !== null
     ? Math.round(availableCredit * exchangeRate * 100) / 100
     : availableCredit;
-  const totalDue = Math.max(0, fee - creditConverted);
+  const effectiveDiscount = referralDiscountConverted > 0 ? referralDiscountConverted : creditConverted;
+  const totalDue = Math.max(0, fee - effectiveDiscount);
   const displayCurrency = canPayLocal ? currency : 'USD';
 
   useEffect(() => {
@@ -251,7 +258,29 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {availableCredit > 0 && (
+            {referralDiscountUsd > 0 && (
+              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Promo discount</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-700">
+                    -{formatCurrency(referralDiscountConverted, displayCurrency)}
+                    {canPayLocal && referralDiscountUsd > 0 && (
+                      <span className="text-xs font-normal text-gray-400 ml-1">
+                        (${referralDiscountUsd.toFixed(2)} USD)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-green-200 pt-1">
+                  <span className="text-sm font-semibold text-gray-800">Total due today</span>
+                  <span className="text-sm font-bold text-blue-700">{formatCurrency(totalDue, displayCurrency)}</span>
+                </div>
+              </div>
+            )}
+            {availableCredit > 0 && referralDiscountUsd <= 0 && (
               <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

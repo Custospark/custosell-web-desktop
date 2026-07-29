@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
@@ -14,12 +14,31 @@ export interface ExplorerMenuItem {
 interface ExplorerRowMenuProps {
   items: ExplorerMenuItem[];
   className?: string;
-  /** Keep the ⋯ button visible (e.g. when the row is selected). */
   pinnedVisible?: boolean;
 }
 
 export function ExplorerRowMenu({ items, className, pinnedVisible = false }: ExplorerRowMenuProps) {
   const [open, setOpen] = useState(false);
+  const [menuOrigin, setMenuOrigin] = useState<{ right: number; top: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const handleToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen((prev) => {
+      if (!prev) {
+        const rect = btnRef.current?.getBoundingClientRect();
+        if (rect) {
+          setMenuOrigin({ right: window.innerWidth - rect.right, top: rect.bottom + 2 });
+        }
+      }
+      return !prev;
+    });
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setMenuOrigin(null);
+  }, []);
 
   if (items.length === 0) return null;
 
@@ -28,11 +47,9 @@ export function ExplorerRowMenu({ items, className, pinnedVisible = false }: Exp
   return (
     <div className={cn('relative shrink-0', className)}>
       <button
+        ref={btnRef}
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((value) => !value);
-        }}
+        onClick={handleToggle}
         className={cn(
           'flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-all',
           showButton
@@ -52,30 +69,35 @@ export function ExplorerRowMenu({ items, className, pinnedVisible = false }: Exp
             type="button"
             className="fixed inset-0 z-30 cursor-default"
             aria-label="Close menu"
-            onClick={() => setOpen(false)}
+            onClick={handleClose}
           />
-          <div className="absolute right-0 top-full z-40 mt-0.5 min-w-[11rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-            {items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={item.disabled}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpen(false);
-                  item.onClick();
-                }}
-                className={cn(
-                  'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-                  item.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-50',
-                  item.disabled && 'cursor-not-allowed opacity-40',
-                )}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </div>
+          {menuOrigin && (
+            <div
+              className="fixed z-40 mt-0.5 min-w-[11rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              style={{ right: menuOrigin.right, top: menuOrigin.top }}
+            >
+              {items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  disabled={item.disabled}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClose();
+                    item.onClick();
+                  }}
+                  className={cn(
+                    'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
+                    item.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-50',
+                    item.disabled && 'cursor-not-allowed opacity-40',
+                  )}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

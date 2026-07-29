@@ -104,7 +104,7 @@ export default function BoardKanbanPageHeader({
 }: BoardKanbanPageHeaderProps) {
   const [mobileExpanded, setMobileExpanded] = useState(false);
   return (
-    <header className="relative z-40 shrink-0 border-b border-white/40 bg-white/85 px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3">
+    <header className="relative z-30 shrink-0 border-b border-white/40 bg-white/85 px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3">
       <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80 sm:mb-2">
         <span>{workspaceLabel}</span>
         <BoardAccessBadges

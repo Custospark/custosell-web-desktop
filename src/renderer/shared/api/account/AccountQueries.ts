@@ -34,7 +34,7 @@ import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/cat
 import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/auth/sessionUpgrade';
 import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
-import { storePlans, storePlanFeatures } from '../../utils/planStorage';
+
 export const accountKeys = {
   all: ['account'] as const,
   profile: () => ['account', 'profile'] as const,
@@ -136,8 +136,6 @@ export function useLogin(options?: { redirect?: boolean }) {
         isLocalSession: isLocal,
         pendingAuthSync: data.pendingAuthSync ?? false,
       }));
-      storePlans(plans);
-      storePlanFeatures(userData?.business?.subscription?.plan_features);
       if (!isLocal) {
         queryClient.setQueryData(accountKeys.profile(), userData);
       }
@@ -220,9 +218,6 @@ export function useRegisterBusiness() {
         isLocalSession: result.isLocalSession,
         pendingAuthSync: result.pendingAuthSync,
       }));
-      storePlans(result.plans);
-      storePlanFeatures(result.user?.business?.subscription?.plan_features);
-
       if (result.isLocalSession) {
         showToast('success', 'Business registered offline. It will sync when you reconnect.');
       } else {
@@ -271,8 +266,6 @@ export function useRegister(options?: { redirect?: boolean }) {
       const userData = extractAuthUser(data);
       const plans = extractActivePlans(userData);
       dispatch(registerSuccess({ user: userData, token: data.token, plans }));
-      storePlans(plans);
-      storePlanFeatures(userData?.business?.subscription?.plan_features);
       showToast('success', 'Account created successfully');
       if (shouldRedirect) {
         navigate(getDefaultRoute(userData));
@@ -309,10 +302,7 @@ export function useProfile() {
       const plans = extractActivePlans(userData);
       if (plans.length) {
         dispatch(setPlans(plans));
-        storePlans(plans);
       }
-      const features = userData?.business?.subscription?.plan_features;
-      if (features) storePlanFeatures(features);
       dispatch(setUser(userData));
 
       queryClient.invalidateQueries({ queryKey: ['subscription', 'access'] });

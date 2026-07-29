@@ -9,11 +9,8 @@ export interface PlanFormPayload {
   name: string;
   slug: string;
   description?: string | null;
-  price_monthly: number;
-  price_yearly?: number | null;
-  price_monthly_usd?: number | null;
+  price_monthly_usd: number;
   price_yearly_usd?: number | null;
-  onboarding_fee_ugx?: number | null;
   onboarding_fee_usd?: number | null;
   trial_days?: number | null;
   billing_cycle?: 'monthly' | 'yearly' | 'both';

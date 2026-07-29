@@ -7,8 +7,6 @@ import { clearAuthSession, isLocalSessionToken } from '../offline/auth/secureSto
 import { ROUTES } from '../../routes/constants/shared.paths';
 import { isCompletelyOffline } from '../offline/core/offlineQueryUtils';
 import { axiosInstance } from '../../api/axiosConfig';
-import { clearPlanStorage } from '../../../shared/utils/planStorage';
-
 export const LOGOUT_INTENT_KEY = 'custosell_logout_intent';
 
 const LEGACY_TOKEN_KEY = 'token';
@@ -107,7 +105,6 @@ export async function runAppLogout(options?: { navigate?: NavigateFunction }): P
   // Session is cleared before navigate — no logout intent (that flag is for 401 hard-redirect races only).
   store.dispatch(logout());
   clearLegacyLocalStorage();
-  clearPlanStorage();
 
   await clearAuthSessionWithTimeout();
 

@@ -23,7 +23,8 @@ export function useCurrencyConvert(amount: number, from: string, to: string) {
       return data.data;
     },
     enabled: amount > 0 && !!from && !!to && from !== to,
-    staleTime: 1000 * 60 * 60,
+    staleTime: 0,
+    gcTime: 0,
     retry: 1,
   });
 }

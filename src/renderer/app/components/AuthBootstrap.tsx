@@ -13,7 +13,6 @@ import { accountKeys } from '../../shared/api/account/AccountQueries';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { isOfflineMode } from '../store/offline/core/offlineQueryUtils';
 import { upgradeLocalSessionIfOnline } from '../store/offline/auth/sessionUpgrade';
-import { getStoredPlans } from '../../shared/utils/planStorage';
 
 export function AuthBootstrap({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -41,10 +40,6 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
         if (session) {
           const normalized = await normalizeStoredSession(session);
           if (cancelled) return;
-          if (!normalized.plans?.length) {
-            const fallbackPlans = getStoredPlans();
-            if (fallbackPlans.length) normalized.plans = fallbackPlans;
-          }
           dispatch(hydrateAuth(normalized));
           queryClient.setQueryData(accountKeys.profile(), normalized.user);
 

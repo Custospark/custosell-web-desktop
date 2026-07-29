@@ -36,8 +36,6 @@ function formatDate(iso?: string | null): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-import { formatCurrency } from '../../shared/utils/formatCurrency';
-
 export default function PlatformManageSubscriptionsPage() {
   const { data: subscriptions = [], isLoading, error } = useQuery({
     queryKey: platformKeys.subscriptions(),
@@ -143,14 +141,14 @@ export default function PlatformManageSubscriptionsPage() {
             { key: 'plan_id', header: 'Plan', render: (s) => (
               <span className="text-gray-600">{s.plan?.name ?? `Plan #${s.plan_id}`}</span>
             )},
-            { key: 'price_monthly', header: 'Monthly', align: 'right', render: (s) => (
+            { key: 'price_monthly_usd', header: 'Monthly (USD)', align: 'right', render: (s) => (
               <>
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_monthly ?? s.plan?.price_monthly ?? 0)}</span>
+                <span className="text-sm font-medium text-gray-900">${Number(s.price_monthly_usd ?? s.plan?.price_monthly_usd ?? 0).toFixed(2)}</span>
               </>
             )},
-            { key: 'price_yearly', header: 'Yearly', align: 'right', render: (s) => (
+            { key: 'price_yearly_usd', header: 'Yearly (USD)', align: 'right', render: (s) => (
               <>
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(s.price_yearly ?? s.plan?.price_yearly ?? 0)}</span>
+                <span className="text-sm font-medium text-gray-900">{s.price_yearly_usd ?? s.plan?.price_yearly_usd ? `$${Number(s.price_yearly_usd ?? s.plan?.price_yearly_usd ?? 0).toFixed(2)}` : '—'}</span>
               </>
             )},
             { key: 'status', header: 'Status', align: 'center', render: (s) => (
@@ -161,12 +159,12 @@ export default function PlatformManageSubscriptionsPage() {
             { key: 'billing_cycle', header: 'Cycle', align: 'center', render: (s) => (
               <span className="text-sm text-gray-600 capitalize">{s.billing_cycle ?? '—'}</span>
             )},
-            { key: 'onboarding', header: 'Onboarding', align: 'right', render: (s) => {
-              const fee = s.onboarding_fee_ugx;
+            { key: 'onboarding', header: 'Onboarding (USD)', align: 'right', render: (s) => {
+              const fee = s.onboarding_fee_usd;
               return (
                 <div className="flex items-center justify-end gap-1.5">
                   {fee != null && fee > 0 && (
-                    <span className="text-sm font-medium text-gray-900">{formatCurrency(fee)}</span>
+                    <span className="text-sm font-medium text-gray-900">${Number(fee).toFixed(2)}</span>
                   )}
                   {s.onboarding_fee_paid
                     ? <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium"><Check className="w-3 h-3" /> Paid</span>

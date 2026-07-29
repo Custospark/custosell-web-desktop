@@ -5,8 +5,6 @@ import { clearAuthSession } from '../offline/auth/secureStorage';
 import { queryClient } from '../../api/axiosConfig';
 import { clearServiceWorkerApiCache } from '../../sw/registerServiceWorker';
 import { ROUTES } from '../../routes/constants/shared.paths';
-import { clearPlanStorage } from '../../../shared/utils/planStorage';
-
 const LEGACY_TOKEN_KEY = 'token';
 const LEGACY_USER_KEY = 'auth_user';
 const SESSION_CLEAR_TIMEOUT_MS = 3000;
@@ -43,7 +41,6 @@ function redirectToLogin(navigate: NavigateFunction): void {
 export async function clearAppSession(dispatch: AppDispatch): Promise<void> {
   dispatch(logout());
   clearLegacyLocalStorage();
-  clearPlanStorage();
   await clearAuthSessionWithTimeout();
   queryClient.clear();
   clearServiceWorkerApiCache();
@@ -56,7 +53,6 @@ export async function performAppLogout(
 ): Promise<void> {
   dispatch(logout());
   clearLegacyLocalStorage();
-  clearPlanStorage();
   queryClient.clear();
   clearServiceWorkerApiCache();
   redirectToLogin(navigate);

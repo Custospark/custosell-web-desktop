@@ -143,8 +143,8 @@ export interface ProrationDetails {
 }
 
 export interface UpgradeQuote {
-  current_plan: { id: number; name: string; price_monthly: number; price_yearly: number };
-  new_plan: { id: number; name: string; price_monthly: number; price_yearly: number };
+  current_plan: { id: number; name: string; price_monthly_usd: number; price_yearly_usd: number };
+  new_plan: { id: number; name: string; price_monthly_usd: number; price_yearly_usd: number };
   billing_cycle: string;
   next_billing_date: string;
   proration: ProrationDetails;

@@ -90,9 +90,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     const isYearly = billingCycle === 'yearly';
     const amount = paymentCurrency === 'USD'
       ? (isYearly ? Number(plan.price_yearly_usd ?? 0) : Number(plan.price_monthly_usd ?? 0))
-      : paymentCurrency === 'UGX'
-        ? (isYearly ? Number(plan.price_yearly ?? 0) : Number(plan.price_monthly ?? 0))
-        : (isYearly ? yearlyPrice(plan) : monthlyPrice(plan));
+      : (isYearly ? yearlyPrice(plan) : monthlyPrice(plan));
     const paymentType = getPaymentType(action.type);
     setPendingPayment({ plan, action, amount });
     setSubscriptionPayment({

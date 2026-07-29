@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import {
-  CreditCard, Info, Coins, DollarSign, Clock, CheckSquare, Sliders, ToggleLeft,
+  CreditCard, Info, DollarSign, Clock, CheckSquare, Sliders, ToggleLeft,
 } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -61,11 +61,8 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
   const [slug, setSlug] = useState(plan?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(false);
   const [description, setDescription] = useState(plan?.description ?? '');
-  const [priceMonthly, setPriceMonthly] = useState(plan ? Number(plan.price_monthly) : 0);
-  const [priceYearly, setPriceYearly] = useState(plan?.price_yearly ? Number(plan.price_yearly) : null);
-  const [priceMonthlyUsd, setPriceMonthlyUsd] = useState(plan?.price_monthly_usd ? Number(plan.price_monthly_usd) : null);
+  const [priceMonthlyUsd, setPriceMonthlyUsd] = useState(plan ? Number(plan.price_monthly_usd) : 0);
   const [priceYearlyUsd, setPriceYearlyUsd] = useState(plan?.price_yearly_usd ? Number(plan.price_yearly_usd) : null);
-  const [onboardingFeeUgx, setOnboardingFeeUgx] = useState(plan?.onboarding_fee_ugx ?? null);
   const [onboardingFeeUsd, setOnboardingFeeUsd] = useState(plan?.onboarding_fee_usd ?? null);
   const [trialDays, setTrialDays] = useState<number | null>(plan?.trial_days ?? 14);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'both'>(plan?.billing_cycle ?? 'monthly');
@@ -83,8 +80,8 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
   }, [slugTouched, isEditing]);
 
   const canSubmit = useMemo(() => {
-    return name.trim().length > 0 && slug.trim().length > 0 && priceMonthly >= 0;
-  }, [name, slug, priceMonthly]);
+    return name.trim().length > 0 && slug.trim().length > 0 && priceMonthlyUsd >= 0;
+  }, [name, slug, priceMonthlyUsd]);
 
   const toggleFeature = useCallback((key: string) => {
     setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -101,11 +98,8 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
       name: name.trim(),
       slug: slug.trim(),
       description: description || null,
-      price_monthly: priceMonthly,
-      price_yearly: priceYearly,
       price_monthly_usd: priceMonthlyUsd,
       price_yearly_usd: priceYearlyUsd,
-      onboarding_fee_ugx: onboardingFeeUgx,
       onboarding_fee_usd: onboardingFeeUsd,
       trial_days: trialDays,
       billing_cycle: billingCycle,
@@ -159,24 +153,11 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
           </div>
         </FormSection>
 
-        <FormSection icon={Coins} title="Pricing (Local)">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Monthly price *</label>
-              <input type="number" min={0} value={priceMonthly} onChange={(e) => setPriceMonthly(Number(e.target.value))} className={inputClass} disabled={isSubmitting} />
-            </div>
-            <div>
-              <label className={labelClass}>Yearly price</label>
-              <input type="number" min={0} value={priceYearly ?? ''} onChange={(e) => setPriceYearly(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
-            </div>
-          </div>
-        </FormSection>
-
         <FormSection icon={DollarSign} title="Pricing (USD)">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Monthly price (USD)</label>
-              <input type="number" min={0} step="0.01" value={priceMonthlyUsd ?? ''} onChange={(e) => setPriceMonthlyUsd(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
+              <label className={labelClass}>Monthly price (USD) *</label>
+              <input type="number" min={0} step="0.01" value={priceMonthlyUsd} onChange={(e) => setPriceMonthlyUsd(Number(e.target.value))} className={inputClass} disabled={isSubmitting} />
             </div>
             <div>
               <label className={labelClass}>Yearly price (USD)</label>
@@ -187,10 +168,6 @@ export function PlanFormModal({ open, onClose, plan }: PlanFormModalProps) {
 
         <FormSection icon={Clock} title="Fees & billing">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Onboarding fee</label>
-              <input type="number" min={0} value={onboardingFeeUgx ?? ''} onChange={(e) => setOnboardingFeeUgx(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />
-            </div>
             <div>
               <label className={labelClass}>Onboarding fee (USD)</label>
               <input type="number" min={0} step="0.01" value={onboardingFeeUsd ?? ''} onChange={(e) => setOnboardingFeeUsd(e.target.value ? Number(e.target.value) : null)} className={inputClass} disabled={isSubmitting} />

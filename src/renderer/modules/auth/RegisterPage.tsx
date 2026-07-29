@@ -20,6 +20,8 @@ export default function RegisterPage() {
   const { data: plans } = useActivePlans();
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
+  const [manualReferralCode, setManualReferralCode] = useState('');
+
   const planId = state?.planId ?? plans?.[0]?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';
   const activeReferralCode = manualReferralCode || referralCode;
@@ -41,7 +43,6 @@ export default function RegisterPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [manualReferralCode, setManualReferralCode] = useState('');
   const [currency, setCurrency] = useState('UGX');
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [currencySearch, setCurrencySearch] = useState('');

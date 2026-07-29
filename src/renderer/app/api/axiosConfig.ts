@@ -13,7 +13,6 @@ import {
   needsSessionUpgrade,
 } from '../store/offline/auth/sessionUpgrade';
 import { LOGOUT_INTENT_KEY } from '../store/auth/runAppLogout';
-import { clearPlanStorage } from '../../shared/utils/planStorage';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -68,7 +67,6 @@ async function forceSessionLogout(): Promise<void> {
   markLogoutIntent();
   store.dispatch(logout());
   clearLegacyLocalStorage();
-  clearPlanStorage();
   queryClient.clear();
   clearServiceWorkerApiCache();
   try {

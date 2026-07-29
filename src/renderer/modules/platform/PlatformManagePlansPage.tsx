@@ -10,7 +10,6 @@ import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeleton
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { CreditCard, Plus, Pencil, Trash2, Check } from 'lucide-react';
 
 export default function PlatformManagePlansPage() {
@@ -103,19 +102,19 @@ export default function PlatformManagePlansPage() {
             { key: 'slug', header: 'Slug', render: (p) => (
               <span className="text-sm text-gray-500 font-mono">{p.slug}</span>
             )},
-            { key: 'price_monthly', header: 'Monthly', align: 'right', render: (p) => (
+            { key: 'price_monthly_usd', header: 'Monthly (USD)', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {formatCurrency(p.price_monthly)}
+                ${Number(p.price_monthly_usd ?? 0).toFixed(2)}
               </span>
             )},
-            { key: 'price_yearly', header: 'Yearly', align: 'right', render: (p) => (
+            { key: 'price_yearly_usd', header: 'Yearly (USD)', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {p.price_yearly ? formatCurrency(p.price_yearly) : '—'}
+                {p.price_yearly_usd ? `$${Number(p.price_yearly_usd).toFixed(2)}` : '—'}
               </span>
             )},
-            { key: 'onboarding_fee_ugx', header: 'Onboarding', align: 'right', render: (p) => (
+            { key: 'onboarding_fee_usd', header: 'Onboarding (USD)', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {p.onboarding_fee_ugx ? formatCurrency(p.onboarding_fee_ugx) : '—'}
+                {p.onboarding_fee_usd ? `$${Number(p.onboarding_fee_usd).toFixed(2)}` : '—'}
               </span>
             )},
             { key: 'trial_days', header: 'Trial', align: 'center', render: (p) => (

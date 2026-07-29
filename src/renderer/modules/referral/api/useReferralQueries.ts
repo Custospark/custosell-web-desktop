@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { REFERRALS, REFERRAL_CODES } from '../../../shared/api/endpoints/endpoints';
 import { useToast } from '../../../app/contexts/ToastContext';
-import type { ApplyReferralPayload, ApplyReferralResponse, ReferralEarnings } from './ReferralTypes';
+import type { ApplyReferralPayload, ApplyReferralResponse, ReferralEarnings, ValidateCodeResponse } from './ReferralTypes';
 
 export const referralKeys = {
   all: ['referrals'] as const,
@@ -41,6 +41,21 @@ export function useApplyReferralCode() {
       const message = error.response?.data?.message || 'Failed to apply referral code';
       showToast('error', message);
     },
+  });
+}
+
+export function useValidateReferralCode(code: string) {
+  return useQuery<ValidateCodeResponse>({
+    queryKey: ['referral-codes', 'validate', code],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<ValidateCodeResponse>(REFERRAL_CODES.VALIDATE, {
+        params: { code },
+      });
+      return data;
+    },
+    enabled: code.length >= 3,
+    staleTime: 0,
+    retry: false,
   });
 }
 

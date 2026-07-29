@@ -136,7 +136,14 @@ export default function PaymentPage() {
                     <Wallet className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700">Promo credit</span>
                   </div>
-                    <span className="text-sm font-bold text-green-700">-{formatCurrency(creditConverted, displayCurrency)}</span>
+                  <span className="text-sm font-bold text-green-700 text-right">
+                    -{formatCurrency(creditConverted, displayCurrency)}
+                    {canPayLocal && availableCredit > 0 && (
+                      <span className="text-xs font-normal text-gray-400 ml-1">
+                        (${availableCredit.toFixed(2)} USD)
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between border-t border-blue-200 pt-2">
                   <span className="text-sm font-semibold text-gray-800">Total due today</span>

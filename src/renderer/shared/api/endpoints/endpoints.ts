@@ -276,6 +276,7 @@ export const REFERRALS = {
 
 export const REFERRAL_CODES = {
   BASE: '/referral-codes',
+  VALIDATE: '/referral-codes/validate',
 };
 
 export const CURRENCY = {

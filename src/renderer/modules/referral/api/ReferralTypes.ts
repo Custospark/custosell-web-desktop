@@ -47,3 +47,11 @@ export interface ApplyReferralResponse {
   message: string;
   referral: ReferralRecord;
 }
+
+export interface ValidateCodeResponse {
+  valid: boolean;
+  message: string;
+  discount_type?: string;
+  discount_value?: number;
+  discount_duration_months?: number;
+}

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
+import { useValidateReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
@@ -10,7 +11,7 @@ import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes'
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins, Tag } from 'lucide-react';
+import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle } from 'lucide-react';
 
 export default function RegisterPage() {
   const registerMutation = useRegisterBusiness();
@@ -21,6 +22,8 @@ export default function RegisterPage() {
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
   const [manualReferralCode, setManualReferralCode] = useState('');
+
+  const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
 
   const planId = state?.planId ?? plans?.[0]?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';
@@ -287,6 +290,16 @@ export default function RegisterPage() {
                 </div>
               )}
             </div>
+
+            {manualReferralCode.length >= 3 && validating && (
+              <p className="text-xs text-gray-400 mt-1 ml-1">Checking code...</p>
+            )}
+            {manualReferralCode.length >= 3 && !validating && validation && (
+              <p className={`text-xs mt-1 ml-1 flex items-center gap-1 ${validation.valid ? 'text-green-600' : 'text-red-500'}`}>
+                {validation.valid ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                {validation.message}
+              </p>
+            )}
 
             <label className="flex items-center justify-center gap-2 cursor-pointer">
               <input

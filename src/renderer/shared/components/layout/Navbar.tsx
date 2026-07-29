@@ -309,11 +309,13 @@ export function Navbar() {
         <div className="flex flex-1 items-center justify-center gap-2 sm:gap-2 lg:flex-initial lg:justify-end shrink-0">
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <SyncHeaderChip />
-            <NavbarNetworkStatus
-              systemStatus={systemStatus}
-              latency={latency}
-              onRetry={retryConnection}
-            />
+            <span className="hidden lg:inline-flex items-center">
+              <NavbarNetworkStatus
+                systemStatus={systemStatus}
+                latency={latency}
+                onRetry={retryConnection}
+              />
+            </span>
           </div>
 
           <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" aria-hidden />

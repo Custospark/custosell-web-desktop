@@ -163,6 +163,7 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
   }
 
   if (user.account_type === 'personal') {
+    modules.add('your_tools');
     (user.modules ?? []).forEach((m) => modules.add(m));
   } else if (isBusinessOwner(user)) {
     resolvedOwnerBusinessModules(user).forEach((m) => modules.add(m));

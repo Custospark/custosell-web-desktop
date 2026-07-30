@@ -9,6 +9,10 @@ const __dirname = path.dirname(__filename);
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
+if (isDev) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 function getSecureStorePath(): string {

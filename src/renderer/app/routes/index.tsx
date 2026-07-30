@@ -347,6 +347,9 @@ export function AppRoutes() {
         </Route>
       </Route>
 
+      {/* Legacy redirect: /personal/modules → /your-tools */}
+      <Route path="/personal/modules" element={<Navigate to={ROUTES.YOUR_TOOLS} replace />} />
+
       {/* Public /@slug share links → /discover/shop/:slug (must stay after static routes). */}
       <Route path="/:shopHandle" element={<ShopShareRedirect />} />
     </Routes>

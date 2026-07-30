@@ -115,8 +115,8 @@ export async function refreshAllServerCatalogSnapshots(): Promise<void> {
   const user = store.getState().auth.user;
 
   await Promise.all([
-    refreshProductCatalogSnapshot(),
-    refreshCategoryCatalogSnapshot(),
+    canAccessModule(user, 'inventory') ? refreshProductCatalogSnapshot() : Promise.resolve(),
+    canAccessModule(user, 'inventory') ? refreshCategoryCatalogSnapshot() : Promise.resolve(),
     refreshCustomerCatalogSnapshot(),
     refreshRoleCatalogSnapshot(),
     refreshStaffCatalogSnapshot(),

@@ -28,6 +28,9 @@ export default function PaymentPage() {
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
   const availableCredit = earnings?.available_credit ?? 0;
+  const referralDiscountUsd = subscription?.referral?.discount_applied
+    ? Number(subscription.referral.discount_applied)
+    : 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const plan = plans?.find((p) => p.id === subscription?.plan_id);
 
@@ -68,11 +71,14 @@ export default function PaymentPage() {
   const displayCurrency = canPayLocal ? currency : 'USD';
   const displayedFee = canPayLocal ? fee : feeUsd;
 
-  // Convert available credit (USD) to display currency for the total
+  const referralDiscountConverted = referralDiscountUsd > 0 && canPayLocal && exchangeRate !== null
+    ? Math.round(referralDiscountUsd * exchangeRate * 100) / 100
+    : referralDiscountUsd;
   const creditConverted = canPayLocal && availableCredit > 0 && exchangeRate !== null
     ? Math.round(availableCredit * exchangeRate * 100) / 100
     : availableCredit;
-  const totalDue = Math.max(0, displayedFee - creditConverted);
+  const effectiveDiscount = referralDiscountConverted > 0 ? referralDiscountConverted : creditConverted;
+  const totalDue = Math.max(0, displayedFee - effectiveDiscount);
   const canPay = canPayLocal ? !!fee : !!feeUsd;
 
   const handlePay = () => {
@@ -150,14 +156,36 @@ export default function PaymentPage() {
                 </p>
               </div>
             )}
-            {availableCredit > 0 && (
-              <>
-                <div className="flex items-center justify-between border-t border-blue-100 pt-3">
-                  <div className="flex items-center gap-1.5">
-                    <Wallet className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700">Promo credit</span>
+            {referralDiscountUsd > 0 && (
+              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Promo discount</span>
                   </div>
-                  <span className="text-sm font-bold text-green-700 text-right">
+                  <span className="text-sm font-bold text-green-700">
+                    -{formatCurrency(referralDiscountConverted, displayCurrency)}
+                    {canPayLocal && referralDiscountUsd > 0 && (
+                      <span className="text-xs font-normal text-gray-400 ml-1">
+                        (${referralDiscountUsd.toFixed(2)} USD)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-green-200 pt-1">
+                  <span className="text-sm font-semibold text-gray-800">Total due today</span>
+                  <span className="text-sm font-bold text-blue-700">{formatCurrency(totalDue, displayCurrency)}</span>
+                </div>
+              </div>
+            )}
+            {availableCredit > 0 && referralDiscountUsd <= 0 && (
+              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Promo credit</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-700">
                     -{formatCurrency(creditConverted, displayCurrency)}
                     {canPayLocal && availableCredit > 0 && (
                       <span className="text-xs font-normal text-gray-400 ml-1">
@@ -166,13 +194,11 @@ export default function PaymentPage() {
                     )}
                   </span>
                 </div>
-                <div className="flex items-center justify-between border-t border-blue-200 pt-2">
+                <div className="flex items-center justify-between border-t border-green-200 pt-1">
                   <span className="text-sm font-semibold text-gray-800">Total due today</span>
-                  <span className="text-base font-bold text-blue-700">
-                    {formatCurrency(totalDue, displayCurrency)}
-                  </span>
+                  <span className="text-sm font-bold text-blue-700">{formatCurrency(totalDue, displayCurrency)}</span>
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}

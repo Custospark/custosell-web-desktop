@@ -47,6 +47,7 @@ Keep our interaction **conversational**—just like two teammates working side b
 | 11 | **Frontend and backend stay in sync.** Any feature, bug, validation rule, API contract, offline sync behavior, auth flow, inventory flow, or user-facing failure state must be reviewed across both Frontend and Backend before implementation is considered complete. |
 | 12 | **Sage and Blue are cross-stack by default when needed.** If a change can affect API contracts, backend validation, database state, frontend UX, offline queues, or sync replay, Sage and Blue must inspect both stacks and produce one integrated plan. |
 | 13 | **File size hard limit: 500 lines — refactor, never revert.** No source file may exceed **500 lines of code**. If a change would push a file over 500 lines, or Vera fails `[file-size-500]` on an already-oversized file you must touch, **stop and refactor into modular files** (split components, extract hooks/utils/types/helpers) **before** continuing. This is **non-negotiable**. **Never** delete, revert, or strip working functionality just so Vera passes. Fix the size by modularizing; then restore/complete the feature; then re-run Vera. |
+| 14 | **Stage, commit, and push after every change — always.** Every time you make a code change, stage all modified/new files, commit with a descriptive message, and push to GitHub. No exceptions. Also update this AGENTS.md and Backend/AGENTS.md if the change warrants it. |
 
 ---
 

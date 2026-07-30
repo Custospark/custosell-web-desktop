@@ -69,11 +69,31 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     if (!plans) return [];
     const filtered = user?.account_type === 'personal'
       ? plans.filter((p) => p.type === 'personal')
-      : plans;
+      : plans.filter((p) => p.type !== 'personal');
     return [...filtered].sort((a, b) => a.sort_order - b.sort_order);
   }, [plans, user?.account_type]);
 
   const currentPlan = sortedPlans.find(p => p.id === subscription.plan_id) ?? null;
+
+  const relevantFeatures = useMemo(() => {
+    const keys = new Set<string>();
+    for (const plan of sortedPlans) {
+      for (const key of Object.keys(plan.features ?? {})) {
+        keys.add(key);
+      }
+    }
+    return Object.entries(FEATURE_CATALOG).filter(([key]) => keys.has(key));
+  }, [sortedPlans]);
+
+  const relevantLimits = useMemo(() => {
+    const keys = new Set<string>();
+    for (const plan of sortedPlans) {
+      for (const key of Object.keys(plan.limits ?? {})) {
+        keys.add(key);
+      }
+    }
+    return Object.entries(LIMIT_LABELS).filter(([key]) => keys.has(key));
+  }, [sortedPlans]);
   const currentPlanSortOrder = currentPlan?.sort_order ?? 0;
 
   const getPaymentMetadata = (action: PlanAction, plan: Plan): Record<string, unknown> | undefined => {
@@ -316,7 +336,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             </tr>
           </thead>
           <tbody>
-            {Object.entries(FEATURE_CATALOG).map(([key, { label }]) => (
+            {relevantFeatures.map(([key, { label }]) => (
               <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
                 <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
                 {sortedPlans.map((p) => {
@@ -334,7 +354,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                 <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Limits</span>
               </td>
             </tr>
-            {Object.entries(LIMIT_LABELS).map(([key, label]) => (
+            {relevantLimits.map(([key, label]) => (
               <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
                 <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
                 {sortedPlans.map((p) => {

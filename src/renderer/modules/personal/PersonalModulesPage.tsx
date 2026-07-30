@@ -1,4 +1,4 @@
-import { ShoppingBag, CheckCircle, Clock, AlertTriangle, CreditCard } from 'lucide-react';
+import { ShoppingBag, CheckCircle, Clock, AlertTriangle, CreditCard, Rocket } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -122,6 +122,32 @@ export default function YourToolsPage() {
             <CreditCard className="h-4 w-4" />
             Subscribe
           </button>
+        </div>
+      )}
+
+      {subscription && (status === 'active' || status === 'trial') && (
+        <div className="mb-6 overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-purple-50 shadow-sm">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-2.5 shadow-md shadow-indigo-500/20">
+                <Rocket className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Go Unlimited — Upgrade to Business</h3>
+                <p className="mt-0.5 text-sm leading-relaxed text-slate-500">
+                  Get sales, inventory, HR, forecasting, and more. Start your free trial today.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 transition-all hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:shadow-indigo-500/40"
+            >
+              <Rocket className="h-4 w-4" />
+              View Business Plans
+            </button>
+          </div>
         </div>
       )}
 

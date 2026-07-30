@@ -68,7 +68,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const sortedPlans = useMemo(() => {
     if (!plans) return [];
     const filtered = user?.account_type === 'personal'
-      ? plans.filter((p) => p.type === 'personal')
+      ? plans.filter((p) => p.type === 'personal' || p.type === 'business')
       : plans.filter((p) => p.type !== 'personal');
     return [...filtered].sort((a, b) => a.sort_order - b.sort_order);
   }, [plans, user?.account_type]);

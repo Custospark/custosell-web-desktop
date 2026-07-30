@@ -184,9 +184,30 @@ export function AppRoutes() {
         <Route element={<AppChrome />}>
         <Route element={<Layout />}>
           <Route path="/app" element={<ModuleLandingRedirect />} />
+
+          {/* Always-accessible routes — no subscription check */}
+          <Route path={ROUTES.YOUR_TOOLS} element={<SuspenseWrapper><YourToolsPage /></SuspenseWrapper>} />
+          <Route element={<ModuleAccessMiddleware module="account" />}>
+            <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
+              <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+              <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
+              <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+              <Route path="referrals" element={<SuspenseWrapper><AccountReferralsPage /></SuspenseWrapper>} />
+            </Route>
+          </Route>
+          <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+          <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
+          <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+          <Route element={<ModuleAccessMiddleware module="guide" />}>
+            <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />
+            <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.CONTACT} element={<SuspenseWrapper><GuideContactPage /></SuspenseWrapper>} />
+          </Route>
+
+          {/* Subscription-guarded routes — require active subscription */}
           <Route element={<SubscriptionGuard />}>
-            {/* Personal module selection — SubscriptionGuard passes through for personal accounts */}
-            <Route path={ROUTES.YOUR_TOOLS} element={<SuspenseWrapper><YourToolsPage /></SuspenseWrapper>} />
             <Route element={<ModuleAccessMiddleware module="dashboard" />}>
               <Route path={ROUTES.DASHBOARD} element={<SuspenseWrapper><DashboardPage /></SuspenseWrapper>} />
             </Route>
@@ -245,17 +266,6 @@ export function AppRoutes() {
                 <Route path="/estimates/:id" element={<SuspenseWrapper><EstimateDetailPage /></SuspenseWrapper>} />
               </Route>
             </Route>
-            <Route element={<ModuleAccessMiddleware module="account" />}>
-              <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
-                <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
-                <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
-                <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
-                <Route path="referrals" element={<SuspenseWrapper><AccountReferralsPage /></SuspenseWrapper>} />
-              </Route>
-            </Route>
-            <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
-            <Route path="/settings/profile" element={<Navigate to={ROUTES.ACCOUNT.PROFILE} replace />} />
-            <Route path="/settings/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
             <Route element={<ModuleAccessMiddleware module="documents" />}>
               <Route path={ROUTES.DOCUMENTS.INDEX} element={<SuspenseWrapper><DocumentsLayout /></SuspenseWrapper>}>
                 <Route index element={<SuspenseWrapper><CabinetsPage /></SuspenseWrapper>} />
@@ -304,13 +314,6 @@ export function AppRoutes() {
               <Route path="/forecasting/budgets/:budgetId" element={<SuspenseWrapper><ForecastingBudgetDetailPage /></SuspenseWrapper>} />
               <Route path={ROUTES.FORECASTING.KPIS} element={<SuspenseWrapper><ForecastingKpisPage /></SuspenseWrapper>} />
               <Route path={ROUTES.FORECASTING.SCENARIOS} element={<SuspenseWrapper><ForecastingScenariosPage /></SuspenseWrapper>} />
-            </Route>
-            <Route element={<ModuleAccessMiddleware module="guide" />}>
-              <Route path={ROUTES.GUIDE.INDEX} element={<Navigate to={ROUTES.GUIDE.TUTORIALS} replace />} />
-              <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
-              <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
-              <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
-              <Route path={ROUTES.GUIDE.CONTACT} element={<SuspenseWrapper><GuideContactPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="settings" />}>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 
 const TOOL_LABELS: Record<string, string> = {
-  pipeline: 'Pipeline (Project Management)',
+  pipeline: 'Sales CRM / Pipeline',
   estimates: 'Projects & Estimates',
   expenses: 'Expenses',
   accounting: 'Accounting',
@@ -54,21 +54,37 @@ export default function YourToolsPage() {
           )}
           <span className={`text-sm font-medium ${config.color}`}>
             {status === 'trial' && subscription.trial_ends_at
-              ? `Free trial until ${new Date(subscription.trial_ends_at).toLocaleDateString()}`
+              ? `Free trial until ${new Date(subscription.trial_ends_at).toLocaleDateString()} — subscribe now to avoid interruption`
               : status === 'active'
-                ? 'Your Personal plan is active'
+                ? 'Your Personal plan is active — all tools unlocked'
                 : status === 'past_due'
-                  ? 'Payment required to continue accessing your tools'
-                  : `Plan is ${status}`}
+                  ? 'Payment overdue. Subscribe to restore access to your tools.'
+                  : status === 'suspended'
+                    ? 'Your subscription has been suspended. Reactivate to regain access.'
+                    : status === 'cancelled'
+                      ? 'Your subscription has been cancelled. Choose a new plan to continue.'
+                      : status === 'expired'
+                        ? 'Your trial has expired. Subscribe to continue using your tools.'
+                        : `Plan is ${status}`}
           </span>
-          {(status === 'past_due' || !status) && (
+          {(status === 'past_due' || status === 'suspended' || status === 'expired' || status === 'cancelled') && (
             <button
               type="button"
-              onClick={() => navigate(ROUTES.ONBOARDING)}
+              onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
               className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50"
             >
               <CreditCard className="h-4 w-4" />
-              Pay now
+              {status === 'past_due' ? 'Pay now' : status === 'suspended' ? 'Reactivate' : 'Subscribe'}
+            </button>
+          )}
+          {status === 'trial' && (
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+            >
+              <CreditCard className="h-4 w-4" />
+              Subscribe Now
             </button>
           )}
         </div>

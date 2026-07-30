@@ -9,7 +9,8 @@ export type PlanActionType =
   | 'downgrade'
   | 'current'
   | 'pay_onboarding'
-  | 'renew';
+  | 'renew'
+  | 'subscribe_early';
 
 export interface PlanAction {
   type: PlanActionType;
@@ -29,7 +30,7 @@ const MATRIX: Matrix = {
     lower:   { type: 'subscribe', label: 'Subscribe', requiresPayment: true },
   },
   trial_paid: {
-    current: { type: 'current', label: 'Current Plan', requiresPayment: false },
+    current: { type: 'subscribe_early', label: 'Subscribe Now', requiresPayment: true },
     higher:  { type: 'upgrade', label: 'Upgrade', requiresPayment: true },
     lower:   { type: 'current', label: 'Current Plan', requiresPayment: false },
   },

@@ -78,9 +78,10 @@ function resolveStatusKey(subscription: SubscriptionInfo | undefined): StatusKey
   return 'none';
 }
 
-function resolveRelation(plan: Plan, subscription: SubscriptionInfo | undefined, currentSortOrder: number): Relation {
+function resolveRelation(plan: Plan, subscription: SubscriptionInfo | undefined, currentSortOrder: number, currentPlanType?: string): Relation {
   if (!subscription) return 'current';
   if (plan.id === subscription.plan_id) return 'current';
+  if (currentPlanType === 'personal' && plan.type === 'business') return 'higher';
   if (plan.sort_order > currentSortOrder) return 'higher';
   return 'lower';
 }
@@ -89,9 +90,10 @@ export function getPlanAction(
   plan: Plan,
   subscription: SubscriptionInfo | undefined,
   currentPlanSortOrder: number,
+  currentPlanType?: string,
 ): PlanAction {
   const statusKey = resolveStatusKey(subscription);
-  const relation = resolveRelation(plan, subscription, currentPlanSortOrder);
+  const relation = resolveRelation(plan, subscription, currentPlanSortOrder, currentPlanType);
   return MATRIX[statusKey][relation];
 }
 

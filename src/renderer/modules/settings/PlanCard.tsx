@@ -52,7 +52,7 @@ export default function PlanCard({
   cancelChangeLoading,
   onCancelScheduledChange,
 }: PlanCardProps) {
-  const action = getPlanAction(plan, subscription, currentPlanSortOrder);
+  const action = getPlanAction(plan, subscription, currentPlanSortOrder, currentPlan?.type);
   const isCurrentPlan = plan.id === subscription.plan_id;
   const isYearly = billingCycle === 'yearly';
 

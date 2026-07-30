@@ -27,6 +27,7 @@ const LIMIT_LABELS: Record<string, string> = {
   max_staff: 'Staff accounts',
   max_products: 'Products',
   max_businesses: 'Business locations',
+  max_board_members: 'Board members',
 };
 
 function featureLabel(key: string): string {

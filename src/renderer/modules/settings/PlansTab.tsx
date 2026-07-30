@@ -78,6 +78,12 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
   const currentPlan = sortedPlans.find(p => p.id === subscription.plan_id) ?? null;
 
+  const comparisonPlans = useMemo(() => {
+    return user?.account_type === 'personal'
+      ? [...personalPlans, ...businessPlans]
+      : businessPlans;
+  }, [user?.account_type, personalPlans, businessPlans]);
+
   const relevantFeatures = useMemo(() => {
     const keys = new Set<string>();
     for (const plan of sortedPlans) {
@@ -211,7 +217,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         )}
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex items-center justify-center gap-3">
         <div className="inline-flex gap-1 bg-gray-100 p-1 rounded-xl">
           <button
             type="button"
@@ -249,6 +255,12 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             <span className="ml-1.5 text-[10px] text-blue-600 font-bold uppercase">Save</span>
           </button>
         </div>
+        {user?.account_type === 'personal' && (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg">
+            <Rocket className="w-3.5 h-3.5" />
+            Upgrade to Business
+          </span>
+        )}
       </div>
 
       {plansLoading ? (
@@ -294,7 +306,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-3 px-2 font-semibold text-gray-700">Feature</th>
-              {sortedPlans.map((p) => (
+              {comparisonPlans.map((p) => (
                 <th key={p.id} className="text-center py-3 px-2 font-semibold text-blue-600">{p.name}</th>
               ))}
             </tr>
@@ -303,7 +315,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             {relevantFeatures.map(([key, { label }]) => (
               <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
                 <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
-                {sortedPlans.map((p) => {
+                {comparisonPlans.map((p) => {
                   const has = p.features?.[key] === true;
                   return (
                     <td key={p.id} className={`text-center py-2.5 px-2 ${has ? 'text-blue-500 font-bold' : 'text-gray-300'}`}>
@@ -314,14 +326,14 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
               </tr>
             ))}
             <tr className="border-b border-gray-200">
-              <td colSpan={sortedPlans.length + 1} className="py-3 px-2">
+              <td colSpan={comparisonPlans.length + 1} className="py-3 px-2">
                 <span className="text-xs font-bold uppercase tracking-wide text-gray-400">Limits</span>
               </td>
             </tr>
             {relevantLimits.map(([key, label]) => (
               <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
                 <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
-                {sortedPlans.map((p) => {
+                {comparisonPlans.map((p) => {
                   const val = p.limits?.[key];
                   return (
                     <td key={p.id} className="text-center py-2.5 px-2 font-semibold text-gray-900">

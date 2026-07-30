@@ -217,49 +217,46 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-3">
-        <div className="inline-flex gap-1 bg-gray-100 p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => {
-              if (subscription.billing_cycle === 'monthly') return;
-              if (subscription.billing_cycle) {
-                setPendingCycle('monthly');
-              } else {
-                setBillingCycle('monthly');
-              }
-            }}
-            className={cn(
-              'px-5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
-              billingCycle === 'monthly' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700',
-            )}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (subscription.billing_cycle === 'yearly') return;
-              if (subscription.billing_cycle) {
-                setPendingCycle('yearly');
-              } else {
-                setBillingCycle('yearly');
-              }
-            }}
-            className={cn(
-              'px-5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
-              billingCycle === 'yearly' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700',
-            )}
-          >
-            Yearly
-            <span className="ml-1.5 text-[10px] text-blue-600 font-bold uppercase">Save</span>
-          </button>
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-3">
+          <div className="inline-flex gap-1 bg-gray-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setBillingCycle('monthly')}
+              className={cn(
+                'px-5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
+                billingCycle === 'monthly' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700',
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle('yearly')}
+              className={cn(
+                'px-5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
+                billingCycle === 'yearly' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700',
+              )}
+            >
+              Yearly
+              <span className="ml-1.5 text-[10px] text-blue-600 font-bold uppercase">Save</span>
+            </button>
+          </div>
+          {user?.account_type === 'personal' && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg">
+              <Rocket className="w-3.5 h-3.5" />
+              Upgrade to Business
+            </span>
+          )}
         </div>
-        {user?.account_type === 'personal' && (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg">
-            <Rocket className="w-3.5 h-3.5" />
-            Upgrade to Business
-          </span>
+        {subscription.billing_cycle && billingCycle !== subscription.billing_cycle && (
+          <button
+            type="button"
+            onClick={() => setPendingCycle(billingCycle)}
+            className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Apply {billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} Billing
+          </button>
         )}
       </div>
 

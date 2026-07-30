@@ -5,7 +5,7 @@ import { CustosellLoader } from '../../shared/components/loading/CustosellLoader
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
-import { Plus, Pencil, Trash2, Wallet, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Wallet } from 'lucide-react';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import type { IncomeSource } from './api/IncomeTypes';
 

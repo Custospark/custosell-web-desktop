@@ -19,7 +19,7 @@ const PIE_COLORS = [
 ];
 
 function DonutChart({ data, title, dataKey, nameKey }: {
-  data: { [key: string]: string | number }[];
+  data: ReadonlyArray<Record<string, unknown>>;
   title: string;
   dataKey: string;
   nameKey: string;
@@ -52,7 +52,7 @@ function DonutChart({ data, title, dataKey, nameKey }: {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                  <Tooltip formatter={(val) => formatCurrency(Number(val ?? 0))} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -79,7 +79,8 @@ const MONTH_LABELS: Record<string, string> = {
   '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec',
 };
 
-function formatMonth(month: string): string {
+function formatMonth(month: React.ReactNode): string {
+  if (typeof month !== 'string') return '';
   const [, m] = month.split('-');
   return MONTH_LABELS[m] ?? month;
 }
@@ -224,7 +225,7 @@ export default function OverviewPage() {
                   <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={formatAxisCurrency} />
                   <Tooltip
-                    formatter={(val: number, name: string) => [formatCurrency(val), name === 'income' ? 'Income' : 'Expenses']}
+                    formatter={(val, name) => [formatCurrency(Number(val ?? 0)), name === 'income' ? 'Income' : 'Expenses']}
                     labelFormatter={formatMonth}
                   />
                   <Bar dataKey="income" fill={CHART_THEME.transactions} radius={[4, 4, 0, 0]} name="income" />

@@ -179,7 +179,7 @@ export default function MyBudgetsPage() {
               <BarChart data={chartData}>
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={formatAxisCurrency} />
-                <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                <Tooltip formatter={(val) => formatCurrency(Number(val ?? 0))} />
                 <Bar dataKey="target" fill={CHART_THEME.line} radius={[4, 4, 0, 0]} name="Target" />
                 <Bar dataKey="actual" fill={CHART_THEME.transactions} radius={[4, 4, 0, 0]} name="Actual" />
               </BarChart>

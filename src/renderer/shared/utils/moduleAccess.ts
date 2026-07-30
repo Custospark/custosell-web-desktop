@@ -53,6 +53,9 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   account: ROUTES.ACCOUNT.NOTIFICATIONS,
   guide: ROUTES.GUIDE.TUTORIALS,
   discover: ROUTES.DISCOVER,
+  // Personal modules
+  pipeline_personal: ROUTES.PIPELINE.BOARDS,
+  accounting_personal: ROUTES.ACCOUNTING.RATIOS,
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
@@ -158,7 +161,9 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
     modules.add('guide_settings');
   }
 
-  if (isBusinessOwner(user)) {
+  if (user.account_type === 'personal') {
+    (user.modules ?? []).forEach((m) => modules.add(m));
+  } else if (isBusinessOwner(user)) {
     resolvedOwnerBusinessModules(user).forEach((m) => modules.add(m));
   } else if (user.business_id) {
     storedBusinessModules(user).forEach((m) => modules.add(m));
@@ -341,6 +346,18 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (!user) return ROUTES.LOGIN;
 
   const accessible = new Set(getPlanAccessibleModules(user));
+
+  // Personal accounts: land on first accessible module or account home
+  if (user.account_type === 'personal') {
+    const personalPriority = ['pipeline', 'accounting', 'account', 'guide'];
+    for (const mod of personalPriority) {
+      if (accessible.has(mod) && MODULE_DEFAULT_ROUTES[mod]) {
+        return MODULE_DEFAULT_ROUTES[mod];
+      }
+    }
+    return ROUTES.ACCOUNT.NOTIFICATIONS;
+  }
+
   const priority = isBusinessOwner(user) ? OWNER_LANDING_PRIORITY : STAFF_LANDING_PRIORITY;
 
   for (const mod of priority) {

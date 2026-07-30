@@ -1,10 +1,20 @@
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { getAccessibleModules } from './moduleAccess';
 import { BUSINESS_MODULE_SLUGS } from './moduleAccess';
+import type { AuthUser } from '../../app/store/slices/authSlice';
 
 /** Keep only non-business slugs + settings — hides all business modules.
- *  Used when plan_features is unavailable to prevent sidebar flash. */
-function restrictToSafeModules(accessible: string[]): string[] {
+ *  Used when plan_features is unavailable to prevent sidebar flash.
+ *  For personal accounts, keeps purchased modules since they're not plan-gated. */
+function restrictToSafeModules(accessible: string[], user?: AuthUser | null): string[] {
+  const keep = new Set(accessible);
+  if (user?.account_type === 'personal') {
+    return accessible.filter((mod) => {
+      if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
+      if (mod === 'settings') return true;
+      return keep.has(mod);
+    });
+  }
   return accessible.filter((mod) => {
     if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
     if (mod === 'settings') return true;
@@ -15,8 +25,12 @@ function restrictToSafeModules(accessible: string[]): string[] {
 export function usePlanAccessibleModules(): string[] {
   const user = useAppSelector((s) => s.auth.user);
   const accessible = getAccessibleModules(user);
-  const features = user?.business?.subscription?.plan_features;
 
+  if (user?.account_type === 'personal') {
+    return restrictToSafeModules(accessible, user);
+  }
+
+  const features = user?.business?.subscription?.plan_features;
   if (!features) return restrictToSafeModules(accessible);
 
   return accessible.filter((mod) => {

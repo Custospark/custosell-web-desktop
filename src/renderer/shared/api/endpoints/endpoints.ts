@@ -283,6 +283,13 @@ export const REFERRAL_CODES = {
 export const CURRENCY = {
   CONVERT: '/currencies/convert',
 };
+export const PERSONAL_SUBSCRIPTIONS = {
+  AVAILABLE: '/personal/subscriptions/available',
+  MINE: '/personal/subscriptions/mine',
+  SUBSCRIBE: '/personal/subscriptions/subscribe',
+  CANCEL: (id: number) => `/personal/subscriptions/${id}/cancel`,
+};
+
 export const SALES_REPS = {
   BASE: '/sales-reps',
   EARNINGS_ALL: '/sales-reps/earnings/all',

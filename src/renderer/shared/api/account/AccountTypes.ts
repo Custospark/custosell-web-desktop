@@ -12,14 +12,25 @@ export interface RegisterRequest {
   password: string;
   password_confirmation: string;
   phone?: string;
-  /** Discover shopper — no business; becomes customer of shops they order from. */
-  account_type?: 'storefront_buyer';
+  /** Personal account — no business; buys modules à la carte. */
+  account_type?: 'personal';
 }
 
 export interface AuthResponse {
   user: AuthUser;
   token: string;
   active_plans?: Plan[];
+}
+
+export interface RegisterPersonalRequest {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  phone?: string;
+  account_type: 'personal';
+  /** Optional module slugs to immediately subscribe to after registration. */
+  modules?: string[];
 }
 
 export interface BusinessRegisterRequest {

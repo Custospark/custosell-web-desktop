@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
-import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
+import { useRegister, useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { useValidateReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -11,16 +11,21 @@ import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes'
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
-import { Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff, LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff,
+  LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle, CircleUser,
+} from 'lucide-react';
 
 export default function RegisterPage() {
-  const registerMutation = useRegisterBusiness();
+  const businessMutation = useRegisterBusiness();
+  const personalMutation = useRegister();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
   const { data: plans } = useActivePlans();
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
+  const [accountType, setAccountType] = useState<'business' | 'personal' | null>(null);
   const [manualReferralCode, setManualReferralCode] = useState('');
 
   const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
@@ -78,14 +83,14 @@ export default function RegisterPage() {
     setStep(2);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleBusinessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!planId) return;
     if (form.password_confirmation.length > 0 && !passwordsMatch) return;
 
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
 
-    registerMutation.mutate({
+    businessMutation.mutate({
       owner_name: [form.owner_first_name, form.owner_last_name]
         .map((part) => part.trim())
         .filter(Boolean)
@@ -103,15 +108,199 @@ export default function RegisterPage() {
     });
   };
 
+  const handlePersonalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.password_confirmation.length > 0 && !passwordsMatch) return;
+
+    const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
+
+    personalMutation.mutate({
+      name: form.name,
+      email: form.email,
+      phone: fullPhone,
+      password: form.password,
+      password_confirmation: form.password_confirmation,
+      account_type: 'personal',
+    });
+  };
+
   const inputCls = "w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
+  const isPending = businessMutation.isPending || personalMutation.isPending;
+
+  const renderPhoneInput = (required = false) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone {required ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}</label>
+      <div className="flex gap-2">
+        <div ref={dropdownRef} className="relative shrink-0">
+          <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-1.5 h-[46px] px-3 border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors cursor-pointer">
+            <span className="text-lg">{countryCode.flag}</span>
+            <span className="text-sm font-medium text-gray-700">{countryCode.dial_code}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+          </button>
+          {dropdownOpen && (
+            <div className="absolute top-full mt-1 left-0 min-w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
+                <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+              </div>
+              {filtered.map((c) => (
+                <button key={c.code} type="button" onClick={() => { setCountryCode(c); setDropdownOpen(false); setSearch(''); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-blue-50 transition-colors cursor-pointer ${c.code === countryCode.code ? 'bg-blue-50 font-medium' : ''}`}>
+                  <span className="text-lg">{c.flag}</span>
+                  <span className="text-gray-800">{c.name}</span>
+                  <span className="ml-auto text-gray-400">{c.dial_code}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="relative flex-1">
+          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input type="tel" placeholder={getPhonePlaceholder(countryCode)} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d\s\-()]/g, '') }))}
+            className="w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm" />
+        </div>
+      </div>
+      {form.phone && (
+        <p className="text-xs text-gray-400 mt-1">Full number: {countryCode.dial_code} {form.phone}</p>
+      )}
+    </div>
+  );
+
+  const renderPasswordFields = () => (
+    <>
+      <div className="relative">
+        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+        <input type={showPassword ? 'text' : 'password'} placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={`${inputCls} pr-12`} />
+        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+      <div className="relative">
+        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+        <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={`${inputCls} pr-12`} />
+        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+      {form.password_confirmation && !passwordsMatch && (
+        <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
+      )}
+    </>
+  );
+
+  const renderSignInFooter = () => (
+    <div className="border-t border-gray-100 pt-4">
+      <p className="mb-3 text-center text-sm font-medium text-gray-700">Already have an account?</p>
+      <Link to={ROUTES.LOGIN}
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50">
+        <LogIn className="h-4 w-4" aria-hidden />
+        Sign In
+      </Link>
+    </div>
+  );
+
+  if (!accountType) {
+    return (
+      <AuthLayout
+        title="Create Account"
+        subtitle={`Get started with ${PRODUCT_NAME}`}
+        heroImage={AUTH_HERO_IMAGES.register}
+      >
+        <div className="space-y-4">
+          <p className="text-center text-sm text-gray-500">
+            How will you use {PRODUCT_NAME}?
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setAccountType('business')}
+            className="flex w-full items-center gap-4 rounded-xl border-2 border-blue-200 bg-white p-5 text-left transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+              <Store className="h-6 w-6 text-blue-700" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-gray-900">For my business</p>
+              <p className="mt-0.5 text-sm text-gray-500">
+                Manage sales, inventory, staff, and customers
+              </p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAccountType('personal')}
+            className="flex w-full items-center gap-4 rounded-xl border-2 border-indigo-200 bg-white p-5 text-left transition-all hover:border-indigo-400 hover:shadow-md cursor-pointer"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+              <CircleUser className="h-6 w-6 text-indigo-700" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-gray-900">For personal use</p>
+              <p className="mt-0.5 text-sm text-gray-500">
+                Project management, bookkeeping, and more
+              </p>
+            </div>
+          </button>
+
+          {renderSignInFooter()}
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  if (accountType === 'personal') {
+    return (
+      <AuthLayout
+        title="Create Personal Account"
+        subtitle={`Start using ${PRODUCT_NAME} for yourself`}
+        heroImage={AUTH_HERO_IMAGES.register}
+      >
+        <form onSubmit={handlePersonalSubmit} className="space-y-4">
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input
+              placeholder="Full name"
+              value={form.name}
+              onChange={handleChange('name')}
+              required
+              className={inputCls}
+            />
+          </div>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
+          </div>
+
+          {renderPhoneInput()}
+          {renderPasswordFields()}
+
+          <Button type="submit" className="w-full gap-2 py-3.5" loading={isPending}>
+            <UserPlus className="h-4 w-4" aria-hidden />
+            Create Personal Account
+          </Button>
+
+          <div className="flex items-center justify-center gap-2">
+            <button type="button" onClick={() => setAccountType(null)}
+              className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer">
+              Back to account type selection
+            </button>
+          </div>
+
+          {renderSignInFooter()}
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
-      title="Create Account"
+      title="Create Business Account"
       subtitle={`Get started with ${PRODUCT_NAME}`}
       heroImage={AUTH_HERO_IMAGES.register}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleBusinessSubmit} className="space-y-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-gray-400">Step {step} of 2</span>
           <div className="flex gap-1">
@@ -153,43 +342,7 @@ export default function RegisterPage() {
               <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone <span className="text-red-500">*</span></label>
-              <div className="flex gap-2">
-                <div ref={dropdownRef} className="relative shrink-0">
-                  <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-1.5 h-[46px] px-3 border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors cursor-pointer">
-                    <span className="text-lg">{countryCode.flag}</span>
-                    <span className="text-sm font-medium text-gray-700">{countryCode.dial_code}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                  </button>
-                  {dropdownOpen && (
-                    <div className="absolute top-full mt-1 left-0 min-w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                      <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
-                        <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
-                      </div>
-                      {filtered.map((c) => (
-                        <button key={c.code} type="button" onClick={() => { setCountryCode(c); setDropdownOpen(false); setSearch(''); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-blue-50 transition-colors cursor-pointer ${c.code === countryCode.code ? 'bg-blue-50 font-medium' : ''}`}>
-                          <span className="text-lg">{c.flag}</span>
-                          <span className="text-gray-800">{c.name}</span>
-                          <span className="ml-auto text-gray-400">{c.dial_code}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  <input type="tel" placeholder={getPhonePlaceholder(countryCode)} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d\s\-()]/g, '') }))}
-                    className="w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm" />
-                </div>
-              </div>
-              {form.phone && (
-                <p className="text-xs text-gray-400 mt-1">Full number: {countryCode.dial_code} {form.phone}</p>
-              )}
-            </div>
+            {renderPhoneInput(true)}
 
             <Button
               type="button"
@@ -205,23 +358,7 @@ export default function RegisterPage() {
 
         {step === 2 && (
           <div className="space-y-4">
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input type={showPassword ? 'text' : 'password'} placeholder="Password (min 6 chars)" value={form.password} onChange={handleChange('password')} required className={`${inputCls} pr-12`} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={form.password_confirmation} onChange={handleChange('password_confirmation')} required className={`${inputCls} pr-12`} />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            {form.password_confirmation && !passwordsMatch && (
-              <p className="text-xs text-red-500 -mt-1">Passwords do not match</p>
-            )}
+            {renderPasswordFields()}
 
             <div ref={currencyRef}>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
@@ -331,26 +468,11 @@ export default function RegisterPage() {
                 <ChevronLeft className="h-4 w-4" />
                 Back
               </button>
-              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={registerMutation.isPending} disabled={!planId}>
+              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={businessMutation.isPending} disabled={!planId}>
                 <UserPlus className="h-4 w-4" aria-hidden />
                 Create Account
               </Button>
             </div>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="space-y-3 border-t border-gray-100 pt-5">
-            <p className="text-center text-sm font-medium text-gray-700">
-              Already have an account?
-            </p>
-            <Link
-              to={ROUTES.LOGIN}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-            >
-              <LogIn className="h-4 w-4" aria-hidden />
-              Sign In
-            </Link>
           </div>
         )}
       </form>

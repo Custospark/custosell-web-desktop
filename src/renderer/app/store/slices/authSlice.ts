@@ -91,8 +91,17 @@ export interface AuthUser {
   is_platform_admin?: boolean;
   platform_roles?: string[];
   is_business_owner?: boolean;
+  account_type?: string;
   modules?: string[];
   accessible_modules?: string[];
+  personal_modules?: Array<{
+    id: number;
+    module_slug: string;
+    status: string;
+    billing_cycle: string;
+    price_usd: number;
+    current_period_end: string | null;
+  }>;
   project_member_ids?: number[];
   last_login_at?: string | null;
   onboarding?: {

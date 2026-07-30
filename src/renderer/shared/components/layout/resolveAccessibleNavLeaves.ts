@@ -34,6 +34,32 @@ export function resolveAccessibleNavGroups(
     ? (slug: string) => planAccessibleModules.includes(slug)
     : (slug: string) => canAccessModule(user, slug);
 
+  // Personal accounts: only show PersonalModules, Account, Guide, Discover, Settings (limited)
+  if (user?.account_type === 'personal') {
+    const personalGroups = baseNavGroups.filter((group) => {
+      if (group.label === 'Discover & My Orders') return true;
+      if (group.label === 'Custosell Guide') return true;
+      if (group.label === 'Account') return true;
+      // Pipeline and Accounting sidebar groups are purchasable
+      if (group.label === 'Pipeline') return hasModule('pipeline');
+      if (group.label === 'Accounting') return hasModule('accounting');
+      return false;
+    }).map((group) => {
+      if (group.label === 'Settings') {
+        return {
+          ...group,
+          subItems: group.subItems.filter((item) => item.label === 'Data & Export' || item.label === 'Business'),
+        };
+      }
+      return group;
+    });
+
+    if (user?.is_platform_admin) {
+      return [...personalGroups, platformNavGroup, guideSettingsNavGroup];
+    }
+    return personalGroups;
+  }
+
   const businessGroups = baseNavGroups.filter((group) => {
     const moduleSlug = NAV_GROUP_MODULE[group.label];
     if (!moduleSlug) return true;

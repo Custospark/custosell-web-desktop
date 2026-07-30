@@ -196,7 +196,14 @@ export default function PrivacyPage() {
 
       {/* FAQ */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Frequently Asked Questions</h2>
+        <p className="text-center text-sm text-gray-500 mb-8">
+          Visit our{' '}
+          <a href="/faq" className="text-blue-600 font-semibold hover:underline">
+            full FAQ page
+          </a>{' '}
+          for general questions about Custosell.
+        </p>
         <div className="space-y-4">
           {faqItems.map((item) => (
             <div key={item.q} className="rounded-xl border-2 border-gray-200 bg-white/80 p-5">

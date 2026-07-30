@@ -148,6 +148,18 @@ export function useGuideFaqs(options?: { enabled?: boolean }) {
   });
 }
 
+export function usePublicFaqs(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: [...guideKeys.faqs(), 'public'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: GuideFaqDto[] }>(GUIDE.PUBLIC_FAQS);
+      return data.data;
+    },
+    staleTime: 60_000,
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useMyGuideFeedback() {
   return useQuery<GuideFeedbackWithSyncMeta[]>({
     queryKey: guideKeys.feedbackMine(),

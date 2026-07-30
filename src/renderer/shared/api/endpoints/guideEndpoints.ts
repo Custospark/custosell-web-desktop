@@ -1,6 +1,7 @@
 export const GUIDE = {
   TUTORIALS: '/guide/tutorials',
   FAQS: '/guide/faqs',
+  PUBLIC_FAQS: '/public/faqs',
   FEEDBACK: '/guide/feedback',
   FEEDBACK_MINE: '/guide/feedback/mine',
   FEEDBACK_ITEM: (id: number) => `/guide/feedback/${id}`,

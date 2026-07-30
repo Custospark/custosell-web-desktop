@@ -1,100 +1,45 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle, MessageCircle } from 'lucide-react';
+import { ChevronDown, HelpCircle, Loader2, MessageCircle, RefreshCw, Search, WifiOff } from 'lucide-react';
+import { usePublicFaqs } from '../guide/api/GuideQueries';
+import type { GuideFaqDto } from '../guide/api/GuideTypes';
 
-interface FaqItem {
-  q: string;
-  a: string;
-}
-
-const FAQ_CATEGORIES: { label: string; icon: typeof HelpCircle; items: FaqItem[] }[] = [
+const CATEGORIES: { label: string; range: [number, number]; description: string }[] = [
   {
-    label: 'Getting Started',
-    icon: HelpCircle,
-    items: [
-      {
-        q: 'What is Custosell?',
-        a: 'Custosell is an all-in-one business operating system for businesses of all sizes — from small shops to large enterprises. It replaces your cash register, receipt book, customer ledger, stock book, expense notebook, invoice book, and payroll sheets — all in one app that works with or without internet.',
-      },
-      {
-        q: 'How do I get started?',
-        a: 'Create a free account, choose your plan, pay the one-time setup fee, and you get a 30-day trial to test everything. No credit card required to start.',
-      },
-      {
-        q: 'What platforms does Custosell support?',
-        a: 'Custosell runs on Windows laptops and tablets. Support for Mac and Linux is coming soon. The public storefront (Discover) works on any phone browser.',
-      },
-    ],
+    label: 'Getting Started & Plans',
+    range: [1, 8],
+    description: 'Learn about Custosell, create your account, and understand plans & billing.',
   },
   {
-    label: 'Plans & Billing',
-    icon: MessageCircle,
-    items: [
-      {
-        q: 'How much does Custosell cost?',
-        a: 'Pricing varies by plan and currency region. Choose from Essential, Professional, or Enterprise — each includes a 30-day trial after setup. See our Plans page for current pricing in your currency.',
-      },
-      {
-        q: 'Is there a free version?',
-        a: 'No, there is no free tier. But you get a full 30-day trial to test every feature before you pay. No credit card required.',
-      },
-      {
-        q: 'Can I switch plans later?',
-        a: 'Yes. Upgrade or downgrade anytime. Changes take effect on your next billing cycle.',
-      },
-      {
-        q: 'What payment methods do you accept?',
-        a: 'Card payments, mobile money, and bank transfer (availability depends on your region).',
-      },
-      {
-        q: 'Can I cancel anytime?',
-        a: 'Yes. Month-to-month, no lock-in contracts. Cancel anytime and your access continues until the end of your billing period.',
-      },
-    ],
+    label: 'For Personal Accounts',
+    range: [9, 11],
+    description: 'FAQs specific to freelancers, solopreneurs, and personal account holders.',
   },
   {
-    label: 'Offline & Technical',
-    icon: HelpCircle,
-    items: [
-      {
-        q: 'Does Custosell work without internet?',
-        a: 'Yes. Custosell is offline-first. You can ring up sales, add customers, record expenses, and manage inventory without any internet connection. Everything syncs automatically when you reconnect.',
-      },
-      {
-        q: 'What happens if my device breaks?',
-        a: 'Your data is stored locally and synced to the cloud. Install Custosell on a new device, log in, and your data restores from the cloud.',
-      },
-      {
-        q: 'Is my data safe?',
-        a: 'Yes. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Your data belongs to you — we never share or sell it.',
-      },
-    ],
+    label: 'For Business Accounts',
+    range: [12, 13],
+    description: 'FAQs for registered businesses using POS, inventory, staff management & more.',
   },
   {
-    label: 'Features',
-    icon: HelpCircle,
-    items: [
-      {
-        q: 'What modules are included in each plan?',
-        a: 'Essential includes point of sale, inventory, customers, expenses, dashboard, and a public online storefront. Professional adds pipeline, estimates, documents, and marketplace. Enterprise adds accounting, HR & payroll, and forecasting.',
-      },
-      {
-        q: 'Can I control what my staff see?',
-        a: 'Yes. You control which modules each staff member can access. A cashier sees only the point of sale. Your inventory manager sees only stock-related sections.',
-      },
-      {
-        q: 'Are receipts tax-compliant?',
-        a: 'Yes. Custosell generates fiscal receipts compliant with local tax regulations, including URA/EFRIS in Uganda. Works offline too — receipts are queued and synced when you reconnect.',
-      },
-      {
-        q: 'Can I sell online with Custosell?',
-        a: 'Yes. Every business gets a public storefront with a shareable link. Customers browse products and place orders. You fulfil from your point of sale. Share the link on WhatsApp, TikTok, or Facebook.',
-      },
-    ],
+    label: 'Technical & Data',
+    range: [14, 15],
+    description: 'Offline capability, security, encryption, and data ownership.',
   },
 ];
 
-function AccordionItem({ item, index }: { item: FaqItem; index: number }) {
+function isInRange(item: GuideFaqDto, range: [number, number]): boolean {
+  return item.sort_order >= range[0] && item.sort_order <= range[1];
+}
+
+function filterFaqs(items: GuideFaqDto[], search: string): GuideFaqDto[] {
+  const q = search.trim().toLowerCase();
+  if (!q) return items;
+  return items.filter(
+    (item) => item.question.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q),
+  );
+}
+
+function AccordionItem({ item, index }: { item: GuideFaqDto; index: number }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -109,7 +54,7 @@ function AccordionItem({ item, index }: { item: FaqItem; index: number }) {
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600">
             {index + 1}
           </span>
-          <span className="text-sm font-semibold text-gray-900 leading-snug">{item.q}</span>
+          <span className="text-sm font-semibold text-gray-900 leading-snug">{item.question}</span>
         </span>
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -126,7 +71,7 @@ function AccordionItem({ item, index }: { item: FaqItem; index: number }) {
             className="overflow-hidden"
           >
             <div className="border-t border-gray-100 px-5 py-4">
-              <p className="text-sm text-gray-600 leading-relaxed">{item.a}</p>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{item.answer}</p>
             </div>
           </motion.div>
         )}
@@ -135,9 +80,16 @@ function AccordionItem({ item, index }: { item: FaqItem; index: number }) {
   );
 }
 
-function CategorySection({ category }: { category: typeof FAQ_CATEGORIES[0] }) {
-  const [expanded, setExpanded] = useState(true);
-  const Icon = category.icon;
+function CategorySection({
+  category,
+  items,
+  defaultExpanded,
+}: {
+  category: typeof CATEGORIES[0];
+  items: GuideFaqDto[];
+  defaultExpanded: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
     <section>
@@ -148,11 +100,14 @@ function CategorySection({ category }: { category: typeof FAQ_CATEGORIES[0] }) {
         aria-expanded={expanded}
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 shadow-sm">
-          <Icon className="h-4 w-4 text-white" />
+          <HelpCircle className="h-4 w-4 text-white" />
         </div>
-        <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-          {category.label}
-        </h2>
+        <div className="text-left">
+          <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+            {category.label}
+          </h2>
+          <p className="text-xs text-gray-500">{category.description}</p>
+        </div>
         <ChevronDown
           className={`ml-auto h-4 w-4 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
         />
@@ -166,8 +121,8 @@ function CategorySection({ category }: { category: typeof FAQ_CATEGORIES[0] }) {
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="space-y-3 overflow-hidden"
           >
-            {category.items.map((item, i) => (
-              <AccordionItem key={item.q} item={item} index={i} />
+            {items.map((item, i) => (
+              <AccordionItem key={item.uuid} item={item} index={i} />
             ))}
           </motion.div>
         )}
@@ -177,9 +132,24 @@ function CategorySection({ category }: { category: typeof FAQ_CATEGORIES[0] }) {
 }
 
 export default function FaqPage() {
+  const [search, setSearch] = useState('');
+  const { data: allItems = [], isLoading, isError, refetch } = usePublicFaqs();
+
+  const filtered = useMemo(() => filterFaqs(allItems, search), [allItems, search]);
+  const hasSearch = search.trim().length > 0;
+
+  const visibleCategories = useMemo(
+    () =>
+      CATEGORIES.map((cat) => ({
+        ...cat,
+        items: filtered.filter((item) => isInRange(item, cat.range)),
+      })).filter((cat) => cat.items.length > 0),
+    [filtered],
+  );
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold border bg-blue-50 border-blue-200 text-blue-700 mb-5">
           <HelpCircle className="w-3.5 h-3.5" />
           Help & Support
@@ -191,22 +161,86 @@ export default function FaqPage() {
           </span>
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          From small shops to large enterprises — everything you need to know about Custosell. Can't find what you're looking for? Reach out to us.
+          Everything you need to know about Custosell — from getting started to advanced features.
         </p>
       </motion.div>
 
-      <div className="space-y-8">
-        {FAQ_CATEGORIES.map((category, i) => (
-          <motion.div
-            key={category.label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 * i }}
-          >
-            <CategorySection category={category} />
-          </motion.div>
-        ))}
+      <div className="relative mb-8">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search questions and answers…"
+          disabled={isLoading}
+          className="w-full rounded-xl border-2 border-gray-200 bg-white/80 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 transition-colors disabled:opacity-50"
+        />
+        {hasSearch && (
+          <p className="mt-1.5 text-xs text-gray-500">
+            {filtered.length} result{filtered.length === 1 ? '' : 's'}
+            {filtered.length !== allItems.length && ` (filtered from ${allItems.length})`}
+          </p>
+        )}
       </div>
+
+      {isLoading && (
+        <div className="flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-12 text-sm text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading answers…
+        </div>
+      )}
+
+      {isError && (
+        <div className="text-center py-12 space-y-4">
+          <WifiOff className="w-10 h-10 text-red-400 mx-auto" />
+          <p className="text-gray-500 text-sm">Could not load FAQs. Check your connection.</p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !isError && allItems.length === 0 && (
+        <div className="text-center py-12">
+          <HelpCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">No published FAQs yet. Check back soon.</p>
+        </div>
+      )}
+
+      {!isLoading && !isError && filtered.length === 0 && allItems.length > 0 && (
+        <div className="text-center py-12">
+          <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm mb-3">No answers match your search.</p>
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Clear Search
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !isError && filtered.length > 0 && (
+        <div className="space-y-8">
+          {visibleCategories.map((cat, i) => (
+            <motion.div
+              key={cat.label}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 * i }}
+            >
+              <CategorySection category={cat} items={cat.items} defaultExpanded={!hasSearch} />
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       <motion.div
         initial={{ opacity: 0 }}
@@ -221,7 +255,7 @@ export default function FaqPage() {
         </p>
         <a
           href="mailto:support@custosell.com"
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-md"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-3 text-sm font-semibold text-white hover:from-blue-700 hover:to-blue-900 transition-all shadow-md hover:shadow-lg"
         >
           <MessageCircle className="h-4 w-4" />
           Contact Support

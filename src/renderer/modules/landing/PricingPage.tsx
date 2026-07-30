@@ -146,9 +146,16 @@ export default function PricingPage() {
           </div>
 
           <div className="max-w-3xl mx-auto mb-16">
-            <h2 className="text-2xl font-bold mb-8 text-center text-gray-900">
+            <h2 className="text-2xl font-bold mb-4 text-center text-gray-900">
               Frequently Asked Questions
             </h2>
+            <p className="text-center text-sm text-gray-500 mb-8">
+              Visit our{' '}
+              <a href="/faq" className="text-blue-600 font-semibold hover:underline">
+                full FAQ page
+              </a>{' '}
+              for answers about getting started, plans, billing, and more.
+            </p>
             <div className="space-y-4">
               {FAQS.map((item) => (
                 <div key={item.q} className="rounded-xl border-2 border-gray-200 bg-white/80 p-5">

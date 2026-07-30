@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import axiosInstance from '../axiosConfig';
+import { axiosInstance } from '../../../app/api/axiosConfig';
 import { USERS } from '../endpoints/endpoints';
 
 export function useUserLookup() {

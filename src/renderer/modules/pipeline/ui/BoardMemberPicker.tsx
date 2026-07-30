@@ -12,7 +12,9 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import type { BoardWorkspace } from './boardVisibilityOptions';
-import { UserPlus, X, Loader2 } from 'lucide-react';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { UserPlus, X, Loader2, Search, AlertCircle } from 'lucide-react';
+import { useUserLookup } from '../../../shared/api/account/useUserLookup';
 
 const pickerInputClass =
   'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20';
@@ -35,6 +37,7 @@ interface BoardMemberPickerProps {
   canManage?: boolean;
   className?: string;
   loadTeamMembers?: boolean;
+  maxBoardMembers?: number | null;
 }
 
 function memberDisplayName(member: BoardMemberInput, staffName?: string): string {
@@ -50,6 +53,7 @@ export default function BoardMemberPicker({
   canManage = true,
   className,
   loadTeamMembers = true,
+  maxBoardMembers,
 }: BoardMemberPickerProps) {
   const { data: teamMembers = [], isLoading, isFetching } = useBoardTeamMembers(_workspace, {
     enabled: loadTeamMembers,
@@ -60,8 +64,17 @@ export default function BoardMemberPicker({
   const [sendNotification, setSendNotification] = useState(true);
   const [search, setSearch] = useState('');
   const [staffSearch, setStaffSearch] = useState('');
+  const [emailSearch, setEmailSearch] = useState('');
+  const [lookupResult, setLookupResult] = useState<{ id: number; name: string; email: string } | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+
+  const subscription = useAppSelector((s) => s.auth.user?.business?.subscription);
+  const lookupMutation = useUserLookup();
 
   const staffLoading = isLoading || (isFetching && teamMembers.length === 0);
+
+  const planLimit = maxBoardMembers ?? subscription?.plan_limits?.max_board_members ?? null;
+  const atLimit = planLimit !== null && value.length >= planLimit;
 
   const availableStaff = useMemo(
     () => teamMembers.filter((u) => u.id !== excludeUserId && !value.some((m) => m.user_id === u.id)),
@@ -87,8 +100,46 @@ export default function BoardMemberPicker({
     });
   }, [query, teamMembers, value]);
 
+  const handleLookup = () => {
+    const email = emailSearch.trim();
+    if (!email) return;
+    setLookupResult(null);
+    setLookupError(null);
+    lookupMutation.mutate(
+      { email },
+      {
+        onSuccess: (data) => {
+          const result = data?.data;
+          if (!result?.user) {
+            setLookupError('No account found for this email. They must have a Custosell account to be added.');
+          } else if (result.status === 'already_member' || result.status === 'unattached') {
+            setLookupResult(result.user);
+          } else if (result.status === 'other_business') {
+            setLookupResult(result.user);
+          } else if (result.status === 'platform_inactive') {
+            setLookupError('This account is inactive and cannot be added.');
+          } else {
+            setLookupError('No account found for this email. They must have a Custosell account to be added.');
+          }
+        },
+        onError: () => {
+          setLookupError('Could not look up this email. Please try again.');
+        },
+      },
+    );
+  };
+
+  const handleAddLookedUp = () => {
+    if (!lookupResult || !canManage || atLimit) return;
+    onChange([...value, { user_id: lookupResult.id, role: selectedRole, name: lookupResult.name, send_notification: sendNotification }]);
+    setLookupResult(null);
+    setEmailSearch('');
+    setSelectedRole('contributor');
+    setSendNotification(true);
+  };
+
   const handleAdd = () => {
-    if (!selectedUserId || !canManage) return;
+    if (!selectedUserId || !canManage || atLimit) return;
     const person = teamMembers.find((u) => u.id === selectedUserId);
     onChange([...value, { user_id: Number(selectedUserId), role: selectedRole, name: person?.name, send_notification: sendNotification }]);
     setSelectedUserId('');
@@ -148,6 +199,20 @@ export default function BoardMemberPicker({
 
   return (
     <div className={cn('space-y-4', className)}>
+      {planLimit !== null && (
+        <div className="flex items-center justify-between rounded-lg bg-gray-50 border border-gray-200 px-3 py-2">
+          <span className="text-xs font-medium text-gray-700">Members</span>
+          <span className={cn('text-xs font-semibold', value.length >= planLimit ? 'text-amber-600' : 'text-gray-900')}>
+            {value.length} / {planLimit}
+            {value.length >= planLimit && ' (limit reached)'}
+          </span>
+        </div>
+      )}
+
+      <p className="text-xs text-gray-500">
+        Search staff from your business or invite any Custosell user by email.
+      </p>
+
       <input
         type="search"
         value={staffSearch}
@@ -155,6 +220,7 @@ export default function BoardMemberPicker({
         placeholder="Search staff by name or email…"
         className={pickerInputClass}
       />
+
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[180px] flex-1">
           <label className="mb-1 block text-xs font-medium text-gray-700">Staff member</label>
@@ -201,7 +267,7 @@ export default function BoardMemberPicker({
           type="button"
           size="sm"
           onClick={handleAdd}
-          disabled={!selectedUserId}
+          disabled={!selectedUserId || atLimit}
           className="inline-flex items-center gap-2"
         >
           <UserPlus className="h-4 w-4" aria-hidden />
@@ -218,6 +284,68 @@ export default function BoardMemberPicker({
       {filteredAvailableStaff.length === 0 && staffQuery && (
         <p className="text-xs text-gray-500">No staff match your search.</p>
       )}
+
+      <div className="border-t border-gray-200 pt-4">
+        <p className="text-xs font-medium text-gray-700 mb-2">Or invite someone by email</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[220px] flex-1">
+            <input
+              type="email"
+              value={emailSearch}
+              onChange={(e) => setEmailSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLookup(); } }}
+              placeholder="Enter their email address…"
+              className={pickerInputClass}
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleLookup}
+            disabled={!emailSearch.trim() || lookupMutation.isPending}
+            className="inline-flex items-center gap-2"
+          >
+            {lookupMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            Search
+          </Button>
+        </div>
+
+        {lookupMutation.isPending && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Looking up user…
+          </div>
+        )}
+
+        {lookupError && (
+          <div className="mt-2 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>{lookupError}</span>
+          </div>
+        )}
+
+        {lookupResult && (
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+            <UserIdentityChip
+              name={lookupResult.name}
+              size="sm"
+              nameClassName="text-sm font-medium text-gray-900"
+              subtitle={lookupResult.email}
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleAddLookedUp}
+              disabled={atLimit}
+              className="inline-flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Add to board
+            </Button>
+          </div>
+        )}
+      </div>
 
       {availableStaff.length === 0 && value.length === 0 && (
         <p className="text-sm text-gray-500">

@@ -152,6 +152,7 @@ export default function BoardVisibilitySection({
             lockedUserId={lockedUserId}
             canManage={canManage}
             loadTeamMembers={loadTeamMembers}
+            maxBoardMembers={undefined}
           />
         </PipelineFormSection>
       )}

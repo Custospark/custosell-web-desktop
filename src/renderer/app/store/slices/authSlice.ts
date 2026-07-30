@@ -9,6 +9,7 @@ export interface SubscriptionInfo {
   plan_name?: string | null;
   plan_slug?: string | null;
   plan_features?: Record<string, boolean> | null;
+  plan_limits?: Record<string, number | null> | null;
   price_monthly_usd?: string | null;
   price_yearly_usd?: string | null;
   onboarding_fee_usd?: string | null;

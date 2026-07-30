@@ -85,7 +85,6 @@ export default function UpgradeFlowConfirmStep({
   const creditAfterProration = availableCredit > 0
     ? Math.min(availableCredit, pr.proration_due_usd ?? pr.proration_due)
     : 0;
-  const currentCycle = subscription.billing_cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -130,7 +129,7 @@ export default function UpgradeFlowConfirmStep({
             <span className="font-semibold text-gray-900">{quote?.current_plan.name}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Current price ({currentCycle})</span>
+            <span className="text-gray-600">Current price</span>
             <span className="font-semibold text-gray-900">{price(pr.old_price)}</span>
           </div>
           <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">

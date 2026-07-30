@@ -137,6 +137,7 @@ const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPag
 const ReferralEntryPage = lazy(() => import('../../modules/referral/pages/ReferralEntryPage'));
 const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/PipelineReferralsPage'));
 const AccountReferralsPage = lazy(() => import('../../modules/account/AccountReferralsPage'));
+const PersonalModulesPage = lazy(() => import('../../modules/personal/PersonalModulesPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -184,6 +185,8 @@ export function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/app" element={<ModuleLandingRedirect />} />
           <Route element={<SubscriptionGuard />}>
+            {/* Personal module selection — SubscriptionGuard passes through for personal accounts */}
+            <Route path={ROUTES.PERSONAL_MODULES} element={<SuspenseWrapper><PersonalModulesPage /></SuspenseWrapper>} />
             <Route element={<ModuleAccessMiddleware module="dashboard" />}>
               <Route path={ROUTES.DASHBOARD} element={<SuspenseWrapper><DashboardPage /></SuspenseWrapper>} />
             </Route>

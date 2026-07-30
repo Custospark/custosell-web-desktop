@@ -94,6 +94,11 @@ export function SubscriptionGuard() {
   const subscription = user?.business?.subscription;
   const status = subscription?.status as string | undefined;
 
+  // Personal accounts don't use business subscriptions — always pass through
+  if (user?.account_type === 'personal') {
+    return <Outlet />;
+  }
+
   if (isLoading || (isFetching && hasAccess !== true)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">

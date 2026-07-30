@@ -347,15 +347,18 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
 
   const accessible = new Set(getPlanAccessibleModules(user));
 
-  // Personal accounts: land on first accessible module or account home
+  // Personal accounts: land on module selection if no modules, or first accessible module
   if (user.account_type === 'personal') {
-    const personalPriority = ['pipeline', 'accounting', 'account', 'guide'];
+    if (!accessible.has('pipeline') && !accessible.has('estimates') && !accessible.has('expenses') && !accessible.has('accounting') && !accessible.has('documents')) {
+      return ROUTES.PERSONAL_MODULES;
+    }
+    const personalPriority = ['pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'account', 'guide'];
     for (const mod of personalPriority) {
       if (accessible.has(mod) && MODULE_DEFAULT_ROUTES[mod]) {
         return MODULE_DEFAULT_ROUTES[mod];
       }
     }
-    return ROUTES.ACCOUNT.NOTIFICATIONS;
+    return ROUTES.PERSONAL_MODULES;
   }
 
   const priority = isBusinessOwner(user) ? OWNER_LANDING_PRIORITY : STAFF_LANDING_PRIORITY;

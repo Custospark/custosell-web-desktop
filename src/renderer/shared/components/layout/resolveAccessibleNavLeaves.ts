@@ -1,5 +1,5 @@
 import {
-  Kanban, Clock, CalendarDays, ClipboardCheck,
+  Kanban, Clock, CalendarDays, ClipboardCheck, Package, Settings, Download,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
@@ -34,24 +34,43 @@ export function resolveAccessibleNavGroups(
     ? (slug: string) => planAccessibleModules.includes(slug)
     : (slug: string) => canAccessModule(user, slug);
 
-  // Personal accounts: only show PersonalModules, Account, Guide, Discover, Settings (limited)
+  // Personal accounts: show module catalog + purchased modules + account/guide/discover/settings
   if (user?.account_type === 'personal') {
-    const personalGroups = baseNavGroups.filter((group) => {
-      if (group.label === 'Discover & My Orders') return true;
-      if (group.label === 'Custosell Guide') return true;
-      if (group.label === 'Account') return true;
-      // Pipeline and Accounting sidebar groups are purchasable
-      if (group.label === 'Pipeline') return hasModule('pipeline');
-      if (group.label === 'Accounting') return hasModule('accounting');
-      return false;
-    }).map((group) => {
-      if (group.label === 'Settings') {
-        return {
-          ...group,
-          subItems: group.subItems.filter((item) => item.label === 'Data & Export' || item.label === 'Business'),
-        };
+    const personalGroups: SidebarNavGroup[] = [];
+
+    personalGroups.push({
+      icon: Package,
+      label: 'Personal Modules',
+      subItems: [
+        { to: ROUTES.PERSONAL_MODULES, label: 'Module catalog', icon: Package },
+      ],
+    });
+
+    // Purchased modules appear as sidebar groups
+    const purchasableGroups = ['Pipeline', 'Projects & Estimates', 'Expenses', 'Documents', 'Accounting'];
+    for (const group of baseNavGroups) {
+      const moduleSlug = NAV_GROUP_MODULE[group.label];
+      if (purchasableGroups.includes(group.label) && moduleSlug && hasModule(moduleSlug)) {
+        personalGroups.push(group);
       }
-      return group;
+    }
+
+    // Always-accessible groups
+    for (const group of baseNavGroups) {
+      if (group.label === 'Custosell Guide' || group.label === 'Account') {
+        personalGroups.push(group);
+      }
+      if (group.label === 'Discover & My Orders') {
+        personalGroups.push(group);
+      }
+    }
+
+    personalGroups.push({
+      icon: Settings,
+      label: 'Settings',
+      subItems: [
+        { to: ROUTES.SETTINGS.DATA_EXPORT, label: 'Data & Export', icon: Download },
+      ],
     });
 
     if (user?.is_platform_admin) {

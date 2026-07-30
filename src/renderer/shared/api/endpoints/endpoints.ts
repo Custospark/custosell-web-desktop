@@ -287,6 +287,7 @@ export const PERSONAL_SUBSCRIPTIONS = {
   AVAILABLE: '/personal/subscriptions/available',
   MINE: '/personal/subscriptions/mine',
   SUBSCRIBE: '/personal/subscriptions/subscribe',
+  PAY: '/personal/subscriptions/pay',
   CANCEL: (id: number) => `/personal/subscriptions/${id}/cancel`,
 };
 

@@ -3,13 +3,33 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 
-const TOOL_LABELS: Record<string, string> = {
-  pipeline: 'Sales CRM / Pipeline',
-  estimates: 'Projects & Estimates',
-  expenses: 'Expenses',
-  accounting: 'Accounting',
-  documents: 'Documents',
-};
+const TOOLS: { slug: string; label: string; description: string }[] = [
+  {
+    slug: 'pipeline',
+    label: 'Sales CRM / Pipeline',
+    description: 'Manage leads, deals, and customer interactions with a visual pipeline board.',
+  },
+  {
+    slug: 'estimates',
+    label: 'Projects & Estimates',
+    description: 'Create estimates, manage projects with tasks, and collaborate with your team.',
+  },
+  {
+    slug: 'expenses',
+    label: 'Expenses',
+    description: 'Track and categorize expenses, attach receipts, and generate reports.',
+  },
+  {
+    slug: 'accounting',
+    label: 'Accounting',
+    description: 'Full double-entry accounting — chart of accounts, journals, trial balance, P&L.',
+  },
+  {
+    slug: 'documents',
+    label: 'Documents',
+    description: 'Store and organize business files securely in the cloud.',
+  },
+];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   trial: { label: 'Free trial', color: 'text-blue-700', bg: 'bg-blue-50' },
@@ -27,7 +47,7 @@ export default function YourToolsPage() {
   const config = status ? STATUS_CONFIG[status] : null;
 
   const accessibleModules = user?.modules ?? [];
-  const tools = Object.keys(TOOL_LABELS).filter((slug) => accessibleModules.includes(slug));
+  const tools = TOOLS.filter((t) => accessibleModules.includes(t.slug));
 
   return (
     <div className="relative mx-auto w-full max-w-6xl pb-28 sm:pb-10">
@@ -108,25 +128,28 @@ export default function YourToolsPage() {
       <div>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Included Tools</h2>
         <div className="grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-2 min-[520px]:gap-3 xl:grid-cols-3">
-          {Object.entries(TOOL_LABELS).map(([slug, label]) => {
-            const enabled = tools.includes(slug);
+          {TOOLS.map((t) => {
+            const enabled = tools.some((tool) => tool.slug === t.slug);
             return (
               <div
-                key={slug}
-                className={`flex items-start gap-3 rounded-2xl border p-3.5 ${
+                key={t.slug}
+                className={`flex flex-col gap-1.5 rounded-2xl border p-3.5 ${
                   enabled
                     ? 'border-blue-200 bg-gradient-to-br from-blue-50/90 to-white shadow-sm shadow-blue-100/60'
                     : 'border-slate-200 bg-white opacity-60'
                 }`}
               >
-                <span
-                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                    enabled ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-400'
-                  }`}
-                >
-                  {enabled ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                </span>
-                <span className="text-sm font-medium text-slate-900">{label}</span>
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                      enabled ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-400'
+                    }`}
+                  >
+                    {enabled ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-900">{t.label}</span>
+                </div>
+                <p className="pl-8 text-xs leading-relaxed text-slate-500">{t.description}</p>
               </div>
             );
           })}

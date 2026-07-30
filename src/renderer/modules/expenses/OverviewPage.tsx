@@ -1,36 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { useIncomeOverview } from './api/IncomeQueries';
-import { Card } from '../../shared/components/cards/Card';
-import { Wallet, ShoppingCart, TrendingDown, TrendingUp, RefreshCw, ArrowRight } from 'lucide-react';
+import { Wallet, ShoppingCart, TrendingUp, TrendingDown, ArrowRight, RefreshCw } from 'lucide-react';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
+import { DashboardStatCard } from '../../shared/components/cards/DashboardStatCard';
+import { type CardColor } from '../../shared/components/cards/statCardStyles';
+import { ChartContainer } from '../../shared/components/charts/ChartContainer';
+import { CHART_THEME, formatAxisCurrency } from '../../shared/components/charts/chartPrimitives';
 
 const PIE_COLORS = [
   '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444',
   '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1',
 ];
-
-function StatCard({ icon: Icon, label, value, sub, color }: {
-  icon: typeof Wallet; label: string; value: string; sub?: string; color: string;
-}) {
-  return (
-    <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4 flex items-start gap-3">
-      <div className={cn('rounded-lg p-2.5 shrink-0', color)}>
-        <Icon className="h-5 w-5 text-white" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-        <p className="text-xl font-bold text-gray-900 mt-0.5">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
 
 function DonutChart({ data, title, dataKey, nameKey }: {
   data: { [key: string]: string | number }[];
@@ -38,40 +24,52 @@ function DonutChart({ data, title, dataKey, nameKey }: {
   dataKey: string;
   nameKey: string;
 }) {
-  if (!data.length) return null;
+  const empty = !data.length;
   return (
-    <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">{title}</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey={dataKey}
-            nameKey={nameKey}
-            cx="50%"
-            cy="50%"
-            innerRadius={50}
-            outerRadius={85}
-            paddingAngle={2}
-          >
-            {data.map((_, i) => (
-              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="text-sm font-semibold text-gray-800 mb-4">{title}</h3>
+      {empty ? (
+        <div className="h-64 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
+          No data yet
+        </div>
+      ) : (
+        <>
+          <ChartContainer className="h-64" minHeight={256}>
+            {(size) => (
+              <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
+                <PieChart>
+                  <Pie
+                    data={data}
+                    dataKey={dataKey}
+                    nameKey={nameKey}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {data.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </ChartContainer>
+          <div className="space-y-1.5 mt-3">
+            {data.slice(0, 5).map((item, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                  <span className="truncate text-gray-700">{String(item[nameKey])}</span>
+                </div>
+                <span className="font-semibold text-gray-900 ml-2">{formatCurrency(Number(item[dataKey]))}</span>
+              </div>
             ))}
-          </Pie>
-          <Tooltip formatter={(val: number) => formatCurrency(val)} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="space-y-1.5 mt-1">
-        {data.slice(0, 5).map((item, i) => (
-          <div key={i} className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-              <span className="truncate text-gray-700">{String(item[nameKey])}</span>
-            </div>
-            <span className="font-semibold text-gray-900 ml-2">{formatCurrency(Number(item[dataKey]))}</span>
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 }
@@ -86,30 +84,18 @@ function formatMonth(month: string): string {
   return MONTH_LABELS[m] ?? month;
 }
 
+interface CardDef {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: CardColor;
+  badge: string;
+  sub?: string;
+}
+
 export default function OverviewPage() {
   const [period, setPeriod] = useState<'thisMonth' | 'lastMonth' | 'thisYear'>('thisMonth');
   const { data, isLoading, isError, refetch } = useIncomeOverview();
-
-  const dateParams = useMemo(() => {
-    const now = new Date();
-    switch (period) {
-      case 'thisMonth':
-        return {
-          date_from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0],
-          date_to: now.toISOString().split('T')[0],
-        };
-      case 'lastMonth':
-        return {
-          date_from: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0],
-          date_to: new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0],
-        };
-      case 'thisYear':
-        return {
-          date_from: new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0],
-          date_to: now.toISOString().split('T')[0],
-        };
-    }
-  }, [period]);
 
   if (isLoading) return <CustosellLoader message="Loading overview…" />;
 
@@ -129,6 +115,43 @@ export default function OverviewPage() {
   }
 
   const d = data!;
+
+  const netColor: CardColor = d.net_balance >= 0 ? 'blue' : 'amber';
+
+  const cards: CardDef[] = [
+    {
+      label: 'Total Income',
+      value: formatCurrency(d.total_income),
+      sub: `${d.income_count} record${d.income_count === 1 ? '' : 's'}`,
+      icon: Wallet,
+      color: 'green',
+      badge: 'Income',
+    },
+    {
+      label: 'Total Expenses',
+      value: formatCurrency(d.total_expenses),
+      sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`,
+      icon: ShoppingCart,
+      color: 'amber',
+      badge: 'Expenses',
+    },
+    {
+      label: 'Net Balance',
+      value: formatCurrency(Math.abs(d.net_balance)),
+      sub: d.net_balance >= 0 ? 'You have money left' : 'You are overspending',
+      icon: d.net_balance >= 0 ? TrendingUp : TrendingDown,
+      color: netColor,
+      badge: 'Balance',
+    },
+    {
+      label: 'Transactions',
+      value: String(d.income_count + d.expense_count),
+      sub: `${d.income_count} income, ${d.expense_count} expenses`,
+      icon: ArrowRight,
+      color: 'purple',
+      badge: 'Total',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -159,37 +182,21 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={Wallet}
-          label="Total Income"
-          value={formatCurrency(d.total_income)}
-          sub={`${d.income_count} record${d.income_count === 1 ? '' : 's'}`}
-          color="bg-gradient-to-br from-green-500 to-green-700"
-        />
-        <StatCard
-          icon={ShoppingCart}
-          label="Total Expenses"
-          value={formatCurrency(d.total_expenses)}
-          sub={`${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`}
-          color="bg-gradient-to-br from-red-500 to-red-700"
-        />
-        <StatCard
-          icon={d.net_balance >= 0 ? TrendingUp : TrendingDown}
-          label="Net Balance"
-          value={formatCurrency(Math.abs(d.net_balance))}
-          sub={d.net_balance >= 0 ? 'You have money left' : 'You are overspending'}
-          color={d.net_balance >= 0
-            ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
-            : 'bg-gradient-to-br from-orange-500 to-red-600'}
-        />
-        <StatCard
-          icon={ArrowRight}
-          label="Transactions"
-          value={String(d.income_count + d.expense_count)}
-          sub={`${d.income_count} income, ${d.expense_count} expenses`}
-          color="bg-gradient-to-br from-purple-500 to-purple-700"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <DashboardStatCard
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              icon={Icon}
+              color={card.color}
+              badge={card.badge}
+              sub={card.sub}
+            />
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -207,27 +214,35 @@ export default function OverviewPage() {
         />
       </div>
 
-      {d.monthly_trends.length > 0 && (
-        <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Income vs Expenses</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={d.monthly_trends}>
-              <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => formatCurrency(v)} />
-              <Tooltip
-                formatter={(val: number, name: string) => [formatCurrency(val), name === 'income' ? 'Income' : 'Expenses']}
-                labelFormatter={formatMonth}
-              />
-              <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} name="income" />
-              <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} name="expenses" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-800 mb-4">Income vs Expenses</h3>
+        {d.monthly_trends.length > 0 ? (
+          <ChartContainer className="h-72" minHeight={288}>
+            {(size) => (
+              <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
+                <BarChart data={d.monthly_trends}>
+                  <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={formatAxisCurrency} />
+                  <Tooltip
+                    formatter={(val: number, name: string) => [formatCurrency(val), name === 'income' ? 'Income' : 'Expenses']}
+                    labelFormatter={formatMonth}
+                  />
+                  <Bar dataKey="income" fill={CHART_THEME.transactions} radius={[4, 4, 0, 0]} name="income" />
+                  <Bar dataKey="expenses" fill={CHART_THEME.deductions} radius={[4, 4, 0, 0]} name="expenses" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartContainer>
+        ) : (
+          <div className="h-72 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
+            No trend data yet
+          </div>
+        )}
+      </div>
 
-      {d.recent_transactions.length > 0 && (
-        <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Transactions</h3>
+      <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Transactions</h3>
+        {d.recent_transactions.length > 0 ? (
           <div className="space-y-1">
             {d.recent_transactions.map((t, i) => (
               <div key={`${t.type}-${t.id}-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -250,8 +265,10 @@ export default function OverviewPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-6">No transactions yet</p>
+        )}
+      </div>
 
       {d.total_income === 0 && d.total_expenses === 0 && (
         <div className="text-center py-12">

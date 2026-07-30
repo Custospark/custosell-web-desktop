@@ -50,8 +50,8 @@ export const ONLINE_ONLY_NAV_ENTRIES: OnlineOnlyNavEntry[] = [
   },
   {
     prefix: ROUTES.PIPELINE.INDEX,
-    label: 'Pipeline',
-    message: 'Pipeline needs a connection. Reconnect to work boards and leads.',
+    label: 'Sales Funnel',
+    message: 'Sales Funnel needs a connection. Reconnect to work boards and leads.',
   },
   {
     prefix: ROUTES.ESTIMATES.INDEX,

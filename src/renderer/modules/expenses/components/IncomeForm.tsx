@@ -7,7 +7,7 @@ import {
 } from '../api/IncomeQueries';
 import { useIncomeSource } from '../api/IncomeQueries';
 import {
-  DollarSign, Calendar, FileText, Tag, Paperclip, Link, Trash2, File, Wallet, ExternalLink,
+  Calendar, FileText, Tag, Paperclip, Link, Trash2, File, Wallet,
 } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { formatFileSize } from '../../../shared/utils/formatFileSize';
@@ -79,26 +79,31 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
   const [linkTitle, setLinkTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadAtt = useUploadIncomeAttachment(savedIncomeId ?? 0);
-  const createLinkAtt = useCreateIncomeAttachmentLink(savedIncomeId ?? 0);
-  const deleteAtt = useDeleteIncomeAttachment(savedIncomeId ?? 0);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingLink, setPendingLink] = useState<{ url: string; title: string } | null>(null);
+
+  const uploadAtt = useUploadIncomeAttachment();
+  const createLinkAtt = useCreateIncomeAttachmentLink();
 
   useEffect(() => {
-    if (income) {
-      setSavedIncomeId(income.id);
-      setSourceName(income.source_name);
-      setAmount(parseFloat(income.amount).toString());
-      setDescription(income.description || '');
-      setIncomeDate(income.income_date.split('T')[0] || income.income_date);
-    } else {
-      setSavedIncomeId(null);
-      setSourceName('');
-      setAmount('');
-      setDescription('');
-      setIncomeDate(new Date().toISOString().split('T')[0]);
-      setLinkUrl('');
-      setLinkTitle('');
-    }
+    queueMicrotask(() => {
+      if (income) {
+        setSavedIncomeId(income.id);
+        setSourceName(income.source_name);
+        setAmount(parseFloat(income.amount).toString());
+        setDescription(income.description || '');
+        setIncomeDate(income.income_date.split('T')[0] || income.income_date);
+      } else {
+        setSavedIncomeId(null);
+        setSourceName('');
+        setAmount('');
+        setDescription('');
+        setIncomeDate(new Date().toISOString().split('T')[0]);
+        setLinkUrl('');
+        setLinkTitle('');
+        setPendingFile(null);
+      }
+    });
   }, [income, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,57 +117,65 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
       income_date: incomeDate,
     };
 
+    let incomeId: number;
     if (isEditing && income) {
       await updateMutation.mutateAsync({ id: income.id, data: payload });
+      incomeId = income.id;
     } else {
       const created = await createMutation.mutateAsync(payload);
-      setSavedIncomeId(created.id);
+      incomeId = created.id;
+      setSavedIncomeId(incomeId);
     }
-    if (!isEditing) return;
+    if (pendingFile) {
+      setFileUploading(true);
+      await uploadAtt.mutateAsync({ incomeSourceId: incomeId, file: pendingFile });
+      setPendingFile(null);
+      setFileUploading(false);
+    }
+    if (pendingLink) {
+      await createLinkAtt.mutateAsync({ incomeSourceId: incomeId, url: pendingLink.url, title: pendingLink.title || undefined });
+      setPendingLink(null);
+    }
     onClose();
   };
 
-  const handleDone = () => {
-    if (fileUploading) return;
-    onClose();
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !savedIncomeId) return;
-    setFileUploading(true);
-    await uploadAtt.mutateAsync(file);
-    setFileUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (file) setPendingFile(file);
   };
 
-  const handleAddLink = async () => {
-    if (!linkUrl.trim() || !savedIncomeId) return;
-    await createLinkAtt.mutateAsync({ url: linkUrl.trim(), title: linkTitle.trim() || undefined });
+  const handleQueueLink = () => {
+    if (!linkUrl.trim()) return;
+    setPendingLink({ url: linkUrl.trim(), title: linkTitle.trim() });
     setLinkUrl('');
     setLinkTitle('');
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const handleRemovePendingLink = () => {
+    setPendingLink(null);
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending || fileUploading;
+  const hasPendingLink = pendingLink !== null;
   const title = isEditing ? 'Edit Income' : 'Record Income';
   const subtitle = isEditing ? 'Update the income details below.' : 'Add money you received — from salary, freelance, sales, or any other source.';
 
   const attachments = displayIncome?.attachments;
 
   return (
-    <Modal isOpen={open} onClose={handleDone} title={title} subtitle={subtitle} size="lg">
+    <Modal isOpen={open} onClose={onClose} title={title} subtitle={subtitle} size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
 
         {/* ── Hero ────────────────────────────────────────── */}
-        <div className="flex items-start gap-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50/50 border border-green-100 p-4">
-          <div className="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2.5 shrink-0 shadow-sm">
+        <div className="flex items-start gap-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-100 p-4">
+          <div className="rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shrink-0 shadow-sm">
             <Wallet className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold text-green-900">
+            <p className="text-sm font-bold text-blue-900">
               {isEditing ? 'Edit income record' : 'New income record'}
             </p>
-            <p className="text-xs text-green-700 mt-0.5">
+            <p className="text-xs text-blue-700 mt-0.5">
               {isEditing
                 ? 'Update the source, amount, or date below.'
                 : 'Record any money coming in — track where your income comes from.'}
@@ -185,7 +198,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                 <input
                   value={sourceName}
                   onChange={(e) => setSourceName(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-green-400 focus:outline-none"
+                  className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
                   placeholder="e.g. Freelance project, Salary, Side hustle"
                   required
                   autoFocus
@@ -201,7 +214,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                     type="number" step="0.01" min="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-green-400 focus:outline-none"
+                    className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
                     placeholder="0.00"
                     required
                   />
@@ -215,7 +228,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                     type="date"
                     value={incomeDate}
                     onChange={(e) => setIncomeDate(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-green-400 focus:outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
                     required
                   />
                 </div>
@@ -235,7 +248,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm min-h-[80px] focus:border-green-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm min-h-[80px] focus:border-blue-400 focus:outline-none resize-none"
               placeholder="Add a note about this income — client name, project reference, payment method…"
             />
           </div>
@@ -258,11 +271,16 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,.pdf,.doc,.docx,.xlsx,.txt,.csv"
-                onChange={handleFileUpload}
-                disabled={!savedIncomeId || fileUploading}
-                className="flex-1 text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 disabled:opacity-40"
+                onChange={handleFileSelect}
+                disabled={fileUploading || !!pendingFile}
+                className="flex-1 text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-40"
               />
-              {fileUploading && <span className="text-xs text-gray-400">Uploading…</span>}
+              {pendingFile && (
+                <span className="text-xs text-blue-600 flex items-center gap-1">
+                  <File className="w-3.5 h-3.5" />
+                  {pendingFile.name}
+                </span>
+              )}
             </div>
 
             <div className="flex items-start gap-2">
@@ -272,38 +290,51 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                   value={linkTitle}
                   onChange={(e) => setLinkTitle(e.target.value)}
                   placeholder="Link label (optional)"
-                  disabled={!savedIncomeId}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-green-400 focus:outline-none disabled:opacity-40"
+                  disabled={hasPendingLink}
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none disabled:opacity-40"
                 />
-                <input
-                  type="url"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://drive.google.com/…"
-                  disabled={!savedIncomeId}
-                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-green-400 focus:outline-none disabled:opacity-40"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://drive.google.com/…"
+                    disabled={hasPendingLink}
+                    className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none disabled:opacity-40"
+                  />
+                  {hasPendingLink ? (
+                    <button
+                      type="button"
+                      onClick={handleRemovePendingLink}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleQueueLink}
+                      disabled={!linkUrl.trim()}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-40"
+                    >
+                      <Link className="h-4 w-4" />
+                      Add
+                    </button>
+                  )}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleAddLink}
-                disabled={!linkUrl.trim() || !savedIncomeId}
-                className="mt-0.5 inline-flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 border border-green-200 hover:bg-green-100 transition-colors disabled:opacity-40"
-              >
-                <Link className="h-4 w-4" />
-                Add
-              </button>
             </div>
           </div>
         </div>
 
         {/* ── Actions ──────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-          <Button type="button" variant="secondary" onClick={handleDone}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             {isEditing ? 'Done' : 'Cancel'}
           </Button>
           {!isEditing && (
-            <Button type="submit" loading={isPending} disabled={!sourceName.trim() || !amount}>
+            <Button type="submit" loading={isPending} disabled={!sourceName.trim() || !amount || isPending}>
               <Wallet className="h-4 w-4" />
               Save Income
             </Button>

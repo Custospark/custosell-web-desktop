@@ -2,6 +2,7 @@ import { ShoppingBag, CheckCircle, Clock, AlertTriangle, CreditCard } from 'luci
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
+import { canAccessModule } from '../../shared/utils/moduleAccess';
 
 const TOOLS: { slug: string; label: string; description: string }[] = [
   {
@@ -46,8 +47,7 @@ export default function YourToolsPage() {
   const status = subscription?.status ?? null;
   const config = status ? STATUS_CONFIG[status] : null;
 
-  const accessibleModules = user?.modules ?? [];
-  const tools = TOOLS.filter((t) => accessibleModules.includes(t.slug));
+  const tools = TOOLS.filter((t) => canAccessModule(user, t.slug));
 
   return (
     <div className="relative mx-auto w-full max-w-6xl pb-28 sm:pb-10">

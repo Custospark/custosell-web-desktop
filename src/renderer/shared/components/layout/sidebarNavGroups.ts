@@ -39,7 +39,7 @@ export const baseSubRoutes = [
   ROUTES.ESTIMATES.INSIGHTS, ROUTES.ESTIMATES.TEMPLATES,
   ROUTES.INVOICES.INDEX,
   ROUTES.INVOICES.SUPPLIER,
-  ROUTES.EXPENSES.OVERVIEW, ROUTES.EXPENSES.INCOME, ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
+  ROUTES.EXPENSES.OVERVIEW, ROUTES.EXPENSES.INCOME, ROUTES.EXPENSES.BUDGETS, ROUTES.EXPENSES.CATEGORIES, ROUTES.EXPENSES.LIST,
   ROUTES.DOCUMENTS.INDEX,
   ROUTES.HR.OVERVIEW, ROUTES.HR.PEOPLE, ROUTES.HR.DEPARTMENTS, ROUTES.HR.COMPANY_ASSETS,
   ROUTES.HR.ATTENDANCE, ROUTES.HR.LEAVE, ROUTES.HR.PAYROLL, ROUTES.HR.TALENT,
@@ -145,7 +145,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
   },
   {
     icon: Kanban,
-    label: 'Pipeline',
+    label: 'Sales Funnel',
     subItems: [
       { to: ROUTES.PIPELINE.BOARDS, label: 'Boards', icon: Kanban },
       { to: ROUTES.PIPELINE.MY_WORK, label: 'My Work', icon: Briefcase },
@@ -172,6 +172,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
     subItems: [
       { to: ROUTES.EXPENSES.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
       { to: ROUTES.EXPENSES.INCOME, label: 'Income', icon: Wallet },
+      { to: ROUTES.EXPENSES.BUDGETS, label: 'My Budgets', icon: Target },
       { to: ROUTES.EXPENSES.LIST, label: 'Expense List', icon: ListOrdered },
       { to: ROUTES.EXPENSES.CATEGORIES, label: 'Expense Categories', icon: Receipt },
     ],

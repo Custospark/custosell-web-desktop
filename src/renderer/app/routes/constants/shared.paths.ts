@@ -58,7 +58,7 @@ export const ROUTES = {
     INSIGHTS: '/estimates/insights',
     TEMPLATES: '/estimates/templates',
   },
-  EXPENSES: { INDEX: '/expenses', OVERVIEW: '/expenses/overview', INCOME: '/expenses/income', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
+  EXPENSES: { INDEX: '/expenses', OVERVIEW: '/expenses/overview', INCOME: '/expenses/income', BUDGETS: '/expenses/budgets', CATEGORIES: '/expenses/categories', LIST: '/expenses/list' },
   DOCUMENTS: {
     INDEX: '/documents',
     CABINET: (id: number) => `/documents/cabinets/${id}`,

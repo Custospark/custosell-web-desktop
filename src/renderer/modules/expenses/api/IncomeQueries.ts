@@ -3,13 +3,14 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { INCOME_SOURCES } from '../../../shared/api/endpoints/endpoints';
 import { EXPENSES } from '../../../shared/api/endpoints/endpoints';
-import type { IncomeSource, CreateIncomeData, UpdateIncomeData, OverviewData, IncomeAttachment } from './IncomeTypes';
+import type { IncomeSource, CreateIncomeData, UpdateIncomeData, OverviewData, IncomeAttachment, BudgetData } from './IncomeTypes';
 
 export const incomeKeys = {
   all: ['income-sources'] as const,
   list: () => [...incomeKeys.all, 'list'] as const,
   detail: (id: number) => [...incomeKeys.all, 'detail', id] as const,
   overview: () => ['expenses', 'overview'] as const,
+  budgets: () => ['expenses', 'budgets'] as const,
 };
 
 export function useIncomeSources() {
@@ -30,6 +31,20 @@ export function useIncomeSource(id: number) {
       return data.data;
     },
     enabled: !!id,
+  });
+}
+
+export function useBudgets(dateFrom?: string, dateTo?: string) {
+  return useQuery({
+    queryKey: [...incomeKeys.budgets(), { dateFrom, dateTo }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
+      const { data } = await axiosInstance.get<BudgetData>(`${EXPENSES}/budgets?${params}`);
+      return data;
+    },
+    staleTime: 30_000,
   });
 }
 
@@ -85,10 +100,10 @@ export function useDeleteIncome() {
   });
 }
 
-export function useUploadIncomeAttachment(incomeSourceId: number) {
+export function useUploadIncomeAttachment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ incomeSourceId, file }: { incomeSourceId: number; file: File }) => {
       const form = new FormData();
       form.append('file', file);
       const { data } = await axiosInstance.post(`${INCOME_SOURCES}/${incomeSourceId}/attachments`, form, {
@@ -96,22 +111,22 @@ export function useUploadIncomeAttachment(incomeSourceId: number) {
       });
       return data.data as IncomeAttachment;
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: incomeKeys.detail(incomeSourceId) });
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: incomeKeys.detail(variables.incomeSourceId) });
       void qc.invalidateQueries({ queryKey: incomeKeys.list() });
     },
   });
 }
 
-export function useCreateIncomeAttachmentLink(incomeSourceId: number) {
+export function useCreateIncomeAttachmentLink() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ url, title }: { url: string; title?: string }) => {
+    mutationFn: async ({ incomeSourceId, url, title }: { incomeSourceId: number; url: string; title?: string }) => {
       const { data } = await axiosInstance.post(`${INCOME_SOURCES}/${incomeSourceId}/attachments/link`, { url, title });
       return data.data as IncomeAttachment;
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: incomeKeys.detail(incomeSourceId) });
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: incomeKeys.detail(variables.incomeSourceId) });
       void qc.invalidateQueries({ queryKey: incomeKeys.list() });
     },
   });

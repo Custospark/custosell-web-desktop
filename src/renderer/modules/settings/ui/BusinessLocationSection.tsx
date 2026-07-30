@@ -36,6 +36,7 @@ import {
 
 export interface BusinessLocationSectionProps {
   isEditing: boolean;
+  isPersonal: boolean;
   form: UpdateBusinessData;
   baseline: UpdateBusinessData;
   update: <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) => void;
@@ -51,6 +52,7 @@ export interface BusinessLocationSectionProps {
 
 export function BusinessLocationSection({
   isEditing,
+  isPersonal,
   form,
   baseline,
   update,
@@ -66,8 +68,8 @@ export function BusinessLocationSection({
   return (
     <BusinessSectionCard
       icon={MapPin}
-      title="Location & details"
-      description="Address, tax information, timezone, and currency."
+      title={isPersonal ? 'Location & preferences' : 'Location & details'}
+      description={isPersonal ? 'Your location, timezone, and currency preferences.' : 'Address, tax information, timezone, and currency.'}
     >
       {isEditing ? (
         <div className="space-y-4">
@@ -138,104 +140,106 @@ export function BusinessLocationSection({
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Tax / VAT ID</label>
-              <div className="relative">
-                <Tag className={iconClass} aria-hidden />
-                <input
-                  className={inputClass}
-                  value={form.tax_id || ''}
-                  onChange={(e) => update('tax_id', e.target.value || null)}
-                  placeholder="Tax registration number"
-                />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Tax regime</label>
-              <div className="relative">
-                <Scale className={iconClass} aria-hidden />
-                <select
-                  className={selectClass}
-                  value={form.tax_regime || 'none'}
-                  onChange={(e) => update('tax_regime', e.target.value as 'none' | 'vat_registered')}
-                  title="Tax regime"
-                >
-                  <option value="none">Not VAT registered</option>
-                  <option value="vat_registered">VAT registered</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Tax jurisdiction</label>
-              <div className="relative">
-                <Globe className={iconClass} aria-hidden />
-                <select
-                  className={selectClass}
-                  value={form.jurisdiction || selectedCountryCode || 'UG'}
-                  onChange={(e) => handleJurisdictionChange(e.target.value || 'UG')}
-                  title="Tax jurisdiction"
-                >
-                  {form.jurisdiction === 'OTHER' && !findCountryByCode('OTHER') ? (
-                    <option value="OTHER">Other / custom</option>
-                  ) : null}
-                  {countryCodesByName.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.flag} {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {form.tax_regime === 'vat_registered' && (
-              <>
-                <div>
-                  <label className={labelClass}>Default VAT rate (%)</label>
-                  <div className="relative">
-                    <Hash className={iconClass} aria-hidden />
-                    <input
-                      className={inputClass}
-                      type="number"
-                      min={0}
-                      max={100}
-                      step="0.01"
-                      value={form.default_vat_rate ?? 18}
-                      onChange={(e) => update('default_vat_rate', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 pt-6">
+          {!isPersonal && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>Tax / VAT ID</label>
+                <div className="relative">
+                  <Tag className={iconClass} aria-hidden />
                   <input
-                    id="prices_include_tax"
-                    type="checkbox"
-                    checked={form.prices_include_tax !== false}
-                    onChange={(e) => update('prices_include_tax', e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className={inputClass}
+                    value={form.tax_id || ''}
+                    onChange={(e) => update('tax_id', e.target.value || null)}
+                    placeholder="Tax registration number"
                   />
-                  <label htmlFor="prices_include_tax" className="text-sm text-gray-700">
-                    Shelf prices include VAT (tax-inclusive pricing)
-                  </label>
                 </div>
-              </>
-            )}
-            <div>
-              <label className={labelClass}>Business type</label>
-              <div className="relative">
-                <Building2 className={iconClass} aria-hidden />
-                <select
-                  className={selectClass}
-                  value={form.business_type || ''}
-                  onChange={(e) => update('business_type', e.target.value || null)}
-                  title="Business type"
-                >
-                  <option value="">Select business type</option>
-                  {Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Tax regime</label>
+                <div className="relative">
+                  <Scale className={iconClass} aria-hidden />
+                  <select
+                    className={selectClass}
+                    value={form.tax_regime || 'none'}
+                    onChange={(e) => update('tax_regime', e.target.value as 'none' | 'vat_registered')}
+                    title="Tax regime"
+                  >
+                    <option value="none">Not VAT registered</option>
+                    <option value="vat_registered">VAT registered</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Tax jurisdiction</label>
+                <div className="relative">
+                  <Globe className={iconClass} aria-hidden />
+                  <select
+                    className={selectClass}
+                    value={form.jurisdiction || selectedCountryCode || 'UG'}
+                    onChange={(e) => handleJurisdictionChange(e.target.value || 'UG')}
+                    title="Tax jurisdiction"
+                  >
+                    {form.jurisdiction === 'OTHER' && !findCountryByCode('OTHER') ? (
+                      <option value="OTHER">Other / custom</option>
+                    ) : null}
+                    {countryCodesByName.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {form.tax_regime === 'vat_registered' && (
+                <>
+                  <div>
+                    <label className={labelClass}>Default VAT rate (%)</label>
+                    <div className="relative">
+                      <Hash className={iconClass} aria-hidden />
+                      <input
+                        className={inputClass}
+                        type="number"
+                        min={0}
+                        max={100}
+                        step="0.01"
+                        value={form.default_vat_rate ?? 18}
+                        onChange={(e) => update('default_vat_rate', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input
+                      id="prices_include_tax"
+                      type="checkbox"
+                      checked={form.prices_include_tax !== false}
+                      onChange={(e) => update('prices_include_tax', e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="prices_include_tax" className="text-sm text-gray-700">
+                      Shelf prices include VAT (tax-inclusive pricing)
+                    </label>
+                  </div>
+                </>
+              )}
+              <div>
+                <label className={labelClass}>Business type</label>
+                <div className="relative">
+                  <Building2 className={iconClass} aria-hidden />
+                  <select
+                    className={selectClass}
+                    value={form.business_type || ''}
+                    onChange={(e) => update('business_type', e.target.value || null)}
+                    title="Business type"
+                  >
+                    <option value="">Select business type</option>
+                    {Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass}>Timezone</label>
@@ -325,20 +329,24 @@ export function BusinessLocationSection({
           <BusinessViewField label="Country" icon={<Globe className="h-4 w-4 text-blue-600" />}>
             {getCountryLabel(baseline.country) === 'Not set' ? '—' : getCountryLabel(baseline.country)}
           </BusinessViewField>
-          <BusinessViewField label="Tax / VAT ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
-            {baseline.tax_id || '—'}
-          </BusinessViewField>
-          <BusinessViewField label="Tax regime" icon={<Scale className="h-4 w-4 text-blue-600" />}>
-            {baseline.tax_regime === 'vat_registered' ? 'VAT registered' : 'Not VAT registered'}
-          </BusinessViewField>
-          <BusinessViewField label="Tax jurisdiction" icon={<Globe className="h-4 w-4 text-blue-600" />}>
-            {getJurisdictionLabel(baseline.jurisdiction) === 'Not set'
-              ? '—'
-              : getJurisdictionLabel(baseline.jurisdiction)}
-          </BusinessViewField>
-          <BusinessViewField label="Business type" icon={<Building2 className="h-4 w-4 text-blue-600" />}>
-            {formatBusinessType(baseline.business_type)}
-          </BusinessViewField>
+          {!isPersonal && (
+            <>
+              <BusinessViewField label="Tax / VAT ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
+                {baseline.tax_id || '—'}
+              </BusinessViewField>
+              <BusinessViewField label="Tax regime" icon={<Scale className="h-4 w-4 text-blue-600" />}>
+                {baseline.tax_regime === 'vat_registered' ? 'VAT registered' : 'Not VAT registered'}
+              </BusinessViewField>
+              <BusinessViewField label="Tax jurisdiction" icon={<Globe className="h-4 w-4 text-blue-600" />}>
+                {getJurisdictionLabel(baseline.jurisdiction) === 'Not set'
+                  ? '—'
+                  : getJurisdictionLabel(baseline.jurisdiction)}
+              </BusinessViewField>
+              <BusinessViewField label="Business type" icon={<Building2 className="h-4 w-4 text-blue-600" />}>
+                {formatBusinessType(baseline.business_type)}
+              </BusinessViewField>
+            </>
+          )}
           <BusinessViewField label="Timezone" icon={<Clock className="h-4 w-4 text-blue-600" />}>
             {baseline.timezone || '—'}
           </BusinessViewField>

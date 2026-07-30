@@ -271,7 +271,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               type="file"
               accept="image/*,.pdf"
               onChange={(e) => setReceipt(e.target.files?.[0] || null)}
-              className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+              disabled={isPending}
+              className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-40"
             />
             {expense?.receipt_url && !receipt && (
               <p className="text-xs text-gray-400 mt-1">

@@ -7,6 +7,7 @@ import { Modal } from '../../shared/components/modals/Modal';
 import { useBusiness, useDeleteBusinessAccount } from './api/settings/BusinessQueries';
 import { inputClass } from '../../shared/utils/inputStyles';
 import { useToast } from '../../app/contexts/useToast';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 
 const DeleteStep = {
   Confirm: 0,
@@ -16,6 +17,8 @@ const DeleteStep = {
 type DeleteStep = (typeof DeleteStep)[keyof typeof DeleteStep];
 
 export default function BusinessSettingsPage() {
+  const user = useAppSelector((s) => s.auth.user);
+  const isPersonal = user?.account_type === 'personal';
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [step, setStep] = useState<DeleteStep>(DeleteStep.Confirm);
   const [understood, setUnderstood] = useState(false);
@@ -75,44 +78,46 @@ export default function BusinessSettingsPage() {
     <div className="mx-auto w-full min-w-0 max-w-5xl pb-10 sm:pb-8">
       <BusinessSettingsForm />
 
-      <Card className="mt-10 border-red-200">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-lg bg-red-50">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+      {!isPersonal && (
+        <Card className="mt-10 border-red-200">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 rounded-lg bg-red-50">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-red-800">Danger Zone</h2>
+                <p className="text-xs text-red-600 mt-0.5">Irreversible actions — proceed with caution</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-semibold text-red-800">Danger Zone</h2>
-              <p className="text-xs text-red-600 mt-0.5">Irreversible actions — proceed with caution</p>
-            </div>
-          </div>
 
-          <div className="bg-red-50/50 border border-red-100 rounded-xl p-5">
-            <div className="flex items-start gap-4">
-              <Trash2 className="w-8 h-8 text-red-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-red-900">Delete Business Account</h3>
-                <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                  Permanently delete your business and all associated data. This action cannot be undone.
-                  All products, customers, sales, invoices, expenses, accounting records, documents,
-                  and settings will be permanently removed.
-                </p>
-                <p className="text-xs text-amber-700 mt-2 font-medium">
-                  We strongly recommend exporting your data first.
-                </p>
-                <Button
-                  variant="danger"
-                  className="mt-4"
-                  onClick={handleOpenDelete}
-                >
-                  <Trash2 className="w-4 h-4 mr-1.5" />
-                  Delete Business Account
-                </Button>
+            <div className="bg-red-50/50 border border-red-100 rounded-xl p-5">
+              <div className="flex items-start gap-4">
+                <Trash2 className="w-8 h-8 text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-red-900">Delete Business Account</h3>
+                  <p className="text-xs text-red-700 mt-1 leading-relaxed">
+                    Permanently delete your business and all associated data. This action cannot be undone.
+                    All products, customers, sales, invoices, expenses, accounting records, documents,
+                    and settings will be permanently removed.
+                  </p>
+                  <p className="text-xs text-amber-700 mt-2 font-medium">
+                    We strongly recommend exporting your data first.
+                  </p>
+                  <Button
+                    variant="danger"
+                    className="mt-4"
+                    onClick={handleOpenDelete}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" />
+                    Delete Business Account
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <Modal isOpen={deleteOpen} onClose={handleClose}>
         <div className="p-6 space-y-5 max-w-lg">

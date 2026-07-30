@@ -55,6 +55,9 @@ export default function BusinessSettingsForm() {
   const mutation = useUpdateBusiness();
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
 
+  const user = useAppSelector((s) => s.auth.user);
+  const isPersonal = user?.account_type === 'personal';
+
   const [isEditing, setIsEditing] = useState(false);
   const [baseline, setBaseline] = useState<BusinessFormSnapshot>({
     form: emptyForm,
@@ -222,9 +225,9 @@ export default function BusinessSettingsForm() {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Settings</p>
-            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Business Profile</h1>
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{isPersonal ? 'Preferences' : 'Business Profile'}</h1>
             <p className="mt-1 text-sm leading-relaxed text-gray-500">
-              Manage your business details, tax, payments, and receipts
+              {isPersonal ? 'Manage your preferences, location, and currency' : 'Manage your business details, tax, payments, and receipts'}
             </p>
           </div>
         </div>
@@ -237,7 +240,7 @@ export default function BusinessSettingsForm() {
             className="w-full shrink-0 sm:w-auto"
           >
             <Pencil className="mr-1.5 h-4 w-4" aria-hidden />
-            Edit business
+            {isPersonal ? 'Edit preferences' : 'Edit business'}
           </Button>
         ) : (
           <Badge variant="primary" className="self-start lg:self-auto">Editing</Badge>
@@ -257,7 +260,7 @@ export default function BusinessSettingsForm() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="space-y-4 p-4 sm:p-6">
           {!isEditing && (
             <article className="rounded-xl border-2 border-blue-200 bg-blue-50/40 shadow-sm">
@@ -270,12 +273,12 @@ export default function BusinessSettingsForm() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1 text-center sm:text-left">
-                  <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || 'Your business'}</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || (isPersonal ? 'Your profile' : 'Your business')}</h2>
                   <p className="mt-1 text-sm text-gray-600">
                     {baseline.form.email || formatPhoneDisplay(baseline.form.phone) || 'No contact details yet'}
                   </p>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                    {baseline.form.business_type ? (
+                    {!isPersonal && baseline.form.business_type ? (
                       <Badge variant="primary">{formatBusinessType(baseline.form.business_type)}</Badge>
                     ) : null}
                     {baseline.form.currency ? (
@@ -296,7 +299,7 @@ export default function BusinessSettingsForm() {
             </article>
           )}
 
-          {isEditing && (
+          {isEditing && !isPersonal && (
             <BusinessSectionCard
               icon={Image}
               title="Business logo"
@@ -336,6 +339,7 @@ export default function BusinessSettingsForm() {
 
           <BusinessProfileSection
             isEditing={isEditing}
+            isPersonal={isPersonal}
             form={form}
             baseline={baseline.form}
             update={update}
@@ -351,6 +355,7 @@ export default function BusinessSettingsForm() {
 
           <BusinessLocationSection
             isEditing={isEditing}
+            isPersonal={isPersonal}
             form={form}
             baseline={baseline.form}
             update={update}
@@ -364,38 +369,42 @@ export default function BusinessSettingsForm() {
             setCurrencySearch={setCurrencySearch}
           />
 
-          <BusinessPaymentSection
-            isEditing={isEditing}
-            form={form}
-            baseline={baseline.form}
-            update={update}
-          />
+          {!isPersonal && (
+            <BusinessPaymentSection
+              isEditing={isEditing}
+              form={form}
+              baseline={baseline.form}
+              update={update}
+            />
+          )}
 
-          <BusinessSectionCard
-            icon={Receipt}
-            title="Receipt settings"
-            description="Footer text printed on customer receipts."
-          >
-            {isEditing ? (
-              <div>
-                <label className={labelClass}>Receipt footer</label>
-                <div className="relative">
-                  <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" aria-hidden />
-                  <textarea
-                    className={`${inputClass} resize-none pl-10`}
-                    rows={4}
-                    value={form.receipt_footer || ''}
-                    onChange={(e) => update('receipt_footer', e.target.value || null)}
-                    placeholder="Thank you for your business!"
-                  />
+          {!isPersonal && (
+            <BusinessSectionCard
+              icon={Receipt}
+              title="Receipt settings"
+              description="Footer text printed on customer receipts."
+            >
+              {isEditing ? (
+                <div>
+                  <label className={labelClass}>Receipt footer</label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" aria-hidden />
+                    <textarea
+                      className={`${inputClass} resize-none pl-10`}
+                      rows={4}
+                      value={form.receipt_footer || ''}
+                      onChange={(e) => update('receipt_footer', e.target.value || null)}
+                      placeholder="Thank you for your business!"
+                    />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <BusinessViewField label="Receipt footer" icon={<FileText className="h-4 w-4 text-blue-600" />}>
-                {baseline.form.receipt_footer || '—'}
-              </BusinessViewField>
-            )}
-          </BusinessSectionCard>
+              ) : (
+                <BusinessViewField label="Receipt footer" icon={<FileText className="h-4 w-4 text-blue-600" />}>
+                  {baseline.form.receipt_footer || '—'}
+                </BusinessViewField>
+              )}
+            </BusinessSectionCard>
+          )}
         </div>
       </div>
 
@@ -403,7 +412,7 @@ export default function BusinessSettingsForm() {
         <div className="sticky bottom-0 z-20 -mx-3 border-t-2 border-gray-200 bg-white/95 px-3 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6 sm:py-4">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <p className="text-sm font-medium leading-snug text-gray-600">
-              {hasChanges ? 'You have unsaved changes' : 'Update your business details, then save'}
+              {hasChanges ? 'You have unsaved changes' : isPersonal ? 'Update your preferences, then save' : 'Update your business details, then save'}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
               <Button

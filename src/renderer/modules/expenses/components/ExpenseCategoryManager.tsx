@@ -5,7 +5,7 @@ import { Card } from '../../../shared/components/cards/Card';
 import { Table } from '../../../shared/components/tables/Table';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Badge } from '../../../shared/components/badges/Badge';
-import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
@@ -128,18 +128,9 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
     <>
       {inline ? content : <Card>{content}</Card>}
 
-      <SlideDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editingCategory ? 'Edit Category' : 'Add Category'}
-        subtitle="Create or edit an expense category"
-        onSubmit={handleSubmit}
-        isSubmitting={isPending}
-        canSubmit={canSubmit}
-      >
-        <div className="space-y-5">
+      <Modal isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} title={editingCategory ? 'Edit Category' : 'Add Category'} subtitle="Create or edit an expense category" size="lg">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
 
-          {/* Section: Category Info */}
           <div className="rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4 text-gray-400" /> Category Info</h3>
@@ -148,7 +139,7 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Category name" />
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Category name" autoFocus />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -161,7 +152,6 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
             </div>
           </div>
 
-          {/* Section: Budget */}
           <div className="rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><DollarSign className="w-4 h-4 text-gray-400" /> Budget</h3>
@@ -193,8 +183,14 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
             </div>
           </div>
 
-        </div>
-      </SlideDrawer>
+          <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setDrawerOpen(false)}>Cancel</Button>
+            <Button type="submit" loading={isPending} disabled={!canSubmit}>
+              {editingCategory ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }

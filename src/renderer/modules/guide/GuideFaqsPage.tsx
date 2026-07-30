@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ChevronDown, HelpCircle, Loader2, RefreshCw, Search, WifiOff } from 'lucide-react';
+import { ChevronDown, HelpCircle, Loader2, Search, WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { useGuideFaqs } from './api/GuideQueries';
 import type { GuideFaqDto } from './api/GuideTypes';
-import { GuideSearchBar } from './components/GuideSearchBar';
+import { formatFaqAnswer } from '../../shared/utils/formatFaqAnswer';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { cn } from '../../shared/utils/cn';
 
@@ -158,7 +158,7 @@ export default function GuideFaqsPage() {
 
       {!isOffline && !isLoading && !isError && filtered.length > 0 && (
         <div className="space-y-8">
-          {visibleCategories.map((cat, ci) => (
+          {visibleCategories.map((cat) => (
             <div key={cat.label}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 shadow-sm">
@@ -204,7 +204,7 @@ export default function GuideFaqsPage() {
                             className="overflow-hidden"
                           >
                             <div className="whitespace-pre-wrap border-t border-gray-100 px-4 py-3 text-sm leading-relaxed text-gray-700">
-                              {item.answer}
+                              {formatFaqAnswer(item.answer)}
                             </div>
                           </motion.div>
                         )}

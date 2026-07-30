@@ -71,13 +71,23 @@ export function resolveAccessibleNavGroups(
         return {
           ...group,
           subItems: group.subItems.filter((item) =>
-            item.label === 'Billing & Subscription' || item.label === 'Data & Export',
+            item.label === 'Business' || item.label === 'Billing & Subscription' || item.label === 'Data & Export',
+          ).map((item) =>
+            item.label === 'Business' ? { ...item, label: 'Preferences' } : item,
           ),
         };
       }
       return {
         ...group,
         subItems: group.subItems.filter((item) => !item.ownerOnly || isBusinessOwner(user)),
+      };
+    }
+    if (group.label === 'Income & Expenses' && !isPersonal) {
+      return {
+        ...group,
+        subItems: group.subItems.filter((item) =>
+          item.label !== 'Income' && item.label !== 'My Budgets',
+        ),
       };
     }
     if (group.label === 'Documents' && isPersonal) {

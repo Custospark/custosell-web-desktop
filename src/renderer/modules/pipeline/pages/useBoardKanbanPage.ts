@@ -174,7 +174,7 @@ export function useBoardKanbanPage() {
   const boardRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARD : ROUTES.PIPELINE.BOARD;
   const boardsListRoute = workspace === 'estimates' ? ROUTES.ESTIMATES.BOARDS : ROUTES.PIPELINE.BOARDS;
   const allowCreateBoard = workspace === 'pipeline' || workspace === 'estimates';
-  const workspaceLabel = workspace === 'estimates' ? 'Projects & Estimates' : 'Pipeline';
+  const workspaceLabel = workspace === 'estimates' ? 'Projects & Estimates' : 'Sales Funnel';
   useEffect(() => {
     if (searchParams.get('conversation') !== '1') return;
     const next = new URLSearchParams(searchParams);

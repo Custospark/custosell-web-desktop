@@ -44,6 +44,34 @@ export interface IncomeSummary {
   }[];
 }
 
+export interface BudgetPeriod {
+  start: string;
+  end: string;
+  days_remaining: number;
+  label: string;
+}
+
+export interface BudgetCategory {
+  id: number;
+  name: string;
+  budget: number;
+  actual: number;
+  remaining: number;
+  percentage: number;
+}
+
+export interface BudgetData {
+  period: BudgetPeriod;
+  income_target: number;
+  income_actual: number;
+  expense_budget: number;
+  expense_actual: number;
+  net_target: number;
+  net_actual: number;
+  daily_remaining: number;
+  categories: BudgetCategory[];
+}
+
 export interface OverviewData {
   total_income: number;
   total_expenses: number;

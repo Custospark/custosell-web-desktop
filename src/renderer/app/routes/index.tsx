@@ -139,6 +139,7 @@ const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/Pi
 const AccountReferralsPage = lazy(() => import('../../modules/account/AccountReferralsPage'));
 const YourToolsPage = lazy(() => import('../../modules/personal/PersonalModulesPage'));
 const IncomeListPage = lazy(() => import('../../modules/expenses/IncomeListPage'));
+const MyBudgetsPage = lazy(() => import('../../modules/expenses/MyBudgetsPage'));
 const OverviewPage = lazy(() => import('../../modules/expenses/OverviewPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
@@ -241,6 +242,7 @@ export function AppRoutes() {
               <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.OVERVIEW} replace />} />
               <Route path={ROUTES.EXPENSES.OVERVIEW} element={<SuspenseWrapper><OverviewPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.INCOME} element={<SuspenseWrapper><IncomeListPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.EXPENSES.BUDGETS} element={<SuspenseWrapper><MyBudgetsPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
             </Route>

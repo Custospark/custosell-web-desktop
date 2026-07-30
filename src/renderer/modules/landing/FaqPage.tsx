@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, Loader2, MessageCircle, RefreshCw, Search, WifiOff } from 'lucide-react';
 import { usePublicFaqs } from '../guide/api/GuideQueries';
 import type { GuideFaqDto } from '../guide/api/GuideTypes';
+import { formatFaqAnswer } from '../../shared/utils/formatFaqAnswer';
 
 const CATEGORIES: { label: string; range: [number, number]; description: string }[] = [
   {
@@ -71,7 +72,7 @@ function AccordionItem({ item, index }: { item: GuideFaqDto; index: number }) {
             className="overflow-hidden"
           >
             <div className="border-t border-gray-100 px-5 py-4">
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{item.answer}</p>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{formatFaqAnswer(item.answer)}</p>
             </div>
           </motion.div>
         )}

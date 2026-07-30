@@ -1,6 +1,5 @@
 import { ShoppingBag, CheckCircle, Clock, AlertTriangle, CreditCard } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { useProfile } from '../../shared/api/account/AccountQueries';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 
@@ -24,7 +23,6 @@ export default function YourToolsPage() {
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
   const subscription = user?.business?.subscription;
-  const planFeatures = subscription?.plan_features ?? {};
   const status = subscription?.status ?? null;
   const config = status ? STATUS_CONFIG[status] : null;
 

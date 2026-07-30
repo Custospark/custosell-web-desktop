@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { UpgradeQuote } from '../../shared/api/account/SubscriptionQueries';
-import type { ApiError } from '../../shared/api/account/AccountTypes';
 import type { AxiosError } from 'axios';
 import { useReferralEarnings, useApplyReferralCode } from '../referral/api/useReferralQueries';
 import { useProfile } from '../../shared/api/account/AccountQueries';
@@ -23,7 +22,7 @@ interface UpgradeFlowConfirmStepProps {
   onClose: () => void;
   onConfirm: () => void;
   upgradePending: boolean;
-  upgradeError: AxiosError<ApiError> | null;
+  upgradeError: AxiosError<{ message?: string; errors?: Record<string, string[]> }> | null;
 }
 
 export default function UpgradeFlowConfirmStep({

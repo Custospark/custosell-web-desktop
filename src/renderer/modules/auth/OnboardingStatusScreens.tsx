@@ -7,7 +7,7 @@ import { Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 interface PaymentDoneScreenProps {
   handleContinue: () => void;
   isRefetching: boolean;
-  selectedPlan?: { trial_days?: number };
+  selectedPlan?: { trial_days?: number | null };
 }
 
 export function PaymentDoneScreen({ handleContinue, isRefetching, selectedPlan }: PaymentDoneScreenProps) {

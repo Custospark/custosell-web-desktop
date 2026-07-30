@@ -1,5 +1,5 @@
 import {
-  Kanban, Clock, CalendarDays, ClipboardCheck, Package, Settings, Download, ShoppingBag,
+  Kanban, Clock, CalendarDays, ClipboardCheck, Package,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../../app/store/slices/authSlice';

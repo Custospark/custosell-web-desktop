@@ -13,7 +13,7 @@ export interface RegisterRequest {
   password_confirmation: string;
   phone?: string;
   /** Personal account — no business; buys modules à la carte. */
-  account_type?: 'personal';
+  account_type?: 'personal' | 'storefront_buyer';
 }
 
 export interface AuthResponse {

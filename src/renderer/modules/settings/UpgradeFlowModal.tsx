@@ -5,7 +5,7 @@ import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { Loader2, CheckCircle, AlertCircle, X, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, X, Wallet, Tag, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import UpgradeFlowConfirmStep from './UpgradeFlowConfirmStep';
 
@@ -130,7 +130,7 @@ export default function UpgradeFlowModal({
         onClose={onClose}
         onConfirm={handleConfirm}
         upgradePending={upgradeMutation.isPending}
-        upgradeError={upgradeMutation.error}
+        upgradeError={upgradeMutation.error as never}
       />
     );
   }

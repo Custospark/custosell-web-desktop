@@ -149,7 +149,7 @@ export default function PaymentPage() {
                 </div>
                 <p className="text-[11px] text-indigo-600/80 pl-5">
                   {subscription.referral.discount_type === 'percentage'
-                    ? `${subscription.referral.discount_value}% off your subscription for ${subscription.referral.discount_duration_months} month${subscription.referral.discount_duration_months > 1 ? 's' : ''}`
+                    ? `${subscription.referral.discount_value}% off your subscription for ${subscription.referral.discount_duration_months ?? 0} month${(subscription.referral.discount_duration_months ?? 0) > 1 ? 's' : ''}`
                     : subscription.referral.discount_type === 'free_month'
                       ? 'One month free on your subscription'
                       : 'Discount applied to your subscription'}

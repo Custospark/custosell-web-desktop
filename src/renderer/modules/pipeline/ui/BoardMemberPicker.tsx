@@ -327,12 +327,14 @@ export default function BoardMemberPicker({
 
         {lookupResult && (
           <div className="mt-2 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-            <UserIdentityChip
-              name={lookupResult.name}
-              size="sm"
-              nameClassName="text-sm font-medium text-gray-900"
-              subtitle={lookupResult.email}
-            />
+            <div className="flex items-center gap-2 min-w-0">
+              <UserIdentityChip
+                name={lookupResult.name}
+                size="sm"
+                nameClassName="text-sm font-medium text-gray-900"
+              />
+              <span className="text-xs text-gray-500 truncate">{lookupResult.email}</span>
+            </div>
             <Button
               type="button"
               size="sm"

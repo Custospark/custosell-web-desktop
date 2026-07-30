@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, useChangeBillingCycle } from '../../shared/api/account/SubscriptionQueries';
+import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, useChangeBillingCycle, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
@@ -333,10 +333,9 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                       onSuccess: (data) => {
                         if (data?.payment_required) {
                           setBillingCyclePaymentQuote({
-                            proration: data.proration,
+                            proration: (data as Record<string, unknown>).proration as Record<string, unknown>,
                             billing_cycle: pendingCycle,
                           });
-                          setBcPaymentStep('confirm');
                         } else {
                           setBillingCycle(pendingCycle);
                           setPendingCycle(null);
@@ -388,7 +387,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           planPrice={subscriptionPayment.planPrice}
           billingCycle={subscriptionPayment.billingCycle}
           amount={subscriptionPayment.amount}
-          currency={getPaymentCurrency()}
+          currency={currency}
           userPhone={userPhone}
           actionLabel={subscriptionPayment.actionLabel}
           paymentType={subscriptionPayment.paymentType}

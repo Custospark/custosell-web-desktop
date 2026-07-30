@@ -3,7 +3,7 @@ import { useExpenses, useDeleteExpense, useExpenseCategories } from '../api/Expe
 import { Table } from '../../../shared/components/tables/Table';
 import { Card } from '../../../shared/components/cards/Card';
 import { Badge } from '../../../shared/components/badges/Badge';
-import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
@@ -48,7 +48,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
     if (ok) deleteMutation.mutate(expense.id);
   };
 
-  if (isLoading) return <LoadingSkeleton variant="table" />;
+  if (isLoading) return <CustosellLoader message="Loading expenses…" />;
   if (error) return <EmptyState icon={<Receipt className="w-12 h-12" />} title="Failed to load expenses" actionLabel="Retry" onAction={() => window.location.reload()} />;
 
   return (

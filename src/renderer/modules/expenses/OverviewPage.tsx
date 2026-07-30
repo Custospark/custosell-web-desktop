@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import { useIncomeOverview } from './api/IncomeQueries';
 import { Card } from '../../shared/components/cards/Card';
-import { Wallet, ShoppingCart, TrendingDown, TrendingUp, Loader2, RefreshCw, ArrowRight } from 'lucide-react';
+import { Wallet, ShoppingCart, TrendingDown, TrendingUp, RefreshCw, ArrowRight } from 'lucide-react';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 
@@ -110,14 +111,7 @@ export default function OverviewPage() {
     }
   }, [period]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-16 text-sm text-gray-500">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-        Loading overview…
-      </div>
-    );
-  }
+  if (isLoading) return <CustosellLoader message="Loading overview…" />;
 
   if (isError) {
     return (

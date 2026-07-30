@@ -1,3 +1,17 @@
+export interface IncomeAttachment {
+  id: number;
+  income_source_id: number;
+  user_id: number | null;
+  type: 'file' | 'link';
+  file_name: string;
+  file_path: string | null;
+  file_url: string | null;
+  link_url: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+  created_at: string | null;
+}
+
 export interface IncomeSource {
   id: number;
   business_id: number;
@@ -6,6 +20,7 @@ export interface IncomeSource {
   source_name: string;
   description: string | null;
   income_date: string;
+  attachments?: IncomeAttachment[];
   created_at: string;
   updated_at: string;
 }

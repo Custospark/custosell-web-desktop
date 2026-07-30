@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { Modal } from '../../../shared/components/modals/Modal';
+import { Button } from '../../../shared/components/buttons/Button';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
 import { useBillableProjects } from '../../estimates/api/useProjectQueries';
 import { useFixedAssets } from '../../accounting/api/AccountingQueries';
-import { Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat, FolderKanban, Package } from 'lucide-react';
+import {
+  Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat,
+  FolderKanban, Package, Receipt, AlertCircle,
+} from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
@@ -14,6 +18,21 @@ interface ExpenseFormProps {
   onClose: () => void;
   expense?: Expense | null;
   shiftId?: number | null;
+}
+
+function FormSection({ icon: Icon, title, children }: { icon: typeof Tag; title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+          <Icon className="w-4 h-4 text-gray-400" /> {title}
+        </h3>
+      </div>
+      <div className="p-4 space-y-3">
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
@@ -117,194 +136,256 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const canSubmit = !!amount && !!description && !!expenseDate;
+  const title = isEditing ? 'Edit Expense' : 'Record Expense';
+  const subtitle = isEditing
+    ? 'Update the expense details below.'
+    : 'Log a business expense and optionally attach a receipt.';
 
   return (
-    <SlideDrawer
-      open={open}
-      onClose={onClose}
-      title={isEditing ? 'Edit Expense' : 'Record Expense'}
-      subtitle={activeShiftId ? 'Linked to your active shift for handover reporting' : 'Log a business expense'}
-      onSubmit={handleSubmit}
-      isSubmitting={isPending}
-      canSubmit={canSubmit}
-    >
+    <Modal isOpen={open} onClose={onClose} title={title} subtitle={subtitle} size="lg">
       <div className="space-y-5">
 
-        {/* Category & Project */}
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4 text-gray-400" /> Category &amp; Project</h3>
+        {/* Hero */}
+        <div className="flex items-start gap-4 rounded-xl bg-gradient-to-br from-orange-50 to-red-50/50 border border-orange-100 p-4">
+          <div className="rounded-lg bg-gradient-to-br from-orange-500 to-red-600 p-2.5 shrink-0 shadow-sm">
+            <Receipt className="h-5 w-5 text-white" />
           </div>
-          <div className="p-4 space-y-3">
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <div>
+            <p className="text-sm font-bold text-orange-900">
+              {isEditing ? 'Edit expense' : 'New expense'}
+            </p>
+            <p className="text-xs text-orange-700 mt-0.5">
+              {activeShiftId
+                ? 'This expense will be linked to your active shift for handover reporting.'
+                : 'Categorise your spending to track where your money goes.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Category & Project */}
+        <FormSection icon={Tag} title="Category & Project">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-orange-400 focus:outline-none"
+            >
               <option value="">Select category</option>
               {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <div>
-              <div className="relative">
-                <FolderKanban className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <select value={projectId} onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none">
-                  <option value="">No project (general expense)</option>
-                  {(projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <p className="mt-1 text-xs text-gray-400">Link to a project for automatic cost allocation and budget tracking.</p>
-            </div>
-            <div>
-              <div className="relative">
-                <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <select value={fixedAssetId} onChange={(e) => setFixedAssetId(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none">
-                  <option value="">No company asset</option>
-                  {fixedAssets.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}{a.asset_tag ? ` (${a.asset_tag})` : ''}</option>
-                  ))}
-                </select>
-              </div>
-              <p className="mt-1 text-xs text-gray-400">Optional — link repair/maintenance spend to a fixed asset.</p>
-            </div>
           </div>
-        </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Project (optional)</label>
+            <div className="relative">
+              <FolderKanban className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white appearance-none focus:border-orange-400 focus:outline-none"
+              >
+                <option value="">No project (general expense)</option>
+                {(projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Link to a project for automatic cost allocation.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Fixed asset (optional)</label>
+            <div className="relative">
+              <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={fixedAssetId}
+                onChange={(e) => setFixedAssetId(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white appearance-none focus:border-orange-400 focus:outline-none"
+              >
+                <option value="">No company asset</option>
+                {fixedAssets.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}{a.asset_tag ? ` (${a.asset_tag})` : ''}</option>
+                ))}
+              </select>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Link repair or maintenance spend to a fixed asset.</p>
+          </div>
+        </FormSection>
 
         {/* Amount & Date */}
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><DollarSign className="w-4 h-4 text-gray-400" /> Amount &amp; Date</h3>
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{getBusinessCurrency()}</span>
-                  <input type="number" min={0} step="100" value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0" />
-                </div>
+        <FormSection icon={DollarSign} title="Amount & Date">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Amount *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
+                <input
+                  type="number" min={0} step="100"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  placeholder="0"
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="date" value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Date *</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="date"
+                  value={expenseDate}
+                  onChange={(e) => setExpenseDate(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                />
               </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* Description */}
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><FileText className="w-4 h-4 text-gray-400" /> Description</h3>
-          </div>
-          <div className="p-4">
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-h-[80px]" placeholder="Expense description" />
-          </div>
-        </div>
+        <FormSection icon={FileText} title="Description">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm min-h-[80px] focus:border-orange-400 focus:outline-none resize-none"
+            placeholder="What was this expense for? e.g. Office supplies — printer toner and paper"
+          />
+        </FormSection>
 
         {/* Reference & Receipt */}
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Paperclip className="w-4 h-4 text-gray-400" /> Reference &amp; Receipt</h3>
-          </div>
-          <div className="p-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="e.g. INV-001" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Receipt</label>
-              <input type="file" accept="image/*,.pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)}
-                className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100" />
-              {expense?.receipt_url && !receipt && (
-                <p className="text-xs text-gray-400 mt-1">Current: <a href={expense.receipt_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">View receipt</a></p>
-              )}
+        <FormSection icon={Paperclip} title="Reference & Receipt">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Reference</label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                placeholder="e.g. INV-001, Receipt #1234"
+              />
             </div>
           </div>
-        </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Receipt</label>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => setReceipt(e.target.files?.[0] || null)}
+              className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+            />
+            {expense?.receipt_url && !receipt && (
+              <p className="text-xs text-gray-400 mt-1">
+                Current: <a href={expense.receipt_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">View receipt</a>
+              </p>
+            )}
+          </div>
+        </FormSection>
 
+        {/* VAT */}
         {vatEnabled && (
-          <div className="rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Tag className="w-4 h-4 text-gray-400" /> Input VAT (purchases)</h3>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier TIN</label>
-                  <input type="text" value={supplierTin} onChange={(e) => setSupplierTin(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Supplier tax ID" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier invoice no.</label>
-                  <input type="text" value={supplierInvoiceNo} onChange={(e) => setSupplierInvoiceNo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Invoice reference" />
-                </div>
+          <FormSection icon={AlertCircle} title="Input VAT (purchases)">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Supplier TIN</label>
+                <input
+                  type="text"
+                  value={supplierTin}
+                  onChange={(e) => setSupplierTin(e.target.value)}
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  placeholder="Supplier tax ID"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">VAT amount on invoice</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{getBusinessCurrency()}</span>
-                  <input type="number" min={0} step="0.01" value={vatAmount} onChange={(e) => setVatAmount(e.target.value)}
-                    className="w-full pl-11 pr-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0.00" />
-                </div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Supplier invoice no.</label>
+                <input
+                  type="text"
+                  value={supplierInvoiceNo}
+                  onChange={(e) => setSupplierInvoiceNo(e.target.value)}
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  placeholder="Invoice reference"
+                />
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={vatClaimable} onChange={(e) => setVatClaimable(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                <span className="text-sm text-gray-700">Include in VAT return as claimable input VAT</span>
-              </label>
             </div>
-          </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">VAT amount</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
+                <input
+                  type="number" min={0} step="0.01"
+                  value={vatAmount}
+                  onChange={(e) => setVatAmount(e.target.value)}
+                  className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={vatClaimable}
+                onChange={(e) => setVatClaimable(e.target.checked)}
+                className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+              />
+              <span className="text-sm text-gray-700">Claimable input VAT</span>
+            </label>
+          </FormSection>
         )}
 
         {/* Recurrence */}
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2"><Repeat className="w-4 h-4 text-gray-400" /> Recurrence</h3>
-          </div>
-          <div className="p-4">
-            <label className="flex items-center gap-2 cursor-pointer mb-3">
-              <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-              <span className="text-sm font-medium text-gray-700">Repeat this expense</span>
-            </label>
-            {isRecurring && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Interval</label>
-                  <select value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Next Due</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input type="date" value={nextDueDate} onChange={(e) => setNextDueDate(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                  </div>
+        <FormSection icon={Repeat} title="Recurrence">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+            />
+            <span className="text-sm font-medium text-gray-700">Repeat this expense</span>
+          </label>
+          {isRecurring && (
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Interval</label>
+                <select
+                  value={recurrenceInterval}
+                  onChange={(e) => setRecurrenceInterval(e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-orange-400 focus:outline-none"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Next due</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="date"
+                    value={nextDueDate}
+                    onChange={(e) => setNextDueDate(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </FormSection>
 
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSubmit}
+            loading={isPending}
+            disabled={!canSubmit}
+          >
+            <Receipt className="h-4 w-4" />
+            {isEditing ? 'Update Expense' : 'Save Expense'}
+          </Button>
+        </div>
       </div>
-    </SlideDrawer>
+    </Modal>
   );
 }

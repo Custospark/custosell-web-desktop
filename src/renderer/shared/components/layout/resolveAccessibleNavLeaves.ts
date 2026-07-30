@@ -1,5 +1,5 @@
 import {
-  Kanban, Clock, CalendarDays, ClipboardCheck, Package, Settings, Download,
+  Kanban, Clock, CalendarDays, ClipboardCheck, Package, Settings, Download, ShoppingBag,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
@@ -34,19 +34,19 @@ export function resolveAccessibleNavGroups(
     ? (slug: string) => planAccessibleModules.includes(slug)
     : (slug: string) => canAccessModule(user, slug);
 
-  // Personal accounts: show module catalog + purchased modules + account/guide/discover/settings
+  // Personal accounts: show Your Tools — active tools + tool store + account/guide/discover
   if (user?.account_type === 'personal') {
     const personalGroups: SidebarNavGroup[] = [];
 
     personalGroups.push({
       icon: Package,
-      label: 'Personal Modules',
+      label: 'Your Tools',
       subItems: [
-        { to: ROUTES.PERSONAL_MODULES, label: 'Module catalog', icon: Package },
+        { to: ROUTES.YOUR_TOOLS, label: 'My Tools', icon: Package },
       ],
     });
 
-    // Purchased modules appear as sidebar groups
+    // Purchased modules appear as their own sidebar groups
     const purchasableGroups = ['Pipeline', 'Projects & Estimates', 'Expenses', 'Documents', 'Accounting'];
     for (const group of baseNavGroups) {
       const moduleSlug = NAV_GROUP_MODULE[group.label];

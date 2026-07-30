@@ -87,7 +87,7 @@ export const ROUTES = {
     PROFILE: '/account/profile',
     REFERRALS: '/account/referrals',
   },
-  PERSONAL_MODULES: '/personal/modules',
+  YOUR_TOOLS: '/your-tools',
   NOTIFICATIONS: { INDEX: '/account/notifications' },
   GUIDE: {
     INDEX: '/guide',

@@ -56,6 +56,7 @@ export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   // Personal modules
   pipeline_personal: ROUTES.PIPELINE.BOARDS,
   accounting_personal: ROUTES.ACCOUNTING.RATIOS,
+  your_tools: ROUTES.YOUR_TOOLS,
 };
 
 const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
@@ -182,7 +183,7 @@ export function getPlanAccessibleModules(user: AuthUser | null | undefined): str
 
   return accessible.filter((mod) => {
     if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
-    if (mod === 'settings') return true;
+    if (mod === 'settings' || mod === 'your_tools') return true;
     return features[mod] === true;
   });
 }
@@ -347,18 +348,9 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
 
   const accessible = new Set(getPlanAccessibleModules(user));
 
-  // Personal accounts: land on module selection if no modules, or first accessible module
+  // Personal accounts: land on Your Tools (shows active tools + tool store access)
   if (user.account_type === 'personal') {
-    if (!accessible.has('pipeline') && !accessible.has('estimates') && !accessible.has('expenses') && !accessible.has('accounting') && !accessible.has('documents')) {
-      return ROUTES.PERSONAL_MODULES;
-    }
-    const personalPriority = ['pipeline', 'estimates', 'expenses', 'accounting', 'documents', 'account', 'guide'];
-    for (const mod of personalPriority) {
-      if (accessible.has(mod) && MODULE_DEFAULT_ROUTES[mod]) {
-        return MODULE_DEFAULT_ROUTES[mod];
-      }
-    }
-    return ROUTES.PERSONAL_MODULES;
+    return ROUTES.YOUR_TOOLS;
   }
 
   const priority = isBusinessOwner(user) ? OWNER_LANDING_PRIORITY : STAFF_LANDING_PRIORITY;
@@ -407,6 +399,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/guide')) return 'guide';
   if (pathname.startsWith('/account') || pathname.startsWith('/notifications')) return 'account';
   if (pathname.startsWith('/discover')) return 'discover';
+  if (pathname.startsWith('/your-tools')) return 'your_tools';
   if (pathname.startsWith('/settings')) return 'settings';
   if (pathname.startsWith('/dashboard')) return 'dashboard';
   if (pathname.startsWith('/invoices')) return 'sales';

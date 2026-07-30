@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, FileSpreadsheet, Receipt, BookOpen, FileText, CreditCard, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Package, FileSpreadsheet, Receipt, BookOpen, FileText, CreditCard, CheckCircle, Loader2, AlertCircle, ShoppingBag, Clock } from 'lucide-react';
 import { useAvailableModules, useMySubscriptions, useSubscribe, useCancelSubscription, useInitiatePayment } from './hooks/usePersonalSubscriptions';
 import type { PersonalModule, MySubscription } from './hooks/usePersonalSubscriptions';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -13,20 +13,61 @@ const MODULE_ICONS: Record<string, typeof Package> = {
   documents: FileText,
 };
 
+function daysUntil(dateStr: string | null): string {
+  if (!dateStr) return '';
+  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+  if (diff < 0) return 'Expired';
+  if (diff === 0) return 'Expires today';
+  if (diff === 1) return 'Expires in 1 day';
+  if (diff <= 7) return `Expires in ${diff} days`;
+  return `Renewal ${new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+}
+
+function ActiveToolRow({ sub, onCancel, cancelling }: { sub: MySubscription; onCancel: () => void; cancelling: boolean }) {
+  const Icon = MODULE_ICONS[sub.module_slug] ?? Package;
+  const expiry = daysUntil(sub.current_period_end);
+  const isExpired = expiry === 'Expired';
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-white px-4 py-3 transition-colors hover:border-gray-200">
+      <div className="flex items-center gap-3">
+        <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isExpired ? 'bg-red-50' : 'bg-green-50'}`}>
+          <Icon className={`h-4 w-4 ${isExpired ? 'text-red-500' : 'text-green-600'}`} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-900 capitalize">{sub.module_slug}</p>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>${sub.price_usd}/mo</span>
+            <span className="text-gray-300">·</span>
+            <span className={`flex items-center gap-1 ${isExpired ? 'text-red-500' : expiry.startsWith('Expires in') ? 'text-amber-500' : 'text-gray-400'}`}>
+              <Clock className="h-3 w-3" />
+              {expiry}
+            </span>
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={cancelling}
+        className="rounded-md px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+      >
+        {cancelling ? '...' : 'Cancel'}
+      </button>
+    </div>
+  );
+}
+
 function ModuleCard({
   module,
   subscription,
   onSubscribe,
-  onCancel,
   subscribing,
-  cancelling,
 }: {
   module: PersonalModule;
   subscription?: MySubscription;
   onSubscribe: () => void;
-  onCancel: () => void;
   subscribing: boolean;
-  cancelling: boolean;
 }) {
   const Icon = MODULE_ICONS[module.slug] ?? Package;
   const isActive = subscription?.status === 'active';
@@ -41,19 +82,9 @@ function ModuleCard({
       <div className="mt-3 flex items-center justify-between">
         <span className="text-sm font-bold text-gray-900">${module.price_monthly_usd}<span className="text-xs font-normal text-gray-500">/mo</span></span>
         {isActive ? (
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-green-600">
-              <CheckCircle className="h-3.5 w-3.5" /> Active
-            </span>
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={cancelling}
-              className="rounded-md px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-            >
-              {cancelling ? '...' : 'Cancel'}
-            </button>
-          </div>
+          <span className="flex items-center gap-1 text-xs font-medium text-green-600">
+            <CheckCircle className="h-3.5 w-3.5" /> Active
+          </span>
         ) : (
           <button
             type="button"
@@ -70,7 +101,21 @@ function ModuleCard({
   );
 }
 
-function PaymentBar({ total, hasPendingPayments }: { total: number; hasPendingPayments: boolean }) {
+function BundleNotice({ count, totalBeforeDiscount, discountedTotal }: { count: number; totalBeforeDiscount: number; discountedTotal: number }) {
+  if (count < 2) return null;
+  return (
+    <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+      <p className="text-sm font-medium text-green-800">
+        Bundle discount applied: <strong>{count} tools</strong> × $5 = ${totalBeforeDiscount.toFixed(2)}
+        <span className="mx-1">→</span>
+        <strong className="text-green-700">${discountedTotal.toFixed(2)}/mo</strong>
+        <span className="ml-1 text-xs">(20% off)</span>
+      </p>
+    </div>
+  );
+}
+
+function PaymentBar({ total }: { total: number }) {
   const { success } = useToast();
   const initiatePayment = useInitiatePayment();
 
@@ -89,13 +134,8 @@ function PaymentBar({ total, hasPendingPayments }: { total: number; hasPendingPa
     <div className="sticky bottom-0 mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-900">Total monthly</p>
+          <p className="text-xs text-gray-500">Total per month</p>
           <p className="text-2xl font-bold text-gray-900">${total.toFixed(2)}<span className="text-sm font-normal text-gray-500">/mo</span></p>
-          {hasPendingPayments && (
-            <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-600">
-              <AlertCircle className="h-3 w-3" /> Pending payment
-            </p>
-          )}
         </div>
         <button
           type="button"
@@ -111,8 +151,7 @@ function PaymentBar({ total, hasPendingPayments }: { total: number; hasPendingPa
   );
 }
 
-export default function PersonalModulesPage() {
-  const user = useAppSelector((s) => s.auth.user);
+export default function YourToolsPage() {
   const { success, error: toastError } = useToast();
   const { data: availableModules, isLoading: loadingModules } = useAvailableModules();
   const { data: mySubs, isLoading: loadingMine } = useMySubscriptions();
@@ -124,8 +163,10 @@ export default function PersonalModulesPage() {
   const subscriptionMap = new Map<string, MySubscription>();
   mySubs?.subscriptions.forEach((s) => subscriptionMap.set(s.module_slug, s));
 
-  const totalMonthly = mySubs?.total_monthly_usd ?? 0;
-  const hasPendingPayments = false;
+  const activeCount = mySubs?.subscriptions.length ?? 0;
+  const totalBeforeDiscount = activeCount * 5;
+  const hasBundle = activeCount >= 2;
+  const discountedTotal = hasBundle ? totalBeforeDiscount * 0.8 : totalBeforeDiscount;
 
   const handleSubscribe = async (moduleSlug: string) => {
     setSubscribingSlug(moduleSlug);
@@ -162,48 +203,71 @@ export default function PersonalModulesPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Your Modules</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Your Tools</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Pick the modules you need. <strong>$5/mo</strong> each. Pay once, use for the month.
+          Tools you subscribe to — <strong>$5/mo</strong> each. Get <strong>2+ tools</strong> and save <strong>20%</strong>.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {availableModules?.map((mod) => (
-          <ModuleCard
-            key={mod.slug}
-            module={mod}
-            subscription={subscriptionMap.get(mod.slug)}
-            onSubscribe={() => handleSubscribe(mod.slug)}
-            onCancel={() => {
-              const sub = subscriptionMap.get(mod.slug);
-              if (sub) handleCancel(sub);
-            }}
-            subscribing={subscribingSlug === mod.slug}
-            cancelling={cancellingId === subscriptionMap.get(mod.slug)?.id}
-          />
-        ))}
-      </div>
-
+      {/* Active tools */}
       {mySubs && mySubs.subscriptions.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold text-gray-900">Active Subscriptions</h2>
-          <div className="divide-y rounded-xl border border-gray-200 bg-white">
+        <section className="mb-10">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            Active Tools
+          </h2>
+          <div className="flex flex-col gap-2">
             {mySubs.subscriptions.map((sub) => (
-              <div key={sub.id} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-gray-900 capitalize">{sub.module_slug}</span>
-                  <span className="text-xs text-gray-400">${sub.price_usd}/mo</span>
-                </div>
-                <span className="text-xs text-gray-500 capitalize">{sub.billing_cycle}</span>
-              </div>
+              <ActiveToolRow
+                key={sub.id}
+                sub={sub}
+                onCancel={() => handleCancel(sub)}
+                cancelling={cancellingId === sub.id}
+              />
             ))}
           </div>
-        </div>
+
+          {activeCount > 0 && (
+            <div className="mt-3">
+              <BundleNotice
+                count={activeCount}
+                totalBeforeDiscount={totalBeforeDiscount}
+                discountedTotal={discountedTotal}
+              />
+            </div>
+          )}
+        </section>
       )}
 
-      <PaymentBar total={totalMonthly} hasPendingPayments={hasPendingPayments} />
+      {/* Empty state */}
+      {mySubs && mySubs.subscriptions.length === 0 && (
+        <section className="mb-10 rounded-xl border-2 border-dashed border-gray-200 p-10 text-center">
+          <ShoppingBag className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+          <h2 className="text-lg font-semibold text-gray-900">No tools yet</h2>
+          <p className="mt-1 text-sm text-gray-500">Pick the tools you need below to get started.</p>
+        </section>
+      )}
+
+      {/* Tool Store */}
+      <section>
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-gray-900">
+          <ShoppingBag className="h-5 w-5 text-blue-500" />
+          Tool Store
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {availableModules?.map((mod) => (
+            <ModuleCard
+              key={mod.slug}
+              module={mod}
+              subscription={subscriptionMap.get(mod.slug)}
+              onSubscribe={() => handleSubscribe(mod.slug)}
+              subscribing={subscribingSlug === mod.slug}
+            />
+          ))}
+        </div>
+      </section>
+
+      <PaymentBar total={discountedTotal} />
     </div>
   );
 }

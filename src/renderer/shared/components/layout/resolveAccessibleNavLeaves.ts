@@ -70,7 +70,9 @@ export function resolveAccessibleNavGroups(
       if (isPersonal) {
         return {
           ...group,
-          subItems: group.subItems.filter((item) => item.label === 'Data & Export'),
+          subItems: group.subItems.filter((item) =>
+            item.label === 'Billing & Subscription' || item.label === 'Data & Export',
+          ),
         };
       }
       return {

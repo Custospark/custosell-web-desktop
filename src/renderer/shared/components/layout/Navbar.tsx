@@ -284,12 +284,13 @@ export function Navbar() {
                 <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[9rem] sm:max-w-[14rem] md:max-w-[20rem] lg:max-w-[28rem] xl:max-w-[36rem]">
                   {businessName}
                 </p>
-                {isBusinessOwner(user) && user?.business?.subscription?.plan_slug && user.account_type !== 'personal' ? (
+                {isBusinessOwner(user) && user?.business?.subscription?.plan_slug ? (
                   <span className={cn(
                     'shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded leading-none',
                     user.business.subscription.plan_slug === 'essential' && 'bg-blue-100 text-blue-700',
                     user.business.subscription.plan_slug === 'professional' && 'bg-indigo-100 text-indigo-700',
                     user.business.subscription.plan_slug === 'enterprise' && 'bg-violet-100 text-violet-700',
+                    user.business.subscription.plan_slug === 'personal' && 'bg-emerald-100 text-emerald-700',
                   )}>
                     {user.business.subscription.plan_slug.slice(0, 3).replace(/^\w/, c => c.toUpperCase())}
                   </span>
@@ -326,7 +327,7 @@ export function Navbar() {
 
           <div data-tour="navbar-referral"><ReferralDropdown /></div>
 
-          {isBusinessOwner(user) && user?.account_type !== 'personal' && <div data-tour="navbar-subscription"><SubscriptionDropdown /></div>}
+          {isBusinessOwner(user) && <div data-tour="navbar-subscription"><SubscriptionDropdown /></div>}
 
           <div className="shrink-0 pr-3">
             <button

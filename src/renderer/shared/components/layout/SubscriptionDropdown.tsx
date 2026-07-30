@@ -7,7 +7,7 @@ import { formatCurrency, formatUSD } from '../../utils/formatCurrency';
 import { useDisplayPrices } from '../../utils/useDisplayPrices';
 import { STATUS_STYLES } from '../../../modules/settings/planConstants';
 import {
-  Crown, Sparkles, Building2, CheckCircle2, ChevronDown,
+  Crown, Sparkles, Building2, CircleUser, CheckCircle2, ChevronDown,
   CreditCard, Settings, ArrowUp, ArrowDown,
 } from 'lucide-react';
 
@@ -15,6 +15,7 @@ const PLAN_META: Record<string, { icon: typeof Crown; colors: { bg: string; ring
   essential: { icon: Crown, colors: { bg: 'bg-blue-50', ring: 'ring-blue-200', text: 'text-blue-700' } },
   professional: { icon: Sparkles, colors: { bg: 'bg-indigo-50', ring: 'ring-indigo-200', text: 'text-indigo-700' } },
   enterprise: { icon: Building2, colors: { bg: 'bg-violet-50', ring: 'ring-violet-200', text: 'text-violet-700' } },
+  personal: { icon: CircleUser, colors: { bg: 'bg-emerald-50', ring: 'ring-emerald-200', text: 'text-emerald-700' } },
 };
 
 function getPlanMeta(slug?: string | null) {
@@ -32,8 +33,10 @@ const FEATURE_LABELS: Record<string, string> = {
   customers: 'Customer Management',
   expenses: 'Expense Tracking',
   dashboard: 'Dashboard & Analytics',
-  pipeline: 'Sales Pipeline',
-  estimates: 'Estimates & Projects',
+  pipeline: 'Pipeline (Project Management)',
+  estimates: 'Projects & Estimates',
+  documents: 'Document Management',
+  accounting: 'Bookkeeping & Accounting',
   storefront: 'Online Storefront',
   marketplace: 'Supply Marketplace',
 };

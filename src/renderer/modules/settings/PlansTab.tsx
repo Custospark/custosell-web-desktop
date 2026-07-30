@@ -62,11 +62,16 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
     return pending ?? null;
   }, [changes]);
 
+  const user = useAppSelector((s) => s.auth.user);
   const { data: plans, isLoading: plansLoading } = useActivePlans();
 
   const sortedPlans = useMemo(() => {
-    return plans ? [...plans].sort((a, b) => a.sort_order - b.sort_order) : [];
-  }, [plans]);
+    if (!plans) return [];
+    const filtered = user?.account_type === 'personal'
+      ? plans.filter((p) => p.type === 'personal')
+      : plans;
+    return [...filtered].sort((a, b) => a.sort_order - b.sort_order);
+  }, [plans, user?.account_type]);
 
   const currentPlan = sortedPlans.find(p => p.id === subscription.plan_id) ?? null;
   const currentPlanSortOrder = currentPlan?.sort_order ?? 0;

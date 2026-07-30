@@ -74,6 +74,7 @@ export const BILLING = {
 };
 export const EXPENSE_CATEGORIES = '/expense-categories';
 export const EXPENSES = '/expenses';
+export const INCOME_SOURCES = '/income-sources';
 export const SYNC = { PUSH: '/sync/push', PULL: '/sync/pull', FULL: '/sync/full' };
 export const NOTIFICATIONS = {
   BASE: '/notifications',

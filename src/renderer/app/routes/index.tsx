@@ -138,6 +138,8 @@ const ReferralEntryPage = lazy(() => import('../../modules/referral/pages/Referr
 const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/PipelineReferralsPage'));
 const AccountReferralsPage = lazy(() => import('../../modules/account/AccountReferralsPage'));
 const YourToolsPage = lazy(() => import('../../modules/personal/PersonalModulesPage'));
+const IncomeListPage = lazy(() => import('../../modules/expenses/IncomeListPage'));
+const OverviewPage = lazy(() => import('../../modules/expenses/OverviewPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -236,7 +238,9 @@ export function AppRoutes() {
               <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />
             </Route>
             <Route element={<ModuleAccessMiddleware module="expenses" />}>
-              <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.LIST} replace />} />
+              <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.OVERVIEW} replace />} />
+              <Route path={ROUTES.EXPENSES.OVERVIEW} element={<SuspenseWrapper><OverviewPage /></SuspenseWrapper>} />
+              <Route path={ROUTES.EXPENSES.INCOME} element={<SuspenseWrapper><IncomeListPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
             </Route>

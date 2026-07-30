@@ -16,8 +16,8 @@ const TOOLS: { slug: string; label: string; description: string }[] = [
   },
   {
     slug: 'expenses',
-    label: 'Expenses',
-    description: 'Track and categorize expenses, attach receipts, and generate reports.',
+    label: 'Income & Expenses',
+    description: 'Record income, track expenses, and see your financial overview.',
   },
   {
     slug: 'accounting',

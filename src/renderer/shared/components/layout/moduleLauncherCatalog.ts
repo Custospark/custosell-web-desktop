@@ -120,11 +120,11 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
   {
     slug: 'expenses',
     label: MODULE_LABELS.expenses,
-    description: 'Expense tracking',
+    description: 'Income tracking, expense tracking & financial overview',
     icon: Receipt,
     tone: TONE.orange,
     section: 'workspace',
-    getRoute: () => ROUTES.EXPENSES.LIST,
+    getRoute: () => ROUTES.EXPENSES.OVERVIEW,
   },
   {
     slug: 'accounting',

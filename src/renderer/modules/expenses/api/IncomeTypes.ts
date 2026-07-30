@@ -1,0 +1,48 @@
+export interface IncomeSource {
+  id: number;
+  business_id: number;
+  user_id: number | null;
+  amount: string;
+  source_name: string;
+  description: string | null;
+  income_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateIncomeData {
+  amount: number;
+  source_name: string;
+  description?: string | null;
+  income_date: string;
+}
+
+export type UpdateIncomeData = Partial<CreateIncomeData>;
+
+export interface IncomeSummary {
+  total_amount: number;
+  total_count: number;
+  by_source: {
+    source: string;
+    total: number;
+    count: number;
+  }[];
+}
+
+export interface OverviewData {
+  total_income: number;
+  total_expenses: number;
+  net_balance: number;
+  income_count: number;
+  expense_count: number;
+  income_by_source: { source: string; total: number; count: number }[];
+  expenses_by_category: { category_id: number | null; category_name: string; total: number; count: number }[];
+  monthly_trends: { month: string; income: number; expenses: number }[];
+  recent_transactions: {
+    type: 'income' | 'expense';
+    amount: number;
+    description: string;
+    date: string;
+    id: number;
+  }[];
+}

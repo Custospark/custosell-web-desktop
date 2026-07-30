@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Package, FileSpreadsheet, Receipt, BookOpen, FileText, CreditCard, CheckCircle, Loader2, ShoppingBag, Clock, ArrowRight, Zap } from 'lucide-react';
+import { Package, FileSpreadsheet, Receipt, BookOpen, FileText, CreditCard, Loader2, ShoppingBag, Clock, ArrowRight, Zap } from 'lucide-react';
 import { useAvailableModules, useMySubscriptions, useSubscribe, useCancelSubscription, useInitiatePayment } from './hooks/usePersonalSubscriptions';
 import type { PersonalModule, MySubscription } from './hooks/usePersonalSubscriptions';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -34,10 +34,10 @@ function daysUntil(dateStr: string | null): string {
 }
 
 const TOOL_COLORS: Record<string, { bg: string; icon: string; border: string }> = {
-  pipeline: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-200' },
-  estimates: { bg: 'bg-purple-50', icon: 'text-purple-600', border: 'border-purple-200' },
+  pipeline: { bg: 'bg-sky-50', icon: 'text-sky-600', border: 'border-sky-200' },
+  estimates: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-200' },
   expenses: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-200' },
-  accounting: { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-emerald-200' },
+  accounting: { bg: 'bg-cyan-50', icon: 'text-cyan-600', border: 'border-cyan-200' },
   documents: { bg: 'bg-rose-50', icon: 'text-rose-600', border: 'border-rose-200' },
 };
 
@@ -118,8 +118,8 @@ function StoreCard({
       <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
         <span className="text-sm font-bold text-gray-900">${module.price_monthly_usd}<span className="text-xs font-normal text-gray-400">/mo</span></span>
         {isActive ? (
-          <span className="flex items-center gap-1 text-xs font-medium text-green-600">
-            <CheckCircle className="h-3.5 w-3.5" /> Active
+          <span className="flex items-center gap-1 text-xs font-medium text-blue-600">
+            <Package className="h-3.5 w-3.5" /> Active
           </span>
         ) : (
           <button
@@ -211,7 +211,7 @@ export default function YourToolsPage() {
         <section className="mb-12">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <Package className="h-5 w-5 text-blue-500" />
               Active Tools ({activeCount})
             </h2>
             <span className="text-sm text-gray-500">
@@ -231,11 +231,11 @@ export default function YourToolsPage() {
           </div>
 
           {hasBundle && (
-            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-              <p className="text-sm font-medium text-green-800">
+            <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+              <p className="text-sm font-medium text-blue-800">
                 Bundle discount: <strong>{activeCount} tools</strong> × $5 = ${totalBeforeDiscount.toFixed(2)}
                 <span className="mx-1">→</span>
-                <strong className="text-green-700">${discountedTotal.toFixed(2)}/mo</strong>
+                <strong className="text-blue-700">${discountedTotal.toFixed(2)}/mo</strong>
                 <span className="ml-1 text-xs">(20% off)</span>
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function YourToolsPage() {
               type="button"
               onClick={handlePay}
               disabled={initiatePayment.isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
             >
               {initiatePayment.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
               Pay now

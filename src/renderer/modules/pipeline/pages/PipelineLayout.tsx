@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../../shared/utils/cn';
 import { Kanban, Briefcase, Users, TrendingUp, SlidersHorizontal, Gift } from 'lucide-react';
 
@@ -14,6 +15,8 @@ const tabs = [
 
 export default function PipelineLayout() {
   const location = useLocation();
+  const user = useAppSelector((s) => s.auth.user);
+  const isPersonal = user?.account_type === 'personal';
   const onKanban = /^\/pipeline\/boards\/\d+/.test(location.pathname);
 
   if (onKanban) {
@@ -28,7 +31,11 @@ export default function PipelineLayout() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Pipeline</h1>
-        <p className="mt-1 text-sm text-gray-500">Track leads, collaborate with your team, and convert opportunities.</p>
+        <p className="mt-1 text-sm text-gray-500">
+          {isPersonal
+            ? 'Track leads and manage your sales process.'
+            : 'Track leads, collaborate with your team, and convert opportunities.'}
+        </p>
       </div>
 
       <nav className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">

@@ -147,7 +147,7 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
   {
     slug: 'documents',
     label: MODULE_LABELS.documents,
-    description: 'Business files',
+    description: 'Files & documents',
     icon: Files,
     tone: TONE.slate,
     section: 'workspace',

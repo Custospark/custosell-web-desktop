@@ -29,7 +29,7 @@ const GROUP_INTRO: Record<string, string> = {
   expenses: 'Track spending and expense categories.',
   accounting: 'Books, statements, and financial ratios.',
   forecasting: 'Cash outlook, budgets, KPIs, and scenarios.',
-  documents: 'Business files organized in cabinets and folders.',
+  documents: 'Files organized in cabinets and folders.',
   hr: 'People, attendance, leave, and payroll.',
   settings: 'Business profile, sales channels, staff, roles, and module access.',
   guide: 'Tutorials, FAQs, feedback, and help — learn Custosell at your pace.',

@@ -54,6 +54,14 @@ export function resolveAccessibleNavGroups(
       if (group.label === 'Account') return true;
       return hasModule(moduleSlug);
     }).map((group) => {
+      if (group.label === 'Documents') {
+        return {
+          ...group,
+          subItems: group.subItems.map((item) =>
+            item.label === 'Business files' ? { ...item, label: 'Documents' } : item,
+          ),
+        };
+      }
       if (group.label === 'Settings') {
         return {
           ...group,

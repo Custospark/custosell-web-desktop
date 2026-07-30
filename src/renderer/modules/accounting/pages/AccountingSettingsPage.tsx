@@ -47,7 +47,7 @@ export default function AccountingSettingsPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Seed Default Chart of Accounts</h2>
-            <p className="text-xs text-gray-500">Create a standard COA for a new business</p>
+            <p className="text-xs text-gray-500">Create a standard COA for your workspace</p>
           </div>
           <Button>
             <Database className="w-4 h-4 mr-1.5" />Seed COA

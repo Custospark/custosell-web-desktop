@@ -102,7 +102,7 @@ export default function FixedAssetsPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Fixed Assets</h1>
-              <p className="text-sm text-gray-500">Shared register with HR Company Assets — depreciation and book value</p>
+              <p className="text-sm text-gray-500">Depreciation and book value tracking for owned assets</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

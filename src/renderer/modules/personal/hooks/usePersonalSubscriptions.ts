@@ -73,7 +73,7 @@ export function useSubscribe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personal', 'modules', 'mine'] });
-      queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'profile'] });
     },
   });
 }
@@ -87,7 +87,7 @@ export function useCancelSubscription() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personal', 'modules', 'mine'] });
-      queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'profile'] });
     },
   });
 }

@@ -45,14 +45,15 @@ export default function YourToolsPage() {
         const sub = subscriptionMap.get(m.slug);
         return {
           ...tile,
-          checked: sub?.status === 'active',
+          checked: sub?.status === 'active' || sub?.status === 'pending',
+          pending: sub?.status === 'pending',
         };
       });
   }, [availableModules, subscriptionMap]);
 
   const handleToggle = async (slug: string) => {
     const sub = subscriptionMap.get(slug);
-    if (sub?.status === 'active') {
+    if (sub?.status === 'active' || sub?.status === 'pending') {
       setTogglingSlug(slug);
       try {
         await cancelSub.mutateAsync(sub.id);
@@ -124,6 +125,7 @@ export default function YourToolsPage() {
             icon={tile.icon}
             tone={tile.tone}
             checked={tile.checked}
+            pending={tile.pending}
             disabled={togglingSlug === tile.slug}
             onToggle={() => handleToggle(tile.slug)}
           />

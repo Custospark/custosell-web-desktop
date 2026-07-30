@@ -10,6 +10,7 @@ export interface OwnerModuleTileProps {
   icon: ElementType;
   tone: string;
   checked: boolean;
+  pending?: boolean;
   locked?: boolean;
   disabled?: boolean;
   onToggle: () => void;
@@ -21,6 +22,7 @@ export function OwnerModuleTile({
   icon: Icon,
   tone,
   checked,
+  pending = false,
   locked = false,
   disabled = false,
   onToggle,
@@ -59,6 +61,10 @@ export function OwnerModuleTile({
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
               <Lock className="h-2.5 w-2.5" />
               Required
+            </span>
+          ) : pending ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+              Pending
             </span>
           ) : null}
         </span>

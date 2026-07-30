@@ -10,7 +10,7 @@ import { getPaymentType } from './planActionMatrix';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { PlanAction } from './planActionMatrix';
-import { CheckCircle, AlertCircle, Clock, CalendarDays } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, CalendarDays, Rocket } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
@@ -72,6 +72,9 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       : plans.filter((p) => p.type !== 'personal');
     return [...filtered].sort((a, b) => a.sort_order - b.sort_order);
   }, [plans, user?.account_type]);
+
+  const personalPlans = useMemo(() => sortedPlans.filter((p) => p.type === 'personal'), [sortedPlans]);
+  const businessPlans = useMemo(() => sortedPlans.filter((p) => p.type === 'business'), [sortedPlans]);
 
   const currentPlan = sortedPlans.find(p => p.id === subscription.plan_id) ?? null;
 
@@ -250,8 +253,33 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
       {plansLoading ? (
         <CustosellLoader fullPage={false} />
+      ) : user?.account_type === 'personal' ? (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+            {personalPlans.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} index={0} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
+            ))}
+          </div>
+
+          <div className="rounded-2xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 p-6 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/20">
+              <Rocket className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Upgrade Your Account to Business</h3>
+            <p className="mt-1 text-sm text-slate-500 max-w-lg mx-auto">
+              Unlock sales, inventory, HR, forecasting, and more. Select a business plan below to upgrade your account and get access to all business features.
+            </p>
+          </div>
+
+          <h3 className="text-sm font-bold uppercase tracking-wide text-slate-400">Business Plans</h3>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+            {businessPlans.map((plan, index) => (
+              <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
+            ))}
+          </div>
+        </>
       ) : (
-        <div className="flex flex-wrap justify-center gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
           {sortedPlans.map((plan, index) => (
             <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
           ))}

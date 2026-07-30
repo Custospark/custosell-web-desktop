@@ -9,6 +9,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
+import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { cn } from '../../shared/utils/cn';
 
 interface UpgradeFlowConfirmStepProps {
@@ -40,6 +41,17 @@ export default function UpgradeFlowConfirmStep({
   const referralDiscountUsd = subscription?.referral?.discount_applied
     ? Number(subscription.referral.discount_applied)
     : 0;
+
+  const { exchangeRate } = useDisplayPrices();
+  const toLocal = (usd: number) => {
+    if (currency === 'USD' || !exchangeRate) return usd;
+    return Math.round(usd * exchangeRate * 100) / 100;
+  };
+  const showUsd = (usd: number) => `(${formatUSD(usd)})`;
+  const price = (usd: number) => currency === 'USD' ? formatUSD(usd) : formatCurrency(toLocal(usd), currency);
+  const priceUsd = (usd: number) => (
+    <>{price(usd)}{currency !== 'USD' && <span className="text-xs text-gray-400 ml-1.5">{showUsd(usd)}</span>}</>
+  );
 
   if (quoteLoading) {
     return (
@@ -96,7 +108,7 @@ export default function UpgradeFlowConfirmStep({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} price</span>
-            <span className="font-semibold text-gray-900">{formatUSD(pr.old_price)}</span>
+            <span className="font-semibold text-gray-900">{price(pr.old_price)}</span>
           </div>
           <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
             <span className="text-gray-600">New plan</span>
@@ -104,7 +116,7 @@ export default function UpgradeFlowConfirmStep({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} price</span>
-            <span className="font-semibold text-gray-900">{formatUSD(pr.new_price)}</span>
+            <span className="font-semibold text-gray-900">{price(pr.new_price)}</span>
           </div>
         </div>
 
@@ -116,11 +128,11 @@ export default function UpgradeFlowConfirmStep({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Credit for unused days</span>
-            <span className="font-semibold text-green-700">{formatUSD(pr.credit)}</span>
+            <span className="font-semibold text-green-700">{price(pr.credit)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Charge for remaining days</span>
-            <span className="font-semibold text-gray-900">{formatUSD(pr.charge)}</span>
+            <span className="font-semibold text-gray-900">{price(pr.charge)}</span>
           </div>
           {referralDiscountUsd > 0 && (
             <div className="flex justify-between text-sm">
@@ -128,7 +140,7 @@ export default function UpgradeFlowConfirmStep({
                 <Tag className="w-3.5 h-3.5 text-green-600" />
                 Promo discount
               </span>
-              <span className="font-semibold text-green-700">-{formatUSD(referralDiscountUsd)}</span>
+              <span className="font-semibold text-green-700">-{priceUsd(referralDiscountUsd)}</span>
             </div>
           )}
           {availableCredit > 0 && referralDiscountUsd <= 0 && (
@@ -137,7 +149,7 @@ export default function UpgradeFlowConfirmStep({
                 <Wallet className="w-3.5 h-3.5 text-green-600" />
                 Credit applied
               </span>
-              <span className="font-semibold text-green-700">-{formatUSD(creditAfterProration)}</span>
+              <span className="font-semibold text-green-700">-{price(creditAfterProration)}</span>
             </div>
           )}
           <div className={cn(
@@ -147,20 +159,20 @@ export default function UpgradeFlowConfirmStep({
             <span className="font-bold text-gray-800">Amount due today</span>
             <span className="font-bold text-blue-700 text-base">
               {referralDiscountUsd > 0
-                ? formatUSD(Math.max(0, (pr.proration_due_usd ?? 0) - referralDiscountUsd))
+                ? price(Math.max(0, (pr.proration_due_usd ?? 0) - referralDiscountUsd))
                 : availableCredit > 0
-                  ? formatUSD(Math.max(0, (pr.proration_due_usd ?? 0) - creditAfterProration))
-                  : formatUSD(pr.proration_due)}
+                  ? price(Math.max(0, (pr.proration_due_usd ?? 0) - creditAfterProration))
+                  : price(pr.proration_due)}
             </span>
           </div>
           {referralDiscountUsd > 0 && (
             <p className="text-[10px] text-green-700 text-center pt-1">
-              {formatUSD(referralDiscountUsd)} promo discount applied
+              {price(referralDiscountUsd)} promo discount applied
             </p>
           )}
           {availableCredit > 0 && referralDiscountUsd <= 0 && (
             <p className="text-[10px] text-green-700 text-center pt-1">
-              {formatUSD(availableCredit)} credit available — {formatUSD(creditAfterProration)} applied
+              {price(availableCredit)} credit available — {price(creditAfterProration)} applied
             </p>
           )}
         </div>

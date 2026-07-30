@@ -22,10 +22,11 @@ interface UpgradeFlowModalProps {
 type Step = 'confirm' | 'upgrading' | 'paying' | 'polling' | 'done' | 'failed';
 
 export default function UpgradeFlowModal({
-  plan, subscription, billingCycle, currency, userPhone,
+  plan, subscription, billingCycle: initialBillingCycle, currency, userPhone,
   onClose, onComplete,
 }: UpgradeFlowModalProps) {
   const [step, setStep] = useState<Step>('confirm');
+  const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [prorationDue, setProrationDue] = useState(0);
@@ -37,7 +38,7 @@ export default function UpgradeFlowModal({
   const applyReferralMutation = useApplyReferralCode();
 
   const { data: quote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
-    subscription.id, plan.id,
+    subscription.id, plan.id, upgradeCycle,
   );
 
   const referralDiscountUsd = subscription?.referral?.discount_applied
@@ -55,7 +56,7 @@ export default function UpgradeFlowModal({
   const handleConfirm = () => {
     setStep('upgrading');
     upgradeMutation.mutate(
-      { subscriptionId: subscription.id, to_plan_id: plan.id, effective: 'immediate' },
+      { subscriptionId: subscription.id, to_plan_id: plan.id, effective: 'immediate', billing_cycle: upgradeCycle },
       {
         onSuccess: (result) => {
           const due = result.proration?.proration?.proration_due ?? prorationDue;
@@ -87,7 +88,7 @@ export default function UpgradeFlowModal({
         amount,
         currency: paymentCurrency,
         phone: userPhone,
-        metadata: { action: 'upgrade', to_plan_id: plan.id },
+        metadata: { action: 'upgrade', to_plan_id: plan.id, billing_cycle: upgradeCycle },
       },
       {
         onSuccess: (result) => {
@@ -126,7 +127,8 @@ export default function UpgradeFlowModal({
         quoteLoading={quoteLoading}
         quoteError={quoteError}
         currency={currency}
-        billingCycle={billingCycle}
+        billingCycle={upgradeCycle}
+        onBillingCycleChange={setUpgradeCycle}
         onClose={onClose}
         onConfirm={handleConfirm}
         upgradePending={upgradeMutation.isPending}
@@ -152,12 +154,12 @@ export default function UpgradeFlowModal({
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl px-4 py-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Billing cycle</span>
-              <span className="font-semibold text-gray-900 capitalize">{billingCycle}</span>
+              <span className="font-semibold text-gray-900 capitalize">{upgradeCycle}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Plan price</span>
               <span className="font-semibold text-gray-900">
-                {formatUSD(quote?.new_plan.price_monthly_usd ?? 0)}/{billingCycle === 'yearly' ? 'yr' : 'mo'}
+                {formatUSD(quote?.new_plan.price_monthly_usd ?? 0)}/{upgradeCycle === 'yearly' ? 'yr' : 'mo'}
               </span>
             </div>
             {referralDiscountUsd > 0 && (

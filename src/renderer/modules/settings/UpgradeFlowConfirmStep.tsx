@@ -20,6 +20,7 @@ interface UpgradeFlowConfirmStepProps {
   quoteError: boolean;
   currency: string;
   billingCycle: 'monthly' | 'yearly';
+  onBillingCycleChange: (cycle: 'monthly' | 'yearly') => void;
   onClose: () => void;
   onConfirm: () => void;
   upgradePending: boolean;
@@ -27,7 +28,7 @@ interface UpgradeFlowConfirmStepProps {
 }
 
 export default function UpgradeFlowConfirmStep({
-  plan, subscription, quote, quoteLoading, quoteError, currency, billingCycle,
+  plan, subscription, quote, quoteLoading, quoteError, currency, billingCycle, onBillingCycleChange,
   onClose, onConfirm, upgradePending, upgradeError,
 }: UpgradeFlowConfirmStepProps) {
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -84,6 +85,7 @@ export default function UpgradeFlowConfirmStep({
   const creditAfterProration = availableCredit > 0
     ? Math.min(availableCredit, pr.proration_due_usd ?? pr.proration_due)
     : 0;
+  const currentCycle = subscription.billing_cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -101,13 +103,34 @@ export default function UpgradeFlowConfirmStep({
           <p className="text-sm text-gray-500 mt-1">Review the prorated charges before confirming.</p>
         </div>
 
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => onBillingCycleChange('monthly')}
+            className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+              billingCycle === 'monthly' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            onClick={() => onBillingCycleChange('yearly')}
+            className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+              billingCycle === 'yearly' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Yearly
+          </button>
+        </div>
+
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Current plan</span>
             <span className="font-semibold text-gray-900">{quote?.current_plan.name}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} price</span>
+            <span className="text-gray-600">Current price ({currentCycle})</span>
             <span className="font-semibold text-gray-900">{price(pr.old_price)}</span>
           </div>
           <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">

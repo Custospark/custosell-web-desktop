@@ -150,13 +150,15 @@ export interface UpgradeQuote {
   proration: ProrationDetails;
 }
 
-export function useUpgradeQuote(subscriptionId: number | null, toPlanId: number | null) {
+export function useUpgradeQuote(subscriptionId: number | null, toPlanId: number | null, billingCycle?: 'monthly' | 'yearly') {
   return useQuery({
-    queryKey: ['subscription', 'upgrade-quote', subscriptionId, toPlanId],
+    queryKey: ['subscription', 'upgrade-quote', subscriptionId, toPlanId, billingCycle],
     queryFn: async () => {
+      const params: Record<string, string | number> = { to_plan_id: toPlanId! };
+      if (billingCycle) params.billing_cycle = billingCycle;
       const { data } = await axiosInstance.get<{ data: UpgradeQuote }>(
         SUBSCRIPTIONS.PRORATION_QUOTE(subscriptionId!),
-        { params: { to_plan_id: toPlanId! } },
+        { params },
       );
       return data.data;
     },
@@ -170,12 +172,15 @@ export function useUpgrade() {
     subscriptionId: number;
     to_plan_id: number;
     effective?: 'immediate' | 'end_of_period';
+    billing_cycle?: 'monthly' | 'yearly';
   }>({
     mutationFn: async (payload) => {
-      const { data } = await axiosInstance.post(SUBSCRIPTIONS.UPGRADE(payload.subscriptionId), {
+      const body: Record<string, unknown> = {
         to_plan_id: payload.to_plan_id,
         effective: payload.effective ?? 'immediate',
-      });
+      };
+      if (payload.billing_cycle) body.billing_cycle = payload.billing_cycle;
+      const { data } = await axiosInstance.post(SUBSCRIPTIONS.UPGRADE(payload.subscriptionId), body);
       return data;
     },
     onError: (error) => {

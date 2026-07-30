@@ -96,7 +96,7 @@ export default function UpgradeFlowConfirmStep({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} price</span>
-            <span className="font-semibold text-gray-900">{formatCurrency(pr.old_price, currency)}</span>
+            <span className="font-semibold text-gray-900">{formatUSD(pr.old_price)}</span>
           </div>
           <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
             <span className="text-gray-600">New plan</span>
@@ -104,7 +104,7 @@ export default function UpgradeFlowConfirmStep({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'} price</span>
-            <span className="font-semibold text-gray-900">{formatCurrency(pr.new_price, currency)}</span>
+            <span className="font-semibold text-gray-900">{formatUSD(pr.new_price)}</span>
           </div>
         </div>
 
@@ -116,11 +116,11 @@ export default function UpgradeFlowConfirmStep({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Credit for unused days</span>
-            <span className="font-semibold text-green-700">{formatCurrency(pr.credit, currency)}</span>
+            <span className="font-semibold text-green-700">{formatUSD(pr.credit)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Charge for remaining days</span>
-            <span className="font-semibold text-gray-900">{formatCurrency(pr.charge, currency)}</span>
+            <span className="font-semibold text-gray-900">{formatUSD(pr.charge)}</span>
           </div>
           {referralDiscountUsd > 0 && (
             <div className="flex justify-between text-sm">
@@ -150,7 +150,7 @@ export default function UpgradeFlowConfirmStep({
                 ? formatUSD(Math.max(0, (pr.proration_due_usd ?? 0) - referralDiscountUsd))
                 : availableCredit > 0
                   ? formatUSD(Math.max(0, (pr.proration_due_usd ?? 0) - creditAfterProration))
-                  : formatCurrency(pr.proration_due, currency)}
+                  : formatUSD(pr.proration_due)}
             </span>
           </div>
           {referralDiscountUsd > 0 && (

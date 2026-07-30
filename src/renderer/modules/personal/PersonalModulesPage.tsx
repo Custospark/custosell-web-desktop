@@ -3,7 +3,7 @@ import { Package, FileSpreadsheet, Receipt, BookOpen, FileText, CreditCard, Chec
 import { useAvailableModules, useMySubscriptions, useSubscribe, useCancelSubscription, useInitiatePayment } from './hooks/usePersonalSubscriptions';
 import type { PersonalModule, MySubscription } from './hooks/usePersonalSubscriptions';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { useToast } from '../../shared/hooks/useToast';
+import { useToast } from '../../app/contexts/useToast';
 
 const MODULE_ICONS: Record<string, typeof Package> = {
   pipeline: Package,

@@ -2,3 +2,25 @@
 @plugin "@tailwindcss/typography";
 @import "../../public/styles/index.css";
 @import "../../public/styles/loadingSkeleton.css";
+
+@keyframes sparkle-border {
+  0%, 100% { border-color: rgb(191 219 254); box-shadow: 0 0 8px -2px rgb(147 197 253 / 0.4); }
+  25% { border-color: rgb(147 197 253); box-shadow: 0 0 14px -2px rgb(96 165 250 / 0.6); }
+  50% { border-color: rgb(96 165 250); box-shadow: 0 0 20px -4px rgb(59 130 246 / 0.5); }
+  75% { border-color: rgb(147 197 253); box-shadow: 0 0 14px -2px rgb(96 165 250 / 0.6); }
+}
+
+@keyframes sparkle-border-personal {
+  0%, 100% { border-color: rgb(199 210 254); box-shadow: 0 0 8px -2px rgb(165 180 252 / 0.4); }
+  25% { border-color: rgb(165 180 252); box-shadow: 0 0 14px -2px rgb(129 140 248 / 0.6); }
+  50% { border-color: rgb(129 140 248); box-shadow: 0 0 20px -4px rgb(99 102 241 / 0.5); }
+  75% { border-color: rgb(165 180 252); box-shadow: 0 0 14px -2px rgb(129 140 248 / 0.6); }
+}
+
+.animate-sparkle-border {
+  animation: sparkle-border 3s ease-in-out infinite;
+}
+
+.animate-sparkle-border-personal {
+  animation: sparkle-border-personal 3s ease-in-out infinite;
+}

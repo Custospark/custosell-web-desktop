@@ -181,7 +181,26 @@ export default function SubscriptionDropdown() {
             )}
           </div>
 
-          {otherPlans.length > 0 && (
+          {user.account_type === 'personal' && (
+            <div className="px-3 py-3 border-b border-gray-200">
+              <button
+                type="button"
+                onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
+                className="w-full flex items-center gap-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 p-3 text-left hover:from-blue-600 hover:to-indigo-700 cursor-pointer shadow-sm"
+              >
+                <div className="rounded-full bg-white/20 p-2 shrink-0">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-bold text-white block">Upgrade to Business Account</span>
+                  <span className="text-xs text-blue-100 block">Get POS, inventory, storefront & more</span>
+                </div>
+                <ArrowUp className="w-4 h-4 text-white shrink-0" />
+              </button>
+            </div>
+          )}
+
+          {otherPlans.length > 0 && user.account_type !== 'personal' && (
             <div className="px-3 py-2 border-b border-gray-200">
               <p className="text-xs font-medium mb-2 px-1 text-gray-500">Other plans</p>
               <div className="space-y-1">

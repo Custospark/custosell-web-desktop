@@ -118,25 +118,28 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
     };
 
     let incomeId: number;
-    if (isEditing && income) {
-      await updateMutation.mutateAsync({ id: income.id, data: payload });
-      incomeId = income.id;
-    } else {
-      const created = await createMutation.mutateAsync(payload);
-      incomeId = created.id;
-      setSavedIncomeId(incomeId);
+    try {
+      if (isEditing && income) {
+        await updateMutation.mutateAsync({ id: income.id, data: payload });
+        incomeId = income.id;
+      } else {
+        const created = await createMutation.mutateAsync(payload);
+        incomeId = created.id;
+        setSavedIncomeId(incomeId);
+      }
+      if (pendingFile) {
+        setFileUploading(true);
+        await uploadAtt.mutateAsync({ incomeSourceId: incomeId, file: pendingFile });
+        setPendingFile(null);
+        setFileUploading(false);
+      }
+      if (pendingLink) {
+        await createLinkAtt.mutateAsync({ incomeSourceId: incomeId, url: pendingLink.url, title: pendingLink.title || undefined });
+        setPendingLink(null);
+      }
+    } finally {
+      onClose();
     }
-    if (pendingFile) {
-      setFileUploading(true);
-      await uploadAtt.mutateAsync({ incomeSourceId: incomeId, file: pendingFile });
-      setPendingFile(null);
-      setFileUploading(false);
-    }
-    if (pendingLink) {
-      await createLinkAtt.mutateAsync({ incomeSourceId: incomeId, url: pendingLink.url, title: pendingLink.title || undefined });
-      setPendingLink(null);
-    }
-    onClose();
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

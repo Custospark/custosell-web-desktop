@@ -16,6 +16,7 @@ const AUTH_HERO_DESCRIPTION = SUPPORTING_LINE;
 interface AuthLayoutProps {
   title: string;
   subtitle?: string;
+  subtitleClassName?: string;
   heroImage?: string;
   heroDescription?: string;
 }
@@ -26,7 +27,7 @@ const AUTH_HIGHLIGHTS = [
   { value: '30-day', label: 'Trial' },
 ] as const;
 
-export function AuthLayout({ title, subtitle, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
+export function AuthLayout({ title, subtitle, subtitleClassName, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
   const image = heroImage || AUTH_HERO_IMAGES.login;
   const description = heroDescription || AUTH_HERO_DESCRIPTION;
 
@@ -124,7 +125,7 @@ export function AuthLayout({ title, subtitle, heroImage, heroDescription, childr
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-6 sm:p-8 lg:border-0 lg:shadow-none lg:bg-transparent lg:p-0">
               <div className="text-center mb-7">
                 <h2 className="text-2xl sm:text-[1.65rem] font-bold text-gray-900 mb-1.5">{title}</h2>
-                {subtitle && <p className="text-gray-500 text-sm sm:text-base leading-relaxed">{subtitle}</p>}
+                {subtitle && <p className={`text-sm sm:text-base leading-relaxed ${subtitleClassName ?? 'text-gray-500'}`}>{subtitle}</p>}
               </div>
               {children}
             </div>

@@ -158,6 +158,7 @@ const authSlice = createSlice({
     },
     loginSuccess(state, action: PayloadAction<{ user: AuthUser; token: string; plans?: Plan[]; isLocalSession?: boolean; pendingAuthSync?: boolean }>) {
       const user = normalizeAuthUser({ ...action.payload.user });
+      console.log('[DEBUG] loginSuccess - user.business?.subscription?.status:', user?.business?.subscription?.status);
       state.user = user;
       state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
@@ -220,6 +221,9 @@ const authSlice = createSlice({
     },
     setUser(state, action: PayloadAction<AuthUser>) {
       const user = normalizeAuthUser({ ...action.payload });
+      const incomingSub = user.business?.subscription;
+      const existingSub = state.user?.business?.subscription;
+      console.log('[DEBUG] setUser - incoming sub status:', incomingSub?.status, 'existing sub status:', existingSub?.status);
       state.user = {
         ...state.user,
         ...user,
@@ -231,6 +235,8 @@ const authSlice = createSlice({
             }
           : state.user?.business,
       };
+      const finalSub = state.user?.business?.subscription;
+      console.log('[DEBUG] setUser - FINAL sub status:', finalSub?.status, 'id:', finalSub?.id);
       state.businessId = user.business_id;
       state.isAuthenticated = true;
       state.isInitialized = true;
@@ -249,12 +255,15 @@ const authSlice = createSlice({
     setBusiness(state, action: PayloadAction<BusinessInfo>) {
       if (state.user) {
         const incoming = action.payload;
+        const existingSub = state.user.business?.subscription;
+        console.log('[DEBUG] setBusiness - existing sub status:', existingSub?.status, '| incoming sub status:', incoming.subscription?.status);
         state.user.business = {
           ...state.user.business,
           ...incoming,
           // Never let business endpoint overwrite subscription — /auth/me is the source of truth
           subscription: state.user.business?.subscription ?? incoming.subscription,
         };
+        console.log('[DEBUG] setBusiness - FINAL sub status:', state.user.business?.subscription?.status);
         state.user.business_name = incoming.name;
       }
     },

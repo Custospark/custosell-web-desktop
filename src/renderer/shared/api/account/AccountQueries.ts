@@ -129,6 +129,7 @@ export function useLogin(options?: { redirect?: boolean }) {
       const userData = extractAuthUser(data);
       const isLocal = data.isLocalSession ?? data.token.startsWith('local_');
       const plans = extractActivePlans(userData);
+      console.log('[DEBUG] useLogin onSuccess - userData.business?.subscription?.status:', userData?.business?.subscription?.status, 'onboarding_fee_paid:', userData?.business?.subscription?.onboarding_fee_paid);
       dispatch(loginSuccess({
         user: userData,
         token: data.token,
@@ -299,6 +300,7 @@ export function useProfile() {
     queryFn: async () => {
       const { data } = await axiosInstance.get('/auth/me');
       const userData = data?.data ?? data;
+      console.log('[DEBUG] useProfile /auth/me - userData.business?.subscription:', userData?.business?.subscription?.status, 'id:', userData?.business?.subscription?.id);
       const plans = extractActivePlans(userData);
       if (plans.length) {
         dispatch(setPlans(plans));

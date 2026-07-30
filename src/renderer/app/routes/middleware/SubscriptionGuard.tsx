@@ -52,6 +52,7 @@ function useSubscriptionAccess() {
     queryKey: ['subscription', 'access'],
     queryFn: async () => {
       const { data } = await axiosInstance.get<AccessResponse>(SUBSCRIPTIONS.ACCESS);
+      console.log('[DEBUG] useSubscriptionAccess - API response:', data, 'has_access:', data?.has_access);
       return data.has_access;
     },
     staleTime: 30_000,
@@ -93,6 +94,8 @@ export function SubscriptionGuard() {
   const user = useAppSelector((s) => s.auth.user);
   const subscription = user?.business?.subscription;
   const status = subscription?.status as string | undefined;
+  console.log('[DEBUG] SubscriptionGuard - hasAccess:', hasAccess, 'isLoading:', isLoading, 'isFetching:', isFetching, 'sub status:', status, 'sub id:', subscription?.id, 'onboarding_fee_paid:', subscription?.onboarding_fee_paid);
+  console.log('[DEBUG] SubscriptionGuard - user.business_id:', user?.business_id, '!!subscription:', !!subscription, 'user.account_type:', user?.account_type);
 
   if (isLoading || (isFetching && hasAccess !== true)) {
     return (

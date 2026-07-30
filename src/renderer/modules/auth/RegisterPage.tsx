@@ -6,6 +6,7 @@ import { useValidateReferralCode } from '../../modules/referral/api/useReferralQ
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
+import { AccountTypeSelector } from './AccountTypeSelector';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
@@ -13,7 +14,7 @@ import { CURRENCIES } from '../../shared/utils/currencies';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import {
   Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff,
-  LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle, CircleUser,
+  LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle, ArrowLeft,
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -189,63 +190,13 @@ export default function RegisterPage() {
     </>
   );
 
-  const renderSignInFooter = () => (
-    <div className="border-t border-gray-100 pt-4">
-      <p className="mb-3 text-center text-sm font-medium text-gray-700">Already have an account?</p>
-      <Link to={ROUTES.LOGIN}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50">
-        <LogIn className="h-4 w-4" aria-hidden />
-        Sign In
-      </Link>
-    </div>
-  );
-
   if (!accountType) {
     return (
       <AuthLayout
         title="Create Account"
-        subtitle={`Get started with ${PRODUCT_NAME}`}
         heroImage={AUTH_HERO_IMAGES.register}
       >
-        <div className="space-y-4">
-          <p className="text-center text-sm text-gray-500">
-            How will you use {PRODUCT_NAME}?
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setAccountType('business')}
-            className="flex w-full items-center gap-4 rounded-xl border-2 border-blue-200 bg-white p-5 text-left transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100">
-              <Store className="h-6 w-6 text-blue-700" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-gray-900">For my business</p>
-              <p className="mt-0.5 text-sm text-gray-500">
-                Manage sales, inventory, staff, and customers
-              </p>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setAccountType('personal')}
-            className="flex w-full items-center gap-4 rounded-xl border-2 border-indigo-200 bg-white p-5 text-left transition-all hover:border-indigo-400 hover:shadow-md cursor-pointer"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
-              <CircleUser className="h-6 w-6 text-indigo-700" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-gray-900">For personal use</p>
-              <p className="mt-0.5 text-sm text-gray-500">
-                Project management, bookkeeping, and more
-              </p>
-            </div>
-          </button>
-
-          {renderSignInFooter()}
-        </div>
+        <AccountTypeSelector onSelect={setAccountType} />
       </AuthLayout>
     );
   }
@@ -254,7 +205,8 @@ export default function RegisterPage() {
     return (
       <AuthLayout
         title="Create Personal Account"
-        subtitle={`Start using ${PRODUCT_NAME} for yourself`}
+        subtitle="Setting up your Personal Account"
+        subtitleClassName="text-blue-600"
         heroImage={AUTH_HERO_IMAGES.register}
       >
         <form onSubmit={handlePersonalSubmit} className="space-y-4">
@@ -276,31 +228,39 @@ export default function RegisterPage() {
           {renderPhoneInput()}
           {renderPasswordFields()}
 
-          <Button type="submit" className="w-full gap-2 py-3.5" loading={isPending}>
-            <UserPlus className="h-4 w-4" aria-hidden />
-            Create Personal Account
-          </Button>
-
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setAccountType(null)}
-              className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer">
-              Back to account type selection
+              className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-300 bg-white px-4 py-3.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 cursor-pointer">
+              <ArrowLeft className="h-4 w-4" />
+              Back
             </button>
+            <Button type="submit" className="flex-1 gap-2 py-3.5" loading={isPending}>
+              <UserPlus className="h-4 w-4" aria-hidden />
+              Create Personal Account
+            </Button>
           </div>
 
-          {renderSignInFooter()}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="mb-3 text-center text-sm font-medium text-gray-700">Already have an account?</p>
+            <Link to={ROUTES.LOGIN}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50">
+              <LogIn className="h-4 w-4" aria-hidden />
+              Sign In
+            </Link>
+          </div>
         </form>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout
-      title="Create Business Account"
-      subtitle={`Get started with ${PRODUCT_NAME}`}
-      heroImage={AUTH_HERO_IMAGES.register}
-    >
-      <form onSubmit={handleBusinessSubmit} className="space-y-4">
+      <AuthLayout
+        title="Create Business Account"
+        subtitle="Setting up your Business Account"
+        subtitleClassName="text-blue-600"
+        heroImage={AUTH_HERO_IMAGES.register}
+      >
+        <form onSubmit={handleBusinessSubmit} className="space-y-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-gray-400">Step {step} of 2</span>
           <div className="flex gap-1">
@@ -344,15 +304,22 @@ export default function RegisterPage() {
 
             {renderPhoneInput(true)}
 
-            <Button
-              type="button"
-              onClick={handleProceed}
-              className="w-full gap-2 py-3.5"
-              disabled={!form.owner_first_name || !form.owner_last_name || !form.name || !form.email}
-            >
-              Proceed
-              <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
-            </Button>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setAccountType(null)}
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-300 bg-white px-4 py-3.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 cursor-pointer">
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+              <Button
+                type="button"
+                onClick={handleProceed}
+                className="flex-1 gap-2 py-3.5"
+                disabled={!form.owner_first_name || !form.owner_last_name || !form.name || !form.email}
+              >
+                Proceed
+                <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
+              </Button>
+            </div>
           </div>
         )}
 
@@ -463,7 +430,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-300 bg-white px-4 py-3.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Back

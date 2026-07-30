@@ -34,50 +34,7 @@ export function resolveAccessibleNavGroups(
     ? (slug: string) => planAccessibleModules.includes(slug)
     : (slug: string) => canAccessModule(user, slug);
 
-  // Personal accounts use the same sidebar logic as business — purchased modules
-  // appear naturally because getPlanAccessibleModules returns only what they own.
-  // A "Your Tools" group is added at the top for the tool management page.
-  if (user?.account_type === 'personal') {
-    const yourToolsGroup: SidebarNavGroup = {
-      icon: Package,
-      label: 'Your Tools',
-      subItems: [
-        { to: ROUTES.YOUR_TOOLS, label: 'Tool manager', icon: Package },
-      ],
-    };
-
-    const filtered = baseNavGroups.filter((group) => {
-      const moduleSlug = NAV_GROUP_MODULE[group.label];
-      if (!moduleSlug) return true;
-      if (group.label === 'Discover & My Orders') return true;
-      if (group.label === 'Custosell Guide') return true;
-      if (group.label === 'Account') return true;
-      return hasModule(moduleSlug);
-    }).map((group) => {
-      if (group.label === 'Documents') {
-        return {
-          ...group,
-          subItems: group.subItems.map((item) =>
-            item.label === 'Business files' ? { ...item, label: 'Documents' } : item,
-          ),
-        };
-      }
-      if (group.label === 'Settings') {
-        return {
-          ...group,
-          subItems: group.subItems.filter((item) => item.label === 'Data & Export'),
-        };
-      }
-      return group;
-    });
-
-    const result: SidebarNavGroup[] = [yourToolsGroup, ...filtered];
-
-    if (user?.is_platform_admin) {
-      return [...result, platformNavGroup, guideSettingsNavGroup];
-    }
-    return result;
-  }
+  const isPersonal = user?.account_type === 'personal';
 
   const businessGroups = baseNavGroups.filter((group) => {
     const moduleSlug = NAV_GROUP_MODULE[group.label];
@@ -110,19 +67,46 @@ export function resolveAccessibleNavGroups(
       };
     }
     if (group.label === 'Settings') {
+      if (isPersonal) {
+        return {
+          ...group,
+          subItems: group.subItems.filter((item) => item.label === 'Data & Export'),
+        };
+      }
       return {
         ...group,
         subItems: group.subItems.filter((item) => !item.ownerOnly || isBusinessOwner(user)),
       };
     }
+    if (group.label === 'Documents' && isPersonal) {
+      return {
+        ...group,
+        subItems: group.subItems.map((item) =>
+          item.label === 'Business files' ? { ...item, label: 'Documents' } : item,
+        ),
+      };
+    }
     return group;
   });
 
+  const result = isPersonal
+    ? [
+        {
+          icon: Package,
+          label: 'Your Tools',
+          subItems: [
+            { to: ROUTES.YOUR_TOOLS, label: 'Tool manager', icon: Package },
+          ],
+        } satisfies SidebarNavGroup,
+        ...businessGroups,
+      ]
+    : businessGroups;
+
   if (user?.is_platform_admin) {
-    return [...businessGroups, platformNavGroup, guideSettingsNavGroup];
+    return [...result, platformNavGroup, guideSettingsNavGroup];
   }
 
-  return businessGroups;
+  return result;
 }
 
 /** Flatten accessible groups in catalog order into leaf destinations. */

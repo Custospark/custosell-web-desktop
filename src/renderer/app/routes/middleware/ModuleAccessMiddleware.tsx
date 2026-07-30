@@ -15,11 +15,6 @@ export function ModuleAccessMiddleware({ module }: ModuleAccessMiddlewareProps) 
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  // Personal accounts manage access via personal subscriptions, not plan features
-  if (user?.account_type === 'personal') {
-    return <Outlet />;
-  }
-
   useEffect(() => {
     if (!user) return;
     const planModules = getPlanAccessibleModules(user);

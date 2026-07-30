@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, getPaymentCurrency, useChangeBillingCycle } from '../../shared/api/account/SubscriptionQueries';
-import { useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
@@ -10,7 +9,7 @@ import { getPaymentType } from './planActionMatrix';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { PlanAction } from './planActionMatrix';
-import { CheckCircle, AlertCircle, Clock, CalendarDays, Tag, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, CalendarDays } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
@@ -41,9 +40,6 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const { currency, monthlyPrice, yearlyPrice, onboardingFee } = useDisplayPrices();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [pendingCycle, setPendingCycle] = useState<'monthly' | 'yearly' | null>(null);
-  const [referralCode, setReferralCode] = useState('');
-  const [showReferralInput, setShowReferralInput] = useState(false);
-  const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
@@ -54,7 +50,6 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const downgradeMutation = useDowngrade();
   const cancelChangeMutation = useCancelScheduledChange();
   const changeBillingCycleMutation = useChangeBillingCycle();
-  const applyReferralMutation = useApplyReferralCode();
   const { data: changes } = useSubscriptionChanges(Number(subscription.id));
   const pendingChange = useMemo(() => {
     if (!changes) return null;
@@ -251,78 +246,14 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       {plansLoading ? (
         <CustosellLoader fullPage={false} />
       ) : (
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="flex flex-wrap justify-center gap-5">
           {sortedPlans.map((plan, index) => (
             <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
           ))}
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <button
-          type="button"
-          onClick={() => setShowReferralInput((v) => !v)}
-          className="flex items-center justify-between w-full text-sm font-medium text-gray-700 cursor-pointer"
-        >
-          <span className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-blue-500" />
-            Have a referral or promo code?
-          </span>
-          {showReferralInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        {showReferralInput && (
-          <>
-            <div className="mt-3 flex gap-2">
-              <input
-                type="text"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value)}
-                placeholder="Enter code"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (referralCode.trim()) {
-                    setReferralSuccess(null);
-                    applyReferralMutation.mutate(
-                      { referral_code: referralCode.trim() },
-                      {
-                        onSuccess: (data) => {
-                          const discount = data?.referral?.discount_applied;
-                          const num = Number(discount);
-                          if (num > 0) {
-                            setReferralSuccess('$' + num.toFixed(2) + '/mo discount applied');
-                          } else {
-                            setReferralSuccess('Code applied successfully');
-                          }
-                          setReferralCode('');
-                        },
-                      },
-                    );
-                  }
-                }}
-                disabled={!referralCode.trim() || applyReferralMutation.isPending}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-              >
-                {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
-              </button>
-            </div>
-            {referralSuccess && (
-              <div className="mt-2 flex items-center gap-1.5 text-sm text-green-700">
-                <CheckCircle className="w-4 h-4" />
-                {referralSuccess}
-              </div>
-            )}
-            {applyReferralMutation.isError && (
-              <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                {applyReferralMutation.error?.response?.data?.message || 'Failed to apply code'}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+
 
       <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 overflow-x-auto">
         <h2 className="text-xl font-bold mb-6 text-center text-gray-900">Feature Comparison</h2>

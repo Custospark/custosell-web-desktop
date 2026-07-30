@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
-import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
+import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { Button } from '../../shared/components/buttons/Button';
-import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 
 interface SubscriptionPaymentModalProps {
@@ -26,8 +26,12 @@ export default function SubscriptionPaymentModal({
 }: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+  const [showReferralInput, setShowReferralInput] = useState(false);
+  const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
 
   const { data: earnings } = useReferralEarnings();
+  const applyReferralMutation = useApplyReferralCode();
   const availableCredit = paymentType === 'renewal' ? (earnings?.available_credit ?? 0) : 0;
   const creditApplied = Math.min(availableCredit, amount);
   const amountAfterCredit = amount - creditApplied;
@@ -216,6 +220,70 @@ export default function SubscriptionPaymentModal({
             Mobile Money: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
           </p>
           <p className="text-xs text-gray-400">An STK push will be sent to this number.</p>
+        </div>
+
+        <div className="border border-gray-200 rounded-xl px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setShowReferralInput((v) => !v)}
+            className="flex items-center justify-between w-full text-sm font-medium text-gray-700 cursor-pointer"
+          >
+            <span className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-blue-500" />
+              Have a referral or promo code?
+            </span>
+            {showReferralInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showReferralInput && (
+            <>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  placeholder="Enter code"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (referralCode.trim()) {
+                      setReferralSuccess(null);
+                      applyReferralMutation.mutate(
+                        { referral_code: referralCode.trim() },
+                        {
+                          onSuccess: (data) => {
+                            const discount = data?.referral?.discount_applied;
+                            const num = Number(discount);
+                            setReferralSuccess(
+                              num > 0 ? '$' + num.toFixed(2) + '/mo discount applied' : 'Code applied successfully'
+                            );
+                            setReferralCode('');
+                          },
+                        },
+                      );
+                    }
+                  }}
+                  disabled={!referralCode.trim() || applyReferralMutation.isPending}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                >
+                  {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                </button>
+              </div>
+              {referralSuccess && (
+                <div className="mt-2 flex items-center gap-1.5 text-sm text-green-700">
+                  <CheckCircle className="w-4 h-4" />
+                  {referralSuccess}
+                </div>
+              )}
+              {applyReferralMutation.isError && (
+                <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  {applyReferralMutation.error?.response?.data?.message || 'Failed to apply code'}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <Button

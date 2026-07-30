@@ -308,8 +308,9 @@ export default function UpgradeFlowModal({
           <p className="text-lg font-bold text-gray-900">Upgrade Failed</p>
           <p className="text-sm text-gray-500 mt-1">{errorMessage || 'An unexpected error occurred.'}</p>
         </div>
-        <Button type="button" onClick={onClose} variant="outline" className="w-full gap-2">
-          Close
+        <Button type="button" onClick={handleDone} className="w-full gap-2">
+          Continue
+          <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>

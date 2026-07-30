@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
-import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, getPaymentCurrency, useChangeBillingCycle } from '../../shared/api/account/SubscriptionQueries';
+import { useDowngrade, useCancelScheduledChange, useSubscriptionChanges, useChangeBillingCycle } from '../../shared/api/account/SubscriptionQueries';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
+import BillingCyclePaymentModal from './BillingCyclePaymentModal';
 import { getPaymentType } from './planActionMatrix';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
@@ -41,6 +42,10 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [pendingCycle, setPendingCycle] = useState<'monthly' | 'yearly' | null>(null);
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
+  const [billingCyclePaymentQuote, setBillingCyclePaymentQuote] = useState<{
+    proration: Record<string, unknown>;
+    billing_cycle: string;
+  } | null>(null);
   const [downgradeConfirmed, setDowngradeConfirmed] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
@@ -302,7 +307,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         </table>
       </div>
 
-      {pendingCycle && (
+      {pendingCycle && !billingCyclePaymentQuote && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-bold text-gray-900">Switch to {pendingCycle === 'yearly' ? 'Yearly' : 'Monthly'} Billing?</h3>
@@ -325,9 +330,17 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                   changeBillingCycleMutation.mutate(
                     { subscriptionId: Number(subscription.id), billing_cycle: pendingCycle },
                     {
-                      onSuccess: () => {
-                        setBillingCycle(pendingCycle);
-                        setPendingCycle(null);
+                      onSuccess: (data) => {
+                        if (data?.payment_required) {
+                          setBillingCyclePaymentQuote({
+                            proration: data.proration,
+                            billing_cycle: pendingCycle,
+                          });
+                          setBcPaymentStep('confirm');
+                        } else {
+                          setBillingCycle(pendingCycle);
+                          setPendingCycle(null);
+                        }
                       },
                       onError: () => setPendingCycle(null),
                     },
@@ -336,11 +349,25 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
                 disabled={changeBillingCycleMutation.isPending}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
               >
-                {changeBillingCycleMutation.isPending ? 'Switching...' : 'Confirm'}
+                {changeBillingCycleMutation.isPending ? 'Checking...' : 'Confirm'}
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {billingCyclePaymentQuote && (
+        <BillingCyclePaymentModal
+          proration={billingCyclePaymentQuote.proration}
+          billingCycle={billingCyclePaymentQuote.billing_cycle}
+          userPhone={userPhone}
+          onClose={() => { setBillingCyclePaymentQuote(null); setPendingCycle(null); }}
+          onComplete={async () => {
+            setBillingCyclePaymentQuote(null);
+            setPendingCycle(null);
+            await onUpgradeComplete?.();
+          }}
+        />
       )}
 
       {upgradeFlowPlan && (

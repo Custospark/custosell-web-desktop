@@ -233,7 +233,7 @@ export function useCancelScheduledChange() {
 export function useChangeBillingCycle() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<{ message: string; data: unknown }, AxiosError<ApiError>, {
+  return useMutation<{ message: string; data: unknown; payment_required?: boolean }, AxiosError<ApiError>, {
     subscriptionId: number;
     billing_cycle: 'monthly' | 'yearly';
     effective?: 'immediate' | 'end_of_period';
@@ -246,8 +246,10 @@ export function useChangeBillingCycle() {
       return data;
     },
     onSuccess: (data) => {
-      showToast('success', data.message || 'Billing cycle updated');
-      queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
+      if (!data.payment_required) {
+        showToast('success', data.message || 'Billing cycle updated');
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
+      }
     },
     onError: (error) => {
       const message = error.response?.data?.message || 'Failed to change billing cycle';

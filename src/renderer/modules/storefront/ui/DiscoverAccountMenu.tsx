@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Heart, LayoutDashboard, LogOut, Package } from 'lucide-react';
+import { ChevronDown, CircleUser, Heart, GraduationCap, LayoutDashboard, LogOut, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../../app/contexts/LogoutContext';
@@ -130,11 +130,30 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
             <button
               type="button"
               role="menuitem"
+              onClick={() => { setOpen(false); navigate(ROUTES.ACCOUNT.NOTIFICATIONS); }}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+            >
+              <CircleUser className="h-4 w-4 text-slate-600" />
+              Account
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => { setOpen(false); navigate(ROUTES.GUIDE.TUTORIALS); }}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+            >
+              <GraduationCap className="h-4 w-4 text-slate-600" />
+              Custosell Guide
+            </button>
+            <hr className="my-1 border-slate-100" />
+            <button
+              type="button"
+              role="menuitem"
               onClick={goHome}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
             >
               <LayoutDashboard className="h-4 w-4 text-slate-600" />
-              {user.business_id ? 'Dashboard' : 'Account home'}
+              {user.business_id ? 'App home' : 'Account home'}
             </button>
             <button
               type="button"

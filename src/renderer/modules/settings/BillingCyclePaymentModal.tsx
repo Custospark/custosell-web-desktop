@@ -3,6 +3,7 @@ import { useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../..
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X } from 'lucide-react';
 import { formatUSD } from '../../shared/utils/formatCurrency';
+import type { PaymentType } from '../../shared/types';
 
 interface BillingCyclePaymentModalProps {
   proration: Record<string, unknown>;
@@ -19,7 +20,7 @@ export default function BillingCyclePaymentModal({
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [step, setStep] = useState<'confirm' | 'paying' | 'polling' | 'done'>('confirm');
 
-  const initiateMutation = useInitiatePayment('billing_cycle_change');
+  const initiateMutation = useInitiatePayment('billing_cycle_change' satisfies PaymentType);
   const paymentQuery = useBillingPayment(paymentId);
 
   const amountDue = Number(proration.proration_due_usd ?? 0);

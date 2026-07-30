@@ -4,6 +4,7 @@ import { useReferralEarnings, useApplyReferralCode } from '../../modules/referra
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatUSD } from '../../shared/utils/formatCurrency';
+import type { PaymentType } from '../../shared/types';
 
 interface SubscriptionPaymentModalProps {
   planName: string;
@@ -13,7 +14,7 @@ interface SubscriptionPaymentModalProps {
   currency: string;
   userPhone: string;
   actionLabel: string;
-  paymentType: string;
+  paymentType: PaymentType;
   metadata?: Record<string, unknown>;
   refreshing?: boolean;
   onClose: () => void;

@@ -7,7 +7,7 @@ import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
 import BillingCyclePaymentModal from './BillingCyclePaymentModal';
 import { getPaymentType } from './planActionMatrix';
-import type { Plan } from '../../shared/types';
+import type { Plan, PaymentType } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { PlanAction } from './planActionMatrix';
 import { CheckCircle, AlertCircle, Clock, CalendarDays, Rocket } from 'lucide-react';
@@ -22,7 +22,7 @@ interface SubscriptionPaymentState {
   billingCycle: string;
   amount: number;
   actionLabel: string;
-  paymentType: string;
+  paymentType: PaymentType;
 }
 
 interface PlansTabProps {

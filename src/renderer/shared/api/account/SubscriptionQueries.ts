@@ -4,6 +4,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/ToastContext';
 import { BILLING, SUBSCRIPTIONS } from '../endpoints/endpoints';
 import { store } from '../../../app/store/store';
+import type { PaymentType } from '../../types';
 
 const PESAPAL_SUPPORTED_CURRENCIES = ['UGX', 'KES', 'TZS'];
 
@@ -55,7 +56,7 @@ function generateIdempotencyKey(): string {
   return `pay_${Date.now()}_${idempotencyCounter}_${crypto.randomUUID?.()?.slice(0, 8) ?? Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function useInitiatePayment(paymentType: string) {
+export function useInitiatePayment(paymentType: PaymentType) {
   const { showToast } = useToast();
   return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
     amount: number;

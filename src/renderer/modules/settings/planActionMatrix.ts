@@ -1,4 +1,4 @@
-import type { Plan } from '../../shared/types';
+import type { Plan, PaymentType } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 
 export type PlanActionType =
@@ -97,7 +97,7 @@ export function getPlanAction(
   return MATRIX[statusKey][relation];
 }
 
-export function getPaymentType(actionType: PlanActionType): string {
+export function getPaymentType(actionType: PlanActionType): PaymentType {
   switch (actionType) {
     case 'pay_onboarding': return 'onboarding';
     case 'renew': return 'renewal';

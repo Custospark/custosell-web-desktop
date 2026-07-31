@@ -6,7 +6,7 @@ import { PlanCards } from '../../shared/components/plans/PlanCards';
 import { useProfile } from '../../shared/api/account/AccountQueries';
 import { useSubscribe, useInitiateOnboardingPayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { axiosInstance } from '../../app/api/axiosConfig';
-import { BILLING, SUBSCRIPTIONS } from '../../shared/api/endpoints/endpoints';
+import { BILLING } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -49,12 +49,13 @@ export default function OnboardingPage() {
     ? Number(subscription.referral.discount_applied)
     : 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
+  const businessPlans = plans?.filter((p) => p.type !== 'personal') ?? [];
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
   const { refetch: refetchProfile, isRefetching } = useProfile();
 
-  const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
+  const selectedPlan = businessPlans.find((p) => p.id === selectedPlanId);
   const fee = selectedPlan ? onboardingFee(selectedPlan) : 0;
   const feeUsd = selectedPlan ? usdOnboardingFee(selectedPlan) : 0;
   const userPhone = user?.business?.phone || user?.phone || '';
@@ -107,11 +108,6 @@ export default function OnboardingPage() {
     try {
       if (!subscription) {
         await subscribeMutation.mutateAsync({ plan_id: selectedPlanId, billing_cycle: billingCycle });
-      } else if (subscription.plan_id !== selectedPlanId) {
-        await axiosInstance.post(SUBSCRIPTIONS.UPGRADE(subscription.id), {
-          to_plan_id: selectedPlanId,
-          effective: 'immediate',
-        });
       }
 
       const paymentCurrency = getPaymentCurrency();
@@ -225,7 +221,7 @@ export default function OnboardingPage() {
             <CustosellLoader fullPage={false} />
           ) : (
             <PlanCards
-              plans={plans ?? []}
+              plans={businessPlans}
               selectedPlanId={selectedPlanId}
               onSelect={handleSelectPlan}
               billingCycle={billingCycle}

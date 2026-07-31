@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
   const { data: plans, isLoading: plansLoading, isError: plansError } = useActivePlans();
+  const businessPlans = plans?.filter((p) => p.type !== 'personal') ?? [];
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
   const [accountType, setAccountType] = useState<'business' | 'personal' | null>(null);
@@ -30,7 +31,7 @@ export default function RegisterPage() {
 
   const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
 
-  const planId = state?.planId ?? plans?.[0]?.id;
+  const planId = state?.planId ?? businessPlans[0]?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';
   const activeReferralCode = manualReferralCode || referralCode;
 

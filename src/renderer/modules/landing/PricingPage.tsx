@@ -35,6 +35,7 @@ export default function PricingPage() {
   const { data: plans, isLoading, isError, refetch } = useActivePlans();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const planSlugs = ['essential', 'professional', 'enterprise'];
+  const businessPlans = plans?.filter((p) => p.type !== 'personal') ?? [];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-12 sm:pb-16">
@@ -80,10 +81,10 @@ export default function PricingPage() {
         </div>
       )}
 
-      {plans && plans.length > 0 && (
+      {businessPlans.length > 0 && (
         <>
           <PlanCards
-            plans={plans}
+            plans={businessPlans}
             billingCycle={billingCycle}
             hideTrialBadge
             onSelect={(plan) => navigate(ROUTES.REGISTER, { state: { planId: plan.id, billingCycle } })}
@@ -99,7 +100,7 @@ export default function PricingPage() {
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-3 px-2 font-semibold text-gray-700">Feature</th>
                   {planSlugs.map((slug) => {
-                    const p = plans.find((pl) => pl.slug === slug);
+                    const p = businessPlans.find((pl) => pl.slug === slug);
                     return (
                       <th key={slug} className="text-center py-3 px-2 font-semibold text-blue-600">
                         {p?.name ?? slug}
@@ -130,7 +131,7 @@ export default function PricingPage() {
                     <tr key={key} className="border-b border-gray-100 odd:bg-gray-50/50">
                       <td className="py-2.5 px-2 font-medium text-gray-700">{label}</td>
                       {planSlugs.map((slug) => {
-                        const p = plans.find((pl) => pl.slug === slug);
+                        const p = businessPlans.find((pl) => pl.slug === slug);
                         const val = p?.limits?.[key];
                         return (
                           <td key={slug} className="text-center py-2.5 px-2 font-semibold text-gray-900">
@@ -185,7 +186,7 @@ export default function PricingPage() {
         </>
       )}
 
-      {!isLoading && !isError && (!plans || plans.length === 0) && (
+      {!isLoading && !isError && businessPlans.length === 0 && (
         <div className="text-center py-12 space-y-4">
           <AlertCircle className="w-10 h-10 text-gray-300 mx-auto" />
           <p className="text-gray-400 text-sm">Pricing plans are not available at this time.</p>

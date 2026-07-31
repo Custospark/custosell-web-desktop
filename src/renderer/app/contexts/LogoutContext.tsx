@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { runAppLogout } from '../store/auth/runAppLogout';
-import { LogoutContext } from './logoutContext';
+import { LogoutContext } from './logoutContextValue';
 
 export function LogoutProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();

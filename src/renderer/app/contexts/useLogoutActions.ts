@@ -1,6 +1,6 @@
 import { useCallback, useContext, useRef, useState } from 'react';
 import { runAppLogout } from '../store/auth/runAppLogout';
-import { LogoutContext, type LogoutContextValue } from './logoutContext';
+import { LogoutContext, type LogoutContextValue } from './logoutContextValue';
 
 export function useLogoutAction(): LogoutContextValue {
   const ctx = useContext(LogoutContext);

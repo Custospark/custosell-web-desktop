@@ -32,12 +32,12 @@ const MATRIX: Matrix = {
   trial_paid: {
     current: { type: 'subscribe_early', label: 'Subscribe Now', requiresPayment: true },
     higher:  { type: 'upgrade', label: 'Upgrade', requiresPayment: true },
-    lower:   { type: 'current', label: 'Current Plan', requiresPayment: false },
+    lower:   { type: 'downgrade', label: 'Schedule Downgrade', requiresPayment: false },
   },
   trial_unpaid: {
     current: { type: 'pay_onboarding', label: 'Pay Setup Fee', requiresPayment: true },
     higher:  { type: 'upgrade', label: 'Upgrade', requiresPayment: true },
-    lower:   { type: 'current', label: 'Current Plan', requiresPayment: false },
+    lower:   { type: 'downgrade', label: 'Schedule Downgrade', requiresPayment: false },
   },
   active: {
     current: { type: 'current', label: 'Current Plan', requiresPayment: false },

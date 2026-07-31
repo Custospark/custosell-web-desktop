@@ -92,7 +92,7 @@ export default function PlanCard({
           : `${accent.border} ${accent.borderHover} hover:shadow-md`,
       )}
     >
-      {isCurrentPlan && action.type === 'current' && (
+      {isCurrentPlan && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
           <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
             <Star className="w-3 h-3 fill-white" />
@@ -216,7 +216,7 @@ export default function PlanCard({
           )}
         </div>
 
-        {isCurrentPlan && action.type === 'current' && !isDowngradeScheduledForThisPlan && (
+        {isCurrentPlan && (
           <div className="mt-4 text-center">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100 px-4 py-2 rounded-xl">
               <CheckCircle className="w-3.5 h-3.5" />

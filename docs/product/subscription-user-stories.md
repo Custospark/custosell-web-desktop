@@ -376,6 +376,29 @@ The SubscriptionGuard polls every 30s. If the subscription is suspended mid-sess
 
 ---
 
+## Plan Card Action Matrix
+
+The plan cards on the Plans tab (`PlansTab` → `PlanCard`) decide each card's action from `planActionMatrix.ts` — a `status × relation` table (`relation` = current/higher/lower vs the subscribed plan).
+
+| Subscription state | Current plan | Higher plan | Lower plan |
+|--------------------|--------------|-------------|------------|
+| `none` (no sub) | Subscribe | Subscribe | Subscribe |
+| `trial_paid` | Subscribe Now | Upgrade | Schedule Downgrade |
+| `trial_unpaid` | Pay Setup Fee | Upgrade | Schedule Downgrade |
+| `active` | Current Plan | Upgrade | Schedule Downgrade |
+| `past_due` | Pay Outstanding | Upgrade | Schedule Downgrade |
+| `suspended` | Reactivate | Reactivate | Reactivate |
+| `expired` | Re-subscribe | Subscribe | Subscribe |
+| `cancelled` | Subscribe | Subscribe | Subscribe |
+
+Rules enforced by `PlanCard`:
+
+- The **current plan** always renders a "Current Plan" badge + pill, regardless of status. If the state also has an action (`Subscribe Now`, `Pay Setup Fee`, `Pay Outstanding`, `Reactivate`), that button still renders below the pill — the current label is never hidden.
+- **Lower plans** always offer a downgrade action (`Schedule Downgrade`) in every status where the subscription is live (trial paid/unpaid, active, past_due). For suspended/expired/cancelled the recovery action dominates per the matrix.
+- `trial_paid` / `trial_unpaid` previously mapped `lower` → `current`, which rendered "Current Plan" on lower plan cards and left the current plan without any "Current" label — both were fixed.
+
+---
+
 ## Referral ↔ Subscription Integration
 
 When a business subscribes using a referral code, the system tracks the referral discount but **does not reduce the subscription price**. The discount is informational only.

@@ -22,7 +22,7 @@ export default function RegisterPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
-  const { data: plans } = useActivePlans();
+  const { data: plans, isLoading: plansLoading, isError: plansError } = useActivePlans();
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
   const [accountType, setAccountType] = useState<'business' | 'personal' | null>(null);
@@ -77,6 +77,11 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const passwordsMatch = form.password === form.password_confirmation;
+  const businessFormValid =
+    Boolean(form.password) &&
+    Boolean(form.password_confirmation) &&
+    passwordsMatch &&
+    privacyConsent;
 
   const handleProceed = () => {
     if (!form.owner_first_name || !form.owner_last_name || !form.name || !form.email) return;
@@ -434,11 +439,19 @@ export default function RegisterPage() {
                 <ChevronLeft className="h-4 w-4" />
                 Back
               </button>
-              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={businessMutation.isPending} disabled={!planId}>
+              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={businessMutation.isPending} disabled={!planId || !businessFormValid}>
                 <UserPlus className="h-4 w-4" aria-hidden />
                 Create Account
               </Button>
             </div>
+            {plansLoading && !planId && (
+              <p className="text-xs text-gray-400 text-center">Loading available plans...</p>
+            )}
+            {!planId && !plansLoading && (
+              <p className="text-xs text-red-500 text-center">
+                {plansError ? 'Plans could not be loaded. Please check your connection and try again.' : 'No plans are currently available. Please try again later.'}
+              </p>
+            )}
           </div>
         )}
       </form>

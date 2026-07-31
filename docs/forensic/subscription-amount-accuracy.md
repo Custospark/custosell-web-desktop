@@ -111,7 +111,7 @@ Flow: `GET proration-quote` → `POST upgrade(immediate)` → if due > 0 `POST i
 > proration figure — sending the local-converted figure would be rejected. The `currency` field
 > sent by the frontend is informational only for these types.
 
-**Proration math (USD):**
+**Proration math (USD) — active (paid) subscriptions only:**
 ```
 daysInPeriod  = next_billing_date − (next_billing_date − 1 billing period)
 daysRemaining = today → next_billing_date        (0 if period already over)
@@ -119,6 +119,11 @@ credit        = round(old_price × daysRemaining / daysInPeriod, 2)
 charge        = round(new_price × daysRemaining / daysInPeriod, 2)
 proration_due = round(max(0, charge − credit), 2)
 ```
+
+> **Trial rule (business decision):** a **trial** subscription has **paid nothing**, so there is
+> **no unused credit**. Subscribing or upgrading during trial charges the **full target plan
+> price** (credit = 0, charge = due = full price). Unused credit only exists on an **active**
+> (paid) subscription. Enforced in `PaymentQuoteService::getQuote()` via `$subscription->isOnTrial()`.
 
 Notes:
 - **Plan change is deferred** until payment confirmation (metadata `pending_upgrade_*`). Zero-due upgrades skip the gateway via `processZeroCostUpgrade()`.
@@ -134,7 +139,12 @@ Triggered by "Apply Yearly/Monthly Billing". Monthly→Yearly is immediate + pay
 | **UI** | `proration_due_usd` (currently shown in USD always) | USD (BUG C) |
 | **API** | `proration_due_usd` — **USD value**, same contract as upgrade | USD (backend contract) |
 | **Provider** | validated against `pending_cycle_change_amount_usd`, converted to local | local |
-| **Backend** | `calculateUpgradeCost()` with same plan; new price = target cycle price | USD, validated |
+| **Backend** | **full yearly price − unused monthly credit** (e.g. 540 − 34.84 = 505.16); stored as `pending_cycle_change_amount_usd` | USD, validated |
+
+> **Cycle-change math (business decision):** switching **monthly → yearly** is a prepayment of the
+> **full year starting today**, offset by the unused days of the already-paid current month:
+> `due = round(max(0, yearly_price − credit), 2)` where `credit` is the monthly-unused credit
+> (never a prorated slice of the yearly price). Fixed in `PaymentQuoteService::getQuote()`.
 
 ### F. Reactivate (`subscription`)
 
@@ -194,16 +204,34 @@ charge = round(135.00 × 20/30, 2) = 90.00
 due    = round(max(0, 90.00 − 36.00), 2) = 54.00
 ```
 
-### D3. Professional → Enterprise with yearly override, 20 days remaining / 365-day period
+### D3. Professional → Enterprise with yearly override (active), 20 days remaining / 31-day month
+
+Yearly target = prepay the full year, offset by the unused **monthly** credit:
 
 ```
-old  = 540.00   new = 1350.00
-credit = round(540 × 20/365, 2)  = 29.59
-charge = round(1350 × 20/365, 2) = 73.97
-due    = round(max(0, 73.97 − 29.59), 2) = 44.38
+credit = round(54.00 × 20/31, 2)    = 34.84
+charge = 1350.00 (full yearly price)
+due    = round(max(0, 1350.00 − 34.84), 2) = 1315.16
 ```
 
 ### D4. Equal-priced upgrade (credit ≥ charge) → $0 due → `processZeroCostUpgrade()`, no gateway.
+
+### D5. Trial Professional → Enterprise (monthly), any day of trial
+
+Trial = paid nothing → no credit → full target plan price:
+
+```
+credit = 0.00
+charge = 135.00 (full Enterprise monthly)
+due    = 135.00
+```
+
+### D6. Active Professional monthly → yearly, 20 days remaining / 31-day month
+
+```
+credit = round(54.00 × 20/31, 2) = 34.84
+due    = round(max(0, 540.00 − 34.84), 2) = 505.16
+```
 
 ---
 
@@ -211,7 +239,10 @@ due    = round(max(0, 73.97 − 29.59), 2) = 44.38
 
 | ID | Severity | Issue | Where |
 |----|----------|-------|-------|
-| BUG A | 🔴 Fixed | Trial upgrades forced proration to $0 (`Amount due today USh 0.00`) | `PaymentQuoteService::getQuote()` — trial-zeroing block removed |
+| BUG A | 🔴 Fixed | Trial upgrades were forced to proration (or earlier, to $0). Now trial = **full plan price, no credit** | `PaymentQuoteService::getQuote()` — trial rule + zeroing removed |
+| BUG E | 🔴 Fixed | `PaymentMethod` enum only had `gateway`/`manual`; `processZeroCostUpgrade()` used `'internal'` and the credit bypass used `'credit'` → `ValueError` crash (500) on zero-due upgrades | `App\Enums\Billing\PaymentMethod` — added `CREDIT`/`INTERNAL` |
+| BUG F | 🔴 Fixed | Zero-cost upgrade created the payment via `createPending()` which forces `status='pending'` → plan changed but payment stayed pending forever | `GatewayService::processZeroCostUpgrade()` — now completes the internal payment |
+| BUG G | 🔴 Fixed | Monthly→yearly charged `yearly × days/31` (treated yearly as monthly) → under-charged a full year by ~$172; now `full year − unused credit` | `PaymentQuoteService::getQuote()` — cycle-change branch |
 | BUG C | 🟡 | Upgrade **paying step** for non-USD businesses formats the **USD** proration figure as if it were local currency (e.g. `USh 40.50` instead of `USh 150,197.90`); Pay button & polling text show USD only. Billing Cycle modal shows USD only. | `UpgradeFlowModal` (paying/polling step), `BillingCyclePaymentModal` |
 | BUG D | 🟡 | Renewal credit display mixes USD credit with local amount (`creditApplied = min(USD, local)`) and shows total in USD when credit applied | `SubscriptionPaymentModal` |
 
@@ -228,15 +259,17 @@ Every scenario below is asserted with real numbers in
 
 | Test | Verifies |
 |------|----------|
-| `test_proration_quote_endpoint_returns_exact_figures_for_trial_upgrade` | quote endpoint returns exact credit/charge/due/days for a trial Professional→Enterprise |
-| `test_upgrade_endpoint_stores_authoritative_pending_amount_in_metadata` | `POST upgrade` stores exact `pending_upgrade_amount_usd`, doesn't change plan |
+| `test_proration_quote_endpoint_returns_exact_figures_for_trial_upgrade` | trial upgrade quote returns **full plan price, credit 0** (no unused credit on trial) |
+| `test_trial_upgrade_quote_charges_full_price_with_no_credit` (unit) | `getQuote()` on a trial sub → full target price, credit 0 |
+| `test_upgrade_endpoint_stores_authoritative_pending_amount_in_metadata` | active upgrade: `POST upgrade` stores exact `pending_upgrade_amount_usd`, doesn't change plan |
 | `test_subscription_payment_amount_is_authoritative_plan_price_during_trial` | backend ignores frontend amount (sends $1, backend charges $54 → **UGX 200,263.86**) |
 | `test_upgrade_payment_charges_exact_local_amount_after_conversion` | after upgrade, initiate payment → payment created at exact UGX figure (due × 3708.59), USD contract |
 | `test_upgrade_payment_rejects_tampered_amount` | amount ≠ `pending_upgrade_amount_usd` → 502, no payment created |
 | `test_onboarding_payment_amount_is_authoritative` | frontend amount ignored; charges exact `onboarding_fee_usd` (Professional = $95 → UGX 352,316.05) |
-| `test_billing_cycle_change_monthly_to_yearly_stores_pending_and_quotes` | immediate switch stores `pending_cycle_change_amount_usd`, exact quote |
-| `test_zero_cost_upgrade_creates_zero_payment_and_changes_plan` | equal/lower proration due → $0 completed payment, plan changes atomically |
-| `test_downgrade_immediate_and_end_of_period_require_no_payment` | downgrade never creates a payment; schedules change correctly |
+| `test_billing_cycle_change_monthly_to_yearly_stores_pending_and_quotes` | immediate monthly→yearly stores `pending_cycle_change_amount_usd` = **full year − unused credit** |
+| `test_zero_cost_upgrade_creates_zero_payment_and_changes_plan` | equal/lower proration due → $0 **completed** payment, plan changes atomically |
+| `test_downgrade_immediate_requires_no_payment` | downgrade immediate never creates a payment |
+| `test_downgrade_end_of_period_schedules_without_payment` | downgrade end-of-period schedules change, no payment |
 
 ---
 

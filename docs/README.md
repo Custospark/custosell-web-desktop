@@ -60,6 +60,13 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [subscription-user-stories.md](./product/subscription-user-stories.md) | Frontend subscription guard, overlay, user stories per status |
 | [billing-currency.md](./product/billing-currency.md) | Multi-currency pricing display, payment currency routing, backend validation |
 
+## Forensic / accuracy audits
+
+| Document | Contents |
+|----------|----------|
+| [subscription-payment-audit.md](./forensic/subscription-payment-audit.md) | Prior subscription/payment C/H/M/L audit (critical, high, medium, low gaps) |
+| [subscription-amount-accuracy.md](./forensic/subscription-amount-accuracy.md) | Master scenario doc — every subscription/payment action, amounts shown vs sent, credits, proration, rewards + real-number test matrix |
+
 ## Future work
 
 | Document | Contents |

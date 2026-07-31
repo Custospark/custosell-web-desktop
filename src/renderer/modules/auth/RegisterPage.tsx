@@ -11,7 +11,6 @@ import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
-import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import {
   Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff,
   LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle, ArrowLeft,

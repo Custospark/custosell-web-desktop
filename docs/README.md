@@ -144,6 +144,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-18-data-export-and-account-deletion.md](./adr/2026-07-18-data-export-and-account-deletion.md) | Business data export API + self-service account deletion |
 | [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency pricing & payment routing — USD-primary display, payment currency selection, backend validation |
 | [2026-07-26-upgrade-flow-proration.md](./adr/2026-07-26-upgrade-flow-proration.md) | Upgrade flow fix — proration display, metadata validation, cross-stack |
+| [2026-07-31-full-price-minus-credit-plan-changes.md](./adr/2026-07-31-full-price-minus-credit-plan-changes.md) | Unified plan-change rule — charge full new plan price, deduct unused credit, reset billing period |
 
 ## Modules
 

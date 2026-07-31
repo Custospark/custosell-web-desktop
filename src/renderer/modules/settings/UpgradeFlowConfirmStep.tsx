@@ -99,7 +99,7 @@ export default function UpgradeFlowConfirmStep({
             <ArrowUp className="w-6 h-6 text-blue-600" />
           </div>
           <h3 className="text-xl font-bold text-gray-900">Upgrade to {plan.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">Review the prorated charges before confirming.</p>
+          <p className="text-sm text-gray-500 mt-1">Review the charges before confirming.</p>
         </div>
 
         <div className="flex bg-gray-100 rounded-lg p-1">
@@ -153,7 +153,7 @@ export default function UpgradeFlowConfirmStep({
             <span className="font-semibold text-green-700">{price(pr.credit)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Charge for remaining days</span>
+            <span className="text-gray-600">New plan price</span>
             <span className="font-semibold text-gray-900">{price(pr.charge)}</span>
           </div>
           {referralDiscountUsd > 0 && (

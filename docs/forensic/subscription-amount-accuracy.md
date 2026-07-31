@@ -24,7 +24,7 @@ authoritative math, credits, proration, discounts, downgrades and rewards must a
 | Backend amount authority | `GatewayService::initiatePayment()` + `PaymentValidator` | Overrides/validates every amount |
 
 **Worked reference numbers** (rate `1 USD = 3708.59 UGX`, observed in `useDisplayPrices`):
-- $54 → **USh 200,263.86** · $135 → **USh 500,659.65** · $40.50 → **USh 150,197.90**
+- $54 → **USh 200,263.86** · $135 → **USh 500,659.65** · $108 → **USh 400,527.72**
 
 ---
 
@@ -102,7 +102,7 @@ Flow: `GET proration-quote` → `POST upgrade(immediate)` → if due > 0 `POST i
 | **UI** | Proration breakdown: credit, charge, due today (`price(proration_due)` → local) | local |
 | **API** | `proration_due` from quote — **always the USD value**, even for non-USD businesses | USD (backend contract) |
 | **Provider** | due − referral discount − credits, converted to local by backend at initiation rate | local |
-| **Backend** | `calculateUpgradeCost()` = charge(remaining days of new plan) − credit(unused days of current plan); stored as `pending_upgrade_amount_usd`; validate amount as USD, then convert | USD → local |
+| **Backend** | `calculateUpgradeCost()` = **full new-plan price** − credit(unused days of current plan); stored as `pending_upgrade_amount_usd`; validate amount as USD, then convert | USD → local |
 
 > **Contract (important):** For `upgrade_proration` and `billing_cycle_change`, the backend
 > interprets the incoming `amount` as **USD** (`GatewayService` line 78 forces `currency='USD'`
@@ -116,9 +116,18 @@ Flow: `GET proration-quote` → `POST upgrade(immediate)` → if due > 0 `POST i
 daysInPeriod  = next_billing_date − (next_billing_date − 1 billing period)
 daysRemaining = today → next_billing_date        (0 if period already over)
 credit        = round(old_price × daysRemaining / daysInPeriod, 2)
-charge        = round(new_price × daysRemaining / daysInPeriod, 2)
+charge        = FULL target plan price (for the target billing cycle) — NOT prorated
 proration_due = round(max(0, charge − credit), 2)
 ```
+
+> **Unified plan-change rule (business decision, 2026-07-31):** for ALL immediate plan changes
+> (upgrade, downgrade, cycle change), the charge is the **full price of the next plan the user is
+> subscribing to**, and the unused credit from the current plan is deducted from that full price —
+> e.g. Enterprise $135/mo with $27 unused Professional credit → **due $108 ≈ USh 400,527.72**.
+> The charge is **never** prorated by days remaining (that was the bug that showed USh 150,197.90
+> instead of ~400,000). On payment/zero-cost completion, `next_billing_date` **resets to today +
+> target period** (double-billing protection). Enforced in `SubscriptionProrationCalculator` +
+> `SubscriptionService::changePlan()`.
 
 > **Trial rule (business decision):** a **trial** subscription has **paid nothing**, so there is
 > **no unused credit**. Subscribing or upgrading during trial charges the **full target plan
@@ -189,19 +198,20 @@ Notes:
 
 ```
 credit = round(54.00 × 15/30, 2)  = 27.00
-charge = round(135.00 × 15/30, 2) = 67.50
-due    = round(max(0, 67.50 − 27.00), 2) = 40.50
+charge = 135.00 (FULL Enterprise monthly price — not prorated)
+due    = round(max(0, 135.00 − 27.00), 2) = 108.00
 ```
-- **UI (UGX):** USh 150,197.90 (40.50 × 3708.59)
-- **API:** sends `40.50` (USD) + `currency: 'UGX'` — backend validates as USD vs `pending_upgrade_amount_usd = 40.50`, then charges **USh 150,197.90** (40.50 × 3708.59)
-- **Backend stored:** `pending_upgrade_amount_usd = 40.50`
+- **UI (UGX):** USh 400,527.72 (108.00 × 3708.59)
+- **API:** sends `108.00` (USD) + `currency: 'UGX'` — backend validates as USD vs `pending_upgrade_amount_usd = 108.00`, then charges **USh 400,527.72** (108.00 × 3708.59)
+- **Backend stored:** `pending_upgrade_amount_usd = 108.00`
+- **After payment:** `next_billing_date` resets to **today + 30 days** (no double bill in 15 days)
 
 ### D2. Professional → Enterprise (monthly), 20 days remaining / 30-day period
 
 ```
 credit = round(54.00 × 20/30, 2)  = 36.00
-charge = round(135.00 × 20/30, 2) = 90.00
-due    = round(max(0, 90.00 − 36.00), 2) = 54.00
+charge = 135.00 (FULL Enterprise monthly price)
+due    = round(max(0, 135.00 − 36.00), 2) = 99.00
 ```
 
 ### D3. Professional → Enterprise with yearly override (active), 20 days remaining / 31-day month
@@ -214,7 +224,7 @@ charge = 1350.00 (full yearly price)
 due    = round(max(0, 1350.00 − 34.84), 2) = 1315.16
 ```
 
-### D4. Equal-priced upgrade (credit ≥ charge) → $0 due → `processZeroCostUpgrade()`, no gateway.
+### D4. Equal/lower-priced change (credit ≥ charge) → $0 due → `processZeroCostUpgrade()`, no gateway; plan still changes and period resets.
 
 ### D5. Trial Professional → Enterprise (monthly), any day of trial
 

@@ -45,7 +45,9 @@ export default function PaymentPage() {
     }
     if (subscription.onboarding_fee_paid) {
       navigate(getDefaultRoute(user), { replace: true });
+      return;
     }
+    navigate(ROUTES.ONBOARDING, { replace: true });
   }, [user, subscription, navigate]);
 
   useEffect(() => {

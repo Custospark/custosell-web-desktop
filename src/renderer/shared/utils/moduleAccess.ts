@@ -381,10 +381,11 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (accessible.has('account')) return MODULE_DEFAULT_ROUTES.account;
   if (accessible.has('guide')) return MODULE_DEFAULT_ROUTES.guide;
 
-  // If business has an unpaid onboarding fee, redirect to payment
+  // If business has an unpaid onboarding fee, redirect to onboarding so the user
+  // picks a plan before paying — not straight to a plan-less payment page.
   const subscription = user?.business?.subscription;
   if (subscription && subscription.onboarding_fee_paid === false) {
-    return ROUTES.REGISTER_PAYMENT;
+    return ROUTES.ONBOARDING;
   }
 
   if (subscription && ['expired', 'suspended', 'cancelled'].includes(subscription.status as string)) {

@@ -36,26 +36,24 @@ function isElectronApp(): boolean {
   return typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
 }
 
-function redirectToLogin(navigate?: NavigateFunction): void {
-  const loginPath = ROUTES.LOGIN;
-
+function redirectToPath(path: string, navigate?: NavigateFunction): void {
   if (navigate) {
-    navigate(loginPath, { replace: true });
+    navigate(path, { replace: true });
   }
 
   const isElectron = isElectronApp();
 
   if (isElectron) {
     const base = window.location.href.split('#')[0];
-    const target = `${base}#${loginPath}`;
-    if (!window.location.hash.includes('/login')) {
+    const target = `${base}#${path}`;
+    if (!window.location.hash.includes(path)) {
       window.location.replace(target);
     }
     return;
   }
 
-  if (window.location.pathname !== loginPath) {
-    window.location.replace(loginPath);
+  if (window.location.pathname !== path) {
+    window.location.replace(path);
   }
 }
 
@@ -99,7 +97,7 @@ async function clearAuthSessionWithTimeout(): Promise<void> {
  * Logout — clears persisted session first, then navigates to login.
  * Works offline; never waits on the network.
  */
-export async function runAppLogout(options?: { navigate?: NavigateFunction }): Promise<void> {
+export async function runAppLogout(options?: { navigate?: NavigateFunction; redirectTo?: string }): Promise<void> {
   const { token, isLocalSession } = store.getState().auth;
 
   // Session is cleared before navigate — no logout intent (that flag is for 401 hard-redirect races only).
@@ -110,5 +108,5 @@ export async function runAppLogout(options?: { navigate?: NavigateFunction }): P
 
   scheduleBackgroundCleanup();
   scheduleServerLogoutRevoke(token, isLocalSession);
-  redirectToLogin(options?.navigate);
+  redirectToPath(options?.redirectTo ?? ROUTES.LOGIN, options?.navigate);
 }

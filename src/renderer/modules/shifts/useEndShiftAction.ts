@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
-import { useLogoutAction } from '../../app/contexts/LogoutContext';
+import { useLogoutAction } from '../../app/contexts/useLogoutActions';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { getUserFirstName } from '../../shared/utils/userDisplayName';
 import { cashHandover, netSales } from '../../shared/utils/accounting';

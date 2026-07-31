@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useSyncExter
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
-import { useLogoutAction } from '../../../app/contexts/LogoutContext';
+import { useLogoutAction } from '../../../app/contexts/useLogoutActions';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { SyncHeaderChip } from '../Errors/SyncProgressBanner';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { PlanCards } from '../../shared/components/plans/PlanCards';
@@ -18,6 +18,7 @@ import { CreditCard, Loader2, CheckCircle, AlertCircle, X, Home, Wallet, Tag, Ch
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { PaymentDoneScreen, WaitingScreen, FailedScreen } from './OnboardingStatusScreens';
+import { useLogoutAction } from '../../app/contexts/useLogoutActions';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -35,6 +36,11 @@ export default function OnboardingPage() {
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
   const applyReferralMutation = useApplyReferralCode();
+  const { logout } = useLogoutAction();
+
+  const handleHome = () => {
+    void logout(ROUTES.HOME);
+  };
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
@@ -186,19 +192,25 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
-        <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={handleHome}
+          className="inline-flex items-center gap-2.5 cursor-pointer"
+          aria-label="Home"
+        >
           <LogoImage size="md" />
           <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
-        </Link>
+        </button>
         <div className="ml-auto">
-          <Link
-            to={ROUTES.HOME}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
+          <button
+            type="button"
+            onClick={handleHome}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
             aria-label="Home"
           >
             <Home className="w-4 h-4 shrink-0" />
             <span>Home</span>
-          </Link>
+          </button>
         </div>
       </header>
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, CircleUser, Heart, GraduationCap, LayoutDashboard, LogOut, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
-import { useLogoutAction } from '../../../app/contexts/LogoutContext';
+import { useLogoutAction } from '../../../app/contexts/useLogoutActions';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { cn } from '../../../shared/utils/cn';

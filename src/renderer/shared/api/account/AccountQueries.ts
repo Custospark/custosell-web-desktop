@@ -32,7 +32,7 @@ import { persistLoginCredentials, refreshStoredUserSnapshot } from '../../../app
 import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
 import { refreshAllServerCatalogSnapshots } from '../../../app/store/offline/catalogs/catalogSnapshotRefresh';
 import { upgradeLocalSessionIfOnline } from '../../../app/store/offline/auth/sessionUpgrade';
-import { useLogoutFallback } from '../../../app/contexts/LogoutContext';
+import { useLogoutFallback } from '../../../app/contexts/useLogoutActions';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
 export const accountKeys = {

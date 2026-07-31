@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X } from 'lucide-react';
-import { formatUSD } from '../../shared/utils/formatCurrency';
+import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
+import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import type { PaymentType } from '../../shared/types';
 
 interface BillingCyclePaymentModalProps {
   proration: Record<string, unknown>;
   billingCycle: string;
+  currency: string;
   userPhone: string;
   onClose: () => void;
   onComplete: () => Promise<void>;
 }
 
 export default function BillingCyclePaymentModal({
-  proration, billingCycle, userPhone,
+  proration, billingCycle, currency, userPhone,
   onClose, onComplete,
 }: BillingCyclePaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
@@ -23,13 +25,15 @@ export default function BillingCyclePaymentModal({
   const initiateMutation = useInitiatePayment('billing_cycle_change' satisfies PaymentType);
   const paymentQuery = useBillingPayment(paymentId);
 
-  const amountDue = Number(proration.proration_due_usd ?? 0);
+  const amountDueUsd = Number(proration.proration_due_usd ?? 0);
+  const { isUsd, toLocal } = useUsdToLocal(currency);
+  const formatUsdValue = (usd: number) => isUsd ? formatUSD(usd) : formatCurrency(toLocal(usd), currency);
 
   const handlePay = () => {
     setStep('paying');
     initiateMutation.mutate(
       {
-        amount: amountDue,
+        amount: amountDueUsd,
         currency: getPaymentCurrency(),
         phone: userPhone,
         metadata: { action: 'billing_cycle_change' },
@@ -67,15 +71,15 @@ export default function BillingCyclePaymentModal({
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl px-4 py-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Yearly price</span>
-                <span className="font-semibold text-gray-900">{formatUSD(Number(proration.new_price_usd ?? 0))}/yr</span>
+                <span className="font-semibold text-gray-900">{formatUsdValue(Number(proration.new_price_usd ?? 0))}/yr</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Credit for remaining days</span>
-                <span className="font-semibold text-green-700">-{formatUSD(Number(proration.credit_usd ?? 0))}</span>
+                <span className="font-semibold text-green-700">-{formatUsdValue(Number(proration.credit_usd ?? 0))}</span>
               </div>
               <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
                 <span className="font-semibold text-gray-700">Amount due today</span>
-                <span className="font-bold text-blue-700 text-base">{formatUSD(amountDue)}</span>
+                <span className="font-bold text-blue-700 text-base">{formatUsdValue(amountDueUsd)}</span>
               </div>
             </div>
 
@@ -87,7 +91,7 @@ export default function BillingCyclePaymentModal({
             </div>
 
             <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm" loading={initiateMutation.isPending}>
-              Pay {formatUSD(amountDue)}
+              Pay {formatUsdValue(amountDueUsd)}
             </Button>
 
             {initiateMutation.isError && (

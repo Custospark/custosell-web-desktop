@@ -243,12 +243,13 @@ due    = round(max(0, 540.00 − 34.84), 2) = 505.16
 | BUG E | 🔴 Fixed | `PaymentMethod` enum only had `gateway`/`manual`; `processZeroCostUpgrade()` used `'internal'` and the credit bypass used `'credit'` → `ValueError` crash (500) on zero-due upgrades | `App\Enums\Billing\PaymentMethod` — added `CREDIT`/`INTERNAL` |
 | BUG F | 🔴 Fixed | Zero-cost upgrade created the payment via `createPending()` which forces `status='pending'` → plan changed but payment stayed pending forever | `GatewayService::processZeroCostUpgrade()` — now completes the internal payment |
 | BUG G | 🔴 Fixed | Monthly→yearly charged `yearly × days/31` (treated yearly as monthly) → under-charged a full year by ~$172; now `full year − unused credit` | `PaymentQuoteService::getQuote()` — cycle-change branch |
-| BUG C | 🟡 | Upgrade **paying step** for non-USD businesses formats the **USD** proration figure as if it were local currency (e.g. `USh 40.50` instead of `USh 150,197.90`); Pay button & polling text show USD only. Billing Cycle modal shows USD only. | `UpgradeFlowModal` (paying/polling step), `BillingCyclePaymentModal` |
-| BUG D | 🟡 | Renewal credit display mixes USD credit with local amount (`creditApplied = min(USD, local)`) and shows total in USD when credit applied | `SubscriptionPaymentModal` |
+| BUG C | 🔴 Fixed | Upgrade **paying/polling step** and Billing Cycle modal showed the **USD** proration as if local or as USD-only. Now the USD figure is converted to the local payment currency at the live rate via the shared `useUsdToLocal` hook (USD businesses unchanged) | `UpgradeFlowModal`, `BillingCyclePaymentModal` |
+| BUG D | 🔴 Fixed | Renewal credit display mixed USD credit with the local amount (`creditApplied = min(USD, local)`, totals shown in USD). The USD credit is now converted to local before subtracting, and every amount displays in one consistent currency | `SubscriptionPaymentModal` |
 
-> Note: The **amount sent to the provider** for upgrades/cycle-changes is correct today (USD
-> contract + backend conversion). The remaining work is **display-only** accuracy for
-> non-USD businesses, plus a documentation note that the USD-send contract is intentional.
+> Note: Display is now fully currency-aware (BUG C/D fixed). The **amount sent to the provider**
+> for upgrades/cycle-changes uses the USD contract + backend conversion; the UI converts the same
+> USD figures to the local payment currency via `useUsdToLocal` (`shared/utils/useUsdToLocal.ts`),
+> so what the user sees equals what is charged.
 
 ---
 

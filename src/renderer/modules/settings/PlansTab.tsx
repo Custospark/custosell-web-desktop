@@ -396,6 +396,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <BillingCyclePaymentModal
           proration={billingCyclePaymentQuote.proration}
           billingCycle={billingCyclePaymentQuote.billing_cycle}
+          currency={currency}
           userPhone={userPhone}
           onClose={() => { setBillingCyclePaymentQuote(null); setPendingCycle(null); }}
           onComplete={async () => {

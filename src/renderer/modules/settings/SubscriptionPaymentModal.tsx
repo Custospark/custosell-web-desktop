@@ -4,6 +4,7 @@ import { useReferralEarnings, useApplyReferralCode } from '../../modules/referra
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatUSD } from '../../shared/utils/formatCurrency';
+import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import type { PaymentType } from '../../shared/types';
 
 interface SubscriptionPaymentModalProps {
@@ -33,9 +34,13 @@ export default function SubscriptionPaymentModal({
 
   const { data: earnings } = useReferralEarnings();
   const applyReferralMutation = useApplyReferralCode();
-  const availableCredit = paymentType === 'renewal' ? (earnings?.available_credit ?? 0) : 0;
-  const creditApplied = Math.min(availableCredit, amount);
+  const { isUsd, toLocal } = useUsdToLocal(currency);
+  const availableCreditUsd = paymentType === 'renewal' ? (earnings?.available_credit ?? 0) : 0;
+  const creditApplied = isUsd
+    ? Math.min(availableCreditUsd, amount)
+    : Math.min(toLocal(availableCreditUsd), amount);
   const amountAfterCredit = amount - creditApplied;
+  const formatLocal = (value: number) => new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
 
   const initiateMutation = useInitiatePayment(paymentType);
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
@@ -203,15 +208,15 @@ export default function SubscriptionPaymentModal({
                   <Wallet className="w-3.5 h-3.5 text-green-600" />
                   Credit applied
                 </span>
-                <span className="font-semibold text-green-700">-{formatUSD(creditApplied)}</span>
+                <span className="font-semibold text-green-700">-{isUsd ? formatUSD(creditApplied) : formatLocal(creditApplied)}</span>
               </div>
             )}
             <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
               <span className="font-semibold text-gray-700">Total due today</span>
               <span className="font-bold text-blue-700 text-base">
                 {creditApplied > 0
-                  ? formatUSD(amountAfterCredit)
-                  : new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)}
+                  ? (isUsd ? formatUSD(amountAfterCredit) : formatLocal(amountAfterCredit))
+                  : formatLocal(amount)}
               </span>
             </div>
           </div>

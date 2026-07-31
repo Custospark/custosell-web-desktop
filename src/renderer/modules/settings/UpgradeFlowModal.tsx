@@ -7,6 +7,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { Loader2, CheckCircle, AlertCircle, X, Wallet, Tag, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
+import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import UpgradeFlowConfirmStep from './UpgradeFlowConfirmStep';
 
 interface UpgradeFlowModalProps {
@@ -45,6 +46,14 @@ export default function UpgradeFlowModal({
     ? Number(subscription.referral.discount_applied)
     : 0;
   const creditAfterProration = 0;
+
+  const paymentCurrency = getPaymentCurrency();
+  const { isUsd, toLocal } = useUsdToLocal(paymentCurrency);
+  const dueUsd = prorationDueUsd || prorationDue;
+  const appliedDiscountUsd = referralDiscountUsd > 0 ? referralDiscountUsd : creditAfterProration;
+  const netDueUsd = Math.max(0, dueUsd - appliedDiscountUsd);
+  const formatUsdValue = (usd: number) => isUsd ? formatUSD(usd) : formatCurrency(toLocal(usd), paymentCurrency);
+  const formatDue = formatUsdValue(netDueUsd);
 
   const upgradeMutation = useUpgrade();
   const initiateMutation = useInitiatePayment('upgrade_proration');
@@ -168,7 +177,7 @@ export default function UpgradeFlowModal({
                   <Tag className="w-3.5 h-3.5 text-green-600" />
                   Promo discount
                 </span>
-                <span className="font-semibold text-green-700">-{formatUSD(referralDiscountUsd)}</span>
+                <span className="font-semibold text-green-700">-{formatUsdValue(referralDiscountUsd)}</span>
               </div>
             )}
             {creditAfterProration > 0 && referralDiscountUsd <= 0 && (
@@ -182,15 +191,7 @@ export default function UpgradeFlowModal({
             )}
             <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
               <span className="font-semibold text-gray-700">Amount due today</span>
-              <span className="font-bold text-blue-700 text-base">
-                {referralDiscountUsd > 0
-                  ? formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - referralDiscountUsd))
-                  : creditAfterProration > 0
-                    ? formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - creditAfterProration))
-                    : getPaymentCurrency() === 'USD'
-                      ? formatUSD(prorationDueUsd || prorationDue)
-                      : formatCurrency(prorationDue, getPaymentCurrency())}
-              </span>
+              <span className="font-bold text-blue-700 text-base">{formatDue}</span>
             </div>
           </div>
 
@@ -267,7 +268,7 @@ export default function UpgradeFlowModal({
 
           <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm"
             loading={initiateMutation.isPending}>
-            Pay {formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - (referralDiscountUsd > 0 ? referralDiscountUsd : creditAfterProration)))}
+            Pay {formatDue}
           </Button>
 
           {initiateMutation.isError && (
@@ -333,7 +334,7 @@ export default function UpgradeFlowModal({
           <div>
             <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
             <p className="text-sm text-gray-500 mt-1">
-              Complete the payment of {formatUSD(Math.max(0, (prorationDueUsd || prorationDue) - (referralDiscountUsd > 0 ? referralDiscountUsd : creditAfterProration)))}.
+              Complete the payment of {formatDue}.
             </p>
             <p className="text-xs text-gray-400 mt-2">
               Follow the prompts on your phone <span className="font-semibold">{userPhone}</span> to complete the payment.

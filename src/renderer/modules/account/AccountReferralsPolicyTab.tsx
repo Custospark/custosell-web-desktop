@@ -10,7 +10,7 @@ export default function AccountReferralsPolicyTab() {
     {
       icon: DollarSign,
       title: 'Rewards',
-      content: 'For every business that signs up using your referral code and completes onboarding, you earn a reward based on their selected plan. Rewards are calculated as a percentage of the monthly subscription price or a flat amount, depending on the active campaign.',
+      content: 'For every business that signs up using your referral code and completes onboarding, you earn a reward based on their selected plan. Percentage rewards are calculated on the amount the referred business actually pays after any discount, or as a flat amount, depending on the active campaign.',
     },
     {
       icon: Users,

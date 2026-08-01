@@ -302,6 +302,7 @@ export default function OrdersPage() {
               rowKey={(o) => o.id}
               data={paginated.data}
               columns={[
+                { key: 'index', header: '#', render: (_o, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
                 {
                   key: 'order_number',
                   header: 'Order',

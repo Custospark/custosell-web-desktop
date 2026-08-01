@@ -194,6 +194,7 @@ export default function IncomingOrdersPage() {
               rowKey={(po) => po.id}
               onRowClick={(po) => setViewPo(po)}
               columns={[
+                { key: 'index', header: '#', render: (_po, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
                 {
                   key: 'po_number',
                   header: 'PO',

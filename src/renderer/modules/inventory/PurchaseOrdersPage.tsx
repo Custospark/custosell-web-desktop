@@ -222,6 +222,7 @@ export default function PurchaseOrdersPage() {
               data={paginated.data}
               rowKey={(po) => po.id}
               columns={[
+                { key: 'index', header: '#', render: (_po, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
                 {
                   key: 'po_number',
                   header: 'Purchase orders',

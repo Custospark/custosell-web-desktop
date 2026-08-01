@@ -216,6 +216,7 @@ export default function MyOrdersPage() {
               data={paginated.data}
               rowKey={(o: MyStorefrontOrder) => o.id}
               columns={[
+                { key: 'index', header: '#', render: (_o, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
                 {
                   key: 'order_number',
                   header: 'Order',

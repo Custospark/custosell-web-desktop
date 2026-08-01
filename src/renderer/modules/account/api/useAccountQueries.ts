@@ -11,11 +11,11 @@ export const accountKeys = {
 };
 
 export function usePaymentInfo() {
-  return useQuery<{ data: PaymentInfo }>({
+  return useQuery<PaymentInfo>({
     queryKey: accountKeys.paymentInfo(),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: PaymentInfo }>('/account/payment-info');
-      return data;
+      return data.data;
     },
   });
 }
@@ -41,11 +41,11 @@ export function useUpdatePaymentInfo() {
 }
 
 export function usePayoutHistory() {
-  return useQuery<{ data: PayoutRecord[] }>({
+  return useQuery<PayoutRecord[]>({
     queryKey: accountKeys.payoutHistory(),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: PayoutRecord[] }>('/payouts/my-history');
-      return data;
+      return data.data;
     },
   });
 }

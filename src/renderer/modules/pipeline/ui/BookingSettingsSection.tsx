@@ -66,7 +66,7 @@ export default function BookingSettingsSection({ boardId, stages, canManage }: B
   });
   const regenerateToken = useRegenerateBookingToken(boardId);
 
-  const settings = settingsData?.data;
+  const settings = settingsData;
   const token = settings?.token ?? '';
 
   const [f, setF] = useState({

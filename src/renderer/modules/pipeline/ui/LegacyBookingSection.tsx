@@ -26,8 +26,8 @@ export default function LegacyBookingSection({ lead, canEdit }: LegacyBookingSec
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const status = lead.booking_status!;
-  const approvedData = approveBooking.data?.data;
-  const bookingToken = bookingSettings?.data?.token;
+  const approvedData = approveBooking.data;
+  const bookingToken = bookingSettings?.token;
   const refCode = approvedData?.reference_code ?? lead.reference_code;
   const checkUrl = bookingToken && refCode
     ? `${window.location.origin}/book/${bookingToken}/check/${refCode}`

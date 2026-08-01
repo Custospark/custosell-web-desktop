@@ -109,7 +109,7 @@ export default function BoardMemberPicker({
       { email },
       {
         onSuccess: (data) => {
-          const result = data?.data;
+          const result = data;
           if (!result?.user) {
             setLookupError('No account found for this email. They must have a Custosell account to be added.');
           } else if (result.status === 'already_member' || result.status === 'unattached') {

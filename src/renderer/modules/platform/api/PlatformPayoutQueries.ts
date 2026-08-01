@@ -42,12 +42,12 @@ export function useRecordPayout() {
   const qc = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<{ data: PayoutRecord }, AxiosError<{ message: string }>, FormData | Record<string, unknown>>({
+  return useMutation<PayoutRecord, AxiosError<{ message: string }>, FormData | Record<string, unknown>>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post<{ data: PayoutRecord }>(PLATFORM.PAYOUTS.BASE, payload, {
         headers: payload instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
       });
-      return data;
+      return data.data;
     },
     onSuccess: () => {
       showToast('success', 'Payout recorded');

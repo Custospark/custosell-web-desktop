@@ -74,8 +74,8 @@ export default function PublicBookingPage() {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const info = infoData?.data;
-  const allSlots: TimeSlot[] = slotsData?.data?.slots ?? [];
+  const info = infoData;
+  const allSlots: TimeSlot[] = slotsData?.slots ?? [];
 
   const availableDayNames = info?.available_days
     ? info.available_days.map((d) => DAY_NAMES[d]).filter(Boolean)

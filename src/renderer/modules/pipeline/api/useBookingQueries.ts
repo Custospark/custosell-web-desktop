@@ -3,6 +3,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { API_BASE_URL } from '../../../app/api/apiConfig';
 import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import type { PipelineLead, PipelineLeadMeeting } from './pipelineTypes';
 
 const BOOKING_BASE = '/public/book';
 
@@ -26,7 +27,7 @@ async function publicFetch<T>(path: string, options?: RequestInit): Promise<T> {
 export function useBookingInfo(token: string) {
   return useQuery({
     queryKey: bookingKeys.info(token),
-    queryFn: () => publicFetch<{ data: BookingInfo }>(`${BOOKING_BASE}/${token}`),
+    queryFn: () => publicFetch<{ data: BookingInfo }>(`${BOOKING_BASE}/${token}`).then((r) => r.data),
     enabled: Boolean(token),
     staleTime: 1000 * 60 * 5,
   });
@@ -41,7 +42,7 @@ export interface TimeSlot {
 export function useBookingSlots(token: string, date: string) {
   return useQuery({
     queryKey: bookingKeys.slots(token, date),
-    queryFn: () => publicFetch<{ data: { slots: TimeSlot[] } }>(`${BOOKING_BASE}/${token}/slots?date=${date}`),
+    queryFn: () => publicFetch<{ data: { slots: TimeSlot[] } }>(`${BOOKING_BASE}/${token}/slots?date=${date}`).then((r) => r.data),
     enabled: Boolean(token) && Boolean(date),
     staleTime: 1000 * 30,
   });
@@ -63,13 +64,13 @@ export function useCreateBooking(token: string) {
 }
 
 export function useBookingSettings(boardId: number) {
-  return useQuery({
+  return useQuery<BookingSettings>({
     queryKey: bookingKeys.settings(boardId),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: BookingSettings }>(
         `/pipeline/boards/${boardId}/booking-settings`,
       );
-      return data;
+      return data.data;
     },
     enabled: Boolean(boardId),
   });
@@ -165,8 +166,8 @@ export function useApproveBooking() {
   return useMutation({
     mutationFn: async (payload: { leadId: number; meeting_link?: string; notes?: string }) => {
       const { leadId, ...body } = payload;
-      const { data } = await axiosInstance.post(`/pipeline/leads/${leadId}/approve-booking`, body);
-      return data;
+      const { data } = await axiosInstance.post<{ data: PipelineLead }>(`/pipeline/leads/${leadId}/approve-booking`, body);
+      return data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });
@@ -185,8 +186,8 @@ export function useScheduleMeeting() {
   return useMutation({
     mutationFn: async (payload: { leadId: number; start_date?: string; due_date?: string; meeting_link?: string; notes?: string }) => {
       const { leadId, ...data } = payload;
-      const res = await axiosInstance.post(`/pipeline/leads/${leadId}/schedule-meeting`, data);
-      return res.data;
+      const res = await axiosInstance.post<{ data: PipelineLeadMeeting }>(`/pipeline/leads/${leadId}/schedule-meeting`, data);
+      return res.data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });
@@ -204,8 +205,8 @@ export function useCompleteBooking() {
 
   return useMutation({
     mutationFn: async (leadId: number) => {
-      const { data } = await axiosInstance.post(`/pipeline/leads/${leadId}/complete-booking`);
-      return data;
+      const { data } = await axiosInstance.post<{ data: PipelineLead }>(`/pipeline/leads/${leadId}/complete-booking`);
+      return data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });
@@ -223,8 +224,8 @@ export function useRejectBooking() {
 
   return useMutation({
     mutationFn: async ({ leadId, reason }: { leadId: number; reason: string }) => {
-      const { data } = await axiosInstance.post(`/pipeline/leads/${leadId}/reject-booking`, { reason });
-      return data;
+      const { data } = await axiosInstance.post<{ data: PipelineLead }>(`/pipeline/leads/${leadId}/reject-booking`, { reason });
+      return data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });
@@ -264,7 +265,7 @@ export interface BookingCheckInfo {
 export function useCheckBooking(token: string, reference: string) {
   return useQuery({
     queryKey: bookingKeys.check(token, reference),
-    queryFn: () => publicFetch<{ data: BookingCheckInfo }>(`${BOOKING_BASE}/${token}/check/${reference}`),
+    queryFn: () => publicFetch<{ data: BookingCheckInfo }>(`${BOOKING_BASE}/${token}/check/${reference}`).then((r) => r.data),
     enabled: Boolean(token) && Boolean(reference),
     staleTime: 0,
     gcTime: 0,
@@ -282,8 +283,8 @@ export function useCreateMeeting() {
   return useMutation({
     mutationFn: async (payload: { leadId: number; start_date?: string; due_date?: string; meeting_link?: string; notes?: string }) => {
       const { leadId, ...data } = payload;
-      const res = await axiosInstance.post(`/pipeline/leads/${leadId}/schedule-meeting`, data);
-      return res.data;
+      const res = await axiosInstance.post<{ data: PipelineLeadMeeting }>(`/pipeline/leads/${leadId}/schedule-meeting`, data);
+      return res.data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });
@@ -302,8 +303,8 @@ export function useUpdateMeeting() {
   return useMutation({
     mutationFn: async (payload: { meetingId: number; start_date?: string; due_date?: string; meeting_link?: string; notes?: string }) => {
       const { meetingId, ...data } = payload;
-      const res = await axiosInstance.patch(`/pipeline/meetings/${meetingId}`, data);
-      return res.data;
+      const res = await axiosInstance.patch<{ data: PipelineLeadMeeting }>(`/pipeline/meetings/${meetingId}`, data);
+      return res.data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });

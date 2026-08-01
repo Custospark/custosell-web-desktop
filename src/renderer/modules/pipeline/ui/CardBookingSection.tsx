@@ -58,7 +58,7 @@ function ScheduleButton({ leadId, boardId }: { leadId: number; boardId?: number 
   const createMeeting = useCreateMeeting();
   const deleteMeeting = useDeleteMeeting();
   const { data: bookingSettings } = useBookingSettings(boardId ?? 0);
-  const slotDuration = bookingSettings?.data?.slot_duration ?? 30;
+  const slotDuration = bookingSettings?.slot_duration ?? 30;
 
   const [schedDate, setSchedDate] = useState('');
   const [schedLink, setSchedLink] = useState('');
@@ -91,7 +91,7 @@ function ScheduleButton({ leadId, boardId }: { leadId: number; boardId?: number 
       { leadId, start_date: startDate, due_date: dueDate, meeting_link: schedLink.trim() || undefined, notes: schedNotes.trim() || undefined },
       {
         onSuccess: (res) => {
-          const meeting = res?.data;
+          const meeting = res;
           const startIso = meeting?.start_date ?? toUtcIso(schedDate);
           const endIso = meeting?.end_date ?? dueDate;
           setSaved({
@@ -235,10 +235,10 @@ function MeetingItem({ meeting, boardId, canEdit }: { meeting: PipelineLeadMeeti
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: bookingSettings } = useBookingSettings(boardId ?? 0);
-  const slotDuration = bookingSettings?.data?.slot_duration ?? 30;
+  const slotDuration = bookingSettings?.slot_duration ?? 30;
 
   const ref = meeting.reference_code;
-  const token = bookingSettings?.data?.token;
+  const token = bookingSettings?.token;
   const checkUrl = ref && token ? `${window.location.origin}/book/${token}/check/${ref}` : null;
 
   const handleCopyLink = async () => {

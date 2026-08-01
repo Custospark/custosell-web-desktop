@@ -39,7 +39,7 @@ export default function PublicBookingCheckPage() {
   const { token, reference } = useParams<{ token: string; reference: string }>();
   const { data, isLoading, error } = useCheckBooking(token ?? '', reference ?? '');
 
-  const booking = data?.data;
+  const booking = data;
 
   if (isLoading) {
     return <CustosellLoader message="Checking your booking..." />;

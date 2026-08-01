@@ -52,13 +52,13 @@ export function useCreateCampaignCode() {
   const qc = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<{ data: CampaignCode }, AxiosError<{ message: string }>, Partial<CampaignCode>>({
+  return useMutation<CampaignCode, AxiosError<{ message: string }>, Partial<CampaignCode>>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post<{ data: CampaignCode }>(PLATFORM.CAMPAIGN_CODES, payload);
-      return data;
+      return data.data;
     },
     onSuccess: (result) => {
-      const code = result?.data?.code;
+      const code = result?.code;
       showToast('success', `Campaign code "${code}" created`);
       qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
@@ -72,10 +72,10 @@ export function useUpdateCampaignCode() {
   const qc = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<{ data: CampaignCode }, AxiosError<{ message: string }>, { id: number; data: Partial<CampaignCode> }>({
+  return useMutation<CampaignCode, AxiosError<{ message: string }>, { id: number; data: Partial<CampaignCode> }>({
     mutationFn: async ({ id, data }) => {
       const { data: res } = await axiosInstance.put<{ data: CampaignCode }>(PLATFORM.CAMPAIGN_CODE(id), data);
-      return res;
+      return res.data;
     },
     onSuccess: () => {
       showToast('success', 'Campaign code updated');

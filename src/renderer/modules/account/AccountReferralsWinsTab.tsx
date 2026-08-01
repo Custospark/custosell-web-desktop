@@ -28,8 +28,8 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
   const { data: payoutHistoryResp, isLoading: historyLoading } = usePayoutHistory();
   const updatePaymentInfo = useUpdatePaymentInfo();
 
-  const paymentInfo = paymentInfoResp?.data;
-  const payoutHistory = payoutHistoryResp?.data ?? [];
+  const paymentInfo = paymentInfoResp;
+  const payoutHistory = payoutHistoryResp ?? [];
 
   const totalEarned = (earnings?.total_earned ?? 0) + (earnings?.commission_earned ?? 0);
 

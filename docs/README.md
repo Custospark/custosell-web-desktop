@@ -153,6 +153,8 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-01-business-income-budget-sidebar.md](./adr/2026-08-01-business-income-budget-sidebar.md) | Business accounts get Income + Budgets under "Income & Expenses"; budget label "Budgets" (business) vs "My Budgets" (personal) |
 | [2026-08-01-header-quick-access-profile-nav.md](./adr/2026-08-01-header-quick-access-profile-nav.md) | Apps/Tour/Tutorials under Profile; Open Orders (live badge) + Products quick access; mobile header + bottom-tab distribution; tour updated |
 | [2026-08-01-expenses-overview-fresh-and-form-guidance.md](./adr/2026-08-01-expenses-overview-fresh-and-form-guidance.md) | Income & Expenses Overview always-fresh; expense form guides required-field validation |
+| [2026-08-01-customers-overview-dashboard.md](./adr/2026-08-01-customers-overview-dashboard.md) | Customers analytics overview — `GET /customers/overview`, FE dashboard, segments/frequency/trends/top-5 |
+| [2026-08-01-readonly-email-and-personal-slice-sync.md](./adr/2026-08-01-readonly-email-and-personal-slice-sync.md) | Email read-only in Account Profile; personal-account shared fields mirrored from Business Settings to auth slice |
 
 ## Modules
 

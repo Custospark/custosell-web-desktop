@@ -14,7 +14,7 @@ interface DiscoverShopRowProps {
 export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShopRowProps) {
   const className = cn(
     marketplaceGlassPanel,
-    'flex w-full items-center gap-2.5 px-2.5 py-2.5 text-left transition-all duration-200',
+    'flex w-full items-center gap-2 px-2 py-2 text-left transition-all duration-200',
     'hover:-translate-y-0.5 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-900/10',
     'active:translate-y-0 active:scale-[0.99]',
     active
@@ -24,7 +24,7 @@ export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShop
 
   const body = (
     <>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
         {shop.logo_path ? (
           <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
         ) : (

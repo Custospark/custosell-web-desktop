@@ -184,7 +184,7 @@ export function DiscoverShopsBrowse() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((shop) => (
               <ShopTile key={shop.slug} shop={shop} />
             ))}
@@ -236,13 +236,13 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
     <article
       className={cn(
         marketplaceGlassPanel,
-        'flex gap-2.5 p-3 shadow-md transition-all duration-200 rounded-none sm:rounded-2xl',
+        'flex gap-2 p-2.5 shadow-md transition-all duration-200 rounded-none sm:rounded-2xl',
         'hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-900/15',
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
         <Link to={ROUTES.SHOP(shop.slug)} className="flex gap-3 outline-none">
-          <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl', wrap)}>
+          <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl', wrap)}>
             {shop.logo_path ? (
               <img src={avatarUrl(shop.logo_path) ?? undefined} alt="" className="h-full w-full object-cover" />
             ) : (

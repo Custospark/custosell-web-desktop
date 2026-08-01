@@ -81,7 +81,7 @@ export function DiscoverProductCard({
 
   const media = (
     <div
-      className={cn('relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl', wrap)}
+      className={cn('relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg', wrap)}
       role={onOpenDetail ? 'button' : undefined}
       tabIndex={onOpenDetail ? 0 : undefined}
       onClick={onOpenDetail ? (e) => {
@@ -104,7 +104,7 @@ export function DiscoverProductCard({
           className="h-full w-full object-cover"
         />
       ) : (
-        <Icon className={cn('h-9 w-9 sm:h-10 sm:w-10', icon)} aria-hidden />
+        <Icon className={cn('h-8 w-8 sm:h-9 sm:w-9', icon)} aria-hidden />
       )}
       <div className="absolute left-1.5 top-1.5">
         <StockAvailabilityBadge product={product} />
@@ -119,8 +119,8 @@ export function DiscoverProductCard({
     <>
       {media}
       <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900">{product.name}</p>
-        <p className="text-sm font-bold tabular-nums text-indigo-900">
+        <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-900">{product.name}</p>
+        <p className="text-[13px] font-bold tabular-nums text-indigo-900">
           <StorefrontProductPrice product={product} currency={currency} size="sm" />
         </p>
         {stars}
@@ -147,7 +147,7 @@ export function DiscoverProductCard({
             onAdd(product);
           }}
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-3 w-3" />
           {outOfStock ? 'Out of stock' : 'Add'}
         </Button>
       ) : (
@@ -160,7 +160,7 @@ export function DiscoverProductCard({
 
   const cardClass = cn(
     marketplaceGlassPanel,
-    'flex h-full flex-col gap-2.5 p-2.5 shadow-md transition-all duration-200',
+    'flex h-full flex-col gap-1.5 p-2 shadow-md transition-all duration-200',
     'hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-900/15',
     'active:translate-y-0 active:scale-[0.99]',
     outOfStock && 'opacity-90',

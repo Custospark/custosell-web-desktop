@@ -17,8 +17,6 @@ import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 interface ModuleLauncherModalProps {
   open: boolean;
   onClose: () => void;
-  /** Softer user-facing copy (e.g. from mobile More) — avoids "module" wording. */
-  friendlyCopy?: boolean;
 }
 
 function SectionHeading({
@@ -134,7 +132,7 @@ function ModuleGrid({
   );
 }
 
-export default function ModuleLauncherModal({ open, onClose, friendlyCopy = false }: ModuleLauncherModalProps) {
+export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherModalProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
@@ -186,22 +184,14 @@ export default function ModuleLauncherModal({ open, onClose, friendlyCopy = fals
     }
   };
 
-  const title = friendlyCopy ? 'Go anywhere in Custosell' : 'Switch modules';
-  const subtitle = friendlyCopy
-    ? (isCompletelyOffline
-      ? 'Some areas need a connection — tap a greyed tile for details'
-      : 'Open any part of Custosell you can use')
-    : (isCompletelyOffline
-      ? 'Some modules need a connection — hover a greyed tile for details'
-      : 'Pick a module you can access');
-  const searchPlaceholder = friendlyCopy ? 'Search Custosell…' : 'Search modules…';
-  const countLabel = friendlyCopy
-    ? `${totalCount} area${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`
-    : `${totalCount} module${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`;
-  const emptyLabel = friendlyCopy
-    ? (query.trim() ? 'Nothing matches your search.' : 'Nothing else is available on your account.')
-    : (query.trim() ? 'No modules match your search.' : 'No modules available for your account.');
-  const workspaceLabel = friendlyCopy ? 'Your workspace' : 'Your modules';
+  const title = 'Go anywhere in Custosell';
+  const subtitle = isCompletelyOffline
+    ? 'Some areas need a connection — greyed tiles open when you are online'
+    : 'Open any page you can use';
+  const searchPlaceholder = 'Search anything…';
+  const countLabel = `${totalCount} page${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`;
+  const emptyLabel = query.trim() ? 'Nothing matches your search.' : 'Nothing else is available on your account.';
+  const workspaceLabel = 'Your workspace';
 
   return (
     <Modal

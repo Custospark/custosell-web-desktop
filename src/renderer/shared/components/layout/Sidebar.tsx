@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { version } from '../../../../../package.json';
@@ -72,6 +72,12 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
   const collapsed = state.sidebarCollapsed;
   const location = useLocation();
   const { isCompletelyOffline } = useNetworkStatus();
+  const activeItemRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    if (!activeItemRef.current) return;
+    activeItemRef.current.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [location.pathname, openGroup, isOpen]);
 
   return (
     <aside
@@ -164,6 +170,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                 key={group.label}
                 to={item.to}
                 onClick={onClose}
+                ref={isSidebarSubItemActive(location.pathname, item.to) ? activeItemRef : null}
                 {...groupTourAttr}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
@@ -231,6 +238,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
                         to={item.to}
                         end
                         onClick={onClose}
+                        ref={isChildActive ? activeItemRef : null}
                         {...modulesAttr}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
                           isChildActive

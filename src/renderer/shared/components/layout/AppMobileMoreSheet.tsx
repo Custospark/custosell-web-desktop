@@ -176,7 +176,6 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
       <ModuleLauncherModal
         open={browseOpen}
         onClose={() => setBrowseOpen(false)}
-        friendlyCopy
       />
     </>,
     document.body,

@@ -48,7 +48,7 @@ export function SearchInput({
           onFocus={onFocus}
           onBlur={onBlur}
           autoFocus
-          placeholder="Search modules and pages..."
+          placeholder="Search anything…"
           aria-label="Global navigation search"
           aria-autocomplete="list"
           className={cn(

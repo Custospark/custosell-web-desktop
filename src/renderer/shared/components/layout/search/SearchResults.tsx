@@ -90,7 +90,7 @@ export function SearchResults({
             <Search className="h-7 w-7 text-gray-400" />
           </div>
           <p className="mb-1 text-sm font-semibold text-gray-700">Start typing to search</p>
-          <p className="text-xs text-gray-400">Jump to any module or page instantly</p>
+          <p className="text-xs text-gray-400">Jump to any page instantly</p>
         </div>
       );
     }

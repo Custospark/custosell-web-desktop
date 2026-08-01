@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -7,6 +7,7 @@ import { MODAL_NESTED_PORTAL_Z_INDEX_CLASS } from '../modals/Modal';
 export interface SearchableSelectOption {
   value: string;
   label: string;
+  group?: string;
 }
 
 const SEARCH_HEADER_PX = 52;
@@ -20,6 +21,7 @@ interface SearchableSelectProps {
   value: string;
   onChange: (value: string) => void;
   emptyOption?: SearchableSelectOption;
+  otherOption?: SearchableSelectOption;
   maxVisibleOptions?: number;
   disabled?: boolean;
   className?: string;
@@ -33,6 +35,7 @@ export function SearchableSelect({
   value,
   onChange,
   emptyOption = { value: '', label: 'All' },
+  otherOption,
   maxVisibleOptions = 5,
   disabled = false,
   className,
@@ -58,9 +61,17 @@ export function SearchableSelect({
     return allOptions.filter((opt) => opt.label.toLowerCase().includes(q));
   }, [allOptions, query]);
 
-  const selectedLabel = allOptions.find((opt) => opt.value === value)?.label ?? placeholder;
+  const selectedLabel = useMemo(() => {
+    if (value && value !== (emptyOption?.value ?? '')) {
+      const match = allOptions.find((opt) => opt.value === value) ?? otherOption;
+      if (match) return match.label;
+      if (otherOption && value === otherOption.value) return otherOption.label;
+    }
+    if (otherOption && value === otherOption.value) return otherOption.label;
+    return value || placeholder;
+  }, [allOptions, value, placeholder, otherOption, emptyOption]);
 
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     const trigger = triggerRef.current;
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
@@ -74,7 +85,7 @@ export function SearchableSelect({
       width: rect.width,
       panelHeight: Math.max(SEARCH_HEADER_PX + OPTION_ROW_PX, availableHeight),
     });
-  };
+  }, [panelHeight]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,7 +97,7 @@ export function SearchableSelect({
       window.removeEventListener('resize', onScrollOrResize);
       window.removeEventListener('scroll', onScrollOrResize, true);
     };
-  }, [open, panelHeight]);
+  }, [open, panelHeight, updatePosition]);
 
   useEffect(() => {
     if (!open) return;
@@ -112,6 +123,8 @@ export function SearchableSelect({
     setQuery('');
   };
 
+  let lastGroup: string | null = null;
+
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
@@ -133,7 +146,7 @@ export function SearchableSelect({
         className={cn(
           'flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-left shadow-sm transition-colors',
           'hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-          !value && 'text-gray-500',
+          !selectedLabel && 'text-gray-500',
           disabled && 'cursor-not-allowed bg-gray-50 text-gray-400 hover:border-gray-300',
         )}
       >
@@ -179,8 +192,15 @@ export function SearchableSelect({
             ) : (
               filtered.map((opt) => {
                 const selected = opt.value === value;
+                const showHeader = opt.group && opt.group !== lastGroup;
+                lastGroup = opt.group ?? null;
                 return (
-                  <li key={opt.value || '__all__'} role="option" aria-selected={selected}>
+                  <li key={opt.value || '__all__'}>
+                    {showHeader && (
+                      <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        {opt.group}
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={() => selectOption(opt.value)}
@@ -194,6 +214,21 @@ export function SearchableSelect({
                   </li>
                 );
               })
+            )}
+            {otherOption && (
+              <li>
+                <div className="mx-3 my-1 border-t border-gray-100" />
+                <button
+                  type="button"
+                  onClick={() => selectOption(otherOption.value)}
+                  className={cn(
+                    'flex w-full items-center px-3 py-2 text-left text-sm font-medium italic transition-colors',
+                    value === otherOption.value ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-50',
+                  )}
+                >
+                  <span className="truncate">{otherOption.label}</span>
+                </button>
+              </li>
             )}
           </ul>
         </div>,

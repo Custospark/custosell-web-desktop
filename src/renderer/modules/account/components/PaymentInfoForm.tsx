@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Landmark, Smartphone } from 'lucide-react';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
+import { SearchableSelect } from '../../../shared/components/inputs/SearchableSelect';
 import { cn } from '../../../shared/utils/cn';
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import { buildInternationalPhone } from '../../../shared/utils/phoneNumber';
@@ -15,7 +16,6 @@ import {
 
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors';
-const selectCls = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -39,21 +39,36 @@ interface PaymentInfoFormProps {
   onSaved: () => void;
 }
 
+const bankOptions = BANK_GROUPS.flatMap((group) =>
+  group.banks.map((bank) => ({
+    value: bank.name,
+    label: bank.name,
+    group: `${group.region} · ${group.country}`,
+  })),
+);
+
 export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onCancel, onSaved }: PaymentInfoFormProps) {
   const updatePaymentInfo = useUpdatePaymentInfo();
 
   const [form, setForm] = useState<PaymentFormState>(initialForm);
   const [country, setCountry] = useState<CountryCode>(initialCountry);
+  const [bankOther, setBankOther] = useState(false);
+  const [branchOther, setBranchOther] = useState(false);
   const [providerOther, setProviderOther] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
   const selectedBank = useMemo(() => findBankByName(form.bank_name), [form.bank_name]);
-  const branches = selectedBank ? selectedBank.branches : [];
-  const bankIsOther = form.bank_name !== '' && !selectedBank;
-  const branchIsOther = form.bank_branch !== '' && !branches.includes(form.bank_branch);
+  const branches = useMemo(() => (selectedBank ? selectedBank.branches : []), [selectedBank]);
+  const bankIsOther = bankOther || (form.bank_name !== '' && !selectedBank);
+  const branchIsOther = branchOther || (form.bank_branch !== '' && branches.length > 0 && !branches.includes(form.bank_branch));
 
   const providerOptions = useMemo(() => mobileMoneyProvidersFor(country.code), [country.code]);
   const providerIsOther = providerOther || (form.mobile_money_provider !== '' && !providerOptions.includes(form.mobile_money_provider));
+
+  const branchOptions = useMemo(
+    () => branches.map((branch) => ({ value: branch, label: branch })),
+    [branches],
+  );
 
   const errors = useMemo(() => validatePaymentForm(form), [form]);
 
@@ -144,26 +159,25 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
             <FieldLabel required>Provider</FieldLabel>
             {providerOptions.length > 0 ? (
               <>
-                <select
+                <SearchableSelect
+                  placeholder="Select provider"
+                  searchPlaceholder="Search providers..."
                   value={providerIsOther ? OTHER_OPTION : form.mobile_money_provider}
-                  onChange={(e) => {
-                    if (e.target.value === OTHER_OPTION) {
+                  onChange={(value) => {
+                    if (value === OTHER_OPTION) {
                       setProviderOther(true);
                       setForm((f) => ({ ...f, mobile_money_provider: '' }));
                     } else {
                       setProviderOther(false);
-                      setForm((f) => ({ ...f, mobile_money_provider: e.target.value }));
+                      setForm((f) => ({ ...f, mobile_money_provider: value }));
                     }
                     setShowErrors(false);
                   }}
-                  className={selectCls}
-                >
-                  <option value="">Select provider</option>
-                  {providerOptions.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                  <option value={OTHER_OPTION}>Other provider…</option>
-                </select>
+                  options={providerOptions.map((p) => ({ value: p, label: p }))}
+                  emptyOption={{ value: '', label: 'Select provider' }}
+                  otherOption={{ value: OTHER_OPTION, label: 'Other provider…' }}
+                  maxVisibleOptions={6}
+                />
                 {providerIsOther && (
                   <input
                     type="text"
@@ -200,28 +214,27 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <FieldLabel required>Bank Name</FieldLabel>
-            <select
+            <SearchableSelect
+              placeholder="Select bank"
+              searchPlaceholder="Search banks..."
               value={bankIsOther ? OTHER_OPTION : form.bank_name}
-              onChange={(e) => {
-                if (e.target.value === OTHER_OPTION) {
+              onChange={(value) => {
+                if (value === OTHER_OPTION) {
+                  setBankOther(true);
+                  setBranchOther(false);
                   setForm((f) => ({ ...f, bank_name: '', bank_branch: '' }));
                 } else {
-                  setForm((f) => ({ ...f, bank_name: e.target.value, bank_branch: '' }));
+                  setBankOther(false);
+                  setBranchOther(false);
+                  setForm((f) => ({ ...f, bank_name: value, bank_branch: '' }));
                 }
                 setShowErrors(false);
               }}
-              className={selectCls}
-            >
-              <option value="">Select bank</option>
-              {BANK_GROUPS.map((group) => (
-                <optgroup key={`${group.region}-${group.country}`} label={`${group.region} · ${group.country}`}>
-                  {group.banks.map((bank) => (
-                    <option key={bank.name} value={bank.name}>{bank.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-              <option value={OTHER_OPTION}>Other bank…</option>
-            </select>
+              options={bankOptions}
+              emptyOption={{ value: '', label: 'Select bank' }}
+              otherOption={{ value: OTHER_OPTION, label: 'Other bank…' }}
+              maxVisibleOptions={6}
+            />
             {bankIsOther && (
               <input
                 type="text"
@@ -271,24 +284,25 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
             <FieldLabel required>Branch</FieldLabel>
             {selectedBank && branches.length > 0 ? (
               <>
-                <select
+                <SearchableSelect
+                  placeholder="Select branch"
+                  searchPlaceholder="Search branches..."
                   value={branchIsOther ? OTHER_OPTION : form.bank_branch}
-                  onChange={(e) => {
-                    if (e.target.value === OTHER_OPTION) {
+                  onChange={(value) => {
+                    if (value === OTHER_OPTION) {
+                      setBranchOther(true);
                       setForm((f) => ({ ...f, bank_branch: '' }));
                     } else {
-                      setForm((f) => ({ ...f, bank_branch: e.target.value }));
+                      setBranchOther(false);
+                      setForm((f) => ({ ...f, bank_branch: value }));
                     }
                     setShowErrors(false);
                   }}
-                  className={selectCls}
-                >
-                  <option value="">Select branch</option>
-                  {branches.map((branch) => (
-                    <option key={branch} value={branch}>{branch}</option>
-                  ))}
-                  <option value={OTHER_OPTION}>Other branch…</option>
-                </select>
+                  options={branchOptions}
+                  emptyOption={{ value: '', label: 'Select branch' }}
+                  otherOption={{ value: OTHER_OPTION, label: 'Other branch…' }}
+                  maxVisibleOptions={5}
+                />
                 {branchIsOther && (
                   <input
                     type="text"

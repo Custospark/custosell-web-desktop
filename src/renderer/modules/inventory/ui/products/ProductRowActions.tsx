@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Store, Package, MoreVertical, Eye, Pencil, PackagePlus, Trash } from 'lucide-react';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
@@ -31,24 +31,42 @@ export default function ProductRowActions({
   const updateSupply = useUpdateSupplyListing();
   const updateStorefront = useUpdateStorefrontListing();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [origin, setOrigin] = useState<{ right: number; top: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const correctedRef = useRef(false);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setOrigin(null);
+    correctedRef.current = false;
+  }, []);
+
+  const handleToggle = useCallback(() => {
+    setOpen((prev) => {
+      if (!prev) {
+        correctedRef.current = false;
+        const rect = btnRef.current?.getBoundingClientRect();
+        if (rect) {
+          setOrigin({ right: window.innerWidth - rect.right, top: rect.bottom + 4 });
+        }
       }
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
+      return !prev;
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open || correctedRef.current) return;
+    const el = menuRef.current;
+    const btn = btnRef.current;
+    if (!el || !btn) return;
+    const btnRect = btn.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - btnRect.bottom - 4;
+    if (spaceBelow < el.offsetHeight) {
+      const top = Math.max(8, btnRect.top - el.offsetHeight - 4);
+      queueMicrotask(() => setOrigin((prev) => (prev ? { ...prev, top } : prev)));
+    }
+    correctedRef.current = true;
   }, [open]);
 
   const busy = updateSupply.isPending || updateStorefront.isPending;
@@ -57,7 +75,7 @@ export default function ProductRowActions({
 
   const toggleStorefront = () => {
     const target = !product.listed_for_storefront;
-    setOpen(false);
+    handleClose();
     updateStorefront.mutate(
       { id: product.id, listed_for_storefront: target },
       {
@@ -69,7 +87,7 @@ export default function ProductRowActions({
 
   const toggleSupply = () => {
     const listing = product.listed_for_supply;
-    setOpen(false);
+    handleClose();
     updateSupply.mutate({
       id: product.id,
       data: listing
@@ -83,10 +101,11 @@ export default function ProductRowActions({
   };
 
   return (
-    <div ref={rootRef} className="relative">
+    <div className="relative shrink-0">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggle}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
         title="Actions"
         aria-label="Product actions"
@@ -96,52 +115,67 @@ export default function ProductRowActions({
         <MoreVertical className="h-4 w-4" />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-9 z-20 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-          <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { setOpen(false); onViewHistory(); }}>
-            <Eye className="h-4 w-4 text-gray-400" /> View history
-          </button>
-          <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { setOpen(false); onEdit(); }}>
-            <Pencil className="h-4 w-4 text-gray-400" /> Edit
-          </button>
-          {canAdjust && (
-            <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { setOpen(false); onAdjustStock(); }}>
-              <PackagePlus className="h-4 w-4 text-blue-600" /> Adjust stock
-            </button>
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-30 cursor-default"
+            aria-label="Close menu"
+            onClick={handleClose}
+          />
+          {origin && (
+            <div
+              ref={menuRef}
+              role="menu"
+              className="fixed z-40 mt-0.5 max-h-[calc(100vh-1rem)] w-56 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              style={{ right: origin.right, top: origin.top }}
+            >
+              <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { handleClose(); onViewHistory(); }}>
+                <Eye className="h-4 w-4 text-gray-400" /> View history
+              </button>
+              <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { handleClose(); onEdit(); }}>
+                <Pencil className="h-4 w-4 text-gray-400" /> Edit
+              </button>
+              {canAdjust && (
+                <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { handleClose(); onAdjustStock(); }}>
+                  <PackagePlus className="h-4 w-4 text-blue-600" /> Adjust stock
+                </button>
+              )}
+              <div className="my-1 border-t border-gray-100" />
+              <button
+                type="button"
+                role="menuitem"
+                className={MENU_ITEM_CLASS}
+                onClick={toggleStorefront}
+                disabled={isOffline || busy}
+                title={isOffline ? 'Unavailable offline' : ''}
+              >
+                <Store className="h-4 w-4 text-emerald-600" />
+                {product.listed_for_storefront ? 'Unlist from public shop' : 'List on public shop'}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={MENU_ITEM_CLASS}
+                onClick={toggleSupply}
+                disabled={isOffline || busy || !canSupply}
+                title={isOffline ? 'Unavailable offline' : !canSupply ? 'Only physical products can be listed for supply' : ''}
+              >
+                <Package className="h-4 w-4 text-blue-600" />
+                {product.listed_for_supply ? 'Unlist for supply' : 'List for supply'}
+              </button>
+              <div className="my-1 border-t border-gray-100" />
+              <button
+                type="button"
+                role="menuitem"
+                className={MENU_ITEM_CLASS}
+                onClick={() => { handleClose(); onDelete(); }}
+                disabled={product._pendingSync}
+              >
+                <Trash className="h-4 w-4 text-red-500" /> Delete
+              </button>
+            </div>
           )}
-          <div className="my-1 border-t border-gray-100" />
-          <button
-            type="button"
-            role="menuitem"
-            className={MENU_ITEM_CLASS}
-            onClick={toggleStorefront}
-            disabled={isOffline || busy}
-            title={isOffline ? 'Unavailable offline' : ''}
-          >
-            <Store className="h-4 w-4 text-emerald-600" />
-            {product.listed_for_storefront ? 'Unlist from public shop' : 'List on public shop'}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className={MENU_ITEM_CLASS}
-            onClick={toggleSupply}
-            disabled={isOffline || busy || !canSupply}
-            title={isOffline ? 'Unavailable offline' : !canSupply ? 'Only physical products can be listed for supply' : ''}
-          >
-            <Package className="h-4 w-4 text-blue-600" />
-            {product.listed_for_supply ? 'Unlist for supply' : 'List for supply'}
-          </button>
-          <div className="my-1 border-t border-gray-100" />
-          <button
-            type="button"
-            role="menuitem"
-            className={MENU_ITEM_CLASS}
-            onClick={() => { setOpen(false); onDelete(); }}
-            disabled={product._pendingSync}
-          >
-            <Trash className="h-4 w-4 text-red-500" /> Delete
-          </button>
-        </div>
+        </>
       )}
     </div>
   );

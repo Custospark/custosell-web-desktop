@@ -44,6 +44,7 @@ export default function ProductList() {
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [storefrontFilter, setStorefrontFilter] = useState<'all' | 'listed' | 'unlisted'>('all');
+  const [supplyFilter, setSupplyFilter] = useState<'all' | 'listed' | 'unlisted'>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithSyncMeta | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<ProductWithSyncMeta | null>(null);
@@ -79,10 +80,12 @@ export default function ProductList() {
     return safe.filter((p) => {
       if (storefrontFilter === 'listed' && !p.listed_for_storefront) return false;
       if (storefrontFilter === 'unlisted' && p.listed_for_storefront) return false;
+      if (supplyFilter === 'listed' && !p.listed_for_supply) return false;
+      if (supplyFilter === 'unlisted' && p.listed_for_supply) return false;
       if (!search.trim()) return true;
       return matchesProductSearch(p, search);
     });
-  }, [products, search, storefrontFilter]);
+  }, [products, search, storefrontFilter, supplyFilter]);
 
   const paginated = usePagination(filtered, 10);
 
@@ -175,6 +178,16 @@ export default function ProductList() {
             <option value="listed">Listed on public shop</option>
             <option value="unlisted">Not listed</option>
           </select>
+          <select
+            value={supplyFilter}
+            onChange={(e) => setSupplyFilter(e.target.value as 'all' | 'listed' | 'unlisted')}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            aria-label="Filter by supply listing"
+          >
+            <option value="all">All supply</option>
+            <option value="listed">Listed for supply</option>
+            <option value="unlisted">Not listed for supply</option>
+          </select>
           <div className="flex items-center gap-2">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
@@ -187,18 +200,18 @@ export default function ProductList() {
                     key={a.label}
                     onClick={() => handleBulkListing(a.channel, a.listed)}
                     disabled={isOffline || bulkListingMutation.isPending}
-                    className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     title={isOffline ? 'Unavailable offline' : a.title}
                   >
                     {a.channel === 'supply' ? <Package className="w-4 h-4" /> : <Store className="w-4 h-4" />}
-                    {a.label}
+                    <span className="hidden sm:inline">{a.label}</span>
                   </button>
                 ))}
                 <button onClick={handleBulkDelete} disabled={bulkDeleteMutation.isPending || isOffline}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={isOffline ? 'Unavailable offline' : ''}>
+                  className="flex items-center gap-1.5 px-2 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={isOffline ? 'Unavailable offline' : `Delete ${selectedIds.size} selected product(s)`}>
                   <Trash2 className="w-4 h-4" />
-                  Delete ({selectedIds.size})
+                  <span className="hidden sm:inline">Delete ({selectedIds.size})</span>
                 </button>
               </div>
             )}
@@ -232,6 +245,12 @@ export default function ProductList() {
                       <span title="Listed on public shop" className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
                         <Store className="h-2.5 w-2.5" />
                         Shop
+                      </span>
+                    ) : null}
+                    {item.listed_for_supply ? (
+                      <span title="Listed for supply" className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                        <Package className="h-2.5 w-2.5" />
+                        Supply
                       </span>
                     ) : null}
                   </div>

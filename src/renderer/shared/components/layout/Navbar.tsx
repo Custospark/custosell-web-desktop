@@ -347,14 +347,13 @@ export function Navbar() {
               aria-label={`Account menu for ${user?.name ?? 'user'}`}
               className={cn(
                 iconBtn,
-                'gap-1.5 px-1 sm:px-1.5 h-11 w-11 sm:h-9 sm:w-auto sm:max-w-[11rem] md:max-w-[14rem]',
-                'ring-1 ring-blue-200 bg-white hover:ring-blue-300',
+                'gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 ring-blue-200 bg-white hover:ring-blue-300',
               )}
             >
               {user?.avatar ? (
-                <img src={avatarUrl(user.avatar)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-white" />
+                <img src={avatarUrl(user.avatar)} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 ring-2 ring-white" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0 ring-2 ring-white">
+                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0 ring-2 ring-white">
                   {initialsFromName(user?.name || 'U')}
                 </div>
               )}

@@ -57,7 +57,7 @@ export default function WishlistPage() {
       },
       product,
     );
-    showToast('success', `Added to ${biz.name} cart`);
+    showToast('success', `Added to ${biz.name} cart`, 5000, 'top-center');
   };
 
   if (!token) {

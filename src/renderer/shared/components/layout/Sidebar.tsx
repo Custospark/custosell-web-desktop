@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { version } from '../../../../../package.json';
 import {
   ChevronDown, ChevronRight, Mail, Phone, Headset, X,
 } from 'lucide-react';
@@ -100,7 +99,6 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         {!collapsed && (
           <div className="flex items-baseline gap-2 flex-1 min-w-0">
             <span className="text-lg font-bold text-blue-600">Custosell</span>
-            <span className="text-[11px] font-semibold text-black ml-1 hidden sm:inline">Version {version}</span>
           </div>
         )}
         <button

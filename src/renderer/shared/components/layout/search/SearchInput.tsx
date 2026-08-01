@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import { Command, Search, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '../../../utils/cn';
 
 interface SearchInputProps {
@@ -13,7 +14,8 @@ interface SearchInputProps {
 }
 
 /** Search input — the centrepiece of the command palette. Deliberately has no
- *  knowledge of routing or store state; purely controlled UI. */
+ *  knowledge of routing or store state; purely controlled UI. The animated
+ *  gradient border matches New Sale's product search bar. */
 export function SearchInput({
   value,
   onChange,
@@ -25,60 +27,64 @@ export function SearchInput({
 }: SearchInputProps) {
   return (
     <div className="relative p-4">
-      <div
-        className={cn(
-          'relative flex items-center overflow-hidden rounded-xl border bg-white transition-all',
-          isFocused
-            ? 'border-blue-500 ring-4 ring-blue-100'
-            : 'border-gray-200 ring-1 ring-gray-100',
-        )}
-      >
-        <Search
-          className={cn(
-            'pointer-events-none absolute left-4 h-5 w-5 flex-shrink-0 transition-colors',
-            isFocused ? 'text-blue-500' : 'text-gray-400',
-          )}
+      <div className="relative rounded-xl p-[2px]">
+        <motion.div
+          className="absolute inset-0 rounded-xl z-0"
+          style={{
+            background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)',
+            backgroundSize: '300% 100%',
+          }}
+          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+          transition={{ duration: isFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
         />
+        <div className="relative rounded-[10px] overflow-hidden bg-white">
+          <Search
+            className={cn(
+              'pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 flex-shrink-0 transition-colors',
+              isFocused ? 'text-blue-500' : 'text-gray-400',
+            )}
+          />
 
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          autoFocus
-          placeholder="Search anything…"
-          aria-label="Global navigation search"
-          aria-autocomplete="list"
-          className={cn(
-            'w-full bg-transparent py-4 pl-12 pr-32 text-[15px] text-gray-900',
-            'placeholder:text-sm placeholder:text-gray-400 focus:outline-none',
-          )}
-        />
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            autoFocus
+            placeholder="Search anything…"
+            aria-label="Global navigation search"
+            aria-autocomplete="list"
+            className={cn(
+              'w-full bg-transparent py-4 pl-12 pr-32 text-[15px] text-gray-900',
+              'placeholder:text-sm placeholder:text-gray-400 focus:outline-none',
+            )}
+          />
 
-        <div className="absolute right-3 flex items-center gap-2">
-          {value && resultCount > 0 && (
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-blue-600 ring-1 ring-blue-200">
-              {resultCount}
-            </span>
-          )}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {value && resultCount > 0 && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-blue-600 ring-1 ring-blue-200">
+                {resultCount}
+              </span>
+            )}
 
-          {value ? (
-            <button
-              type="button"
-              onClick={() => onChange('')}
-              aria-label="Clear search"
-              className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          ) : (
-            <div className="hidden select-none items-center gap-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-500 sm:flex">
-              <Command className="h-3 w-3" />
-              <span>K</span>
-            </div>
-          )}
+            {value ? (
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                aria-label="Clear search"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : (
+              <div className="hidden select-none items-center gap-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-500 sm:flex">
+                <Command className="h-3 w-3" />
+                <span>K</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

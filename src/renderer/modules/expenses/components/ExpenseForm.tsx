@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
 import { useBillableProjects } from '../../estimates/api/useProjectQueries';
 import { useFixedAssets } from '../../accounting/api/AccountingQueries';
+import { cn } from '../../../shared/utils/cn';
 import {
   Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat,
   FolderKanban, Package, Receipt, AlertCircle,
@@ -60,6 +61,12 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceInterval, setRecurrenceInterval] = useState('monthly');
   const [nextDueDate, setNextDueDate] = useState('');
+  const [errors, setErrors] = useState<{ amount?: string; description?: string; date?: string }>({});
+  const [attempted, setAttempted] = useState(false);
+
+  const amountRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   const isEditing = !!expense;
 
@@ -81,6 +88,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setRecurrenceInterval(expense.recurrence_interval || 'monthly');
         setNextDueDate(expense.next_due_date || '');
         setReceipt(null);
+        setErrors({});
+        setAttempted(false);
       } else {
         setCategoryId('');
         setProjectId('');
@@ -97,12 +106,36 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setRecurrenceInterval('monthly');
         setNextDueDate('');
         setReceipt(null);
+        setErrors({});
+        setAttempted(false);
       }
     });
   }, [expense, open]);
 
+  function validate(): { amount?: string; description?: string; date?: string } {
+    const next: { amount?: string; description?: string; date?: string } = {};
+    if (!amount.trim()) next.amount = 'Enter the expense amount.';
+    if (!description.trim()) next.description = 'Describe what the expense was for.';
+    if (!expenseDate) next.date = 'Pick the expense date.';
+    return next;
+  }
+
+  const clearError = (key: keyof typeof errors) => {
+    if (!errors[key]) return;
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
   const handleSubmit = () => {
-    if (!amount || !description || !expenseDate) return;
+    const nextErrors = validate();
+    setErrors(nextErrors);
+    if (Object.values(nextErrors).some(Boolean)) {
+      setAttempted(true);
+      if (nextErrors.amount) amountRef.current?.focus();
+      else if (nextErrors.date) dateRef.current?.focus();
+      else if (nextErrors.description) descriptionRef.current?.focus();
+      return;
+    }
+    setAttempted(false);
 
     const formData = new FormData();
     if (categoryId) formData.append('expense_category_id', categoryId);
@@ -135,7 +168,6 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const canSubmit = !!amount && !!description && !!expenseDate;
   const title = isEditing ? 'Edit Expense' : 'Record Expense';
   const subtitle = isEditing
     ? 'Update the expense details below.'
@@ -217,37 +249,55 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
                 <input
+                  ref={amountRef}
                   type="number" min={0} step="100"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  aria-invalid={!!errors.amount}
+                  onChange={(e) => { setAmount(e.target.value); clearError('amount'); }}
+                  className={cn(
+                    'w-full pl-11 pr-3 py-2.5 border-2 rounded-lg text-sm focus:outline-none',
+                    errors.amount ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
+                  )}
                   placeholder="0"
                 />
               </div>
+              {errors.amount && <p className="mt-1 text-xs font-medium text-red-600">{errors.amount}</p>}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Date *</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
+                  ref={dateRef}
                   type="date"
                   value={expenseDate}
-                  onChange={(e) => setExpenseDate(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  aria-invalid={!!errors.date}
+                  onChange={(e) => { setExpenseDate(e.target.value); clearError('date'); }}
+                  className={cn(
+                    'w-full pl-10 pr-3 py-2.5 border-2 rounded-lg text-sm focus:outline-none',
+                    errors.date ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
+                  )}
                 />
               </div>
+              {errors.date && <p className="mt-1 text-xs font-medium text-red-600">{errors.date}</p>}
             </div>
           </div>
         </FormSection>
 
         {/* Description */}
-        <FormSection icon={FileText} title="Description">
+        <FormSection icon={FileText} title="Description *">
           <textarea
+            ref={descriptionRef}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm min-h-[80px] focus:border-orange-400 focus:outline-none resize-none"
+            aria-invalid={!!errors.description}
+            onChange={(e) => { setDescription(e.target.value); clearError('description'); }}
+            className={cn(
+              'w-full px-3 py-2.5 border-2 rounded-lg text-sm min-h-[80px] focus:outline-none resize-none',
+              errors.description ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
+            )}
             placeholder="What was this expense for? e.g. Office supplies — printer toner and paper"
           />
+          {errors.description && <p className="mt-1 text-xs font-medium text-red-600">{errors.description}</p>}
         </FormSection>
 
         {/* Reference & Receipt */}
@@ -375,16 +425,27 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         </FormSection>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button
-            onClick={handleSubmit}
-            loading={isPending}
-            disabled={!canSubmit}
-          >
-            <Receipt className="h-4 w-4" />
-            {isEditing ? 'Update Expense' : 'Save Expense'}
-          </Button>
+        <div className="border-t border-gray-100 pt-4 space-y-3">
+          {attempted && Object.values(errors).some(Boolean) && (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2.5 text-sm text-red-700"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Fill in the highlighted required fields to save the expense.</span>
+            </div>
+          )}
+          <div className="flex items-center justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button
+              onClick={handleSubmit}
+              loading={isPending}
+              disabled={isPending}
+            >
+              <Receipt className="h-4 w-4" />
+              {isEditing ? 'Update Expense' : 'Save Expense'}
+            </Button>
+          </div>
         </div>
       </div>
     </Modal>

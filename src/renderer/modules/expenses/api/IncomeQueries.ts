@@ -55,7 +55,9 @@ export function useIncomeOverview() {
       const { data } = await axiosInstance.get<OverviewData>(`${EXPENSES}/overview`);
       return data;
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 }
 

@@ -252,6 +252,12 @@ export default function PlatformPayoutsPage() {
             <Table
               columns={[
                 {
+                  key: 'index', header: '#',
+                  render: (_r: PayableEntity, idx: number) => (
+                    <span className="text-sm text-gray-400">{idx + 1}</span>
+                  ),
+                },
+                {
                   key: 'name', header: 'Payee',
                   render: (r: PayableEntity) => (
                     <div>

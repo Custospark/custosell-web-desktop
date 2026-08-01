@@ -5,9 +5,10 @@ import { Modal } from '../../shared/components/modals/Modal';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
   Wallet, DollarSign, Mail, Check, Smartphone, Landmark,
-  Paperclip, X, FileText, Image, CalendarDays,
+  Paperclip, X, FileText, Image, Zap, CalendarClock,
 } from 'lucide-react';
-import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
+import { cn } from '../../shared/utils/cn';
+import { PipelineModalHero, PipelineFormSection, PipelineIconField, pipelineLabelClass } from '../pipeline/ui/pipelineFormFields';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
 interface Props {
@@ -119,23 +120,42 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
             </PipelineIconField>
           )}
 
-          <PipelineIconField label="When" icon={CalendarDays}>
-            <div className="flex gap-3 pt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={isImmediate} onChange={() => setIsImmediate(true)} className="accent-emerald-600" />
-                <span className="text-sm text-gray-700">Now</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={!isImmediate} onChange={() => setIsImmediate(false)} className="accent-emerald-600" />
-                <span className="text-sm text-gray-700">Schedule</span>
-              </label>
+          <div>
+            <label className={pipelineLabelClass}>When</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setIsImmediate(true)}
+                className={cn(
+                  'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors',
+                  isImmediate
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                )}
+              >
+                <Zap className="h-4 w-4" />
+                Now
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsImmediate(false)}
+                className={cn(
+                  'flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors',
+                  !isImmediate
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                )}
+              >
+                <CalendarClock className="h-4 w-4" />
+                Schedule
+              </button>
             </div>
             {!isImmediate && (
               <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)}
                 className="mt-2 w-full rounded-lg border border-gray-200 bg-white py-2.5 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             )}
-          </PipelineIconField>
+          </div>
 
           <PipelineIconField label="Notes" icon={Mail}>
             <textarea
@@ -147,7 +167,11 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
             />
           </PipelineIconField>
 
-          <PipelineIconField label="Attachments" icon={Paperclip}>
+          <div>
+            <label className={cn(pipelineLabelClass, 'flex items-center gap-1.5')}>
+              <Paperclip className="h-4 w-4 text-gray-400" />
+              Attachments
+            </label>
             <input
               ref={fileInputRef}
               type="file"
@@ -159,24 +183,29 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
               }}
               className="hidden"
             />
-            <div className="flex flex-wrap gap-2">
-              {files.map((f, i) => (
-                <div key={i} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-700">
-                  {f.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
-                  <span className="max-w-32 truncate">{f.name}</span>
-                  <button type="button" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/50 p-3">
+              {files.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700">
+                      {f.type.startsWith('image/') ? <Image className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                      <span className="max-w-32 truncate">{f.name}</span>
+                      <button type="button" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
               {files.length < 5 && (
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600">
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2.5 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600">
                   + Add file
                 </button>
               )}
+              <p className="mt-2 text-center text-xs text-gray-400">Images or PDFs, max 5MB each (up to 5 files)</p>
             </div>
-            <p className="mt-1 text-xs text-gray-400">Images or PDFs, max 5MB each (up to 5 files)</p>
-          </PipelineIconField>
+          </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>

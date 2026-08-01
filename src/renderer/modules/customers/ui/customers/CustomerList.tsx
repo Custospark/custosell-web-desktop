@@ -13,10 +13,12 @@ import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
-import CustomerFormDrawer from './CustomerFormDrawer';
+import CustomerFormModal from './CustomerFormModal';
 import CustomerPurchaseModal from './CustomerPurchaseModal';
 import { displayCustomerPhone } from '../../../../shared/utils/customerContactUtils';
 import { Plus, Users, Pencil, Trash, ShoppingBag, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
@@ -30,7 +32,7 @@ export default function CustomerList() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<CustomerWithSyncMeta | null>(null);
   const [modalCustomerId, setModalCustomerId] = useState<number | null>(null);
   const [modalCustomerName, setModalCustomerName] = useState('');
@@ -48,8 +50,8 @@ export default function CustomerList() {
 
   const paginated = usePagination(filtered, 10);
 
-  const openCreate = () => { setEditingCustomer(null); setDrawerOpen(true); };
-  const openEdit = (c: CustomerWithSyncMeta) => { setEditingCustomer(c); setDrawerOpen(true); };
+  const openCreate = () => { setEditingCustomer(null); setFormOpen(true); };
+  const openEdit = (c: CustomerWithSyncMeta) => { setEditingCustomer(c); setFormOpen(true); };
 
   const openPurchases = (customer: CustomerWithSyncMeta) => {
     setModalCustomerId(customer.id);
@@ -130,9 +132,9 @@ export default function CustomerList() {
         />
       </Card>
 
-      <CustomerFormDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+      <CustomerFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
         customer={editingCustomer}
       />
 

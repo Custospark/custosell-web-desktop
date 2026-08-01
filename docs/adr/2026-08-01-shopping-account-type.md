@@ -35,6 +35,13 @@ Shopping accounts must never reach the main app shell/sidebar. Removed/guarded e
 
 Backend (ADR-024 in `Backend/docs/decisions.md`) preserves the `storefront_buyer` type, returns `active_plans: []`, re-classifies legacy `personal + null business_id` users, and adds Shopping FAQ/welcome copy.
 
+### Always-fresh Discover catalogs (2026-08-01)
+
+Products & Services and Businesses pages must never show stale cached data. `useStorefrontDiscoverInfinite`, `useStorefrontShopsInfinite`, and `useStorefrontCategories` were 10-min/60s `staleTime` with `refetchOnWindowFocus: false` — a shop's listing/stock change stayed stale for the whole window. Now:
+- `staleTime: 0` (never treated as fresh), `refetchOnMount: 'always'`, `refetchOnWindowFocus: 'always'` — every visit/refocus refetches.
+- `refetchInterval: 60s` while the Discover page is open keeps an idle tab current (pauses in background).
+- `prefetchStorefrontCatalogs` warm-cache uses the same `staleTime: 0`, so the prefetch never masks a stale read.
+
 ## Consequences
 
 - Shopping accounts never see a dashboard, plans, billing, or workspace in the UI.

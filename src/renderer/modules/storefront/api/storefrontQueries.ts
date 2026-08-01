@@ -15,8 +15,12 @@ import { optimisticallyRemoveWishlistProducts } from './wishlistQueries';
 export { storefrontKeys };
 export { useRateStorefrontProduct, useRateStorefrontShop } from './storefrontRatingQueries';
 
-const CATALOG_STALE_MS = 10 * 60_000;
+// Always-fresh catalogs: Products & Services and Businesses must never show stale
+// cache. staleTime 0 → every mount/focus refetches; a 60s interval keeps the open
+// Discover page current without waiting for a refocus.
+const CATALOG_STALE_MS = 0;
 const CATALOG_GC_MS = 60 * 60_000;
+const CATALOG_REFRESH_MS = 60_000;
 
 type PageMeta = {
   total?: number;
@@ -102,11 +106,13 @@ export function useStorefrontShopsInfinite(q = '') {
     initialPageParam: 1,
     queryFn: ({ pageParam }) => fetchShopsPage(pageParam, query),
     getNextPageParam: (last) => nextPage(last.meta),
-    staleTime: query ? 30_000 : CATALOG_STALE_MS,
+    staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
     retry: 2,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: CATALOG_REFRESH_MS,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -120,8 +126,10 @@ export function useStorefrontDiscoverInfinite(category = '') {
     staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
     retry: 2,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: CATALOG_REFRESH_MS,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -217,7 +225,9 @@ export function useStorefrontCategories() {
       const { data } = await axiosInstance.get(STOREFRONT.CATEGORIES);
       return unwrapList<StorefrontCategory>(data);
     },
-    staleTime: 60_000,
+    staleTime: CATALOG_STALE_MS,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 }
 

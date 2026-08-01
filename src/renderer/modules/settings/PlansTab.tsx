@@ -97,7 +97,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       .sort(([a], [b]) => {
         const countA = planList.filter((p) => p.features?.[a] === true).length;
         const countB = planList.filter((p) => p.features?.[b] === true).length;
-        return countA - countB;
+        return countB - countA;
       });
   }, [comparisonPlans, sortedPlans]);
 

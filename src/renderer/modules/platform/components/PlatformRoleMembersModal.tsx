@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { Shield, Users, UserPlus, UserMinus, Search, Mail } from 'lucide-react';
 import type { PlatformRole, PlatformUser } from '../api/PlatformTypes';
 import { useBulkAssignPlatformRoles, usePlatformRoleMembers, usePlatformUsers } from '../api/PlatformUserQueries';
@@ -35,6 +36,7 @@ export function PlatformRoleMembersModal({ open, role, onClose }: PlatformRoleMe
   );
 
   const assignMutation = useBulkAssignPlatformRoles();
+  const { confirm } = useConfirm();
   const isPending = assignMutation.isPending;
 
   const members = useMemo(() => membersPage?.data ?? [], [membersPage?.data]);
@@ -55,8 +57,16 @@ export function PlatformRoleMembersModal({ open, role, onClose }: PlatformRoleMe
     assignMutation.mutate({ ids: [user.id], role: roleName, action: 'assign' });
   };
 
-  const remove = (user: PlatformUser) => {
-    assignMutation.mutate({ ids: [user.id], role: roleName, action: 'revoke' });
+  const remove = async (user: PlatformUser) => {
+    const confirmed = await confirm({
+      title: `Remove ${user.name}?`,
+      message: `They will lose the "${roleName}" role and its platform access.`,
+      confirmText: 'Remove',
+      variant: 'danger',
+    });
+    if (confirmed) {
+      assignMutation.mutate({ ids: [user.id], role: roleName, action: 'revoke' });
+    }
   };
 
   return (

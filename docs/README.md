@@ -148,6 +148,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-01-product-modal-inline-add-category.md](./adr/2026-08-01-product-modal-inline-add-category.md) | Inline "Add Category" in product modal; category drawer converted to standard modal |
 | [2026-08-01-product-listing-bulk-and-row-actions.md](./adr/2026-08-01-product-listing-bulk-and-row-actions.md) | Product bulk List/Unlist actions (shop + supply) and per-row Actions menu |
 | [2026-08-01-product-list-supply-filter-and-dropdown-fix.md](./adr/2026-08-01-product-list-supply-filter-and-dropdown-fix.md) | Supply listing filter + badge, responsive bulk bar, un-clipped row actions menu |
+| [2026-08-01-stock-adjust-modal.md](./adr/2026-08-01-stock-adjust-modal.md) | Stock adjust converted from slide drawer to standard centered modal |
 
 ## Modules
 

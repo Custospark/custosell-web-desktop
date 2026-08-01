@@ -22,7 +22,7 @@ export function useSearchFilter(query: string) {
         return;
       }
       const results = accessibleItems
-        .filter((m) => [m.label, m.group, ...m.keywords].join(' ').toLowerCase().includes(term))
+        .filter((m) => [m.label, m.group, m.description, ...m.keywords].join(' ').toLowerCase().includes(term))
         .slice(0, MAX_RESULTS);
       setFilteredResults(results);
     }, DEBOUNCE_MS);

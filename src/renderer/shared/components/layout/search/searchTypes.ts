@@ -4,6 +4,7 @@ import type { AuthUser } from '../../../../app/store/slices/authSlice';
 export interface SearchableNavItem {
   id: string;
   label: string;
+  description: string;
   route: string;
   /** Sidebar module (group) this item belongs to. */
   group: string;

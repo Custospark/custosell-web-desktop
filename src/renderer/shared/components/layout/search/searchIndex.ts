@@ -3,6 +3,7 @@ import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { getPlanAccessibleModules } from '../../../utils/moduleAccess';
 import { resolveAccessibleNavGroups } from '../resolveAccessibleNavLeaves';
 import type { SidebarNavGroup } from '../sidebarNavGroups';
+import { describeNavItem } from './searchDescriptions';
 import type { SearchableNavItem } from './searchTypes';
 
 /** One entry per sidebar module (group) — routes to the module's first page. */
@@ -13,6 +14,7 @@ function groupEntries(group: SidebarNavGroup): SearchableNavItem[] {
     {
       id: `group:${group.label}`,
       label: group.label,
+      description: describeNavItem(first.to, group.label, group.label),
       route: first.to,
       group: group.label,
       keywords: [group.label, ...group.subItems.map((s) => s.label)],
@@ -25,6 +27,7 @@ function subItemEntries(group: SidebarNavGroup): SearchableNavItem[] {
   return group.subItems.map((sub) => ({
     id: `${group.label}:${sub.label}`,
     label: sub.label,
+    description: describeNavItem(sub.to, sub.label, group.label),
     route: sub.to,
     group: group.label,
     keywords: [sub.label, group.label, ...sub.to.split('/').filter(Boolean)],

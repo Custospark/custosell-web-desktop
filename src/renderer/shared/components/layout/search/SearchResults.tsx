@@ -185,6 +185,7 @@ export function SearchResults({
                         </span>
                         <span className={groupChip}>{m.group}</span>
                       </div>
+                      <p className="truncate text-xs text-gray-400">{m.description}</p>
                     </div>
                     <ArrowRight className="h-4 w-4 flex-shrink-0 self-center text-gray-400 opacity-0 transition-opacity group-hover:opacity-100" />
                   </motion.button>
@@ -258,7 +259,7 @@ export function SearchResults({
                   />
                   <span className={groupChip}>{m.group}</span>
                 </div>
-                <HighlightMatch text={m.route} query={query} className="truncate text-xs text-gray-400" />
+                <HighlightMatch text={m.description} query={query} className="truncate text-xs text-gray-400" />
               </div>
             </motion.button>
           );

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, Package } from 'lucide-react';
+import { ClipboardList, Package, Plus } from 'lucide-react';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useOpenOrders } from '../../../modules/sales/api/orders/useOrderQueries';
@@ -32,6 +32,17 @@ export function HeaderQuickNav() {
 
   return (
     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" data-tour="navbar-quick">
+      {canSales && (
+        <NavLink
+          to={ROUTES.SALES.NEW}
+          title="New Sale"
+          aria-label="New Sale"
+          className={navLinkClass}
+        >
+          <Plus className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="hidden xl:inline truncate">New Sale</span>
+        </NavLink>
+      )}
       {canSales && (
         <NavLink
           to={ROUTES.SALES.ORDERS}

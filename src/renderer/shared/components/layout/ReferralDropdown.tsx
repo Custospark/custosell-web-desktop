@@ -118,7 +118,7 @@ export default function ReferralDropdown() {
         className={cn(
           'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
           'text-xs lg:text-sm',
-          open ? 'bg-gray-100 ring-gray-300' : 'bg-white ring-gray-200 hover:bg-gray-50',
+          open ? 'bg-indigo-50 ring-indigo-300' : 'bg-white ring-indigo-200 hover:bg-indigo-50/60 hover:ring-indigo-300',
         )}
         title={hasReferralCode ? `Referral code: ${code}` : 'Referral Program'}
         aria-label="Referral Program"

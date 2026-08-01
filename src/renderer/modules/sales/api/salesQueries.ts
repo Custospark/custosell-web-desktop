@@ -374,8 +374,8 @@ export function useCreateSale() {
       }
 
       try {
-        const res = await axiosInstance.post('/sales', payload);
-        return res.data as SaleWithSyncMeta;
+        const { data } = await axiosInstance.post<{ data: SaleWithSyncMeta }>('/sales', payload);
+        return data.data;
       } catch (err: unknown) {
         if (shouldCompleteSaleLocally()) {
           return completeOfflineSaleInstant(payload);

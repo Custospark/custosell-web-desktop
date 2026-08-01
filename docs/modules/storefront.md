@@ -10,7 +10,7 @@ Same path for public visitors and logged-in users (Discover shell):
 2. **Products** strip / tab → progressive cross-shop products (`DiscoverProductsBrowse`); compact tiles; client-side search.
 3. Catalogs stay **warm in React Query** (prefetch + layout warmup, 10 min stale / 1 h gc) so Shops ↔ Products and return-from-shop feel instant.
 4. Open a shop → compact product grid + Add to that shop’s bag.
-5. **Cart** hub → one bag per business; submit one bag at a time. Logged-in buyers auto-fill name/phone from profile.
+5. **Cart** hub → one bag per business; submit one bag at a time. When signed in, the account **name/phone win** for the delivery identity on submit (account → bag → saved contact), unless the shopper explicitly edited the contact this session — then their typed values win. Pre-fill also writes the account identity to the bag and the shared `buyerContact` so reorders prefill.
 6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned. **Eye** opens line items (PO/IO-style). After a shop completes/invoices the sale, buyers open **Receipt** / **Invoice** via sparse icon actions (Sales History style). Receipt preview uses the same primary **Download PDF** / **Print** footer as Sale completed, with Share under More. Receipt and invoice letterheads show the **shop business name** (not Custosell); invoice **View/Download PDF** uses `GET /storefront/my-orders/{id}/invoice/pdf` — see ADR [storefront-buyer-doc-letterhead](../adr/2026-07-12-storefront-buyer-doc-letterhead.md). Payment receipts remain on the invoice modal’s Receipts tab.
 7. **Delivery contact** → Name/phone saved to `custosell.storefront.buyerContact.v1` and to the buyer `User.phone` on place-order so reorders prefill; still editable in the delivery modal.
 7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order — no business setup. They become that shop’s customer on order.
@@ -26,6 +26,8 @@ Strip label stays **Shops** (never the open shop’s name). While on `/discover/
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
 Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). Last delivery name/phone persists separately (`custosell.storefront.buyerContact.v1`) so clearing a bag after place-order does not force re-entry. See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md) and [storefront-buyer-phone-and-order-eye](../adr/2026-07-12-storefront-buyer-phone-and-order-eye.md).
+
+Add-to-cart and cart-hub toasts render **top-center** so the right-side cart sheet/dock never hides them. Product/service tiles were compacted (~30%) and the Products / shop grids densified for more items per row. Header **Open Orders** / **Products** quick-nav tabs glow (blue→indigo→violet gradient) when active, and the open-orders count badge pulses.
 
 ## App module (logged-in)
 

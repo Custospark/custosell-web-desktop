@@ -34,7 +34,7 @@ export function SearchBar() {
       )}
     >
       <Search className="h-4 w-4 shrink-0" aria-hidden />
-      <span className="flex-1 truncate text-left">Search for anything you want..</span>
+      <span className="flex-1 truncate text-left">Search for anything you need…</span>
       <span className="hidden shrink-0 items-center gap-1 rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[10px] text-gray-400 sm:inline-flex">
         {isMac ? '⌘' : 'Ctrl'}
         <span className="font-bold">K</span>

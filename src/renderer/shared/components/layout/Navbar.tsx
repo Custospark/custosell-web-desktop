@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { isBusinessOwner } from '../../utils/moduleAccess';
+import { canUseGlobalSearch } from './search/searchTypes';
 
 const NETWORK_STATUS_THEME = {
   online: {
@@ -167,6 +168,8 @@ export function Navbar() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null!);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: ACCOUNT_MENU_WIDTH_PX });
+  /** Workspace accounts (personal/business) get connectivity/orders/notifications in the search top bar. */
+  const isWorkspace = canUseGlobalSearch(user);
   /** Match Layout / ProductTour `lg` (1024) — hamburger + logo stay out of the DOM on mobile. */
   const isDesktopChrome = useSyncExternalStore(
     subscribeLgBreakpoint,
@@ -311,22 +314,23 @@ export function Navbar() {
         </div>
 
         <div className="flex flex-1 items-center justify-between gap-1 sm:gap-1.5 lg:flex-initial lg:justify-end shrink-0 min-w-0">
-          <HeaderQuickNav />
+          {!isWorkspace && <HeaderQuickNav />}
 
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <SyncHeaderChip />
-            <span className="hidden lg:inline-flex items-center">
-              <NavbarNetworkStatus
-                systemStatus={systemStatus}
-                latency={latency}
-                onRetry={retryConnection}
-              />
-            </span>
+            {!isWorkspace && (
+              <span className="hidden lg:inline-flex items-center">
+                <NavbarNetworkStatus
+                  systemStatus={systemStatus}
+                  latency={latency}
+                  onRetry={retryConnection}
+                />
+              </span>
+            )}
+            <span className="hidden lg:block w-px h-5 bg-gray-200 shrink-0" aria-hidden />
           </div>
 
-          <span className="hidden lg:block w-px h-5 bg-gray-200 shrink-0" aria-hidden />
-
-          <HeaderNotifications />
+          {!isWorkspace && <HeaderNotifications />}
 
           <div data-tour="navbar-referral"><ReferralDropdown /></div>
 

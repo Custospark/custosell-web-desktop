@@ -1,16 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ShoppingCart, Store, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../../app/contexts/useToast';
 import { store } from '../../../app/store/store';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
-import { setUser } from '../../../app/store/slices/authSlice';
+import { setUser, type AuthUser } from '../../../app/store/slices/authSlice';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
 import { storefrontKeys, usePlaceStorefrontOrder } from '../api/storefrontQueries';
-import { loadBuyerContact, saveBuyerContact } from '../cart/storefrontBuyerContactStorage';
+import {
+  loadBuyerContact,
+  saveBuyerContact,
+  type StorefrontBuyerContact,
+} from '../cart/storefrontBuyerContactStorage';
 import { useStorefrontMultiCart } from '../cart/storefrontMultiCartContext';
+import {
+  type StorefrontBagContactPatch,
+  type StorefrontCartBag,
+} from '../cart/storefrontCartTypes';
 import { StorefrontBagCheckout } from './StorefrontBagCheckout';
 import { StorefrontLoginDialog } from './StorefrontLoginDialog';
 
@@ -19,6 +27,41 @@ interface StorefrontCartHubProps {
   onClose: () => void;
   variant?: 'dock' | 'sheet';
   className?: string;
+}
+
+type StorefrontIdentity = {
+  customer_name: string;
+  customer_phone: string;
+};
+
+function accountIdentity(user: AuthUser | null | undefined): StorefrontIdentity {
+  return {
+    customer_name: user?.name?.trim() || '',
+    customer_phone: user?.phone?.trim() || '',
+  };
+}
+
+/**
+ * Delivery identity priority:
+ * - preferAccount (signed-in, not edited this session): account wins → bag → saved.
+ * - otherwise (guest or explicit edit): bag wins → account → saved.
+ */
+function resolveIdentity(opts: {
+  bag: Pick<StorefrontCartBag, 'customer_name' | 'customer_phone'>;
+  saved: Pick<StorefrontBuyerContact, 'customer_name' | 'customer_phone'>;
+  account: StorefrontIdentity;
+  preferAccount: boolean;
+}): StorefrontIdentity {
+  const { bag, saved, account, preferAccount } = opts;
+  return preferAccount
+    ? {
+        customer_name: account.customer_name || bag.customer_name.trim() || saved.customer_name,
+        customer_phone: account.customer_phone || bag.customer_phone.trim() || saved.customer_phone,
+      }
+    : {
+        customer_name: bag.customer_name.trim() || account.customer_name || saved.customer_name,
+        customer_phone: bag.customer_phone.trim() || account.customer_phone || saved.customer_phone,
+      };
 }
 
 /**
@@ -50,6 +93,12 @@ export function StorefrontCartHub({
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [pendingSlug, setPendingSlug] = useState<string | null>(null);
+  const userEditedSlugs = useRef<Set<string>>(new Set());
+
+  const handleContactChange = useCallback((slug: string, patch: StorefrontBagContactPatch) => {
+    userEditedSlugs.current.add(slug);
+    setBagContact(slug, patch);
+  }, [setBagContact]);
 
   const selected = useMemo(() => {
     if (bags.length === 0) return null;
@@ -81,20 +130,27 @@ export function StorefrontCartHub({
     const auth = store.getState().auth;
     let bag = getBag(slug);
     if (!bag || bag.items.length === 0) {
-      showToast('error', 'Add at least one product');
+      showToast('error', 'Add at least one product', 5000, 'top-center');
       return;
     }
 
     const saved = loadBuyerContact();
-    const name = bag.customer_name.trim() || saved.customer_name || auth.user?.name?.trim() || '';
-    const phone = bag.customer_phone.trim() || saved.customer_phone || auth.user?.phone?.trim() || '';
+    const preferAccount = Boolean(auth.token) && !userEditedSlugs.current.has(slug);
+    const identity = resolveIdentity({
+      bag,
+      saved,
+      account: accountIdentity(auth.user),
+      preferAccount,
+    });
+    const name = identity.customer_name;
+    const phone = identity.customer_phone;
     if (name !== bag.customer_name || phone !== bag.customer_phone) {
       setBagContact(slug, { customer_name: name, customer_phone: phone });
       bag = { ...bag, customer_name: name, customer_phone: phone };
     }
 
     if (!bag.customer_name.trim() || !bag.customer_phone.trim()) {
-      showToast('error', 'Enter your name and phone so the shop can reach you');
+      showToast('error', 'Enter your name and phone so the shop can reach you', 5000, 'top-center');
       return;
     }
 
@@ -135,13 +191,13 @@ export function StorefrontCartHub({
             setActiveSlug(next?.shop.slug ?? null);
           }
           void queryClient.invalidateQueries({ queryKey: storefrontKeys.all });
-          showToast('success', res.message || `Order ${res.order_number} sent`);
+          showToast('success', res.message || `Order ${res.order_number} sent`, 5000, 'top-center');
           setPendingSlug(null);
         },
         onError: (err: unknown) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           if (status === 429) {
-            showToast('error', 'Too many orders — try again in a minute');
+            showToast('error', 'Too many orders — try again in a minute', 5000, 'top-center');
             return;
           }
           if (status === 401) {
@@ -152,30 +208,29 @@ export function StorefrontCartHub({
           const msg = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })
             ?.response?.data;
           const first = msg?.errors ? Object.values(msg.errors).flat()[0] : msg?.message;
-          showToast('error', first || 'Could not place order');
+          showToast('error', first || 'Could not place order', 5000, 'top-center');
         },
       },
     );
   };
 
-  // Prefer bag → last saved contact → profile. Never wipe a typed phone with an empty profile.
+  // Signed-in account identity wins over saved contact; explicit edits this session still win.
   useEffect(() => {
     if (!open || bags.length === 0) return;
     const saved = loadBuyerContact();
     for (const bag of bags) {
-      const name = bag.customer_name.trim()
-        || saved.customer_name
-        || user?.name?.trim()
-        || '';
-      const phone = bag.customer_phone.trim()
-        || saved.customer_phone
-        || user?.phone?.trim()
-        || '';
-      if (!name && !phone) continue;
-      if (name === bag.customer_name && phone === bag.customer_phone) continue;
+      const preferAccount = Boolean(token) && !userEditedSlugs.current.has(bag.shop.slug);
+      const identity = resolveIdentity({
+        bag,
+        saved,
+        account: accountIdentity(user),
+        preferAccount,
+      });
+      if (!identity.customer_name && !identity.customer_phone) continue;
+      if (identity.customer_name === bag.customer_name && identity.customer_phone === bag.customer_phone) continue;
       setBagContact(bag.shop.slug, {
-        customer_name: name,
-        customer_phone: phone,
+        customer_name: identity.customer_name,
+        customer_phone: identity.customer_phone,
       });
     }
   }, [open, token, user, bags, setBagContact]);
@@ -290,7 +345,7 @@ export function StorefrontCartHub({
               signedIn={Boolean(token)}
               onUpdateQty={updateQty}
               onRemoveLine={removeLine}
-              onContactChange={setBagContact}
+              onContactChange={handleContactChange}
               onSubmit={() => placeBag(selected.shop.slug)}
               onClose={onClose}
             />

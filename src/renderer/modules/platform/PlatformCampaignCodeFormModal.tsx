@@ -1,6 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
-import { X, Shuffle } from 'lucide-react';
+import {
+  PipelineFormSection,
+  PipelineIconField,
+  PipelineModalHero,
+  pipelineInputClass,
+  pipelineSelectClass,
+} from '../pipeline/ui/pipelineFormFields';
+import {
+  Tag, KeyRound, Percent, BadgePercent, CalendarDays, Timer, Repeat, CalendarClock, Shuffle, Check, Power,
+} from 'lucide-react';
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function generateCode(): string {
@@ -41,13 +51,26 @@ const EMPTY_FORM: CampaignCodeFormData = {
 export default function PlatformCampaignCodeFormModal({
   isOpen, onClose, onSubmit, isPending, initial, title,
 }: PlatformCampaignCodeFormModalProps) {
+  const isEditing = !!initial;
   const [form, setForm] = useState<CampaignCodeFormData>(() => initial ?? EMPTY_FORM);
+  const wasOpen = useRef(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && !wasOpen.current) {
+      queueMicrotask(() => setForm(initial ?? EMPTY_FORM));
+    }
+    wasOpen.current = isOpen;
+  }, [isOpen, initial]);
 
   const set = (patch: Partial<CampaignCodeFormData>) => setForm((prev) => ({ ...prev, ...patch }));
 
-  const handleSubmit = () => {
+  const handleClose = () => {
+    if (isPending) return;
+    onClose();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const payload: Record<string, unknown> = {
       code: form.code,
       owner_type: 'campaign',
@@ -67,20 +90,23 @@ export default function PlatformCampaignCodeFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">{title ?? 'Create Campaign Code'}</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={title ?? 'Create Campaign Code'}
+      subtitle={isEditing ? 'Update the discount code details' : 'Create a promo code to reward campaigns'}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <PipelineModalHero
+          icon={Tag}
+          tone="blue"
+          title={isEditing ? 'Update campaign code' : 'New campaign code'}
+          description={isEditing ? 'Edit the details of this promotional code' : 'Create a promo code to offer a discount'}
+        />
 
-        <div className="p-6 space-y-6">
-
-          {/* Code */}
-          <fieldset>
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Code</legend>
+        <PipelineFormSection title="Campaign code" icon={Tag}>
+          <PipelineIconField label="Code" icon={KeyRound} required hint="Uppercase letters and numbers">
             <div className="flex gap-2">
               <input
                 autoFocus
@@ -88,117 +114,107 @@ export default function PlatformCampaignCodeFormModal({
                 value={form.code}
                 onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
                 placeholder="e.g. FESTIVE20"
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={pipelineInputClass}
+                required
               />
               <button
                 type="button"
                 onClick={() => set({ code: generateCode() })}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 cursor-pointer shrink-0"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 cursor-pointer"
               >
                 <Shuffle className="h-3.5 w-3.5" />
                 Generate
               </button>
             </div>
-          </fieldset>
+          </PipelineIconField>
+        </PipelineFormSection>
 
-          {/* Discount */}
-          <fieldset>
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Discount</legend>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
-                <select
-                  value={form.discount_type}
-                  onChange={(e) => set({ discount_type: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="flat_amount">Flat Amount ($)</option>
-                  <option value="free_month">Free Month</option>
-                </select>
-              </div>
-              {form.discount_type !== 'free_month' && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Value</label>
-                  <input
-                    type="number"
-                    value={form.discount_value}
-                    onChange={(e) => set({ discount_value: e.target.value })}
-                    placeholder={form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 10.00'}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    min="0"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Duration (months)</label>
+        <PipelineFormSection title="Discount" icon={Percent}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <PipelineIconField label="Type" icon={Percent} required>
+              <select value={form.discount_type} onChange={(e) => set({ discount_type: e.target.value })} className={pipelineSelectClass}>
+                <option value="percentage">Percentage (%)</option>
+                <option value="flat_amount">Flat Amount ($)</option>
+                <option value="free_month">Free Month</option>
+              </select>
+            </PipelineIconField>
+            {form.discount_type !== 'free_month' && (
+              <PipelineIconField label="Value" icon={BadgePercent} required>
                 <input
                   type="number"
-                  value={form.discount_duration_months}
-                  onChange={(e) => set({ discount_duration_months: e.target.value })}
-                  placeholder="e.g. 1"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  min="1"
-                  max="12"
+                  value={form.discount_value}
+                  onChange={(e) => set({ discount_value: e.target.value })}
+                  placeholder={form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 10.00'}
+                  className={pipelineInputClass}
+                  min="0"
+                  required
                 />
-              </div>
-            </div>
-          </fieldset>
+              </PipelineIconField>
+            )}
+            <PipelineIconField label="Duration (months)" icon={CalendarDays} hint="How long the discount lasts after redemption">
+              <input
+                type="number"
+                value={form.discount_duration_months}
+                onChange={(e) => set({ discount_duration_months: e.target.value })}
+                placeholder="e.g. 1"
+                className={pipelineInputClass}
+                min="1"
+                max="12"
+              />
+            </PipelineIconField>
+          </div>
+        </PipelineFormSection>
 
-          {/* Limits */}
-          <fieldset>
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Limits &amp; Expiry</legend>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Max uses</label>
-                <input
-                  type="number"
-                  value={form.max_uses}
-                  onChange={(e) => set({ max_uses: e.target.value })}
-                  placeholder="Unlimited"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  min="1"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Expires at</label>
-                <input
-                  type="datetime-local"
-                  value={form.expires_at}
-                  onChange={(e) => set({ expires_at: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-          </fieldset>
+        <PipelineFormSection title="Limits & Expiry" icon={Timer}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <PipelineIconField label="Max uses" icon={Repeat} hint="Leave blank for unlimited">
+              <input
+                type="number"
+                value={form.max_uses}
+                onChange={(e) => set({ max_uses: e.target.value })}
+                placeholder="Unlimited"
+                className={pipelineInputClass}
+                min="1"
+              />
+            </PipelineIconField>
+            <PipelineIconField label="Expires at" icon={CalendarClock}>
+              <input
+                type="datetime-local"
+                value={form.expires_at}
+                onChange={(e) => set({ expires_at: e.target.value })}
+                className={pipelineInputClass}
+              />
+            </PipelineIconField>
+          </div>
+        </PipelineFormSection>
 
-          {/* Status */}
-          {initial && (
-            <fieldset>
-              <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Status</legend>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={form.is_active}
-                  onClick={() => set({ is_active: !form.is_active })}
-                  className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${form.is_active ? 'bg-green-500' : 'bg-gray-300'}`}
-                >
-                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${form.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
-                </button>
-                <span className="text-sm text-gray-700">{form.is_active ? 'Active' : 'Inactive'}</span>
-              </label>
-            </fieldset>
-          )}
-        </div>
+        {isEditing && (
+          <PipelineFormSection title="Status" icon={Power}>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.is_active}
+                onClick={() => set({ is_active: !form.is_active })}
+                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${form.is_active ? 'bg-green-500' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${form.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
+              </button>
+              <span className="text-sm text-gray-700">{form.is_active ? 'Active' : 'Inactive'}</span>
+            </label>
+          </PipelineFormSection>
+        )}
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="button" onClick={handleSubmit} loading={isPending}>
-            {initial ? 'Save Changes' : 'Create Code'}
+        <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+          <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={isPending}>
+            <Check className="h-4 w-4" />
+            {isEditing ? 'Save Changes' : 'Create Code'}
           </Button>
         </div>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }

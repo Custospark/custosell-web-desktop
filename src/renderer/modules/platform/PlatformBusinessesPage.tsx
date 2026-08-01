@@ -226,6 +226,7 @@ export default function PlatformBusinessesPage() {
   return (
     <div className="space-y-6">
       <PlatformBusinessStatusModal
+        key={statusTargets ? `status-${statusTargets.map((b) => b.id).join(',')}` : 'status-closed'}
         open={statusTargets !== null}
         businesses={statusTargets ?? []}
         isPending={updateStatus.isPending || bulkUpdateStatus.isPending}
@@ -233,6 +234,7 @@ export default function PlatformBusinessesPage() {
         onConfirm={handleStatusConfirm}
       />
       <PlatformBusinessNotificationModal
+        key={notifyTargets ? `notify-${notifyTargets.map((b) => b.id).join(',')}` : 'notify-closed'}
         open={notifyTargets !== null}
         businesses={notifyTargets ?? []}
         isPending={notifyBusinesses.isPending}
@@ -240,6 +242,7 @@ export default function PlatformBusinessesPage() {
         onConfirm={handleNotifyConfirm}
       />
       <PlatformBusinessDeleteModal
+        key={deleteTargets ? `delete-${deleteTargets.map((b) => b.id).join(',')}` : 'delete-closed'}
         open={deleteTargets !== null}
         businesses={deleteTargets ?? []}
         isPending={deleteBusiness.isPending || bulkDelete.isPending}
@@ -247,7 +250,7 @@ export default function PlatformBusinessesPage() {
         onConfirm={handleDeleteConfirm}
       />
       <PlatformBusinessResetModal
-        key={resetTargets ? resetTargets.map((b) => b.id).join(',') : 'closed'}
+        key={resetTargets ? `reset-${resetTargets.map((b) => b.id).join(',')}` : 'reset-closed'}
         open={resetTargets !== null}
         businesses={resetTargets ?? []}
         isPending={resetBusinessData.isPending}

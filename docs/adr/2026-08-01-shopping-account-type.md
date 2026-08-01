@@ -37,7 +37,7 @@ Backend (ADR-024 in `Backend/docs/decisions.md`) preserves the `storefront_buyer
 
 ### Always-fresh Discover catalogs (2026-08-01)
 
-Products & Services and Businesses pages must never show stale cached data. `useStorefrontDiscoverInfinite`, `useStorefrontShopsInfinite`, and `useStorefrontCategories` were 10-min/60s `staleTime` with `refetchOnWindowFocus: false` — a shop's listing/stock change stayed stale for the whole window. Now:
+Products & Services and Businesses pages must never show stale cached data. `useStorefrontDiscoverInfinite`, `useStorefrontShopsInfinite`, and `useStorefrontCategories` were 10-min/60s `staleTime` with `refetchOnWindowFocus: false` — a shop's listing/stock change stayed stale for the whole window. The clicked business page (`useStorefrontShop` 15s / `useStorefrontShopProducts` 60s) had the same stale-read risk. Now all of them:
 - `staleTime: 0` (never treated as fresh), `refetchOnMount: 'always'`, `refetchOnWindowFocus: 'always'` — every visit/refocus refetches.
 - `refetchInterval: 60s` while the Discover page is open keeps an idle tab current (pauses in background).
 - `prefetchStorefrontCatalogs` warm-cache uses the same `staleTime: 0`, so the prefetch never masks a stale read.

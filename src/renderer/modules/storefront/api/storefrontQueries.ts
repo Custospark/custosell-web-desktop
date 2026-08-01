@@ -240,7 +240,11 @@ export function useStorefrontShop(slug: string) {
     },
     enabled: Boolean(slug),
     retry: 1,
-    staleTime: 15_000,
+    staleTime: CATALOG_STALE_MS,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: CATALOG_REFRESH_MS,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -257,7 +261,11 @@ export function useStorefrontShopProducts(slug: string, category = '') {
       };
     },
     enabled: Boolean(slug),
-    staleTime: 60_000,
+    staleTime: CATALOG_STALE_MS,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: CATALOG_REFRESH_MS,
+    refetchIntervalInBackground: false,
   });
 }
 

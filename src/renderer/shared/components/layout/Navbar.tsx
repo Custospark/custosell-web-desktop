@@ -8,8 +8,6 @@ import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { SyncHeaderChip } from '../Errors/SyncProgressBanner';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderQuickNav } from './HeaderQuickNav';
-import { SearchBar } from './search/SearchBar';
-import { canUseGlobalSearch } from './search/searchTypes';
 import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQueries';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
@@ -176,9 +174,6 @@ export function Navbar() {
     getLgBreakpointServerSnapshot,
   );
 
-  /** Global search trigger — personal and business accounts only. */
-  const canSearch = canUseGlobalSearch(user);
-
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
     if (!trigger) return;
@@ -313,8 +308,6 @@ export function Navbar() {
               className="max-w-[12rem] xl:max-w-none shrink-0"
             />
           ) : null}
-
-          {canSearch && <SearchBar />}
         </div>
 
         <div className="flex flex-1 items-center justify-between gap-1 sm:gap-1.5 lg:flex-initial lg:justify-end shrink-0 min-w-0">

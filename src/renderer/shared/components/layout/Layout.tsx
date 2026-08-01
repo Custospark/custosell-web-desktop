@@ -9,9 +9,6 @@ import { Main } from './Main';
 import { Footer } from './Footer';
 import { AppMobileTabBar } from './AppMobileTabBar';
 import { OnboardingGate } from '../../../modules/onboarding/OnboardingGate';
-import { SearchModal } from './search/SearchModal';
-import { useSearchKeyboard } from './search/useSearchKeyboard';
-import { canUseGlobalSearch } from './search/searchTypes';
 
 export function Layout() {
   const { state, dispatch } = useAppContext();
@@ -21,12 +18,6 @@ export function Layout() {
   const user = useAppSelector((s) => s.auth.user);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const subscription = user?.business?.subscription;
-
-  // ── Global search palette ─────────────────────────────────────────────────
-  // Mounted here (not inside the trigger) so ⌘K / Ctrl+K works app-wide.
-  // Personal and business accounts only — storefront buyers get no workspace.
-  const { isOpen: searchOpen, closeSearch } = useSearchKeyboard();
-  const canSearch = canUseGlobalSearch(user);
 
   useEffect(() => {
     if (!isAuthenticated || location.pathname === ROUTES.ONBOARDING) return;
@@ -62,7 +53,6 @@ export function Layout() {
         <AppMobileTabBar />
       </div>
       <OnboardingGate />
-      {canSearch && <SearchModal isOpen={searchOpen} onClose={closeSearch} />}
     </div>
   );
 }

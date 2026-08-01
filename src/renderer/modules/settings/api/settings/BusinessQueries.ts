@@ -251,7 +251,7 @@ export function useUpdateBusiness() {
         const nextEmail = variables.data.email;
         if (nextName && oldBusiness?.name !== nextName) patch.name = nextName;
         if (nextPhone !== undefined && (oldBusiness?.phone ?? null) !== nextPhone) patch.phone = nextPhone;
-        if (nextEmail !== undefined && (oldBusiness?.email ?? null) !== nextEmail) patch.email = nextEmail;
+        if (nextEmail !== undefined && (oldBusiness?.email ?? null) !== nextEmail) patch.email = nextEmail ?? undefined;
         if (Object.keys(patch).length > 0) {
           dispatch(setUser({ ...authUser, ...patch }));
         }

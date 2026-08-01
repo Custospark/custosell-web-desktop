@@ -283,8 +283,8 @@ export function useCreateMeeting() {
   return useMutation({
     mutationFn: async (payload: { leadId: number; start_date?: string; due_date?: string; meeting_link?: string; notes?: string }) => {
       const { leadId, ...data } = payload;
-      const res = await axiosInstance.post<{ data: PipelineLeadMeeting }>(`/pipeline/leads/${leadId}/schedule-meeting`, data);
-      return res.data.data;
+      const res = await axiosInstance.post<{ data: PipelineLeadMeeting; check_url?: string | null }>(`/pipeline/leads/${leadId}/schedule-meeting`, data);
+      return { ...res.data.data, check_url: res.data.check_url ?? null };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pipeline'] });

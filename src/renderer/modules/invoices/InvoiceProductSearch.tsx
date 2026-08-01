@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Plus, X, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../shared/utils/cn';
 import { formatCurrency } from '../../shared/utils/formatCurrency';

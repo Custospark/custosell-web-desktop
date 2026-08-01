@@ -18,8 +18,8 @@ const PIE_COLORS = [
   '#3b82f6', '#8b5cf6', '#06b6d4', '#ec4899',
 ];
 
-function DonutChart({ data, title, dataKey, nameKey }: {
-  data: ReadonlyArray<Record<string, unknown>>;
+function DonutChart<T extends object>({ data, title, dataKey, nameKey }: {
+  data: readonly T[];
   title: string;
   dataKey: string;
   nameKey: string;
@@ -58,15 +58,18 @@ function DonutChart({ data, title, dataKey, nameKey }: {
             )}
           </ChartContainer>
           <div className="space-y-1.5 mt-3">
-            {data.slice(0, 5).map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                  <span className="truncate text-gray-700">{String(item[nameKey])}</span>
+            {data.slice(0, 5).map((raw, i) => {
+              const item = raw as Record<string, unknown>;
+              return (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <span className="truncate text-gray-700">{String(item[nameKey])}</span>
+                  </div>
+                  <span className="font-semibold text-gray-900 ml-2">{Number(item[dataKey]).toLocaleString()}</span>
                 </div>
-                <span className="font-semibold text-gray-900 ml-2">{Number(item[dataKey]).toLocaleString()}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

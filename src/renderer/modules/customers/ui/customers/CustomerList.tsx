@@ -16,10 +16,7 @@ import { Pagination, usePagination } from '../../../../shared/components/tables/
 import CustomerFormDrawer from './CustomerFormDrawer';
 import CustomerPurchaseModal from './CustomerPurchaseModal';
 import { displayCustomerPhone } from '../../../../shared/utils/customerContactUtils';
-import { Plus, Users, Pencil, Trash, ShoppingBag, Files, BarChart3 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '../../../../app/routes/constants/shared.paths';
-import { canAccessModule } from '../../../../shared/utils/moduleAccess';
+import { Plus, Users, Pencil, Trash, ShoppingBag, BarChart3 } from 'lucide-react';
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
@@ -31,8 +28,6 @@ export default function CustomerList() {
   const { data: customers, isLoading, error } = useCustomers();
   const deleteMutation = useDeleteCustomer();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
-  const user = useAppSelector((s) => s.auth.user);
-  const canDocuments = canAccessModule(user, 'documents');
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -119,11 +114,6 @@ export default function CustomerList() {
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete" disabled={item._pendingSync}><Trash className="w-4 h-4 text-red-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openPurchases(item); }} title="Purchases"><ShoppingBag className="w-4 h-4 text-blue-600" /></Button>
-                  {canDocuments && (
-                    <Link to={`${ROUTES.DOCUMENTS.INDEX}?customer_id=${item.id}`} title="Documents" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm"><Files className="w-4 h-4 text-indigo-600" /></Button>
-                    </Link>
-                  )}
                 </div>
               ),
             },

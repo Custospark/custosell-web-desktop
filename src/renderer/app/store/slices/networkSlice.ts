@@ -86,6 +86,7 @@ export const { setBrowserOffline, setBrowserOnline, dismissOfflineBanner } = net
 export const selectSystemStatus = (state: RootState): SystemStatus => state.network.systemStatus;
 export const selectIsOnline = (state: RootState): boolean => state.network.isOnline;
 export const selectNetworkLatency = (state: RootState): number | null => state.network.latency;
+export const selectNetworkLastCheckedAt = (state: RootState): string | null => state.network.lastCheckedAt;
 export const selectIsCompletelyOffline = (state: RootState): boolean => state.network.systemStatus === 'offline';
 export const selectShowOfflineBanner = (state: RootState): boolean =>
   state.network.systemStatus === 'offline' && !state.network.offlineBannerDismissed;

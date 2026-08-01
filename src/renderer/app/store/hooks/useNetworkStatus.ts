@@ -4,6 +4,7 @@ import {
   selectSystemStatus,
   selectIsOnline,
   selectNetworkLatency,
+  selectNetworkLastCheckedAt,
   selectIsCompletelyOffline,
   selectNetworkIsChecking,
   checkNetworkConnectivity,
@@ -14,6 +15,7 @@ export function useNetworkStatus() {
   const systemStatus = useAppSelector(selectSystemStatus);
   const isOnline = useAppSelector(selectIsOnline);
   const latency = useAppSelector(selectNetworkLatency);
+  const lastCheckedAt = useAppSelector(selectNetworkLastCheckedAt);
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
   const isChecking = useAppSelector(selectNetworkIsChecking);
 
@@ -21,5 +23,5 @@ export function useNetworkStatus() {
     void dispatch(checkNetworkConnectivity());
   }, [dispatch]);
 
-  return { systemStatus, isOnline, latency, isCompletelyOffline, isChecking, retryConnection };
+  return { systemStatus, isOnline, latency, lastCheckedAt, isCompletelyOffline, isChecking, retryConnection };
 }

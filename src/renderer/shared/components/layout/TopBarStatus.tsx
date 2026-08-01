@@ -12,7 +12,7 @@ const STATUS_THEME = {
     pulse: true,
   },
   slow: {
-    label: 'Slow',
+    label: 'Slow Connection',
     icon: AlertTriangle,
     pill: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100/70',
     iconClass: 'text-orange-500',
@@ -27,19 +27,39 @@ const STATUS_THEME = {
   },
 } as const;
 
+function formatLatency(ms: number | null): string {
+  if (ms === null) return 'N/A';
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function formatLastChecked(date: Date | null): string {
+  if (!date) return 'Never';
+  const diffMs = Date.now() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 10) return 'Just now';
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  return `${diffHour}h ago`;
+}
+
 /**
- * TopBarStatus — connectivity + app version, the left cluster of the global
- * search top bar (mirrors Custocare's SystemStatusIndicator). The pill doubles
- * as a retry trigger when the connection is slow or down.
+ * TopBarStatus — the left cluster of the global search top bar, mirroring
+ * Custocare's SystemStatusIndicator: a connection pill (with latency), a last
+ * checked timestamp, and the app version. The pill doubles as a retry trigger
+ * when the connection is slow or down.
  */
 export function TopBarStatus() {
-  const { systemStatus, latency, retryConnection } = useNetworkStatus();
+  const { systemStatus, latency, lastCheckedAt, retryConnection } = useNetworkStatus();
   const theme = STATUS_THEME[systemStatus];
   const Icon = theme.icon;
+  const lastChecked = lastCheckedAt ? new Date(lastCheckedAt) : null;
 
   const title =
     systemStatus === 'online'
-      ? latency != null ? `Connected · ${latency}ms latency` : 'Connected'
+      ? latency != null ? `Connected · ${formatLatency(latency)} latency` : 'Connected'
       : systemStatus === 'slow'
         ? 'Slow connection — tap to retry'
         : 'No internet connection — tap to retry';
@@ -64,12 +84,19 @@ export function TopBarStatus() {
         />
         <span className="truncate">{theme.label}</span>
         {systemStatus === 'online' && latency != null && (
-          <span className="hidden tabular-nums text-[10px] opacity-70 md:inline">{latency}ms</span>
+          <span className="hidden tabular-nums text-[10px] opacity-70 md:inline">{formatLatency(latency)}</span>
         )}
       </button>
 
-      <span className="hidden rounded-full border border-gray-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-gray-500 md:inline-flex">
-        v{getDesktopAppVersion()}
+      <span
+        className="hidden rounded border border-gray-200 bg-slate-50 px-2 py-1 text-xs text-gray-500 md:inline"
+        title={lastChecked ? `Last checked: ${lastChecked.toLocaleTimeString()}` : 'Never checked'}
+      >
+        {formatLastChecked(lastChecked)}
+      </span>
+
+      <span className="hidden rounded border border-gray-200 bg-slate-50 px-2 py-1 text-xs text-gray-500 lg:inline">
+        Version {getDesktopAppVersion()}
       </span>
     </div>
   );

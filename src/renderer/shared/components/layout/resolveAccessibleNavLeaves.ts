@@ -85,8 +85,8 @@ export function resolveAccessibleNavGroups(
     if (group.label === 'Income & Expenses' && !isPersonal) {
       return {
         ...group,
-        subItems: group.subItems.filter((item) =>
-          item.label !== 'Income' && item.label !== 'My Budgets',
+        subItems: group.subItems.map((item) =>
+          item.label === 'My Budgets' ? { ...item, label: 'Budgets' } : item,
         ),
       };
     }

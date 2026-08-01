@@ -115,7 +115,7 @@ export default function MyBudgetsPage() {
             <Target className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">My Budgets</h1>
+            <h1 className="text-xl font-semibold text-gray-900">{isPersonal ? 'My Budgets' : 'Budgets'}</h1>
             <p className="text-sm text-gray-500">{d.period.label} · {d.period.days_remaining} days remaining</p>
           </div>
         </div>

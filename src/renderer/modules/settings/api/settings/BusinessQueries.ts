@@ -13,7 +13,7 @@ import type {
   UpdateStorefrontProfileData,
   UpdateSupplyProfileData,
 } from './BusinessTypes';
-import { setBusiness } from '../../../../app/store/slices/authSlice';
+import { setBusiness, setUser, type AuthUser } from '../../../../app/store/slices/authSlice';
 import { useAppDispatch } from '../../../../app/store/hooks/useApp';
 import { store } from '../../../../app/store/store';
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
@@ -109,10 +109,8 @@ export function useBusiness() {
     if (!query.data) return;
     const info = businessToAuthInfo(query.data);
     const existing = store.getState().auth.user?.business;
-    console.log('[DEBUG] useBusiness - query.data.subscription?.status:', (query.data as any)?.subscription?.status, '| existing.subscription?.status:', existing?.subscription?.status);
     // Business endpoint subscription is never the source of truth — preserve /auth/me data
     info.subscription = existing?.subscription ?? info.subscription;
-    console.log('[DEBUG] useBusiness - FINAL info.subscription?.status:', info.subscription?.status);
     dispatch(setBusiness(info));
   }, [query.data, dispatch]);
 
@@ -235,10 +233,28 @@ export function useUpdateBusiness() {
         throw err;
       }
     },
-    onSuccess: (business) => {
+    onSuccess: (business, variables) => {
       if (!business) {
         qc.invalidateQueries({ queryKey: businessKeys.mine() });
         return;
+      }
+
+      // Personal accounts share name/phone/email between Account>Profile and
+      // Business>Settings. Mirror any actually-changed shared fields onto the
+      // auth user so the header, menus, and profile page stay in sync.
+      const authUser = store.getState().auth.user;
+      if (authUser?.account_type === 'personal') {
+        const oldBusiness = qc.getQueryData<BusinessWithSyncMeta>(businessKeys.mine());
+        const patch: Partial<AuthUser> = {};
+        const nextName = variables.data.name;
+        const nextPhone = variables.data.phone;
+        const nextEmail = variables.data.email;
+        if (nextName && oldBusiness?.name !== nextName) patch.name = nextName;
+        if (nextPhone !== undefined && (oldBusiness?.phone ?? null) !== nextPhone) patch.phone = nextPhone;
+        if (nextEmail !== undefined && (oldBusiness?.email ?? null) !== nextEmail) patch.email = nextEmail;
+        if (Object.keys(patch).length > 0) {
+          dispatch(setUser({ ...authUser, ...patch }));
+        }
       }
 
       dispatch(setBusiness(businessToAuthInfo(business)));

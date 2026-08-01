@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
+import { ProfileSectionCard } from './ProfileSectionCard';
+import { ProfilePasswordSection } from './ProfilePasswordSection';
 import { useMutation } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
@@ -19,15 +21,12 @@ import {
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import { buildFullName, splitFullName } from '../../../shared/utils/userDisplayName';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
-import { cn } from '../../../shared/utils/cn';
 import {
   User,
   Mail,
   Phone,
-  Lock,
   Camera,
   Image,
-  ShieldCheck,
   Pencil,
   Building2,
   WifiOff,
@@ -58,6 +57,8 @@ interface ProfileFormState {
   password_confirmation: string;
 }
 
+export type { ProfileFormState };
+
 function baselineFromUser(user: AuthUser): ProfileBaseline {
   const { firstName, lastName } = splitFullName(user.name);
   return {
@@ -84,35 +85,6 @@ function formFromUser(user: AuthUser): { form: ProfileFormState; countryCode: Co
       password_confirmation: '',
     },
   };
-}
-
-function ProfileSectionCard({
-  icon: Icon,
-  title,
-  description,
-  children,
-  className,
-}: {
-  icon: typeof User;
-  title: string;
-  description?: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <article className={cn('rounded-xl border-2 border-gray-200 bg-white shadow-sm', className)}>
-      <div className="flex items-start gap-3 border-b border-gray-200 px-4 py-4 sm:px-5">
-        <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
-          <Icon className="h-5 w-5" aria-hidden />
-        </div>
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-          {description ? <p className="mt-0.5 text-sm text-gray-500">{description}</p> : null}
-        </div>
-      </div>
-      <div className="p-4 sm:p-5">{children}</div>
-    </article>
-  );
 }
 
 export default function ProfileSettingsForm() {
@@ -396,14 +368,16 @@ export default function ProfileSettingsForm() {
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
                       <input
-                        className={inputClass}
+                        className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
                         type="email"
                         value={form.email}
-                        onChange={update('email')}
+                        readOnly
+                        tabIndex={-1}
                         placeholder="Email address"
                         required
                       />
                     </div>
+                    <p className="mt-1 text-xs text-gray-500">Email is your login and cannot be changed.</p>
                   </div>
                   <PhoneNumberField
                     label="Phone"
@@ -433,45 +407,11 @@ export default function ProfileSettingsForm() {
           </ProfileSectionCard>
 
           {isEditing && (
-            <ProfileSectionCard
-              icon={ShieldCheck}
-              title="Change password"
-              description="Leave blank to keep your current password."
-            >
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <label className={labelClass}>New password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
-                      <input
-                        className={inputClass}
-                        type="password"
-                        value={form.password}
-                        onChange={update('password')}
-                        placeholder="Min 6 characters"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Confirm password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
-                      <input
-                        className={inputClass}
-                        type="password"
-                        value={form.password_confirmation}
-                        onChange={update('password_confirmation')}
-                        placeholder="Confirm password"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {form.password && !passwordsValid && (
-                  <p className="text-sm font-medium text-red-600">Passwords do not match</p>
-                )}
-              </div>
-            </ProfileSectionCard>
+            <ProfilePasswordSection
+              form={form}
+              update={update}
+              passwordsValid={passwordsValid}
+            />
           )}
         </div>
       </div>

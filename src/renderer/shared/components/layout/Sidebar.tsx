@@ -9,6 +9,7 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 import LogoImage from '../../assets/LogoImage';
+import { CustosellBrandLockup } from '../brand/CustosellBrandLockup';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { NAV_GROUP_MODULE } from '../../utils/moduleAccess';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
@@ -95,11 +96,15 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           collapsed ? 'justify-center px-2' : 'px-6',
         )}
       >
-        <LogoImage size="sm" />
-        {!collapsed && (
-          <div className="flex items-baseline gap-2 flex-1 min-w-0">
-            <span className="text-lg font-bold text-blue-600">Custosell</span>
-          </div>
+        {collapsed ? (
+          <LogoImage size="sm" />
+        ) : (
+          <CustosellBrandLockup
+            showTagline
+            logoSize="sm"
+            nameClassName="text-lg"
+            className="flex-1"
+          />
         )}
         <button
           type="button"

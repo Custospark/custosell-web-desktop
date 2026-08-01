@@ -4,20 +4,22 @@ import { getPlanAccessibleModules } from '../../../utils/moduleAccess';
 import { resolveAccessibleNavGroups } from '../resolveAccessibleNavLeaves';
 import type { SidebarNavGroup } from '../sidebarNavGroups';
 import { describeNavItem } from './searchDescriptions';
+import { keywordsForRoute, MODULE_ALIASES, MODULE_LANDING_ROUTES } from './searchKeywords';
 import type { SearchableNavItem } from './searchTypes';
 
-/** One entry per sidebar module (group) — routes to the module's first page. */
+/** One entry per sidebar module (group) — routes to the module's landing page. */
 function groupEntries(group: SidebarNavGroup): SearchableNavItem[] {
   const first = group.subItems[0];
   if (!first) return [];
+  const route = MODULE_LANDING_ROUTES[group.label] ?? first.to;
   return [
     {
       id: `group:${group.label}`,
       label: group.label,
       description: describeNavItem(first.to, group.label, group.label),
-      route: first.to,
+      route,
       group: group.label,
-      keywords: [group.label, ...group.subItems.map((s) => s.label)],
+      keywords: [...(MODULE_ALIASES[group.label] ?? []), group.label, ...group.subItems.map((s) => s.label)],
     },
   ];
 }
@@ -30,7 +32,7 @@ function subItemEntries(group: SidebarNavGroup): SearchableNavItem[] {
     description: describeNavItem(sub.to, sub.label, group.label),
     route: sub.to,
     group: group.label,
-    keywords: [sub.label, group.label, ...sub.to.split('/').filter(Boolean)],
+    keywords: [sub.label, group.label, ...keywordsForRoute(sub.to), ...sub.to.split('/').filter(Boolean)],
   }));
 }
 

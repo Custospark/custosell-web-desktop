@@ -36,6 +36,7 @@ export const platformKeys = {
   users: (params: Record<string, string>) => [...platformKeys.all, 'users', 'v2', params] as const,
   userStats: (params: Record<string, string>) => [...platformKeys.all, 'user-stats', params] as const,
   roles: () => [...platformKeys.all, 'roles'] as const,
+  roleMembers: (id: number, params: Record<string, string>) => [...platformKeys.all, 'roles', id, 'members', params] as const,
   permissions: () => [...platformKeys.all, 'permissions'] as const,
   plans: () => [...platformKeys.all, 'plans'] as const,
   subscriptions: () => [...platformKeys.all, 'subscriptions'] as const,

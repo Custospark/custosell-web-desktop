@@ -257,6 +257,18 @@ export function usePlatformRoles() {
   });
 }
 
+export function usePlatformRoleMembers(roleId: number, params: Record<string, string> = {}) {
+  return useQuery({
+    queryKey: platformKeys.roleMembers(roleId, params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<PaginatedPlatformResponse<PlatformUser>>(PLATFORM.ROLE_MEMBERS(roleId), { params });
+      return data;
+    },
+    enabled: roleId > 0,
+    ...platformFreshQuery,
+  });
+}
+
 export function usePlatformPermissions() {
   return useQuery({
     queryKey: platformKeys.permissions(),
@@ -273,8 +285,12 @@ export function useCreatePlatformRole() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async (payload: { name: string; permissions: string[] }) => {
-      const { data } = await axiosInstance.post<{ data: PlatformRole }>(PLATFORM.ROLES, payload);
+    mutationFn: async (payload: { name: string; permissions?: string[] }) => {
+      const body: Record<string, unknown> = { name: payload.name };
+      if (payload.permissions && payload.permissions.length > 0) {
+        body.permissions = payload.permissions;
+      }
+      const { data } = await axiosInstance.post<{ data: PlatformRole }>(PLATFORM.ROLES, body);
       return data.data;
     },
     onSuccess: () => {
@@ -290,8 +306,8 @@ export function useUpdatePlatformRole() {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, permissions }: { id: number; permissions: string[] }) => {
-      const { data } = await axiosInstance.put<{ data: PlatformRole }>(PLATFORM.ROLE(id), { permissions });
+    mutationFn: async ({ id, name }: { id: number; name: string }) => {
+      const { data } = await axiosInstance.put<{ data: PlatformRole }>(PLATFORM.ROLE(id), { name });
       return data.data;
     },
     onSuccess: () => {

@@ -5,6 +5,7 @@ import {
 } from './api/PlatformUserQueries';
 import type { PlatformRole } from './api/PlatformTypes';
 import { PlatformRoleFormModal } from './components/PlatformRoleFormModal';
+import { PlatformRoleMembersModal } from './components/PlatformRoleMembersModal';
 import { Button } from '../../shared/components/buttons/Button';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { Table } from '../../shared/components/tables/Table';
@@ -13,7 +14,7 @@ import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeleton
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
-import { Shield, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Shield, Plus, Pencil, Trash2, Users } from 'lucide-react';
 
 const BUILT_IN_ROLES = ['platform-admin', 'platform-analyst', 'platform-support'];
 
@@ -24,6 +25,7 @@ export default function PlatformRolesPage() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<PlatformRole | null>(null);
+  const [membersFor, setMembersFor] = useState<PlatformRole | null>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return roles;
@@ -66,7 +68,13 @@ export default function PlatformRolesPage() {
 
   return (
     <>
-      <PlatformRoleFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} role={editingRole} />
+      <PlatformRoleFormModal
+        key={editingRole?.id ?? 'create'}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        role={editingRole}
+      />
+      <PlatformRoleMembersModal open={membersFor !== null} role={membersFor} onClose={() => setMembersFor(null)} />
 
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -110,11 +118,19 @@ export default function PlatformRolesPage() {
             { key: 'permissions', header: 'Permissions', render: (r) => (
               <span className="text-sm text-gray-600">{r.permissions.length} permission{r.permissions.length === 1 ? '' : 's'}</span>
             )},
-            { key: 'actions', header: '', render: (r) => (
+            { key: 'members', header: 'Members', render: (r) => (
+              <span className="text-sm text-gray-700">{r.users_count ?? 0}</span>
+            )},
+            { key: 'actions', header: 'Actions', render: (r) => (
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(r)} title="Edit permissions">
-                  <Pencil className="w-3.5 h-3.5" />
+                <Button variant="ghost" size="sm" onClick={() => setMembersFor(r)} title="Manage members">
+                  <Users className="w-3.5 h-3.5" />
                 </Button>
+                {!BUILT_IN_ROLES.includes(r.name) && (
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(r)} title="Rename role">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                )}
                 {!BUILT_IN_ROLES.includes(r.name) && (
                   <Button variant="ghost" size="sm" onClick={() => handleDelete(r)} disabled={deleteMutation.isPending} title="Delete role">
                     <Trash2 className="w-3.5 h-3.5 text-red-600" />

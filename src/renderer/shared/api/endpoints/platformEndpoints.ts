@@ -22,6 +22,7 @@ export const PLATFORM = {
   USERS_NOTIFY: '/platform/users/notify',
   ROLES: '/platform/roles',
   ROLE: (id: number) => `/platform/roles/${id}`,
+  ROLE_MEMBERS: (id: number) => `/platform/roles/${id}/members`,
   PERMISSIONS: '/platform/permissions',
   CAMPAIGN_CODES: '/platform/referral-codes',
   CAMPAIGN_CODE: (id: number) => `/platform/referral-codes/${id}`,

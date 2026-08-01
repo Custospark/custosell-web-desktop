@@ -5,7 +5,7 @@ import cn from '../../utils/cn';
 interface Column<T> {
   key: string;
   header: string;
-  render?: (item: T) => ReactNode;
+  render?: (item: T, index: number) => ReactNode;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
 }
@@ -26,7 +26,7 @@ function SkeletonRow({ cols }: { cols: number }) {
     <tr>
       {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${60 + Math.random() * 30}%` }} />
+          <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${64 + (i % 4) * 8}%` }} />
         </td>
       ))}
     </tr>
@@ -100,7 +100,7 @@ export function Table<T>({ columns, data, loading, onRowClick, sortKey, sortDir,
                   'px-4 py-3 text-sm text-gray-700 whitespace-nowrap',
                   col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                 )}>
-                  {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
+                  {col.render ? col.render(item, idx) : String((item as Record<string, unknown>)[col.key] ?? '')}
                 </td>
               ))}
             </tr>

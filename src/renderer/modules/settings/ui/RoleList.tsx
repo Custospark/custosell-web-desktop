@@ -75,7 +75,7 @@ export default function RoleList() {
         <Table<RoleWithSyncMeta>
           rowKey={(r) => r.id}
           columns={[
-            { key: 'id', header: '#' },
+            { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
             { key: 'name', header: 'Name', render: (item) => (
                 <div className="flex items-center gap-2">
                   <span>{item.name}</span>

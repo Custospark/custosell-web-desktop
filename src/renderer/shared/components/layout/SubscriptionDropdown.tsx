@@ -129,7 +129,7 @@ export default function SubscriptionDropdown() {
         onClick={() => setOpen(!open)}
         className={cn(
           'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
-          open ? 'bg-gray-50 ring-gray-300' : cn('bg-white hover:bg-gray-50', meta.colors.ring),
+          open ? 'bg-gray-100 ring-gray-300' : 'bg-white ring-gray-200 hover:bg-gray-50',
         )}
       >
         <div className={cn('w-7 h-7 rounded-full flex items-center justify-center ring-1 shrink-0', meta.colors.ring, meta.colors.bg)}>

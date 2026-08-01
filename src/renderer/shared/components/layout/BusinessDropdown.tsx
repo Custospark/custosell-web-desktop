@@ -1,0 +1,148 @@
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
+import { resolveBusinessDisplayName, resolveBusinessLogoPath } from '../../utils/shellDisplay';
+import { avatarUrl } from '../../utils/avatarUrl';
+import { isBusinessOwner } from '../../utils/moduleAccess';
+import { cn } from '../../utils/cn';
+import {
+  Building2, ChevronDown, ExternalLink, Settings, CreditCard, CircleUser,
+} from 'lucide-react';
+
+/** Business context trigger — the Custosell equivalent of Custocare's context switcher. */
+export default function BusinessDropdown() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const user = useAppSelector((s) => s.auth.user);
+  const { data: business } = useBusiness();
+
+  const businessName =
+    user?.account_type === 'personal' ? 'Personal'
+    : user?.account_type === 'storefront_buyer' ? 'Shopping'
+    : resolveBusinessDisplayName(user, business);
+  const businessLogoUrl = avatarUrl(resolveBusinessLogoPath(user, business));
+
+  const isBusiness = user?.account_type === 'business';
+  const planName = user?.business?.subscription?.plan_name;
+  const planSlug = user?.business?.subscription?.plan_slug;
+  const subtitle =
+    user?.account_type === 'personal' ? 'Personal plan'
+    : user?.account_type === 'storefront_buyer' ? 'Shopping account'
+    : (planName ?? 'Business account');
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleNavigate = (to: string) => {
+    setOpen(false);
+    navigate(to);
+  };
+
+  if (!businessName || user?.account_type === 'storefront_buyer') return null;
+
+  const links: { label: string; icon: typeof Settings; to: string }[] = [];
+  if (isBusiness || isBusinessOwner(user)) {
+    links.push({ label: 'Business Settings', icon: Settings, to: ROUTES.SETTINGS.BUSINESS });
+  }
+  if (isBusinessOwner(user)) {
+    links.push({ label: 'Billing & Subscription', icon: CreditCard, to: ROUTES.SETTINGS.SUBSCRIPTION });
+  }
+  if (!isBusiness) {
+    links.push({ label: 'My Account', icon: CircleUser, to: ROUTES.ACCOUNT.PROFILE });
+  }
+
+  const planBadge = planSlug ? (
+    <span
+      className={cn(
+        'shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded leading-none',
+        planSlug === 'essential' && 'bg-blue-100 text-blue-700',
+        planSlug === 'professional' && 'bg-indigo-100 text-indigo-700',
+        planSlug === 'enterprise' && 'bg-violet-100 text-violet-700',
+        planSlug === 'personal' && 'bg-emerald-100 text-emerald-700',
+      )}
+    >
+      {planSlug.slice(0, 3).replace(/^\w/, (c) => c.toUpperCase())}
+    </span>
+  ) : null;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'text-xs lg:text-sm',
+          open ? 'bg-blue-50 ring-blue-300' : 'bg-white ring-blue-200 hover:bg-blue-50/60 hover:ring-blue-300',
+        )}
+        title={businessName}
+        aria-label={`${businessName} — business menu`}
+        aria-expanded={open}
+      >
+        <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-blue-200 bg-blue-50 shrink-0 overflow-hidden">
+          {businessLogoUrl ? (
+            <img src={businessLogoUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+          )}
+        </div>
+        <div className="hidden lg:flex items-center gap-1.5 min-w-0 max-w-[200px]">
+          <div className="min-w-0">
+            <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
+            <span className="block text-xs truncate text-gray-500">{subtitle}</span>
+          </div>
+          {isBusinessOwner(user) && planBadge}
+        </div>
+        <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="fixed left-1/2 -translate-x-1/2 top-16 w-[calc(100vw-2rem)] max-w-sm rounded-xl border border-gray-200 bg-white shadow-xl z-50 lg:absolute lg:left-auto lg:right-0 lg:top-auto lg:-translate-x-0 lg:mt-2 lg:w-80">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-blue-200 bg-blue-50 shrink-0 overflow-hidden">
+                {businessLogoUrl ? (
+                  <img src={businessLogoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate flex items-center gap-1.5">
+                  <span className="truncate">{businessName}</span>
+                  {isBusinessOwner(user) && planBadge}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-2 space-y-1">
+            {links.map((link) => (
+              <button
+                key={link.to}
+                type="button"
+                onClick={() => handleNavigate(link.to)}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer text-gray-600 font-medium"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <link.icon className="w-4 h-4 text-gray-400 shrink-0" />
+                  <span className="truncate">{link.label}</span>
+                </span>
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

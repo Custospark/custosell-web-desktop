@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useSyncExternalStore } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
@@ -13,17 +12,16 @@ import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQu
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
 import { getUserFirstName } from '../../utils/userDisplayName';
-import { resolveBusinessDisplayName, resolveBusinessLogoPath, resolveUserMenuLabel } from '../../utils/shellDisplay';
+import { resolveUserMenuLabel } from '../../utils/shellDisplay';
 import { avatarUrl } from '../../utils/avatarUrl';
 import { initialsFromName } from '../UserAvatar';
-import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
 import { UserProfileMenu } from './UserProfileMenu';
 import SubscriptionDropdown from './SubscriptionDropdown';
 import ReferralDropdown from './ReferralDropdown';
+import BusinessDropdown from './BusinessDropdown';
 import { CustosellBrandLockup } from '../brand/CustosellBrandLockup';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import {
-  Menu, ChevronDown, Clock, Wifi, SignalMedium, WifiOff, Building2,
+  Menu, ChevronDown, Clock, Wifi, SignalMedium, WifiOff,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { isBusinessOwner } from '../../utils/moduleAccess';
@@ -155,14 +153,7 @@ function NavbarNetworkStatus({
 
 export function Navbar() {
   const { state, dispatch } = useAppContext();
-  const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
-  const { data: business } = useBusiness();
-  const businessName =
-    user?.account_type === 'personal' ? 'Personal'
-    : user?.account_type === 'storefront_buyer' ? 'Shopping'
-    : resolveBusinessDisplayName(user, business);
-  const businessLogoUrl = avatarUrl(resolveBusinessLogoPath(user, business));
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
   const { requestEndShift, isEnding } = useEndShiftAction();
@@ -284,43 +275,6 @@ export function Navbar() {
             className="shrink-0"
           />
 
-          {businessName ? (
-            <button
-              type="button"
-              onClick={() => navigate(ROUTES.SETTINGS.BUSINESS)}
-              title={`${businessName} — open business settings`}
-              aria-label={`${businessName} — open business settings`}
-              data-tour="navbar-business"
-              className="flex min-w-0 items-center gap-2 rounded-lg bg-slate-50/80 px-2.5 py-2 ring-1 ring-slate-100 transition-colors hover:bg-slate-100 hover:ring-slate-200 sm:px-2.5 sm:py-1.5"
-            >
-              {businessLogoUrl ? (
-                <img
-                  src={businessLogoUrl}
-                  alt=""
-                  className="h-7 w-7 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
-                />
-              ) : (
-                <Building2 className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
-              )}
-              <div className="min-w-0 flex items-center gap-1.5">
-                <p className="truncate text-sm font-semibold text-slate-900 sm:text-base max-w-[8rem] md:max-w-[12rem] lg:max-w-[14rem] xl:max-w-[20rem]">
-                  {businessName}
-                </p>
-                {isBusinessOwner(user) && user?.business?.subscription?.plan_slug ? (
-                  <span className={cn(
-                    'shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded leading-none',
-                    user.business.subscription.plan_slug === 'essential' && 'bg-blue-100 text-blue-700',
-                    user.business.subscription.plan_slug === 'professional' && 'bg-indigo-100 text-indigo-700',
-                    user.business.subscription.plan_slug === 'enterprise' && 'bg-violet-100 text-violet-700',
-                    user.business.subscription.plan_slug === 'personal' && 'bg-emerald-100 text-emerald-700',
-                  )}>
-                    {user.business.subscription.plan_slug.slice(0, 3).replace(/^\w/, c => c.toUpperCase())}
-                  </span>
-                ) : null}
-              </div>
-            </button>
-          ) : null}
-
           {user?.shift_clock_in ? (
             <NavbarShiftBadge
               clockIn={user.shift_clock_in}
@@ -347,6 +301,8 @@ export function Navbar() {
           </div>
 
           {!isWorkspace && <HeaderNotifications />}
+
+          <div data-tour="navbar-business"><BusinessDropdown /></div>
 
           <div data-tour="navbar-referral"><ReferralDropdown /></div>
 

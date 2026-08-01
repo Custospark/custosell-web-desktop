@@ -100,7 +100,6 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           <LogoImage size="sm" />
         ) : (
           <CustosellBrandLockup
-            showTagline
             logoSize="sm"
             nameClassName="text-lg"
             className="flex-1"

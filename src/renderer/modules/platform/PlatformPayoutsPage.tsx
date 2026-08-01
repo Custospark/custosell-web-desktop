@@ -228,7 +228,7 @@ export default function PlatformPayoutsPage() {
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         {payables.length > 0 && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-5 py-4 border-b border-gray-100">
-            <div className="w-full sm:w-72">
+            <div className="w-full sm:flex-1">
               <SearchInput
                 placeholder="Search by name, email, or phone..."
                 value={search}

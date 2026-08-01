@@ -258,7 +258,7 @@ export default function CreateLeadModal({
             </PipelineIconField>
           </div>
           <PipelineIconField label="Assign to" icon={UserRound}>
-            <MultiAssigneeSelect value={assigneeIds} onChange={setAssigneeIds} />
+            <MultiAssigneeSelect value={assigneeIds} onChange={setAssigneeIds} boardId={resolvedBoardId ?? 0} />
           </PipelineIconField>
         </PipelineFormSection>
         )}
@@ -266,7 +266,7 @@ export default function CreateLeadModal({
         {cardType === 'card' && (
         <PipelineFormSection title="Assignment" icon={UserRound}>
           <PipelineIconField label="Assign to" icon={UserRound}>
-            <MultiAssigneeSelect value={assigneeIds} onChange={setAssigneeIds} />
+            <MultiAssigneeSelect value={assigneeIds} onChange={setAssigneeIds} boardId={resolvedBoardId ?? 0} />
           </PipelineIconField>
         </PipelineFormSection>
         )}

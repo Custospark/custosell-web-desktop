@@ -333,6 +333,7 @@ export default function LeadDetailModal({
                   ?? (lead.assigned_to ? [lead.assigned_to] : [])
                 }
                 disabled={fieldDisabled}
+                boardId={boardId ?? 0}
                 onChange={(ids) => {
                   patchLead({
                     assignee_ids: ids,

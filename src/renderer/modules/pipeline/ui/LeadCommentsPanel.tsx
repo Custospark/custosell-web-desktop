@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
@@ -245,11 +245,17 @@ export default function LeadCommentsPanel({
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(() => new Set());
 
   const threads = useMemo(() => buildCommentThreads(activities), [activities]);
+  const listRef = useRef<HTMLUListElement>(null);
   const loadedComments = countUserComments(activities);
   const totalComments = expectedTotalComments != null
     ? Math.max(expectedTotalComments, loadedComments)
     : loadedComments;
   const isHydratingComments = isSyncing && totalComments > loadedComments;
+
+  useEffect(() => {
+    if (!listRef.current) return;
+    listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [threads.length]);
 
   const handlePost = async () => {
     if (!canContribute || !note.trim()) return;
@@ -416,7 +422,7 @@ export default function LeadCommentsPanel({
             ? `Showing ${loadedComments} of ${totalComments} comments`
             : `${totalComments} comment${totalComments === 1 ? '' : 's'}`}
         </span>
-        <span className="hidden sm:inline">Newest first · Ctrl+Enter to send</span>
+        <span className="hidden sm:inline">Newest at the bottom · Ctrl+Enter to send</span>
       </div>
       </>
       )}
@@ -428,7 +434,7 @@ export default function LeadCommentsPanel({
         </div>
       )}
 
-      <ul className="max-h-[min(55vh,420px)] space-y-4 overflow-y-auto pr-1">
+      <ul ref={listRef} className="max-h-[min(55vh,420px)] space-y-4 overflow-y-auto pr-1">
         {threads.length === 0 ? (
           isHydratingComments ? (
             <li className="rounded-lg border border-dashed border-blue-200 bg-blue-50/40 py-8 text-center text-xs text-blue-800">

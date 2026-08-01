@@ -10,7 +10,7 @@ const MAX_VISIBLE_REPLIES_DEFAULT = 5;
 export function buildBoardMessageThreads(messages: PipelineBoardMessage[]): BoardMessageThread[] {
   const roots = messages
     .filter((message) => !message.parent_id)
-    .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+    .sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime());
 
   const repliesByParent = new Map<number, PipelineBoardMessage[]>();
   for (const message of messages) {

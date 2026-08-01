@@ -13,7 +13,7 @@ export function buildCommentThreads(activities: PipelineLeadActivity[]): Comment
   const userComments = activities.filter((a) => USER_COMMENT_TYPES.has(a.type));
   const roots = userComments
     .filter((a) => !a.parent_id)
-    .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+    .sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime());
 
   const repliesByParent = new Map<number, PipelineLeadActivity[]>();
   for (const activity of userComments) {

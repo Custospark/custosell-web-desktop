@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useStaff } from '../../settings/api/settings/StaffQueries';
+import { useBoardResourceMembers } from '../api/usePipelineResourceQueries';
+import type { PipelineUserRef } from '../api/pipelineTypes';
 import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { cn } from '../../../shared/utils/cn';
 import { X } from 'lucide-react';
@@ -9,6 +11,8 @@ interface MultiAssigneeSelectProps {
   onChange: (ids: number[]) => void;
   disabled?: boolean;
   className?: string;
+  /** Board id — invited board members are merged into the assignee options. */
+  boardId?: number;
 }
 
 export default function MultiAssigneeSelect({
@@ -16,12 +20,23 @@ export default function MultiAssigneeSelect({
   onChange,
   disabled = false,
   className,
+  boardId,
 }: MultiAssigneeSelectProps) {
   const { data: staff = [] } = useStaff();
+  const { data: boardMembers = [] } = useBoardResourceMembers(boardId ?? 0, Boolean(boardId));
+
+  const candidates = useMemo(() => {
+    const map = new Map<number, PipelineUserRef>();
+    for (const member of staff) map.set(member.id, member);
+    for (const member of boardMembers) {
+      if (!map.has(member.id)) map.set(member.id, member);
+    }
+    return [...map.values()];
+  }, [staff, boardMembers]);
 
   const selected = useMemo(
-    () => staff.filter((s) => value.includes(s.id)),
-    [staff, value],
+    () => candidates.filter((c) => value.includes(c.id)),
+    [candidates, value],
   );
 
   const toggle = (id: number) => {
@@ -63,7 +78,7 @@ export default function MultiAssigneeSelect({
         disabled={disabled}
         className="min-h-[88px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50"
       >
-        {staff.map((member) => (
+        {candidates.map((member) => (
           <option key={member.id} value={member.id}>
             {member.name}
           </option>

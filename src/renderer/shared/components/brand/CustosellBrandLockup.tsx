@@ -29,7 +29,7 @@ export function CustosellBrandLockup({
       <div className="min-w-0 leading-tight">
         <span
           className={cn(
-            'block truncate font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent',
+            'block truncate font-bold text-blue-600',
             nameClassName,
           )}
         >

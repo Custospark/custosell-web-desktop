@@ -80,6 +80,11 @@ export default function PlatformCampaignCodesPage() {
           <Table
             columns={[
               {
+                key: 'index',
+                header: '#',
+                render: (_r, idx) => idx + 1,
+              },
+              {
                 key: 'code',
                 header: 'Code',
                 render: (r: CampaignCode) => (

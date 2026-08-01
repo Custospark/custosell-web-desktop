@@ -24,7 +24,7 @@ import { Package, Plus, Upload, Download, Trash2, CheckSquare, Square, Store } f
 import { avatarUrl } from '../../../../shared/utils/avatarUrl';
 import ProductFormModal from './ProductFormModal';
 import ProductRowActions from './ProductRowActions';
-import StockAdjustDrawer from './StockAdjustDrawer';
+import StockAdjustModal from './StockAdjustModal';
 import ImportModal from './ImportModal';
 import ExportModal from './ExportModal';
 import LedgerHistoryModal from './LedgerHistoryModal';
@@ -312,7 +312,7 @@ export default function ProductList() {
       />
 
       {adjustingProduct && (
-        <StockAdjustDrawer
+        <StockAdjustModal
           open={!!adjustingProduct}
           onClose={() => setAdjustingProduct(null)}
           product={adjustingProduct}

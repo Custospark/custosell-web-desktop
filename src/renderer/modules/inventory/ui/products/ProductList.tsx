@@ -161,7 +161,6 @@ export default function ProductList() {
       </div>
 
       <ProductStatsCards products={products || []} />
-      <div className="h-6" />
 
       <Card>
         <div className="flex items-center gap-4 mb-4 flex-wrap">

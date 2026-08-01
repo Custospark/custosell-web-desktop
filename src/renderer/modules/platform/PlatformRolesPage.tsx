@@ -4,7 +4,7 @@ import {
   usePlatformRoles,
 } from './api/PlatformUserQueries';
 import type { PlatformRole } from './api/PlatformTypes';
-import { PlatformRoleFormDrawer } from './components/PlatformRoleFormDrawer';
+import { PlatformRoleFormModal } from './components/PlatformRoleFormModal';
 import { Button } from '../../shared/components/buttons/Button';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { Table } from '../../shared/components/tables/Table';
@@ -22,7 +22,7 @@ export default function PlatformRolesPage() {
   const deleteMutation = useDeletePlatformRole();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<PlatformRole | null>(null);
 
   const filtered = useMemo(() => {
@@ -36,8 +36,8 @@ export default function PlatformRolesPage() {
 
   const paginated = usePagination(filtered, 10);
 
-  const openCreate = () => { setEditingRole(null); setDrawerOpen(true); };
-  const openEdit = (r: PlatformRole) => { setEditingRole(r); setDrawerOpen(true); };
+  const openCreate = () => { setEditingRole(null); setModalOpen(true); };
+  const openEdit = (r: PlatformRole) => { setEditingRole(r); setModalOpen(true); };
 
   const handleDelete = async (r: PlatformRole) => {
     if (BUILT_IN_ROLES.includes(r.name)) return;
@@ -66,7 +66,7 @@ export default function PlatformRolesPage() {
 
   return (
     <>
-      <PlatformRoleFormDrawer key={editingRole?.id ?? 'create'} open={drawerOpen} onClose={() => setDrawerOpen(false)} role={editingRole} />
+      <PlatformRoleFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} role={editingRole} />
 
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -91,6 +91,12 @@ export default function PlatformRolesPage() {
         <Table<PlatformRole>
           rowKey={(r) => r.id}
           columns={[
+            {
+              key: 'index', header: '#',
+              render: (_r: PlatformRole, idx: number) => (
+                <span className="text-sm text-gray-400">{idx + 1}</span>
+              ),
+            },
             { key: 'name', header: 'Role', render: (r) => (
               <div className="flex items-center gap-2">
                 <span className="font-medium text-gray-900">{r.name}</span>

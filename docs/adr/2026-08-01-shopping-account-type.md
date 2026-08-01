@@ -22,6 +22,17 @@ Storefront buyers previously registered through the Personal flow, which the bac
 - **`DiscoverAccountMenu`** (shopping accounts only): **Custosell Guide removed**, and **Referrals** + **Profile** added — both open as **standard modals** (`ReferralsModal`, `ProfileModal` wrapping the shared `Modal` component). Referrals content was extracted from `AccountReferralsPage` into `ReferralsContent` so the page and the modal share one source of truth; `ProfileModal` reuses `ProfileSettingsForm` (which owns its own header + save state, so the modal renders without a title). The storefront buyer never needs the app sidebar.
 - **`StorefrontActionStrip`** gained a `cartPrimary` prop: shopping accounts get **Cart as a primary tab** (in the slot the hidden Home/Dashboard would occupy) so the mobile bottom nav stays a consistent 4 tabs — **Cart · Products · Orders · More**. For shopping accounts Cart is removed from the More tray (leaving Businesses + Wishlist there); non-shopping accounts keep the prior Home/Products/Orders/More layout. `ConnectedStorefrontStrip` passes `cartPrimary={isStorefrontBuyer(user)}`.
 
+### No shell-sidebar escapes (2026-08-01)
+
+Shopping accounts must never reach the main app shell/sidebar. Removed/guarded every shell link reachable from the Discover UI:
+- **`DiscoverAccountMenu`**: the **Account** item (→ `/account/notifications`, a shell page) is hidden for shopping accounts; the menu becomes Wishlist / My orders / Referrals / Profile / Logout. Non-shopping accounts keep it.
+- **`ReferralsContent`**: the **Help & Contact** tab (its links all open the shell Guide pages) is hidden for shopping accounts — Wins/Policy remain.
+- Verified `DiscoverLayout` renders no `Navbar`/`Sidebar`, and the storefront's only other `ROUTES` usages are Discover/Shop/Login/Home/Privacy/Terms (none are shell pages).
+
+### Profile modal layout (2026-08-01)
+
+`ProfileModal` wraps `ProfileSettingsForm` in a `px-4 sm:px-6` container (modal body `p-0`). The form's full-bleed sticky save bar (`-mx-4 sm:-mx-6`) now aligns flush to the panel edges instead of overflowing a padded body, and content gets comfortable padding on all breakpoints. Modal `size="xl"`, body scrolls, `max-h-[90vh]`.
+
 Backend (ADR-024 in `Backend/docs/decisions.md`) preserves the `storefront_buyer` type, returns `active_plans: []`, re-classifies legacy `personal + null business_id` users, and adds Shopping FAQ/welcome copy.
 
 ## Consequences

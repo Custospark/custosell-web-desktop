@@ -131,15 +131,17 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
               <Package className="h-4 w-4 text-indigo-700" />
               My orders
             </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => { setOpen(false); navigate(ROUTES.ACCOUNT.NOTIFICATIONS); }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
-            >
-              <CircleUser className="h-4 w-4 text-slate-600" />
-              Account
-            </button>
+            {!isStorefrontBuyer(user) ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setOpen(false); navigate(ROUTES.ACCOUNT.NOTIFICATIONS); }}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                <CircleUser className="h-4 w-4 text-slate-600" />
+                Account
+              </button>
+            ) : null}
             {isStorefrontBuyer(user) ? (
               <>
                 <button

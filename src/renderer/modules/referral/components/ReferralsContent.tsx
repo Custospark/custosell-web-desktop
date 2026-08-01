@@ -4,6 +4,8 @@ import { useReferralEarnings, useGenerateReferralCode } from '../api/useReferral
 import { cn } from '../../../shared/utils/cn';
 import QRCodeLib from 'qrcode';
 
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { isStorefrontBuyer } from '../../../shared/utils/moduleAccess';
 import {
   Gift, Copy, Check, Sparkles, QrCode, Download, Share2, X, Link,
   Trophy, ScrollText, LifeBuoy,
@@ -28,6 +30,10 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 export function ReferralsContent() {
   const { data: earnings, isLoading: earningsLoading } = useReferralEarnings();
   const generateCode = useGenerateReferralCode();
+  const user = useAppSelector((s) => s.auth.user);
+  // Shopping accounts stay inside Discover — Help & Contact links into the main
+  // shell sidebar, so it is hidden for them (Wins/Policy remain).
+  const tabs = isStorefrontBuyer(user) ? TABS.filter((t) => t.id !== 'help') : TABS;
 
   const code = earnings?.referral_code;
 
@@ -151,7 +157,7 @@ export function ReferralsContent() {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex gap-0 -mb-px" role="tablist">
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button

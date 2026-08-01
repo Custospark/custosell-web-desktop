@@ -12,7 +12,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     'h-11 w-11 sm:h-8 sm:w-8 xl:h-9 xl:w-auto xl:min-w-[2rem] xl:px-2.5',
     'text-xs xl:text-sm',
     isActive
-      ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/40 ring-1 ring-indigo-400/60'
+      ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white'
       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900',
   );
 
@@ -31,7 +31,7 @@ export function HeaderQuickNav() {
   if (!canSales && !canInventory) return null;
 
   return (
-    <div className="flex items-center gap-0.5 sm:gap-1 shrink-0" data-tour="navbar-quick">
+    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" data-tour="navbar-quick">
       {canSales && (
         <NavLink
           to={ROUTES.SALES.ORDERS}

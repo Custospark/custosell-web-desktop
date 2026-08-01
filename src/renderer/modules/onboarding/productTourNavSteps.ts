@@ -129,7 +129,7 @@ export function navTourStepsForUser(
       target: `sidebar-module-${slug}`,
       title: groupTitle(group, slug),
       body: groupBody(slug, group),
-      // Discover leaves the app shell — navigating would drop sidebar targets and break Next.
+      // Online Shopping leaves the app shell — navigating would drop sidebar targets and break Next.
       route: TOUR_SIDEBAR_ONLY_SLUGS.has(slug) ? undefined : group.subItems[0]?.to,
       // Expand so sub-items are visible inside the group spotlight
       expandGroup: isSingle ? undefined : group.label,

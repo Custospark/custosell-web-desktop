@@ -150,5 +150,8 @@ export function isSidebarSubItemActive(pathname: string, itemTo: string): boolea
   if (itemTo === ROUTES.ESTIMATES.INDEX) {
     return /^\/estimates\/\d+/.test(pathname);
   }
+  if (itemTo === ROUTES.CUSTOMERS.INDEX) {
+    return pathname === itemTo || /^\/customers\/\d+/.test(pathname);
+  }
   return pathname.startsWith(`${itemTo}/`);
 }

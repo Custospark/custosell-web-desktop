@@ -33,6 +33,7 @@ Overview payload: totals (customers, active, repeat rate), revenue, segment brea
 
 - Customers module now has a **sidebar sub-nav** (`sidebarNavGroups.ts`): **Overview** → `/customers/overview`, **Customer List** → `/customers`, so both views are first-class app navigation. `baseSubRoutes` includes both.
 - Stat cards removed from the **Customer List** page (they live on Overview only); the list keeps table + search + pagination. The Overview header button on the list remains as a quick link.
+- Overview header uses a **Customer List** link (Users icon) instead of an ArrowLeft back button; sidebar active-state excludes the sibling sub-route so `/customers/overview` no longer also highlights **Customer List**.
 
 ## Consequences
 

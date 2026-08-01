@@ -180,7 +180,7 @@ export default function NewSale() {
                   animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                   transition={{ duration: isFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
                 />
-                <div className="relative z-10 rounded-[6px] overflow-hidden bg-white">
+                <div className="relative rounded-[6px] overflow-hidden bg-white">
                   <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} />
                   <input ref={searchRef} type="text" placeholder="Search by name, SKU, or barcode..." title="Search products"
                     value={search}
@@ -217,7 +217,7 @@ export default function NewSale() {
             <AnimatePresence>
               {showResults && search && (
                 <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                  className="absolute z-30 w-full mt-1.5">
+                  className="absolute z-[5] w-full mt-1.5">
                   <div className="relative rounded-xl p-[2px]">
                     <motion.div className="absolute inset-0 rounded-xl z-0"
                       style={{ background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)', backgroundSize: '300% 100%' }}

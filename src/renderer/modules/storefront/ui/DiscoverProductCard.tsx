@@ -132,24 +132,41 @@ export function DiscoverProductCard({
         ) : null}
       </div>
       {onAdd ? (
-        <Button
-          type="button"
-          size="sm"
-          className="mt-auto w-full gap-1"
-          disabled={outOfStock}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (outOfStock) {
-              showToast('error', 'This item is out of stock');
-              return;
-            }
-            onAdd(product);
-          }}
-        >
-          <Plus className="h-3 w-3" />
-          {outOfStock ? 'Out of stock' : 'Add'}
-        </Button>
+        <div className="mt-auto flex items-center gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            className="flex-1 gap-1"
+            disabled={outOfStock}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (outOfStock) {
+                showToast('error', 'This item is out of stock');
+                return;
+              }
+              onAdd(product);
+            }}
+          >
+            <Plus className="h-3 w-3" />
+            {outOfStock ? 'Out of stock' : 'Add to cart'}
+          </Button>
+          {onOpenDetail ? (
+            <button
+              type="button"
+              title="View details"
+              aria-label="View details"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenDetail();
+              }}
+              className="shrink-0 rounded-lg bg-indigo-50 px-2 py-2 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200/80 transition-colors hover:bg-indigo-100"
+            >
+              View details
+            </button>
+          ) : null}
+        </div>
       ) : (
         <span className="mt-auto inline-flex items-center justify-center rounded-lg bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200/80">
           {onOpenDetail ? 'View details →' : 'View shop →'}

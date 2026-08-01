@@ -10,6 +10,9 @@ import {
 import { CatalogLoadError } from './CatalogLoadError';
 import { DiscoverProductCard } from './DiscoverProductCard';
 import { StorefrontProductDetailModal } from './StorefrontProductDetailModal';
+import { isStorefrontProductOutOfStock } from './storefrontStock';
+import { useStorefrontMultiCart } from '../cart/storefrontMultiCartContext';
+import { useToast } from '../../../app/contexts/useToast';
 import type { StorefrontProduct } from '../api/storefrontTypes';
 
 const RENDER_CHUNK = 36;
@@ -22,6 +25,8 @@ export function DiscoverProductsBrowse() {
   const [visible, setVisible] = useState(RENDER_CHUNK);
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const { data: categories = [] } = useStorefrontCategories();
+  const { addProduct } = useStorefrontMultiCart();
+  const { showToast } = useToast();
   const {
     data,
     isLoading,
@@ -78,6 +83,29 @@ export function DiscoverProductsBrowse() {
   const shown = filtered.slice(0, visible);
   const totalMeta = data?.pages[0]?.meta.total;
   const needsMoreLoaded = visible + RENDER_CHUNK > products.length && Boolean(hasNextPage);
+
+  const handleAdd = (product: StorefrontProduct) => {
+    const biz = product.business;
+    if (!biz) {
+      showToast('error', 'This product is not linked to a shop yet.');
+      return;
+    }
+    if (isStorefrontProductOutOfStock(product)) {
+      showToast('error', 'This item is out of stock');
+      return;
+    }
+    addProduct(
+      {
+        name: biz.name,
+        slug: biz.slug,
+        currency: biz.currency,
+        city: biz.city,
+        logo_path: biz.logo_path,
+      },
+      product,
+    );
+    showToast('success', `Added to ${biz.name} cart`, 5000, 'top-center');
+  };
 
   const onShowMore = () => {
     setVisible((n) => n + RENDER_CHUNK);
@@ -189,6 +217,7 @@ export function DiscoverProductsBrowse() {
               <DiscoverProductCard
                 key={`${p.id}-${p.business?.slug ?? ''}`}
                 product={p}
+                onAdd={handleAdd}
                 onOpenDetail={() => setDetail(p)}
               />
             ))}

@@ -236,7 +236,7 @@ export default function OrdersPage() {
                 ? 'bg-teal-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
             )}
-            title="Show Discover / online storefront orders only"
+            title="Show online / storefront orders only"
           >
             <Wifi className="w-3.5 h-3.5" />
             Online
@@ -271,7 +271,7 @@ export default function OrdersPage() {
             className="mb-3 w-full rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-left text-sm text-teal-900 hover:bg-teal-100"
           >
             <span className="font-semibold">{onlineOpenCount} open online order{onlineOpenCount === 1 ? '' : 's'}</span>
-            <span className="text-teal-800"> from Discover — tap to filter</span>
+            <span className="text-teal-800"> from Order Online — tap to filter</span>
           </button>
         ) : null}
         {isLoading ? (

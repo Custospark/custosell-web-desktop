@@ -22,7 +22,7 @@ export function SearchInput({ className, value, onChange, onClear, placeholder =
           animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
           transition={{ duration: isFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
         />
-        <div className="relative z-10 overflow-hidden rounded-[6px] bg-white">
+        <div className="relative overflow-hidden rounded-[6px] bg-white">
           <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors pointer-events-none ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} />
           <input
             ref={inputRef}

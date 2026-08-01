@@ -27,7 +27,9 @@ Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visi
 Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). Last delivery name/phone persists separately (`custosell.storefront.buyerContact.v1`) so clearing a bag after place-order does not force re-entry. See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md) and [storefront-buyer-phone-and-order-eye](../adr/2026-07-12-storefront-buyer-phone-and-order-eye.md).
 
-Add-to-cart and cart-hub toasts render **top-center** so the right-side cart sheet/dock never hides them. Product/service tiles were compacted (~30%) and the Products / shop grids densified for more items per row. Header **Open Orders** / **Products** quick-nav tabs glow (blue→indigo→violet gradient) when active, and the open-orders count badge pulses.
+Add-to-cart and cart-hub toasts render **top-center** so the right-side cart sheet/dock never hides them. Product/service tiles were compacted (~30%) and the Products / shop grids densified for more items per row. Header **Open Orders** / **Products** quick-nav tabs show a flat blue→indigo→violet gradient when active (no shadow/glow); the open-orders count badge pulses.
+
+Browse product cards now offer **Add to cart** (per-shop bag) next to **View details** — `DiscoverProductsBrowse` wires `useStorefrontMultiCart` so guests can add from the cross-shop grid without opening a shop. The New Sale product-search dropdown layers **below** the app header (stacking-context fix) so header dropdowns always render on top.
 
 ## App module (logged-in)
 

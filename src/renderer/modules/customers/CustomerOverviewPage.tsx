@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts';
 import { useCustomerOverview } from './api/customers/CustomerQueries';
-import { Users, UserCheck, Repeat, DollarSign, ArrowLeft, RefreshCw, TrendingUp } from 'lucide-react';
+import { Users, UserCheck, Repeat, DollarSign, RefreshCw, TrendingUp } from 'lucide-react';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { DashboardStatCard } from '../../shared/components/cards/DashboardStatCard';
@@ -169,7 +169,7 @@ export default function CustomerOverviewPage() {
           to={ROUTES.CUSTOMERS.INDEX}
           className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> View Customer List
+          <Users className="w-4 h-4" /> Customer List
         </Link>
       </div>
 

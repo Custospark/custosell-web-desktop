@@ -4,11 +4,11 @@ import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
-  Wallet, DollarSign, Mail, Check, Smartphone, Landmark,
+  Wallet, DollarSign, Mail, Check, Smartphone,
   Paperclip, X, FileText, Image, Zap, CalendarClock,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
-import { PipelineModalHero, PipelineFormSection, PipelineIconField, pipelineLabelClass } from '../pipeline/ui/pipelineFormFields';
+import { PipelineModalHero, PipelineFormSection, PipelineIconField, pipelineLabelClass, pipelineSelectClass } from '../pipeline/ui/pipelineFormFields';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
 interface Props {
@@ -109,14 +109,17 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
           </PipelineIconField>
 
           {(!useConfigured || showOverride) && (
-            <PipelineIconField label={`Payment Method${useConfigured ? ' (override)' : ''}`} icon={entity.payment_method === 'bank' ? Landmark : Smartphone}>
-              <input
-                type="text"
+            <PipelineIconField label={`Payment Method${useConfigured ? ' (override)' : ''}`} icon={Smartphone}>
+              <select
                 value={overrideMethod}
                 onChange={(e) => setOverrideMethod(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder={useConfigured ? 'Override payment method…' : 'e.g. Mobile Money, Bank Transfer'}
-              />
+                className={cn(pipelineSelectClass, !overrideMethod && 'text-gray-400')}
+              >
+                <option value="" disabled>Select payment method…</option>
+                {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+                  <option key={value} value={value} className="text-gray-900">{label}</option>
+                ))}
+              </select>
             </PipelineIconField>
           )}
 

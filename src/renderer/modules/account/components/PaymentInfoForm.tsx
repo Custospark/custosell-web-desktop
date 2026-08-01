@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Landmark, Smartphone } from 'lucide-react';
+import { Check, Landmark, Smartphone } from 'lucide-react';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import { SearchableSelect } from '../../../shared/components/inputs/SearchableSelect';
 import { cn } from '../../../shared/utils/cn';
@@ -29,6 +29,48 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="mt-1 text-xs text-red-600">{message}</p>;
+}
+
+interface MethodCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  selected: boolean;
+  onClick: () => void;
+}
+
+function MethodCard({ icon, title, description, selected, onClick }: MethodCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={cn(
+        'relative flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors cursor-pointer',
+        selected
+          ? 'border-indigo-500 bg-indigo-50/60'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
+      )}
+    >
+      <span
+        className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+          selected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500',
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-gray-900">{title}</span>
+        <span className="block text-xs text-gray-500">{description}</span>
+      </span>
+      {selected && (
+        <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white">
+          <Check className="h-3.5 w-3.5" />
+        </span>
+      )}
+    </button>
+  );
 }
 
 interface PaymentInfoFormProps {
@@ -99,40 +141,34 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
   };
 
   return (
-    <form onSubmit={handleSave} className="space-y-4">
-      <div className="flex gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="payment_method"
-            value="mobile_money"
-            checked={form.payment_method === 'mobile_money'}
-            onChange={() => handleMethodChange('mobile_money')}
-            className="accent-indigo-600"
+    <form onSubmit={handleSave} className="space-y-5">
+      <div>
+        <p className="text-sm font-medium text-gray-800 mb-3">How would you like to receive your referral rewards?</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <MethodCard
+            icon={<Smartphone className="h-5 w-5" />}
+            title="Mobile Money"
+            description="M-Pesa, MTN MoMo, Airtel Money and more"
+            selected={form.payment_method === 'mobile_money'}
+            onClick={() => handleMethodChange('mobile_money')}
           />
-          <Smartphone className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-700">Mobile Money</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="payment_method"
-            value="bank"
-            checked={form.payment_method === 'bank'}
-            onChange={() => handleMethodChange('bank')}
-            className="accent-indigo-600"
+          <MethodCard
+            icon={<Landmark className="h-5 w-5" />}
+            title="Bank Transfer"
+            description="Deposit to a bank account worldwide"
+            selected={form.payment_method === 'bank'}
+            onClick={() => handleMethodChange('bank')}
           />
-          <Landmark className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-700">Bank Transfer</span>
-        </label>
+        </div>
       </div>
 
-      {!form.payment_method && (
-        <p className="text-xs text-gray-400">Choose a payout method to continue.</p>
-      )}
-
       {form.payment_method === 'mobile_money' && (
-        <div className="space-y-4">
+        <section className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-indigo-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Mobile Money details</h3>
+          </div>
+
           <div>
             <FieldLabel required>Mobile Money Number</FieldLabel>
             <PhoneNumberField
@@ -207,12 +243,17 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
               <FieldError message={errors.mobile_money_provider} />
             )}
           </div>
-        </div>
+        </section>
       )}
 
       {form.payment_method === 'bank' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
+        <section className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Landmark className="h-4 w-4 text-indigo-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Bank account details</h3>
+          </div>
+
+          <div>
             <FieldLabel required>Bank Name</FieldLabel>
             <SearchableSelect
               placeholder="Select bank"
@@ -250,37 +291,39 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
             {showErrors && errors.bank_name && <FieldError message={errors.bank_name} />}
           </div>
 
-          <div>
-            <FieldLabel required>Account Name</FieldLabel>
-            <input
-              type="text"
-              value={form.bank_account_name}
-              onChange={(e) => {
-                setForm((f) => ({ ...f, bank_account_name: e.target.value }));
-                setShowErrors(false);
-              }}
-              placeholder="Full name on account"
-              className={inputCls}
-            />
-            {showErrors && errors.bank_account_name && <FieldError message={errors.bank_account_name} />}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <FieldLabel required>Account Name</FieldLabel>
+              <input
+                type="text"
+                value={form.bank_account_name}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, bank_account_name: e.target.value }));
+                  setShowErrors(false);
+                }}
+                placeholder="Full name on account"
+                className={inputCls}
+              />
+              {showErrors && errors.bank_account_name && <FieldError message={errors.bank_account_name} />}
+            </div>
+
+            <div>
+              <FieldLabel required>Account Number</FieldLabel>
+              <input
+                type="text"
+                value={form.bank_account_number}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, bank_account_number: e.target.value }));
+                  setShowErrors(false);
+                }}
+                placeholder="Account number"
+                className={inputCls}
+              />
+              {showErrors && errors.bank_account_number && <FieldError message={errors.bank_account_number} />}
+            </div>
           </div>
 
-          <div>
-            <FieldLabel required>Account Number</FieldLabel>
-            <input
-              type="text"
-              value={form.bank_account_number}
-              onChange={(e) => {
-                setForm((f) => ({ ...f, bank_account_number: e.target.value }));
-                setShowErrors(false);
-              }}
-              placeholder="Account number"
-              className={inputCls}
-            />
-            {showErrors && errors.bank_account_number && <FieldError message={errors.bank_account_number} />}
-          </div>
-
-          <div className={selectedBank ? '' : 'sm:col-span-2'}>
+          <div className={selectedBank && branches.length > 0 ? '' : 'sm:col-span-2'}>
             <FieldLabel required>Branch</FieldLabel>
             {selectedBank && branches.length > 0 ? (
               <>
@@ -330,10 +373,10 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
             )}
             {showErrors && errors.bank_branch && <FieldError message={errors.bank_branch} />}
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
         {hasSavedData && (
           <button
             type="button"

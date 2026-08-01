@@ -161,8 +161,7 @@ export function useDeleteBusiness() {
   });
 }
 
-export function useResetBusinessData() {
-  const queryClient = useQueryClient();
+export function useResetBusinessData() {  const queryClient = useQueryClient();
   const { showToast } = useToast();
 
   return useMutation({
@@ -181,8 +180,7 @@ export function useResetBusinessData() {
   });
 }
 
-export function useBulkDeleteBusinesses() {
-  const queryClient = useQueryClient();
+export function useBulkDeleteBusinesses() {  const queryClient = useQueryClient();
   const { showToast } = useToast();
 
   return useMutation({
@@ -238,5 +236,25 @@ export function useNotifyBusinesses() {
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
     onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to send notification')),
+  });
+}
+
+export function useActivateBusinessSubscription() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, planId, billingCycle }: { id: number; planId: number; billingCycle: 'monthly' | 'yearly' }) => {
+      const { data } = await axiosInstance.post<{ message: string }>(PLATFORM.BUSINESS_SUBSCRIPTION_ACTIVATE(id), {
+        plan_id: planId,
+        billing_cycle: billingCycle,
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to activate subscription')),
   });
 }

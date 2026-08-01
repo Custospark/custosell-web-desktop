@@ -25,6 +25,17 @@ export const BUSINESS_ACCOUNT_STATUSES: BusinessAccountStatus[] = ['active', 'wa
 
 export const STATUS_DURATION_DAYS = [7, 30, 60, 90] as const;
 
+export const SUBSCRIPTION_STATUS_OPTIONS = [
+  { value: '', label: 'All subscriptions' },
+  { value: 'active', label: 'Active' },
+  { value: 'trial', label: 'Trial' },
+  { value: 'past_due', label: 'Past due' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'none', label: 'No subscription' },
+] as const;
+
 export const ACTIVITY_STATUS_LABELS: Record<import('./PlatformTypes').ActivityStatus, string> = {
   active: 'Active',
   dormant: 'Dormant',

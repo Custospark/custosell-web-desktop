@@ -12,6 +12,7 @@ export const PLATFORM = {
   BUSINESSES_BULK_DELETE: '/platform/businesses/bulk-delete',
   BUSINESSES_BULK_STATUS: '/platform/businesses/bulk-status',
   BUSINESSES_NOTIFY: '/platform/businesses/notify',
+  BUSINESS_SUBSCRIPTION_ACTIVATE: (id: number) => `/platform/businesses/${id}/subscription`,
   USERS: '/platform/users',
   USER_STATS: '/platform/users/stats',
   USER_STATUS: (id: number) => `/platform/users/${id}/status`,

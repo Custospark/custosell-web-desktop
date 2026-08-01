@@ -9,11 +9,9 @@ import {
   usePlatformBusinessStats,
   useResetBusinessData,
   useUpdateBusinessStatus,
+  useActivateBusinessSubscription,
 } from './api/PlatformQueries';
 import {
-  BUSINESS_ACCOUNT_STATUSES,
-  STATUS_DURATION_DAYS,
-  STATUS_LABELS,
   formatBusinessActivityRecency,
   resolveDisplayActivityStatus,
   matchesStatusDurationFilter,
@@ -24,7 +22,6 @@ import { PlatformBusinessOnboardingChart } from './PlatformCharts';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
-import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -35,9 +32,10 @@ import { PlatformBusinessResetModal } from './components/PlatformBusinessResetMo
 import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
 import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
-import {
-  AlertTriangle, Mail, Shield, Trash2, RefreshCw, CheckSquare, Square,
-} from 'lucide-react';
+import { PlatformBusinessFilters } from './components/PlatformBusinessFilters';
+import { PlatformBusinessRowActions } from './components/PlatformBusinessRowActions';
+import { PlatformActivateSubscriptionModal } from './components/PlatformActivateSubscriptionModal';
+import { AlertTriangle, CheckSquare, Mail, RefreshCw, Shield, Square, Trash2 } from 'lucide-react';
 
 import { PlatformBusinessStatCards } from './components/PlatformBusinessStatCards';
 
@@ -59,6 +57,7 @@ export default function PlatformBusinessesPage() {
   const [activityFilter, setActivityFilter] = useState('');
   const [accountStatusFilter, setAccountStatusFilter] = useState<BusinessAccountStatus | ''>('');
   const [statusDurationFilter, setStatusDurationFilter] = useState<number | ''>('');
+  const [subscriptionFilter, setSubscriptionFilter] = useState('');
   const [dateFrom, setDateFrom] = useState(defaultRange().from);
   const [dateTo, setDateTo] = useState(defaultRange().to);
   const [dateTouched, setDateTouched] = useState<{ from: boolean; to: boolean }>({ from: false, to: false });
@@ -67,6 +66,7 @@ export default function PlatformBusinessesPage() {
   const [notifyTargets, setNotifyTargets] = useState<ModalTarget | null>(null);
   const [deleteTargets, setDeleteTargets] = useState<ModalTarget | null>(null);
   const [resetTargets, setResetTargets] = useState<ModalTarget | null>(null);
+  const [activateTarget, setActivateTarget] = useState<PlatformBusiness | null>(null);
 
   const dateValidation = useMemo(
     () => validateBusinessStatsDateRange(dateFrom, dateTo),
@@ -92,6 +92,7 @@ export default function PlatformBusinessesPage() {
   const bulkDelete = useBulkDeleteBusinesses();
   const notifyBusinesses = useNotifyBusinesses();
   const resetBusinessData = useResetBusinessData();
+  const activateSubscription = useActivateBusinessSubscription();
 
   const rows = useMemo(() => {
     const list = data?.data ?? [];
@@ -100,6 +101,8 @@ export default function PlatformBusinessesPage() {
       if (activityFilter && b.activity_status !== activityFilter) return false;
       if (accountStatusFilter && b.status !== accountStatusFilter) return false;
       if (!matchesStatusDurationFilter(b, accountStatusFilter, statusDurationFilter)) return false;
+      if (subscriptionFilter === 'none' && b.subscription_status) return false;
+      if (subscriptionFilter && subscriptionFilter !== 'none' && b.subscription_status !== subscriptionFilter) return false;
       if (!q) return true;
       return (
         b.name.toLowerCase().includes(q)
@@ -109,9 +112,14 @@ export default function PlatformBusinessesPage() {
         || (b.owner_phone?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [data?.data, search, activityFilter, accountStatusFilter, statusDurationFilter]);
+  }, [data?.data, search, activityFilter, accountStatusFilter, statusDurationFilter, subscriptionFilter]);
 
   const paginated = usePagination(rows, 15);
+
+  const tableData = useMemo(
+    () => paginated.data.map((b, i) => ({ ...b, __row: (paginated.page - 1) * paginated.pageSize + i + 1 })),
+    [paginated.data, paginated.page, paginated.pageSize],
+  );
 
   const selectedBusinesses = useMemo(
     () => rows.filter((b) => selectedIds.has(b.id)),
@@ -199,8 +207,17 @@ export default function PlatformBusinessesPage() {
     });
   };
 
+  const handleActivateConfirm = (planId: number, billingCycle: 'monthly' | 'yearly') => {
+    if (!activateTarget) return;
+    activateSubscription.mutate(
+      { id: activateTarget.id, planId, billingCycle },
+      { onSuccess: () => setActivateTarget(null) },
+    );
+  };
+
   const actionPending = updateStatus.isPending || bulkUpdateStatus.isPending
-    || deleteBusiness.isPending || bulkDelete.isPending || notifyBusinesses.isPending || resetBusinessData.isPending;
+    || deleteBusiness.isPending || bulkDelete.isPending || notifyBusinesses.isPending || resetBusinessData.isPending
+    || activateSubscription.isPending;
 
   if (statsLoading && listLoading) return <LoadingSkeleton variant="table" />;
 
@@ -236,6 +253,14 @@ export default function PlatformBusinessesPage() {
         isPending={resetBusinessData.isPending}
         onClose={() => setResetTargets(null)}
         onConfirm={handleResetConfirm}
+      />
+      <PlatformActivateSubscriptionModal
+        key={activateTarget ? `activate-${activateTarget.id}` : 'activate-closed'}
+        open={activateTarget !== null}
+        business={activateTarget}
+        isPending={activateSubscription.isPending}
+        onClose={() => setActivateTarget(null)}
+        onConfirm={handleActivateConfirm}
       />
 
       <div>
@@ -301,67 +326,22 @@ export default function PlatformBusinessesPage() {
 
       <Card>
         <div className="flex flex-col gap-4 mb-4">
-          <div className="flex flex-col lg:flex-row gap-3">
-            <div className="flex-1">
-              <SearchInput
-                placeholder="Search by business name, owner email, or business email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClear={() => setSearch('')}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                {rows.length} match{rows.length === 1 ? '' : 'es'} · {data?.data?.length ?? 0} total loaded
-              </p>
-            </div>
-            <select
-              value={activityFilter}
-              onChange={(e) => setActivityFilter(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
-            >
-            <option value="">All activity</option>
-            <option value="active">Active — sale or login ≤30d</option>
-            <option value="dormant">Dormant — 31–90d since last activity</option>
-            <option value="churned">Churned — 90d+ since last activity</option>
-            <option value="never_used">Never used — no sales or logins</option>
-            <option value="suspended">Suspended account</option>
-            </select>
-            <select
-              value={accountStatusFilter}
-              onChange={(e) => {
-                setAccountStatusFilter(e.target.value as BusinessAccountStatus | '');
-                if (!e.target.value) setStatusDurationFilter('');
-              }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
-            >
-              <option value="">All account statuses</option>
-              {BUSINESS_ACCOUNT_STATUSES.map((s) => (
-                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-              ))}
-            </select>
-            <select
-              value={statusDurationFilter}
-              onChange={(e) => setStatusDurationFilter(e.target.value ? Number(e.target.value) : '')}
-              disabled={!accountStatusFilter}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit disabled:opacity-50"
-              title="Filter businesses in the selected account status for at least N days"
-            >
-              <option value="">Any duration</option>
-              {STATUS_DURATION_DAYS.map((d) => (
-                <option key={d} value={d}>In status ≥ {d} days</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
-            >
-              {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
-              {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
-            </button>
-          </div>
+          <PlatformBusinessFilters
+            search={search}
+            onSearchChange={setSearch}
+            resultCount={rows.length}
+            totalCount={data?.data?.length ?? 0}
+            activityFilter={activityFilter}
+            onActivityFilterChange={setActivityFilter}
+            accountStatusFilter={accountStatusFilter}
+            onAccountStatusFilterChange={setAccountStatusFilter}
+            statusDurationFilter={statusDurationFilter}
+            onStatusDurationFilterChange={setStatusDurationFilter}
+            subscriptionFilter={subscriptionFilter}
+            onSubscriptionFilterChange={setSubscriptionFilter}
+            allSelected={allSelected}
+            onToggleAll={toggleAll}
+          />
         </div>
 
         <PlatformBulkActionBar
@@ -390,9 +370,12 @@ export default function PlatformBusinessesPage() {
           <LoadingSkeleton variant="table" />
         ) : (
           <>
-            <Table<PlatformBusiness>
+            <Table<PlatformBusiness & { __row: number }>
               rowKey={(b) => b.id}
               columns={[
+                { key: '__row', header: '#', align: 'center', render: (b) => (
+                  <span className="text-sm text-gray-400 font-mono">{b.__row}</span>
+                )},
                 {
                   key: 'select',
                   header: '',
@@ -455,24 +438,19 @@ export default function PlatformBusinessesPage() {
                   <span title="Count of sale records in the last 30 days">{b.transactions_30d.toLocaleString()}</span>
                 )},
                 { key: 'plan', header: 'Plan', render: (b) => b.plan_name ?? '—' },
-                { key: 'actions', header: '', render: (b) => (
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setNotifyTargets([b])} disabled={actionPending} title="Send notification">
-                      <Mail className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setStatusTargets([b])} disabled={actionPending} title="Change status">
-                      <Shield className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTargets([b])} disabled={actionPending} title="Delete">
-                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setResetTargets([b])} disabled={actionPending} title="Wipe transactional data">
-                      <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
-                    </Button>
-                  </div>
+                { key: 'actions', header: 'Actions', align: 'center', render: (b) => (
+                  <PlatformBusinessRowActions
+                    business={b}
+                    disabled={actionPending}
+                    onNotify={() => setNotifyTargets([b])}
+                    onChangeStatus={() => setStatusTargets([b])}
+                    onActivateSubscription={() => setActivateTarget(b)}
+                    onReset={() => setResetTargets([b])}
+                    onDelete={() => setDeleteTargets([b])}
+                  />
                 )},
               ]}
-              data={paginated.data}
+              data={tableData}
             />
             <Pagination
               currentPage={paginated.page}

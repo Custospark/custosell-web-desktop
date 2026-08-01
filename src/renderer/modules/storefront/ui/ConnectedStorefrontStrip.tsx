@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
+import { getDefaultRoute, isStorefrontBuyer } from '../../../shared/utils/moduleAccess';
 import { normalizeDiscoverPath } from './normalizeDiscoverPath';
 import {
   StorefrontActionStrip,
@@ -47,6 +47,8 @@ export function ConnectedStorefrontStrip({
   const focus = new URLSearchParams(location.search).get('focus');
   const onShopsList = path === ROUTES.DISCOVER && focus !== 'products';
   const onProductsList = path === ROUTES.DISCOVER && focus === 'products';
+  // Shopping accounts have no dashboard — hide the home/Dashboard tab entirely.
+  const shopping = isStorefrontBuyer(user);
 
   const leaveCartThen = (fn: () => void) => {
     onCloseCart?.();
@@ -64,7 +66,7 @@ export function ConnectedStorefrontStrip({
       homeTitle={token ? 'Open your dashboard' : 'Custosell marketing home'}
       shopsLabel="Businesses"
       shopsTitle="Browse all businesses"
-      onHome={() => {
+      onHome={shopping ? undefined : () => {
         leaveCartThen(() => {
           if (token) {
             navigate(getDefaultRoute(user));

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Store, CircleUser, LogIn, ChevronRight } from 'lucide-react';
+import { Store, CircleUser, ShoppingBag, LogIn, ChevronRight } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 
 interface Props {
-  onSelect: (type: 'business' | 'personal') => void;
+  onSelect: (type: 'business' | 'personal' | 'shopping') => void;
 }
 
 export function AccountTypeSelector({ onSelect }: Props) {
@@ -30,6 +30,23 @@ export function AccountTypeSelector({ onSelect }: Props) {
             </p>
           </div>
           <ChevronRight className="h-5 w-5 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelect('shopping')}
+          className="animate-sparkle-border flex w-full items-center gap-4 rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md cursor-pointer group"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors">
+            <ShoppingBag className="h-6 w-6 text-emerald-700" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold text-gray-900">For shopping</p>
+            <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+              Browse and buy from every business on the Discover marketplace — save items to your wishlist, place orders, and track them in My Orders. Free, with no setup.
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-emerald-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
         </button>
 
         <button

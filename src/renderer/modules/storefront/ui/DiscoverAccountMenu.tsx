@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../../app/contexts/useLogoutActions';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
+import { getDefaultRoute, isStorefrontBuyer } from '../../../shared/utils/moduleAccess';
 import { cn } from '../../../shared/utils/cn';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
@@ -146,15 +146,17 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
               Custosell Guide
             </button>
             <hr className="my-1 border-slate-100" />
-            <button
-              type="button"
-              role="menuitem"
-              onClick={goHome}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
-            >
-              <LayoutDashboard className="h-4 w-4 text-slate-600" />
-              {user.business_id ? 'App home' : 'Account home'}
-            </button>
+            {!isStorefrontBuyer(user) ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={goHome}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                <LayoutDashboard className="h-4 w-4 text-slate-600" />
+                {user.business_id ? 'App home' : 'Account home'}
+              </button>
+            ) : null}
             <button
               type="button"
               role="menuitem"

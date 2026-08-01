@@ -90,6 +90,11 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   'Guide Settings': 'guide_settings',
 };
 
+/** Shopping accounts (storefront_buyer) — Discover-only buyers, no workspace. */
+export function isStorefrontBuyer(user: AuthUser | null | undefined): boolean {
+  return user?.account_type === 'storefront_buyer';
+}
+
 export function isBusinessOwner(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
   if (user.is_business_owner === true) return true;

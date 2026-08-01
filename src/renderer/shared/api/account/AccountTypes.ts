@@ -12,7 +12,9 @@ export interface RegisterRequest {
   password: string;
   password_confirmation: string;
   phone?: string;
-  /** Personal account — no business; buys modules à la carte. */
+  /** Simple account types — no business/workspace.
+   *  `personal` buys modules à la carte; `storefront_buyer` is a free
+   *  Discover-only shopping account (no dashboard, no subscription). */
   account_type?: 'personal' | 'storefront_buyer';
 }
 

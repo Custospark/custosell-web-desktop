@@ -153,7 +153,10 @@ export function Navbar() {
   const { state, dispatch } = useAppContext();
   const user = useAppSelector((s) => s.auth.user);
   const { data: business } = useBusiness();
-  const businessName = user?.account_type === 'personal' ? 'Personal' : resolveBusinessDisplayName(user, business);
+  const businessName =
+    user?.account_type === 'personal' ? 'Personal'
+    : user?.account_type === 'storefront_buyer' ? 'Shopping'
+    : resolveBusinessDisplayName(user, business);
   const businessLogoUrl = avatarUrl(resolveBusinessLogoPath(user, business));
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();

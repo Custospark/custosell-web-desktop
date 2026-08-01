@@ -1,24 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
-import { useRegister, useRegisterBusiness } from '../../shared/api/account/AccountQueries';
+import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { useValidateReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AccountTypeSelector } from './AccountTypeSelector';
+import { SimpleAccountForm } from './SimpleAccountForm';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { countryCodes, type CountryCode } from '../../shared/utils/countryCodes';
 import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
 import {
   Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff,
-  LogIn, UserPlus, Coins, Tag, CheckCircle, XCircle, ArrowLeft,
+  UserPlus, Coins, Tag, CheckCircle, XCircle, ArrowLeft,
 } from 'lucide-react';
-
 export default function RegisterPage() {
   const businessMutation = useRegisterBusiness();
-  const personalMutation = useRegister();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
@@ -26,7 +25,7 @@ export default function RegisterPage() {
   const businessPlans = plans?.filter((p) => p.type !== 'personal') ?? [];
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
-  const [accountType, setAccountType] = useState<'business' | 'personal' | null>(null);
+  const [accountType, setAccountType] = useState<'business' | 'personal' | 'shopping' | null>(null);
   const [manualReferralCode, setManualReferralCode] = useState('');
 
   const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
@@ -114,24 +113,7 @@ export default function RegisterPage() {
     });
   };
 
-  const handlePersonalSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.password_confirmation.length > 0 && !passwordsMatch) return;
-
-    const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
-
-    personalMutation.mutate({
-      name: form.name,
-      email: form.email,
-      phone: fullPhone,
-      password: form.password,
-      password_confirmation: form.password_confirmation,
-      account_type: 'personal',
-    });
-  };
-
   const inputCls = "w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";
-  const isPending = businessMutation.isPending || personalMutation.isPending;
 
   const renderPhoneInput = (required = false) => (
     <div>
@@ -206,54 +188,16 @@ export default function RegisterPage() {
     );
   }
 
-  if (accountType === 'personal') {
+  if (accountType === 'personal' || accountType === 'shopping') {
+    const isShopping = accountType === 'shopping';
     return (
       <AuthLayout
-        title="Create Personal Account"
-        subtitle="Setting up your Personal Account"
-        subtitleClassName="text-blue-600"
+        title={isShopping ? 'Create Shopping Account' : 'Create Personal Account'}
+        subtitle={isShopping ? 'Setting up your Shopping Account' : 'Setting up your Personal Account'}
+        subtitleClassName={isShopping ? 'text-emerald-600' : 'text-blue-600'}
         heroImage={AUTH_HERO_IMAGES.register}
       >
-        <form onSubmit={handlePersonalSubmit} className="space-y-4">
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input
-              placeholder="Full name"
-              value={form.name}
-              onChange={handleChange('name')}
-              required
-              className={inputCls}
-            />
-          </div>
-          <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-            <input type="email" placeholder="Email address" value={form.email} onChange={handleChange('email')} required className={inputCls} />
-          </div>
-
-          {renderPhoneInput()}
-          {renderPasswordFields()}
-
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setAccountType(null)}
-              className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-300 bg-white px-4 py-3.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 cursor-pointer">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
-            <Button type="submit" className="flex-1 gap-2 py-3.5" loading={isPending}>
-              <UserPlus className="h-4 w-4" aria-hidden />
-              Create Personal Account
-            </Button>
-          </div>
-
-          <div className="border-t border-gray-100 pt-4">
-            <p className="mb-3 text-center text-sm font-medium text-gray-700">Already have an account?</p>
-            <Link to={ROUTES.LOGIN}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50">
-              <LogIn className="h-4 w-4" aria-hidden />
-              Sign In
-            </Link>
-          </div>
-        </form>
+        <SimpleAccountForm mode={accountType} onBack={() => setAccountType(null)} />
       </AuthLayout>
     );
   }

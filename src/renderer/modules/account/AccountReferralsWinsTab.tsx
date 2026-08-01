@@ -1,18 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
-import { usePaymentInfo, useUpdatePaymentInfo, usePayoutHistory } from './api/useAccountQueries';
+import { useState } from 'react';
+import { usePayoutHistory } from './api/useAccountQueries';
 import type { ReferralEarnings } from '../referral/api/ReferralTypes';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import {
-  Users, DollarSign, Clock, TrendingUp, Wallet, Smartphone, Landmark,
+  Users, DollarSign, Clock, TrendingUp, Wallet,
   Receipt, Check, X, Building2, ChevronLeft, ChevronRight,
   FileText, Image,
 } from 'lucide-react';
-import {
-  EAST_AFRICA_BANKS_BY_COUNTRY,
-  findBankByName,
-  OTHER_OPTION,
-} from './data/eastAfricaBanks';
+import { PaymentInfoSection } from './components/PaymentInfoSection';
 
 const PAGE_SIZE = 10;
 
@@ -29,54 +25,11 @@ const STATUS_PAYOUT_ICONS: Record<string, { icon: React.ReactNode; color: string
 };
 
 export default function AccountReferralsWinsTab({ earnings }: { earnings: ReferralEarnings | undefined }) {
-  const { data: paymentInfoResp, isLoading: paymentLoading } = usePaymentInfo();
   const { data: payoutHistoryResp, isLoading: historyLoading } = usePayoutHistory();
-  const updatePaymentInfo = useUpdatePaymentInfo();
 
-  const paymentInfo = paymentInfoResp;
   const payoutHistory = payoutHistoryResp ?? [];
 
   const totalEarned = (earnings?.total_earned ?? 0) + (earnings?.commission_earned ?? 0);
-
-  const [form, setForm] = useState({
-    payment_method: '', mobile_money_provider: '', mobile_money_number: '',
-    bank_name: '', bank_account_name: '', bank_account_number: '', bank_branch: '',
-  });
-
-  const formLoaded = useRef(false);
-  useEffect(() => {
-    if (paymentInfo && !formLoaded.current) {
-      formLoaded.current = true;
-      setForm({
-        payment_method: paymentInfo.payment_method ?? '',
-        mobile_money_provider: paymentInfo.mobile_money_provider ?? '',
-        mobile_money_number: paymentInfo.mobile_money_number ?? '',
-        bank_name: paymentInfo.bank_name ?? '',
-        bank_account_name: paymentInfo.bank_account_name ?? '',
-        bank_account_number: paymentInfo.bank_account_number ?? '',
-        bank_branch: paymentInfo.bank_branch ?? '',
-      });
-    }
-  }, [paymentInfo]);
-
-  const handleSubmitPayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload: Record<string, string> = {};
-    if (form.payment_method === 'mobile_money') {
-      payload.payment_method = 'mobile_money';
-      payload.mobile_money_provider = form.mobile_money_provider;
-      payload.mobile_money_number = form.mobile_money_number;
-    } else if (form.payment_method === 'bank') {
-      payload.payment_method = 'bank';
-      payload.bank_name = form.bank_name;
-      payload.bank_account_name = form.bank_account_name;
-      payload.bank_account_number = form.bank_account_number;
-      payload.bank_branch = form.bank_branch;
-    } else {
-      payload.payment_method = '';
-    }
-    updatePaymentInfo.mutate(payload);
-  };
 
   const payoutTotalPaid = payoutHistory
     .filter((p) => p.status === 'paid')
@@ -87,11 +40,6 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
   const totalPages = Math.max(1, Math.ceil(referrals.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
   const pageReferrals = referrals.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
-
-  const selectedBank = findBankByName(form.bank_name);
-  const branches = selectedBank ? selectedBank.branches : [];
-  const bankIsOther = form.bank_name !== '' && !selectedBank;
-  const branchIsOther = form.bank_branch !== '' && !branches.includes(form.bank_branch);
 
   return (
     <div className="space-y-6">
@@ -231,159 +179,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
       </section>
 
       {/* Payment Info */}
-      <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Payment Information</h2>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Add where your referral rewards should be paid. You can be paid by mobile money or bank transfer to any bank in East Africa.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmitPayment} className="space-y-4">
-          {paymentLoading ? (
-            <p className="text-sm text-gray-400">Loading...</p>
-          ) : (
-            <>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="payment_method" value="mobile_money"
-                    checked={form.payment_method === 'mobile_money'}
-                    onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-                    className="accent-indigo-600" />
-                  <Smartphone className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">Mobile Money</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="payment_method" value="bank"
-                    checked={form.payment_method === 'bank'}
-                    onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-                    className="accent-indigo-600" />
-                  <Landmark className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">Bank Transfer</span>
-                </label>
-              </div>
-
-              {form.payment_method === 'mobile_money' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Provider</label>
-                    <select value={form.mobile_money_provider}
-                      onChange={(e) => setForm({ ...form, mobile_money_provider: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                      <option value="">Select provider</option>
-                      <option value="mtn">MTN</option>
-                      <option value="airtel">Airtel</option>
-                      <option value="vodafone">Vodafone</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Mobile Number</label>
-                    <input type="text" value={form.mobile_money_number}
-                      onChange={(e) => setForm({ ...form, mobile_money_number: e.target.value })}
-                      placeholder="+256 700 000 000"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                  </div>
-                </div>
-              )}
-
-              {form.payment_method === 'bank' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name</label>
-                    <select
-                      value={selectedBank ? selectedBank.name : bankIsOther ? OTHER_OPTION : ''}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setForm((f) => (v === OTHER_OPTION
-                          ? { ...f, bank_name: '', bank_branch: '' }
-                          : { ...f, bank_name: v, bank_branch: '' }));
-                      }}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                      <option value="">Select bank</option>
-                      {EAST_AFRICA_BANKS_BY_COUNTRY.map((group) => (
-                        <optgroup key={group.country} label={group.country}>
-                          {group.banks.map((bank) => (
-                            <option key={bank.name} value={bank.name}>{bank.name}</option>
-                          ))}
-                        </optgroup>
-                      ))}
-                      <option value={OTHER_OPTION}>Other bank…</option>
-                    </select>
-                    {bankIsOther && (
-                      <input
-                        type="text"
-                        value={form.bank_name}
-                        onChange={(e) => setForm((f) => ({ ...f, bank_name: e.target.value }))}
-                        placeholder="Type your bank name"
-                        className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Name</label>
-                    <input type="text" value={form.bank_account_name}
-                      onChange={(e) => setForm({ ...form, bank_account_name: e.target.value })} placeholder="Full name on account"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Number</label>
-                    <input type="text" value={form.bank_account_number}
-                      onChange={(e) => setForm({ ...form, bank_account_number: e.target.value })} placeholder="Account number"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                  </div>
-                  <div className={selectedBank ? '' : 'sm:col-span-2'}>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Branch</label>
-                    {selectedBank ? (
-                      <>
-                        <select
-                          value={branchIsOther ? OTHER_OPTION : form.bank_branch}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setForm((f) => (v === OTHER_OPTION
-                              ? { ...f, bank_branch: '' }
-                              : { ...f, bank_branch: v }));
-                          }}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                          <option value="">Select branch</option>
-                          {branches.map((branch) => (
-                            <option key={branch} value={branch}>{branch}</option>
-                          ))}
-                          <option value={OTHER_OPTION}>Other branch…</option>
-                        </select>
-                        {branchIsOther && (
-                          <input
-                            type="text"
-                            value={form.bank_branch}
-                            onChange={(e) => setForm((f) => ({ ...f, bank_branch: e.target.value }))}
-                            placeholder="Type your branch name"
-                            className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        )}
-                      </>
-                    ) : (
-                      <input type="text" value={form.bank_branch}
-                        onChange={(e) => setForm({ ...form, bank_branch: e.target.value })} placeholder="Branch name"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end">
-                <button type="submit" disabled={updatePaymentInfo.isPending}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 px-4 py-2 rounded-lg transition-colors cursor-pointer">
-                  {updatePaymentInfo.isPending ? 'Saving...' : 'Save Payment Info'}
-                </button>
-              </div>
-            </>
-          )}
-        </form>
-      </section>
+      <PaymentInfoSection />
 
       {/* Payout History */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">

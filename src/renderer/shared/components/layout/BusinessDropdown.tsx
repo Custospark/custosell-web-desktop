@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -9,7 +9,10 @@ import { isBusinessOwner } from '../../utils/moduleAccess';
 import { cn } from '../../utils/cn';
 import {
   Building2, ChevronDown, ExternalLink, Settings, CreditCard, CircleUser,
+  FileText, MapPin, Phone, Mail,
 } from 'lucide-react';
+
+type DetailRow = { icon: typeof MapPin; value: string };
 
 /** Business context trigger — the Custosell equivalent of Custocare's context switcher. */
 export default function BusinessDropdown() {
@@ -26,12 +29,37 @@ export default function BusinessDropdown() {
   const businessLogoUrl = avatarUrl(resolveBusinessLogoPath(user, business));
 
   const isBusiness = user?.account_type === 'business';
+  const isOwner = isBusinessOwner(user);
   const planName = user?.business?.subscription?.plan_name;
   const planSlug = user?.business?.subscription?.plan_slug;
   const subtitle =
     user?.account_type === 'personal' ? 'Personal plan'
     : user?.account_type === 'storefront_buyer' ? 'Shopping account'
     : (planName ?? 'Business account');
+
+  const businessDetails = useMemo<DetailRow[]>(() => {
+    if (!business) return [];
+    const rows: DetailRow[] = [];
+    if (business.description?.trim()) {
+      rows.push({ icon: FileText, value: business.description.trim() });
+    }
+    const location = [business.address, business.city, business.state, business.country]
+      .filter(Boolean)
+      .join(', ')
+      .trim();
+    if (location) {
+      rows.push({ icon: MapPin, value: location });
+    }
+    const phone = (business.business_phone ?? business.phone)?.trim();
+    if (phone) {
+      rows.push({ icon: Phone, value: phone });
+    }
+    const email = (business.business_email ?? business.email)?.trim();
+    if (email) {
+      rows.push({ icon: Mail, value: email });
+    }
+    return rows;
+  }, [business]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -49,10 +77,10 @@ export default function BusinessDropdown() {
   if (!businessName || user?.account_type === 'storefront_buyer') return null;
 
   const links: { label: string; icon: typeof Settings; to: string }[] = [];
-  if (isBusiness || isBusinessOwner(user)) {
+  if (isBusiness || isOwner) {
     links.push({ label: 'Business Settings', icon: Settings, to: ROUTES.SETTINGS.BUSINESS });
   }
-  if (isBusinessOwner(user)) {
+  if (isOwner) {
     links.push({ label: 'Billing & Subscription', icon: CreditCard, to: ROUTES.SETTINGS.SUBSCRIPTION });
   }
   if (!isBusiness) {
@@ -72,6 +100,8 @@ export default function BusinessDropdown() {
       {planSlug.slice(0, 3).replace(/^\w/, (c) => c.toUpperCase())}
     </span>
   ) : null;
+
+  const showDetailsSection = Boolean(business && (businessDetails.length > 0 || isOwner));
 
   return (
     <div ref={ref} className="relative">
@@ -99,7 +129,7 @@ export default function BusinessDropdown() {
             <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
             <span className="block text-xs truncate text-gray-500">{subtitle}</span>
           </div>
-          {isBusinessOwner(user) && planBadge}
+          {isOwner && planBadge}
         </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
@@ -118,12 +148,36 @@ export default function BusinessDropdown() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 truncate flex items-center gap-1.5">
                   <span className="truncate">{businessName}</span>
-                  {isBusinessOwner(user) && planBadge}
+                  {isOwner && planBadge}
                 </p>
                 <p className="text-xs text-gray-500 truncate">{subtitle}</p>
               </div>
             </div>
           </div>
+
+          {showDetailsSection && (
+            <div className="px-4 py-3 border-b border-gray-200">
+              {businessDetails.length > 0 ? (
+                <div className="space-y-2">
+                  {businessDetails.map((row, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <row.icon className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-gray-600 min-w-0 break-words">{row.value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleNavigate(ROUTES.SETTINGS.BUSINESS)}
+                  className="w-full flex items-center justify-between gap-2 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg px-2 py-1.5 cursor-pointer"
+                >
+                  <span>Set in Business Settings</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="p-2 space-y-1">
             {links.map((link) => (

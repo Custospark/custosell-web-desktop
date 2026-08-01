@@ -249,7 +249,7 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-10 shrink-0 bg-white border-b border-gray-200',
+        'sticky top-0 z-30 shrink-0 bg-white border-b border-gray-200',
         SHELL_HEADER_HEIGHT_CLASS,
         'pl-3 sm:pl-4 lg:pl-3 pr-3 sm:pr-4 lg:pr-6',
       )}

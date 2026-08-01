@@ -85,14 +85,21 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   }, [user?.account_type, personalPlans, businessPlans]);
 
   const relevantFeatures = useMemo(() => {
+    const planList = comparisonPlans.length > 0 ? comparisonPlans : sortedPlans;
     const keys = new Set<string>();
-    for (const plan of sortedPlans) {
+    for (const plan of planList) {
       for (const key of Object.keys(plan.features ?? {})) {
         keys.add(key);
       }
     }
-    return Object.entries(FEATURE_CATALOG).filter(([key]) => keys.has(key));
-  }, [sortedPlans]);
+    return Object.entries(FEATURE_CATALOG)
+      .filter(([key]) => keys.has(key))
+      .sort(([a], [b]) => {
+        const countA = planList.filter((p) => p.features?.[a] === true).length;
+        const countB = planList.filter((p) => p.features?.[b] === true).length;
+        return countA - countB;
+      });
+  }, [comparisonPlans, sortedPlans]);
 
   const relevantLimits = useMemo(() => {
     const keys = new Set<string>();
@@ -264,7 +271,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <CustosellLoader fullPage={false} />
       ) : user?.account_type === 'personal' ? (
         <>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
             {personalPlans.map((plan) => (
               <PlanCard key={plan.id} plan={plan} index={0} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
             ))}
@@ -281,14 +288,14 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           </div>
 
           <h3 className="text-sm font-bold uppercase tracking-wide text-slate-400">Business Plans</h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
             {businessPlans.map((plan, index) => (
               <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
             ))}
           </div>
         </>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
           {sortedPlans.map((plan, index) => (
             <PlanCard key={plan.id} plan={plan} index={index} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
           ))}

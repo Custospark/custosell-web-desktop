@@ -39,7 +39,7 @@ Module launcher catalog: `moduleLauncherCatalog.ts`. Visibility = staff/owner dr
 
 `Sidebar.tsx` uses absolute positioning; removed offline-banner `top` offset hack after banners moved above layout.
 
-When completely offline, online-only modules and subnavs (Pipeline, Estimates, Documents, Forecasting, HR, Accounting, Platform, Marketplace / POs / Incoming / Supplier invoices, **Discover & My Orders**) render as disabled controls (`cursor-not-allowed`, opacity, native `title` hover). Sales invoices stay enabled. Registry: `onlineOnlyNav.ts`.
+When completely offline, online-only modules and subnavs (Pipeline, Estimates, Documents, Forecasting, HR, Accounting, Platform, Marketplace / POs / Incoming / Supplier invoices, **Online Shopping**) render as disabled controls (`cursor-not-allowed`, opacity, native `title` hover). Sales invoices stay enabled. Registry: `onlineOnlyNav.ts`.
 
 ## Main content
 

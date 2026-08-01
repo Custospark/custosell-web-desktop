@@ -23,7 +23,7 @@ const GROUP_INTRO: Record<string, string> = {
   dashboard: 'Your business overview — a quick pulse on performance.',
   sales: 'Ring sales, manage orders, history, refunds, and sales invoices.',
   inventory: 'Products, stock, marketplace, and purchase orders live here.',
-  customers: 'Keep your customer list ready for sales and invoicing.',
+  customers: 'Track customer analytics on Overview and manage your customer list.',
   pipeline: 'Boards and leads to win deals and track follow-ups.',
   estimates: 'Estimates, projects, and delivery boards.',
   expenses: 'Track spending and expense categories.',
@@ -35,7 +35,7 @@ const GROUP_INTRO: Record<string, string> = {
   guide: 'Tutorials, FAQs, feedback, and help — learn Custosell at your pace.',
   account: 'Notifications and your profile — keep your account up to date.',
   discover:
-    'Browse public businesses, products, and services — and track orders you placed as a buyer. Open it anytime from here — the tour stays in your workspace.',
+    'Order Online — browse businesses, products, and services — and track orders you placed as a buyer. Open it anytime from here — the tour stays in your workspace.',
 };
 
 /** Immersive shells leave App chrome (sidebar + tour overlay). Spotlight only — never navigate. */

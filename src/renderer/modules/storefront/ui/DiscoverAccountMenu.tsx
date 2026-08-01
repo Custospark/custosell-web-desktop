@@ -55,7 +55,7 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
   const handleLogout = async () => {
     const confirmed = await confirm({
       title: 'Log out?',
-      message: `${user.name?.split(/\s+/)[0] || 'You'}, you will stay on Discover as a guest until you sign in again.`,
+      message: `${user.name?.split(/\s+/)[0] || 'You'}, you will stay on Online Shopping as a guest until you sign in again.`,
       confirmText: 'Log out',
       cancelText: 'Stay signed in',
       variant: 'warning',

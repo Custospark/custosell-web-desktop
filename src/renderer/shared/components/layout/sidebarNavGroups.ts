@@ -32,7 +32,7 @@ export const baseSubRoutes = [
   ROUTES.DISCOVER, ROUTES.DISCOVER_MY_ORDERS,
   ROUTES.SALES.NEW, ROUTES.SALES.ORDERS, ROUTES.SALES.HISTORY, ROUTES.SALES.REFUNDS,
   ROUTES.INVENTORY.PRODUCTS, ROUTES.INVENTORY.CATEGORIES, ROUTES.INVENTORY.STOCK,
-  ROUTES.CUSTOMERS.INDEX,
+  ROUTES.CUSTOMERS.INDEX, ROUTES.CUSTOMERS.OVERVIEW,
   ROUTES.PIPELINE.BOARDS, ROUTES.PIPELINE.MY_WORK, ROUTES.PIPELINE.LEADS,
   ROUTES.PIPELINE.INSIGHTS, ROUTES.PIPELINE.SETTINGS, ROUTES.PIPELINE.REFERRALS,
   ROUTES.ESTIMATES.INDEX, ROUTES.ESTIMATES.PROJECTS, ROUTES.ESTIMATES.BOARDS,
@@ -132,14 +132,15 @@ export const baseNavGroups: SidebarNavGroup[] = [
     icon: Users,
     label: 'Customers',
     subItems: [
+      { to: ROUTES.CUSTOMERS.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
       { to: ROUTES.CUSTOMERS.INDEX, label: 'Customer List', icon: Users },
     ],
   },
   {
     icon: Compass,
-    label: 'Discover & My Orders',
+    label: 'Online Shopping',
     subItems: [
-      { to: ROUTES.DISCOVER, label: 'Discover', icon: Compass },
+      { to: ROUTES.DISCOVER, label: 'Browse & Order', icon: Compass },
       { to: ROUTES.DISCOVER_MY_ORDERS, label: 'My Orders', icon: ShoppingBag },
     ],
   },

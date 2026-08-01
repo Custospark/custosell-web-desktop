@@ -148,7 +148,7 @@ function DiscoverShellChrome() {
             <Link
               to={`${ROUTES.DISCOVER}?focus=shops`}
               className="flex shrink-0 items-center gap-1.5 sm:rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-600/40 sm:gap-2.5"
-              aria-label={`${PRODUCT_NAME} Discover`}
+              aria-label={`${PRODUCT_NAME} Order Online`}
               onClick={() => setCartOpen(false)}
             >
               <LogoImage size="sm" />
@@ -158,7 +158,7 @@ function DiscoverShellChrome() {
             </Link>
             <div className="min-w-0 flex-1 border-l border-slate-300/70 pl-2 sm:pl-3">
               <p className="hidden text-[11px] font-semibold uppercase tracking-wide text-indigo-800 sm:block">
-                Discover
+                Order Online
               </p>
               <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
               {subtitle ? (

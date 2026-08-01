@@ -157,7 +157,7 @@ export function BusinessStorefrontCard() {
             Share your shop link on TikTok, WhatsApp, or Facebook. Guests browse listed products and send order requests — no online payment.
           </p>
           <p className="mt-1 text-xs leading-snug text-gray-500">
-            Shop logo appears on Discover.{' '}
+            Shop logo appears in Order Online.{' '}
             <Link to={ROUTES.SETTINGS.BUSINESS} className="font-semibold text-blue-700 hover:underline">
               Change logo in Business settings
             </Link>

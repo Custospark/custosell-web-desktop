@@ -8,7 +8,7 @@ export const LANDING_MOBILE_TABS: ReadonlyArray<{
   end?: boolean;
 }> = [
   { label: 'Home', path: ROUTES.HOME, icon: Home, end: true },
-  { label: 'Discover', path: ROUTES.DISCOVER, icon: Compass },
+  { label: 'Order Online', path: ROUTES.DISCOVER, icon: Compass },
   { label: 'Pricing', path: ROUTES.PRICING, icon: CreditCard },
   { label: 'Privacy', path: ROUTES.PRIVACY, icon: Shield },
   { label: 'FAQs', path: ROUTES.PUBLIC_FAQS, icon: HelpCircle },

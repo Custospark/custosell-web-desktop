@@ -29,8 +29,13 @@ Overview payload: totals (customers, active, repeat rate), revenue, segment brea
 - `src/renderer/app/routes/index.tsx` — route under `ModuleAccessMiddleware module="customers"`, registered before the index route.
 - `src/renderer/modules/customers/ui/customers/CustomerList.tsx` — Overview button in header.
 
+### Follow-up (same day)
+
+- Customers module now has a **sidebar sub-nav** (`sidebarNavGroups.ts`): **Overview** → `/customers/overview`, **Customer List** → `/customers`, so both views are first-class app navigation. `baseSubRoutes` includes both.
+- Stat cards removed from the **Customer List** page (they live on Overview only); the list keeps table + search + pagination. The Overview header button on the list remains as a quick link.
+
 ## Consequences
 
 - Owners get a fast snapshot of their customer base.
 - The overview is always-fresh to match the rest of the Customers module's near-real-time behaviour.
-- Customers module keeps list + overview; navigation preserved for existing users.
+- Customers module keeps list + overview; navigation preserved for existing users (sidebar sub-nav + header quick link).

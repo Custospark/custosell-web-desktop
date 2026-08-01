@@ -1,6 +1,6 @@
 # Public storefront module
 
-Consumer-facing shops and Discover — not B2B Marketplace.
+Consumer-facing shops and **Order Online** (the Discover storefront) — not B2B Marketplace.
 
 ## Buyer journey
 
@@ -31,7 +31,7 @@ Add-to-cart and cart-hub toasts render **top-center** so the right-side cart she
 
 ## App module (logged-in)
 
-Sidebar **Discover & My Orders**:
+Sidebar **Online Shopping** (landing tab: **Order Online**):
 
 | Path | Purpose |
 |------|---------|
@@ -48,7 +48,7 @@ Public share URLs (QR / WhatsApp / marketing):
 
 `/discover`, `/discover/my-orders`, `/discover/wishlist`, and `/discover/shop/:slug` live on **DiscoverLayout outside `PublicRoute`**, so signed-in sidebar links never hit the guest-only redirect to dashboard. Landing / Pricing / Privacy / Login stay under `PublicRoute` (guests only). See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md).
 
-Sidebar group **Discover & My Orders** is in the product tour (`sidebar-module-discover`) and is **online-only** when completely offline (greyed out via `onlineOnlyNav.ts`; banner if already on the page).
+Sidebar group **Online Shopping** (sub-items **Browse & Order** + **My Orders**) is in the product tour (`sidebar-module-discover`) and is **online-only** when completely offline (greyed out via `onlineOnlyNav.ts`; banner if already on the page).
 
 Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 

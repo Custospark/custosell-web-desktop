@@ -16,7 +16,7 @@ import { scrollLandingToTop } from './ui/landingMobileNav';
 
 const navLinks = [
   { label: 'Home', path: ROUTES.HOME, icon: Home },
-  { label: 'Discover', path: ROUTES.DISCOVER, icon: Compass },
+  { label: 'Order Online', path: ROUTES.DISCOVER, icon: Compass },
   { label: 'Pricing', path: ROUTES.PRICING, icon: CreditCard },
   { label: 'Privacy', path: ROUTES.PRIVACY, icon: Shield },
   { label: 'FAQs', path: ROUTES.PUBLIC_FAQS, icon: HelpCircle },

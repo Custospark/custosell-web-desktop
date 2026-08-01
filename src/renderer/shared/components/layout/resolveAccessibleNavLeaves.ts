@@ -43,7 +43,7 @@ export function resolveAccessibleNavGroups(
       if (!hasModule('estimates')) return false;
       return hasEstimatesBoardsAccess(user);
     }
-    if (group.label === 'Discover & My Orders') return true;
+    if (group.label === 'Online Shopping') return true;
     if (group.label === 'Custosell Guide') return true;
     if (group.label === 'Account') return true;
     return hasModule(moduleSlug);

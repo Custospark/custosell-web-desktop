@@ -13,7 +13,6 @@ import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
-import { CustomerStatsCards } from './CustomerStatsCards';
 import CustomerFormDrawer from './CustomerFormDrawer';
 import CustomerPurchaseModal from './CustomerPurchaseModal';
 import { displayCustomerPhone } from '../../../../shared/utils/customerContactUtils';
@@ -94,9 +93,6 @@ export default function CustomerList() {
           <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Customer</Button>
         </div>
       </div>
-
-      <CustomerStatsCards customers={customers || []} />
-      <div className="h-6" />
 
       <Card>
         <div className="flex items-center gap-4 mb-4">

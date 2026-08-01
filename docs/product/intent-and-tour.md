@@ -44,8 +44,8 @@ Targets need stable anchors (`data-tour`). Guide card sits beside the spotlight 
 | Area | What’s covered |
 |------|----------------|
 | Shell | Apps, network, Guide/Tour, profile, sidebar, Quick Support |
-| Modules | One step per accessible module — **Account, Discover & My Orders, and Custosell Guide included** |
-| Discover | Sidebar spotlight only — **does not navigate** to `/discover` (immersive shell would leave tour targets) |
+| Modules | One step per accessible module — **Account, Online Shopping, and Custosell Guide included** |
+| Online Shopping | Sidebar spotlight only — **does not navigate** to `/discover` (immersive shell would leave tour targets) |
 | Grouping | Each module expands so **header + sub-nav** share one spotlight (not a step per link) |
 | Owners | Module access in Settings |
 | Finish / Skip | Flower celebration (~30s) + congratulations; skip has its own welcome copy |

@@ -85,7 +85,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   Settings: 'settings',
   Account: 'account',
   'Custosell Guide': 'guide',
-  'Discover & My Orders': 'discover',
+  'Online Shopping': 'discover',
   Platform: 'platform',
   'Guide Settings': 'guide_settings',
 };

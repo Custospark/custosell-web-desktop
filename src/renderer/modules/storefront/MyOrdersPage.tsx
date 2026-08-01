@@ -204,7 +204,7 @@ export default function MyOrdersPage() {
             title={allOrders.length === 0 ? 'No orders yet' : 'No matching orders'}
             description={
               allOrders.length === 0
-                ? 'Browse Discover, open a shop, and place an order request.'
+                ? 'Browse businesses, open a shop, and place an order request.'
                 : 'Try another status or search — filtering is instant on this device.'
             }
             actionLabel="Browse businesses"

@@ -464,7 +464,7 @@ export default function PlatformUsersPage() {
                 { key: 'joined', header: 'Joined', render: (u) => (
                   u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'
                 )},
-                { key: 'actions', header: '', render: (u) => (
+                { key: 'actions', header: 'Actions', align: 'center', render: (u) => (
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setNotifyTargets([u])} disabled={actionPending} title="Send notification">
                       <Mail className="w-3.5 h-3.5" />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
 import {
@@ -64,6 +64,8 @@ export default function PlatformCampaignCodeFormModal({
 
   const set = (patch: Partial<CampaignCodeFormData>) => setForm((prev) => ({ ...prev, ...patch }));
 
+  const canSubmit = useMemo(() => form.code.trim().length > 0, [form.code]);
+
   const handleClose = () => {
     if (isPending) return;
     onClose();
@@ -71,6 +73,7 @@ export default function PlatformCampaignCodeFormModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     const payload: Record<string, unknown> = {
       code: form.code,
       owner_type: 'campaign',
@@ -95,9 +98,10 @@ export default function PlatformCampaignCodeFormModal({
       onClose={handleClose}
       title={title ?? 'Create Campaign Code'}
       subtitle={isEditing ? 'Update the discount code details' : 'Create a promo code to reward campaigns'}
-      size="md"
+      size="lg"
+      bodyClassName="px-4 py-4 sm:px-6"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <PipelineModalHero
           icon={Tag}
           tone="blue"
@@ -105,9 +109,23 @@ export default function PlatformCampaignCodeFormModal({
           description={isEditing ? 'Edit the details of this promotional code' : 'Create a promo code to offer a discount'}
         />
 
-        <PipelineFormSection title="Campaign code" icon={Tag}>
-          <PipelineIconField label="Code" icon={KeyRound} required hint="Uppercase letters and numbers">
-            <div className="flex gap-2">
+        <PipelineFormSection
+          title="Campaign code"
+          icon={Tag}
+          description="Short code customers enter at signup."
+        >
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-sm font-medium text-gray-700">
+                Code
+                <span className="ml-0.5 text-red-500">*</span>
+              </label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => set({ code: generateCode() })}>
+                <Shuffle className="h-3.5 w-3.5" /> Generate
+              </Button>
+            </div>
+            <div className="relative">
+              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 autoFocus
                 type="text"
@@ -117,20 +135,17 @@ export default function PlatformCampaignCodeFormModal({
                 className={pipelineInputClass}
                 required
               />
-              <button
-                type="button"
-                onClick={() => set({ code: generateCode() })}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-50 cursor-pointer"
-              >
-                <Shuffle className="h-3.5 w-3.5" />
-                Generate
-              </button>
             </div>
-          </PipelineIconField>
+            <p className="mt-1 text-xs text-gray-400">Uppercase letters and numbers only.</p>
+          </div>
         </PipelineFormSection>
 
-        <PipelineFormSection title="Discount" icon={Percent}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <PipelineFormSection
+          title="Discount"
+          icon={Percent}
+          description="What the code takes off at signup."
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <PipelineIconField label="Type" icon={Percent} required>
               <select value={form.discount_type} onChange={(e) => set({ discount_type: e.target.value })} className={pipelineSelectClass}>
                 <option value="percentage">Percentage (%)</option>
@@ -165,8 +180,12 @@ export default function PlatformCampaignCodeFormModal({
           </div>
         </PipelineFormSection>
 
-        <PipelineFormSection title="Limits & Expiry" icon={Timer}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <PipelineFormSection
+          title="Limits & Expiry"
+          icon={Timer}
+          description="Optional caps and an end date."
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <PipelineIconField label="Max uses" icon={Repeat} hint="Leave blank for unlimited">
               <input
                 type="number"
@@ -189,7 +208,11 @@ export default function PlatformCampaignCodeFormModal({
         </PipelineFormSection>
 
         {isEditing && (
-          <PipelineFormSection title="Status" icon={Power}>
+          <PipelineFormSection
+            title="Status"
+            icon={Power}
+            description="Whether customers can still redeem this code."
+          >
             <label className="flex items-center gap-3 cursor-pointer">
               <button
                 type="button"
@@ -205,11 +228,16 @@ export default function PlatformCampaignCodeFormModal({
           </PipelineFormSection>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
-          <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending}>
+        <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 pt-4 sm:-mx-6 sm:flex-row sm:justify-end sm:px-6">
+          <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button type="submit" loading={isPending}>
+          <Button
+            type="submit"
+            loading={isPending}
+            disabled={!canSubmit}
+            className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+          >
             <Check className="h-4 w-4" />
             {isEditing ? 'Save Changes' : 'Create Code'}
           </Button>

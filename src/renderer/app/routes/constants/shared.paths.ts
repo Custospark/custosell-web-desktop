@@ -27,7 +27,7 @@ export const ROUTES = {
     PURCHASE_ORDERS: '/inventory/purchase-orders',
     INCOMING_ORDERS: '/inventory/incoming-orders',
   },
-  CUSTOMERS: { INDEX: '/customers' },
+  CUSTOMERS: { INDEX: '/customers', OVERVIEW: '/customers/overview' },
   PIPELINE: {
     INDEX: '/pipeline',
     BOARDS: '/pipeline/boards',

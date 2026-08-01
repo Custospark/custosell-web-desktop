@@ -16,7 +16,7 @@ import {
   completeOfflineUpdateCustomerInstant,
   completeOfflineDeleteCustomerInstant,
 } from '../../../../app/store/offline/customers/completeOfflineCustomer';
-import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerPurchase } from './CustomerTypes';
+import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerPurchase, CustomerOverviewData } from './CustomerTypes';
 
 export const customerKeys = {
   all: ['customers'] as const,
@@ -25,6 +25,7 @@ export const customerKeys = {
   customers: () => [...customerKeys.all, 'customers'] as const,
   customer: (id: number) => [...customerKeys.all, 'customers', id] as const,
   customerPurchases: (id: number) => [...customerKeys.all, 'customers', id, 'purchases'] as const,
+  overview: () => [...customerKeys.all, 'overview'] as const,
 };
 
 /** ── Merge helpers ── */
@@ -115,6 +116,19 @@ export function useCustomer(id: number) {
       });
     },
     enabled: Boolean(id),
+  });
+}
+
+export function useCustomerOverview() {
+  return useQuery<CustomerOverviewData>({
+    queryKey: customerKeys.overview(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<CustomerOverviewData>(CUSTOMERS.OVERVIEW);
+      return data;
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 }
 

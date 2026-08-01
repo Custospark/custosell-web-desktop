@@ -17,7 +17,7 @@ import { CustomerStatsCards } from './CustomerStatsCards';
 import CustomerFormDrawer from './CustomerFormDrawer';
 import CustomerPurchaseModal from './CustomerPurchaseModal';
 import { displayCustomerPhone } from '../../../../shared/utils/customerContactUtils';
-import { Plus, Users, Pencil, Trash, ShoppingBag, Files } from 'lucide-react';
+import { Plus, Users, Pencil, Trash, ShoppingBag, Files, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 import { canAccessModule } from '../../../../shared/utils/moduleAccess';
@@ -87,7 +87,12 @@ export default function CustomerList() {
           <h1 className="text-xl font-semibold text-gray-900">Customers</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your customer relationships{isOffline && ' · Offline mode'}</p>
         </div>
-        <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Customer</Button>
+        <div className="flex items-center gap-2">
+          <Link to={ROUTES.CUSTOMERS.OVERVIEW} className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+            <BarChart3 className="w-4 h-4" />Overview
+          </Link>
+          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Customer</Button>
+        </div>
       </div>
 
       <CustomerStatsCards customers={customers || []} />

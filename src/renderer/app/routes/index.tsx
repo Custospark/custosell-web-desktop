@@ -27,6 +27,7 @@ import MarketplacePage from '../../modules/inventory/MarketplacePage';
 import PurchaseOrdersPage from '../../modules/inventory/PurchaseOrdersPage';
 import IncomingOrdersPage from '../../modules/inventory/IncomingOrdersPage';
 import CustomerListPage from '../../modules/customers/CustomerListPage';
+import CustomerOverviewPage from '../../modules/customers/CustomerOverviewPage';
 import InvoicesPage from '../../modules/invoices/InvoicesPage';
 import SettingsPage from '../../modules/settings/SettingsPage';
 import BusinessSettingsPage from '../../modules/settings/BusinessSettingsPage';
@@ -236,6 +237,7 @@ export function AppRoutes() {
               <Route path={ROUTES.INVENTORY.INCOMING_ORDERS} element={<SuspenseWrapper><IncomingOrdersPage /></SuspenseWrapper>} />
             </Route>
             <Route element={<ModuleAccessMiddleware module="customers" />}>
+              <Route path={ROUTES.CUSTOMERS.OVERVIEW} element={<SuspenseWrapper><CustomerOverviewPage /></SuspenseWrapper>} />
               <Route path={ROUTES.CUSTOMERS.INDEX} element={<SuspenseWrapper><CustomerListPage /></SuspenseWrapper>} />
             </Route>
             <Route element={<ModuleAccessMiddleware module="expenses" />}>

@@ -31,7 +31,7 @@ export const PRODUCTS = {
   IMAGE: (id: number) => `/products/${id}/image`,
   BULK_LISTING: '/products/bulk-listing',
 };
-export const CUSTOMERS = { BASE: '/customers', RESOLVE: '/customers/resolve', PURCHASES: (id: number) => `/customers/${id}/purchases` };
+export const CUSTOMERS = { BASE: '/customers', OVERVIEW: '/customers/overview', RESOLVE: '/customers/resolve', PURCHASES: (id: number) => `/customers/${id}/purchases` };
 export const SHIFTS = {
   CLOCK_IN: '/shifts/clock-in',
   ACTIVE: '/shifts/active',

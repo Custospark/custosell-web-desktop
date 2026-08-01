@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCategories, useCreateProduct, useUpdateProduct } from '../../api/products/ProductQueries';
-import type { CatalogItemType, CreateProductData, Product } from '../../api/products/ProductTypes';
+import type { CatalogItemType, Category, CreateProductData, Product } from '../../api/products/ProductTypes';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
 import { TAX_CLASS_LABELS, type TaxClass } from '../../../../shared/utils/taxEngine';
 import { cn } from '../../../../shared/utils/cn';
+import CategoryFormModal from '../categories/CategoryFormModal';
 import {
   PipelineFormSection,
   PipelineIconField,
@@ -27,6 +28,7 @@ import {
   Wrench,
   RefreshCw,
   Check,
+  Plus,
 } from 'lucide-react';
 import { ProductSupplyListingSection } from '../supply/ProductSupplyListingSection';
 import { ProductStorefrontListingSection } from './ProductStorefrontListingSection';
@@ -95,6 +97,7 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const isService = form.type === 'service';
   const itemLabel = isService ? 'Service' : 'Product';
 
@@ -237,19 +240,28 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
             </PipelineIconField>
           </div>
 
-          <PipelineIconField label="Category" icon={FolderTree}>
-            <select
-              className={pipelineSelectClass}
-              title="Category"
-              value={form.category_id ?? ''}
-              onChange={(e) => update('category_id', e.target.value ? Number(e.target.value) : null)}
-            >
-              <option value="">No category</option>
-              {categories?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </PipelineIconField>
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-sm font-medium text-gray-700">Category</label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setCategoryModalOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Add Category
+              </Button>
+            </div>
+            <div className="relative">
+              <FolderTree className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <select
+                className={pipelineSelectClass}
+                title="Category"
+                value={form.category_id ?? ''}
+                onChange={(e) => update('category_id', e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">No category</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
@@ -470,6 +482,12 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
           </Button>
         </div>
       </form>
+
+      <CategoryFormModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        onCreated={(cat: Category) => update('category_id', cat.id)}
+      />
     </Modal>
   );
 }

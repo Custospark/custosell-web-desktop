@@ -12,18 +12,18 @@ import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { FolderTree, Plus, Pencil, Trash } from 'lucide-react';
-import CategoryFormDrawer from './CategoryFormDrawer';
+import CategoryFormModal from './CategoryFormModal';
 
 export default function CategoryList() {
   const { data: categories, isLoading, error } = useCategories();
   const deleteMutation = useDeleteCategory();
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const { confirm } = useConfirm();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithSyncMeta | null>(null);
 
-  const openCreate = () => { setEditingCategory(null); setDrawerOpen(true); };
-  const openEdit = (cat: CategoryWithSyncMeta) => { setEditingCategory(cat); setDrawerOpen(true); };
+  const openCreate = () => { setEditingCategory(null); setModalOpen(true); };
+  const openEdit = (cat: CategoryWithSyncMeta) => { setEditingCategory(cat); setModalOpen(true); };
 
   const handleDelete = async (cat: CategoryWithSyncMeta) => {
     const confirmed = await confirm({
@@ -87,9 +87,9 @@ export default function CategoryList() {
         />
       </Card>
 
-      <CategoryFormDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+      <CategoryFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
         category={editingCategory}
       />
     </>

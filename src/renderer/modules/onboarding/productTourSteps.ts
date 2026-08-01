@@ -1,8 +1,6 @@
 import {
   Settings,
-  LayoutGrid,
   Wifi,
-  GraduationCap,
   CircleUser,
   PanelLeft,
   Headset,
@@ -10,6 +8,7 @@ import {
   Menu,
   CreditCard,
   Gift,
+  ClipboardList,
 } from 'lucide-react';
 import type { AuthUser } from '../../app/store/slices/authSlice';
 import { canAccessModule, isBusinessOwner } from '../../shared/utils/moduleAccess';
@@ -28,12 +27,13 @@ const SHELL_STEPS: ProductTourStep[] = [
     tone: 'bg-slate-50 text-slate-600 ring-slate-200',
   },
   {
-    id: 'apps',
-    target: 'navbar-apps',
-    title: 'Apps launcher',
-    body: 'Jump anywhere in your workspace from one place — you’re never more than a click from the tools you need.',
-    icon: LayoutGrid,
-    tone: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
+    id: 'quick',
+    target: 'navbar-quick',
+    title: 'Quick access',
+    body: 'Open orders and products are one tap away, and the open-orders badge keeps you on top of what needs attention.',
+    icon: ClipboardList,
+    tone: 'bg-orange-50 text-orange-600 ring-orange-100',
+    when: (user) => canAccessModule(user, 'sales') || canAccessModule(user, 'inventory'),
   },
   {
     id: 'network',
@@ -42,14 +42,6 @@ const SHELL_STEPS: ProductTourStep[] = [
     body: 'See online, slow, or offline instantly. Core selling and stock keep working when the network drops.',
     icon: Wifi,
     tone: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
-  },
-  {
-    id: 'guide',
-    target: 'navbar-guide',
-    title: 'Guide & tour',
-    body: 'Tutorials, FAQs, and Replay Tour live here whenever you want a refresher.',
-    icon: GraduationCap,
-    tone: 'bg-violet-50 text-violet-600 ring-violet-100',
   },
   {
     id: 'referral',
@@ -72,7 +64,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'profile',
     target: 'navbar-profile',
     title: 'Your profile',
-    body: 'Open your account menu for My Profile, shift actions, and sign out.',
+    body: 'Open your account menu for Apps, Tour, Tutorials, FAQs, Notifications, and sign out.',
     icon: CircleUser,
     tone: 'bg-blue-50 text-blue-600 ring-blue-100',
   },

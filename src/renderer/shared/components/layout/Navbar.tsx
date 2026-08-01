@@ -6,8 +6,8 @@ import { useLogoutAction } from '../../../app/contexts/useLogoutActions';
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { SyncHeaderChip } from '../Errors/SyncProgressBanner';
-import { GuideHeaderNav } from './GuideHeaderNav';
-import { ModuleLauncherButton } from './ModuleLauncherButton';
+import { HeaderNotifications } from './HeaderNotifications';
+import { HeaderQuickNav } from './HeaderQuickNav';
 import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQueries';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
 import { formatShiftDateTime } from '../../utils/formatDateTime';
@@ -310,7 +310,9 @@ export function Navbar() {
           ) : null}
         </div>
 
-        <div className="flex flex-1 items-center justify-center gap-2 sm:gap-2 lg:flex-initial lg:justify-end shrink-0">
+        <div className="flex flex-1 items-center justify-between gap-1 sm:gap-1.5 lg:flex-initial lg:justify-end shrink-0 min-w-0">
+          <HeaderQuickNav />
+
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <SyncHeaderChip />
             <span className="hidden lg:inline-flex items-center">
@@ -322,11 +324,9 @@ export function Navbar() {
             </span>
           </div>
 
-          <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" aria-hidden />
+          <span className="hidden lg:block w-px h-5 bg-gray-200 shrink-0" aria-hidden />
 
-          <ModuleLauncherButton />
-
-          <GuideHeaderNav />
+          <HeaderNotifications />
 
           <div data-tour="navbar-referral"><ReferralDropdown /></div>
 

@@ -151,6 +151,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-01-stock-adjust-modal.md](./adr/2026-08-01-stock-adjust-modal.md) | Stock adjust converted from slide drawer to standard centered modal |
 | [2026-08-01-shopping-account-type.md](./adr/2026-08-01-shopping-account-type.md) | Third account type `storefront_buyer` ("Shopping"); Discover-only nav, no dashboard; register page option + SimpleAccountForm |
 | [2026-08-01-business-income-budget-sidebar.md](./adr/2026-08-01-business-income-budget-sidebar.md) | Business accounts get Income + Budgets under "Income & Expenses"; budget label "Budgets" (business) vs "My Budgets" (personal) |
+| [2026-08-01-header-quick-access-profile-nav.md](./adr/2026-08-01-header-quick-access-profile-nav.md) | Apps/Tour/Tutorials under Profile; Open Orders (live badge) + Products quick access; mobile header + bottom-tab distribution; tour updated |
 
 ## Modules
 

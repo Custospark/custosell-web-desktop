@@ -104,8 +104,8 @@ export function useOrders(
   });
 }
 
-export function useOpenOrders(enabled = true) {
-  return useOrders({ status: 'open' }, enabled);
+export function useOpenOrders(enabled = true, options?: { poll?: boolean }) {
+  return useOrders({ status: 'open' }, enabled, options);
 }
 
 export function useOrder(id: number, enabled = true) {

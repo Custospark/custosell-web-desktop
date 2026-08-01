@@ -55,7 +55,7 @@ export function AppMobileTabBar() {
         )}
         aria-label="Mobile primary"
       >
-        <ul className={cn('mx-auto grid max-w-lg grid-cols-4 items-stretch px-1', APP_MOBILE_TAB_BAR_HEIGHT_CLASS)}>
+        <ul className={cn('grid w-full grid-cols-4 items-stretch px-1', APP_MOBILE_TAB_BAR_HEIGHT_CLASS)}>
           <li className="min-w-0">
             <button
               type="button"

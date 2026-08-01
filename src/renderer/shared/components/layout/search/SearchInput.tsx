@@ -53,7 +53,7 @@ export function SearchInput({
             onFocus={onFocus}
             onBlur={onBlur}
             autoFocus
-            placeholder="Search anything…"
+            placeholder="Search anything you need in Custosell..."
             aria-label="Global navigation search"
             aria-autocomplete="list"
             className={cn(

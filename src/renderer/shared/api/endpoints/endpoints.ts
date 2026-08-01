@@ -29,6 +29,7 @@ export const PRODUCTS = {
   SUPPLY_LISTING: (id: number) => `/products/${id}/supply-listing`,
   STOREFRONT_LISTING: (id: number) => `/products/${id}/storefront-listing`,
   IMAGE: (id: number) => `/products/${id}/image`,
+  BULK_LISTING: '/products/bulk-listing',
 };
 export const CUSTOMERS = { BASE: '/customers', RESOLVE: '/customers/resolve', PURCHASES: (id: number) => `/customers/${id}/purchases` };
 export const SHIFTS = {

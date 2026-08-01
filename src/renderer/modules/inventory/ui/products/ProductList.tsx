@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useProducts, useDeleteProduct, inventoryKeys } from '../../api/products/ProductQueries';
+import { useBulkUpdateListing } from '../../api/products/ProductListingQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
@@ -18,14 +19,22 @@ import { cn } from '../../../../shared/utils/cn';
 import { matchesProductSearch } from '../../../../shared/utils/productSearch';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
-import { isServiceItem, tracksStock } from '../../api/products/ProductTypes';
-import { Package, Plus, Pencil, Trash, PackagePlus, Upload, Download, Eye, Trash2, CheckSquare, Square, Store } from 'lucide-react';
+import { isServiceItem } from '../../api/products/ProductTypes';
+import { Package, Plus, Upload, Download, Trash2, CheckSquare, Square, Store } from 'lucide-react';
 import { avatarUrl } from '../../../../shared/utils/avatarUrl';
 import ProductFormModal from './ProductFormModal';
+import ProductRowActions from './ProductRowActions';
 import StockAdjustDrawer from './StockAdjustDrawer';
 import ImportModal from './ImportModal';
 import ExportModal from './ExportModal';
 import LedgerHistoryModal from './LedgerHistoryModal';
+
+const BULK_LISTING_ACTIONS: { channel: 'supply' | 'storefront'; listed: boolean; label: string; title: string }[] = [
+  { channel: 'storefront', listed: true, label: 'List shop', title: 'List selected on public shop' },
+  { channel: 'storefront', listed: false, label: 'Unlist shop', title: 'Unlist selected from public shop' },
+  { channel: 'supply', listed: true, label: 'List supply', title: 'List selected for supply' },
+  { channel: 'supply', listed: false, label: 'Unlist supply', title: 'Unlist selected from supply' },
+];
 
 export default function ProductList() {
   const queryClient = useQueryClient();
@@ -53,6 +62,16 @@ export default function ProductList() {
       setSelectedIds(new Set());
     },
   });
+
+  const bulkListingMutation = useBulkUpdateListing();
+
+  const handleBulkListing = (channel: 'supply' | 'storefront', listed: boolean) => {
+    if (selectedIds.size === 0) return;
+    bulkListingMutation.mutate(
+      { ids: Array.from(selectedIds), channel, listed },
+      { onSuccess: () => setSelectedIds(new Set()) },
+    );
+  };
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -162,12 +181,26 @@ export default function ProductList() {
               Select All
             </button>
             {selectedIds.size > 0 && (
-              <button onClick={handleBulkDelete} disabled={bulkDeleteMutation.isPending || isOffline}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                title={isOffline ? 'Unavailable offline' : ''}>
-                <Trash2 className="w-4 h-4" />
-                Delete ({selectedIds.size})
-              </button>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {BULK_LISTING_ACTIONS.map((a) => (
+                  <button
+                    key={a.label}
+                    onClick={() => handleBulkListing(a.channel, a.listed)}
+                    disabled={isOffline || bulkListingMutation.isPending}
+                    className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    title={isOffline ? 'Unavailable offline' : a.title}
+                  >
+                    {a.channel === 'supply' ? <Package className="w-4 h-4" /> : <Store className="w-4 h-4" />}
+                    {a.label}
+                  </button>
+                ))}
+                <button onClick={handleBulkDelete} disabled={bulkDeleteMutation.isPending || isOffline}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={isOffline ? 'Unavailable offline' : ''}>
+                  <Trash2 className="w-4 h-4" />
+                  Delete ({selectedIds.size})
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -228,14 +261,13 @@ export default function ProductList() {
             },
             { key: 'is_active', header: 'Status', render: (item) => item.is_active ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Inactive</Badge> },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
-                <div className="flex items-center justify-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryProduct(item); }} title="View History"><Eye className="w-4 h-4 text-gray-500" /></Button>
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                  {!item._pendingSync && tracksStock(item) && (
-                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setAdjustingProduct(item); }} title="Adjust Stock"><PackagePlus className="w-4 h-4 text-blue-600" /></Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Delete" disabled={item._pendingSync}><Trash className="w-4 h-4 text-red-500" /></Button>
-                </div>
+                <ProductRowActions
+                  product={item}
+                  onViewHistory={() => setHistoryProduct(item)}
+                  onEdit={() => openEdit(item)}
+                  onAdjustStock={() => setAdjustingProduct(item)}
+                  onDelete={() => handleDelete(item)}
+                />
               ),
             },
           ]}

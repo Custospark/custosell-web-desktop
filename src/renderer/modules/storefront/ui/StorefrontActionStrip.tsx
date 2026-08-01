@@ -20,6 +20,8 @@ interface StorefrontActionStripProps {
   cartCount?: number;
   wishlistCount?: number;
   ordersCount?: number;
+  /** Shopping accounts have no Home/Dashboard — Cart becomes a primary tab instead. */
+  cartPrimary?: boolean;
   className?: string;
 }
 
@@ -58,6 +60,7 @@ export function StorefrontActionStrip({
   cartCount = 0,
   wishlistCount = 0,
   ordersCount = 0,
+  cartPrimary = false,
   className,
 }: StorefrontActionStripProps) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -65,13 +68,15 @@ export function StorefrontActionStrip({
 
   const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; onClick: () => void }> = [
     { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, onClick: onBrowse },
-    {
-      tab: 'cart' as const,
-      icon: <ShoppingCart className="h-4 w-4" aria-hidden />,
-      label: 'Cart',
-      tone: 'emerald' as Tone,
-      onClick: onCart,
-    },
+    ...(cartPrimary
+      ? []
+      : [{
+          tab: 'cart' as const,
+          icon: <ShoppingCart className="h-4 w-4" aria-hidden />,
+          label: 'Cart',
+          tone: 'emerald' as Tone,
+          onClick: onCart,
+        }]),
     {
       tab: 'wishlist' as const,
       icon: <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />,
@@ -134,7 +139,8 @@ export function StorefrontActionStrip({
       aria-label="Storefront navigation"
     >
       <div className="grid grid-cols-4 items-stretch lg:hidden">
-        {onHome ? tabBtn('home', <Home className="h-4 w-4" aria-hidden />, 'slate', homeLabel, onHome) : null}
+        {!cartPrimary && onHome ? tabBtn('home', <Home className="h-4 w-4" aria-hidden />, 'slate', homeLabel, onHome) : null}
+        {cartPrimary ? tabBtn('cart', <ShoppingCart className="h-4 w-4" aria-hidden />, 'emerald', 'Cart', onCart) : null}
         {tabBtn('discover', <Compass className="h-4 w-4" aria-hidden />, 'amber', 'Products', onDiscover)}
         {tabBtn('orders', <LayoutList className="h-4 w-4" aria-hidden />, 'blue', 'Orders', onOrders)}
 

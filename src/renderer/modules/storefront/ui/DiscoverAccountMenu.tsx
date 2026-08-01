@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, CircleUser, Heart, GraduationCap, LayoutDashboard, LogOut, Package } from 'lucide-react';
+import { ChevronDown, CircleUser, GraduationCap, Heart, LayoutDashboard, LogOut, Package, Gift, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../../app/contexts/useLogoutActions';
@@ -7,6 +7,8 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { getDefaultRoute, isStorefrontBuyer } from '../../../shared/utils/moduleAccess';
 import { cn } from '../../../shared/utils/cn';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
+import { ReferralsModal } from '../../../modules/referral/components/ReferralsModal';
+import { ProfileModal } from '../../../modules/settings/ui/ProfileModal';
 
 interface DiscoverAccountMenuProps {
   user: AuthUser;
@@ -30,6 +32,8 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
   const { confirm } = useConfirm();
   const { logout, isLoggingOut } = useLogoutAction();
   const [open, setOpen] = useState(false);
+  const [referralsOpen, setReferralsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -136,15 +140,38 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
               <CircleUser className="h-4 w-4 text-slate-600" />
               Account
             </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => { setOpen(false); navigate(ROUTES.GUIDE.TUTORIALS); }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
-            >
-              <GraduationCap className="h-4 w-4 text-slate-600" />
-              Custosell Guide
-            </button>
+            {isStorefrontBuyer(user) ? (
+              <>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setOpen(false); setReferralsOpen(true); }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-indigo-50"
+                >
+                  <Gift className="h-4 w-4 text-indigo-600" />
+                  Referrals
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setOpen(false); setProfileOpen(true); }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+                >
+                  <UserRound className="h-4 w-4 text-slate-600" />
+                  Profile
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setOpen(false); navigate(ROUTES.GUIDE.TUTORIALS); }}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                <GraduationCap className="h-4 w-4 text-slate-600" />
+                Custosell Guide
+              </button>
+            )}
             <hr className="my-1 border-slate-100" />
             {!isStorefrontBuyer(user) ? (
               <button
@@ -170,6 +197,9 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
           </div>
         </div>
       ) : null}
+
+      <ReferralsModal isOpen={referralsOpen} onClose={() => setReferralsOpen(false)} />
+      <ProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }

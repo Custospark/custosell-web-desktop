@@ -62,6 +62,7 @@ export function ConnectedStorefrontStrip({
       cartCount={cartCount}
       wishlistCount={wishlistCount}
       ordersCount={ordersCount}
+      cartPrimary={shopping}
       homeLabel={token ? 'Dashboard' : 'Home'}
       homeTitle={token ? 'Open your dashboard' : 'Custosell marketing home'}
       shopsLabel="Businesses"

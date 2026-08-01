@@ -229,7 +229,7 @@ function SearchModalInner({ isOpen, onClose }: SearchModalProps) {
               </div>
 
               {/* ── Keyboard hints footer ── */}
-              <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/80 px-4 py-2.5">
+              <div className="mx-1.5 mb-1.5 flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-2.5">
                 <div className="flex flex-wrap items-center gap-3">
                   {[
                     { keys: ['↑', '↓'], hint: 'navigate' },

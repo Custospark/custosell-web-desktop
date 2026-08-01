@@ -9,6 +9,18 @@ import { usePaymentInfo } from '../api/useAccountQueries';
 import { paymentInfoToForm } from '../data/paymentInfoFormShared';
 import { PaymentInfoForm } from './PaymentInfoForm';
 
+function DetailRow({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-1.5">
+      <span className="shrink-0 text-sm text-gray-500">{label}</span>
+      <span className={`min-w-0 break-words text-right text-sm font-medium text-gray-900 ${mono ? 'font-mono' : ''}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function PaymentInfoSection() {
   const { data: paymentInfo, isLoading } = usePaymentInfo();
   const [editing, setEditing] = useState(false);
@@ -21,50 +33,9 @@ export function PaymentInfoSection() {
     return parseInternationalPhone(paymentInfo.mobile_money_number).countryCode;
   }, [paymentInfo]);
 
-  const savedSummary = useMemo(() => {
-    if (!paymentInfo?.payment_method) return null;
-    if (paymentInfo.payment_method === 'mobile_money') {
-      return (
-        <div className="flex items-center gap-2">
-          <Smartphone className="w-4 h-4 text-gray-400 shrink-0" />
-          <span className="text-sm text-gray-700">
-            <strong className="text-gray-900">{paymentInfo.mobile_money_provider || 'Mobile Money'}</strong>
-            <span className="text-gray-400"> · </span>
-            {formatPhoneDisplay(paymentInfo.mobile_money_number)}
-          </span>
-        </div>
-      );
-    }
-    if (paymentInfo.payment_method === 'bank') {
-      return (
-        <div className="flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-gray-400 shrink-0" />
-          <span className="text-sm text-gray-700">
-            <strong className="text-gray-900">{paymentInfo.bank_name || 'Bank transfer'}</strong>
-            {paymentInfo.bank_branch && (
-              <>
-                <span className="text-gray-400"> · </span>
-                <span>{paymentInfo.bank_branch}</span>
-              </>
-            )}
-            {paymentInfo.bank_account_name && (
-              <>
-                <span className="text-gray-400"> · </span>
-                <span>{paymentInfo.bank_account_name}</span>
-              </>
-            )}
-            {paymentInfo.bank_account_number && (
-              <>
-                <span className="text-gray-400"> · </span>
-                <span className="font-mono">{paymentInfo.bank_account_number}</span>
-              </>
-            )}
-          </span>
-        </div>
-      );
-    }
-    return null;
-  }, [paymentInfo]);
+  const methodIcon = paymentInfo?.payment_method === 'bank' ? Landmark : Smartphone;
+  const methodTitle =
+    paymentInfo?.payment_method === 'bank' ? 'Bank Transfer' : paymentInfo?.payment_method === 'mobile_money' ? 'Mobile Money' : '';
 
   if (isLoading) {
     return (
@@ -76,36 +47,53 @@ export function PaymentInfoSection() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-      <div>
-        <div className="flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Payment Information</h2>
-          {hasSavedData && !editing && (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
-            >
-              <Pencil className="w-4 h-4" /> Edit
-            </button>
-          )}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Payment Information</h2>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Where your referral rewards are paid — mobile money or bank transfer to any bank worldwide.
+          </p>
         </div>
-        <p className="text-sm text-gray-500 mt-1">
-          Add where your referral rewards should be paid — mobile money or bank transfer to any bank worldwide.
-        </p>
+        {hasSavedData && !editing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+          >
+            <Pencil className="w-4 h-4" /> Edit
+          </button>
+        )}
       </div>
 
       {!editing ? (
         hasSavedData ? (
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 border border-gray-100 p-3">
-            {savedSummary}
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
-            >
-              <Pencil className="w-4 h-4" /> Edit
-            </button>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
+              {(() => {
+                const Icon = methodIcon;
+                return <Icon className="h-4 w-4 text-indigo-600" />;
+              })()}
+              <span className="text-sm font-semibold text-gray-900">{methodTitle}</span>
+            </div>
+            <div className="pt-2">
+              {paymentInfo?.payment_method === 'mobile_money' && (
+                <>
+                  <DetailRow label="Number" value={formatPhoneDisplay(paymentInfo.mobile_money_number)} />
+                  <DetailRow label="Provider" value={paymentInfo.mobile_money_provider} />
+                </>
+              )}
+              {paymentInfo?.payment_method === 'bank' && (
+                <>
+                  <DetailRow label="Bank" value={paymentInfo.bank_name} />
+                  <DetailRow label="Branch" value={paymentInfo.bank_branch} />
+                  <DetailRow label="Account name" value={paymentInfo.bank_account_name} />
+                  <DetailRow label="Account number" value={paymentInfo.bank_account_number} mono />
+                </>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 py-6 text-center">

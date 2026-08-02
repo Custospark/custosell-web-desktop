@@ -7,6 +7,7 @@ import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
+import { TAX_CLASS_LABELS, type TaxClass } from '../../../../shared/utils/taxEngine';
 import CategoryFormModal from '../categories/CategoryFormModal';
 import {
   PipelineFormSection,

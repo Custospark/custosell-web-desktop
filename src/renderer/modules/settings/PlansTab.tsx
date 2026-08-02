@@ -274,7 +274,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <CustosellLoader fullPage={false} />
       ) : user?.account_type === 'personal' ? (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
+          <div className="mx-auto grid w-full max-w-md grid-cols-1 gap-5">
             {personalPlans.map((plan) => (
               <PlanCard key={plan.id} plan={plan} index={0} billingCycle={billingCycle} currency={currency} onboardingFee={onboardingFee} monthlyPriceFn={monthlyPrice} yearlyPriceFn={yearlyPrice} subscription={subscription} currentPlan={currentPlan} currentPlanSortOrder={currentPlanSortOrder} downgradePlan={downgradePlan} downgradeConfirmed={downgradeConfirmed} downgradeMutation={downgradeMutation} handleAction={handleAction} handleDowngradeAction={handleDowngradeAction} setDowngradePlan={setDowngradePlan} setDowngradeConfirmed={setDowngradeConfirmed} pendingChange={pendingChange} cancelChangeLoading={cancelChangeMutation.isPending} onCancelScheduledChange={() => cancelChangeMutation.mutate({ subscriptionId: Number(subscription.id) })} />
             ))}

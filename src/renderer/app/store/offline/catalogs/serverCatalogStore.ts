@@ -19,11 +19,15 @@ export interface ServerCatalogRecord<T = unknown> {
   businessId: number;
   entity: CatalogEntity;
   catalogKind: string;
+  locationId: number | null;
   items: T[];
   syncedAt: string;
 }
 
-function catalogKey(entity: CatalogEntity, businessId: number, catalogKind: string): string {
+function catalogKey(entity: CatalogEntity, businessId: number, catalogKind: string, locationId: number | null = null): string {
+  if (entity === 'products') {
+    return `${entity}:${businessId}:${catalogKind}:loc-${locationId ?? 0}`;
+  }
   return `${entity}:${businessId}:${catalogKind}`;
 }
 
@@ -33,13 +37,15 @@ export const serverCatalogStore = {
     businessId: number,
     items: T[],
     catalogKind = 'default',
+    locationId: number | null = null,
   ): Promise<void> {
     const db = await getOfflineDb();
     const record: ServerCatalogRecord<T> = {
-      key: catalogKey(entity, businessId, catalogKind),
+      key: catalogKey(entity, businessId, catalogKind, locationId),
       businessId,
       entity,
       catalogKind,
+      locationId,
       items,
       syncedAt: new Date().toISOString(),
     };
@@ -50,18 +56,19 @@ export const serverCatalogStore = {
     entity: CatalogEntity,
     businessId: number,
     catalogKind = 'default',
+    locationId: number | null = null,
   ): Promise<T[] | null> {
     const db = await getOfflineDb();
-    const record = await db.get('serverCatalogs', catalogKey(entity, businessId, catalogKind)) as
+    const record = await db.get('serverCatalogs', catalogKey(entity, businessId, catalogKind, locationId)) as
       | ServerCatalogRecord<T>
       | undefined;
     return record?.items ?? null;
   },
 
-  async loadProducts(businessId: number): Promise<unknown[] | null> {
-    const full = await this.load('products', businessId, 'full');
+  async loadProducts(businessId: number, locationId: number | null = null): Promise<unknown[] | null> {
+    const full = await this.load('products', businessId, 'full', locationId);
     if (full && full.length > 0) return full;
-    return this.load('products', businessId, 'active');
+    return this.load('products', businessId, 'active', locationId);
   },
 
   async clearBusiness(entity: CatalogEntity, businessId: number): Promise<void> {

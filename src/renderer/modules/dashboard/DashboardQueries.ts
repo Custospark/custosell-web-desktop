@@ -9,13 +9,15 @@ import {
   loadDashboardSummaryBaseline,
 } from '../../app/store/offline/catalogs/dashboardCatalogSnapshot';
 import { resolveAuthBusinessId } from '../../app/store/offline/catalogs/catalogSnapshotUtils';
-import type { DashboardSummary } from './DashboardTypes';
+import { REPORTS } from '../../shared/api/endpoints/endpoints';
+import type { DashboardSummary, BranchPerformanceResponse } from './DashboardTypes';
 
 export const dashboardKeys = {
   all: ['dashboard'] as const,
   /** Server-only baseline — never merged with offline overlay. */
   server: () => [...dashboardKeys.all, 'server'] as const,
   summary: () => [...dashboardKeys.all, 'summary'] as const,
+  branchPerformance: () => [...dashboardKeys.all, 'branch-performance'] as const,
 };
 
 const emptySummary = (): DashboardSummary => ({
@@ -71,6 +73,23 @@ export function useDashboardSummary() {
   return useQuery<DashboardSummary>({
     queryKey: dashboardKeys.summary(),
     queryFn: fetchDashboardSummary,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    placeholderData: (prev) => prev,
+    retry: (count, err) => !isNetworkFailure(err) && count < 1,
+    networkMode: 'always',
+  });
+}
+
+export function useBranchPerformance(dateFrom: string, dateTo: string) {
+  return useQuery<BranchPerformanceResponse>({
+    queryKey: [...dashboardKeys.branchPerformance(), dateFrom, dateTo],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: BranchPerformanceResponse }>(REPORTS.BRANCH_PERFORMANCE, {
+        params: { date_from: dateFrom, date_to: dateTo },
+      });
+      return data.data;
+    },
     staleTime: 0,
     refetchOnMount: 'always',
     placeholderData: (prev) => prev,

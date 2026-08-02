@@ -58,3 +58,23 @@ export interface DashboardSummary {
   recent_sales: RecentSale[];
   today_vat?: DashboardTodayVat | null;
 }
+
+export interface BranchPerformance {
+  location_id: number;
+  name: string;
+  is_default: boolean;
+  gross_sales: number;
+  refunds: number;
+  net_after_refunds: number;
+  expenses: number;
+  net_sales: number;
+  transactions: number;
+  items_sold: number;
+  share_pct: number;
+}
+
+export interface BranchPerformanceResponse {
+  date_from: string;
+  date_to: string;
+  branches: BranchPerformance[];
+}

@@ -7,18 +7,15 @@ import { applyOfflineStockOverlay } from '../../../../app/store/offline/inventor
 
 import { isNetworkFailure, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../../../app/store/offline/core/offlineReadStrategy';
-import { readCatalogBaseline, backupCatalogSnapshot, resolveAuthBusinessId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
+import { readCatalogBaseline, resolveAuthBusinessId, resolveAuthLocationId } from '../../../../app/store/offline/catalogs/catalogSnapshotUtils';
 import {
   backupProductCatalog,
   fetchProductsFromApi,
-  loadCategoryCatalogBaseline,
   loadProductCatalogBaseline,
-  refreshCategoryCatalogSnapshot,
   refreshProductCatalogSnapshot,
 } from '../../../../app/store/offline/catalogs/catalogSnapshotRefresh';
 import { mutationQueue } from '../../../../app/store/offline/sync/mutationQueue';
 import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
-import { localCategoriesStore, toCategoryWithSyncMeta, type CategoryWithSyncMeta } from '../../../../app/store/offline/inventory/localCategoriesStore';
 import {
   shouldCompleteProductLocally,
   completeOfflineCreateProductInstant,
@@ -26,22 +23,24 @@ import {
   completeOfflineDeleteProductInstant,
   completeOfflineUpdatePendingProduct,
 } from '../../../../app/store/offline/inventory/completeOfflineProduct';
-import {
-  shouldCompleteCategoryLocally,
-  completeOfflineCreateCategoryInstant,
-  completeOfflineUpdateCategoryInstant,
-  completeOfflineDeleteCategoryInstant,
-} from '../../../../app/store/offline/inventory/completeOfflineCategory';
-import {
-  shouldCompleteStockAdjustmentLocally,
-  completeOfflineStockAdjustmentInstant,
-} from '../../../../app/store/offline/inventory/completeOfflineStockAdjustment';
-import { stockLedger } from '../../../../app/store/offline/inventory/stockLedger';
 import { PRODUCTS } from '../../../../shared/api/endpoints/endpoints';
+import { inventoryKeys } from './inventoryKeys';
 import type {
-  Category, Product, StockMovement,
-  CreateCategoryData, CreateProductData, UpdateProductData, CreateStockMovementData,
+  Product, StockMovement,
+  CreateProductData, UpdateProductData,
 } from './ProductTypes';
+
+export { inventoryKeys };
+export {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from './CategoryQueries';
+export {
+  useStockMovements,
+  useCreateStockMovement,
+} from './StockMovementQueries';
 
 export interface UpdateSupplyListingData {
   listed_for_supply: boolean;
@@ -49,24 +48,11 @@ export interface UpdateSupplyListingData {
   supply_min_qty?: number | null;
 }
 
-export const inventoryKeys = {
-  all: ['inventory'] as const,
-  categories: () => [...inventoryKeys.all, 'categories'] as const,
-  products: () => [...inventoryKeys.all, 'products'] as const,
-  product: (id: number) => [...inventoryKeys.all, 'products', id] as const,
-  lowStock: () => [...inventoryKeys.all, 'products', 'low-stock'] as const,
-  productStockMovements: (productId: number) => [...inventoryKeys.all, 'products', productId, 'stock-movements'] as const,
-  stockMovements: () => [...inventoryKeys.all, 'stock-movements'] as const,
-};
-
-/** ── Merge helpers ── */
+/** ── Product merge helpers ── */
 
 async function readProductsBaseline(): Promise<Product[]> {
-  return readCatalogBaseline('products', inventoryKeys.products(), loadProductCatalogBaseline);
-}
-
-async function readCategoriesBaseline(): Promise<Category[]> {
-  return readCatalogBaseline('categories', inventoryKeys.categories(), loadCategoryCatalogBaseline);
+  const locationId = resolveAuthLocationId();
+  return readCatalogBaseline('products', inventoryKeys.products(), loadProductCatalogBaseline, locationId);
 }
 
 function stripStaleProductSyncMeta(
@@ -130,10 +116,11 @@ async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
     return await readWithOfflineStrategy({
       readFromClient: readProductsFromClientCache,
       fetchFromServer: async () => {
-        const { products: serverProducts, catalogKind } = await fetchProductsFromApi();
+        const locationId = resolveAuthLocationId();
+        const { products: serverProducts, catalogKind } = await fetchProductsFromApi(locationId);
         const businessId = resolveAuthBusinessId();
         if (businessId) {
-          backupProductCatalog(businessId, catalogKind, serverProducts);
+          backupProductCatalog(businessId, catalogKind, serverProducts, locationId);
         }
         return mergeProductsWithOfflineOverlay(serverProducts);
       },
@@ -144,13 +131,6 @@ async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
   }
 }
 
-async function loadLocalPendingCategories(): Promise<CategoryWithSyncMeta[]> {
-  const pending = await localCategoriesStore.getPending();
-  return pending
-    .filter((r) => r.mutationType === 'create')
-    .map(toCategoryWithSyncMeta);
-}
-
 /** Merge server products with local pending creates — local wins by id/name. */
 function mergeProductLists(base: Product[], local: ProductWithSyncMeta[]): ProductWithSyncMeta[] {
   const safeBase = base.filter(Boolean) as Product[];
@@ -159,15 +139,6 @@ function mergeProductLists(base: Product[], local: ProductWithSyncMeta[]): Produ
   const localNames = new Set(safeLocal.map((p) => p.name));
   const filtered = safeBase.filter((p) => !localIds.has(p.id) && !localNames.has(p.name));
   return [...safeLocal, ...filtered] as ProductWithSyncMeta[];
-}
-
-function mergeCategoryLists(base: Category[], local: CategoryWithSyncMeta[]): CategoryWithSyncMeta[] {
-  const safeBase = base.filter(Boolean) as Category[];
-  const safeLocal = local.filter(Boolean) as CategoryWithSyncMeta[];
-  const localIds = new Set(safeLocal.map((c) => c.id));
-  const localNames = new Set(safeLocal.map((c) => c.name));
-  const filtered = safeBase.filter((c) => !localIds.has(c.id) && !localNames.has(c.name));
-  return [...safeLocal, ...filtered] as CategoryWithSyncMeta[];
 }
 
 function extractApiErrorMessage(err: unknown, fallback: string): string {
@@ -187,203 +158,8 @@ function extractProductFromResponse(responseData: unknown): Product | null {
   return null;
 }
 
-function extractCategoryFromResponse(responseData: unknown): Category | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: Category };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as Category;
-  if ('id' in direct) return direct;
-  return null;
-}
-
 function sanitizeProductList(list: ProductWithSyncMeta[] = []): ProductWithSyncMeta[] {
   return list.filter(Boolean) as ProductWithSyncMeta[];
-}
-
-function sanitizeCategoryList(list: CategoryWithSyncMeta[] = []): CategoryWithSyncMeta[] {
-  return list.filter(Boolean) as CategoryWithSyncMeta[];
-}
-
-/** ── Categories ── */
-
-export function useCategories() {
-  return useQuery<CategoryWithSyncMeta[]>({
-    queryKey: inventoryKeys.categories(),
-    queryFn: async () => readWithOfflineStrategy({
-      readFromClient: async () => {
-        const baseline = await readCategoriesBaseline();
-        const local = await loadLocalPendingCategories();
-        return mergeCategoryLists(baseline, local);
-      },
-      fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Category[] }>('/categories');
-        const list = Array.isArray(response.data) ? response.data : [];
-        const businessId = resolveAuthBusinessId();
-        if (businessId) {
-          backupCatalogSnapshot('categories', businessId, list);
-        }
-        const local = await loadLocalPendingCategories();
-        return mergeCategoryLists(list, local);
-      },
-    }),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    placeholderData: (prev) => prev,
-    retry: (count, err) => !isNetworkFailure(err) && count < 1,
-    networkMode: 'always',
-  });
-}
-
-export function useCreateCategory() {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation<CategoryWithSyncMeta, AxiosError<ApiError>, CreateCategoryData>({
-    networkMode: 'always',
-    retry: false,
-    mutationFn: async (p) => {
-      if (shouldCompleteCategoryLocally()) {
-        return completeOfflineCreateCategoryInstant(p);
-      }
-      try {
-        const { data } = await axiosInstance.post<{ data: Category }>('/categories', p);
-        const category = extractCategoryFromResponse(data);
-        if (!category) {
-          throw new Error('Invalid category response from server');
-        }
-        return category as CategoryWithSyncMeta;
-      } catch (err: unknown) {
-        if (shouldCompleteCategoryLocally()) {
-          return completeOfflineCreateCategoryInstant(p);
-        }
-        throw err;
-      }
-    },
-    onMutate: async () => {
-      await qc.cancelQueries({ queryKey: inventoryKeys.categories() });
-    },
-    onSuccess: (category) => {
-      if (!category) {
-        void refreshCategoryCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
-        return;
-      }
-      if (category._pendingSync) {
-        qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) => {
-          const list = sanitizeCategoryList(old ?? []);
-          if (list.some((c) => c.id === category.id || c.name === category.name)) return list;
-          return [category, ...list];
-        });
-        showToast('success', 'Category saved — will sync when online');
-      } else {
-        void refreshCategoryCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
-      }
-    },
-    onError: (e) => {
-      showToast('error', sanitizeErrorMessage(e, 'Failed to create category'));
-    },
-  });
-}
-
-export function useUpdateCategory() {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation<CategoryWithSyncMeta, AxiosError<ApiError>, { id: number; data: CreateCategoryData }>({
-    networkMode: 'always',
-    retry: false,
-    mutationFn: async ({ id, data }) => {
-      const existing = sanitizeCategoryList(
-        queryClient.getQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories()) ?? [],
-      ).find((c) => c.id === id);
-      if (!existing) throw new Error('Category not found');
-
-      const isPendingOnly = existing._pendingSync || id < 0;
-      if (isPendingOnly) {
-        return { ...existing, ...data, _pendingSync: true } as CategoryWithSyncMeta;
-      }
-
-      if (shouldCompleteCategoryLocally()) {
-        return completeOfflineUpdateCategoryInstant(existing, data);
-      }
-      try {
-        const { data: res } = await axiosInstance.put<{ data: Category }>(`/categories/${id}`, data);
-        const category = extractCategoryFromResponse(res);
-        if (!category) {
-          throw new Error('Invalid category response from server');
-        }
-        return category as CategoryWithSyncMeta;
-      } catch (err: unknown) {
-        if (shouldCompleteCategoryLocally()) {
-          return completeOfflineUpdateCategoryInstant(existing, data);
-        }
-        throw err;
-      }
-    },
-    onSuccess: (category, { id }) => {
-      if (!category) {
-        void refreshCategoryCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
-        return;
-      }
-      if (category._pendingSync) {
-        qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) =>
-          sanitizeCategoryList(old ?? []).map((c) => c.id === id ? category : c),
-        );
-        showToast('success', 'Changes saved — will sync when online');
-      } else {
-        void refreshCategoryCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
-      }
-    },
-    onError: (e) => {
-      showToast('error', sanitizeErrorMessage(e, 'Failed to update category'));
-    },
-  });
-}
-
-export function useDeleteCategory() {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation<void, AxiosError<ApiError>, number>({
-    networkMode: 'always',
-    retry: false,
-    mutationFn: async (id) => {
-      const cached = qc.getQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories());
-      const category = cached?.find((c) => c.id === id);
-      const isPendingOnly = category?._pendingSync || id < 0;
-
-      if (isPendingOnly) {
-        const mutationId = await localCategoriesStore.removeByCategoryId(id);
-        if (mutationId) {
-          await mutationQueue.removeById(mutationId);
-        }
-        return;
-      }
-
-      if (shouldCompleteCategoryLocally()) {
-        completeOfflineDeleteCategoryInstant(id);
-        return;
-      }
-      try {
-        await axiosInstance.delete(`/categories/${id}`);
-      } catch (err: unknown) {
-        if (shouldCompleteCategoryLocally()) {
-          completeOfflineDeleteCategoryInstant(id);
-          return;
-        }
-        throw err;
-      }
-    },
-    onSuccess: (_data, id) => {
-      qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) =>
-        (old ?? []).filter((c) => c.id !== id),
-      );
-      void refreshCategoryCatalogSnapshot();
-    },
-    onError: (e) => {
-      showToast('error', sanitizeErrorMessage(e, 'Failed to delete category'));
-    },
-  });
 }
 
 /** ── Products ── */
@@ -417,7 +193,7 @@ export function useProduct(id: number) {
           return found as ProductWithSyncMeta;
         },
         fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Product }>(`/products/${id}`);
+          const { data: response } = await axiosInstance.get<{ data: Product }>(`/products/${id}`);
           return response.data as ProductWithSyncMeta;
         },
       });
@@ -645,95 +421,6 @@ export function useDeleteProduct() {
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to delete product'));
-    },
-  });
-}
-
-function extractStockMovementFromResponse(responseData: unknown): StockMovement | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: StockMovement };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as StockMovement;
-  if ('id' in direct && 'stock_after' in direct) return direct;
-  return null;
-}
-
-/** ── Stock Movements ── */
-
-export function useStockMovements() {
-  return useQuery<StockMovement[]>({
-    queryKey: inventoryKeys.stockMovements(),
-    queryFn: async () => {
-      const { data: response } = await axiosInstance.get<{ data: StockMovement[] }>('/stock-movements');
-      return response.data;
-    },
-  });
-}
-
-export function useCreateStockMovement() {
-  const queryClient = useQueryClient();
-  const { showToast } = useToast();
-
-  return useMutation<
-    StockMovement,
-    AxiosError<ApiError>,
-    CreateStockMovementData,
-    { previousProducts: Product[] | undefined }
-  >({
-    networkMode: 'always',
-    retry: false,
-    mutationFn: async (payload) => {
-      if (shouldCompleteStockAdjustmentLocally()) {
-        return completeOfflineStockAdjustmentInstant(payload);
-      }
-      try {
-        const { data } = await axiosInstance.post('/stock-movements', payload);
-        const movement = extractStockMovementFromResponse(data);
-        if (!movement) {
-          throw new Error('Invalid stock movement response from server');
-        }
-        return movement;
-      } catch (err: unknown) {
-        if (shouldCompleteStockAdjustmentLocally()) {
-          return completeOfflineStockAdjustmentInstant(payload);
-        }
-        throw err;
-      }
-    },
-    onMutate: async (payload) => {
-      await queryClient.cancelQueries({ queryKey: inventoryKeys.products() });
-      const previousProducts = queryClient.getQueryData<Product[]>(inventoryKeys.products());
-      queryClient.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
-        (old ?? []).map((p) =>
-          p.id === payload.product_id ? { ...p, stock_quantity: payload.stock_after } : p,
-        ),
-      );
-      return { previousProducts };
-    },
-    onSuccess: (movement, payload) => {
-      const stockAfter = movement?.stock_after ?? payload.stock_after;
-      queryClient.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
-        (old ?? []).map((p) =>
-          p.id === payload.product_id ? { ...p, stock_quantity: stockAfter } : p,
-        ),
-      );
-      void stockLedger.set(payload.product_id, stockAfter).catch(() => undefined);
-      void refreshProductCatalogSnapshot();
-
-      if ((movement?.id ?? 0) < 0) {
-        showToast('success', 'Stock adjusted — will sync when online');
-      }
-    },
-    onError: (error, _payload, ctx) => {
-      if (ctx?.previousProducts) {
-        queryClient.setQueryData(inventoryKeys.products(), ctx.previousProducts);
-      }
-      const message = extractApiErrorMessage(error, 'Failed to record stock movement');
-      console.error('[StockMovement] Failed:', error);
-      showToast('error', message);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
     },
   });
 }

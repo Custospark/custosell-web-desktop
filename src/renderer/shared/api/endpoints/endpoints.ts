@@ -64,6 +64,10 @@ export const PAYMENTS = {
   EMAIL: (id: number) => `/payments/${id}/email`,
 };
 export const STOCK_MOVEMENTS = '/stock-movements';
+export const STOCK_TRANSFER = '/stock-movements/transfer';
+export const REPORTS = {
+  BRANCH_PERFORMANCE: '/reports/branch-performance',
+};
 export const SUBSCRIPTIONS = {
   BASE: '/subscriptions',
   ACCESS: '/subscriptions/access',

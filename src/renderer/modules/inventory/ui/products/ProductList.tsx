@@ -20,7 +20,7 @@ import { matchesProductSearch } from '../../../../shared/utils/productSearch';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { ProductStatsCards } from './ProductStatsCards';
 import { isServiceItem } from '../../api/products/ProductTypes';
-import { Package, Plus, Upload, Download, Trash2, CheckSquare, Square, Store } from 'lucide-react';
+import { Package, Plus, Upload, Download, Trash2, CheckSquare, Square, Store, ArrowLeftRight } from 'lucide-react';
 import { avatarUrl } from '../../../../shared/utils/avatarUrl';
 import ProductFormModal from './ProductFormModal';
 import ProductRowActions from './ProductRowActions';
@@ -28,6 +28,9 @@ import StockAdjustModal from './StockAdjustModal';
 import ImportModal from './ImportModal';
 import ExportModal from './ExportModal';
 import LedgerHistoryModal from './LedgerHistoryModal';
+import BranchTransferModal from './BranchTransferModal';
+import { useLocations } from '../../../settings/api/settings/LocationQueries';
+import { useLocationStock } from '../../api/products/BranchStockQueries';
 
 const BULK_LISTING_ACTIONS: { channel: 'supply' | 'storefront'; listed: boolean; label: string; title: string }[] = [
   { channel: 'storefront', listed: true, label: 'List shop', title: 'List selected on public shop' },
@@ -52,6 +55,16 @@ export default function ProductList() {
   const [exportOpen, setExportOpen] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<ProductWithSyncMeta | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const { data: locations = [] } = useLocations();
+  const [branchFilter, setBranchFilter] = useState<string>('');
+  const [transferOpen, setTransferOpen] = useState(false);
+  const { data: branchStock = [] } = useLocationStock(branchFilter ? Number(branchFilter) : null);
+
+  const stockByProduct = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const item of branchStock) map.set(item.product_id, item.stock_quantity);
+    return map;
+  }, [branchStock]);
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: number[]) => {
@@ -78,6 +91,7 @@ export default function ProductList() {
     if (!products) return [];
     const safe = products.filter(Boolean) as ProductWithSyncMeta[];
     return safe.filter((p) => {
+      if (branchFilter && !stockByProduct.has(p.id)) return false;
       if (storefrontFilter === 'listed' && !p.listed_for_storefront) return false;
       if (storefrontFilter === 'unlisted' && p.listed_for_storefront) return false;
       if (supplyFilter === 'listed' && !p.listed_for_supply) return false;
@@ -85,7 +99,7 @@ export default function ProductList() {
       if (!search.trim()) return true;
       return matchesProductSearch(p, search);
     });
-  }, [products, search, storefrontFilter, supplyFilter]);
+  }, [products, search, storefrontFilter, supplyFilter, branchFilter, stockByProduct]);
 
   const paginated = usePagination(filtered, 10);
 
@@ -168,6 +182,17 @@ export default function ProductList() {
             <SearchInput placeholder="Search by name, SKU, or barcode..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
           <select
+            value={branchFilter}
+            onChange={(e) => { setBranchFilter(e.target.value); setSelectedIds(new Set()); }}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            aria-label="Filter by branch"
+          >
+            <option value="">All branches</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}{l.is_default ? ' (Default)' : ''}</option>
+            ))}
+          </select>
+          <select
             value={storefrontFilter}
             onChange={(e) => setStorefrontFilter(e.target.value as 'all' | 'listed' | 'unlisted')}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -211,6 +236,12 @@ export default function ProductList() {
                   title={isOffline ? 'Unavailable offline' : `Delete ${selectedIds.size} selected product(s)`}>
                   <Trash2 className="w-4 h-4" />
                   <span className="hidden sm:inline">Delete ({selectedIds.size})</span>
+                </button>
+                <button onClick={() => setTransferOpen(true)} disabled={isOffline}
+                  className="flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={isOffline ? 'Unavailable offline' : `Transfer ${selectedIds.size} selected product(s) to another branch`}>
+                  <ArrowLeftRight className="w-4 h-4" />
+                  <span className="hidden sm:inline">Transfer</span>
                 </button>
               </div>
             )}
@@ -273,8 +304,9 @@ export default function ProductList() {
                 if (isServiceItem(item)) {
                   return <span className="text-xs font-medium text-blue-600">Service</span>;
                 }
-                const isLow = item.stock_quantity <= item.low_stock_threshold;
-                return <span className={cn(isLow && 'text-amber-600 font-semibold')}>{item.stock_quantity}{isLow && <span className="ml-1 text-xs text-amber-500">(low)</span>}</span>;
+                const qty = branchFilter ? (stockByProduct.get(item.id) ?? 0) : item.stock_quantity;
+                const isLow = qty <= item.low_stock_threshold;
+                return <span className={cn(isLow && 'text-amber-600 font-semibold')}>{qty}{isLow && <span className="ml-1 text-xs text-amber-500">(low)</span>}</span>;
               },
             },
             { key: 'is_active', header: 'Status', render: (item) => item.is_active ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Inactive</Badge> },
@@ -341,6 +373,12 @@ export default function ProductList() {
           productName={historyProduct.name}
         />
       )}
+
+      <BranchTransferModal
+        open={transferOpen}
+        onClose={() => { setTransferOpen(false); setSelectedIds(new Set()); }}
+        products={(products || []).filter((p) => selectedIds.has(p.id))}
+      />
     </>
   );
 }

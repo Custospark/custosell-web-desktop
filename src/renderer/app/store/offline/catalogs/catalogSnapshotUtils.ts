@@ -8,11 +8,19 @@ export function resolveAuthBusinessId(): number | null {
   return typeof id === 'number' && Number.isFinite(id) ? id : null;
 }
 
+/** The signed-in operator's active branch id (falls back to the user/location). */
+export function resolveAuthLocationId(): number | null {
+  const state = store.getState().auth;
+  const id = state.activeLocationId ?? state.user?.location_id ?? null;
+  return typeof id === 'number' && Number.isFinite(id) ? id : null;
+}
+
 /** React Query cache first (in-session), then durable IDB snapshot for this business. */
 export async function readCatalogBaseline<T>(
   entity: CatalogEntity,
   queryKey: readonly unknown[],
-  loadFromIdb: (businessId: number) => Promise<T[] | null>,
+  loadFromIdb: (businessId: number, locationId?: number | null) => Promise<T[] | null>,
+  locationId: number | null = null,
 ): Promise<T[]> {
   const cached = queryClient.getQueryData<T[]>(queryKey) ?? [];
   const safeCached = cached.filter(Boolean) as T[];
@@ -22,7 +30,7 @@ export async function readCatalogBaseline<T>(
   if (!businessId) return [];
 
   try {
-    const fromIdb = await loadFromIdb(businessId);
+    const fromIdb = await loadFromIdb(businessId, locationId);
     return (fromIdb ?? []).filter(Boolean) as T[];
   } catch (err) {
     console.warn(`[Catalog] Failed to read ${entity} snapshot:`, err);
@@ -35,8 +43,9 @@ export function backupCatalogSnapshot<T>(
   businessId: number,
   items: T[],
   catalogKind = 'default',
+  locationId: number | null = null,
 ): void {
-  void serverCatalogStore.save(entity, businessId, items, catalogKind).catch((err) => {
+  void serverCatalogStore.save(entity, businessId, items, catalogKind, locationId).catch((err) => {
     console.warn(`[Catalog] Failed to backup ${entity} snapshot:`, err);
   });
 }

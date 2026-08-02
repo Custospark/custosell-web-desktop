@@ -9,7 +9,7 @@ import type { StaffUser } from '../../../../modules/settings/api/settings/StaffT
 import type { Location } from '../../../../modules/settings/api/settings/LocationTypes';
 import { LOCATIONS } from '../../../../shared/api/endpoints/endpoints';
 import { isOfflineMode } from '../core/offlineQueryUtils';
-import { backupCatalogSnapshot, resolveAuthBusinessId } from './catalogSnapshotUtils';
+import { backupCatalogSnapshot, resolveAuthBusinessId, resolveAuthLocationId } from './catalogSnapshotUtils';
 import { serverCatalogStore, type ProductCatalogKind } from './serverCatalogStore';
 import { refreshSalesCatalogSnapshotsForSession } from './salesCatalogSnapshot';
 import { refreshExpensesCatalogSnapshotsForSession } from './expensesCatalogSnapshot';
@@ -26,9 +26,10 @@ function normalizeList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function fetchProductsFromApi(): Promise<{ products: Product[]; catalogKind: ProductCatalogKind }> {
+export async function fetchProductsFromApi(locationId: number | null = null): Promise<{ products: Product[]; catalogKind: ProductCatalogKind }> {
   try {
-    const { data } = await axiosInstance.get('/products');
+    const params = locationId ? { location_id: locationId } : {};
+    const { data } = await axiosInstance.get('/products', { params });
     return { products: normalizeList<Product>(data), catalogKind: 'full' };
   } catch (err) {
     const status = (err as AxiosError).response?.status;
@@ -49,17 +50,19 @@ export function backupProductCatalog(
   businessId: number,
   catalogKind: ProductCatalogKind,
   products: Product[],
+  locationId: number | null = null,
 ): void {
-  backupCatalogSnapshot('products', businessId, products, catalogKind);
+  backupCatalogSnapshot('products', businessId, products, catalogKind, locationId);
 }
 
 export async function refreshProductCatalogSnapshot(): Promise<void> {
   if (isOfflineMode()) return;
   const businessId = resolveAuthBusinessId();
   if (!businessId) return;
+  const locationId = resolveAuthLocationId();
   try {
-    const { products, catalogKind } = await fetchProductsFromApi();
-    backupProductCatalog(businessId, catalogKind, products);
+    const { products, catalogKind } = await fetchProductsFromApi(locationId);
+    backupProductCatalog(businessId, catalogKind, products, locationId);
   } catch (err) {
     console.warn('[Catalog] Product snapshot refresh failed:', err);
   }
@@ -140,8 +143,8 @@ export async function refreshAllServerCatalogSnapshots(): Promise<void> {
   ]);
 }
 
-export async function loadProductCatalogBaseline(businessId: number): Promise<Product[]> {
-  const items = await serverCatalogStore.loadProducts(businessId);
+export async function loadProductCatalogBaseline(businessId: number, locationId: number | null = null): Promise<Product[]> {
+  const items = await serverCatalogStore.loadProducts(businessId, locationId);
   return (items ?? []) as Product[];
 }
 

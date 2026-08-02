@@ -1,6 +1,7 @@
 import { useDashboardSummary } from './DashboardQueries';
 import { useExpenseSummary } from '../expenses/api/ExpenseQueries';
 import { SalesTrendChart, ExpensePieChart } from './DashboardCharts';
+import BranchPerformanceCard from './BranchPerformanceCard';
 import QuickReports from './QuickReports';
 import DashboardVatSection from './DashboardVatSection';
 import { Badge } from '../../shared/components/badges/Badge';
@@ -148,6 +149,8 @@ export default function DashboardPage() {
 
         {/* Right Column — Reports + VAT + Expenses */}
         <div className="lg:col-span-2 space-y-6">
+          <BranchPerformanceCard />
+
           <QuickReports />
 
           <DashboardVatSection summary={summary} isLoading={isLoading} />

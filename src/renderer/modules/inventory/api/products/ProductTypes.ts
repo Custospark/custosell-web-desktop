@@ -112,6 +112,8 @@ export interface CreateProductData {
   is_active?: boolean;
   is_recurring?: boolean;
   billing_interval?: string | null;
+  /** Target branch (location) for opening stock; defaults to the business default branch. */
+  location_id?: number | null;
 }
 
 export type UpdateProductData = Partial<CreateProductData>;

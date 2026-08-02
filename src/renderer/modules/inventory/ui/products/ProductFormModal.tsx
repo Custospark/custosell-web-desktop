@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCategories, useCreateProduct, useUpdateProduct } from '../../api/products/ProductQueries';
-import type { CatalogItemType, Category, CreateProductData, Product } from '../../api/products/ProductTypes';
+import { useLocations } from '../../../settings/api/settings/LocationQueries';
+import type { CatalogItemType, Category, Product } from '../../api/products/ProductTypes';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
 import { getBusinessCurrency } from '../../../../shared/utils/formatCurrency';
-import { TAX_CLASS_LABELS, type TaxClass } from '../../../../shared/utils/taxEngine';
 import { cn } from '../../../../shared/utils/cn';
 import CategoryFormModal from '../categories/CategoryFormModal';
 import {
@@ -26,6 +26,7 @@ import {
   FileText,
   FolderTree,
   Wrench,
+  Building2,
   RefreshCw,
   Check,
   Plus,
@@ -33,6 +34,12 @@ import {
 import { ProductSupplyListingSection } from '../supply/ProductSupplyListingSection';
 import { ProductStorefrontListingSection } from './ProductStorefrontListingSection';
 import { ProductDiscountField } from './ProductDiscountField';
+import {
+  type FormState,
+  emptyForm,
+  toProductForm,
+  toCreatePayload,
+} from './ProductFormState';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -48,53 +55,14 @@ const COMMON_UNITS = [
   'Plate', 'Bowl', 'Cup', 'Glass', 'Bunch', 'Head', 'Piece',
 ];
 
-interface FormState {
-  name: string; type: CatalogItemType; unit: string; category_id: number | null; description: string | null;
-  sku: string | null; barcode: string | null; is_active: boolean;
-  is_recurring: boolean; billing_interval: string;
-  unit_price: string; wholesale_price: string; cost_price: string; stock_quantity: string;
-  low_stock_threshold: string; tax_percentage: string; tax_class: TaxClass;
-  discount_percent: string;
-}
-
-const emptyForm: FormState = {
-  name: '', type: 'product', unit: '', category_id: null, description: null,
-  sku: null, barcode: null, is_active: true,
-  is_recurring: false, billing_interval: 'month',
-  unit_price: '', wholesale_price: '', cost_price: '', stock_quantity: '0',
-  low_stock_threshold: '5', tax_percentage: '0', tax_class: 'standard',
-  discount_percent: '',
-};
-
-function toNumber(val: string): number {
-  const n = parseFloat(val);
-  return isNaN(n) ? 0 : n;
-}
-
-function toCreatePayload(f: FormState): CreateProductData {
-  const isService = f.type === 'service';
-  return {
-    name: f.name, type: f.type, unit: f.unit || null, category_id: f.category_id, description: f.description,
-    sku: f.sku, barcode: f.barcode, is_active: f.is_active,
-    is_recurring: f.is_recurring,
-    billing_interval: f.is_recurring ? (f.billing_interval || 'month') : null,
-    unit_price: toNumber(f.unit_price),
-    discount_percent: f.discount_percent === '' ? null : toNumber(f.discount_percent),
-    wholesale_price: f.wholesale_price === '' ? null : toNumber(f.wholesale_price),
-    cost_price: f.cost_price === '' ? null : toNumber(f.cost_price),
-    stock_quantity: isService ? 0 : toNumber(f.stock_quantity),
-    low_stock_threshold: isService ? 0 : toNumber(f.low_stock_threshold),
-    tax_percentage: toNumber(f.tax_percentage),
-    tax_class: f.tax_class,
-  };
-}
-
 export default function ProductFormModal({ open, onClose, product, onProductUpdated }: ProductFormModalProps) {
   const isEditing = !!product;
   const { data: categories } = useCategories();
+  const { data: locations = [] } = useLocations();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const defaultLocationId = locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? null;
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -104,26 +72,12 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
   useEffect(() => {
     queueMicrotask(() => {
       if (product) {
-        setForm({
-          name: product.name, type: product.type === 'service' ? 'service' : 'product',
-          unit: product.unit ?? '', category_id: product.category_id, description: product.description,
-          sku: product.sku, barcode: product.barcode, is_active: product.is_active,
-          is_recurring: product.is_recurring ?? false,
-          billing_interval: product.billing_interval ?? 'month',
-          unit_price: product.unit_price, wholesale_price: product.wholesale_price ?? '', cost_price: product.cost_price ?? '',
-          stock_quantity: String(product.stock_quantity), low_stock_threshold: String(product.low_stock_threshold),
-          tax_percentage: product.tax_percentage,
-          tax_class: (product.tax_class as TaxClass) || 'standard',
-          discount_percent:
-            product.discount_percent != null && product.discount_percent !== ''
-              ? String(product.discount_percent)
-              : '',
-        });
+        setForm(toProductForm(product));
       } else {
-        setForm(emptyForm);
+        setForm({ ...emptyForm, location_id: defaultLocationId });
       }
     });
-  }, [product, open]);
+  }, [product, open, defaultLocationId]);
 
   const update = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => setForm((p) => ({ ...p, [key]: val })), []);
 
@@ -148,7 +102,7 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    const payload = toCreatePayload(form);
+    const payload = toCreatePayload(form, defaultLocationId);
     if (isEditing && product) {
       updateMutation.mutate({ id: product.id, data: payload }, { onSuccess: onClose });
     } else {
@@ -365,16 +319,29 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
               <span>Stock quantity is managed via <strong>Adjust Stock</strong>, not this form.</span>
             </div>
           ) : (
-            <PipelineIconField label="Initial stock quantity" icon={Archive}>
-              <input
-                className={pipelineInputClass}
-                type="number"
-                min={0}
-                value={form.stock_quantity}
-                onChange={(e) => update('stock_quantity', e.target.value)}
-                placeholder="0"
-              />
-            </PipelineIconField>
+            <>
+              <PipelineIconField label="Branch" icon={Building2}>
+                <select
+                  className={pipelineSelectClass}
+                  value={form.location_id ?? ''}
+                  onChange={(e) => update('location_id', e.target.value ? Number(e.target.value) : null)}
+                >
+                  {locations.map((l) => (
+                    <option key={l.id} value={l.id}>{l.name}{l.is_default ? ' (Default)' : ''}</option>
+                  ))}
+                </select>
+              </PipelineIconField>
+              <PipelineIconField label="Initial stock quantity" icon={Archive}>
+                <input
+                  className={pipelineInputClass}
+                  type="number"
+                  min={0}
+                  value={form.stock_quantity}
+                  onChange={(e) => update('stock_quantity', e.target.value)}
+                  placeholder="0"
+                />
+              </PipelineIconField>
+            </>
           )}
 
           {!isService ? (

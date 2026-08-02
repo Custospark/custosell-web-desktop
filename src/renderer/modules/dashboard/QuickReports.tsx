@@ -4,7 +4,8 @@ import { Button } from '../../shared/components/buttons/Button';
 import { SearchableSelect } from '../../shared/components/inputs/SearchableSelect';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
-import { useReportDownload } from './DashboardQueries';
+import { useReportDownload, useBranchPerformance } from './DashboardQueries';
+import { BranchPerformanceTable } from './BranchPerformanceCard';
 import { useStaff } from '../settings/api/settings/StaffQueries';
 import { useShifts } from '../shifts/ShiftQueries';
 import {
@@ -32,6 +33,7 @@ interface ReportConfig {
   hasDateRange: boolean;
   supportsCashierFilter?: boolean;
   supportsShiftFilter?: boolean;
+  onScreen?: boolean;
 }
 
 const reports: ReportConfig[] = [
@@ -124,6 +126,13 @@ const reports: ReportConfig[] = [
     defaultFormat: 'xlsx', hasDateRange: false,
   },
   {
+    key: 'branch-performance', label: 'Branch Performance', description: 'Per-branch net sales, transactions, and share',
+    purpose: 'Which branch is performing best?',
+    icon: BarChart3, color: 'blue', bg: 'bg-blue-50', textColor: 'text-blue-600',
+    formats: [],
+    defaultFormat: '', hasDateRange: true, supportsCashierFilter: true, supportsShiftFilter: true, onScreen: true,
+  },
+  {
     key: 'payment-breakdown', label: 'Payment Breakdown', description: 'Collections by payment method (net after refunds)',
     purpose: 'How are customers paying?',
     icon: CreditCard, color: 'amber', bg: 'bg-amber-50', textColor: 'text-amber-600',
@@ -154,6 +163,8 @@ export default function QuickReports() {
     () => resolveReportDateRange(datePreset, customFrom, customTo),
     [datePreset, customFrom, customTo],
   );
+
+  const { data: branchData, isLoading: branchLoading } = useBranchPerformance(dateFrom, dateTo);
 
   const dateRangeValid = !selectedReport?.hasDateRange || isValidDateRange(dateFrom, dateTo);
 
@@ -217,7 +228,7 @@ export default function QuickReports() {
   };
 
   const handleDownload = () => {
-    if (!selectedReport || isOffline || !dateRangeValid) return;
+    if (!selectedReport || isOffline || !dateRangeValid || selectedReport.onScreen) return;
 
     const params = new URLSearchParams({ format });
     if (selectedReport.hasDateRange) {
@@ -395,6 +406,15 @@ export default function QuickReports() {
 
               {/* Right — format */}
               <div className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/40 p-4">
+                {selectedReport.onScreen ? (
+                  <BranchPerformanceTable
+                    branches={branchData?.branches ?? []}
+                    isLoading={branchLoading}
+                    dateFrom={dateFrom}
+                    dateTo={dateTo}
+                  />
+                ) : (
+                  <>
                 <label className="block text-sm font-semibold text-gray-800 mb-3">Export format</label>
                 <div className="grid grid-cols-3 gap-3 flex-1 content-start">
                   {selectedReport.formats.map((fmt) => {
@@ -420,9 +440,12 @@ export default function QuickReports() {
                     );
                   })}
                 </div>
+                </>
+                )}
               </div>
             </div>
 
+            {!selectedReport.onScreen && (
             <div className="flex items-center justify-between gap-3 mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-400 hidden sm:block">Downloads use your business name in the filename.</p>
               <div className="flex gap-2 sm:gap-3 ml-auto">
@@ -436,6 +459,7 @@ export default function QuickReports() {
                 </Button>
               </div>
             </div>
+            )}
           </div>
         )}
       </Modal>

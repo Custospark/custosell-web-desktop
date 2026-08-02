@@ -1,7 +1,8 @@
-import { User, Mail, ShieldCheck, Plus } from 'lucide-react';
+import { User, Mail, ShieldCheck, Plus, GitBranch } from 'lucide-react';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import type { RoleWithSyncMeta } from '../../../app/store/offline/settings/localRolesStore';
+import type { Location } from '../api/settings/LocationTypes';
 import { StaffPasswordFields } from './StaffPasswordFields';
 
 interface StaffIdentityFieldsProps {
@@ -11,6 +12,8 @@ interface StaffIdentityFieldsProps {
   countryCode: CountryCode;
   roleId: number | null;
   roles?: RoleWithSyncMeta[] | null;
+  locationId: number | null;
+  locations?: Location[] | null;
   emailLocked: boolean;
   roleSelectionLocked: boolean;
   roleDisplayName: string;
@@ -35,6 +38,8 @@ interface StaffIdentityFieldsProps {
   onLocalPhoneChange: (value: string) => void;
   onRoleChange: (roleId: number) => void;
   onAddRole: () => void;
+  onLocationChange: (locationId: number | null) => void;
+  onAddLocation: () => void;
   onPasswordChange: (value: string) => void;
   onPasswordConfirmationChange: (value: string) => void;
   onToggleShowPassword: () => void;
@@ -48,6 +53,8 @@ export function StaffIdentityFields({
   countryCode,
   roleId,
   roles,
+  locationId,
+  locations,
   emailLocked,
   roleSelectionLocked,
   roleDisplayName,
@@ -72,6 +79,8 @@ export function StaffIdentityFields({
   onLocalPhoneChange,
   onRoleChange,
   onAddRole,
+  onLocationChange,
+  onAddLocation,
   onPasswordChange,
   onPasswordConfirmationChange,
   onToggleShowPassword,
@@ -158,6 +167,31 @@ export function StaffIdentityFields({
             className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
             <Plus className="w-3 h-3" />
             Add Role
+          </button>
+        </div>
+        <div>
+          <label className={labelClass}>Branch</label>
+          <div className="relative">
+            <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              className={inputClass}
+              value={locationId ?? 0}
+              onChange={(e) => onLocationChange(Number(e.target.value) || null)}
+              title="Home branch"
+            >
+              <option value={0}>No branch</option>
+              {(locations ?? []).filter(Boolean).map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}{l.is_default ? ' (Default)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Home branch for sales, stock, and shifts. Staff can be moved later from the staff list.</p>
+          <button type="button" onClick={onAddLocation}
+            className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
+            <Plus className="w-3 h-3" />
+            Add Branch
           </button>
         </div>
         {!isAttachMode && (

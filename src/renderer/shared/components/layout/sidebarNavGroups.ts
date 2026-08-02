@@ -12,6 +12,7 @@ import {
   DollarSign,
   Gift,
   GitBranch,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -44,7 +45,7 @@ export const baseSubRoutes = [
   ROUTES.DOCUMENTS.INDEX,
   ROUTES.HR.OVERVIEW, ROUTES.HR.PEOPLE, ROUTES.HR.DEPARTMENTS, ROUTES.HR.COMPANY_ASSETS,
   ROUTES.HR.ATTENDANCE, ROUTES.HR.LEAVE, ROUTES.HR.PAYROLL, ROUTES.HR.TALENT,
-  ROUTES.HR.REPORTS, ROUTES.HR.SETTINGS,
+  ROUTES.HR.TRANSFERS, ROUTES.HR.REPORTS, ROUTES.HR.SETTINGS,
   ROUTES.ACCOUNTING.RATIOS, ROUTES.ACCOUNTING.STATEMENTS,
   ROUTES.ACCOUNTING.CHART_OF_ACCOUNTS, ROUTES.ACCOUNTING.JOURNAL_ENTRIES,
   ROUTES.ACCOUNTING.FIXED_ASSETS,
@@ -198,6 +199,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.HR.LEAVE, label: 'Leave', icon: CalendarDays },
       { to: ROUTES.HR.PAYROLL, label: 'Payroll', icon: Wallet },
       { to: ROUTES.HR.TALENT, label: 'Talent', icon: ClipboardCheck },
+      { to: ROUTES.HR.TRANSFERS, label: 'Transfers', icon: ArrowRightLeft },
       { to: ROUTES.HR.REPORTS, label: 'Reports', icon: BarChart3 },
       { to: ROUTES.HR.SETTINGS, label: 'HR settings', icon: SlidersHorizontal },
     ],

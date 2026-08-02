@@ -107,6 +107,7 @@ const HrLeavePage = lazy(() => import('../../modules/hr/pages/HrLeavePage'));
 const HrPayrollPage = lazy(() => import('../../modules/hr/pages/HrPayrollPage'));
 const HrPayRunDetailPage = lazy(() => import('../../modules/hr/pages/HrPayRunDetailPage'));
 const HrTalentPage = lazy(() => import('../../modules/hr/pages/HrTalentPage'));
+const HrTransfersPage = lazy(() => import('../../modules/hr/pages/HrTransfersPage'));
 const HrReportsPage = lazy(() => import('../../modules/hr/pages/HrReportsPage'));
 const HrSettingsPage = lazy(() => import('../../modules/hr/pages/HrSettingsPage'));
 const HrCompanyAssetsPage = lazy(() => import('../../modules/hr/pages/HrCompanyAssetsPage'));
@@ -296,6 +297,7 @@ export function AppRoutes() {
                   <Route path="payroll" element={<SuspenseWrapper><HrPayrollPage /></SuspenseWrapper>} />
                   <Route path="payroll/runs/:payRunId" element={<SuspenseWrapper><HrPayRunDetailPage /></SuspenseWrapper>} />
                   <Route path="talent" element={<SuspenseWrapper><HrTalentPage /></SuspenseWrapper>} />
+                  <Route path="transfers" element={<SuspenseWrapper><HrTransfersPage /></SuspenseWrapper>} />
                   <Route path="reports" element={<SuspenseWrapper><HrReportsPage /></SuspenseWrapper>} />
                   <Route path="settings" element={<SuspenseWrapper><HrSettingsPage /></SuspenseWrapper>} />
                 </Route>

@@ -3,8 +3,15 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useAttachStaff, useCreateStaff, lookupStaffEmail, useUpdateStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
+import { useLocations } from '../api/settings/LocationQueries';
 import { getBusinessOwnerId, getStaffAccountRules, isBusinessOwnerStaff } from '../api/settings/staffAccountRules';
-import type { AttachStaffData, CreateStaffData, StaffLookupResult, StaffUser, UpdateStaffData } from '../api/settings/StaffTypes';
+import type { StaffLookupResult, StaffUser } from '../api/settings/StaffTypes';
+import {
+  buildAttachStaffPayload,
+  buildCreateStaffPayload,
+  buildUpdateStaffPayload,
+  type StaffPayloadBase,
+} from './staffFormPayloads';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { setUser } from '../../../app/store/slices/authSlice';
@@ -38,6 +45,7 @@ export interface StaffFormState {
   password: string;
   password_confirmation: string;
   role_id: number | null;
+  location_id: number | null;
   modules: BusinessModuleSlug[];
   estimatesFullAccess: boolean;
   hrFullAccess: boolean;
@@ -50,6 +58,7 @@ const emptyForm: StaffFormState = {
   password: '',
   password_confirmation: '',
   role_id: 0,
+  location_id: null,
   modules: ['sales'],
   estimatesFullAccess: false,
   hrFullAccess: false,
@@ -96,6 +105,7 @@ function hydrateFormFromStaff(
       password: '',
       password_confirmation: '',
       role_id: staff.role_id ?? null,
+      location_id: staff.location_id ?? null,
       modules: staffModules,
       estimatesFullAccess: staffHasFullEstimatesModule(staff.modules),
       hrFullAccess: staffHasFullHrModule(staff.modules),
@@ -112,6 +122,7 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
   const { showToast } = useToast();
   const { data: roles } = useRoles();
   const { data: business } = useBusiness();
+  const { data: locations } = useLocations();
   const authUser = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
   const isSubmitting = createMutation.isPending || attachMutation.isPending || updateMutation.isPending;
@@ -120,6 +131,7 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
   const [form, setForm] = useState<StaffFormState>(emptyForm);
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [roleDrawerOpen, setRoleDrawerOpen] = useState(false);
+  const [locationFormOpen, setLocationFormOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [lookup, setLookup] = useState<StaffLookupResult | null>(null);
@@ -158,8 +170,10 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
       } else {
         hydratedKeyRef.current = null;
         const defaultRole = roles?.find((r) => r.is_default) ?? roles?.find((r) => r.slug === 'staff');
+        const safeLocations = (locations ?? []).filter(Boolean);
+        const defaultLocation = safeLocations.find((l) => l.is_default) ?? safeLocations.find((l) => l.is_active) ?? null;
         setCountryCode(getDefaultCountryCode());
-        setForm({ ...emptyForm, role_id: defaultRole?.id ?? 0 });
+        setForm({ ...emptyForm, role_id: defaultRole?.id ?? 0, location_id: defaultLocation?.id ?? null });
       }
       setLookup(null);
       setLookupError(null);
@@ -167,7 +181,7 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
       setShowPassword(false);
       setShowConfirmPassword(false);
     });
-  }, [staff, open, roles, applyStaffHydration]);
+  }, [staff, open, roles, locations, applyStaffHydration]);
 
   // Always refresh from server when editing so module checkboxes match persisted access.
   useEffect(() => {
@@ -367,20 +381,25 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
 
   const handleSubmit = () => {
     if (!canSubmit || isSubmitting) return;
+
+    const base: StaffPayloadBase = {
+      name: form.name.trim(),
+      email: emailLocked ? staff?.email ?? form.email.trim() : form.email.trim(),
+      phone: fullPhone,
+      roleId: form.role_id ?? null,
+      locationId: form.location_id,
+      modules: modulesLocked ? undefined : resolvedModules,
+    };
+
     if (isEditing && staff) {
-      const payload: UpdateStaffData = {
-        name: form.name.trim(),
-        email: emailLocked ? staff.email : form.email.trim(),
-        phone: fullPhone,
-        role_id: canChangeRole ? form.role_id || staff.role_id || null : staff.role_id ?? null,
-        modules: modulesLocked ? undefined : resolvedModules,
-      };
-      if (form.password.trim()) {
-        payload.password = form.password.trim();
-        if (isPendingCreate) {
-          payload.password_confirmation = form.password_confirmation.trim();
-        }
-      }
+      const payload = buildUpdateStaffPayload({
+        ...base,
+        currentLocationId: staff.location_id ?? null,
+        canChangeRole,
+        currentRoleId: staff.role_id ?? null,
+        password: form.password.trim() || undefined,
+        passwordConfirmation: form.password_confirmation.trim() || undefined,
+      });
       updateMutation.mutate({ id: staff.id, data: payload }, {
         onSuccess: async (updatedStaff) => {
           if (staff.id === authUser?.id) {
@@ -412,28 +431,16 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
     }
 
     if (isAttachMode) {
-      const payload: AttachStaffData = {
-        email: form.email.trim(),
-        role_id: form.role_id ?? 0,
-        modules: resolvedModules,
-        name: form.name.trim() || undefined,
-        phone: fullPhone,
-      };
-      attachMutation.mutate(payload, { onSuccess: onClose });
+      attachMutation.mutate(buildAttachStaffPayload(base), { onSuccess: onClose });
       return;
     }
 
-    const payload: CreateStaffData = {
-      business_id: authUser?.business_id ?? null,
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone: fullPhone,
+    createMutation.mutate(buildCreateStaffPayload({
+      ...base,
+      businessId: authUser?.business_id ?? null,
       password: form.password.trim(),
-      password_confirmation: form.password_confirmation.trim(),
-      role_id: form.role_id ?? 0,
-      modules: resolvedModules,
-    };
-    createMutation.mutate(payload, { onSuccess: onClose });
+      passwordConfirmation: form.password_confirmation.trim(),
+    }), { onSuccess: onClose });
   };
 
   return {
@@ -444,6 +451,10 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
     roles,
     roleDrawerOpen,
     setRoleDrawerOpen,
+    locationFormOpen,
+    setLocationFormOpen,
+    locations,
+    handleLocationChange: (value: number | null) => update('location_id', value),
     showPassword,
     showConfirmPassword,
     setShowPassword,

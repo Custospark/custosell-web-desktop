@@ -2,10 +2,12 @@ import { useState, useMemo } from 'react';
 import { useStaff, useDetachStaff } from '../api/settings/StaffQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
+import { useLocations } from '../api/settings/LocationQueries';
 import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffAccountRules';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
+import { SearchableSelect } from '../../../shared/components/inputs/SearchableSelect';
 import { Table } from '../../../shared/components/tables/Table';
 import { Card } from '../../../shared/components/cards/Card';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
@@ -15,30 +17,60 @@ import { useToast } from '../../../app/contexts/useToast';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import StaffFormModal from './StaffFormModal';
-import { Users, Plus, Pencil, UserMinus } from 'lucide-react';
+import StaffTransferModal from './StaffTransferModal';
+import { Users, Plus, Pencil, UserMinus, ArrowRightLeft, GitBranch } from 'lucide-react';
 
 export default function StaffList() {
   const { data: staff, isLoading, error } = useStaff();
   const { data: business } = useBusiness();
   const { data: roles } = useRoles();
+  const { data: locations } = useLocations();
   const detachMutation = useDetachStaff();
   const { confirm } = useConfirm();
   const { showToast } = useToast();
   const authUser = useAppSelector((s) => s.auth.user);
   const [search, setSearch] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferStaff, setTransferStaff] = useState<StaffWithSyncMeta | null>(null);
   const businessOwnerId = getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null });
   const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
+  const locationsById = useMemo(() => new Map((locations ?? []).filter(Boolean).map((l) => [l.id, l])), [locations]);
+
+  const branchOptions = useMemo(
+    () => (locations ?? []).filter(Boolean).map((l) => ({
+      value: String(l.id),
+      label: l.is_default ? `${l.name} (Default)` : l.name,
+    })),
+    [locations],
+  );
+  const roleOptions = useMemo(
+    () => (roles ?? []).filter(Boolean).map((r) => ({ value: String(r.id), label: r.name })),
+    [roles],
+  );
+
+  const branchName = (s: StaffWithSyncMeta): string | null =>
+    s.location?.name ?? (s.location_id != null ? locationsById.get(s.location_id)?.name ?? null : null);
 
   const filtered = useMemo(() => {
     const safeStaff = (staff ?? []).filter(Boolean);
-    if (!search.trim()) return safeStaff;
-    const q = search.toLowerCase();
-    return safeStaff.filter((s) =>
-      s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.phone && s.phone.toLowerCase().includes(q))
-    );
-  }, [staff, search]);
+    const q = search.trim().toLowerCase();
+    return safeStaff.filter((s) => {
+      if (branchFilter && (s.location_id ?? null) !== Number(branchFilter)) return false;
+      if (roleFilter && (s.role_id ?? null) !== Number(roleFilter)) return false;
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q)
+        || s.email.toLowerCase().includes(q)
+        || (s.phone && s.phone.toLowerCase().includes(q))
+        || (branchName(s)?.toLowerCase().includes(q) ?? false)
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff, search, branchFilter, roleFilter, locationsById]);
 
   const paginated = usePagination(filtered, 10);
 
@@ -51,6 +83,10 @@ export default function StaffList() {
   const openEdit = (s: StaffWithSyncMeta) => {
     setEditingStaffId(s.id);
     setDrawerOpen(true);
+  };
+  const openTransfer = (s: StaffWithSyncMeta) => {
+    setTransferStaff(s);
+    setTransferOpen(true);
   };
 
   const handleDetach = async (s: StaffWithSyncMeta) => {
@@ -92,9 +128,31 @@ export default function StaffList() {
       </div>
 
       <Card>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex-1">
-            <SearchInput placeholder="Search staff by name, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+        <div className="flex flex-wrap items-center gap-4 mb-4">
+          <div className="flex-1 min-w-[220px]">
+            <SearchInput placeholder="Search staff by name, email, phone or branch..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+          </div>
+          <div className="w-52">
+            <SearchableSelect
+              placeholder="All branches"
+              searchPlaceholder="Search branches..."
+              options={branchOptions}
+              value={branchFilter}
+              onChange={setBranchFilter}
+              emptyOption={{ value: '', label: 'All branches' }}
+              maxVisibleOptions={6}
+            />
+          </div>
+          <div className="w-52">
+            <SearchableSelect
+              placeholder="All roles"
+              searchPlaceholder="Search roles..."
+              options={roleOptions}
+              value={roleFilter}
+              onChange={setRoleFilter}
+              emptyOption={{ value: '', label: 'All roles' }}
+              maxVisibleOptions={6}
+            />
           </div>
         </div>
         <Table<StaffWithSyncMeta>
@@ -136,8 +194,15 @@ export default function StaffList() {
                 return phone || <span className="text-gray-400">—</span>;
               } },
             { key: 'role', header: 'Role', render: (item) => item.role?.name || <span className="text-gray-400">—</span> },
+            { key: 'branch', header: 'Branch', render: (item) => {
+                const name = branchName(item);
+                return name
+                  ? <span className="inline-flex items-center gap-1.5"><GitBranch className="w-3.5 h-3.5 text-gray-400" />{name}</span>
+                  : <span className="text-gray-400">—</span>;
+              } },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openTransfer(item); }} title="Transfer to another branch"><ArrowRightLeft className="w-4 h-4 text-indigo-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
                   {(() => {
                     const rules = getStaffAccountRules(
@@ -179,6 +244,15 @@ export default function StaffList() {
           setEditingStaffId(null);
         }}
         staff={editingStaff}
+      />
+
+      <StaffTransferModal
+        open={transferOpen}
+        onClose={() => {
+          setTransferOpen(false);
+          setTransferStaff(null);
+        }}
+        staff={transferStaff}
       />
     </>
   );

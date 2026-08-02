@@ -3,6 +3,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import RoleFormDrawer from './RoleFormDrawer';
+import LocationFormModal from './LocationFormModal';
 import { StaffModuleAccessFields } from './StaffModuleAccessFields';
 import { StaffFormBanners } from './StaffFormBanners';
 import { StaffIdentityFields } from './StaffIdentityFields';
@@ -85,6 +86,8 @@ export default function StaffFormModal({ open, onClose, staff }: StaffFormModalP
               countryCode={f.countryCode}
               roleId={f.form.role_id}
               roles={f.roles}
+              locationId={f.form.location_id}
+              locations={f.locations}
               emailLocked={f.emailLocked}
               roleSelectionLocked={f.roleSelectionLocked}
               roleDisplayName={f.roleDisplayName}
@@ -109,6 +112,8 @@ export default function StaffFormModal({ open, onClose, staff }: StaffFormModalP
               onLocalPhoneChange={(value) => f.update('localPhone', value)}
               onRoleChange={(roleId) => f.update('role_id', roleId)}
               onAddRole={() => f.setRoleDrawerOpen(true)}
+              onLocationChange={f.handleLocationChange}
+              onAddLocation={() => f.setLocationFormOpen(true)}
               onPasswordChange={(value) => f.update('password', value)}
               onPasswordConfirmationChange={(value) => f.update('password_confirmation', value)}
               onToggleShowPassword={() => f.setShowPassword((v) => !v)}
@@ -144,6 +149,7 @@ export default function StaffFormModal({ open, onClose, staff }: StaffFormModalP
         </div>
       </Modal>
       <RoleFormDrawer open={f.roleDrawerOpen} onClose={() => f.setRoleDrawerOpen(false)} />
+      <LocationFormModal open={f.locationFormOpen} onClose={() => f.setLocationFormOpen(false)} />
     </>
   );
 }

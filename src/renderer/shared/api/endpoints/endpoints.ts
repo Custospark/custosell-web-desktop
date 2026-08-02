@@ -28,6 +28,10 @@ export const LOCATIONS = {
   BY_ID: (id: number) => `/locations/${id}`,
   DEFAULT: (id: number) => `/locations/${id}/default`,
 };
+export const STAFF_TRANSFERS = {
+  BASE: '/staff-transfers',
+  BY_ID: (id: number) => `/staff-transfers/${id}`,
+};
 export const CATEGORIES = '/categories';
 export const PRODUCTS = {
   BASE: '/products',

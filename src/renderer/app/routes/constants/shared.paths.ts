@@ -78,6 +78,7 @@ export const ROUTES = {
     PAYROLL: '/hr/payroll',
     PAY_RUN: (id: number) => `/hr/payroll/runs/${id}`,
     TALENT: '/hr/talent',
+    TRANSFERS: '/hr/transfers',
     REPORTS: '/hr/reports',
     SETTINGS: '/hr/settings',
   },

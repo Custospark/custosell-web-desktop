@@ -201,26 +201,6 @@ export default function YourToolsPage() {
 
   return (
     <div className="relative mx-auto w-full max-w-6xl pb-28 sm:pb-10">
-      {!activeAccess && (
-        <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <AlertTriangle className="h-5 w-5 text-amber-700" />
-          <span className="text-sm font-medium text-amber-700">
-            {status === 'suspended'
-              ? `Your subscription has been suspended${priceLabel ? ` — restore access at just ${priceLabel}/month` : ''}.`
-              : status === 'past_due'
-                ? 'Payment overdue — restore access to unlock your tools.'
-                : `No active plan${priceLabel ? ` — restore access at just ${priceLabel}/month` : ''}.`}
-          </span>
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 hover:bg-amber-50"
-          >
-            <CreditCard className="h-4 w-4" />
-            {status === 'past_due' ? 'Pay now' : 'Restore access'}
-          </button>
-        </div>
-      )}
 
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">

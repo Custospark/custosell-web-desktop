@@ -11,7 +11,7 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../../app/contexts/useToast';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import LocationFormModal from './LocationFormModal';
-import { Store, Plus, Pencil, Star, Trash2 } from 'lucide-react';
+import { GitBranch, Plus, Pencil, Star, Trash2 } from 'lucide-react';
 
 export default function LocationList() {
   const { data: locations, isLoading, error } = useLocations();
@@ -67,7 +67,7 @@ export default function LocationList() {
 
   if (error) {
     return (
-      <EmptyState icon={<Store className="w-12 h-12" />} title="Failed to load branches"
+      <EmptyState icon={<GitBranch className="w-12 h-12" />} title="Failed to load branches"
         description={error?.message || 'An error occurred'} actionLabel="Retry" onAction={() => window.location.reload()} />
     );
   }
@@ -94,6 +94,7 @@ export default function LocationList() {
             { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
             { key: 'name', header: 'Branch', render: (item) => (
                 <div className="flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-gray-400 shrink-0" />
                   <span>{item.name}</span>
                   {item.is_default && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800" title="Default branch">

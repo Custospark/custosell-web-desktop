@@ -9,7 +9,7 @@ import { isBusinessOwner } from '../../utils/moduleAccess';
 import { cn } from '../../utils/cn';
 import {
   Building2, ChevronDown, ExternalLink, Settings, CreditCard, CircleUser,
-  FileText, MapPin, Phone, Mail,
+  FileText, MapPin, Phone, Mail, GitBranch,
 } from 'lucide-react';
 
 type DetailRow = { icon: typeof MapPin; value: string };
@@ -116,7 +116,10 @@ export default function BusinessDropdown() {
         <div className="hidden lg:flex items-center gap-1.5 min-w-0 max-w-[200px]">
           <div className="min-w-0">
             <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
-            <span className="block text-xs truncate text-gray-500">{subtitle}</span>
+            <span className="flex items-center gap-1 text-xs truncate text-gray-500">
+              {isBusiness && <GitBranch className="w-3 h-3 text-gray-400 shrink-0" />}
+              <span className="truncate">{subtitle}</span>
+            </span>
           </div>
         </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
@@ -137,7 +140,10 @@ export default function BusinessDropdown() {
                 <p className="text-sm font-bold text-gray-900 truncate">
                   <span className="truncate">{businessName}</span>
                 </p>
-                <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+                <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+                  {isBusiness && <GitBranch className="w-3 h-3 text-gray-400 shrink-0" />}
+                  <span className="truncate">{subtitle}</span>
+                </p>
               </div>
             </div>
           </div>

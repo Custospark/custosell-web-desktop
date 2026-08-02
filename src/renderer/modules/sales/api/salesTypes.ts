@@ -111,6 +111,7 @@ export interface CreateSalePayload {
   change_given?: number | null;
   shift_id?: number | null;
   order_id?: number | null;
+  location_id?: number | null;
   payment_method: 'cash' | 'mobile_money' | 'card' | 'other';
   customer_id?: number | null;
   notes?: string | null;

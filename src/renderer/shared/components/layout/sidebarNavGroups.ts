@@ -11,6 +11,7 @@ import {
   CreditCard,
   DollarSign,
   Gift,
+  GitBranch,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -250,7 +251,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.SETTINGS.TAX, label: 'Tax & VAT', icon: Scale },
       { to: ROUTES.SETTINGS.STAFF, label: 'Staff', icon: UserCog },
       { to: ROUTES.SETTINGS.ROLES, label: 'Roles', icon: Shield },
-      { to: ROUTES.SETTINGS.LOCATIONS, label: 'Branches', icon: Store },
+      { to: ROUTES.SETTINGS.LOCATIONS, label: 'Branches', icon: GitBranch },
       { to: ROUTES.SETTINGS.MODULES, label: 'Module access', icon: LayoutGrid, ownerOnly: true },
       { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Billing & Subscription', icon: CreditCard, ownerOnly: true },
       { to: ROUTES.SETTINGS.DATA_EXPORT, label: 'Data & Export', icon: Download },

@@ -39,6 +39,7 @@ export function BillingControls() {
   const createSale = useCreateSale();
   const resolveCustomer = useResolveCustomerContact();
   const currentShiftId = useAppSelector((s) => s.auth.user?.shift_id);
+  const activeLocationId = useAppSelector((s) => s.auth.activeLocationId);
   const authUser = useAppSelector((s) => s.auth.user);
   const { taxSettings, business: taxBusinessRecord } = useBusinessTaxSettings();
   const currency = taxBusinessRecord?.currency || authUser?.business?.currency || 'UGX';
@@ -113,6 +114,7 @@ export function BillingControls() {
             : null,
           shift_id: currentShiftId || null,
           order_id: activeOrderId || null,
+          location_id: activeLocationId || null,
         },
         {
           onSuccess: (sale) => {

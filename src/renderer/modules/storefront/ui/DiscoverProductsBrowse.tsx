@@ -106,6 +106,7 @@ export function DiscoverProductsBrowse() {
       },
       product,
     );
+    showToast('success', 'Added to cart', 2500, 'top-center');
   }, [addProduct, showToast]);
 
   const onShowMore = () => {

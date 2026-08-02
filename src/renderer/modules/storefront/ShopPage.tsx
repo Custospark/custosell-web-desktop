@@ -137,6 +137,7 @@ export default function ShopPage() {
       },
       product,
     );
+    showToast('success', 'Added to cart', 2500, 'top-center');
   }, [shop, addProduct, showToast]);
 
   if (!slug) {

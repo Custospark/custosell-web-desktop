@@ -342,20 +342,18 @@ export default function YourToolsPage() {
                     type="button"
                     onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
                     aria-label={`${t.label} — locked, restore access to use`}
-                    className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left opacity-80 transition-all hover:opacity-100"
+                    className="flex cursor-not-allowed flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-300 text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
                         <t.icon className="h-4 w-4" />
                       </span>
-                      <span className="text-sm font-bold text-slate-500 line-through decoration-slate-300">
-                        {t.label}
-                      </span>
-                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                      <span className="text-sm font-bold text-slate-600">{t.label}</span>
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                         <Lock className="h-3 w-3" />
                       </span>
                     </div>
-                    <p className="pl-10 text-xs leading-relaxed text-slate-400">{t.description}</p>
+                    <p className="pl-10 text-xs leading-relaxed text-slate-500">{t.description}</p>
                   </button>
                 ))}
               </div>

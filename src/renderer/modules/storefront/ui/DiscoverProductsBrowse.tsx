@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Package, Search } from 'lucide-react';
-import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import {
@@ -116,11 +116,7 @@ export function DiscoverProductsBrowse() {
 
   if (!data && isLoading) {
     return (
-      <LoadingSkeleton
-        variant="page"
-        message="Loading products…"
-        detail="Gathering listed products and services across businesses — almost ready."
-      />
+      <CustosellLoader message="Loading products — gathering listed products and services across businesses." />
     );
   }
 

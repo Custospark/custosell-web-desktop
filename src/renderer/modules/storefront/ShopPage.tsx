@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { Phone, Search, ShoppingBag, Mail, MapPin } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { useToast } from '../../app/contexts/useToast';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -160,13 +160,7 @@ export default function ShopPage() {
   };
 
   if (shopQuery.isLoading && !shop) {
-    return (
-      <LoadingSkeleton
-        variant="page"
-        message="Loading this shop…"
-        detail="Pulling the catalog so you can browse and add to cart."
-      />
-    );
+    return <CustosellLoader message="Loading this shop — pulling the catalog so you can browse and add to cart." />;
   }
 
   // Enabled shop with zero listings is a valid shop — only fail when the shop API itself fails.
@@ -192,13 +186,7 @@ export default function ShopPage() {
   }
 
   if (!shop) {
-    return (
-      <LoadingSkeleton
-        variant="page"
-        message="Loading this shop…"
-        detail="Pulling the catalog so you can browse and add to cart."
-      />
-    );
+    return <CustosellLoader message="Loading this shop — pulling the catalog so you can browse and add to cart." />;
   }
 
   return (
@@ -267,11 +255,7 @@ export default function ShopPage() {
       </div>
 
       {productsQuery.isLoading ? (
-        <LoadingSkeleton
-          variant="page"
-          message="Loading products…"
-          detail="Fetching what this shop has listed."
-        />
+        <CustosellLoader message="Loading products — fetching what this shop has listed." />
       ) : productsQuery.isError ? (
         <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600', 'rounded-none sm:rounded-2xl')}>
           Could not load products for this shop. Try refreshing.

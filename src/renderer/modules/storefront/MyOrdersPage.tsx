@@ -14,7 +14,7 @@ import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
 import { SearchInput } from '../../shared/components/inputs/SearchInput';
-import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { Table } from '../../shared/components/tables/Table';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -191,11 +191,7 @@ export default function MyOrdersPage() {
         </div>
 
         {isLoading ? (
-          <LoadingSkeleton
-            variant="page"
-            message="Loading your orders…"
-            detail="Fetching orders you placed across businesses."
-          />
+          <CustosellLoader message="Loading your orders — fetching orders you placed across businesses." />
         ) : isError ? (
           <p className="py-8 text-center text-sm text-red-600">Could not load your orders.</p>
         ) : filtered.length === 0 ? (

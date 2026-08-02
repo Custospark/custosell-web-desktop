@@ -4,7 +4,7 @@ import { Mail, MapPin, Phone, Search, Store } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useToast } from '../../../app/contexts/useToast';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
-import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
@@ -123,11 +123,7 @@ export function DiscoverShopsBrowse() {
 
   if (!data && isLoading) {
     return (
-      <LoadingSkeleton
-        variant="page"
-        message="Loading businesses…"
-        detail="Finding businesses with a public storefront for you."
-      />
+      <CustosellLoader message="Loading businesses — finding shops with a public storefront." />
     );
   }
 

@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
+import { useAppDispatch, useAppSelector } from '../../../../app/store/hooks/useApp';
+import { setActiveLocation, setUser, type AuthLocation } from '../../../../app/store/slices/authSlice';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
 import { STAFF_TRANSFERS } from '../../../../shared/api/endpoints/endpoints';
 import { isNetworkFailure, isOfflineMode, sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
@@ -44,6 +46,8 @@ export function useStaffTransfers() {
 
 export function useTransferStaff() {
   const qc = useQueryClient();
+  const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((s) => s.auth.user);
   const { showToast } = useToast();
   return useMutation<StaffTransfer, AxiosError<ApiError>, CreateStaffTransferData>({
     networkMode: 'always',
@@ -80,6 +84,21 @@ export function useTransferStaff() {
             };
           }),
         );
+      }
+
+      // If the transferred staff is the current signed-in user, update the auth slice so the
+      // active branch in the UI follows them to the destination branch immediately.
+      if (currentUser && transfer.user_id === currentUser.id && toId != null) {
+        const toBranch: AuthLocation = transfer.to_location
+          ? { id: transfer.to_location.id, name: transfer.to_location.name, code: '', is_default: false }
+          : { id: toId, name: 'Branch', code: '', is_default: false };
+        dispatch(setActiveLocation(toId));
+        dispatch(setUser({
+          ...currentUser,
+          location_id: toId,
+          location: toBranch,
+          locations: [toBranch, ...(currentUser.locations ?? []).filter((l) => l.id !== toId)],
+        }));
       }
 
       showToast('success', `${transfer.user?.name ?? 'Staff member'} moved to ${transfer.to_location?.name ?? 'new branch'}`);

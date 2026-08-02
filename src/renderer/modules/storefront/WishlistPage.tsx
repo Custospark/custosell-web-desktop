@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Heart, Package } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useToast } from '../../app/contexts/useToast';
-import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
+import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
 import { cn } from '../../shared/utils/cn';
 import { useWishlist } from './api/wishlistQueries';
@@ -80,7 +80,7 @@ export default function WishlistPage() {
   }
 
   if (isLoading) {
-    return <LoadingSkeleton variant="page" message="Loading wishlist…" />;
+    return <CustosellLoader message="Loading wishlist…" />;
   }
 
   if (isError && !data) {

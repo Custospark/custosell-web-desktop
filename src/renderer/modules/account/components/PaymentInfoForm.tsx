@@ -17,6 +17,9 @@ import {
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors';
 
+const selectCls =
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors';
+
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -195,13 +198,16 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
             <FieldLabel required>Provider</FieldLabel>
             {providerOptions.length > 0 ? (
               <>
-                <SearchableSelect
-                  placeholder="Select provider"
-                  searchPlaceholder="Search providers..."
+                <select
+                  className={selectCls}
                   value={providerIsOther ? OTHER_OPTION : form.mobile_money_provider}
-                  onChange={(value) => {
+                  onChange={(e) => {
+                    const value = e.target.value;
                     if (value === OTHER_OPTION) {
                       setProviderOther(true);
+                      setForm((f) => ({ ...f, mobile_money_provider: '' }));
+                    } else if (value === '') {
+                      setProviderOther(false);
                       setForm((f) => ({ ...f, mobile_money_provider: '' }));
                     } else {
                       setProviderOther(false);
@@ -209,11 +215,13 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
                     }
                     setShowErrors(false);
                   }}
-                  options={providerOptions.map((p) => ({ value: p, label: p }))}
-                  emptyOption={{ value: '', label: 'Select provider' }}
-                  otherOption={{ value: OTHER_OPTION, label: 'Other provider…' }}
-                  maxVisibleOptions={6}
-                />
+                >
+                  <option value="">Select provider</option>
+                  {providerOptions.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                  <option value={OTHER_OPTION}>Other provider…</option>
+                </select>
                 {providerIsOther && (
                   <input
                     type="text"
@@ -255,27 +263,33 @@ export function PaymentInfoForm({ initialForm, initialCountry, hasSavedData, onC
 
           <div>
             <FieldLabel required>Bank Name</FieldLabel>
-            <SearchableSelect
-              placeholder="Select bank"
-              searchPlaceholder="Search banks..."
+            <select
+              className={selectCls}
               value={bankIsOther ? OTHER_OPTION : form.bank_name}
-              onChange={(value) => {
-                if (value === OTHER_OPTION) {
+              onChange={(e) => {
+                const bankValue = e.target.value;
+                if (bankValue === OTHER_OPTION) {
                   setBankOther(true);
+                  setBranchOther(false);
+                  setForm((f) => ({ ...f, bank_name: '', bank_branch: '' }));
+                } else if (bankValue === '') {
+                  setBankOther(false);
                   setBranchOther(false);
                   setForm((f) => ({ ...f, bank_name: '', bank_branch: '' }));
                 } else {
                   setBankOther(false);
                   setBranchOther(false);
-                  setForm((f) => ({ ...f, bank_name: value, bank_branch: '' }));
+                  setForm((f) => ({ ...f, bank_name: bankValue, bank_branch: '' }));
                 }
                 setShowErrors(false);
               }}
-              options={bankOptions}
-              emptyOption={{ value: '', label: 'Select bank' }}
-              otherOption={{ value: OTHER_OPTION, label: 'Other bank…' }}
-              maxVisibleOptions={6}
-            />
+            >
+              <option value="">Select bank</option>
+              {bankOptions.map((b) => (
+                <option key={b.value} value={b.value}>{b.label}</option>
+              ))}
+              <option value={OTHER_OPTION}>Other bank…</option>
+            </select>
             {bankIsOther && (
               <input
                 type="text"

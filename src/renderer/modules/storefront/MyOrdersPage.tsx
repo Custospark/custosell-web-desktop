@@ -267,6 +267,7 @@ export default function MyOrdersPage() {
                 {
                   key: 'docs',
                   header: 'Actions',
+                  align: 'right',
                   render: (o: MyStorefrontOrder) => <MyOrdersDocumentHost order={o} />,
                 },
               ]}

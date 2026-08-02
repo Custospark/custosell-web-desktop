@@ -306,18 +306,20 @@ function DesktopTab({
         desktopTones[tone],
       )}
     >
-      {count > 0 ? (
-        <span
-          className={cn(
-            'absolute -right-2 -top-2 flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[8px] font-bold leading-[1.15rem] text-white shadow ring-2 ring-white',
-            countTone === 'emerald' ? 'bg-emerald-600' : 'bg-blue-600',
-          )}
-        >
-          {count > 99 ? '99+' : count}
-        </span>
-      ) : null}
       {icon}
-      <span>{label}</span>
+      <span className="relative">
+        {label}
+        {count > 0 ? (
+          <span
+            className={cn(
+              'absolute -top-2.5 left-full ml-1 flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[8px] font-bold leading-[1.15rem] text-white ring-2 ring-white',
+              countTone === 'emerald' ? 'bg-emerald-600' : 'bg-blue-600',
+            )}
+          >
+            {count > 99 ? '99+' : count}
+          </span>
+        ) : null}
+      </span>
     </button>
   );
 }

@@ -72,20 +72,33 @@ export function SearchableSelect({
   }, [allOptions, value, placeholder, otherOption, emptyOption]);
 
   const updatePosition = useCallback(() => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom - 12;
-    const spaceAbove = rect.top - 12;
-    const openUp = spaceBelow < panelHeight && spaceAbove > spaceBelow;
-    const availableHeight = Math.min(panelHeight, openUp ? spaceAbove : spaceBelow);
-    setPosition({
-      top: openUp ? rect.top - availableHeight - 4 : rect.bottom + 4,
-      left: rect.left,
-      width: rect.width,
-      panelHeight: Math.max(SEARCH_HEADER_PX + OPTION_ROW_PX, availableHeight),
+      const trigger = triggerRef.current;
+      if (!trigger) return null;
+      const rect = trigger.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom - 12;
+      const spaceAbove = rect.top - 12;
+      const openUp = spaceBelow < panelHeight && spaceAbove > spaceBelow;
+      const availableHeight = Math.min(panelHeight, openUp ? spaceAbove : spaceBelow);
+      const next = {
+        top: openUp ? rect.top - availableHeight - 4 : rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        panelHeight: Math.max(SEARCH_HEADER_PX + OPTION_ROW_PX, availableHeight),
+      };
+      setPosition(next);
+      return next;
+    }, [panelHeight]);
+
+  const toggle = useCallback(() => {
+    setOpen((prev) => {
+      if (prev) {
+        setQuery('');
+        return false;
+      }
+      updatePosition();
+      return true;
     });
-  }, [panelHeight]);
+  }, [updatePosition]);
 
   useEffect(() => {
     if (!open) return;
@@ -141,7 +154,7 @@ export function SearchableSelect({
         disabled={disabled}
         onClick={() => {
           if (disabled) return;
-          setOpen((prev) => !prev);
+          toggle();
         }}
         className={cn(
           'flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-left shadow-sm transition-colors',

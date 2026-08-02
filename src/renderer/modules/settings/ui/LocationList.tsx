@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useLocations, useDeleteLocation, useSetDefaultLocation } from '../api/settings/LocationQueries';
 import type { Location } from '../api/settings/LocationTypes';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -11,7 +12,8 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../../app/contexts/useToast';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import LocationFormModal from './LocationFormModal';
-import { GitBranch, Plus, Pencil, Star, Trash2 } from 'lucide-react';
+import { GitBranch, Plus, Pencil, Star, Trash2, Users } from 'lucide-react';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
 export default function LocationList() {
   const { data: locations, isLoading, error } = useLocations();
@@ -79,7 +81,12 @@ export default function LocationList() {
           <h1 className="text-xl font-semibold text-gray-900">Branch Management</h1>
           <p className="text-sm text-gray-500 mt-1">Track stock, sales, and shifts per branch</p>
         </div>
-        <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Branch</Button>
+        <div className="flex items-center gap-2">
+          <Link to={ROUTES.SETTINGS.STAFF}>
+            <Button><Users className="w-4 h-4 mr-1.5" />Add Staff</Button>
+          </Link>
+          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Branch</Button>
+        </div>
       </div>
 
       <Card>

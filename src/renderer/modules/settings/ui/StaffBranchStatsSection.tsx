@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import {
   Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { ArrowRightLeft, GitBranch, Users, Clock, CheckCircle2 } from 'lucide-react';
+import { Users, GitBranch, Clock, CheckCircle2 } from 'lucide-react';
 import { DashboardStatCard } from '../../../shared/components/cards/DashboardStatCard';
 import type { CardColor } from '../../../shared/components/cards/statCardStyles';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
@@ -17,7 +17,6 @@ interface StaffBranchStatsSectionProps {
   locations: Location[] | undefined;
   transfers: StaffTransfer[] | undefined;
   isLoading?: boolean;
-  onOpenTransfers?: () => void;
 }
 
 function BranchDonut({ data }: { data: ReturnType<typeof buildBranchStats> }) {
@@ -112,12 +111,12 @@ export function StaffBranchStatsSection({
   locations,
   transfers,
   isLoading = false,
-  onOpenTransfers,
 }: StaffBranchStatsSectionProps) {
   const branchStats = useMemo(() => buildBranchStats(staff, locations), [staff, locations]);
   const transferSummary = useMemo(() => buildTransferSummary(transfers), [transfers]);
 
   const totalStaff = (staff ?? []).filter(Boolean).length;
+  const totalBranches = (locations ?? []).filter(Boolean).length;
   const branchesUsed = branchStats.filter((b) => b.id != null).length;
 
   const cards: Array<{ label: string; value: string; icon: React.ElementType; color: CardColor; badge: string; sub: string }> = [
@@ -127,15 +126,15 @@ export function StaffBranchStatsSection({
       icon: Users,
       color: 'blue',
       badge: 'People',
-      sub: `${branchesUsed} branch${branchesUsed === 1 ? '' : 'es'} in use`,
+      sub: `${branchesUsed} branch${branchesUsed === 1 ? '' : 'es'} with staff`,
     },
     {
       label: 'Branches',
-      value: String(branchesUsed),
+      value: String(totalBranches),
       icon: GitBranch,
       color: 'purple',
       badge: 'Locations',
-      sub: `${branchStats.length} group${branchStats.length === 1 ? '' : 's'}`,
+      sub: `${branchesUsed} in use`,
     },
     {
       label: 'Completed Transfers',
@@ -178,23 +177,6 @@ export function StaffBranchStatsSection({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <BranchDonut data={branchStats} />
           <BranchBars data={branchStats} />
-        </div>
-      )}
-
-      {onOpenTransfers && (
-        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Transfer history</p>
-            <p className="text-xs text-gray-500 mt-0.5">Every branch move for your staff — completed, pending, and cancelled.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenTransfers}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <ArrowRightLeft className="w-4 h-4 text-indigo-500" />
-            View transfers
-          </button>
         </div>
       )}
     </div>

@@ -15,6 +15,7 @@ import { cn } from '../../shared/utils/cn';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
 import PlanCard from './PlanCard';
+import PlanUsageSection from './ui/PlanUsageSection';
 
 interface SubscriptionPaymentState {
   planName: string;
@@ -223,6 +224,8 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           </div>
         )}
       </div>
+
+      {user?.account_type !== 'personal' && <PlanUsageSection plan={currentPlan} />}
 
       <div className="flex flex-col items-center gap-3">
         <div className="flex items-center gap-3">

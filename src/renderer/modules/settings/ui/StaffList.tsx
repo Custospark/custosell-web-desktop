@@ -8,7 +8,6 @@ import { getBusinessOwnerId, getStaffAccountRules } from '../api/settings/staffA
 import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
 import { Button } from '../../../shared/components/buttons/Button';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
-import { SearchableSelect } from '../../../shared/components/inputs/SearchableSelect';
 import { Table } from '../../../shared/components/tables/Table';
 import { Card } from '../../../shared/components/cards/Card';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
@@ -20,6 +19,7 @@ import { Pagination, usePagination } from '../../../shared/components/tables/Pag
 import StaffFormModal from './StaffFormModal';
 import StaffTransferModal from './StaffTransferModal';
 import StaffTransferHistoryModal from './StaffTransferHistoryModal';
+import LocationFormModal from './LocationFormModal';
 import { StaffBranchStatsSection } from './StaffBranchStatsSection';
 import { Users, Plus, Pencil, UserMinus, ArrowRightLeft, GitBranch, History } from 'lucide-react';
 
@@ -38,6 +38,7 @@ export default function StaffList() {
   const [roleFilter, setRoleFilter] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
+  const [branchModalOpen, setBranchModalOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferStaff, setTransferStaff] = useState<StaffWithSyncMeta | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -134,7 +135,10 @@ export default function StaffList() {
           <h1 className="text-xl font-semibold text-gray-900">Staff Management</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your staff users and their roles</p>
         </div>
-        <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Staff</Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setBranchModalOpen(true)}><GitBranch className="w-4 h-4 mr-1.5" />Add Branch</Button>
+          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Staff</Button>
+        </div>
       </div>
 
       <StaffBranchStatsSection
@@ -142,37 +146,36 @@ export default function StaffList() {
         locations={locations}
         transfers={transfers}
         isLoading={isLoading}
-        onOpenTransfers={() => setTransferOpen(true)}
       />
 
       <div className="mt-6">
       <Card>
-        <div className="flex flex-wrap items-center gap-4 mb-4">
-          <div className="flex-1 min-w-[220px]">
+        <div className="flex items-center gap-4 mb-4 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
             <SearchInput placeholder="Search staff by name, email, phone or branch..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
           </div>
-          <div className="w-52">
-            <SearchableSelect
-              placeholder="All branches"
-              searchPlaceholder="Search branches..."
-              options={branchOptions}
-              value={branchFilter}
-              onChange={setBranchFilter}
-              emptyOption={{ value: '', label: 'All branches' }}
-              maxVisibleOptions={6}
-            />
-          </div>
-          <div className="w-52">
-            <SearchableSelect
-              placeholder="All roles"
-              searchPlaceholder="Search roles..."
-              options={roleOptions}
-              value={roleFilter}
-              onChange={setRoleFilter}
-              emptyOption={{ value: '', label: 'All roles' }}
-              maxVisibleOptions={6}
-            />
-          </div>
+          <select
+            value={branchFilter}
+            onChange={(e) => setBranchFilter(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            aria-label="Filter by branch"
+          >
+            <option value="">All branches</option>
+            {branchOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            aria-label="Filter by role"
+          >
+            <option value="">All roles</option>
+            {roleOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
         </div>
         <Table<StaffWithSyncMeta>
           rowKey={(s) => s.id}
@@ -265,6 +268,12 @@ export default function StaffList() {
           setEditingStaffId(null);
         }}
         staff={editingStaff}
+      />
+
+      <LocationFormModal
+        open={branchModalOpen}
+        onClose={() => setBranchModalOpen(false)}
+        location={null}
       />
 
       <StaffTransferModal

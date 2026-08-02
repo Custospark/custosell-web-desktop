@@ -148,6 +148,37 @@ export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug
   return [...modules];
 }
 
+/** Mirrors backend Subscription::hasAccess() so the UI can re-derive module grants from the live subscription, independent of a potentially-stale stored `modules` array. */
+export function hasSubscriptionAccess(subscription: {
+  status?: string | null;
+  trial_ends_at?: string | null;
+  grace_period_ends_at?: string | null;
+} | null | undefined): boolean {
+  if (!subscription?.status) return false;
+  const now = Date.now();
+  switch (subscription.status) {
+    case 'active':
+    case 'trialing':
+      return true;
+    case 'trial':
+      if (!subscription.trial_ends_at) return true;
+      return new Date(subscription.trial_ends_at).getTime() > now;
+    case 'past_due':
+      if (!subscription.grace_period_ends_at) return false;
+      return new Date(subscription.grace_period_ends_at).getTime() > now;
+    default:
+      return false;
+  }
+}
+
+/** Subscription-bearing personal accounts grant modules only while they have access;
+ *  accounts created before reconciliation default to granting access (no subscription yet). */
+function personalModuleAccess(user: AuthUser): boolean {
+  const hasSubscription = Boolean(user.business?.subscription?.status);
+  if (!hasSubscription) return true;
+  return hasSubscriptionAccess(user.business?.subscription);
+}
+
 export function ownerHasLegacyFullEstimatesAccess(user: AuthUser | null | undefined): boolean {
   if (!user || !isBusinessOwner(user)) return false;
   return staffHasFullEstimatesModule(user.modules);
@@ -170,11 +201,13 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
   if (user.account_type === 'personal') {
     modules.add('your_tools');
 
-    // Personal module grants are authoritative in `user.modules` (backend reconciles
-    // them against subscription access at login). Do NOT apply the business-owner
-    // fallback that returns every module when nothing is stored — that would re-expose
-    // paid modules to a suspended/expired personal account.
-    storedBusinessModules(user).forEach((m) => modules.add(m));
+    // Personal module grants come from backend `user.modules` (reconciled against
+    // subscription access at login). Cross-check the live subscription so a stale
+    // stored session can't re-expose paid modules to a suspended/expired account.
+    const currentAccess = personalModuleAccess(user);
+    if (currentAccess) {
+      storedBusinessModules(user).forEach((m) => modules.add(m));
+    }
   } else if (isBusinessOwner(user)) {
     resolvedOwnerBusinessModules(user).forEach((m) => modules.add(m));
   } else if (user.business_id) {

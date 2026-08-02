@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { resolveAccessibleNavGroups } from '../../shared/components/layout/resolveAccessibleNavLeaves';
 import { usePlanAccessibleModules } from '../../shared/utils/usePlanAccessibleModules';
+import { hasSubscriptionAccess } from '../../shared/utils/moduleAccess';
 
 interface Tool {
   key: string;
@@ -87,28 +88,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   suspended: { label: 'Suspended', color: 'text-gray-500', bg: 'bg-gray-50' },
 };
 
-/** Mirrors backend Subscription::hasAccess() — past_due within grace still counts as access. */
-function hasSubscriptionAccess(subscription: {
-  status?: string | null;
-  trial_ends_at?: string | null;
-  grace_period_ends_at?: string | null;
-} | null | undefined): boolean {
-  if (!subscription?.status) return false;
-  const now = Date.now();
-  switch (subscription.status) {
-    case 'active':
-    case 'trialing':
-      return true;
-    case 'trial':
-      if (!subscription.trial_ends_at) return true;
-      return new Date(subscription.trial_ends_at).getTime() > now;
-    case 'past_due':
-      if (!subscription.grace_period_ends_at) return false;
-      return new Date(subscription.grace_period_ends_at).getTime() > now;
-    default:
-      return false;
-  }
-}
+/** Local state for the tools grid. "Show more" reveal and access gating use shared hasSubscriptionAccess(). */
 
 export default function YourToolsPage() {
   const user = useAppSelector((s) => s.auth.user);

@@ -250,7 +250,7 @@ export default function BusinessSettingsForm() {
       {isCompletelyOffline && (
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <p>Business profile changes require an internet connection.</p>
+          <p>{isPersonal ? 'Preference changes require an internet connection.' : 'Business profile changes require an internet connection.'}</p>
         </div>
       )}
 

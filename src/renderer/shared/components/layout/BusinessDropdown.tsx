@@ -29,6 +29,7 @@ export default function BusinessDropdown() {
     : resolveBusinessDisplayName(user, business);
   const businessLogoUrl = avatarUrl(resolveBusinessLogoPath(user, business));
 
+  const isPersonal = user?.account_type === 'personal';
   const isBusiness = user?.account_type === 'business';
   const isOwner = isBusinessOwner(user);
   const activeLocation =
@@ -80,7 +81,7 @@ export default function BusinessDropdown() {
   if (!businessName || user?.account_type === 'storefront_buyer') return null;
 
   const links: { label: string; icon: typeof Settings; to: string }[] = [];
-  if (isBusiness || isOwner) {
+  if (!isPersonal && (isBusiness || isOwner)) {
     links.push({ label: 'Business Settings', icon: Settings, to: ROUTES.SETTINGS.BUSINESS });
   }
   if (isOwner) {
@@ -90,7 +91,7 @@ export default function BusinessDropdown() {
     links.push({ label: 'My Account', icon: CircleUser, to: ROUTES.ACCOUNT.PROFILE });
   }
 
-  const showDetailsSection = Boolean(business && (businessDetails.length > 0 || isOwner));
+  const showDetailsSection = !isPersonal && Boolean(business && (businessDetails.length > 0 || isOwner));
 
   return (
     <div ref={ref} className="relative">

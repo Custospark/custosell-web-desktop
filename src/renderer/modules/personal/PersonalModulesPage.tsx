@@ -56,18 +56,18 @@ const TOOL_ORDER = [
   'Settings',
 ];
 
-/** Personal-account voice — warm, casual, self-focused. */
+/** Personal-account voice — mirrors the register page's value-driven copy. */
 const PERSONAL_DESCRIPTIONS: Record<string, string> = {
-  'Online Shopping': 'Browse and buy products from businesses across Custosell.',
-  Sales: 'Keep tabs on your sales and see how your money moves.',
-  'Inventory & Supply Chain': 'Keep what you sell stocked and easy to find.',
-  Customers: 'Nurture the people you sell to and serve them well.',
-  'Sales Funnel': 'Track your leads and close deals you care about.',
-  'Projects & Estimates': 'Bring your ideas to life — estimate, plan, and team up.',
-  'Income & Expenses': 'Watch what you earn and spend, all in one cozy place.',
-  Accounting: 'Keep your records neat and your numbers in balance.',
-  Documents: 'Store and find your important files with ease.',
-  Forecasting: 'Take a peek at what your future might look like.',
+  'Online Shopping': 'Browse products and services from every business on Custosell and order them.',
+  Sales: 'Manage personal sales and see your money flow — productive, even offline.',
+  'Inventory & Supply Chain': 'Keep what you sell stocked and simple to find.',
+  Customers: 'Look after the people you sell to and bring them back.',
+  'Sales Funnel': 'Track personal projects and close the deals that matter to you.',
+  'Projects & Estimates': 'Project Management — plan and estimate your ideas, even offline.',
+  'Income & Expenses': 'Expense Tracking — record what you spend and earn to stay organised.',
+  Accounting: 'Bookkeeping — keep your records neat and your numbers in balance.',
+  Documents: 'Document Management — store and find your important files with ease.',
+  Forecasting: 'Plan ahead and see where you are heading with confidence.',
   'HR & Payroll': 'Look after people, from their pay to their days off.',
   'Custosell Guide': 'Friendly tutorials, FAQs, feedback, and help when you need it.',
   Account: 'Your notifications, profile, and referral insights in one spot.',
@@ -119,6 +119,9 @@ export default function YourToolsPage() {
   const [showAll, setShowAll] = useState(false);
 
   const firstName = user?.name?.trim().split(/\s+/)[0] || 'there';
+
+  const monthlyPriceUsd = Number(subscription?.price_monthly_usd) || 0;
+  const priceLabel = monthlyPriceUsd > 0 ? `$${monthlyPriceUsd}` : null;
 
   const availableTools = useMemo(() => {
     const copy = user?.account_type === 'personal'
@@ -189,10 +192,10 @@ export default function YourToolsPage() {
     if (status === 'past_due' && activeAccess && subscription.grace_period_ends_at) {
       return `Payment overdue — access continues until ${new Date(subscription.grace_period_ends_at).toLocaleDateString()}. Subscribe to keep your tools.`;
     }
-    if (status === 'past_due') return 'Payment overdue. Subscribe to restore access to your tools.';
-    if (status === 'suspended') return 'Your subscription has been suspended. Reactivate to regain access.';
-    if (status === 'cancelled') return 'Your subscription has been cancelled. Choose a new plan to continue.';
-    if (status === 'expired') return 'Your trial has expired. Subscribe to continue using your tools.';
+    if (status === 'past_due') return 'Payment overdue — restore access to unlock your tools.';
+    if (status === 'suspended') return `Access suspended${priceLabel ? ` — restore at just ${priceLabel}/month` : ''}.`;
+    if (status === 'cancelled') return 'Plan cancelled — choose a plan to continue.';
+    if (status === 'expired') return 'Your trial has expired. Restore access to continue.';
     return `Plan is ${status}.`;
   };
 
@@ -203,10 +206,10 @@ export default function YourToolsPage() {
           <AlertTriangle className="h-5 w-5 text-amber-700" />
           <span className="text-sm font-medium text-amber-700">
             {status === 'suspended'
-              ? 'Your subscription has been suspended. Always-available tools remain — subscribe to restore full access.'
+              ? `Your subscription has been suspended${priceLabel ? ` — restore access at just ${priceLabel}/month` : ''}.`
               : status === 'past_due'
-                ? 'Payment overdue. Always-available tools remain — pay to restore full access.'
-                : 'No active plan. Always-available tools remain — subscribe to unlock the rest.'}
+                ? 'Payment overdue — restore access to unlock your tools.'
+                : `No active plan${priceLabel ? ` — restore access at just ${priceLabel}/month` : ''}.`}
           </span>
           <button
             type="button"
@@ -214,7 +217,7 @@ export default function YourToolsPage() {
             className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 hover:bg-amber-50"
           >
             <CreditCard className="h-4 w-4" />
-            {status === 'suspended' ? 'Reactivate' : status === 'past_due' ? 'Pay now' : 'Subscribe'}
+            {status === 'past_due' ? 'Pay now' : 'Restore access'}
           </button>
         </div>
       )}
@@ -332,7 +335,7 @@ export default function YourToolsPage() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
                 >
                   <CreditCard className="h-4 w-4" />
-                  Restore full access
+                  {priceLabel ? `Restore access at just ${priceLabel}/month` : 'Restore full access'}
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 min-[520px]:gap-4 xl:grid-cols-3">
@@ -342,7 +345,7 @@ export default function YourToolsPage() {
                     type="button"
                     onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
                     aria-label={`${t.label} — locked, restore access to use`}
-                    className="flex cursor-not-allowed flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                    className="flex cursor-not-allowed select-none flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-600">

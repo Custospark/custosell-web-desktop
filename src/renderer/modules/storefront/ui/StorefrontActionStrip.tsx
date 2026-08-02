@@ -66,8 +66,8 @@ export function StorefrontActionStrip({
   const [moreOpen, setMoreOpen] = useState(false);
   const shopsActive = active === 'browse';
 
-  const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; onClick: () => void }> = [
-    { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, onClick: onBrowse },
+  const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; count: number; countTone?: Tone; onClick: () => void }> = [
+    { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, count: 0, onClick: onBrowse },
     ...(cartPrimary
       ? []
       : [{
@@ -75,6 +75,8 @@ export function StorefrontActionStrip({
           icon: <ShoppingCart className="h-4 w-4" aria-hidden />,
           label: 'Cart',
           tone: 'emerald' as Tone,
+          count: cartCount,
+          countTone: 'emerald' as Tone,
           onClick: onCart,
         }]),
     {
@@ -82,6 +84,8 @@ export function StorefrontActionStrip({
       icon: <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />,
       label: 'Wishlist',
       tone: 'rose' as Tone,
+      count: wishlistCount,
+      countTone: 'rose' as Tone,
       onClick: onWishlist,
     },
   ];
@@ -104,26 +108,26 @@ export function StorefrontActionStrip({
           act ? activeTone[tone] : inactiveTone[tone],
         )}
       >
-        <span className={cn('flex h-7 w-7 items-center justify-center', act ? 'rounded-md bg-white/60' : '')}>
+        <span className={cn('relative flex h-7 w-7 items-center justify-center', act ? 'rounded-md bg-white/60' : '')}>
           {icon}
-        </span>
-        <span className="w-full truncate inline-flex items-center justify-center gap-1">
-          {label}
           {tab === 'orders' && ordersCount > 0 ? (
-            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold leading-none text-white">
+            <span className="absolute -right-2 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
               {ordersCount > 99 ? '99+' : ordersCount}
             </span>
           ) : null}
           {tab === 'cart' && cartCount > 0 ? (
-            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[8px] font-bold leading-none text-white">
+            <span className="absolute -right-2 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
               {cartCount > 99 ? '99+' : cartCount}
             </span>
           ) : null}
           {tab === 'wishlist' && wishlistCount > 0 ? (
-            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold leading-none text-white">
+            <span className="absolute -right-2 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
               {wishlistCount > 99 ? '99+' : wishlistCount}
             </span>
           ) : null}
+        </span>
+        <span className="w-full truncate inline-flex items-center justify-center">
+          {label}
         </span>
       </button>
     );
@@ -176,8 +180,20 @@ export function StorefrontActionStrip({
                   act ? activeTone[t.tone] : (inactiveTone[t.tone] + ' hover:bg-slate-100'),
                 )}
               >
-                {t.icon}
-                <span className="w-full truncate">{t.label}</span>
+                <span className="relative flex h-6 w-6 items-center justify-center">
+                    {t.icon}
+                    {t.count > 0 ? (
+                      <span
+                        className={cn(
+                          'absolute -right-2 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white',
+                          t.countTone === 'emerald' ? 'bg-emerald-600' : t.countTone === 'rose' ? 'bg-rose-600' : 'bg-blue-600',
+                        )}
+                      >
+                        {t.count > 99 ? '99+' : t.count}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="w-full truncate">{t.label}</span>
               </button>
             );
           })}

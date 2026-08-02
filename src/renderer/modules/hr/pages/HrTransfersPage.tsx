@@ -5,6 +5,9 @@ import { CustosellLoader } from '../../../shared/components/loading/CustosellLoa
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import { cn } from '../../../shared/utils/cn';
 import { useStaffTransfers } from '../../settings/api/settings/StaffTransferQueries';
+import { useStaff } from '../../settings/api/settings/StaffQueries';
+import { useLocations } from '../../settings/api/settings/LocationQueries';
+import { StaffBranchStatsSection } from '../../settings/ui/StaffBranchStatsSection';
 import StaffTransferModal from '../../settings/ui/StaffTransferModal';
 import { HrEmptyState, HrPageHeader } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
@@ -31,6 +34,8 @@ function statusBadge(status: string) {
 
 export default function HrTransfersPage() {
   const { data: transfers = [], isLoading, isError } = useStaffTransfers();
+  const { data: staff } = useStaff();
+  const { data: locations } = useLocations();
   const [search, setSearch] = useState('');
   const [transferOpen, setTransferOpen] = useState(false);
 
@@ -60,6 +65,13 @@ export default function HrTransfersPage() {
             New transfer
           </Button>
         }
+      />
+
+      <StaffBranchStatsSection
+        staff={staff}
+        locations={locations}
+        transfers={transfers}
+        isLoading={isLoading}
       />
 
       <div className={HR_SURFACE.toolbar}>

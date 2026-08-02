@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useStaff, useDetachStaff } from '../api/settings/StaffQueries';
+import { useStaffTransfers } from '../api/settings/StaffTransferQueries';
 import { useBusiness } from '../api/settings/BusinessQueries';
 import { useRoles } from '../api/settings/RoleQueries';
 import { useLocations } from '../api/settings/LocationQueries';
@@ -18,10 +19,13 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import StaffFormModal from './StaffFormModal';
 import StaffTransferModal from './StaffTransferModal';
-import { Users, Plus, Pencil, UserMinus, ArrowRightLeft, GitBranch } from 'lucide-react';
+import StaffTransferHistoryModal from './StaffTransferHistoryModal';
+import { StaffBranchStatsSection } from './StaffBranchStatsSection';
+import { Users, Plus, Pencil, UserMinus, ArrowRightLeft, GitBranch, History } from 'lucide-react';
 
 export default function StaffList() {
   const { data: staff, isLoading, error } = useStaff();
+  const { data: transfers } = useStaffTransfers();
   const { data: business } = useBusiness();
   const { data: roles } = useRoles();
   const { data: locations } = useLocations();
@@ -36,6 +40,8 @@ export default function StaffList() {
   const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferStaff, setTransferStaff] = useState<StaffWithSyncMeta | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyStaff, setHistoryStaff] = useState<StaffWithSyncMeta | null>(null);
   const businessOwnerId = getBusinessOwnerId(business, { ignoreAuthFallbackForUserId: authUser?.id ?? null });
   const rolesById = useMemo(() => new Map((roles ?? []).filter(Boolean).map((role) => [role.id, role])), [roles]);
   const locationsById = useMemo(() => new Map((locations ?? []).filter(Boolean).map((l) => [l.id, l])), [locations]);
@@ -88,6 +94,10 @@ export default function StaffList() {
     setTransferStaff(s);
     setTransferOpen(true);
   };
+  const openHistory = (s: StaffWithSyncMeta) => {
+    setHistoryStaff(s);
+    setHistoryOpen(true);
+  };
 
   const handleDetach = async (s: StaffWithSyncMeta) => {
     const rules = getStaffAccountRules(
@@ -127,6 +137,15 @@ export default function StaffList() {
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Staff</Button>
       </div>
 
+      <StaffBranchStatsSection
+        staff={staff}
+        locations={locations}
+        transfers={transfers}
+        isLoading={isLoading}
+        onOpenTransfers={() => setTransferOpen(true)}
+      />
+
+      <div className="mt-6">
       <Card>
         <div className="flex flex-wrap items-center gap-4 mb-4">
           <div className="flex-1 min-w-[220px]">
@@ -202,6 +221,7 @@ export default function StaffList() {
               } },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openHistory(item); }} title="Transfer history"><History className="w-4 h-4 text-gray-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openTransfer(item); }} title="Transfer to another branch"><ArrowRightLeft className="w-4 h-4 text-indigo-500" /></Button>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit"><Pencil className="w-4 h-4" /></Button>
                   {(() => {
@@ -236,6 +256,7 @@ export default function StaffList() {
           onPageSizeChange={paginated.setPageSize}
         />
       </Card>
+      </div>
 
       <StaffFormModal
         open={drawerOpen}
@@ -253,6 +274,15 @@ export default function StaffList() {
           setTransferStaff(null);
         }}
         staff={transferStaff}
+      />
+
+      <StaffTransferHistoryModal
+        open={historyOpen}
+        onClose={() => {
+          setHistoryOpen(false);
+          setHistoryStaff(null);
+        }}
+        staff={historyStaff}
       />
     </>
   );

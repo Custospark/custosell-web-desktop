@@ -18,6 +18,10 @@ import { EmployeeStatusBadge } from '../ui/HrStatusBadges';
 import { HrEmptyState, HrPageHeader } from '../ui/HrSurface';
 import { HrAddEmployeeModal } from '../ui/HrAddEmployeeModal';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
+import { useStaff } from '../../settings/api/settings/StaffQueries';
+import { useLocations } from '../../settings/api/settings/LocationQueries';
+import { useStaffTransfers } from '../../settings/api/settings/StaffTransferQueries';
+import { StaffBranchStatsSection } from '../../settings/ui/StaffBranchStatsSection';
 
 export default function HrPeoplePage() {
   const navigate = useNavigate();
@@ -31,6 +35,9 @@ export default function HrPeoplePage() {
     status: statusFilter || undefined,
   });
   const removeAccount = useRemoveHrEmployeeAccount();
+  const { data: staff } = useStaff();
+  const { data: locations } = useLocations();
+  const { data: transfers } = useStaffTransfers();
   const paginated = usePagination(employees, 15);
   const hasFilters = Boolean(search.trim() || statusFilter);
 
@@ -142,6 +149,8 @@ export default function HrPeoplePage() {
           </Button>
         }
       />
+
+      <StaffBranchStatsSection staff={staff} locations={locations} transfers={transfers} isLoading={isLoading} />
 
       <div className={HR_SURFACE.toolbar}>
         <div className="relative min-w-[200px] flex-1 sm:max-w-md">

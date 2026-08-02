@@ -61,13 +61,62 @@ export function useStockTransfer() {
       const { data } = await axiosInstance.post(STOCK_TRANSFER, payload);
       return data;
     },
-    onSuccess: () => {
+    onMutate: async (payload) => {
+      const { from_location_id, to_location_id, items } = payload;
+      const qtyByProduct = new Map<number, number>(
+        items.filter((i) => i.quantity > 0).map((i) => [i.product_id, i.quantity]),
+      );
+
+      const fromKey = ['inventory', 'location-stock', from_location_id] as const;
+      const toKey = ['inventory', 'location-stock', to_location_id] as const;
+
+      const previousFrom = queryClient.getQueryData<LocationStockItem[]>(fromKey);
+      const previousTo = queryClient.getQueryData<LocationStockItem[]>(toKey);
+
+      queryClient.cancelQueries({ queryKey: fromKey });
+      queryClient.cancelQueries({ queryKey: toKey });
+
+      const applyFrom = (old: LocationStockItem[] = []) =>
+        old.map((s) =>
+          qtyByProduct.has(s.product_id)
+            ? { ...s, stock_quantity: s.stock_quantity - (qtyByProduct.get(s.product_id) ?? 0) }
+            : s,
+        );
+
+      if (previousFrom) {
+        queryClient.setQueryData<LocationStockItem[]>(fromKey, applyFrom);
+      }
+
+      queryClient.setQueryData<LocationStockItem[]>(toKey, (old = []) => {
+        const map = new Map(old.map((s) => [s.product_id, s]));
+        for (const [productId, qty] of qtyByProduct) {
+          const cur = map.get(productId);
+          map.set(
+            productId,
+            cur
+              ? { ...cur, stock_quantity: cur.stock_quantity + qty }
+              : { location_id: to_location_id, product_id: productId, product_name: null, stock_quantity: qty, low_stock_threshold: 0 },
+          );
+        }
+        return [...map.values()];
+      });
+
+      return { previousFrom: previousFrom ?? [], previousTo: previousTo ?? [], fromKey, toKey };
+    },
+    onError: (e, _payload, context) => {
+      if (context) {
+        queryClient.setQueryData<LocationStockItem[]>(context.fromKey, context.previousFrom);
+        queryClient.setQueryData<LocationStockItem[]>(context.toKey, context.previousTo);
+      }
+      showToast('error', sanitizeErrorMessage(e, 'Failed to transfer stock'));
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.stockMovements() });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.products() });
-      showToast('success', 'Stock transferred between branches');
+      queryClient.invalidateQueries({ queryKey: ['inventory', 'location-stock'] });
     },
-    onError: (e) => {
-      showToast('error', sanitizeErrorMessage(e, 'Failed to transfer stock'));
+    onSuccess: () => {
+      showToast('success', 'Stock transferred between branches');
     },
   });
 }

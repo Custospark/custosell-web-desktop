@@ -35,7 +35,10 @@ export function StorefrontBagCheckout({
 }: StorefrontBagCheckoutProps) {
   const currency = bag.shop.currency || 'UGX';
   const total = bagTotal(bag);
-  const canPlace = bag.items.length > 0 && Boolean(bag.customer_name.trim()) && Boolean(bag.customer_phone.trim());
+  const canPlace =
+    bag.items.length > 0 &&
+    Boolean(bag.customer_name?.trim()) &&
+    Boolean(bag.customer_phone?.trim());
   const [qtyEdit, setQtyEdit] = useState<{
     productId: number;
     productName: string;

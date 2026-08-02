@@ -1,5 +1,8 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { RefreshCw, House } from 'lucide-react';
+import LogoImage from '../../assets/LogoImage';
+import { store } from '../../../app/store/store';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
 interface Props {
   children: ReactNode;
@@ -11,6 +14,11 @@ interface State {
   error: Error | null;
 }
 
+/**
+ * Global error boundary. Recovers to the closest safe surface rather than a
+ * dead screen: Retry in place, or land on the dashboard (signed in) or home
+ * (guest) via a fresh page load. Friendly, brand-forward copy.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -29,26 +37,42 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: null });
   };
 
+  handleRecover = () => {
+    const token = store.getState().auth?.token;
+    const target = token ? ROUTES.DASHBOARD : ROUTES.HOME;
+    window.location.assign(target);
+  };
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-          <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-            <WifiOff className="w-8 h-8 text-amber-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Custosell needs a retry</h2>
-          <p className="text-sm text-gray-500 max-w-md mb-6">
-            Something went wrong opening this screen. Retry, or reconnect if the issue continues.
+        <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
+          <span className="mb-6 inline-flex items-center justify-center">
+            <LogoImage size="md" />
+          </span>
+          <h2 className="mb-2 text-lg font-semibold text-gray-900">Sorry, we hit a bump</h2>
+          <p className="mb-1 max-w-md text-sm text-gray-500">
+            Something went wrong while loading this screen. No action was lost on your end — your
+            work is safe. You can try again, or head back to your dashboard.
           </p>
-          <button
-            onClick={this.handleRetry}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry
-          </button>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={this.handleRetry}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try again
+            </button>
+            <button
+              onClick={this.handleRecover}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              <House className="h-4 w-4" />
+              Back to dashboard
+            </button>
+          </div>
         </div>
       );
     }

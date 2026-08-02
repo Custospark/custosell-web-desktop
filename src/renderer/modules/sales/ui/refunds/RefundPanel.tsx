@@ -268,7 +268,7 @@ export default function RefundPanel() {
                   <span>Date</span>
                   <span>{new Date(selectedSale.sale_date).toLocaleDateString()} {new Date(selectedSale.created_at).toLocaleTimeString()}</span>
                 </div>
-                {cashier && <div className="flex justify-between"><span>Cashier</span><span>{cashier.name}</span></div>}
+                {cashier && <div className="flex justify-between"><span>Sales Person</span><span>{cashier.name}</span></div>}
                 {customer && <div className="flex justify-between"><span>Customer</span><span>{customer.name}</span></div>}
                 <div className="flex justify-between">
                   <span>Payment</span>

@@ -60,7 +60,7 @@ export default function OwnerModuleAccessForm() {
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
   const planModules = usePlanAccessibleModules();
-  const planSlugs = new Set(planModules);
+  const planSlugs = useMemo(() => new Set(planModules), [planModules]);
 
   const planAllowedTiles = useMemo(
     () => OWNER_MODULE_TILES.filter((t) => planSlugs.has(t.slug)),
@@ -161,11 +161,9 @@ export default function OwnerModuleAccessForm() {
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Module access</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-              Choose which workspaces appear in your own account. Staff keep the modules you assigned them —
-              turning something off here does not remove it from your team. Manage staff access in Staff.
-              Account and Custosell Guide stay available to everyone. Settings stays on for owners and cannot be turned off.
-            </p>
+<p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
+  Pick which workspaces you see. Changes here only affect your own account — not your team. Staff access is managed in Staff.
+</p>
           </div>
         </div>
         <div className="hidden shrink-0 items-center gap-3 self-stretch rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm sm:flex lg:self-start">

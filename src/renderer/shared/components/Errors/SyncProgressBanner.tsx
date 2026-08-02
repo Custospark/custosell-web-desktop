@@ -55,21 +55,13 @@ function useSyncRate(synced: number, startedAt: string | null, running: boolean)
   const [rate, setRate] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!running || !startedAt || synced === 0) {
-      setRate(null);
-      return;
-    }
+    if (!running || !startedAt || synced === 0) return;
 
     const update = () => {
       const elapsedSec = (Date.now() - new Date(startedAt).getTime()) / 1000;
-      if (elapsedSec < 10) {
-        setRate(null);
-        return;
-      }
-      setRate(Math.max(1, Math.round((synced / elapsedSec) * 60)));
+      setRate(elapsedSec < 10 ? null : Math.max(1, Math.round((synced / elapsedSec) * 60)));
     };
 
-    update();
     const id = window.setInterval(update, 2000);
     return () => clearInterval(id);
   }, [synced, startedAt, running]);
@@ -107,6 +99,7 @@ function SyncInProgressStrip({
   isPaused,
   isOffline,
   startedAt,
+  onDismiss,
 }: {
   percent: number;
   processed: number;
@@ -118,6 +111,7 @@ function SyncInProgressStrip({
   isPaused: boolean;
   isOffline: boolean;
   startedAt: string | null;
+  onDismiss: () => void;
 }) {
   const tone = isPaused ? 'warning' : 'info';
   const styles = BANNER_STYLES[tone];
@@ -164,6 +158,8 @@ function SyncInProgressStrip({
         </div>
 
         <Badge variant={isPaused ? 'warning' : 'primary'}>{percent}%</Badge>
+
+        <DismissButton tone={tone} onClick={onDismiss} />
       </div>
 
       <div className="px-4 pb-2.5">
@@ -315,6 +311,7 @@ export function SyncProgressBanner() {
         isPaused={isPaused}
         isOffline={isOffline}
         startedAt={sync.startedAt}
+        onDismiss={() => dispatch(syncBannerDismissed())}
       />
     );
   }

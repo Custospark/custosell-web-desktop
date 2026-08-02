@@ -75,7 +75,7 @@ export const mutationQueue = {
       }
     }
 
-    const pending = all.filter((m) => m.status === 'queued' || m.status === 'failed');
+    const pending = all.filter((m) => m.status === 'queued');
     return pending;
   },
 
@@ -171,7 +171,7 @@ export const mutationQueue = {
     const db = await getOfflineDb();
     const all = await db.getAll('mutations');
     const now = Date.now();
-    return all.filter((m) => m.status === 'queued' || m.status === 'failed' || isStaleSyncingMutation(m, now)).length;
+    return all.filter((m) => m.status === 'queued' || isStaleSyncingMutation(m, now)).length;
   },
 
   async removeById(id: string): Promise<void> {

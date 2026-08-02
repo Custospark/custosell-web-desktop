@@ -358,13 +358,13 @@ export default function QuickReports() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {selectedReport.supportsCashierFilter && staff.length > 0 && (
                       <SearchableSelect
-                        label="Cashier"
+                        label="Sales Person"
                         value={userId}
                         onChange={handleCashierChange}
                         options={cashierOptions}
-                        placeholder="All cashiers"
-                        searchPlaceholder="Search cashiers..."
-                        emptyOption={{ value: '', label: 'All cashiers' }}
+                        placeholder="All sales people"
+                        searchPlaceholder="Search sales people..."
+                        emptyOption={{ value: '', label: 'All sales people' }}
                       />
                     )}
                     {selectedReport.supportsShiftFilter && (
@@ -373,18 +373,18 @@ export default function QuickReports() {
                         value={shiftId}
                         onChange={setShiftId}
                         options={shiftOptions}
-                        placeholder={userId ? 'All shifts for this cashier' : 'All shifts'}
+                        placeholder={userId ? 'All shifts for this sales person' : 'All shifts'}
                         searchPlaceholder="Search shifts..."
                         emptyOption={{
                           value: '',
-                          label: userId ? 'All shifts for this cashier' : 'All shifts',
+                          label: userId ? 'All shifts for this sales person' : 'All shifts',
                         }}
                         disabled={userId !== '' && shiftOptions.length === 0}
                       />
                     )}
                     {selectedReport.supportsShiftFilter && userId && shiftOptions.length === 0 && (
                       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 sm:col-span-2">
-                        No shifts found for this cashier in the selected period.
+                        No shifts found for this sales person in the selected period.
                       </p>
                     )}
                   </div>

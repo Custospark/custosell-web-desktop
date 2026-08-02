@@ -10,10 +10,7 @@ import { useMarketplaceHeroBackground } from '../inventory/ui/marketplace/market
 import { prefetchStorefrontCatalogs, useMyStorefrontOrdersCount } from './api/storefrontQueries';
 import { useWishlistCount } from './api/wishlistQueries';
 import { useStorefrontCatalogWarmup } from './cart/useStorefrontCatalogWarmup';
-import {
-  StorefrontMultiCartProvider,
-  useStorefrontMultiCart,
-} from './cart/storefrontMultiCartContext';
+import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
 import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
 import { StorefrontCartHub } from './ui/StorefrontCartHub';
 import { StorefrontLoginDialog } from './ui/StorefrontLoginDialog';
@@ -270,9 +267,7 @@ function DiscoverShellChrome() {
 export default function DiscoverLayout() {
   return (
     <DiscoverShellProvider>
-      <StorefrontMultiCartProvider>
-        <DiscoverShellChrome />
-      </StorefrontMultiCartProvider>
+      <DiscoverShellChrome />
     </DiscoverShellProvider>
   );
 }

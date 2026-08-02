@@ -14,6 +14,9 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { netSaleAmount } from '../utils/saleAmounts';
 import { MODAL_Z_INDEX_CLASS } from '../../../shared/components/modals/Modal';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useToast } from '../../../app/contexts/useToast';
+import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import { downloadSalesReceiptPdf } from '../useSalesReceiptPdf';
 import { FiscalStatusBadge } from '../../../shared/components/badges/FiscalStatusBadge';
 
 interface SaleCompletedModalProps {
@@ -42,6 +45,8 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   const authUser = useAppSelector((s) => s.auth.user);
   const business = authUser?.business;
   const { share } = useWebShare();
+  const { showToast } = useToast();
+  const [downloading, setDownloading] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -56,7 +61,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
     `,
   });
 
-  const handleDownloadPdf = useReactToPrint({
+  const handlePrintToPdf = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: sale?.receipt_number ?? 'receipt',
     pageStyle: `
@@ -68,6 +73,25 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
       }
     `,
   });
+
+  // Download the server-generated receipt PDF (Documents-module blob standard).
+  // Pending/local sales have no server PDF yet — fall back to a print-based file.
+  const handleDownloadPdf = async () => {
+    if (!sale) return;
+    if (sale.id > 0 && !sale._pendingSync) {
+      try {
+        setDownloading(true);
+        await downloadSalesReceiptPdf(sale.id);
+      } catch (err) {
+        showToast('error', sanitizeErrorMessage(err, 'Failed to download receipt PDF'));
+        handlePrintToPdf();
+      } finally {
+        setDownloading(false);
+      }
+      return;
+    }
+    handlePrintToPdf();
+  };
 
   if (!sale) return null;
 
@@ -147,6 +171,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
               label: 'Download PDF',
               icon: <Download className="h-4 w-4" />,
               onClick: handleDownloadPdf,
+              loading: downloading,
               title: 'Save this receipt as a PDF file',
             },
             {

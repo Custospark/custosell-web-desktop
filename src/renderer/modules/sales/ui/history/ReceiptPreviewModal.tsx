@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Printer, Download, Share2 } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
@@ -6,6 +6,9 @@ import ReceiptContent from '../receipt/ReceiptContent';
 import { ReceiptActionBar } from '../receipt/ReceiptActionBar';
 import { useWebShare, receiptShareText } from '../../../../shared/hooks/useWebShare';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { useToast } from '../../../../app/contexts/useToast';
+import { sanitizeErrorMessage } from '../../../../app/store/offline/core/offlineQueryUtils';
+import { downloadSalesReceiptPdf } from '../../useSalesReceiptPdf';
 import type { Sale } from '../../api/salesTypes';
 
 interface ReceiptPreviewModalProps {
@@ -20,6 +23,8 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
   const authUser = useAppSelector((s) => s.auth.user);
   const business = sale.business ?? authUser?.business;
   const { share } = useWebShare();
+  const { showToast } = useToast();
+  const [downloading, setDownloading] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -34,7 +39,7 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
     `,
   });
 
-  const handleDownloadPdf = useReactToPrint({
+  const handlePrintToPdf = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: sale.receipt_number,
     pageStyle: `
@@ -46,6 +51,22 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
       }
     `,
   });
+
+  const handleDownloadPdf = async () => {
+    if (sale.id > 0) {
+      try {
+        setDownloading(true);
+        await downloadSalesReceiptPdf(sale.id);
+      } catch (err) {
+        showToast('error', sanitizeErrorMessage(err, 'Failed to download receipt PDF'));
+        handlePrintToPdf();
+      } finally {
+        setDownloading(false);
+      }
+      return;
+    }
+    handlePrintToPdf();
+  };
 
   const shopName = business?.name ?? 'Shop';
   const currency = business?.currency || 'UGX';
@@ -64,6 +85,7 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
             label: 'Download PDF',
             icon: <Download className="h-4 w-4" />,
             onClick: handleDownloadPdf,
+            loading: downloading,
             title: 'Save this receipt as a PDF file',
           },
           {

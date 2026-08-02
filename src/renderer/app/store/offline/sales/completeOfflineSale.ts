@@ -23,6 +23,10 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
   const now = new Date().toISOString();
   const localIdNum = -Date.now();
   const authUser = store.getState().auth.user;
+  const activeLocationId = store.getState().auth.activeLocationId;
+  const activeLocation = authUser?.locations?.find((l) => l.id === activeLocationId)
+    ?? authUser?.location
+    ?? null;
   const products = queryClient.getQueryData<Product[]>(inventoryKeys.products()) ?? [];
   const cartLines = payload.items.map((item) => {
     const product = products.find((p) => p.id === item.product_id);
@@ -76,6 +80,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
     shift_id: payload.shift_id ?? null,
     order_id: payload.order_id ?? null,
     location_id: payload.location_id ?? null,
+    location: activeLocation ? { id: activeLocation.id, name: activeLocation.name, code: activeLocation.code } : undefined,
     amount_tendered: payload.amount_tendered ? payload.amount_tendered.toString() : null,
     change_given: payload.change_given ? payload.change_given.toString() : null,
     notes: payload.notes ?? null,

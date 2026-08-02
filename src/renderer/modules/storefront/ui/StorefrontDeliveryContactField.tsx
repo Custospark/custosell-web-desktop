@@ -70,22 +70,22 @@ export function StorefrontDeliveryContactField({
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [localPhone, setLocalPhone] = useState('');
 
-  const hasContact = Boolean(value.customer_name.trim() && value.customer_phone.trim());
+  const hasContact = Boolean(value.customer_name?.trim() && value.customer_phone?.trim());
   const hasPartial = Boolean(
-    value.customer_name.trim()
-    || value.customer_phone.trim()
-    || value.notes.trim()
-    || value.delivery_address.trim()
-    || value.delivery_city.trim(),
+    value.customer_name?.trim()
+    || value.customer_phone?.trim()
+    || value.notes?.trim()
+    || value.delivery_address?.trim()
+    || value.delivery_city?.trim(),
   );
 
   const openModal = () => {
     if (disabled) return;
-    const parsed = parseInternationalPhone(value.customer_phone);
-    setName(value.customer_name);
-    setNotes(value.notes);
-    setAddress(value.delivery_address);
-    setCity(value.delivery_city);
+    const parsed = parseInternationalPhone(value.customer_phone ?? '');
+    setName(value.customer_name ?? '');
+    setNotes(value.notes ?? '');
+    setAddress(value.delivery_address ?? '');
+    setCity(value.delivery_city ?? '');
     setCountryCode(parsed.countryCode);
     setLocalPhone(parsed.localNumber);
     setOpen(true);
@@ -109,7 +109,8 @@ export function StorefrontDeliveryContactField({
   const inputCls =
     'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/25';
 
-  const locationLine = [value.delivery_address.trim(), value.delivery_city.trim()].filter(Boolean).join(', ');
+  const locationLine = [value.delivery_address?.trim() ?? '', value.delivery_city?.trim() ?? '']
+    .filter(Boolean).join(', ');
 
   return (
     <>
@@ -143,16 +144,16 @@ export function StorefrontDeliveryContactField({
             {hasContact ? (
               <>
                 <span className="block truncate text-sm font-semibold text-slate-900">
-                  {value.customer_name.trim()}
+                  {value.customer_name?.trim()}
                 </span>
                 <span className="mt-0.5 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-slate-500">
                   <span className="inline-flex items-center gap-1">
                     <Phone className="h-3 w-3 shrink-0 text-slate-400" />
-                    {value.customer_phone.trim()}
+                    {value.customer_phone?.trim()}
                   </span>
                   {locationLine ? <span className="truncate">· {locationLine}</span> : null}
-                  {value.notes.trim() ? (
-                    <span className="truncate text-slate-400">· {value.notes.trim()}</span>
+                  {value.notes?.trim() ? (
+                    <span className="truncate text-slate-400">· {value.notes?.trim()}</span>
                   ) : null}
                 </span>
               </>

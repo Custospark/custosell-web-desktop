@@ -133,11 +133,11 @@ export const DiscoverProductCard = memo(function DiscoverProductCard({
         ) : null}
       </div>
       {onAdd ? (
-        <div className="mt-auto flex items-center gap-1.5">
+        <div className="mt-auto flex flex-col gap-1.5">
           <Button
             type="button"
             size="sm"
-            className="flex-1 gap-1"
+            className="w-full gap-1"
             disabled={outOfStock}
             onClick={(e) => {
               e.preventDefault();
@@ -162,7 +162,7 @@ export const DiscoverProductCard = memo(function DiscoverProductCard({
                 e.stopPropagation();
                 onOpenDetail(product);
               }}
-              className="shrink-0 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-200/80 transition-colors hover:bg-indigo-100"
+              className="w-full shrink-0 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-200/80 transition-colors hover:bg-indigo-100"
             >
               View details
             </button>

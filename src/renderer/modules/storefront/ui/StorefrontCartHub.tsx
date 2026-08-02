@@ -55,12 +55,12 @@ function resolveIdentity(opts: {
   const { bag, saved, account, preferAccount } = opts;
   return preferAccount
     ? {
-        customer_name: account.customer_name || bag.customer_name.trim() || saved.customer_name,
-        customer_phone: account.customer_phone || bag.customer_phone.trim() || saved.customer_phone,
+        customer_name: account.customer_name || bag.customer_name?.trim() || saved.customer_name,
+        customer_phone: account.customer_phone || bag.customer_phone?.trim() || saved.customer_phone,
       }
     : {
-        customer_name: bag.customer_name.trim() || account.customer_name || saved.customer_name,
-        customer_phone: bag.customer_phone.trim() || account.customer_phone || saved.customer_phone,
+        customer_name: bag.customer_name?.trim() || account.customer_name || saved.customer_name,
+        customer_phone: bag.customer_phone?.trim() || account.customer_phone || saved.customer_phone,
       };
 }
 
@@ -149,7 +149,7 @@ export function StorefrontCartHub({
       bag = { ...bag, customer_name: name, customer_phone: phone };
     }
 
-    if (!bag.customer_name.trim() || !bag.customer_phone.trim()) {
+    if (!bag.customer_name?.trim() || !bag.customer_phone?.trim()) {
       showToast('error', 'Enter your name and phone so the shop can reach you', 5000, 'top-center');
       return;
     }
@@ -168,9 +168,9 @@ export function StorefrontCartHub({
         slug,
         customer_name: placedName,
         customer_phone: placedPhone,
-        notes: bag.notes.trim() || undefined,
-        delivery_address: bag.delivery_address.trim() || undefined,
-        delivery_city: bag.delivery_city.trim() || undefined,
+        notes: bag.notes?.trim() || undefined,
+        delivery_address: bag.delivery_address?.trim() || undefined,
+        delivery_city: bag.delivery_city?.trim() || undefined,
         items: bag.items.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
       },
       {
@@ -178,8 +178,8 @@ export function StorefrontCartHub({
           saveBuyerContact({
             customer_name: placedName,
             customer_phone: placedPhone,
-            delivery_address: bag.delivery_address.trim(),
-            delivery_city: bag.delivery_city.trim(),
+            delivery_address: bag.delivery_address?.trim() || '',
+            delivery_city: bag.delivery_city?.trim() || '',
           });
           const currentUser = store.getState().auth.user;
           if (currentUser && placedPhone && currentUser.phone !== placedPhone) {

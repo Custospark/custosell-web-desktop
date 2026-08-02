@@ -14,13 +14,8 @@ import {
 
 type DetailRow = { icon: typeof MapPin; value: string };
 
-interface BusinessDropdownProps {
-  /** Show the business-name text label. When false, render icon-only (used for width-constrained navbars). */
-  label?: boolean;
-}
-
 /** Business context trigger — the Custosell equivalent of Custocare's context switcher. */
-export default function BusinessDropdown({ label = true }: BusinessDropdownProps) {
+export default function BusinessDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -118,17 +113,15 @@ export default function BusinessDropdown({ label = true }: BusinessDropdownProps
             <Building2 className="w-3.5 h-3.5 text-blue-600" />
           )}
         </div>
-        {label && (
-          <div className="hidden lg:flex items-center gap-1.5 min-w-0 max-w-[200px]">
-            <div className="min-w-0">
-              <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
-              <span className="flex items-center gap-1 text-xs truncate text-gray-500">
-                {isBusiness && <GitBranch className="w-3 h-3 text-gray-400 shrink-0" />}
-                <span className="truncate">{subtitle}</span>
-              </span>
-            </div>
+        <div className="hidden lg:flex items-center gap-1.5 min-w-0 max-w-[200px]">
+          <div className="min-w-0">
+            <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
+            <span className="flex items-center gap-1 text-xs truncate text-gray-500">
+              {isBusiness && <GitBranch className="w-3 h-3 text-gray-400 shrink-0" />}
+              <span className="truncate">{subtitle}</span>
+            </span>
           </div>
-        )}
+        </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

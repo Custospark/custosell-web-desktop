@@ -18,12 +18,7 @@ const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
   rewarded: { dot: 'bg-blue-500', label: 'Rewarded' },
 };
 
-interface ReferralDropdownProps {
-  /** Show the Refer & Earn text label. When false, render icon-only (width-constrained navbars). */
-  label?: boolean;
-}
-
-export default function ReferralDropdown({ label = true }: ReferralDropdownProps) {
+export default function ReferralDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -132,12 +127,10 @@ export default function ReferralDropdown({ label = true }: ReferralDropdownProps
         <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-indigo-200 bg-indigo-50 shrink-0">
           <Gift className="w-3.5 h-3.5 text-indigo-600" />
         </div>
-        {label && (
-          <div className="hidden lg:block min-w-0 max-w-[140px]">
-            <span className="text-xs font-semibold truncate block text-gray-900">Refer &amp; Earn</span>
-            <span className="block text-xs truncate text-gray-500">{hasReferralCode ? (totalEarned > 0 ? `${formatUSD(totalEarned)} earned` : 'Get your referral code') : 'Start referring'}</span>
-          </div>
-        )}
+        <div className="hidden lg:block min-w-0 max-w-[140px]">
+          <span className="text-xs font-semibold truncate block text-gray-900">Refer &amp; Earn</span>
+          <span className="block text-xs truncate text-gray-500">{hasReferralCode ? (totalEarned > 0 ? `${formatUSD(totalEarned)} earned` : 'Get your referral code') : 'Start referring'}</span>
+        </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

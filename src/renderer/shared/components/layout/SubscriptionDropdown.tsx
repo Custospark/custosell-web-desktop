@@ -41,12 +41,7 @@ const FEATURE_LABELS: Record<string, string> = {
   marketplace: 'Supply Marketplace',
 };
 
-interface SubscriptionDropdownProps {
-  /** Show the plan/status text label. When false, render icon-only (width-constrained navbars). */
-  label?: boolean;
-}
-
-export default function SubscriptionDropdown({ label = true }: SubscriptionDropdownProps) {
+export default function SubscriptionDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -117,12 +112,10 @@ export default function SubscriptionDropdown({ label = true }: SubscriptionDropd
           <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-amber-300 bg-amber-100 shrink-0">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
           </div>
-          {label && (
-            <div className="hidden lg:block min-w-0 max-w-[140px]">
-              <span className="text-xs font-semibold truncate block text-amber-700">Choose a plan</span>
-              <span className="block text-xs truncate text-gray-500">Get started</span>
-            </div>
-          )}
+          <div className="hidden lg:block min-w-0 max-w-[140px]">
+            <span className="text-xs font-semibold truncate block text-amber-700">Choose a plan</span>
+            <span className="block text-xs truncate text-gray-500">Get started</span>
+          </div>
           <ChevronDown className="hidden lg:block w-3 h-3 ml-auto shrink-0 text-amber-400" />
         </button>
       </div>
@@ -147,12 +140,10 @@ export default function SubscriptionDropdown({ label = true }: SubscriptionDropd
             {currentSlug.slice(0, 1).toUpperCase()}{currentSlug.slice(1, 3)}
           </span>
         )}
-        {label && (
-          <div className="hidden lg:block min-w-0 max-w-[140px]">
-            <span className="text-xs font-semibold truncate block text-gray-900">{currentPlan?.name ?? subscription?.plan_name ?? 'Essential'}</span>
-            <span className="block text-xs truncate text-gray-500">{statusLabel}</span>
-          </div>
-        )}
+        <div className="hidden lg:block min-w-0 max-w-[140px]">
+          <span className="text-xs font-semibold truncate block text-gray-900">{currentPlan?.name ?? subscription?.plan_name ?? 'Essential'}</span>
+          <span className="block text-xs truncate text-gray-500">{statusLabel}</span>
+        </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

@@ -167,35 +167,56 @@ export default function YourToolsPage() {
 
   return (
     <div className="relative mx-auto w-full max-w-6xl pb-28 sm:pb-10">
-      {activeAccess ? (
-        <>
-          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-blue-600">Welcome back, {firstName} 👋</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Your Tools</h1>
-              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500">
-                Get started with any of these tools. Choose one below to jump straight in.
-              </p>
-            </div>
-            {activeAccess && (
-              <button
-                type="button"
-                onClick={() => go(ROUTES.SETTINGS.SUBSCRIPTION)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-indigo-700"
-              >
-                <CreditCard className="h-4 w-4" />
-                Upgrade plan
-              </button>
-            )}
-          </div>
+      {!activeAccess && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="h-5 w-5 text-amber-700" />
+          <span className="text-sm font-medium text-amber-700">
+            {status === 'suspended'
+              ? 'Your subscription has been suspended. Always-available tools remain — subscribe to restore full access.'
+              : status === 'past_due'
+                ? 'Payment overdue. Always-available tools remain — pay to restore full access.'
+                : 'No active plan. Always-available tools remain — subscribe to unlock the rest.'}
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 hover:bg-amber-50"
+          >
+            <CreditCard className="h-4 w-4" />
+            {status === 'suspended' ? 'Reactivate' : status === 'past_due' ? 'Pay now' : 'Subscribe'}
+          </button>
+        </div>
+      )}
 
-          <section aria-label="Get started">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
-                <Sparkles className="h-3.5 w-3.5" />
-              </span>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Get started with any of these</h2>
-            </div>
+      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-blue-600">Welcome back, {firstName} 👋</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Your Tools</h1>
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500">
+            Get started with any of these tools. Choose one below to jump straight in.
+          </p>
+        </div>
+        {activeAccess && (
+          <button
+            type="button"
+            onClick={() => go(ROUTES.SETTINGS.SUBSCRIPTION)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/30 transition-all hover:from-blue-700 hover:to-indigo-700"
+          >
+            <CreditCard className="h-4 w-4" />
+            Upgrade plan
+          </button>
+        )}
+      </div>
+
+      <section aria-label="Get started">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
+            <Sparkles className="h-3.5 w-3.5" />
+          </span>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            {activeAccess ? 'Get started with any of these' : 'Your always-available tools'}
+          </h2>
+        </div>
             <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 min-[520px]:gap-4 xl:grid-cols-3">
               {visibleTools.map((t) => (
                 <button
@@ -320,23 +341,6 @@ export default function YourToolsPage() {
               </div>
             </div>
           </div>
-        </>
-      ) : (
-        <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <AlertTriangle className="h-5 w-5 text-amber-700" />
-          <span className="text-sm font-medium text-amber-700">
-            No active plan. Subscribe to access your tools.
-          </span>
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.ONBOARDING)}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-amber-700 shadow-sm ring-1 ring-inset ring-amber-200 hover:bg-amber-50"
-          >
-            <CreditCard className="h-4 w-4" />
-            Subscribe
-          </button>
-        </div>
-      )}
     </div>
   );
 }

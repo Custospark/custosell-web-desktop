@@ -169,9 +169,13 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
 
   if (user.account_type === 'personal') {
     modules.add('your_tools');
-  }
 
-  if (isBusinessOwner(user)) {
+    // Personal module grants are authoritative in `user.modules` (backend reconciles
+    // them against subscription access at login). Do NOT apply the business-owner
+    // fallback that returns every module when nothing is stored — that would re-expose
+    // paid modules to a suspended/expired personal account.
+    storedBusinessModules(user).forEach((m) => modules.add(m));
+  } else if (isBusinessOwner(user)) {
     resolvedOwnerBusinessModules(user).forEach((m) => modules.add(m));
   } else if (user.business_id) {
     storedBusinessModules(user).forEach((m) => modules.add(m));

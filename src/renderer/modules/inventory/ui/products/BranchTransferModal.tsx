@@ -4,6 +4,7 @@ import { Button } from '../../../../shared/components/buttons/Button';
 import { useLocations } from '../../../settings/api/settings/LocationQueries';
 import { useLocationStock, useStockTransfer, type TransferLine } from '../../api/products/BranchStockQueries';
 import type { ProductWithSyncMeta } from '../../../../app/store/offline/inventory/localProductsStore';
+import { isServiceItem } from '../../api/products/ProductTypes';
 import { ArrowLeftRight } from 'lucide-react';
 
 interface BranchTransferModalProps {
@@ -27,15 +28,17 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
 
   const activeLocations = useMemo(() => locations.filter((l) => l.is_active), [locations]);
 
+  const stockProducts = useMemo(() => products.filter((p) => !isServiceItem(p)), [products]);
+
   useEffect(() => {
     if (!open) return;
     queueMicrotask(() => {
       const defaultLoc = activeLocations.find((l) => l.is_default);
       setFromId(defaultLoc?.id ?? activeLocations[0]?.id ?? null);
       setToId(null);
-      setRows(products.map((p) => ({ product_id: p.id, name: p.name, quantity: 0 })));
+      setRows(stockProducts.map((p) => ({ product_id: p.id, name: p.name, quantity: 0 })));
     });
-  }, [open, products, activeLocations]);
+  }, [open, stockProducts, activeLocations]);
 
   const { data: fromStock = [] } = useLocationStock(fromId);
 

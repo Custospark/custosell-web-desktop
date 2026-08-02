@@ -78,6 +78,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   'Projects & Estimates': 'estimates',
   Estimates: 'estimates',
   Expenses: 'expenses',
+  'Income & Expenses': 'expenses',
   Accounting: 'accounting',
   Forecasting: 'forecasting',
   Documents: 'documents',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Heart, Package } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useToast } from '../../app/contexts/useToast';
@@ -37,7 +37,7 @@ export default function WishlistPage() {
   }, [token, data, setHeader]);
 
   /** Add to cart only — wishlist clears after a successful place-order on the server. */
-  const addToCart = (product: StorefrontProduct) => {
+  const addToCart = useCallback((product: StorefrontProduct) => {
     const biz = product.business;
     if (!biz?.slug) {
       showToast('error', 'Could not find this shop');
@@ -57,7 +57,9 @@ export default function WishlistPage() {
       },
       product,
     );
-  };
+  }, [addProduct, showToast]);
+
+  const openDetail = useCallback((product: StorefrontProduct) => setDetail(product), []);
 
   if (!token) {
     return (
@@ -124,7 +126,7 @@ export default function WishlistPage() {
               product={w.product}
               shopSlug={w.product.business?.slug}
               currency={w.product.business?.currency}
-              onOpenDetail={() => setDetail(w.product!)}
+              onOpenDetail={openDetail}
               onAdd={addToCart}
             />
           ) : null

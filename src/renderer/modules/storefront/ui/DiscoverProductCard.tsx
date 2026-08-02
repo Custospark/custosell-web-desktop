@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -24,11 +25,11 @@ interface DiscoverProductCardProps {
   currency?: string;
   className?: string;
   /** Open product detail modal (Discover browse). */
-  onOpenDetail?: () => void;
+  onOpenDetail?: (product: StorefrontProduct) => void;
 }
 
 /** Compact proportional product tile with one-tap star ratings. */
-export function DiscoverProductCard({
+export const DiscoverProductCard = memo(function DiscoverProductCard({
   product,
   onAdd,
   shopSlug,
@@ -87,13 +88,13 @@ export function DiscoverProductCard({
       onClick={onOpenDetail ? (e) => {
         e.preventDefault();
         e.stopPropagation();
-        onOpenDetail();
+        onOpenDetail(product);
       } : undefined}
       onKeyDown={onOpenDetail ? (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
-          onOpenDetail();
+          onOpenDetail(product);
         }
       } : undefined}
     >
@@ -159,7 +160,7 @@ export function DiscoverProductCard({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onOpenDetail();
+                onOpenDetail(product);
               }}
               className="shrink-0 rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-200/80 transition-colors hover:bg-indigo-100"
             >
@@ -190,11 +191,11 @@ export function DiscoverProductCard({
         role="button"
         tabIndex={0}
         className={cn(cardClass, 'w-full cursor-pointer text-left')}
-        onClick={onOpenDetail}
+        onClick={() => onOpenDetail(product)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onOpenDetail();
+            onOpenDetail(product);
           }
         }}
       >
@@ -212,4 +213,4 @@ export function DiscoverProductCard({
       {body}
     </Link>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { Phone, Search, ShoppingBag, Mail, MapPin } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
@@ -120,11 +120,8 @@ export default function ShopPage() {
     };
   }, [shop, setHeader, showToast, bagCount, openCart]);
 
-  if (!slug) {
-    return <Navigate to={`${ROUTES.DISCOVER}?focus=shops`} replace />;
-  }
-
-  const onAdd = (product: StorefrontProduct) => {
+  const openDetail = useCallback((product: StorefrontProduct) => setDetail(product), []);
+  const onAdd = useCallback((product: StorefrontProduct) => {
     if (!shop) return;
     if (isStorefrontProductOutOfStock(product)) {
       showToast('error', 'This item is out of stock');
@@ -140,7 +137,11 @@ export default function ShopPage() {
       },
       product,
     );
-  };
+  }, [shop, addProduct, showToast]);
+
+  if (!slug) {
+    return <Navigate to={`${ROUTES.DISCOVER}?focus=shops`} replace />;
+  }
 
   const applyShopRating = (stars: number) => {
     if (!shop) return;
@@ -281,7 +282,7 @@ export default function ShopPage() {
               currency={currency}
               shopSlug={shop.slug}
               onAdd={onAdd}
-              onOpenDetail={() => setDetail(p)}
+              onOpenDetail={openDetail}
             />
           ))}
         </div>

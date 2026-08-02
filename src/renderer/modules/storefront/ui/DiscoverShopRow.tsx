@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Store } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
@@ -11,7 +12,7 @@ interface DiscoverShopRowProps {
 }
 
 /** Dense shop card — lively hover lift like Marketplace catalog cards. */
-export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShopRowProps) {
+export const DiscoverShopRow = memo(function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShopRowProps) {
   const className = cn(
     marketplaceGlassPanel,
     'flex w-full items-center gap-2 px-2 py-2 text-left transition-all duration-200',
@@ -50,4 +51,4 @@ export function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShop
   }
 
   return <div className={className}>{body}</div>;
-}
+});

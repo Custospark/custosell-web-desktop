@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Package, Search } from 'lucide-react';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
@@ -84,7 +84,9 @@ export function DiscoverProductsBrowse() {
   const totalMeta = data?.pages[0]?.meta.total;
   const needsMoreLoaded = visible + RENDER_CHUNK > products.length && Boolean(hasNextPage);
 
-  const handleAdd = (product: StorefrontProduct) => {
+  const handleOpenDetail = useCallback((product: StorefrontProduct) => setDetail(product), []);
+
+  const handleAdd = useCallback((product: StorefrontProduct) => {
     const biz = product.business;
     if (!biz) {
       showToast('error', 'This product is not linked to a shop yet.');
@@ -104,7 +106,7 @@ export function DiscoverProductsBrowse() {
       },
       product,
     );
-  };
+  }, [addProduct, showToast]);
 
   const onShowMore = () => {
     setVisible((n) => n + RENDER_CHUNK);
@@ -213,7 +215,7 @@ export function DiscoverProductsBrowse() {
                 key={`${p.id}-${p.business?.slug ?? ''}`}
                 product={p}
                 onAdd={handleAdd}
-                onOpenDetail={() => setDetail(p)}
+                onOpenDetail={handleOpenDetail}
               />
             ))}
           </div>

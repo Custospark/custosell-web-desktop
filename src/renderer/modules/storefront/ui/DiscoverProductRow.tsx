@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -14,7 +15,7 @@ interface DiscoverProductRowProps {
 }
 
 /** Compact product row — small thumb, no hero image waste. */
-export function DiscoverProductRow({ product, currency, shopSlug }: DiscoverProductRowProps) {
+export const DiscoverProductRow = memo(function DiscoverProductRow({ product, currency, shopSlug }: DiscoverProductRowProps) {
   return (
     <li className={cn(marketplaceGlassPanel, 'flex items-center gap-3 px-3 py-2.5')}>
       <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden sm:rounded-lg bg-slate-100">
@@ -44,4 +45,4 @@ export function DiscoverProductRow({ product, currency, shopSlug }: DiscoverProd
       </Link>
     </li>
   );
-}
+});

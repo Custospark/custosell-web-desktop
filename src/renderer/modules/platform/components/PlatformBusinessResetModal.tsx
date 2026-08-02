@@ -57,7 +57,7 @@ export function PlatformBusinessResetModal({
       <div className="space-y-4 sm:space-y-5">
         <PipelineModalHero
           icon={RefreshCw}
-          tone="amber"
+          tone="red"
           title={step === 'first' ? `Wipe data for ${businessName}?` : 'Type to confirm'}
           description={
             step === 'first'

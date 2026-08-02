@@ -38,6 +38,7 @@ import { ProductDiscountField } from './ProductDiscountField';
 import {
   type FormState,
   emptyForm,
+  toNumber,
   toProductForm,
   toCreatePayload,
 } from './ProductFormState';

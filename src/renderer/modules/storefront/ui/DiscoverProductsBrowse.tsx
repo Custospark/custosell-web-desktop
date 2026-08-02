@@ -104,7 +104,6 @@ export function DiscoverProductsBrowse() {
       },
       product,
     );
-    showToast('success', `Added to ${biz.name} cart`, 5000, 'top-center');
   };
 
   const onShowMore = () => {

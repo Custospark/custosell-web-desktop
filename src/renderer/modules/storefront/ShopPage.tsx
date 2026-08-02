@@ -139,7 +139,6 @@ export default function ShopPage() {
       },
       product,
     );
-    showToast('success', `Added to ${shop.name} cart`, 5000, 'top-center');
   };
 
   const applyShopRating = (stars: number) => {

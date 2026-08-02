@@ -105,8 +105,6 @@ export function StorefrontMultiCartProvider({ children }: { children: ReactNode 
         },
       };
     });
-    setActiveSlug(shop.slug);
-    setCartOpen(true);
   }, []);
 
   const updateQty = useCallback((slug: string, productId: number, quantity: number) => {

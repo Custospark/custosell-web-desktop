@@ -155,6 +155,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-01-expenses-overview-fresh-and-form-guidance.md](./adr/2026-08-01-expenses-overview-fresh-and-form-guidance.md) | Income & Expenses Overview always-fresh; expense form guides required-field validation |
 | [2026-08-01-customers-overview-dashboard.md](./adr/2026-08-01-customers-overview-dashboard.md) | Customers analytics overview — `GET /customers/overview`, FE dashboard, segments/frequency/trends/top-5 |
 | [2026-08-01-readonly-email-and-personal-slice-sync.md](./adr/2026-08-01-readonly-email-and-personal-slice-sync.md) | Email read-only in Account Profile; personal-account shared fields mirrored from Business Settings to auth slice |
+| [2026-08-02-branch-transfer-excludes-services.md](./adr/2026-08-02-branch-transfer-excludes-services.md) | Branch stock transfer excludes service items (no branch stock for non-inventory services) |
 
 ## Modules
 

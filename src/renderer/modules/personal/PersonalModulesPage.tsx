@@ -82,10 +82,33 @@ const TOOL_DESCRIPTIONS: Record<string, Record<string, string>> = {
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   trial: { label: 'Free trial', color: 'text-blue-700', bg: 'bg-blue-50' },
   active: { label: 'Active', color: 'text-green-700', bg: 'bg-green-50' },
-  past_due: { label: 'Payment needed', color: 'text-red-700', bg: 'bg-red-50' },
+  past_due: { label: 'Needs payment', color: 'text-amber-700', bg: 'bg-amber-50' },
   cancelled: { label: 'Cancelled', color: 'text-gray-500', bg: 'bg-gray-50' },
   suspended: { label: 'Suspended', color: 'text-gray-500', bg: 'bg-gray-50' },
 };
+
+/** Mirrors backend Subscription::hasAccess() — past_due within grace still counts as access. */
+function hasSubscriptionAccess(subscription: {
+  status?: string | null;
+  trial_ends_at?: string | null;
+  grace_period_ends_at?: string | null;
+} | null | undefined): boolean {
+  if (!subscription?.status) return false;
+  const now = Date.now();
+  switch (subscription.status) {
+    case 'active':
+    case 'trialing':
+      return true;
+    case 'trial':
+      if (!subscription.trial_ends_at) return true;
+      return new Date(subscription.trial_ends_at).getTime() > now;
+    case 'past_due':
+      if (!subscription.grace_period_ends_at) return false;
+      return new Date(subscription.grace_period_ends_at).getTime() > now;
+    default:
+      return false;
+  }
+}
 
 export default function YourToolsPage() {
   const user = useAppSelector((s) => s.auth.user);
@@ -94,7 +117,7 @@ export default function YourToolsPage() {
   const subscription = user?.business?.subscription;
   const status = subscription?.status ?? null;
   const config = status ? STATUS_CONFIG[status] : null;
-  const activeAccess = status === 'active' || status === 'trial';
+  const activeAccess = hasSubscriptionAccess(subscription);
   const [showAll, setShowAll] = useState(false);
 
   const firstName = user?.name?.trim().split(/\s+/)[0] || 'there';
@@ -132,6 +155,9 @@ export default function YourToolsPage() {
       return `Free trial until ${new Date(subscription.trial_ends_at).toLocaleDateString()} — subscribe now to keep your tools`;
     }
     if (status === 'active') return 'Your Personal plan is active — all tools unlocked.';
+    if (status === 'past_due' && activeAccess && subscription.grace_period_ends_at) {
+      return `Payment overdue — access continues until ${new Date(subscription.grace_period_ends_at).toLocaleDateString()}. Subscribe to keep your tools.`;
+    }
     if (status === 'past_due') return 'Payment overdue. Subscribe to restore access to your tools.';
     if (status === 'suspended') return 'Your subscription has been suspended. Reactivate to regain access.';
     if (status === 'cancelled') return 'Your subscription has been cancelled. Choose a new plan to continue.';

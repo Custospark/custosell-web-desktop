@@ -8,13 +8,15 @@ import type {
 
 export const STOREFRONT_CART_KEY = 'custosell.storefront.cart.v1';
 
-const TEXT_FIELDS: (keyof StorefrontCartBag)[] = [
+const TEXT_FIELDS: StorefrontBagTextKey[] = [
   'notes',
   'customer_name',
   'customer_phone',
   'delivery_address',
   'delivery_city',
 ];
+
+type StorefrontBagTextKey = 'notes' | 'customer_name' | 'customer_phone' | 'delivery_address' | 'delivery_city';
 
 /** Guarantee every text field is a string so consumers can `.trim()` safely. */
 function sanitizeBag(input: unknown): StorefrontCartBag | null {

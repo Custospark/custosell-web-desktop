@@ -14,7 +14,8 @@ import {
   useStorefrontShopProducts,
 } from './api/storefrontQueries';
 import type { StorefrontProduct, StorefrontShop } from './api/storefrontTypes';
-import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
+import { useStorefrontCartActions } from './cart/storefrontMultiCartContext';
+import { selectStorefrontBagBySlug } from './cart/storefrontCartSlice';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
 import { DiscoverProductCard } from './ui/DiscoverProductCard';
 import { ProductStarRating } from './ui/ProductStarRating';
@@ -35,7 +36,8 @@ export default function ShopPage() {
   const shell = useDiscoverShell();
   const { setHeader, requestSignIn } = shell;
   const token = useAppSelector((s) => s.auth.token);
-  const { addProduct, openCart, getBag } = useStorefrontMultiCart();
+  const { addProduct, openCart } = useStorefrontCartActions();
+  const bag = useAppSelector(selectStorefrontBagBySlug(slug ?? ''));
   const shopQuery = useStorefrontShop(slug ?? '');
   const productsQuery = useStorefrontShopProducts(slug ?? '');
   const rateShop = useRateStorefrontShop();
@@ -48,7 +50,6 @@ export default function ShopPage() {
     [productsQuery.data?.products],
   );
   const currency = shop?.currency || 'UGX';
-  const bag = slug ? getBag(slug) : null;
   const bagCount = bag?.items.length ?? 0;
   const locationLine = shop ? shopLocationLine(shop) : '';
 

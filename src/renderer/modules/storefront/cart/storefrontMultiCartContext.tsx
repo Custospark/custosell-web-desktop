@@ -24,12 +24,7 @@ import type {
   StorefrontCartShopMeta,
 } from './storefrontCartTypes';
 
-type MultiCartValue = {
-  carts: ReturnType<typeof selectStorefrontCarts>;
-  cartOpen: boolean;
-  activeSlug: string | null;
-  lineCount: number;
-  bags: StorefrontCartBag[];
+type StorefrontActions = {
   setCartOpen: (open: boolean) => void;
   openCart: (slug?: string | null) => void;
   setActiveSlug: (slug: string | null) => void;
@@ -39,16 +34,24 @@ type MultiCartValue = {
   removeLine: (slug: string, productId: number) => void;
   setBagContact: (slug: string, patch: StorefrontBagContactPatch) => void;
   clearBag: (slug: string) => void;
+};
+
+type MultiCartValue = StorefrontActions & {
+  carts: ReturnType<typeof selectStorefrontCarts>;
+  cartOpen: boolean;
+  activeSlug: string | null;
+  lineCount: number;
+  bags: StorefrontCartBag[];
   getBag: (slug: string) => StorefrontCartBag | null;
 };
 
-export function useStorefrontMultiCart(): MultiCartValue {
+/**
+ * Stable dispatchers only — no state subscription. Use this in high-volume
+ * screens (product grids) that only need to add/remove so they never re-render
+ * just because the cart changed.
+ */
+export function useStorefrontCartActions(): StorefrontActions {
   const dispatch = useAppDispatch();
-  const carts = useAppSelector(selectStorefrontCarts);
-  const cartOpen = useAppSelector(selectStorefrontCartOpen);
-  const activeSlug = useAppSelector(selectStorefrontActiveSlug);
-  const bags = useAppSelector(selectStorefrontBags);
-  const lineCount = useAppSelector(selectStorefrontLineCount);
 
   const handleSetCartOpen = useCallback((open: boolean) => dispatch(setCartOpen(open)), [dispatch]);
   const handleSetActiveSlug = useCallback((slug: string | null) => dispatch(setActiveSlug(slug)), [dispatch]);
@@ -77,14 +80,8 @@ export function useStorefrontMultiCart(): MultiCartValue {
     [dispatch],
   );
   const handleClearBag = useCallback((slug: string) => dispatch(clearBag(slug)), [dispatch]);
-  const getBag = useCallback((slug: string) => carts[slug] ?? null, [carts]);
 
   return {
-    carts,
-    cartOpen,
-    activeSlug,
-    lineCount,
-    bags,
     setCartOpen: handleSetCartOpen,
     setActiveSlug: handleSetActiveSlug,
     openCart: handleOpenCart,
@@ -94,6 +91,26 @@ export function useStorefrontMultiCart(): MultiCartValue {
     removeLine: handleRemoveLine,
     setBagContact: handleSetBagContact,
     clearBag: handleClearBag,
+  };
+}
+
+export function useStorefrontMultiCart(): MultiCartValue {
+  const actions = useStorefrontCartActions();
+  const carts = useAppSelector(selectStorefrontCarts);
+  const cartOpen = useAppSelector(selectStorefrontCartOpen);
+  const activeSlug = useAppSelector(selectStorefrontActiveSlug);
+  const bags = useAppSelector(selectStorefrontBags);
+  const lineCount = useAppSelector(selectStorefrontLineCount);
+
+  const getBag = useCallback((slug: string) => carts[slug] ?? null, [carts]);
+
+  return {
+    ...actions,
+    carts,
+    cartOpen,
+    activeSlug,
+    lineCount,
+    bags,
     getBag,
   };
 }

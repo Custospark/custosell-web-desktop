@@ -11,7 +11,7 @@ import { CatalogLoadError } from './CatalogLoadError';
 import { DiscoverProductCard } from './DiscoverProductCard';
 import { StorefrontProductDetailModal } from './StorefrontProductDetailModal';
 import { isStorefrontProductOutOfStock } from './storefrontStock';
-import { useStorefrontMultiCart } from '../cart/storefrontMultiCartContext';
+import { useStorefrontCartActions } from '../cart/storefrontMultiCartContext';
 import { useToast } from '../../../app/contexts/useToast';
 import type { StorefrontProduct } from '../api/storefrontTypes';
 
@@ -25,7 +25,7 @@ export function DiscoverProductsBrowse() {
   const [visible, setVisible] = useState(RENDER_CHUNK);
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const { data: categories = [] } = useStorefrontCategories();
-  const { addProduct } = useStorefrontMultiCart();
+  const { addProduct } = useStorefrontCartActions();
   const { showToast } = useToast();
   const {
     data,

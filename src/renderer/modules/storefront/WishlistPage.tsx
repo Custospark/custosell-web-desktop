@@ -7,7 +7,7 @@ import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTh
 import { cn } from '../../shared/utils/cn';
 import { useWishlist } from './api/wishlistQueries';
 import type { StorefrontProduct } from './api/storefrontTypes';
-import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
+import { useStorefrontCartActions } from './cart/storefrontMultiCartContext';
 import { DiscoverProductCard } from './ui/DiscoverProductCard';
 import { useDiscoverShell } from './ui/discoverShellContext';
 import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
@@ -17,7 +17,7 @@ export default function WishlistPage() {
   const token = useAppSelector((s) => s.auth.token);
   const { setHeader, requestSignIn } = useDiscoverShell();
   const { showToast } = useToast();
-  const { addProduct } = useStorefrontMultiCart();
+  const { addProduct } = useStorefrontCartActions();
   const { data, isLoading, isError, refetch, isFetching } = useWishlist(Boolean(token));
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
 

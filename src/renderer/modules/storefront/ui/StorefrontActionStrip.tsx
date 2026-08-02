@@ -217,17 +217,10 @@ export function StorefrontActionStrip({
           onClick={onCart}
           title={cartCount > 0 ? `Cart (${cartCount})` : 'Cart'}
           tone="emerald"
-          icon={(
-            <span className="relative inline-flex shrink-0">
-              <ShoppingCart className="h-4 w-4" aria-hidden />
-              {cartCount > 0 ? (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              ) : null}
-            </span>
-          )}
+          icon={<ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />}
           label="Cart"
+          count={cartCount}
+          countTone="emerald"
         />
         <DesktopTab
           active={active === 'wishlist'}
@@ -251,17 +244,10 @@ export function StorefrontActionStrip({
           onClick={onOrders}
           title={ordersCount > 0 ? `My orders (${ordersCount})` : 'My orders'}
           tone="blue"
-          icon={(
-            <span className="relative inline-flex shrink-0">
-              <LayoutList className="h-4 w-4" aria-hidden />
-              {ordersCount > 0 ? (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                  {ordersCount > 99 ? '99+' : ordersCount}
-                </span>
-              ) : null}
-            </span>
-          )}
+          icon={<LayoutList className="h-4 w-4 shrink-0" aria-hidden />}
           label="Orders"
+          count={ordersCount}
+          countTone="blue"
         />
       </div>
     </nav>
@@ -275,6 +261,8 @@ function DesktopTab({
   tone,
   icon,
   label,
+  count = 0,
+  countTone,
 }: {
   active?: boolean;
   onClick: () => void;
@@ -282,6 +270,8 @@ function DesktopTab({
   tone: Tone;
   icon: ReactNode;
   label: string;
+  count?: number;
+  countTone?: Tone;
 }) {
   const desktopTones: Record<Tone, string> = {
     slate: active
@@ -312,10 +302,20 @@ function DesktopTab({
       aria-label={title}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'inline-flex min-h-0 w-auto flex-none flex-row items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold hover:-translate-y-0.5 active:translate-y-0 transition-all',
+        'relative inline-flex min-h-0 w-auto flex-none flex-row items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold hover:-translate-y-0.5 active:translate-y-0 transition-all',
         desktopTones[tone],
       )}
     >
+      {count > 0 ? (
+        <span
+          className={cn(
+            'absolute -right-2 -top-2 flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[8px] font-bold leading-[1.15rem] text-white shadow ring-2 ring-white',
+            countTone === 'emerald' ? 'bg-emerald-600' : 'bg-blue-600',
+          )}
+        >
+          {count > 99 ? '99+' : count}
+        </span>
+      ) : null}
       {icon}
       <span>{label}</span>
     </button>

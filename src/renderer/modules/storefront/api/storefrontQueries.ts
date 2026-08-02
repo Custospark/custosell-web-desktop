@@ -176,13 +176,20 @@ export function useMyStorefrontOrdersList(enabled = true, options?: { poll?: boo
   });
 }
 
-/** Strip badge — same cache as the orders list. */
+/** Strip badge — open orders only, so the count reflects what still needs attention. */
 export function useMyStorefrontOrdersCount(enabled = true) {
-  const list = useMyStorefrontOrdersList(enabled);
-  return {
-    ...list,
-    data: list.data?.total ?? 0,
-  };
+  return useQuery({
+    queryKey: [storefrontKeys.myOrdersCount()],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(STOREFRONT.MY_ORDERS, {
+        params: { status: 'open', per_page: 1, page: 1 },
+      });
+      return pageMeta(data).total ?? 0;
+    },
+    enabled,
+    staleTime: 15_000,
+    refetchOnMount: 'always',
+  });
 }
 
 export function useStorefrontDiscover(q: string, category: string) {

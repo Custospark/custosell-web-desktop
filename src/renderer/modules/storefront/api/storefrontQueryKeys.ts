@@ -13,7 +13,7 @@ export const storefrontKeys = {
   myOrders: (status?: string, q?: string) => [...storefrontKeys.all, 'my-orders', status ?? '', q ?? ''] as const,
   myOrdersPages: () => [...storefrontKeys.all, 'my-orders-pages'] as const,
   myOrdersList: () => [...storefrontKeys.all, 'my-orders-list'] as const,
-  myOrdersCount: () => [...storefrontKeys.all, 'my-orders-count'] as const,
+  myOrdersCount: () => [...storefrontKeys.all, 'my-orders-count', 'open'] as const,
   wishlist: () => [...storefrontKeys.all, 'wishlist'] as const,
   wishlistCount: () => [...storefrontKeys.all, 'wishlist-count'] as const,
 };

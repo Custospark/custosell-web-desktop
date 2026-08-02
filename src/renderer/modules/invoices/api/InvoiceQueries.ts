@@ -99,6 +99,7 @@ export function useInvoice(id: number, options?: { enabled?: boolean }) {
 
 export type UpdateInvoicePayload = {
   customer_id?: number | null;
+  location_id?: number | null;
   issue_date: string;
   due_date: string;
   tax_total?: number;
@@ -127,6 +128,7 @@ export function useUpdateInvoice() {
 export type CreateInvoicePayload = {
   customer_id?: number | null;
   sale_id?: number | null;
+  location_id?: number | null;
   issue_date: string;
   due_date: string;
   tax_total?: number;

@@ -33,6 +33,8 @@ interface InvoiceBuilderSeed {
   lineItems: InvoiceLineItem[];
   customerId?: number | null;
   saleId?: number | null;
+  /** Source branch of the linked sale — carries to the invoice so filtering/printing show it. */
+  locationId?: number | null;
   /** When billing a completed sale, reuse sale tax so invoice total matches collections. */
   saleTaxTotal?: number;
   /** Sale-level discount already applied at checkout — keeps invoice total aligned. */
@@ -199,12 +201,13 @@ export default function InvoiceBuilderForm({
   const buildPayload = useCallback((resolvedCustomerId: number | null) => ({
     customer_id: resolvedCustomerId,
     sale_id: seed?.saleId ?? undefined,
+    location_id: seed?.locationId ?? undefined,
     issue_date: issueDate,
     due_date: dueDate,
     tax_total: taxBreakdown.taxTotal,
     notes: notes || undefined,
     items: lineItemsToPayload(lineItems),
-  }), [seed?.saleId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
+  }), [seed?.saleId, seed?.locationId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
 
   async function resolveCustomerId(): Promise<number | null> {
     if (contact.customerId) return contact.customerId;

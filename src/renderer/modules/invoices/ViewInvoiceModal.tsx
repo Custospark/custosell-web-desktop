@@ -143,6 +143,11 @@ export function ViewInvoiceModal({
                   PO <span className="font-medium text-slate-900">{invoice.purchase_order.po_number}</span>
                 </span>
               ) : null}
+              {invoice.location?.name ? (
+                <span className="text-sm text-slate-600">
+                  Branch <span className="font-medium text-slate-900">{invoice.location.name}</span>
+                </span>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-3 gap-2 shrink-0">

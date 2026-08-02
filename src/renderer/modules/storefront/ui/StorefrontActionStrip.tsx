@@ -80,6 +80,15 @@ export function StorefrontActionStrip({
           onClick: onCart,
         }]),
     {
+      tab: 'orders' as const,
+      icon: <LayoutList className="h-4 w-4" aria-hidden />,
+      label: 'Orders',
+      tone: 'blue' as Tone,
+      count: ordersCount,
+      countTone: 'blue' as Tone,
+      onClick: onOrders,
+    },
+    {
       tab: 'wishlist' as const,
       icon: <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />,
       label: 'Wishlist',
@@ -239,23 +248,6 @@ export function StorefrontActionStrip({
           countTone="emerald"
         />
         <DesktopTab
-          active={active === 'wishlist'}
-          onClick={onWishlist}
-          title={wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist'}
-          tone="rose"
-          icon={(
-            <span className="relative inline-flex shrink-0">
-              <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />
-              {wishlistCount > 0 ? (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                  {wishlistCount > 99 ? '99+' : wishlistCount}
-                </span>
-              ) : null}
-            </span>
-          )}
-          label="Wishlist"
-        />
-        <DesktopTab
           active={active === 'orders'}
           onClick={onOrders}
           title={ordersCount > 0 ? `My orders (${ordersCount})` : 'My orders'}
@@ -264,6 +256,16 @@ export function StorefrontActionStrip({
           label="Orders"
           count={ordersCount}
           countTone="blue"
+        />
+        <DesktopTab
+          active={active === 'wishlist'}
+          onClick={onWishlist}
+          title={wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist'}
+          tone="rose"
+          icon={<Heart className={cn('h-4 w-4 shrink-0', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />}
+          label="Wishlist"
+          count={wishlistCount}
+          countTone="rose"
         />
       </div>
     </nav>
@@ -329,7 +331,7 @@ function DesktopTab({
           <span
             className={cn(
               'absolute -top-2.5 left-full ml-1 flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[8px] font-bold leading-[1.15rem] text-white ring-2 ring-white',
-              countTone === 'emerald' ? 'bg-emerald-600' : 'bg-blue-600',
+              countTone === 'emerald' ? 'bg-emerald-600' : countTone === 'rose' ? 'bg-rose-600' : 'bg-blue-600',
             )}
           >
             {count > 99 ? '99+' : count}

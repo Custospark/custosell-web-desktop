@@ -299,11 +299,18 @@ export function usePlaceStorefrontOrder() {
           total: prevOrders.total + 1,
         });
       }
-      return { prevOrders };
+      const prevCount = queryClient.getQueryData<number>(storefrontKeys.myOrdersCount());
+      if (typeof prevCount === 'number') {
+        queryClient.setQueryData(storefrontKeys.myOrdersCount(), prevCount + 1);
+      }
+      return { prevOrders, prevCount };
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prevOrders !== undefined) {
         queryClient.setQueryData(storefrontKeys.myOrdersList(), ctx.prevOrders);
+      }
+      if (ctx?.prevCount !== undefined) {
+        queryClient.setQueryData(storefrontKeys.myOrdersCount(), ctx.prevCount);
       }
     },
     onSuccess: async (_data, vars) => {

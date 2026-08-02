@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
+import { useToast } from '../../../app/contexts/useToast';
 import type { StorefrontProduct } from '../api/storefrontTypes';
 import {
   addProduct,
@@ -52,6 +53,7 @@ type MultiCartValue = StorefrontActions & {
  */
 export function useStorefrontCartActions(): StorefrontActions {
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
 
   const handleSetCartOpen = useCallback((open: boolean) => dispatch(setCartOpen(open)), [dispatch]);
   const handleSetActiveSlug = useCallback((slug: string | null) => dispatch(setActiveSlug(slug)), [dispatch]);
@@ -61,8 +63,11 @@ export function useStorefrontCartActions(): StorefrontActions {
     [dispatch],
   );
   const handleAddProduct = useCallback(
-    (shop: StorefrontCartShopMeta, product: StorefrontProduct) => dispatch(addProduct({ shop, product })),
-    [dispatch],
+    (shop: StorefrontCartShopMeta, product: StorefrontProduct) => {
+      dispatch(addProduct({ shop, product }));
+      showToast('success', `${product.name} added to cart`, 5000, 'top-center');
+    },
+    [dispatch, showToast],
   );
   const handleUpdateQty = useCallback(
     (slug: string, productId: number, quantity: number) => dispatch(updateQty({ slug, productId, quantity })),

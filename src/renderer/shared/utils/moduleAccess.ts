@@ -378,9 +378,9 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
     return ROUTES.ESTIMATES.BOARDS;
   }
 
-  // Storefront shoppers (no business) — Discover, not empty POS shell
+  // Storefront shoppers (no business) — Products & Services, not empty POS shell
   if (!user.business_id && accessible.has('discover')) {
-    return ROUTES.DISCOVER_MY_ORDERS;
+    return ROUTES.DISCOVER;
   }
 
   if (accessible.has('account')) return MODULE_DEFAULT_ROUTES.account;

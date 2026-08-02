@@ -48,7 +48,7 @@ function mergeOrders(base: PosOrder[] = [], local: PosOrder[] = []): PosOrder[] 
 }
 
 export function useOrders(
-  filters?: { status?: string; q?: string; source?: string },
+  filters?: { status?: string; q?: string; source?: string; location_id?: string },
   enabled = true,
   options?: { poll?: boolean },
 ) {
@@ -68,6 +68,10 @@ export function useOrders(
           if (filters?.source) {
             merged = merged.filter((o) => (o.source ?? 'pos') === filters.source);
           }
+          if (filters?.location_id) {
+            const locId = Number(filters.location_id);
+            merged = merged.filter((o) => o.location_id === locId);
+          }
           if (filters?.q?.trim()) {
             const q = filters.q.trim().toLowerCase();
             merged = merged.filter(
@@ -84,6 +88,10 @@ export function useOrders(
           let list = local;
           if (filters?.status) list = list.filter((o) => o.status === filters.status);
           if (filters?.source) list = list.filter((o) => (o.source ?? 'pos') === filters.source);
+          if (filters?.location_id) {
+            const locId = Number(filters.location_id);
+            list = list.filter((o) => o.location_id === locId);
+          }
           if (filters?.q?.trim()) {
             const q = filters.q.trim().toLowerCase();
             list = list.filter(

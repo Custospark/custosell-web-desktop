@@ -29,6 +29,7 @@ import { computeSaleBalance } from '../../../payments/payableBalance';
 import type { Sale } from '../../api/salesTypes';
 import type { Invoice } from '../../../invoices/api/InvoiceTypes';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
+import BranchFilter from '../../../../shared/components/filters/BranchFilter';
 
 export default function SalesHistory() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
@@ -37,6 +38,7 @@ export default function SalesHistory() {
   const qc = useQueryClient();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
   const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
   const [invoiceSale, setInvoiceSale] = useState<Sale | null>(null);
   const [existingInvoiceForSale, setExistingInvoiceForSale] = useState<Invoice | null>(null);
@@ -70,10 +72,14 @@ export default function SalesHistory() {
   const filtered = useMemo(() => {
     if (!sales) return [];
     const safe = sales.filter(Boolean) as SaleWithSyncMeta[];
-    if (!search.trim()) return safe;
-    const q = search.toLowerCase();
-    return safe.filter((s) => s.receipt_number.toLowerCase().includes(q));
-  }, [sales, search]);
+    const branchId = branchFilter ? Number(branchFilter) : null;
+    return safe.filter((s) => {
+      if (branchId && s.location_id !== branchId) return false;
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return s.receipt_number.toLowerCase().includes(q);
+    });
+  }, [sales, search, branchFilter]);
 
   const paginated = usePagination(filtered, 15);
 
@@ -178,6 +184,7 @@ export default function SalesHistory() {
         <div className="flex-1">
           <SearchInput placeholder="Search receipt/sale by receipt number" value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
         </div>
+        <BranchFilter value={branchFilter} onChange={setBranchFilter} />
         <div className="flex items-center gap-2">
           <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
             {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}

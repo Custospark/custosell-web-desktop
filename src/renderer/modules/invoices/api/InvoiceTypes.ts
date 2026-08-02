@@ -17,6 +17,9 @@ export interface Invoice {
   estimate_id?: number | null;
   purchase_order_id?: number | null;
   buyer_business_id?: number | null;
+  /** Source branch this invoice was created from. */
+  location_id?: number | null;
+  location?: { id: number; name: string; code: string | null } | null;
   /** issued = we sold; received = PO invoice from a supplier */
   direction?: 'issued' | 'received';
   /** Counterparty label from API (supplier when received, customer when issued). */

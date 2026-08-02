@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
+import BranchFilter from '../../../../shared/components/filters/BranchFilter';
 
 const statusLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
   paid: { label: 'Paid', variant: 'success' },
@@ -33,6 +34,7 @@ export default function RefundPanel() {
   const user = useAppSelector((s) => s.auth.user);
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const [receiptSearch, setReceiptSearch] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [refundQtys, setRefundQtys] = useState<Record<number, number>>({});
@@ -51,7 +53,10 @@ export default function RefundPanel() {
     },
   });
 
-  const paidSales = (sales ?? []).filter(Boolean).filter((s) => s.payment_status === 'paid' || s.payment_status === 'partially_refunded')
+  const branchId = branchFilter ? Number(branchFilter) : null;
+  const paidSales = (sales ?? []).filter(Boolean)
+    .filter((s) => s.payment_status === 'paid' || s.payment_status === 'partially_refunded')
+    .filter((s) => !branchId || s.location_id === branchId)
     .filter((s) => !receiptSearch || s.receipt_number.toLowerCase().includes(receiptSearch.toLowerCase()));
 
   const saleSubtotal = selectedSale ? parseFloat(selectedSale.subtotal) : 0;
@@ -193,6 +198,7 @@ export default function RefundPanel() {
               </div>
             </div>
           </div>
+          <BranchFilter value={branchFilter} onChange={setBranchFilter} />
           <div className="flex items-center gap-2">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}

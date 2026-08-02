@@ -22,6 +22,7 @@ import SendDocumentEmailModal from '../../shared/components/email/SendDocumentEm
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { balanceDue, displayStatus, invoicePartyLabel, isOverdue, isReceivedInvoice } from './invoiceListHelpers';
 import { buildInvoiceColumns } from './buildInvoiceColumns';
+import BranchFilter from '../../shared/components/filters/BranchFilter';
 
 type InvoiceView = 'list' | 'create' | 'edit';
 export type InvoicesPageMode = 'sales' | 'supplier';
@@ -39,6 +40,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'issued' | 'received'>('issued');
   const [localPaymentModal, setLocalPaymentModal] = useState<Invoice | null>(null);
   const [localViewInvoiceId, setLocalViewInvoiceId] = useState<number | null>(null);
@@ -70,9 +72,11 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const poParam = searchParams.get('po');
+    const branchId = branchFilter ? Number(branchFilter) : null;
     return sorted.filter((inv) => {
       const status = displayStatus(inv);
       if (statusFilter && status !== statusFilter) return false;
+      if (branchId && inv.location_id !== branchId) return false;
       if (isSupplierMode || directionFilter === 'received') {
         if (!isReceivedInvoice(inv)) return false;
       } else if (directionFilter === 'issued') {
@@ -89,7 +93,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
       }
       return true;
     });
-  }, [sorted, search, statusFilter, directionFilter, searchParams, isSupplierMode]);
+  }, [sorted, search, statusFilter, directionFilter, searchParams, isSupplierMode, branchFilter]);
 
   const paginated = usePagination(filtered, 15);
 
@@ -253,6 +257,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+              <BranchFilter value={branchFilter} onChange={setBranchFilter} />
               <span className="hidden sm:inline text-xs text-gray-400 whitespace-nowrap">
                 {filtered.length} of {stats.total}
               </span>
@@ -347,6 +352,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
                   onClick={() => {
                     setSearch('');
                     setStatusFilter('');
+                    setBranchFilter('');
                     setDirectionFilter(isSupplierMode ? 'received' : 'issued');
                     clearPoFilter();
                   }}

@@ -26,6 +26,8 @@ export interface PosOrder {
   delivery_address?: string | null;
   delivery_city?: string | null;
   shift_id: number | null;
+  location_id?: number | null;
+  location?: { id: number; name: string; code: string | null } | null;
   order_number: string;
   status: OrderStatus;
   source?: OrderSource | string;
@@ -47,6 +49,7 @@ export interface PosOrder {
 export interface CreateOrderPayload {
   customer_id?: number | null;
   customer_name?: string | null;
+  location_id?: number | null;
   shift_id?: number | null;
   notes?: string | null;
   subtotal?: number;

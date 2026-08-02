@@ -42,6 +42,7 @@ import InvoiceFromSaleModal from './ui/InvoiceFromSaleModal';
 import RenameOrderModal from './ui/RenameOrderModal';
 import { ORDER_STATUS_TABS, orderStatusBadge } from './ui/orders/orderStatusUi';
 import type { Invoice } from '../invoices/api/InvoiceTypes';
+import BranchFilter from '../../shared/components/filters/BranchFilter';
 
 export default function OrdersPage() {
   const dispatch = useAppDispatch();
@@ -52,6 +53,7 @@ export default function OrdersPage() {
 
   const [statusTab, setStatusTab] = useState<OrderStatus | 'all'>('open');
   const [onlineOnly, setOnlineOnly] = useState(false);
+  const [branchFilter, setBranchFilter] = useState('');
   const [search, setSearch] = useState('');
   const [invoiceSaleId, setInvoiceSaleId] = useState<number | null>(null);
   const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
@@ -63,8 +65,9 @@ export default function OrdersPage() {
       status: statusTab === 'all' ? undefined : statusTab,
       q: search.trim() || undefined,
       source: onlineOnly ? 'storefront' : undefined,
+      location_id: branchFilter || undefined,
     }),
-    [statusTab, search, onlineOnly],
+    [statusTab, search, onlineOnly, branchFilter],
   );
 
   const { data: orders = [], isLoading, error, refetch, isFetching } = useOrders(filters, true, { poll: true });
@@ -259,6 +262,7 @@ export default function OrdersPage() {
               onClear={() => setSearch('')}
             />
           </div>
+          <BranchFilter value={branchFilter} onChange={setBranchFilter} />
         </div>
 
         {!isOffline && onlineOpenCount > 0 && !onlineOnly ? (

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
-  CheckCircle, AlertTriangle, CreditCard, Rocket, ChevronDown, ChevronUp, Sparkles,
+  CheckCircle, AlertTriangle, CreditCard, Rocket, ChevronDown, ChevronUp, Sparkles, Lock,
+  Wallet, Kanban, FileText, FolderOpen, BookOpen,
 } from 'lucide-react';
 import type { ElementType } from 'react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -8,7 +9,22 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { resolveAccessibleNavGroups } from '../../shared/components/layout/resolveAccessibleNavLeaves';
 import { usePlanAccessibleModules } from '../../shared/utils/usePlanAccessibleModules';
-import { hasSubscriptionAccess } from '../../shared/utils/moduleAccess';
+import {
+  BUSINESS_MODULE_SLUGS,
+  MODULE_LABELS,
+  MODULE_DEFAULT_ROUTES,
+  getAccessibleModules,
+  hasSubscriptionAccess,
+} from '../../shared/utils/moduleAccess';
+
+/** Icons for paid personal-plan tools that are locked while access lapses. */
+const LOCKED_ICONS: Record<string, ElementType> = {
+  expenses: Wallet,
+  pipeline: Kanban,
+  documents: FileText,
+  estimates: FolderOpen,
+  accounting: BookOpen,
+};
 
 interface Tool {
   key: string;
@@ -128,6 +144,39 @@ export default function YourToolsPage() {
   const visibleTools = availableTools.slice(0, 6);
   const hasMore = availableTools.length > 6;
   const hiddenCount = availableTools.length - 6;
+
+  // Paid personal-plan tools the user currently has NO access to (lapsed/suspended).
+  // Derived from the plan's granted features minus what is reachable right now.
+  const lockedTools = useMemo(() => {
+    if (activeAccess) return [];
+    const accessible = new Set(getAccessibleModules(user));
+    const features = user?.business?.subscription?.plan_features ?? {};
+    const copy = user?.account_type === 'personal'
+      ? TOOL_DESCRIPTIONS.personal
+      : TOOL_DESCRIPTIONS.business;
+    return Object.entries(features)
+      .filter(([slug, enabled]) =>
+        enabled
+        && (BUSINESS_MODULE_SLUGS as readonly string[]).includes(slug)
+        && !accessible.has(slug)
+        && copy[MODULE_LABELS[slug as keyof typeof MODULE_LABELS]],
+      )
+      .map<Tool>(([slug]) => {
+        const label = MODULE_LABELS[slug as keyof typeof MODULE_LABELS];
+        return {
+          key: slug,
+          label,
+          description: copy[label],
+          icon: LOCKED_ICONS[slug] ?? Sparkles,
+          to: MODULE_DEFAULT_ROUTES[slug],
+        };
+      })
+      .sort((a, b) => {
+        const ia = TOOL_ORDER.indexOf(a.label);
+        const ib = TOOL_ORDER.indexOf(b.label);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      });
+  }, [user, activeAccess]);
 
   const go = (to: string) => navigate(to);
 
@@ -265,6 +314,53 @@ export default function YourToolsPage() {
               </div>
             ) : null}
           </section>
+
+          {!activeAccess && lockedTools.length > 0 && (
+            <section aria-label="Locked tools" className="mt-8">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-500 text-white">
+                    <Lock className="h-3.5 w-3.5" />
+                  </span>
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Locked tools — reactivate to unlock
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Restore full access
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 min-[520px]:gap-4 xl:grid-cols-3">
+                {lockedTools.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
+                    aria-label={`${t.label} — locked, restore access to use`}
+                    className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left opacity-80 transition-all hover:opacity-100"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-300 text-white">
+                        <t.icon className="h-4 w-4" />
+                      </span>
+                      <span className="text-sm font-bold text-slate-500 line-through decoration-slate-300">
+                        {t.label}
+                      </span>
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                        <Lock className="h-3 w-3" />
+                      </span>
+                    </div>
+                    <p className="pl-10 text-xs leading-relaxed text-slate-400">{t.description}</p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )} 
 
           {/* Bottom: plan / subscription info */}
           <div className="mt-8 space-y-4">

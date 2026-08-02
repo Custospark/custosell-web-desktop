@@ -320,12 +320,10 @@ export default function YourToolsPage() {
               </div>
               <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 min-[520px]:gap-4 xl:grid-cols-3">
                 {lockedTools.map((t) => (
-                  <button
+                  <div
                     key={t.key}
-                    type="button"
-                    onClick={() => navigate(ROUTES.SETTINGS.SUBSCRIPTION)}
-                    aria-label={`${t.label} — locked, restore access to use`}
-                    className="flex cursor-not-allowed select-none flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                    aria-label={`${t.label} — locked`}
+                    className="flex cursor-not-allowed select-none flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
@@ -337,7 +335,7 @@ export default function YourToolsPage() {
                       </span>
                     </div>
                     <p className="pl-10 text-xs leading-relaxed text-slate-500">{t.description}</p>
-                  </button>
+                  </div>
                 ))}
               </div>
             </section>

@@ -2,7 +2,7 @@ import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { RefreshCw, House } from 'lucide-react';
 import LogoImage from '../../assets/LogoImage';
 import { store } from '../../../app/store/store';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { getDefaultRoute } from '../../utils/moduleAccess';
 
 interface Props {
   children: ReactNode;
@@ -38,14 +38,19 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   handleRecover = () => {
-    const token = store.getState().auth?.token;
-    const target = token ? ROUTES.DASHBOARD : ROUTES.HOME;
+    const user = store.getState().auth?.user ?? null;
+    const target = getDefaultRoute(user);
     window.location.assign(target);
   };
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
+
+      const user = store.getState().auth?.user ?? null;
+      const isStorefrontBuyer = user?.account_type === 'storefront_buyer';
+      const isPersonal = user?.account_type === 'personal';
+      const homeLabel = isStorefrontBuyer ? 'Back to shopping' : isPersonal ? 'Back to your tools' : 'Back to dashboard';
 
       return (
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
@@ -55,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <h2 className="mb-2 text-lg font-semibold text-gray-900">Sorry, we hit a bump</h2>
           <p className="mb-1 max-w-md text-sm text-gray-500">
             Something went wrong while loading this screen. No action was lost on your end — your
-            work is safe. You can try again, or head back to your dashboard.
+            work is safe. You can try again, or head back.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
@@ -70,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
               className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               <House className="h-4 w-4" />
-              Back to dashboard
+              {homeLabel}
             </button>
           </div>
         </div>

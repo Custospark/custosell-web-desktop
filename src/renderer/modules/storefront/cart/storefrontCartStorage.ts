@@ -19,17 +19,23 @@ const TEXT_FIELDS: (keyof StorefrontCartBag)[] = [
 /** Guarantee every text field is a string so consumers can `.trim()` safely. */
 function sanitizeBag(input: unknown): StorefrontCartBag | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
-  const bag = input as Partial<Record<keyof StorefrontCartBag, unknown>> & {
-    shop: unknown;
-    items: unknown;
-  };
-  const shop = bag.shop as Partial<StorefrontCartShopMeta> | undefined;
+  const bag = input as Record<string, unknown>;
+  const shopRaw = bag.shop;
   if (
-    !shop || typeof shop !== 'object' || typeof shop.slug !== 'string' ||
+    !shopRaw || typeof shopRaw !== 'object' ||
+    typeof (shopRaw as Record<string, unknown>).slug !== 'string' ||
     !Array.isArray(bag.items)
   ) {
     return null;
   }
+  const shopPartial = shopRaw as Partial<StorefrontCartShopMeta>;
+  const shop: StorefrontCartShopMeta = {
+    name: shopPartial.name ?? '',
+    slug: shopPartial.slug ?? '',
+    currency: shopPartial.currency ?? 'UGX',
+    city: shopPartial.city ?? '',
+    logo_path: shopPartial.logo_path ?? null,
+  };
   const row: StorefrontCartBag = {
     shop,
     items: bag.items as StorefrontCartBag['items'],
@@ -40,7 +46,8 @@ function sanitizeBag(input: unknown): StorefrontCartBag | null {
     delivery_city: '',
   };
   for (const f of TEXT_FIELDS) {
-    if (typeof bag[f] === 'string') row[f] = bag[f] as string;
+    const val = bag[f as string];
+    if (typeof val === 'string') row[f] = val;
   }
   return row;
 }

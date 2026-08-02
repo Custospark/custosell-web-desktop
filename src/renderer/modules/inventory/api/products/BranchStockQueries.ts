@@ -54,7 +54,14 @@ export function useStockTransfer() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<unknown, AxiosError<ApiError>, TransferPayload>({
+  interface TransferContext {
+    previousFrom: LocationStockItem[];
+    previousTo: LocationStockItem[];
+    fromKey: readonly ['inventory', 'location-stock', number];
+    toKey: readonly ['inventory', 'location-stock', number];
+  }
+
+  return useMutation<unknown, AxiosError<ApiError>, TransferPayload, TransferContext>({
     networkMode: 'always',
     retry: (count, err) => !isNetworkFailure(err) && count < 1,
     mutationFn: async (payload) => {

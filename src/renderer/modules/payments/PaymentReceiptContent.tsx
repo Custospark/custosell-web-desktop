@@ -24,10 +24,12 @@ interface PaymentReceiptContentProps {
   billDetails?: PaymentReceiptBillDetails | null;
   /** Issuing seller letterhead. When omitted, uses the logged-in business. */
   issuerBusiness?: ReceiptBusinessSnapshot | null;
+  /** Branch where the payment was generated. */
+  branch?: string | null;
 }
 
 const PaymentReceiptContent = forwardRef<HTMLDivElement, PaymentReceiptContentProps>(
-  ({ payment, context, billDetails, issuerBusiness }, ref) => {
+  ({ payment, context, billDetails, issuerBusiness, branch }, ref) => {
     const business = useReceiptBusiness(issuerBusiness);
     const currency = business?.currency || 'UGX';
     const tendered = payment.amount_tendered ?? payment.amount;
@@ -56,6 +58,12 @@ const PaymentReceiptContent = forwardRef<HTMLDivElement, PaymentReceiptContentPr
               <span>Date</span>
               <span>{formatShiftDate(payment.paid_at)}</span>
             </div>
+            {branch ? (
+              <div className="flex justify-between">
+                <span>Branch</span>
+                <span className="font-medium">{branch}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between">
               <span>Method</span>
               <span className="capitalize">{payment.payment_method.replace('_', ' ')}</span>

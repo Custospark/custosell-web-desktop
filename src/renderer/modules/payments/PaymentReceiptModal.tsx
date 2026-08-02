@@ -61,6 +61,11 @@ export default function PaymentReceiptModal({
   const customerName = invoice?.customer?.name ?? sale?.customer?.name ?? undefined;
   const issuerBusiness = isReceivedInvoice ? (invoice?.seller_business ?? null) : null;
 
+  const branchName =
+    sale?.location?.name
+    ?? invoice?.location?.name
+    ?? null;
+
   const billDetails = billDetailsProp
     ?? (sale ? buildBillDetailsFromSale(sale) : invoice ? buildBillDetailsFromInvoice(invoice) : null);
 
@@ -171,6 +176,7 @@ export default function PaymentReceiptModal({
               context={context}
               billDetails={billDetails}
               issuerBusiness={issuerBusiness}
+              branch={branchName}
             />
           </div>
 

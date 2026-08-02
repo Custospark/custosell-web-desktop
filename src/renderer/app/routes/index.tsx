@@ -338,9 +338,11 @@ export function AppRoutes() {
               <Route path="locations" element={<SuspenseWrapper><LocationsSettingsPage /></SuspenseWrapper>} />
               <Route path="modules" element={<SuspenseWrapper><ModuleAccessSettingsPage /></SuspenseWrapper>} />
               <Route path="data-export" element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
-              <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
             </Route>
           </Route>
+          {/* Plans & billing — always reachable regardless of the settings module gate
+              (e.g. suspended/expired personal accounts must reach the plans page). */}
+          <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
           <Route element={<PlatformAdminRoute />}>
             <Route path={ROUTES.PLATFORM.INDEX} element={<Navigate to={ROUTES.PLATFORM.OVERVIEW} replace />} />
             <Route path={ROUTES.PLATFORM.OVERVIEW} element={<SuspenseWrapper><PlatformOverviewPage /></SuspenseWrapper>} />

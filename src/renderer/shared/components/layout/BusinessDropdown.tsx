@@ -20,6 +20,7 @@ export default function BusinessDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const user = useAppSelector((s) => s.auth.user);
+  const activeLocationId = useAppSelector((s) => s.auth.activeLocationId);
   const { data: business } = useBusiness();
 
   const businessName =
@@ -30,12 +31,14 @@ export default function BusinessDropdown() {
 
   const isBusiness = user?.account_type === 'business';
   const isOwner = isBusinessOwner(user);
-  const planName = user?.business?.subscription?.plan_name;
-  const planSlug = user?.business?.subscription?.plan_slug;
+  const activeLocation =
+    user?.locations?.find((loc) => loc.id === activeLocationId) ??
+    user?.locations?.find((loc) => loc.is_default) ??
+    user?.location;
   const subtitle =
-    user?.account_type === 'personal' ? 'Personal plan'
+    user?.account_type === 'personal' ? 'Personal account'
     : user?.account_type === 'storefront_buyer' ? 'Shopping account'
-    : (planName ?? 'Business account');
+    : (activeLocation?.name ?? 'Business account');
 
   const businessDetails = useMemo<DetailRow[]>(() => {
     if (!business) return [];
@@ -87,20 +90,6 @@ export default function BusinessDropdown() {
     links.push({ label: 'My Account', icon: CircleUser, to: ROUTES.ACCOUNT.PROFILE });
   }
 
-  const planBadge = planSlug ? (
-    <span
-      className={cn(
-        'shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded leading-none',
-        planSlug === 'essential' && 'bg-blue-100 text-blue-700',
-        planSlug === 'professional' && 'bg-indigo-100 text-indigo-700',
-        planSlug === 'enterprise' && 'bg-violet-100 text-violet-700',
-        planSlug === 'personal' && 'bg-emerald-100 text-emerald-700',
-      )}
-    >
-      {planSlug.slice(0, 3).replace(/^\w/, (c) => c.toUpperCase())}
-    </span>
-  ) : null;
-
   const showDetailsSection = Boolean(business && (businessDetails.length > 0 || isOwner));
 
   return (
@@ -129,7 +118,6 @@ export default function BusinessDropdown() {
             <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
             <span className="block text-xs truncate text-gray-500">{subtitle}</span>
           </div>
-          {isOwner && planBadge}
         </div>
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
@@ -146,9 +134,8 @@ export default function BusinessDropdown() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate flex items-center gap-1.5">
+                <p className="text-sm font-bold text-gray-900 truncate">
                   <span className="truncate">{businessName}</span>
-                  {isOwner && planBadge}
                 </p>
                 <p className="text-xs text-gray-500 truncate">{subtitle}</p>
               </div>

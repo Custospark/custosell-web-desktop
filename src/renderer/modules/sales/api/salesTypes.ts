@@ -67,6 +67,8 @@ export interface Sale {
   customer_id: number | null;
   shift_id: number | null;
   order_id?: number | null;
+  location_id?: number | null;
+  location?: { id: number; name: string; code: string } | null;
   business?: BusinessInfo;
   receipt_number: string;
   subtotal: string;

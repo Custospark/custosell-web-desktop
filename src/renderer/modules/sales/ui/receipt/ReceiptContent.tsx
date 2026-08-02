@@ -61,6 +61,12 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
             <span>Receipt Number</span>
             <span className="font-medium text-gray-800">{sale.receipt_number}</span>
           </div>
+          {sale.location?.name && (
+            <div className="flex justify-between">
+              <span>Branch</span>
+              <span className="font-medium text-gray-800">{sale.location.name}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>Date</span>
             <span>{new Date(sale.created_at).toLocaleDateString()} {new Date(sale.created_at).toLocaleTimeString()}</span>

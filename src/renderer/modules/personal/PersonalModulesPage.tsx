@@ -63,7 +63,7 @@ const PERSONAL_DESCRIPTIONS: Record<string, string> = {
   'Inventory & Supply Chain': 'Keep what you sell stocked and simple to find.',
   Customers: 'Look after the people you sell to and bring them back.',
   'Sales Funnel': 'Track personal projects and close the deals that matter to you.',
-  'Projects & Estimates': 'Project Management — plan and estimate your ideas, even offline.',
+  'Projects & Estimates': 'Project Management — plan and estimate your ideas, and track progress.',
   'Income & Expenses': 'Expense Tracking — record what you spend and earn to stay organised.',
   Accounting: 'Bookkeeping — keep your records neat and your numbers in balance.',
   Documents: 'Document Management — store and find your important files with ease.',

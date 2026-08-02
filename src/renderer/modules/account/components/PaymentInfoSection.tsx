@@ -25,7 +25,15 @@ export function PaymentInfoSection() {
   const { data: paymentInfo, isLoading } = usePaymentInfo();
   const [editing, setEditing] = useState(false);
 
-  const hasSavedData = Boolean(paymentInfo?.payment_method);
+  const hasSavedData = Boolean(
+    paymentInfo?.payment_method ||
+    paymentInfo?.mobile_money_number ||
+    paymentInfo?.mobile_money_provider ||
+    paymentInfo?.bank_name ||
+    paymentInfo?.bank_account_name ||
+    paymentInfo?.bank_account_number ||
+    paymentInfo?.bank_branch,
+  );
 
   const initialForm = useMemo(() => paymentInfoToForm(paymentInfo), [paymentInfo]);
   const initialCountry = useMemo(() => {
@@ -33,9 +41,13 @@ export function PaymentInfoSection() {
     return parseInternationalPhone(paymentInfo.mobile_money_number).countryCode;
   }, [paymentInfo]);
 
-  const methodIcon = paymentInfo?.payment_method === 'bank' ? Landmark : Smartphone;
-  const methodTitle =
-    paymentInfo?.payment_method === 'bank' ? 'Bank Transfer' : paymentInfo?.payment_method === 'mobile_money' ? 'Mobile Money' : '';
+  const hasMobileMoney = Boolean(paymentInfo?.mobile_money_number || paymentInfo?.mobile_money_provider);
+  const hasBank = Boolean(
+    paymentInfo?.bank_name ||
+    paymentInfo?.bank_account_name ||
+    paymentInfo?.bank_account_number ||
+    paymentInfo?.bank_branch,
+  );
 
   if (isLoading) {
     return (
@@ -70,30 +82,33 @@ export function PaymentInfoSection() {
 
       {!editing ? (
         hasSavedData ? (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
-              {(() => {
-                const Icon = methodIcon;
-                return <Icon className="h-4 w-4 text-indigo-600" />;
-              })()}
-              <span className="text-sm font-semibold text-gray-900">{methodTitle}</span>
-            </div>
-            <div className="pt-2">
-              {paymentInfo?.payment_method === 'mobile_money' && (
-                <>
-                  <DetailRow label="Number" value={formatPhoneDisplay(paymentInfo.mobile_money_number)} />
-                  <DetailRow label="Provider" value={paymentInfo.mobile_money_provider} />
-                </>
-              )}
-              {paymentInfo?.payment_method === 'bank' && (
-                <>
-                  <DetailRow label="Bank" value={paymentInfo.bank_name} />
-                  <DetailRow label="Branch" value={paymentInfo.bank_branch} />
-                  <DetailRow label="Account name" value={paymentInfo.bank_account_name} />
-                  <DetailRow label="Account number" value={paymentInfo.bank_account_number} mono />
-                </>
-              )}
-            </div>
+          <div className="space-y-3">
+            {hasMobileMoney && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
+                  <Smartphone className="h-4 w-4 text-indigo-600" />
+                  <span className="text-sm font-semibold text-gray-900">Mobile Money</span>
+                </div>
+                <div className="pt-2">
+                  <DetailRow label="Number" value={formatPhoneDisplay(paymentInfo?.mobile_money_number)} />
+                  <DetailRow label="Provider" value={paymentInfo?.mobile_money_provider} />
+                </div>
+              </div>
+            )}
+            {hasBank && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
+                  <Landmark className="h-4 w-4 text-indigo-600" />
+                  <span className="text-sm font-semibold text-gray-900">Bank Transfer</span>
+                </div>
+                <div className="pt-2">
+                  <DetailRow label="Bank" value={paymentInfo?.bank_name} />
+                  <DetailRow label="Branch" value={paymentInfo?.bank_branch} />
+                  <DetailRow label="Account name" value={paymentInfo?.bank_account_name} />
+                  <DetailRow label="Account number" value={paymentInfo?.bank_account_number} mono />
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 py-6 text-center">

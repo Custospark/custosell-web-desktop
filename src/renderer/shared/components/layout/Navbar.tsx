@@ -70,6 +70,69 @@ function getLgBreakpointServerSnapshot() {
   return false;
 }
 
+/**
+ * Dropdown label cluster — Business, Referral, Subscription.
+ * Shows each text label only while there is room: drops labels in priority
+ * order (business → referral → subscription) as the measured row shrinks, and
+ * restores them as space frees up. Icons always remain.
+ */
+function NavbarLabelCluster({
+  showSubscription,
+}: {
+  showSubscription: boolean;
+}) {
+  const holderRef = useRef<HTMLDivElement>(null);
+  /** Number of labels to show, in priority order: business, referral, subscription. */
+  const [labelCount, setLabelCount] = useState(showSubscription ? 3 : 2);
+  const labelCountRef = useRef(labelCount);
+  useEffect(() => {
+    labelCountRef.current = labelCount;
+  }, [labelCount]);
+
+  useEffect(() => {
+    const el = holderRef.current;
+    if (!el) return;
+
+    const total = showSubscription ? 3 : 2;
+
+    const reconcile = () => {
+      const avail = el.clientWidth;
+      const needed = el.scrollWidth;
+      // Hysteresis: grow only with comfortable headroom, shrink on real overflow.
+      if (needed > avail + 2) {
+        setLabelCount((c) => Math.max(1, c - 1));
+      } else if (labelCountRef.current < total && needed + 24 < avail) {
+        setLabelCount((c) => Math.min(total, c + 1));
+      }
+    };
+
+    reconcile();
+    const ro = new ResizeObserver(reconcile);
+    ro.observe(el);
+    window.addEventListener('resize', reconcile);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', reconcile);
+    };
+  }, [showSubscription]);
+
+  const showBusiness = labelCount >= 1;
+  const showReferral = labelCount >= 2;
+  const showSubscriptionLabel = showSubscription && labelCount >= 3;
+
+  return (
+    <div
+      ref={holderRef}
+      data-label-cluster
+      className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-hidden"
+    >
+      <div data-tour="navbar-business"><BusinessDropdown label={showBusiness} /></div>
+      <div data-tour="navbar-referral"><ReferralDropdown label={showReferral} /></div>
+      {showSubscription && <div data-tour="navbar-subscription"><SubscriptionDropdown label={showSubscriptionLabel} /></div>}
+    </div>
+  );
+}
+
 function NavbarShiftBadge({ clockIn, className }: { clockIn: string; className?: string }) {
   return (
     <div
@@ -302,11 +365,7 @@ export function Navbar() {
 
           {!isWorkspace && <HeaderNotifications />}
 
-          <div data-tour="navbar-business"><BusinessDropdown /></div>
-
-          <div data-tour="navbar-referral"><ReferralDropdown /></div>
-
-          {isBusinessOwner(user) && <div data-tour="navbar-subscription"><SubscriptionDropdown /></div>}
+          <NavbarLabelCluster showSubscription={isBusinessOwner(user)} />
 
           <div className="shrink-0 pr-3">
             <button

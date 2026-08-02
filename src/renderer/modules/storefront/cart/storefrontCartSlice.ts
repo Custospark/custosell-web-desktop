@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { logout } from '../../../app/store/slices/authSlice';
 import type { StorefrontCartItem, StorefrontProduct } from '../api/storefrontTypes';
 import {
@@ -123,8 +123,10 @@ type StorefrontCartRoot = { storefrontCart: StorefrontCartState };
 export const selectStorefrontCartOpen = (state: StorefrontCartRoot) => state.storefrontCart.cartOpen;
 export const selectStorefrontActiveSlug = (state: StorefrontCartRoot) => state.storefrontCart.activeSlug;
 export const selectStorefrontCarts = (state: StorefrontCartRoot) => state.storefrontCart.carts;
-export const selectStorefrontBags = (state: StorefrontCartRoot): StorefrontCartBag[] =>
-  Object.values(state.storefrontCart.carts).filter((b) => b.items.length > 0);
+export const selectStorefrontBags = createSelector(
+  selectStorefrontCarts,
+  (carts): StorefrontCartBag[] => Object.values(carts).filter((b) => b.items.length > 0),
+);
 export const selectStorefrontLineCount = (state: StorefrontCartRoot): number =>
   Object.values(state.storefrontCart.carts).reduce(
     (sum, bag) => sum + bag.items.length,

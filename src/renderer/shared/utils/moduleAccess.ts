@@ -201,12 +201,17 @@ export function getAccessibleModules(user: AuthUser | null | undefined): string[
   if (user.account_type === 'personal') {
     modules.add('your_tools');
 
-    // Personal module grants come from backend `user.modules` (reconciled against
-    // subscription access at login). Cross-check the live subscription so a stale
-    // stored session can't re-expose paid modules to a suspended/expired account.
-    const currentAccess = personalModuleAccess(user);
-    if (currentAccess) {
-      storedBusinessModules(user).forEach((m) => modules.add(m));
+    // Personal module grants come from the subscription plan's live access, not the
+    // mutable `user.modules` array (which a stale offline session or a business-sync
+    // can decorate with paid modules even after suspension). plan_features is the
+    // authoritative grant list; it is only surfaced while the subscription has access.
+    if (personalModuleAccess(user)) {
+      const features = user.business?.subscription?.plan_features ?? {};
+      for (const [slug, enabled] of Object.entries(features)) {
+        if (enabled && (BUSINESS_MODULE_SLUGS as readonly string[]).includes(slug)) {
+          modules.add(slug);
+        }
+      }
     }
   } else if (isBusinessOwner(user)) {
     resolvedOwnerBusinessModules(user).forEach((m) => modules.add(m));

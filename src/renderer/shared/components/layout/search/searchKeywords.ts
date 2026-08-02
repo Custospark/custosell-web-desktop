@@ -87,6 +87,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
   [ROUTES.SETTINGS.TAX]: ['vat', 'tax rates', 'tax configuration', 'tax setup', 'sales tax'],
   [ROUTES.SETTINGS.STAFF]: ['invite staff', 'manage team', 'add staff', 'team members', 'staff accounts'],
   [ROUTES.SETTINGS.ROLES]: ['permissions', 'role settings', 'access control', 'user roles', 'permission levels'],
+  [ROUTES.SETTINGS.LOCATIONS]: ['branches', 'branch', 'location', 'locations', 'store locations', 'multiple stores'],
   [ROUTES.SETTINGS.MODULES]: ['module access', 'enable modules', 'module permissions', 'staff modules', 'feature access'],
   [ROUTES.SETTINGS.SUBSCRIPTION]: ['billing', 'plan', 'upgrade', 'pricing', 'payments', 'renewal', 'invoice', 'subscription status'],
   [ROUTES.SETTINGS.DATA_EXPORT]: ['export data', 'backup', 'download data', 'csv export', 'data download'],

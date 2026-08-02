@@ -38,6 +38,7 @@ import StaffSettingsPage from '../../modules/settings/StaffSettingsPage';
 import RoleSettingsPage from '../../modules/settings/RoleSettingsPage';
 import ModuleAccessSettingsPage from '../../modules/settings/ModuleAccessSettingsPage';
 import DataExportPage from '../../modules/settings/DataExportPage';
+import LocationsSettingsPage from '../../modules/settings/LocationsSettingsPage';
 import PlatformOverviewPage from '../../modules/platform/PlatformOverviewPage';
 import PlatformBusinessesPage from '../../modules/platform/PlatformBusinessesPage';
 import PlatformUsersPage from '../../modules/platform/PlatformUsersPage';
@@ -332,6 +333,7 @@ export function AppRoutes() {
               <Route path="tax" element={<SuspenseWrapper><TaxCompliancePage /></SuspenseWrapper>} />
               <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />
               <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
+              <Route path="locations" element={<SuspenseWrapper><LocationsSettingsPage /></SuspenseWrapper>} />
               <Route path="modules" element={<SuspenseWrapper><ModuleAccessSettingsPage /></SuspenseWrapper>} />
               <Route path="data-export" element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
               <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />

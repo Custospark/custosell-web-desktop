@@ -9,6 +9,7 @@ export const store = configureStore({
       plans: [],
       token: null,
       businessId: null,
+      activeLocationId: null,
       isAuthenticated: false,
       isLoading: false,
       isInitialized: false,

@@ -22,6 +22,12 @@ export const USERS = {
   ATTACH: '/users/attach',
   DETACH: (id: number) => `/users/${id}/detach`,
 };
+export const LOCATIONS = {
+  BASE: '/locations',
+  ACTIVE: '/locations/active',
+  BY_ID: (id: number) => `/locations/${id}`,
+  DEFAULT: (id: number) => `/locations/${id}/default`,
+};
 export const CATEGORIES = '/categories';
 export const PRODUCTS = {
   BASE: '/products',

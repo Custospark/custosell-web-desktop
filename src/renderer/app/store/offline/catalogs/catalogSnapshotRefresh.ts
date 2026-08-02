@@ -6,6 +6,8 @@ import type { Category } from '../../../../modules/inventory/api/products/Produc
 import type { Customer } from '../../../../modules/customers/api/customers/CustomerTypes';
 import type { Role } from '../../../../modules/settings/api/settings/RoleTypes';
 import type { StaffUser } from '../../../../modules/settings/api/settings/StaffTypes';
+import type { Location } from '../../../../modules/settings/api/settings/LocationTypes';
+import { LOCATIONS } from '../../../../shared/api/endpoints/endpoints';
 import { isOfflineMode } from '../core/offlineQueryUtils';
 import { backupCatalogSnapshot, resolveAuthBusinessId } from './catalogSnapshotUtils';
 import { serverCatalogStore, type ProductCatalogKind } from './serverCatalogStore';
@@ -111,6 +113,18 @@ export async function refreshStaffCatalogSnapshot(): Promise<void> {
   }
 }
 
+export async function refreshLocationCatalogSnapshot(): Promise<void> {
+  if (isOfflineMode()) return;
+  const businessId = resolveAuthBusinessId();
+  if (!businessId) return;
+  try {
+    const { data } = await axiosInstance.get<{ data: Location[] }>(LOCATIONS.BASE);
+    backupCatalogSnapshot('locations', businessId, normalizeList<Location>(data.data ?? data));
+  } catch (err) {
+    console.warn('[Catalog] Location snapshot refresh failed:', err);
+  }
+}
+
 export async function refreshAllServerCatalogSnapshots(): Promise<void> {
   const user = store.getState().auth.user;
 
@@ -145,4 +159,8 @@ export async function loadRoleCatalogBaseline(businessId: number): Promise<Role[
 
 export async function loadStaffCatalogBaseline(businessId: number): Promise<StaffUser[]> {
   return (await serverCatalogStore.load<StaffUser>('staff', businessId)) ?? [];
+}
+
+export async function loadLocationCatalogBaseline(businessId: number): Promise<Location[]> {
+  return (await serverCatalogStore.load<Location>('locations', businessId)) ?? [];
 }

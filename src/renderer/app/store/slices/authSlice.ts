@@ -75,14 +75,23 @@ export interface BusinessInfo {
   storefront_enabled?: boolean;
   subscription?: SubscriptionInfo | null;
 }
+export interface AuthLocation {
+  id: number;
+  name: string;
+  code: string;
+  is_default: boolean;
+}
 export interface AuthUser {
   id: number;
   business_id: number | null;
+  location_id?: number | null;
   role_id: number | null;
   name: string;
   email: string;
   phone: string | null;
   is_active: boolean;
+  location?: AuthLocation | null;
+  locations?: AuthLocation[];
   avatar?: string | null;
   business_name?: string | null;
   business?: BusinessInfo | null;
@@ -117,6 +126,7 @@ interface AuthState {
   plans: Plan[];
   token: string | null;
   businessId: number | null;
+  activeLocationId: number | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
@@ -130,6 +140,7 @@ const initialState: AuthState = {
   plans: [],
   token: null,
   businessId: null,
+  activeLocationId: null,
   isAuthenticated: false,
   isLoading: false,
   isInitialized: false,
@@ -148,6 +159,14 @@ function normalizeAuthUser(user: AuthUser): AuthUser {
   return user;
 }
 
+function resolveDefaultLocationId(user: AuthUser): number | null {
+  if (user.location_id) return user.location_id;
+  const defaultLoc = user.locations?.find((loc) => loc.is_default);
+  if (defaultLoc) return defaultLoc.id;
+  const firstLoc = user.locations?.[0];
+  return firstLoc?.id ?? null;
+}
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -163,6 +182,7 @@ const authSlice = createSlice({
       state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
       state.businessId = user.business_id;
+      state.activeLocationId = resolveDefaultLocationId(user);
       state.isAuthenticated = true;
       state.isLoading = false;
       state.isInitialized = true;
@@ -184,6 +204,7 @@ const authSlice = createSlice({
       state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
       state.businessId = user.business_id;
+      state.activeLocationId = resolveDefaultLocationId(user);
       state.isAuthenticated = true;
       state.isLoading = false;
       state.isInitialized = true;
@@ -199,6 +220,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.businessId = null;
+      state.activeLocationId = null;
       state.isAuthenticated = false;
       state.isLoading = false;
       state.isInitialized = true;
@@ -212,6 +234,7 @@ const authSlice = createSlice({
       state.plans = action.payload.plans ?? [];
       state.token = action.payload.token;
       state.businessId = user.business_id;
+      state.activeLocationId = resolveDefaultLocationId(user);
       state.isAuthenticated = true;
       state.isInitialized = true;
       state.isLocalSession = action.payload.isLocalSession;
@@ -238,6 +261,9 @@ const authSlice = createSlice({
       const finalSub = state.user?.business?.subscription;
       console.log('[DEBUG] setUser - FINAL sub status:', finalSub?.status, 'id:', finalSub?.id);
       state.businessId = user.business_id;
+      if (state.activeLocationId == null) {
+        state.activeLocationId = resolveDefaultLocationId(state.user);
+      }
       state.isAuthenticated = true;
       state.isInitialized = true;
     },
@@ -270,6 +296,9 @@ const authSlice = createSlice({
     setInitialized(state) {
       state.isInitialized = true;
     },
+    setActiveLocation(state, action: PayloadAction<number | null>) {
+      state.activeLocationId = action.payload;
+    },
     clearError(state) {
       state.error = null;
     },
@@ -279,7 +308,7 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, hydrateAuth, setUser, setPlans, setBusiness, setInitialized, clearError, updateShiftContext,
+  logout, hydrateAuth, setUser, setPlans, setBusiness, setInitialized, setActiveLocation, clearError, updateShiftContext,
 } = authSlice.actions;
 
 export default authSlice.reducer;

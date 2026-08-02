@@ -97,7 +97,7 @@ export const ROUTES = {
     CONTACT: '/guide/contact',
   },
   BOOKING: { BOOK: (token: string) => `/book/${token}`, CHECK: (token: string, ref: string) => `/book/${token}/check/${ref}` },
-  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', SALES_CHANNELS: '/settings/sales-channels', TAX: '/settings/tax', STAFF: '/settings/staff', ROLES: '/settings/roles', MODULES: '/settings/modules', SUBSCRIPTION: '/settings/subscription', DATA_EXPORT: '/settings/data-export' },
+  SETTINGS: { INDEX: '/settings', BUSINESS: '/settings/business', SALES_CHANNELS: '/settings/sales-channels', TAX: '/settings/tax', STAFF: '/settings/staff', ROLES: '/settings/roles', MODULES: '/settings/modules', LOCATIONS: '/settings/locations', SUBSCRIPTION: '/settings/subscription', DATA_EXPORT: '/settings/data-export' },
   ACCOUNTING: {
     INDEX: '/accounting',
     STATEMENTS: '/accounting/statements',

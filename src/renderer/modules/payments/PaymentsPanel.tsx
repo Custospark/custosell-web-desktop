@@ -99,13 +99,18 @@ export default function PaymentsPanel({
   children,
 }: PaymentsPanelProps) {
   const progress = totalAmount > 0 ? Math.min(100, (amountPaid / totalAmount) * 100) : 0;
+  const branchName = sale?.location?.name ?? invoice?.location?.name ?? null;
 
   return (
     <div className="space-y-4">
       <PipelineModalHero
         icon={Wallet}
         title={canRecord ? 'Collect payment' : 'Payment receipts'}
-        description={`${referenceType} ${referenceLabel} · ${payments.length} payment${payments.length === 1 ? '' : 's'} on record`}
+        description={
+          branchName
+            ? `${referenceType} ${referenceLabel} · ${branchName} · ${payments.length} payment${payments.length === 1 ? '' : 's'} on record`
+            : `${referenceType} ${referenceLabel} · ${payments.length} payment${payments.length === 1 ? '' : 's'} on record`
+        }
         tone={canRecord ? 'emerald' : 'slate'}
       />
 

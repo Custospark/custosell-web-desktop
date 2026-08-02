@@ -19,10 +19,11 @@ interface Tool {
 }
 
 /** Group labels that are not "tools" to launch from the Get Started grid. */
-const NON_TOOL_GROUPS = new Set(['Your Tools', 'Online Shopping', 'Platform', 'Guide Settings']);
+const NON_TOOL_GROUPS = new Set(['Your Tools', 'Platform', 'Guide Settings']);
 
 /** Preferred display order for the workspace tool cards; unlisted/default groups sort last. */
 const TOOL_ORDER = [
+  'Online Shopping',
   'Dashboard',
   'Sales',
   'Inventory & Supply Chain',
@@ -41,7 +42,7 @@ const TOOL_ORDER = [
 
 /** Personal-account voice — warm, casual, self-focused. */
 const PERSONAL_DESCRIPTIONS: Record<string, string> = {
-  Dashboard: 'A friendly snapshot of what is happening with your money and tasks.',
+  'Online Shopping': 'Browse and buy products from businesses across Custosell.',
   Sales: 'Keep tabs on your sales and see how your money moves.',
   'Inventory & Supply Chain': 'Keep what you sell stocked and easy to find.',
   Customers: 'Nurture the people you sell to and serve them well.',
@@ -59,6 +60,7 @@ const PERSONAL_DESCRIPTIONS: Record<string, string> = {
 
 /** Business-account copy: business-and-warm tone. */
 const BUSINESS_DESCRIPTIONS: Record<string, string> = {
+  'Online Shopping': 'Browse and buy products from businesses across Custosell.',
   Dashboard: 'Your business at a glance — key numbers and activity, neatly set.',
   Sales: 'Process orders, track history, and handle refunds and shifts with ease.',
   'Inventory & Supply Chain': 'Keep products, stock, suppliers, and purchase orders in balance.',

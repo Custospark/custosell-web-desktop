@@ -41,9 +41,9 @@ export function AccountTypeSelector({ onSelect }: Props) {
             <ShoppingBag className="h-6 w-6 text-emerald-700" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-gray-900">For shopping</p>
+            <p className="text-base font-semibold text-gray-900">Online shopping</p>
             <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
-              Browse and buy from every business on the Discover marketplace — save items to your wishlist, place orders, and track them in My Orders. Free, with no setup.
+              Browse products and services from every business on the marketplace, add them to your cart, save to your wishlist, place orders, and track everything in your orders — free, with no setup.
             </p>
           </div>
           <ChevronRight className="h-5 w-5 text-emerald-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />

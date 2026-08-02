@@ -120,9 +120,9 @@ export default function YourToolsPage() {
     }));
   }, [user, planModules]);
 
-  const visibleTools = showAll ? availableTools : availableTools.slice(0, 6);
+  const visibleTools = availableTools.slice(0, 6);
   const hasMore = availableTools.length > 6;
-  const hiddenCount = availableTools.length - visibleTools.length;
+  const hiddenCount = availableTools.length - 6;
 
   const go = (to: string) => navigate(to);
 

@@ -194,7 +194,7 @@ export default function RegisterPage() {
       <AuthLayout
         title={isShopping ? 'Create Shopping Account' : 'Create Personal Account'}
         subtitle={isShopping ? 'Setting up your Shopping Account' : 'Setting up your Personal Account'}
-        subtitleClassName={isShopping ? 'text-emerald-600' : 'text-blue-600'}
+        subtitleClassName="text-blue-600"
         heroImage={AUTH_HERO_IMAGES.register}
       >
         <SimpleAccountForm mode={accountType} onBack={() => setAccountType(null)} />

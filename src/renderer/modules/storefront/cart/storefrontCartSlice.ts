@@ -1,6 +1,7 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { logout } from '../../../app/store/slices/authSlice';
 import type { StorefrontCartItem, StorefrontProduct } from '../api/storefrontTypes';
+import { loadStorefrontCart } from './storefrontCartStorage';
 import {
   emptyBag,
   type StorefrontBagContactPatch,
@@ -17,7 +18,7 @@ export interface StorefrontCartState {
 }
 
 const initialState: StorefrontCartState = {
-  carts: {},
+  carts: loadStorefrontCart(),
   cartOpen: false,
   activeSlug: null,
 };
@@ -95,11 +96,11 @@ const storefrontCartSlice = createSlice({
       delete state.carts[action.payload];
     },
     resetStorefrontCart() {
-      return initialState;
+      return { carts: {}, cartOpen: false, activeSlug: null };
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(logout, () => initialState);
+    builder.addCase(logout, () => ({ carts: {}, cartOpen: false, activeSlug: null }));
   },
 });
 

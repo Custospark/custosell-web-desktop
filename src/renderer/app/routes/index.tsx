@@ -337,9 +337,12 @@ export function AppRoutes() {
               <Route path="roles" element={<SuspenseWrapper><RoleSettingsPage /></SuspenseWrapper>} />
               <Route path="locations" element={<SuspenseWrapper><LocationsSettingsPage /></SuspenseWrapper>} />
               <Route path="modules" element={<SuspenseWrapper><ModuleAccessSettingsPage /></SuspenseWrapper>} />
-              <Route path="data-export" element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
             </Route>
           </Route>
+          {/* Settings pages personal accounts need — always reachable regardless of the
+              settings module gate (same as Billing & Subscription below). */}
+          <Route path={ROUTES.SETTINGS.BUSINESS} element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.SETTINGS.DATA_EXPORT} element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
           {/* Plans & billing — always reachable regardless of the settings module gate
               (e.g. suspended/expired personal accounts must reach the plans page). */}
           <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />

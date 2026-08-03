@@ -93,14 +93,19 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         keys.add(key);
       }
     }
+    // Order rows by how many BUSINESS plans include the feature, so a personal
+    // account's comparison matches the business account layout exactly (most
+    // commonly included features first). Mixing in personal plans would skew
+    // the counts and produce a different, non-business ordering.
+    const orderingSource = businessPlans.length > 0 ? businessPlans : planList;
     return Object.entries(FEATURE_CATALOG)
       .filter(([key]) => keys.has(key))
       .sort(([a], [b]) => {
-        const countA = planList.filter((p) => p.features?.[a] === true).length;
-        const countB = planList.filter((p) => p.features?.[b] === true).length;
+        const countA = orderingSource.filter((p) => p.features?.[a] === true).length;
+        const countB = orderingSource.filter((p) => p.features?.[b] === true).length;
         return countB - countA;
       });
-  }, [comparisonPlans, sortedPlans]);
+  }, [comparisonPlans, sortedPlans, businessPlans]);
 
   const relevantLimits = useMemo(() => {
     const keys = new Set<string>();

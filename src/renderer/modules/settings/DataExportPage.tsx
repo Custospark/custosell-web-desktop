@@ -4,7 +4,6 @@ import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { TOOL_DESCRIPTIONS } from '../personal/toolDescriptions';
 import { useBusinessExport } from './api/settings/BusinessQueries';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 
@@ -17,38 +16,44 @@ const FORMATS: { value: ExportFormat; label: string; description: string; icon: 
 ];
 
 /**
- * What's included in a data export — deliberately hardcoded per account type and
+ * The actual data records included in an export — hardcoded per account type and
  * independent of the subscription's live status. A lapsed/suspended user must still
- * see exactly what their export contains, so we never derive this from plan_features
- * or the currently-accessible modules. Descriptions reuse the shared Your Tools copy.
+ * see exactly what data their export contains, so we never derive this from
+ * plan_features or the currently-accessible modules.
  */
-const INCLUDED_LABELS: Record<'personal' | 'business', string[]> = {
+const INCLUDED_DATA: Record<'personal' | 'business', string[]> = {
   personal: [
-    'Sales Funnel',
-    'Projects & Estimates',
-    'Income & Expenses',
-    'Accounting',
+    'Pipeline boards & leads',
+    'Estimates & projects',
+    'Expenses & categories',
+    'Chart of accounts',
+    'Journal entries',
+    'General ledger',
     'Documents',
   ],
   business: [
-    'Dashboard',
-    'Sales',
-    'Inventory & Supply Chain',
+    'Business profile',
+    'Products',
+    'Categories',
     'Customers',
-    'Sales Funnel',
-    'Projects & Estimates',
-    'Income & Expenses',
-    'Accounting',
+    'Sales & sale items',
+    'Invoices & invoice items',
+    'Payments',
+    'Orders',
+    'Purchase orders & items',
+    'Expenses & categories',
+    'Stock movements',
+    'Pipeline boards & leads',
+    'Estimates & projects',
     'Documents',
-    'Forecasting',
-    'HR & Payroll',
+    'Chart of accounts',
+    'Journal entries',
+    'General ledger',
+    'Users & roles',
+    'Shifts',
+    'Notifications',
   ],
 };
-
-interface IncludedTool {
-  label: string;
-  description: string;
-}
 
 export default function DataExportPage() {
   const [format, setFormat] = useState<ExportFormat>('json');
@@ -58,12 +63,7 @@ export default function DataExportPage() {
   const user = useAppSelector((s) => s.auth.user);
   const isPersonal = user?.account_type === 'personal';
 
-  const accountKind = isPersonal ? 'personal' : 'business';
-  const copy = TOOL_DESCRIPTIONS[accountKind];
-  const includedItems: IncludedTool[] = INCLUDED_LABELS[accountKind].map((label) => ({
-    label,
-    description: copy[label],
-  }));
+  const includedItems = INCLUDED_DATA[isPersonal ? 'personal' : 'business'];
 
   const handleExport = () => {
     setConfirmOpen(true);
@@ -214,14 +214,11 @@ export default function DataExportPage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2 text-xs text-gray-600">
             {includedItems.map((item) => (
-              <div key={item.label} className="flex items-start gap-1.5 py-1">
-                <svg className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div key={item} className="flex items-center gap-1.5 py-1">
+                <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>
-                  <span className="font-medium text-gray-700">{item.label}</span>
-                  <span className="text-gray-500"> — {item.description}</span>
-                </span>
+                {item}
               </div>
             ))}
           </div>

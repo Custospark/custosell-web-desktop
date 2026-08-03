@@ -17,10 +17,11 @@ export function Main() {
     <main
       className={cn(
         'flex min-h-0 flex-1 flex-col overflow-x-hidden',
-        // Fixed bottom tab bar overlays content on mobile — pb-20 clears it
+        // The mobile tab bar is in-flow on mobile (Layout flex child), so it
+        // reserves its own height and Main never needs manual bottom clearance.
         flushLayout
           ? 'overflow-x-auto overflow-y-hidden p-0'
-          : 'overflow-y-auto p-4 sm:p-6 pb-20 lg:pb-0',
+          : 'overflow-y-auto p-4 sm:p-6',
       )}
       data-tour="main-workspace"
       data-scroll-container

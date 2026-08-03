@@ -24,8 +24,8 @@ const PRESET_CHIPS: { label: string; months: number }[] = [
   { label: '2 yr', months: 24 },
 ];
 
-function addMonthsToDate(months: number): string {
-  const d = new Date();
+function addMonthsToDate(base: string, months: number): string {
+  const d = new Date(base);
   d.setMonth(d.getMonth() + months);
   return d.toLocaleDateString();
 }
@@ -120,7 +120,7 @@ export default function RenewTopUpModal({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">New billing date</span>
-            <span className="font-semibold text-gray-900">{addMonthsToDate(months)}</span>
+            <span className="font-semibold text-gray-900">{addMonthsToDate(subscription.next_billing_date || new Date().toISOString(), months)}</span>
           </div>
           <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
             <span className="font-semibold text-gray-700">Total due</span>

@@ -10,6 +10,7 @@ import BillingHistoryTab from './ui/BillingHistoryTab';
 import {
   CreditCard, Building2, History, Wallet,
 } from 'lucide-react';
+import { cn } from '../../shared/utils/cn';
 import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 
 type SubscriptionTab = 'plans' | 'payments' | 'history';

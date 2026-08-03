@@ -20,6 +20,7 @@ interface UpgradeFlowConfirmStepProps {
   quoteError: boolean;
   currency: string;
   billingCycle: 'monthly' | 'yearly';
+  isYearlySub: boolean;
   onBillingCycleChange: (cycle: 'monthly' | 'yearly') => void;
   onClose: () => void;
   onConfirm: () => void;
@@ -28,7 +29,7 @@ interface UpgradeFlowConfirmStepProps {
 }
 
 export default function UpgradeFlowConfirmStep({
-  plan, subscription, quote, quoteLoading, quoteError, currency, billingCycle, onBillingCycleChange,
+  plan, subscription, quote, quoteLoading, quoteError, currency, billingCycle, isYearlySub, onBillingCycleChange,
   onClose, onConfirm, upgradePending, upgradeError,
 }: UpgradeFlowConfirmStepProps) {
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -106,9 +107,10 @@ export default function UpgradeFlowConfirmStep({
           <button
             type="button"
             onClick={() => onBillingCycleChange('monthly')}
+            disabled={isYearlySub}
             className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
               billingCycle === 'monthly' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
-            }`}
+            } ${isYearlySub ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Monthly
           </button>
@@ -122,6 +124,12 @@ export default function UpgradeFlowConfirmStep({
             Yearly
           </button>
         </div>
+
+        {isYearlySub && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            You're on an annual plan. Stay on <span className="font-semibold">Yearly</span> to upgrade — moving to monthly isn't available to avoid losing your prepaid annual credit.
+          </p>
+        )}
 
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-xl p-4 space-y-3">
           <div className="flex justify-between text-sm">

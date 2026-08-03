@@ -27,7 +27,8 @@ export default function UpgradeFlowModal({
   onClose, onComplete,
 }: UpgradeFlowModalProps) {
   const [step, setStep] = useState<Step>('confirm');
-  const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
+  const isYearlySub = subscription.billing_cycle === 'yearly';
+  const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(isYearlySub ? 'yearly' : initialBillingCycle);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [prorationDue, setProrationDue] = useState(0);
@@ -35,6 +36,11 @@ export default function UpgradeFlowModal({
   const [referralCode, setReferralCode] = useState('');
   const [showReferralInput, setShowReferralInput] = useState(false);
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
+
+  const handleBillingCycleChange = (cycle: 'monthly' | 'yearly') => {
+    if (isYearlySub && cycle === 'monthly') return;
+    setUpgradeCycle(cycle);
+  };
 
   const applyReferralMutation = useApplyReferralCode();
 
@@ -137,7 +143,8 @@ export default function UpgradeFlowModal({
         quoteError={quoteError}
         currency={currency}
         billingCycle={upgradeCycle}
-        onBillingCycleChange={setUpgradeCycle}
+        isYearlySub={isYearlySub}
+        onBillingCycleChange={handleBillingCycleChange}
         onClose={onClose}
         onConfirm={handleConfirm}
         upgradePending={upgradeMutation.isPending}

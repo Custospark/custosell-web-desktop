@@ -61,6 +61,7 @@ export function useInitiatePayment(paymentType: PaymentType) {
   return useMutation<{ success: boolean; payment_id: number; message: string; redirect_url?: string }, AxiosError<ApiError>, {
     amount: number;
     currency?: string;
+    billingCycle?: 'monthly' | 'yearly';
     phone?: string;
     metadata?: Record<string, unknown>;
   }>({
@@ -70,6 +71,7 @@ export function useInitiatePayment(paymentType: PaymentType) {
         amount: payload.amount,
         currency: payload.currency ?? 'USD',
         payment_type: paymentType,
+        billing_cycle: payload.billingCycle,
         phone: payload.phone,
         metadata: payload.metadata ?? null,
         idempotency_key: generateIdempotencyKey(),

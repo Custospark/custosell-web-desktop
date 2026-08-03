@@ -3,7 +3,7 @@ import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatUSD } from '../../shared/utils/formatCurrency';
+import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import type { PaymentType } from '../../shared/types';
 
@@ -40,7 +40,7 @@ export default function SubscriptionPaymentModal({
     ? Math.min(availableCreditUsd, amount)
     : Math.min(toLocal(availableCreditUsd), amount);
   const amountAfterCredit = amount - creditApplied;
-  const formatLocal = (value: number) => new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
+  const formatLocal = (value: number) => formatCurrency(value, currency);
 
   const initiateMutation = useInitiatePayment(paymentType);
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
@@ -53,7 +53,7 @@ export default function SubscriptionPaymentModal({
   const handlePay = () => {
     setPopupBlocked(false);
     initiateMutation.mutate(
-      { amount, currency, phone: userPhone, metadata },
+      { amount, currency, billingCycle: billingCycle as 'monthly' | 'yearly', phone: userPhone, metadata },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
@@ -198,7 +198,7 @@ export default function SubscriptionPaymentModal({
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Plan price</span>
               <span className="font-semibold text-gray-900">
-                {new Intl.NumberFormat('en-UG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(planPrice)}
+                {formatLocal(planPrice)}
                 <span className="text-xs text-gray-400 font-normal">/{billingCycle === 'yearly' ? 'yr' : 'mo'}</span>
               </span>
             </div>

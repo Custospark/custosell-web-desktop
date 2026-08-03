@@ -22,6 +22,7 @@ interface SubscriptionPaymentState {
   planPrice: number;
   billingCycle: string;
   amount: number;
+  currency: string;
   actionLabel: string;
   paymentType: PaymentType;
 }
@@ -152,6 +153,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       planPrice: amount,
       billingCycle,
       amount,
+      currency: paymentCurrency,
       actionLabel: action.label,
       paymentType,
     });
@@ -411,7 +413,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <BillingCyclePaymentModal
           proration={billingCyclePaymentQuote.proration}
           billingCycle={billingCyclePaymentQuote.billing_cycle}
-          currency={currency}
+          currency={getPaymentCurrency()}
           userPhone={userPhone}
           onClose={() => { setBillingCyclePaymentQuote(null); setPendingCycle(null); }}
           onComplete={async () => {
@@ -427,7 +429,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           plan={upgradeFlowPlan}
           subscription={subscription}
           billingCycle={billingCycle}
-          currency={currency}
+          currency={getPaymentCurrency()}
           userPhone={userPhone}
           onClose={() => setUpgradeFlowPlan(null)}
           onComplete={handlePaymentComplete}
@@ -440,7 +442,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           planPrice={subscriptionPayment.planPrice}
           billingCycle={subscriptionPayment.billingCycle}
           amount={subscriptionPayment.amount}
-          currency={currency}
+          currency={subscriptionPayment.currency}
           userPhone={userPhone}
           actionLabel={subscriptionPayment.actionLabel}
           paymentType={subscriptionPayment.paymentType}

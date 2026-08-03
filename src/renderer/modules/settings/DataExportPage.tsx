@@ -4,8 +4,7 @@ import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { usePlanAccessibleModules } from '../../shared/utils/usePlanAccessibleModules';
-import { resolveAccessibleNavGroups } from '../../shared/components/layout/resolveAccessibleNavLeaves';
+import { MODULE_LABELS } from '../../shared/utils/moduleAccess';
 import { TOOL_DESCRIPTIONS } from '../personal/toolDescriptions';
 import { useBusinessExport } from './api/settings/BusinessQueries';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
@@ -18,8 +17,14 @@ const FORMATS: { value: ExportFormat; label: string; description: string; icon: 
   { value: 'xlsx', label: 'Excel (XLSX)', description: 'Formatted Excel workbook', icon: FileSpreadsheet },
 ];
 
-/** Group labels that are not data-bearing tools for the export list. */
-const NON_DATA_GROUPS = new Set(['Your Tools', 'Platform', 'Guide Settings', 'Account']);
+/** Plan-feature slugs that aren't BUSINESS_MODULE_SLUGS but still represent exportable tools. */
+const EXTRA_FEATURE_LABELS: Record<string, string> = {
+  storefront: 'Online Storefront',
+  marketplace: 'Supply Marketplace',
+};
+
+/** Non-tool plan features that shouldn't appear in the export "What's included" list. */
+const SKIP_FEATURES = new Set(['settings', 'estimates_full']);
 
 interface IncludedTool {
   label: string;
@@ -32,17 +37,25 @@ export default function DataExportPage() {
   const exportMutation = useBusinessExport();
   const { isCompletelyOffline } = useNetworkStatus();
   const user = useAppSelector((s) => s.auth.user);
-  const planModules = usePlanAccessibleModules();
   const isPersonal = user?.account_type === 'personal';
 
-  // Same tool list + voice as the Your Tools page — driven by account type and the
-  // user's accessible modules, so personal accounts never see business-only tools.
+  // "What's included" reflects the plan's granted modules (plan.features), NOT the
+  // currently-accessible modules. That way a lapsed/suspended subscription still shows
+  // everything the plan includes, even though the tools are locked until reactivation.
   const includedItems = useMemo<IncludedTool[]>(() => {
     const copy = TOOL_DESCRIPTIONS[isPersonal ? 'personal' : 'business'];
-    return resolveAccessibleNavGroups(user, planModules)
-      .filter((g) => !NON_DATA_GROUPS.has(g.label) && copy[g.label])
-      .map((g) => ({ label: g.label, description: copy[g.label] }));
-  }, [user, planModules, isPersonal]);
+    const features = user?.business?.subscription?.plan_features ?? {};
+    const items: IncludedTool[] = [];
+
+    for (const [slug, enabled] of Object.entries(features)) {
+      if (!enabled || SKIP_FEATURES.has(slug)) continue;
+      const label = MODULE_LABELS[slug as keyof typeof MODULE_LABELS] ?? EXTRA_FEATURE_LABELS[slug];
+      if (!label) continue;
+      items.push({ label, description: copy[label] });
+    }
+
+    return items.sort((a, b) => a.label.localeCompare(b.label));
+  }, [user, isPersonal]);
 
   const handleExport = () => {
     setConfirmOpen(true);
@@ -199,7 +212,9 @@ export default function DataExportPage() {
                 </svg>
                 <span>
                   <span className="font-medium text-gray-700">{item.label}</span>
-                  <span className="text-gray-500"> — {item.description}</span>
+                  {item.description && (
+                    <span className="text-gray-500"> — {item.description}</span>
+                  )}
                 </span>
               </div>
             ))}

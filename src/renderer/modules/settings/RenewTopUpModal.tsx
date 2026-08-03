@@ -3,6 +3,7 @@ import { X, ArrowRight } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
+import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
@@ -37,6 +38,7 @@ export default function RenewTopUpModal({
   const [confirming, setConfirming] = useState(false);
 
   const currency = getPaymentCurrency();
+  const { isUsd, toLocal } = useUsdToLocal(currency);
   const isYearly = subscription.billing_cycle === 'yearly';
 
   const monthlyRateUsd = isYearly
@@ -44,6 +46,7 @@ export default function RenewTopUpModal({
     : Number(plan.price_monthly_usd ?? 0);
 
   const amountUsd = Math.round(months * monthlyRateUsd * 100) / 100;
+  const previewAmount = isUsd ? amountUsd : toLocal(amountUsd);
 
   const applyChip = (m: number) => {
     setMonths(m);
@@ -122,7 +125,7 @@ export default function RenewTopUpModal({
           <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">
             <span className="font-semibold text-gray-700">Total due</span>
             <span className="font-bold text-blue-700 text-base">
-              {currency === 'USD' ? formatUSD(amountUsd) : formatCurrency(amountUsd, currency)}
+              {isUsd ? formatUSD(amountUsd) : formatCurrency(previewAmount, currency)}
             </span>
           </div>
         </div>

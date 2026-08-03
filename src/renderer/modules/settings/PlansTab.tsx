@@ -143,6 +143,10 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       setUpgradeFlowPlan(plan);
       return;
     }
+    if (action.type === 'renew_early') {
+      setTopUp(true);
+      return;
+    }
     const paymentCurrency = getPaymentCurrency();
     const isYearly = billingCycle === 'yearly';
     const amount = paymentCurrency === 'USD'

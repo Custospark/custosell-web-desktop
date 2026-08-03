@@ -83,7 +83,7 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-[calc(4rem+max(0.5rem,env(safe-area-inset-bottom)))]">
           <button
             type="button"
             onClick={() => setBrowseOpen(true)}

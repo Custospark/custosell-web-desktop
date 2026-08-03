@@ -25,7 +25,7 @@ const INCLUDED_DATA: Record<'personal' | 'business', string[]> = {
   personal: [
     'Pipeline boards & leads',
     'Estimates & projects',
-    'Expenses & categories',
+    'Income & expenses',
     'Chart of accounts',
     'Journal entries',
     'General ledger',
@@ -41,7 +41,7 @@ const INCLUDED_DATA: Record<'personal' | 'business', string[]> = {
     'Payments',
     'Orders',
     'Purchase orders & items',
-    'Expenses & categories',
+    'Income & expenses',
     'Stock movements',
     'Pipeline boards & leads',
     'Estimates & projects',

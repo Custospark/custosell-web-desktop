@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { LifeBuoy, MessageSquare, BookOpen, HelpCircle, ArrowRight, Mail } from 'lucide-react';
+import { LifeBuoy, MessageSquare, BookOpen, HelpCircle, ArrowRight, Mail, Phone } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_WHATSAPP } from '../../shared/brand/custosellBrand';
 
 export default function AccountReferralsHelpTab() {
   const navigate = useNavigate();
@@ -74,6 +75,30 @@ export default function AccountReferralsHelpTab() {
           <p className="text-sm text-indigo-700">
             Visit the <strong>Contact & Help</strong> page to send us a message directly. Our team typically responds within 24 hours.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-white border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-100 transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              {SUPPORT_EMAIL}
+            </a>
+            <a
+              href={`tel:${SUPPORT_PHONE.replace(/\s+/g, '')}`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-white border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-100 transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              {SUPPORT_PHONE}
+            </a>
+            <a
+              href={`https://wa.me/${SUPPORT_WHATSAPP}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-white border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-100 transition-colors"
+            >
+              WhatsApp
+            </a>
+          </div>
         </div>
       </div>
     </div>

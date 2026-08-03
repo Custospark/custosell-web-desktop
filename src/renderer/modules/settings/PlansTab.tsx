@@ -235,9 +235,11 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         {subscription.status === 'active' && !subscription.payment_action?.required && currentPlan && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-white/10 backdrop-blur rounded-lg p-3">
             <p className="text-sm text-white font-medium">
-              Plan expires on {subscription.next_billing_date
+              All set — your {currentPlan.name} plan is active through{' '}
+              {subscription.next_billing_date
                 ? new Date(subscription.next_billing_date).toLocaleDateString()
-                : 'an unknown date'} — renew early to avoid any interruption.
+                : 'your billing date'}
+              . No worries here, but you can renew early whenever it suits you.
             </p>
             <button
               type="button"

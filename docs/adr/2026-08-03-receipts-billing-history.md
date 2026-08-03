@@ -6,12 +6,15 @@
 
 ## Decision
 
-The subscription Settings page gains two dedicated tabs alongside **Plans**:
+The subscription Settings page gains a **Plans** tab and a unified **History** tab:
 
-- **Payments** (`BillingPaymentsTab.tsx`) — every charge against the subscription with
-  per-row **download receipt** and **email receipt** actions for completed payments.
-- **History** (`BillingHistoryTab.tsx`) — one unified, newest-first activity timeline
-  that merges payments, scheduled plan changes, and credit applications.
+- **History** (`BillingHistoryTab.tsx`) — one newest-first activity timeline that merges
+  payments, scheduled plan changes, and credit applications. Completed payment items
+  carry **download receipt** (PDF) and **email receipt** actions (`EmailReceiptModal`).
+
+The initial separate **Payments** tab (`BillingPaymentsTab.tsx`) was removed once a
+single History timeline was adopted — the backend `/billing/history` feed already
+includes every charge, so a dedicated payments list only duplicated the same rows.
 
 ## Why
 
@@ -36,12 +39,12 @@ New endpoints added to `endpoints.ts`:
   - `useBillingHistory()` — React Query wrapper over the history feed.
   - `downloadReceiptPdf(id)` — fetches the blob + derives the filename.
   - `saveBlobDownload(blob, filename)` — triggers the browser blob save.
-  - `useEmailReceipt()` — mutation that POSTs the email request and surfaces toasts.
-- `modules/settings/ui/BillingPaymentsTab.tsx` — status icons (completed/failed/pending),
-  currency formatting, pagination, download/email actions gated to completed payments.
-- `modules/settings/ui/BillingHistoryTab.tsx` — timeline with per-item icon/badge and
-  pagination.
-- `SubscriptionSettingsPage.tsx` now owns only the tab switch and credit banner; the old
+  - `useEmailReceipt()` — mutation that POSTs `{ paymentId, email }` and surfaces toasts.
+- `modules/settings/ui/BillingHistoryTab.tsx` — unified timeline with per-item icon/badge,
+  pagination, and download/email actions gated to completed payments.
+- `modules/settings/ui/EmailReceiptModal.tsx` — asks for the recipient email (prefilled
+  with the signed-in user's email) before sending the receipt, standard vault-email style.
+- `SubscriptionSettingsPage.tsx` owns only the tab switch and credit banner; the old
   inline payments/plan-change state (queries + pagination) was removed to respect the
   500-line rule.
 
@@ -54,8 +57,8 @@ New endpoints added to `endpoints.ts`:
 ## Related files
 
 - `src/renderer/modules/settings/api/billingReceipts.ts`
-- `src/renderer/modules/settings/ui/BillingPaymentsTab.tsx`
 - `src/renderer/modules/settings/ui/BillingHistoryTab.tsx`
+- `src/renderer/modules/settings/ui/EmailReceiptModal.tsx`
 - `src/renderer/modules/settings/SubscriptionSettingsPage.tsx`
 - `src/renderer/shared/api/endpoints/endpoints.ts`
 - `src/renderer/shared/brand/custosellBrand.ts` (+ support chips in `AccountReferralsHelpTab.tsx`)

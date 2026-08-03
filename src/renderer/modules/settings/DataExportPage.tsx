@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FileDown, Database, Table, FileSpreadsheet, Download, ShieldAlert, Loader2 } from 'lucide-react';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { usePlanAccessibleModules } from '../../shared/utils/usePlanAccessibleModules';
+import { resolveAccessibleNavGroups } from '../../shared/components/layout/resolveAccessibleNavLeaves';
+import { TOOL_DESCRIPTIONS } from '../personal/toolDescriptions';
 import { useBusinessExport } from './api/settings/BusinessQueries';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 
@@ -15,27 +18,13 @@ const FORMATS: { value: ExportFormat; label: string; description: string; icon: 
   { value: 'xlsx', label: 'Excel (XLSX)', description: 'Formatted Excel workbook', icon: FileSpreadsheet },
 ];
 
-// Mirrors the personal plan features in the backend PlanSeeder (pipeline, estimates,
-// expenses, accounting, documents) plus the account profile.
-const PERSONAL_INCLUDED = [
-  'Profile',
-  'Pipeline boards & leads',
-  'Estimates & projects',
-  'Expenses & categories',
-  'Documents',
-  'Chart of accounts',
-  'Journal entries',
-  'General ledger',
-];
+/** Group labels that are not data-bearing tools for the export list. */
+const NON_DATA_GROUPS = new Set(['Your Tools', 'Platform', 'Guide Settings', 'Account']);
 
-// Full business export surface.
-const BUSINESS_INCLUDED = [
-  'Business profile', 'Products', 'Categories', 'Customers',
-  'Sales & items', 'Expenses & categories', 'Invoices & items', 'Payments',
-  'Orders', 'Purchase orders', 'Stock movements', 'Pipeline boards & leads',
-  'Estimates & projects', 'Documents', 'Chart of accounts', 'Journal entries',
-  'General ledger', 'Users & roles', 'Shifts', 'Notifications',
-];
+interface IncludedTool {
+  label: string;
+  description: string;
+}
 
 export default function DataExportPage() {
   const [format, setFormat] = useState<ExportFormat>('json');
@@ -43,8 +32,17 @@ export default function DataExportPage() {
   const exportMutation = useBusinessExport();
   const { isCompletelyOffline } = useNetworkStatus();
   const user = useAppSelector((s) => s.auth.user);
+  const planModules = usePlanAccessibleModules();
   const isPersonal = user?.account_type === 'personal';
-  const includedItems = isPersonal ? PERSONAL_INCLUDED : BUSINESS_INCLUDED;
+
+  // Same tool list + voice as the Your Tools page — driven by account type and the
+  // user's accessible modules, so personal accounts never see business-only tools.
+  const includedItems = useMemo<IncludedTool[]>(() => {
+    const copy = TOOL_DESCRIPTIONS[isPersonal ? 'personal' : 'business'];
+    return resolveAccessibleNavGroups(user, planModules)
+      .filter((g) => !NON_DATA_GROUPS.has(g.label) && copy[g.label])
+      .map((g) => ({ label: g.label, description: copy[g.label] }));
+  }, [user, planModules, isPersonal]);
 
   const handleExport = () => {
     setConfirmOpen(true);
@@ -193,13 +191,16 @@ export default function DataExportPage() {
             <Database className="w-4 h-4 text-gray-500" />
             What's included
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs text-gray-600">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2 text-xs text-gray-600">
             {includedItems.map((item) => (
-              <div key={item} className="flex items-center gap-1.5 py-1">
-                <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div key={item.label} className="flex items-start gap-1.5 py-1">
+                <svg className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                {item}
+                <span>
+                  <span className="font-medium text-gray-700">{item.label}</span>
+                  <span className="text-gray-500"> — {item.description}</span>
+                </span>
               </div>
             ))}
           </div>

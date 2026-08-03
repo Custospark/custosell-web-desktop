@@ -5,7 +5,6 @@ import { useProfile } from '../../shared/api/account/AccountQueries';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import PlansTab from './PlansTab';
-import BillingPaymentsTab from './ui/BillingPaymentsTab';
 import BillingHistoryTab from './ui/BillingHistoryTab';
 import {
   CreditCard, Building2, History, Wallet,
@@ -13,11 +12,10 @@ import {
 import { cn } from '../../shared/utils/cn';
 import { useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 
-type SubscriptionTab = 'plans' | 'payments' | 'history';
+type SubscriptionTab = 'plans' | 'history';
 
 const TABS: { key: SubscriptionTab; label: string; icon: typeof CreditCard }[] = [
   { key: 'plans', label: 'Plans', icon: CreditCard },
-  { key: 'payments', label: 'Payments', icon: CreditCard },
   { key: 'history', label: 'History', icon: History },
 ];
 
@@ -84,8 +82,6 @@ export default function SubscriptionSettingsPage() {
       </nav>
 
       {activeTab === 'plans' && <PlansTab subscription={subscription} onUpgradeComplete={async () => { await refetchProfile(); }} />}
-
-      {activeTab === 'payments' && <BillingPaymentsTab />}
 
       {activeTab === 'history' && <BillingHistoryTab />}
     </div>

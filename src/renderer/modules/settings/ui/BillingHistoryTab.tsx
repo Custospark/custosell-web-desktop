@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
-import { ArrowUp, ArrowDown, XCircle, CreditCard, RefreshCw, CalendarPlus } from 'lucide-react';
-import { useBillingHistory, type HistoryItem } from '../api/billingReceipts';
+import { useMemo, useState } from 'react';
+import { ArrowUp, ArrowDown, XCircle, CreditCard, RefreshCw, CalendarPlus, Download, Mail, Loader2 } from 'lucide-react';
+import { useBillingHistory, downloadReceiptPdf, saveBlobDownload, type HistoryItem } from '../api/billingReceipts';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../../shared/utils/cn';
+import EmailReceiptModal from './EmailReceiptModal';
 
 function formatMoney(amount: number | undefined, currency?: string | null): string {
   if (amount === undefined || amount === null) return '';
@@ -72,14 +74,29 @@ function itemTitle(item: HistoryItem): string {
 
 export default function HistoryTab() {
   const { data: feed, isLoading } = useBillingHistory();
+  const user = useAppSelector((state) => state.auth.user);
+  const defaultEmail = user?.email ?? '';
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [emailTarget, setEmailTarget] = useState<HistoryItem | null>(null);
   const items = useMemo(() => feed ?? [], [feed]);
   const paginated = usePagination(items, 12);
+
+  const handleDownload = async (item: HistoryItem) => {
+    if (item.payment_id === undefined) return;
+    setDownloadingId(item.payment_id);
+    try {
+      const { blob, filename } = await downloadReceiptPdf(item.payment_id);
+      saveBlobDownload(blob, filename);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-900">Billing Activity</h3>
-        <p className="text-xs text-gray-500 mt-0.5">A full timeline of payments, top-ups, plan changes, and credit applications.</p>
+        <h3 className="text-sm font-semibold text-gray-900">Billing History</h3>
+        <p className="text-xs text-gray-500 mt-0.5">Every charge, top-up, plan change, and credit application — newest first.</p>
       </div>
 
       {isLoading ? (
@@ -100,11 +117,36 @@ export default function HistoryTab() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-gray-900">{itemTitle(item)}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{whenLabel(item) || <span className="text-gray-400">{item.transaction_reference}</span>}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{whenLabel(item) || (item.transaction_reference ? <span className="text-gray-400">{item.transaction_reference}</span> : null)}</p>
                     </div>
-                    <span className={cn('inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0', badge.cls)}>
-                      {badge.label}
-                    </span>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <span className={cn('inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full', badge.cls)}>
+                        {badge.label}
+                      </span>
+                      {item.type === 'payment' && item.payment_id !== undefined && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void handleDownload(item)}
+                            disabled={downloadingId === item.payment_id}
+                            title="Download receipt (PDF)"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            {downloadingId === item.payment_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                            Receipt
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEmailTarget(item)}
+                            title="Email receipt (PDF)"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            Email
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -126,6 +168,15 @@ export default function HistoryTab() {
       ) : (
         <p className="text-sm text-gray-400 text-center py-6">No billing activity recorded yet.</p>
       )}
+      <EmailReceiptModal
+        open={emailTarget !== null}
+        paymentId={emailTarget?.payment_id ?? 0}
+        reference={emailTarget?.transaction_reference}
+        amount={String(emailTarget?.amount ?? 0)}
+        currency={emailTarget?.currency ?? ''}
+        defaultEmail={defaultEmail}
+        onClose={() => setEmailTarget(null)}
+      />
     </div>
   );
 }

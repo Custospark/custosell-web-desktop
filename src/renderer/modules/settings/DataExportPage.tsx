@@ -3,15 +3,38 @@ import { FileDown, Database, Table, FileSpreadsheet, Download, ShieldAlert, Load
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useBusinessExport } from './api/settings/BusinessQueries';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 
 type ExportFormat = 'json' | 'csv' | 'xlsx';
 
 const FORMATS: { value: ExportFormat; label: string; description: string; icon: typeof Database }[] = [
-  { value: 'json', label: 'JSON', description: 'Full structured data — all entities in one file', icon: Database },
+  { value: 'json', label: 'JSON', description: 'Full structured data — all your records in one file', icon: Database },
   { value: 'csv', label: 'CSV', description: 'Comma-separated values — easy to open in spreadsheets', icon: Table },
   { value: 'xlsx', label: 'Excel (XLSX)', description: 'Formatted Excel workbook', icon: FileSpreadsheet },
+];
+
+// Mirrors the personal plan features in the backend PlanSeeder (pipeline, estimates,
+// expenses, accounting, documents) plus the account profile.
+const PERSONAL_INCLUDED = [
+  'Profile',
+  'Pipeline boards & leads',
+  'Estimates & projects',
+  'Expenses & categories',
+  'Documents',
+  'Chart of accounts',
+  'Journal entries',
+  'General ledger',
+];
+
+// Full business export surface.
+const BUSINESS_INCLUDED = [
+  'Business profile', 'Products', 'Categories', 'Customers',
+  'Sales & items', 'Expenses & categories', 'Invoices & items', 'Payments',
+  'Orders', 'Purchase orders', 'Stock movements', 'Pipeline boards & leads',
+  'Estimates & projects', 'Documents', 'Chart of accounts', 'Journal entries',
+  'General ledger', 'Users & roles', 'Shifts', 'Notifications',
 ];
 
 export default function DataExportPage() {
@@ -19,6 +42,9 @@ export default function DataExportPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const exportMutation = useBusinessExport();
   const { isCompletelyOffline } = useNetworkStatus();
+  const user = useAppSelector((s) => s.auth.user);
+  const isPersonal = user?.account_type === 'personal';
+  const includedItems = isPersonal ? PERSONAL_INCLUDED : BUSINESS_INCLUDED;
 
   const handleExport = () => {
     setConfirmOpen(true);
@@ -34,7 +60,9 @@ export default function DataExportPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Data & Export</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Export all your business data for backup, migration, or record-keeping.
+          {isPersonal
+            ? 'Export all your personal data for backup, migration, or record-keeping.'
+            : 'Export all your business data for backup, migration, or record-keeping.'}
         </p>
       </div>
 
@@ -45,9 +73,13 @@ export default function DataExportPage() {
               <Database className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-gray-800">Full Business Data Export</h2>
+              <h2 className="text-sm font-semibold text-gray-800">
+                {isPersonal ? 'Full Personal Data Export' : 'Full Business Data Export'}
+              </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Products, customers, sales, invoices, expenses, accounting, pipeline, documents, and more
+                {isPersonal
+                  ? 'Pipeline, estimates, expenses, accounting, documents, and more'
+                  : 'Products, customers, sales, invoices, expenses, accounting, pipeline, documents, and more'}
               </p>
             </div>
           </div>
@@ -99,10 +131,13 @@ export default function DataExportPage() {
             <div className="flex items-start gap-3">
               <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-800">Owner-only action</p>
+                <p className="text-sm font-medium text-amber-800">
+                  {isPersonal ? 'Owner-only action' : 'Owner-only action'}
+                </p>
                 <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                  Only the business owner can export all data. Staff members cannot initiate exports.
-                  Exports include all business records and user information.
+                  {isPersonal
+                    ? 'Only you can export your data. Exports include all your personal records.'
+                    : 'Only the business owner can export all data. Staff members cannot initiate exports. Exports include all business records and user information.'}
                 </p>
               </div>
             </div>
@@ -115,7 +150,7 @@ export default function DataExportPage() {
               <div>
                 <p className="text-sm font-semibold text-gray-800">Confirm data export</p>
                 <p className="text-xs text-gray-600 mt-1">
-                  This will generate a full export of all your business data in <strong>{format.toUpperCase()}</strong> format.
+                  This will generate a full export of all your {isPersonal ? 'personal' : 'business'} data in <strong>{format.toUpperCase()}</strong> format.
                   The file will be downloaded automatically when ready.
                 </p>
               </div>
@@ -159,13 +194,7 @@ export default function DataExportPage() {
             What's included
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs text-gray-600">
-            {[
-              'Business profile', 'Products', 'Categories', 'Customers',
-              'Sales & items', 'Expenses & categories', 'Invoices & items', 'Payments',
-              'Orders', 'Purchase orders', 'Stock movements', 'Pipeline boards & leads',
-              'Estimates & projects', 'Documents', 'Chart of accounts', 'Journal entries',
-              'General ledger', 'Users & roles', 'Shifts', 'Notifications',
-            ].map((item) => (
+            {includedItems.map((item) => (
               <div key={item} className="flex items-center gap-1.5 py-1">
                 <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

@@ -10,6 +10,7 @@ export type PlanActionType =
   | 'current'
   | 'pay_onboarding'
   | 'renew'
+  | 'renew_early'
   | 'subscribe_early';
 
 export interface PlanAction {
@@ -40,7 +41,7 @@ const MATRIX: Matrix = {
     lower:   { type: 'downgrade', label: 'Schedule Downgrade', requiresPayment: false },
   },
   active: {
-    current: { type: 'current', label: 'Current Plan', requiresPayment: false },
+    current: { type: 'renew_early', label: 'Renew Early', requiresPayment: true },
     higher:  { type: 'upgrade', label: 'Upgrade', requiresPayment: true },
     lower:   { type: 'downgrade', label: 'Schedule Downgrade', requiresPayment: false },
   },
@@ -100,7 +101,8 @@ export function getPlanAction(
 export function getPaymentType(actionType: PlanActionType): PaymentType {
   switch (actionType) {
     case 'pay_onboarding': return 'onboarding';
-    case 'renew': return 'renewal';
+    case 'renew':
+    case 'renew_early': return 'renewal';
     case 'upgrade': return 'upgrade_proration';
     default: return 'subscription';
   }

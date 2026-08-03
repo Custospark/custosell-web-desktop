@@ -52,6 +52,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
   const [upgradeFlowPlan, setUpgradeFlowPlan] = useState<Plan | null>(null);
+  const [renewEarly, setRenewEarly] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const downgradeMutation = useDowngrade();
@@ -228,6 +229,23 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           <div className="mt-4 bg-white/15 backdrop-blur rounded-lg p-3 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 shrink-0 text-amber-200" />
             <p className="text-sm text-white font-medium">{subscription.payment_action.message}</p>
+          </div>
+        )}
+
+        {subscription.status === 'active' && !subscription.payment_action?.required && currentPlan && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-white/10 backdrop-blur rounded-lg p-3">
+            <p className="text-sm text-white font-medium">
+              Plan expires on {subscription.next_billing_date
+                ? new Date(subscription.next_billing_date).toLocaleDateString()
+                : 'an unknown date'} — renew early to avoid any interruption.
+            </p>
+            <button
+              type="button"
+              onClick={() => setRenewEarly(true)}
+              className="text-sm font-semibold bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer"
+            >
+              Renew Early
+            </button>
           </div>
         )}
       </div>
@@ -450,6 +468,22 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
           refreshing={refreshing}
           onClose={closePaymentModal}
           onComplete={handlePaymentComplete}
+        />
+      )}
+
+      {renewEarly && currentPlan && (
+        <SubscriptionPaymentModal
+          planName={currentPlan.name}
+          planPrice={subscription.billing_cycle === 'yearly' ? Number(currentPlan.price_yearly_usd ?? 0) : Number(currentPlan.price_monthly_usd ?? 0)}
+          billingCycle={subscription.billing_cycle === 'yearly' ? 'yearly' : 'monthly'}
+          amount={subscription.billing_cycle === 'yearly' ? Number(currentPlan.price_yearly_usd ?? 0) : Number(currentPlan.price_monthly_usd ?? 0)}
+          currency={getPaymentCurrency()}
+          userPhone={userPhone}
+          actionLabel="Renew Early"
+          paymentType="renewal"
+          refreshing={refreshing}
+          onClose={() => setRenewEarly(false)}
+          onComplete={() => { setRenewEarly(false); handlePaymentComplete(); }}
         />
       )}
     </div>

@@ -5,7 +5,9 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { BILLING } from '../../../shared/api/endpoints/endpoints';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
-import { useEmailReceipt, downloadReceiptPdf, saveBlobDownload } from '../api/billingReceipts';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { downloadReceiptPdf, saveBlobDownload } from '../api/billingReceipts';
+import EmailReceiptModal from './EmailReceiptModal';
 import type { PaymentType } from '../../../shared/types';
 
 interface BillingPaymentRecord {
@@ -21,8 +23,10 @@ interface BillingPaymentRecord {
 }
 
 export default function BillingPaymentsTab() {
-  const emailReceipt = useEmailReceipt();
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [emailTarget, setEmailTarget] = useState<BillingPaymentRecord | null>(null);
+  const user = useAppSelector((state) => state.auth.user);
+  const defaultEmail = user?.email ?? '';
 
   const { data: payments, isLoading } = useQuery<BillingPaymentRecord[]>({
     queryKey: ['billing', 'payments'],
@@ -109,12 +113,11 @@ export default function BillingPaymentsTab() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => emailReceipt.mutate(payment.id)}
-                        disabled={emailReceipt.isPending}
+                        onClick={() => setEmailTarget(payment)}
                         title="Email receipt (PDF)"
                         className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                       >
-                        {emailReceipt.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                        <Mail className="w-3.5 h-3.5" />
                         Email
                       </button>
                     </div>
@@ -140,6 +143,15 @@ export default function BillingPaymentsTab() {
           />
         </div>
       )}
+      <EmailReceiptModal
+        open={emailTarget !== null}
+        paymentId={emailTarget?.id ?? 0}
+        reference={emailTarget?.transaction_reference}
+        amount={emailTarget?.amount ?? '0'}
+        currency={emailTarget?.currency ?? ''}
+        defaultEmail={defaultEmail}
+        onClose={() => setEmailTarget(null)}
+      />
     </div>
   );
 }

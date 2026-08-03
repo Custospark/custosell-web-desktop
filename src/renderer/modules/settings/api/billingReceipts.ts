@@ -85,9 +85,9 @@ export function saveBlobDownload(blob: Blob, filename: string): void {
 
 export function useEmailReceipt() {
   const { showToast } = useToast();
-  return useMutation<{ success: boolean; message: string }, Error, number>({
-    mutationFn: async (paymentId: number) => {
-      const { data } = await axiosInstance.post(BILLING.RECEIPT_EMAIL(paymentId));
+  return useMutation<{ success: boolean; message: string }, Error, { paymentId: number; email?: string }>({
+    mutationFn: async ({ paymentId, email }) => {
+      const { data } = await axiosInstance.post(BILLING.RECEIPT_EMAIL(paymentId), { email: email || undefined });
       return data;
     },
     onSuccess: (data) => {

@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { FileDown, Database, Table, FileSpreadsheet, Download, ShieldAlert, Loader2 } from 'lucide-react';
 import { Card } from '../../shared/components/cards/Card';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { usePlanAccessibleModules } from '../../shared/utils/usePlanAccessibleModules';
-import { resolveAccessibleNavGroups } from '../../shared/components/layout/resolveAccessibleNavLeaves';
 import { TOOL_DESCRIPTIONS } from '../personal/toolDescriptions';
 import { useBusinessExport } from './api/settings/BusinessQueries';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
@@ -18,8 +16,34 @@ const FORMATS: { value: ExportFormat; label: string; description: string; icon: 
   { value: 'xlsx', label: 'Excel (XLSX)', description: 'Formatted Excel workbook', icon: FileSpreadsheet },
 ];
 
-/** Group labels that are not data-bearing tools for the export list. */
-const NON_DATA_GROUPS = new Set(['Your Tools', 'Platform', 'Guide Settings', 'Account']);
+/**
+ * What's included in a data export — deliberately hardcoded per account type and
+ * independent of the subscription's live status. A lapsed/suspended user must still
+ * see exactly what their export contains, so we never derive this from plan_features
+ * or the currently-accessible modules. Descriptions reuse the shared Your Tools copy.
+ */
+const INCLUDED_LABELS: Record<'personal' | 'business', string[]> = {
+  personal: [
+    'Sales Funnel',
+    'Projects & Estimates',
+    'Income & Expenses',
+    'Accounting',
+    'Documents',
+  ],
+  business: [
+    'Dashboard',
+    'Sales',
+    'Inventory & Supply Chain',
+    'Customers',
+    'Sales Funnel',
+    'Projects & Estimates',
+    'Income & Expenses',
+    'Accounting',
+    'Documents',
+    'Forecasting',
+    'HR & Payroll',
+  ],
+};
 
 interface IncludedTool {
   label: string;
@@ -32,17 +56,14 @@ export default function DataExportPage() {
   const exportMutation = useBusinessExport();
   const { isCompletelyOffline } = useNetworkStatus();
   const user = useAppSelector((s) => s.auth.user);
-  const planModules = usePlanAccessibleModules();
   const isPersonal = user?.account_type === 'personal';
 
-  // Same tool list + voice as the Your Tools page — driven by account type and the
-  // user's accessible modules, so personal accounts never see business-only tools.
-  const includedItems = useMemo<IncludedTool[]>(() => {
-    const copy = TOOL_DESCRIPTIONS[isPersonal ? 'personal' : 'business'];
-    return resolveAccessibleNavGroups(user, planModules)
-      .filter((g) => !NON_DATA_GROUPS.has(g.label) && copy[g.label])
-      .map((g) => ({ label: g.label, description: copy[g.label] }));
-  }, [user, planModules, isPersonal]);
+  const accountKind = isPersonal ? 'personal' : 'business';
+  const copy = TOOL_DESCRIPTIONS[accountKind];
+  const includedItems: IncludedTool[] = INCLUDED_LABELS[accountKind].map((label) => ({
+    label,
+    description: copy[label],
+  }));
 
   const handleExport = () => {
     setConfirmOpen(true);

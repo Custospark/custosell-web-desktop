@@ -5,7 +5,7 @@ import { salesKeys } from '../../../../modules/sales/api/salesQueries';
 import { dashboardKeys } from '../../../../modules/dashboard/DashboardQueries';
 import { shiftKeys } from '../../../../modules/shifts/ShiftQueries';
 import { inventoryKeys } from '../../../../modules/inventory/api/products/ProductQueries';
-import { expenseKeys } from '../../../../modules/expenses/api/ExpenseQueries';
+import { expenseKeys } from '../../../../shared/utils/expenseKeys';
 import { guideKeys } from '../../../../modules/guide/api/GuideQueries';
 import { orderKeys } from '../../../../modules/sales/api/orders/orderQueryKeys';
 import { refreshAllServerCatalogSnapshots } from '../catalogs/catalogSnapshotRefresh';

@@ -1,4 +1,4 @@
-export type ReportDatePreset = 'today' | 'week' | 'month' | 'custom';
+export type ReportDatePreset = 'today' | 'week' | 'month' | 'year' | 'custom';
 
 function toDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -32,6 +32,11 @@ export function resolveReportDateRange(
     return { dateFrom: toDateKey(start), dateTo: end };
   }
 
+  if (preset === 'year') {
+    const start = new Date(today.getFullYear(), 0, 1);
+    return { dateFrom: toDateKey(start), dateTo: end };
+  }
+
   return {
     dateFrom: customFrom || end,
     dateTo: customTo || end,
@@ -47,5 +52,6 @@ export const REPORT_DATE_PRESETS: { id: ReportDatePreset; label: string }[] = [
   { id: 'today', label: 'Today' },
   { id: 'week', label: 'This week' },
   { id: 'month', label: 'This month' },
+  { id: 'year', label: 'This year' },
   { id: 'custom', label: 'Custom' },
 ];

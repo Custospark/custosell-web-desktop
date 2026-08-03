@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
+import { useLocations } from '../../settings/api/settings/LocationQueries';
 import { useBillableProjects } from '../../estimates/api/useProjectQueries';
 import { useFixedAssets } from '../../accounting/api/AccountingQueries';
 import { cn } from '../../../shared/utils/cn';
@@ -38,15 +39,18 @@ function FormSection({ icon: Icon, title, children }: { icon: typeof Tag; title:
 
 export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
   const { data: categories } = useExpenseCategories();
+  const { data: locations = [] } = useLocations();
   const { data: projects } = useBillableProjects();
   const { data: fixedAssets = [] } = useFixedAssets();
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
+  const activeLocationId = useAppSelector((s) => s.auth.activeLocationId ?? null);
   const { taxEnabled: vatEnabled } = useBusinessTaxSettings();
   const activeShiftId = shiftId ?? authShiftId;
 
   const [categoryId, setCategoryId] = useState('');
+  const [locationId, setLocationId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [fixedAssetId, setFixedAssetId] = useState('');
   const [amount, setAmount] = useState('');
@@ -74,6 +78,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     queueMicrotask(() => {
       if (expense) {
         setCategoryId(expense.expense_category_id?.toString() || '');
+        setLocationId(expense.location_id?.toString() || '');
         setProjectId('');
         setFixedAssetId(expense.fixed_asset_id?.toString() || '');
         setAmount(parseFloat(expense.amount).toString());
@@ -92,6 +97,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setAttempted(false);
       } else {
         setCategoryId('');
+        setLocationId(activeLocationId ? String(activeLocationId) : '');
         setProjectId('');
         setFixedAssetId('');
         setAmount('');
@@ -110,7 +116,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setAttempted(false);
       }
     });
-  }, [expense, open]);
+  }, [expense, open, activeLocationId]);
 
   function validate(): { amount?: string; description?: string; date?: string } {
     const next: { amount?: string; description?: string; date?: string } = {};
@@ -139,6 +145,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
     const formData = new FormData();
     if (categoryId) formData.append('expense_category_id', categoryId);
+    if (locationId) formData.append('location_id', locationId);
     if (projectId) formData.append('project_id', projectId);
     if (fixedAssetId) formData.append('fixed_asset_id', fixedAssetId);
     formData.append('amount', amount);
@@ -196,6 +203,20 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
         {/* Category & Project */}
         <FormSection icon={Tag} title="Category & Project">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Branch</label>
+            <select
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-orange-400 focus:outline-none"
+            >
+              <option value="">Select branch</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}{l.is_default ? ' (Default)' : ''}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-400">Defaults to your current branch. Used for branch performance reporting.</p>
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
             <select

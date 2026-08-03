@@ -26,6 +26,19 @@ import {
 } from '../../../app/store/offline/expenses/completeOfflineExpenseCategory';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';
+import { expenseKeys } from '../../../shared/utils/expenseKeys';
+import {
+  applyExpenseDeleteOptimisticUpdates,
+  applyExpenseOptimisticUpdates,
+  findCachedExpense,
+  mergeExpenseCategoryLists,
+  mergeExpenseLists,
+  mergeLocalExpensesIntoSummary,
+  sanitizeExpenseCategoryList,
+  sanitizeExpenseList,
+  summarizeExpenses,
+  matchesExpenseFilters,
+} from '../../../shared/utils/expenseCacheUtils';
 import {
   backupExpenseCategoriesSnapshot,
   backupExpensesListSnapshot,
@@ -43,14 +56,6 @@ import type {
   ExpenseCategoryWithSyncMeta,
 } from './ExpenseTypes';
 
-export const expenseKeys = {
-  all: ['expenses'] as const,
-  list: (filters?: Record<string, string>) => [...expenseKeys.all, 'list', filters] as const,
-  detail: (id: number) => [...expenseKeys.all, 'detail', id] as const,
-  summary: (filters?: Record<string, string>) => [...expenseKeys.all, 'summary', filters] as const,
-  categories: () => [...expenseKeys.all, 'categories'] as const,
-};
-
 async function loadLocalPendingExpenses(): Promise<ExpenseWithSyncMeta[]> {
   const pending = await localExpensesStore.getPending();
   return pending
@@ -63,187 +68,6 @@ async function loadLocalPendingExpenseCategories(): Promise<ExpenseCategoryWithS
   return pending
     .filter((r) => r.mutationType !== 'delete')
     .map(toExpenseCategoryWithSyncMeta);
-}
-
-function mergeExpenseLists(base: Expense[] = [], local: ExpenseWithSyncMeta[] = []): ExpenseWithSyncMeta[] {
-  const safeBase = base.filter(Boolean) as Expense[];
-  const safeLocal = local.filter(Boolean) as ExpenseWithSyncMeta[];
-  const localIds = new Set(safeLocal.map((expense) => expense.id));
-  const filtered = safeBase.filter((expense) => !localIds.has(expense.id));
-  return [...safeLocal, ...filtered] as ExpenseWithSyncMeta[];
-}
-
-function matchesExpenseFilters(expense: ExpenseWithSyncMeta, filters?: Record<string, string>): boolean {
-  if (!filters) return true;
-  if (filters.category_id && String(expense.expense_category_id ?? '') !== filters.category_id) return false;
-  if (filters.shift_id && String(expense.shift_id ?? '') !== filters.shift_id) return false;
-  const expenseDate = (expense.expense_date ?? '').slice(0, 10);
-  if (filters.date_from && expenseDate < filters.date_from.slice(0, 10)) return false;
-  if (filters.date_to && expenseDate > filters.date_to.slice(0, 10)) return false;
-  return true;
-}
-
-function mergeExpenseCategoryLists(
-  base: ExpenseCategory[] = [],
-  local: ExpenseCategoryWithSyncMeta[] = [],
-): ExpenseCategoryWithSyncMeta[] {
-  const safeBase = base.filter(Boolean) as ExpenseCategory[];
-  const safeLocal = local.filter(Boolean) as ExpenseCategoryWithSyncMeta[];
-  const localIds = new Set(safeLocal.map((category) => category.id));
-  const localNames = new Set(safeLocal.map((category) => category.name));
-  const filtered = safeBase.filter((category) => !localIds.has(category.id) && !localNames.has(category.name));
-  return [...safeLocal, ...filtered] as ExpenseCategoryWithSyncMeta[];
-}
-
-function sanitizeExpenseList(list: ExpenseWithSyncMeta[] = []): ExpenseWithSyncMeta[] {
-  return list.filter(Boolean) as ExpenseWithSyncMeta[];
-}
-
-function sanitizeExpenseCategoryList(
-  list: ExpenseCategoryWithSyncMeta[] = [],
-): ExpenseCategoryWithSyncMeta[] {
-  return list.filter(Boolean) as ExpenseCategoryWithSyncMeta[];
-}
-
-function getAllExpenseListQueries(qc: ReturnType<typeof useQueryClient>) {
-  return qc.getQueriesData<ExpenseWithSyncMeta[]>({ queryKey: [...expenseKeys.all, 'list'] });
-}
-
-function patchExpenseLists(
-  qc: ReturnType<typeof useQueryClient>,
-  patch: (old: ExpenseWithSyncMeta[]) => ExpenseWithSyncMeta[],
-): void {
-  const queries = getAllExpenseListQueries(qc);
-  for (const [key, data] of queries) {
-    qc.setQueryData<ExpenseWithSyncMeta[]>(key, sanitizeExpenseList(patch(sanitizeExpenseList(data ?? []))));
-  }
-  if (queries.length === 0) {
-    qc.setQueryData<ExpenseWithSyncMeta[]>(expenseKeys.list(), sanitizeExpenseList(patch([])));
-  }
-}
-
-function patchShiftExpenseCache(
-  qc: ReturnType<typeof useQueryClient>,
-  shiftId: number | null | undefined,
-  patch: (old: ExpenseWithSyncMeta[]) => ExpenseWithSyncMeta[],
-): void {
-  if (!shiftId) return;
-  qc.setQueryData<ExpenseWithSyncMeta[]>(
-    shiftKeys.expenses(shiftId),
-    (old) => sanitizeExpenseList(patch(sanitizeExpenseList(old ?? []))),
-  );
-}
-
-function applyExpenseOptimisticUpdates(
-  qc: ReturnType<typeof useQueryClient>,
-  expense: ExpenseWithSyncMeta,
-  mode: 'create' | 'update',
-  previousShiftId?: number | null,
-): void {
-  if (mode === 'create') {
-    patchExpenseLists(qc, (old) => {
-      if (old.some((item) => item.id === expense.id)) return old;
-      return [expense, ...old];
-    });
-    patchShiftExpenseCache(qc, expense.shift_id, (old) => {
-      if (old.some((item) => item.id === expense.id)) return old;
-      return [expense, ...old];
-    });
-  } else {
-    patchExpenseLists(qc, (old) => old.map((item) => (item.id === expense.id ? expense : item)));
-    const shiftIds = new Set(
-      [expense.shift_id, previousShiftId].filter((id): id is number => typeof id === 'number'),
-    );
-    for (const shiftId of shiftIds) {
-      patchShiftExpenseCache(qc, shiftId, (old) =>
-        old.map((item) => (item.id === expense.id ? expense : item)),
-      );
-    }
-  }
-
-  qc.setQueryData(expenseKeys.detail(expense.id), expense);
-  void qc.invalidateQueries({ queryKey: [...expenseKeys.all, 'summary'] });
-  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
-}
-
-function applyExpenseDeleteOptimisticUpdates(
-  qc: ReturnType<typeof useQueryClient>,
-  expenseId: number,
-  shiftId: number | null | undefined,
-): void {
-  patchExpenseLists(qc, (old) => old.filter((expense) => expense.id !== expenseId));
-  patchShiftExpenseCache(qc, shiftId, (old) => old.filter((expense) => expense.id !== expenseId));
-  void qc.invalidateQueries({ queryKey: [...expenseKeys.all, 'summary'] });
-  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
-}
-
-function findCachedExpense(id: number): ExpenseWithSyncMeta | undefined {
-  const lists = queryClient.getQueriesData<ExpenseWithSyncMeta[]>({ queryKey: [...expenseKeys.all, 'list'] });
-  for (const [, data] of lists) {
-    const match = sanitizeExpenseList(data ?? []).find((expense) => expense.id === id);
-    if (match) return match;
-  }
-  return queryClient.getQueryData<ExpenseWithSyncMeta>(expenseKeys.detail(id));
-}
-
-function summarizeExpenses(expenses: ExpenseWithSyncMeta[]): ExpenseSummary {
-  const byCategory = new Map<number | null, { category_id: number | null; category_name: string; total: number; count: number }>();
-  let totalAmount = 0;
-
-  for (const expense of expenses) {
-    const amount = Number(expense.amount) || 0;
-    totalAmount += amount;
-    const key = expense.expense_category_id ?? null;
-    const current = byCategory.get(key) ?? {
-      category_id: key,
-      category_name: expense.expense_category?.name ?? 'Uncategorized',
-      total: 0,
-      count: 0,
-    };
-    current.total += amount;
-    current.count += 1;
-    byCategory.set(key, current);
-  }
-
-  return {
-    total_amount: totalAmount,
-    total_count: expenses.length,
-    by_category: Array.from(byCategory.values()),
-  };
-}
-
-function mergeLocalExpensesIntoSummary(summary: ExpenseSummary, local: ExpenseWithSyncMeta[]): ExpenseSummary {
-  if (local.length === 0) return summary;
-  const merged = {
-    ...summary,
-    by_category: summary.by_category.map((item) => ({ ...item })),
-  };
-
-  for (const expense of local) {
-    const amount = Number(expense.amount) || 0;
-    merged.total_amount += amount;
-    merged.total_count += 1;
-
-    const categoryId = expense.expense_category_id ?? null;
-    const existing = merged.by_category.find((item) => item.category_id === categoryId);
-    if (existing) {
-      existing.total += amount;
-      existing.count += 1;
-    } else {
-      merged.by_category.push({
-        category_id: categoryId,
-        category_name: expense.expense_category?.name ?? 'Uncategorized',
-        total: amount,
-        count: 1,
-      });
-    }
-  }
-
-  return merged;
-}
-
-function getExpenseErrorMessage(e: AxiosError, fallback: string): string {
-  return sanitizeErrorMessage(e, fallback);
 }
 
 async function readExpensesListFromClient(filters?: Record<string, string>): Promise<ExpenseWithSyncMeta[]> {
@@ -370,6 +194,7 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: expenseKeys.categories() });
   qc.invalidateQueries({ queryKey: shiftKeys.all });
   qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+  qc.invalidateQueries({ queryKey: dashboardKeys.branchPerformance() });
 }
 
 export function useCreateExpense() {
@@ -410,7 +235,7 @@ export function useCreateExpense() {
       }
     },
     onError: (e) => {
-      showToast('error', getExpenseErrorMessage(e, 'Failed to record expense'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to record expense'));
     },
   });
 }
@@ -464,7 +289,7 @@ export function useUpdateExpense() {
     },
     onError: (e, _vars, ctx) => {
       if (ctx?.previous) qc.setQueryData(expenseKeys.list(), ctx.previous);
-      showToast('error', getExpenseErrorMessage(e, 'Failed to update expense'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to update expense'));
     },
   });
 }
@@ -513,7 +338,7 @@ export function useDeleteExpense() {
       if (ctx?.removed) {
         applyExpenseOptimisticUpdates(qc, ctx.removed, 'create');
       }
-      showToast('error', getExpenseErrorMessage(e, 'Failed to delete expense'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to delete expense'));
     },
   });
 }
@@ -559,7 +384,7 @@ export function useCreateExpenseCategory() {
       }
     },
     onError: (e) => {
-      showToast('error', getExpenseErrorMessage(e, 'Failed to create category'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to create category'));
     },
   });
 }
@@ -615,7 +440,7 @@ export function useUpdateExpenseCategory() {
     },
     onError: (e, _vars, ctx) => {
       if (ctx?.previous) qc.setQueryData(expenseKeys.categories(), ctx.previous);
-      showToast('error', getExpenseErrorMessage(e, 'Failed to update category'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to update category'));
     },
   });
 }
@@ -667,7 +492,7 @@ export function useDeleteExpenseCategory() {
     },
     onError: (e, _id, ctx) => {
       if (ctx?.previous) qc.setQueryData(expenseKeys.categories(), ctx.previous);
-      showToast('error', getExpenseErrorMessage(e, 'Failed to delete category'));
+      showToast('error', sanitizeErrorMessage(e, 'Failed to delete category'));
     },
   });
 }

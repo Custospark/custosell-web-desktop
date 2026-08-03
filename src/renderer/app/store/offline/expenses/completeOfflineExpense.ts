@@ -87,6 +87,7 @@ export function buildLocalExpense(payload: ExpenseFormPayload): ExpenseWithSyncM
     expense_category: getSelectedCategory(categoryId),
     recorded_by: authUser?.id ?? null,
     recorded_by_user: authUser ? { data: { id: authUser.id, name: authUser.name, email: authUser.email } } : null,
+    location_id: payload.fields.location_id ? Number(payload.fields.location_id) : null,
     shift_id: payload.fields.shift_id ? Number(payload.fields.shift_id) : null,
     amount: payload.fields.amount ?? '0',
     description: payload.fields.description ?? '',
@@ -113,7 +114,7 @@ export async function persistOfflineExpenseInBackground(
   payload: ExpenseFormPayload | { id: number },
   mutationType: 'create' | 'update' | 'delete',
 ): Promise<void> {
-  let mutationId = '';
+  let mutationId: string | undefined;
   let method: 'POST' | 'DELETE' = 'POST';
   let url = '/expenses';
 
@@ -167,6 +168,7 @@ export function completeOfflineUpdateExpenseInstant(expense: Expense, formData: 
     ...expense,
     expense_category_id: payload.fields.expense_category_id ? Number(payload.fields.expense_category_id) : null,
     expense_category: getSelectedCategory(payload.fields.expense_category_id ? Number(payload.fields.expense_category_id) : null),
+    location_id: payload.fields.location_id ? Number(payload.fields.location_id) : expense.location_id ?? null,
     shift_id: payload.fields.shift_id ? Number(payload.fields.shift_id) : expense.shift_id ?? null,
     amount: payload.fields.amount ?? expense.amount,
     description: payload.fields.description ?? expense.description,
@@ -198,6 +200,7 @@ export function completeOfflineDeleteExpenseInstant(id: number): void {
     expense_category: null,
     recorded_by: null,
     recorded_by_user: null,
+    location_id: null,
     shift_id: null,
     amount: '0',
     description: '',

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useExpenses, useDeleteExpense, useExpenseCategories } from '../api/ExpenseQueries';
+import { useLocations } from '../../settings/api/settings/LocationQueries';
 import { Table } from '../../../shared/components/tables/Table';
 import { Card } from '../../../shared/components/cards/Card';
 import { Badge } from '../../../shared/components/badges/Badge';
@@ -19,6 +20,12 @@ interface ExpenseListProps {
 export default function ExpenseList({ filters }: ExpenseListProps) {
   const { data: expenses, isLoading, error } = useExpenses(filters);
   const { data: categories } = useExpenseCategories();
+  const { data: locations = [] } = useLocations();
+  const locationNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const loc of locations) map.set(loc.id, loc.name);
+    return map;
+  }, [locations]);
   const deleteMutation = useDeleteExpense();
   const { confirm } = useConfirm();
   const [editExpense, setEditExpense] = useState<ExpenseWithSyncMeta | null>(null);
@@ -77,6 +84,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
           columns={[
             { key: 'date', header: 'Date', render: (e) => new Date(e.expense_date).toLocaleDateString() },
             { key: 'category', header: 'Category', render: (e) => e.expense_category?.name || <span className="text-gray-400">—</span> },
+            { key: 'branch', header: 'Branch', render: (e) => e.location?.name || locationNameById.get(e.location_id ?? -1) || <span className="text-gray-400">—</span> },
             { key: 'description', header: 'Description', render: (e) => (
               <div className="flex items-center gap-2">
                 <span>{e.description}</span>

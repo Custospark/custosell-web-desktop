@@ -15,7 +15,7 @@ interface BranchPerformanceCardProps {
 }
 
 export default function BranchPerformanceCard({ onOpenReport }: BranchPerformanceCardProps) {
-  const [datePreset, setDatePreset] = useState<'today' | 'week' | 'month'>('today');
+  const [datePreset, setDatePreset] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const { dateFrom, dateTo } = useMemo(() => resolveReportDateRange(datePreset, '', ''), [datePreset]);
 
   const { data, isLoading } = useBranchPerformance(dateFrom, dateTo);
@@ -32,10 +32,11 @@ export default function BranchPerformanceCard({ onOpenReport }: BranchPerformanc
   const chartData = sorted.map((b) => ({ location_id: b.location_id, name: b.name, net_sales: b.net_sales }));
   const totalNet = sorted.reduce((sum, b) => sum + b.net_sales, 0);
 
-  const presets: { id: 'today' | 'week' | 'month'; label: string }[] = [
+  const presets: { id: 'today' | 'week' | 'month' | 'year'; label: string }[] = [
     { id: 'today', label: 'Today' },
     { id: 'week', label: 'This Week' },
     { id: 'month', label: 'This Month' },
+    { id: 'year', label: 'This Year' },
   ];
 
   return (
@@ -66,7 +67,7 @@ export default function BranchPerformanceCard({ onOpenReport }: BranchPerformanc
       {isLoading && !data ? (
         <p className="text-sm text-gray-400 text-center py-10">Loading branch performance...</p>
       ) : sorted.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-10">No sales recorded for this period.</p>
+        <p className="text-sm text-gray-400 text-center py-10">No sales or expenses recorded for this period.</p>
       ) : (
         <>
           <ChartContainer className="h-56" minHeight={224}>
@@ -140,6 +141,7 @@ function BranchPerformanceTooltip({
       <div className="space-y-1.5">
         <ChartTooltipRow label="Gross sales" value={formatCurrency(branch.gross_sales)} />
         <ChartTooltipRow label="Refunds" value={`-${formatCurrency(branch.refunds)}`} muted />
+        <ChartTooltipRow label="Expenses" value={`-${formatCurrency(branch.expenses)}`} muted />
         <ChartTooltipRow label="Net sales" value={formatCurrency(branch.net_sales)} accent />
         <ChartTooltipRow label="Transactions" value={String(branch.transactions)} />
         <ChartTooltipRow label="Items sold" value={String(branch.items_sold)} />
@@ -165,7 +167,7 @@ export function BranchPerformanceTable({
   }
 
   if (branches.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-10">No sales recorded for this period.</p>;
+    return <p className="text-sm text-gray-400 text-center py-10">No sales or expenses recorded for this period.</p>;
   }
 
   const sorted = [...branches].sort((a, b) => b.net_sales - a.net_sales);
@@ -179,6 +181,8 @@ export function BranchPerformanceTable({
           <thead>
             <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
               <th className="py-2 pr-3 font-medium">Branch</th>
+              <th className="py-2 pr-3 font-medium text-right">Gross</th>
+              <th className="py-2 pr-3 font-medium text-right">Expenses</th>
               <th className="py-2 pr-3 font-medium text-right">Net sales</th>
               <th className="py-2 pr-3 font-medium text-right">Transactions</th>
               <th className="py-2 font-medium text-right">Share</th>
@@ -191,6 +195,12 @@ export function BranchPerformanceTable({
                   {b.name}
                   {b.is_default && <span className="ml-1.5 text-[10px] text-gray-400">Default</span>}
                 </td>
+                <td className="py-2.5 pr-3 text-right tabular-nums text-gray-600">
+                  {formatCurrency(b.gross_sales)}
+                </td>
+                <td className="py-2.5 pr-3 text-right tabular-nums text-gray-600">
+                  {formatCurrency(b.expenses)}
+                </td>
                 <td className="py-2.5 pr-3 text-right tabular-nums text-gray-900 font-semibold">
                   {formatCurrency(b.net_sales)}
                 </td>
@@ -200,6 +210,8 @@ export function BranchPerformanceTable({
             ))}
             <tr className="bg-gray-50">
               <td className="py-2.5 pr-3 text-gray-900 font-bold">Total</td>
+              <td className="py-2.5 pr-3 text-right text-gray-500">—</td>
+              <td className="py-2.5 pr-3 text-right text-gray-500">—</td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-gray-900 font-bold">{formatCurrency(totalNet)}</td>
               <td className="py-2.5 pr-3 text-right text-gray-500">—</td>
               <td className="py-2.5 text-right text-gray-500">—</td>

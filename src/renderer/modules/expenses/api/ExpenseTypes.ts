@@ -30,6 +30,8 @@ export interface Expense {
   expense_category?: ExpenseCategory | null;
   recorded_by: number | null;
   recorded_by_user?: { data: UserInfo } | null;
+  location_id?: number | null;
+  location?: { id: number; name: string; code?: string | null; is_default?: boolean } | null;
   shift_id?: number | null;
   amount: string;
   description: string;
@@ -84,6 +86,7 @@ export interface CreateExpenseData {
   next_due_date?: string | null;
   expense_date: string;
   shift_id?: number | null;
+  location_id?: number | null;
   fixed_asset_id?: number | null;
 }
 

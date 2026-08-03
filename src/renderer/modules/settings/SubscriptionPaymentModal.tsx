@@ -226,7 +226,7 @@ export default function SubscriptionPaymentModal({
           <p className="text-sm text-gray-600">
             Mobile Money: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
           </p>
-          <p className="text-xs text-gray-400">An STK push will be sent to this number.</p>
+          <p className="text-xs text-gray-400">You can change payment details in next step.</p>
         </div>
 
         <div className="border border-gray-200 rounded-xl px-4 py-3">

@@ -27,8 +27,7 @@ export default function UpgradeFlowModal({
   onClose, onComplete,
 }: UpgradeFlowModalProps) {
   const [step, setStep] = useState<Step>('confirm');
-  const isYearlySub = subscription.billing_cycle === 'yearly';
-  const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(isYearlySub ? 'yearly' : initialBillingCycle);
+  const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [prorationDue, setProrationDue] = useState(0);
@@ -37,16 +36,13 @@ export default function UpgradeFlowModal({
   const [showReferralInput, setShowReferralInput] = useState(false);
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
 
-  const handleBillingCycleChange = (cycle: 'monthly' | 'yearly') => {
-    if (isYearlySub && cycle === 'monthly') return;
-    setUpgradeCycle(cycle);
-  };
-
   const applyReferralMutation = useApplyReferralCode();
 
-  const { data: quote, isLoading: quoteLoading, isError: quoteError } = useUpgradeQuote(
+  const { data: quote, isLoading: quoteLoading, isError: quoteError, error: quoteErrorObj } = useUpgradeQuote(
     subscription.id, plan.id, upgradeCycle,
   );
+
+  const quoteErrorMessage = quoteErrorObj && (quoteErrorObj as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
   const referralDiscountUsd = subscription?.referral?.discount_applied
     ? Number(subscription.referral.discount_applied)
@@ -143,8 +139,8 @@ export default function UpgradeFlowModal({
         quoteError={quoteError}
         currency={currency}
         billingCycle={upgradeCycle}
-        isYearlySub={isYearlySub}
-        onBillingCycleChange={handleBillingCycleChange}
+        onBillingCycleChange={setUpgradeCycle}
+        quoteErrorMessage={quoteErrorMessage}
         onClose={onClose}
         onConfirm={handleConfirm}
         upgradePending={upgradeMutation.isPending}

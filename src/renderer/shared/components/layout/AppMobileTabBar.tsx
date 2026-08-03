@@ -32,10 +32,23 @@ export function AppMobileTabBar() {
   const planModules = usePlanAccessibleModules();
   const leaves = useMemo(() => resolveAccessibleNavLeaves(user, planModules), [user, planModules]);
   const pinTabs = leaves.slice(0, 2);
-  const remainingLeaves = leaves.slice(2);
+  // Quick links must never split a group across the pin boundary: if a group has
+  // any leaf pinned as a bottom tab, keep the whole group visible so items like
+  // Online Shopping > Browse & Order + My Orders always appear together.
+  const pinnedTos = useMemo(() => new Set(pinTabs.map((l) => l.to)), [pinTabs]);
+  const remainingLeaves = useMemo(
+    () => leaves.filter((leaf) => {
+      const groupLeaves = leaves.filter((l) => l.groupLabel === leaf.groupLabel);
+      const fullyPinned = groupLeaves.length > 0 && groupLeaves.every((l) => pinnedTos.has(l.to));
+      return !fullyPinned;
+    }),
+    [leaves, pinnedTos],
+  );
   const moreActive =
     state.mobileMoreOpen
-    || remainingLeaves.some((leaf) => isSidebarSubItemActive(location.pathname, leaf.to));
+    || remainingLeaves
+      .filter((leaf) => !pinnedTos.has(leaf.to))
+      .some((leaf) => isSidebarSubItemActive(location.pathname, leaf.to));
 
   const handleMenu = () => {
     dispatch({ type: 'TOGGLE_SIDEBAR' });

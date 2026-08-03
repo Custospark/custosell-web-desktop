@@ -1,5 +1,5 @@
 import {
-  Kanban, Clock, CalendarDays, ClipboardCheck, Package, CreditCard,
+  Kanban, Clock, CalendarDays, ClipboardCheck, Package,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
@@ -45,18 +45,10 @@ export function resolveAccessibleNavGroups(
     }
     if (group.label === 'Online Shopping') return true;
     if (group.label === 'Custosell Guide') return true;
+    // Settings is always surfaced for personal accounts (module gate would drop it —
+    // personal never gets the `settings` module). The .map() below narrows its sub-items.
+    if (group.label === 'Settings' && isPersonal) return true;
     if (group.label === 'Account') {
-      // Personal accounts never get the `settings` module, so surface Billing &
-      // Subscription under Account instead so they can always reach the plans page.
-      if (isPersonal) {
-        return {
-          ...group,
-          subItems: [
-            ...group.subItems,
-            { to: ROUTES.SETTINGS.SUBSCRIPTION, label: 'Billing & Subscription', icon: CreditCard },
-          ],
-        };
-      }
       return group;
     }
     return hasModule(moduleSlug);

@@ -330,7 +330,6 @@ export function AppRoutes() {
           <Route element={<ModuleAccessMiddleware module="settings" />}>
             <Route path={ROUTES.SETTINGS.INDEX} element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>}>
               <Route index element={<Navigate to={ROUTES.SETTINGS.BUSINESS} replace />} />
-              <Route path="business" element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
               <Route path="sales-channels" element={<SuspenseWrapper><SalesChannelsSettingsPage /></SuspenseWrapper>} />
               <Route path="tax" element={<SuspenseWrapper><TaxCompliancePage /></SuspenseWrapper>} />
               <Route path="staff" element={<SuspenseWrapper><StaffSettingsPage /></SuspenseWrapper>} />

@@ -18,7 +18,7 @@ export interface LoginCredentials { email: string; password: string; }
 export interface RegisterData { name: string; email: string; password: string; password_confirmation: string; phone?: string; }
 export interface AuthResponse { user: ApiResponse<User>; token: string; }
 
-export type PaymentType = 'onboarding' | 'subscription' | 'renewal' | 'upgrade_proration' | 'billing_cycle_change';
+export type PaymentType = 'onboarding' | 'subscription' | 'renewal' | 'topup' | 'upgrade_proration' | 'billing_cycle_change';
 
 declare const __APP_VERSION__: string;
 export { __APP_VERSION__ }

@@ -17,6 +17,7 @@ interface SubscriptionPaymentModalProps {
   actionLabel: string;
   paymentType: PaymentType;
   metadata?: Record<string, unknown>;
+  topupMonths?: number;
   refreshing?: boolean;
   onClose: () => void;
   onComplete: () => void;
@@ -24,7 +25,7 @@ interface SubscriptionPaymentModalProps {
 
 export default function SubscriptionPaymentModal({
   planName, planPrice, billingCycle, amount, currency, userPhone,
-  actionLabel, paymentType, metadata, refreshing, onClose, onComplete,
+  actionLabel, paymentType, metadata, topupMonths, refreshing, onClose, onComplete,
 }: SubscriptionPaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
@@ -53,7 +54,7 @@ export default function SubscriptionPaymentModal({
   const handlePay = () => {
     setPopupBlocked(false);
     initiateMutation.mutate(
-      { amount, currency, billingCycle: billingCycle as 'monthly' | 'yearly', phone: userPhone, metadata },
+      { amount, currency, billingCycle: billingCycle as 'monthly' | 'yearly', phone: userPhone, metadata, topupMonths },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);

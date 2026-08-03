@@ -6,6 +6,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import UpgradeFlowModal from './UpgradeFlowModal';
 import BillingCyclePaymentModal from './BillingCyclePaymentModal';
+import RenewTopUpModal from './RenewTopUpModal';
 import { getPaymentType } from './planActionMatrix';
 import type { Plan, PaymentType } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
@@ -52,7 +53,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [subscriptionPayment, setSubscriptionPayment] = useState<SubscriptionPaymentState | null>(null);
   const [upgradeFlowPlan, setUpgradeFlowPlan] = useState<Plan | null>(null);
-  const [renewEarly, setRenewEarly] = useState(false);
+  const [topUp, setTopUp] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const downgradeMutation = useDowngrade();
@@ -243,7 +244,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
             </p>
             <button
               type="button"
-              onClick={() => setRenewEarly(true)}
+              onClick={() => setTopUp(true)}
               className="text-sm font-semibold bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer"
             >
               Renew Early
@@ -473,19 +474,16 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         />
       )}
 
-      {renewEarly && currentPlan && (
-        <SubscriptionPaymentModal
-          planName={currentPlan.name}
-          planPrice={subscription.billing_cycle === 'yearly' ? Number(currentPlan.price_yearly_usd ?? 0) : Number(currentPlan.price_monthly_usd ?? 0)}
-          billingCycle={subscription.billing_cycle === 'yearly' ? 'yearly' : 'monthly'}
-          amount={subscription.billing_cycle === 'yearly' ? Number(currentPlan.price_yearly_usd ?? 0) : Number(currentPlan.price_monthly_usd ?? 0)}
-          currency={getPaymentCurrency()}
+      {topUp && currentPlan && (
+        <RenewTopUpModal
+          plan={currentPlan}
+          subscription={subscription}
           userPhone={userPhone}
-          actionLabel="Renew Early"
-          paymentType="renewal"
-          refreshing={refreshing}
-          onClose={() => setRenewEarly(false)}
-          onComplete={() => { setRenewEarly(false); handlePaymentComplete(); }}
+          onClose={() => setTopUp(false)}
+          onComplete={async () => {
+            setTopUp(false);
+            await handlePaymentComplete();
+          }}
         />
       )}
     </div>

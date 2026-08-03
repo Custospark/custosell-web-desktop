@@ -64,6 +64,7 @@ export function useInitiatePayment(paymentType: PaymentType) {
     billingCycle?: 'monthly' | 'yearly';
     phone?: string;
     metadata?: Record<string, unknown>;
+    topupMonths?: number;
   }>({
     mutationFn: async (payload) => {
       const { data } = await axiosInstance.post(BILLING.INITIATE, {
@@ -74,6 +75,7 @@ export function useInitiatePayment(paymentType: PaymentType) {
         billing_cycle: payload.billingCycle,
         phone: payload.phone,
         metadata: payload.metadata ?? null,
+        topup_months: payload.topupMonths ?? null,
         idempotency_key: generateIdempotencyKey(),
       });
       return data;

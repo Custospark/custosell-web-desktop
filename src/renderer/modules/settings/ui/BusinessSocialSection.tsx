@@ -32,7 +32,7 @@ export function BusinessSocialSection() {
   const { data: links = [], isLoading } = useBusinessSocialLinks();
   const upsert = useUpsertBusinessSocialLink();
   const remove = useDeleteBusinessSocialLink();
-  const confirm = useConfirm();
+  const { confirm } = useConfirm();
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
 
   const [platform, setPlatform] = useState('');

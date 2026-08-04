@@ -5,7 +5,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useToast } from '../../../app/contexts/useToast';
-import { KeyRound, Lock, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { KeyRound, Lock, ShieldCheck, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import type { ApiError } from '../../../shared/api/account/AccountTypes';
 
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
@@ -19,6 +19,9 @@ export default function SecurityPasswordTab() {
   const [confirmation, setConfirmation] = useState('');
   const [code, setCode] = useState('');
   const [pendingNewPassword, setPendingNewPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const passwordsMatch = password === confirmation;
   const valid = currentPassword.length > 0 && password.length >= 6 && passwordsMatch;
@@ -151,13 +154,21 @@ export default function SecurityPasswordTab() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
             <input
-              className={inputClass}
-              type="password"
+              className={`${inputClass} pr-10`}
+              type={showCurrent ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Current password"
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowCurrent(!showCurrent)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              aria-label={showCurrent ? 'Hide current password' : 'Show current password'}
+            >
+              {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
         <div>
@@ -165,13 +176,21 @@ export default function SecurityPasswordTab() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
             <input
-              className={inputClass}
-              type="password"
+              className={`${inputClass} pr-10`}
+              type={showNew ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min 6 characters"
               autoComplete="new-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowNew(!showNew)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              aria-label={showNew ? 'Hide new password' : 'Show new password'}
+            >
+              {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
         <div>
@@ -179,13 +198,21 @@ export default function SecurityPasswordTab() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
             <input
-              className={inputClass}
-              type="password"
+              className={`${inputClass} pr-10`}
+              type={showConfirm ? 'text' : 'password'}
               value={confirmation}
               onChange={(e) => setConfirmation(e.target.value)}
               placeholder="Confirm password"
               autoComplete="new-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+            >
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
       </div>

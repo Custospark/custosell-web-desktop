@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Trash2, ShieldAlert, Loader2 } from 'lucide-react';
+import { AlertTriangle, Trash2, ShieldAlert, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import BusinessSettingsForm from './ui/BusinessSettingsForm';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
@@ -23,6 +23,7 @@ export default function BusinessSettingsPage() {
   const [step, setStep] = useState<DeleteStep>(DeleteStep.Confirm);
   const [understood, setUnderstood] = useState(false);
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
   const deleteMutation = useDeleteBusinessAccount();
   const { data: business } = useBusiness();
@@ -200,13 +201,24 @@ export default function BusinessSettingsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Your password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className={inputClass}
-                  />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className={`${inputClass} pl-10 pr-10`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 

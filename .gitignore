@@ -29,3 +29,6 @@ docs/**/*.ipynb
 !docs/team/agents-playbook.ipynb
 !docs/offline/architecture-diagram.ipynb
 !docs/product/sales-conversation.ipynb
+
+# scratch
+placeholder.txt

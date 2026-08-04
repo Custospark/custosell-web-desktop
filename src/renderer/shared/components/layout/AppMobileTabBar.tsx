@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Menu, Ellipsis } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
 import {
   APP_MOBILE_TAB_BAR_HEIGHT_CLASS,
@@ -32,17 +33,19 @@ export function AppMobileTabBar() {
 
   const planModules = usePlanAccessibleModules();
   const leaves = useMemo(() => resolveAccessibleNavLeaves(user, planModules), [user, planModules]);
-  const pinTabs = leaves.slice(0, 2);
-  // Quick links must never split a group across the pin boundary: if a group has
-  // any leaf pinned as a bottom tab, keep the whole group visible so items like
-  // Online Shopping > Browse & Order + My Orders always appear together.
+  // Pin Products (Inventory) then Orders (Sales) when both are available — the two
+  // most-used destinations, ordered so Orders sits right after Products. Fall back
+  // to the first accessible leaves otherwise.
+  const pinTabs = useMemo(() => {
+    const products = leaves.find((l) => l.to === ROUTES.INVENTORY.PRODUCTS);
+    const orders = leaves.find((l) => l.to === ROUTES.SALES.ORDERS);
+    if (products && orders) return [products, orders];
+    return leaves.slice(0, 2);
+  }, [leaves]);
   const pinnedTos = useMemo(() => new Set(pinTabs.map((l) => l.to)), [pinTabs]);
+  // Never duplicate a pinned tab: remove pinned destinations from the overflow sheet.
   const remainingLeaves = useMemo(
-    () => leaves.filter((leaf) => {
-      const groupLeaves = leaves.filter((l) => l.groupLabel === leaf.groupLabel);
-      const fullyPinned = groupLeaves.length > 0 && groupLeaves.every((l) => pinnedTos.has(l.to));
-      return !fullyPinned;
-    }),
+    () => leaves.filter((leaf) => !pinnedTos.has(leaf.to)),
     [leaves, pinnedTos],
   );
   const moreActive =

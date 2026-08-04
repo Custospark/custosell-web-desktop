@@ -78,6 +78,21 @@ async function fetchDiscoverPage(pageParam: number, category = '') {
   };
 }
 
+async function fetchShopProductsPage(pageParam: number, slug: string, category = '') {
+  const { data } = await axiosInstance.get(STOREFRONT.PRODUCTS(slug), {
+    params: {
+      per_page: 24,
+      page: pageParam,
+      category: category || undefined,
+    },
+  });
+  return {
+    products: unwrapList<StorefrontProduct>(data),
+    shop: (data as { shop?: StorefrontShop }).shop,
+    meta: pageMeta(data),
+  };
+}
+
 /** Warm shops + products into React Query so tab switches are instant. */
 export async function prefetchStorefrontCatalogs(queryClient: QueryClient): Promise<void> {
   await Promise.all([
@@ -269,6 +284,24 @@ export function useStorefrontShopProducts(slug: string, category = '') {
     },
     enabled: Boolean(slug),
     staleTime: CATALOG_STALE_MS,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: CATALOG_REFRESH_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+/** Progressive per-shop products — page on scroll instead of one giant catalog fetch. */
+export function useStorefrontShopProductsInfinite(slug: string, category = '') {
+  return useInfiniteQuery({
+    queryKey: storefrontKeys.productsPages(slug, category),
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => fetchShopProductsPage(pageParam, slug, category),
+    getNextPageParam: (last) => nextPage(last.meta),
+    enabled: Boolean(slug),
+    staleTime: CATALOG_STALE_MS,
+    gcTime: CATALOG_GC_MS,
+    retry: 2,
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
     refetchInterval: CATALOG_REFRESH_MS,

@@ -1,0 +1,17 @@
+
+this item on the referral dashboard should have some considerable spacing on to
+
+Referrals
+
+$0.00
+
+Earned
+
+$0.00
+
+Paid
+
+$0.00
+
+Bal.
+

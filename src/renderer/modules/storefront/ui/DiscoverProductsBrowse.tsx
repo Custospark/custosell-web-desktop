@@ -11,6 +11,7 @@ import { CatalogLoadError } from './CatalogLoadError';
 import { DiscoverProductCard } from './DiscoverProductCard';
 import { StorefrontProductDetailModal } from './StorefrontProductDetailModal';
 import { isStorefrontProductOutOfStock } from './storefrontStock';
+import { useRevealMore } from './useRevealMore';
 import { useStorefrontCartActions } from '../cart/storefrontMultiCartContext';
 import { useToast } from '../../../app/contexts/useToast';
 import type { StorefrontProduct } from '../api/storefrontTypes';
@@ -22,7 +23,6 @@ const AUTO_PAGE_CAP = 3;
 export function DiscoverProductsBrowse() {
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('');
-  const [visible, setVisible] = useState(RENDER_CHUNK);
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const { data: categories = [] } = useStorefrontCategories();
   const { addProduct } = useStorefrontCartActions();
@@ -74,15 +74,17 @@ export function DiscoverProductsBrowse() {
   }, [products, q]);
 
   const listKey = `${category}|${q.trim()}`;
-  const [seen, setSeen] = useState(listKey);
-  if (listKey !== seen) {
-    setSeen(listKey);
-    setVisible(RENDER_CHUNK);
-  }
-
-  const shown = filtered.slice(0, visible);
   const totalMeta = data?.pages[0]?.meta.total;
-  const needsMoreLoaded = visible + RENDER_CHUNK > products.length && Boolean(hasNextPage);
+  const { visible, sentinelRef, revealMore } = useRevealMore({
+    chunk: RENDER_CHUNK,
+    count: filtered.length,
+    hasNextPage: Boolean(hasNextPage),
+    resetKey: listKey,
+    onLoadMore: () => {
+      if (!isFetchingNextPage) void fetchNextPage();
+    },
+  });
+  const shown = filtered.slice(0, visible);
 
   const handleOpenDetail = useCallback((product: StorefrontProduct) => setDetail(product), []);
 
@@ -107,13 +109,6 @@ export function DiscoverProductsBrowse() {
       product,
     );
   }, [addProduct, showToast]);
-
-  const onShowMore = () => {
-    setVisible((n) => n + RENDER_CHUNK);
-    if (needsMoreLoaded && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  };
 
   if (!data && isLoading) {
     return (
@@ -220,18 +215,21 @@ export function DiscoverProductsBrowse() {
             ))}
           </div>
           {filtered.length > visible || hasNextPage ? (
-            <button
-              type="button"
-              className="mx-auto rounded-xl border-2 border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
-              disabled={isFetchingNextPage && filtered.length <= visible}
-              onClick={onShowMore}
-            >
-              {isFetchingNextPage
-                ? 'Loading more…'
-                : filtered.length > visible
-                  ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
-                  : 'Load more products and services'}
-            </button>
+            <>
+              <button
+                type="button"
+                className="mx-auto rounded-xl border-2 border-amber-300/90 bg-gradient-to-r from-amber-50 via-white to-orange-50 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
+                disabled={isFetchingNextPage && filtered.length <= visible}
+                onClick={revealMore}
+              >
+                {isFetchingNextPage
+                  ? 'Loading more…'
+                  : filtered.length > visible
+                    ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
+                    : 'Load more products and services'}
+              </button>
+              <div ref={sentinelRef} className="h-px w-full" aria-hidden />
+            </>
           ) : null}
         </>
       )}

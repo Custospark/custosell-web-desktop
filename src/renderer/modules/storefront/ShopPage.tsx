@@ -11,7 +11,7 @@ import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTh
 import {
   useRateStorefrontShop,
   useStorefrontShop,
-  useStorefrontShopProducts,
+  useStorefrontShopProductsInfinite,
 } from './api/storefrontQueries';
 import type { StorefrontProduct, StorefrontShop } from './api/storefrontTypes';
 import { useStorefrontCartActions } from './cart/storefrontMultiCartContext';
@@ -23,6 +23,7 @@ import { StorefrontProductDetailModal } from './ui/StorefrontProductDetailModal'
 import { StorefrontQrCode } from './ui/StorefrontQrCode';
 import { StorefrontSocialLinks } from './ui/StorefrontSocialLinks';
 import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
+import { useRevealMore } from './ui/useRevealMore';
 import { useDiscoverShell } from './ui/discoverShellContext';
 
 function shopLocationLine(shop: StorefrontShop): string {
@@ -40,15 +41,15 @@ export default function ShopPage() {
   const { addProduct, openCart } = useStorefrontCartActions();
   const bag = useAppSelector(selectStorefrontBagBySlug(slug ?? ''));
   const shopQuery = useStorefrontShop(slug ?? '');
-  const productsQuery = useStorefrontShopProducts(slug ?? '');
+  const productsQuery = useStorefrontShopProductsInfinite(slug ?? '');
   const rateShop = useRateStorefrontShop();
   const [q, setQ] = useState('');
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
 
-  const shop = shopQuery.data ?? productsQuery.data?.shop;
+  const shop = shopQuery.data ?? productsQuery.data?.pages[0]?.shop;
   const products = useMemo(
-    () => productsQuery.data?.products ?? [],
-    [productsQuery.data?.products],
+    () => productsQuery.data?.pages.flatMap((p) => p.products) ?? [],
+    [productsQuery.data?.pages],
   );
   const currency = shop?.currency || 'UGX';
   const bagCount = bag?.items.length ?? 0;
@@ -62,6 +63,18 @@ export default function ShopPage() {
       return hay.includes(needle);
     });
   }, [products, q]);
+
+  const hasNextPage = productsQuery.hasNextPage ?? false;
+  const { visible, sentinelRef, revealMore } = useRevealMore({
+    chunk: 36,
+    count: filtered.length,
+    hasNextPage,
+    resetKey: `${slug}|${q.trim().toLowerCase()}`,
+    onLoadMore: () => {
+      if (!productsQuery.isFetchingNextPage) void productsQuery.fetchNextPage();
+    },
+  });
+  const shown = filtered.slice(0, visible);
 
   useEffect(() => {
     if (!shop) {
@@ -280,18 +293,37 @@ export default function ShopPage() {
           No products match “{q.trim()}”.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {filtered.map((p) => (
-            <DiscoverProductCard
-              key={p.id}
-              product={p}
-              currency={currency}
-              shopSlug={shop.slug}
-              onAdd={onAdd}
-              onOpenDetail={openDetail}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {shown.map((p) => (
+              <DiscoverProductCard
+                key={p.id}
+                product={p}
+                currency={currency}
+                shopSlug={shop.slug}
+                onAdd={onAdd}
+                onOpenDetail={openDetail}
+              />
+            ))}
+          </div>
+          {filtered.length > visible || hasNextPage ? (
+            <>
+              <button
+                type="button"
+                className="mx-auto rounded-xl border-2 border-indigo-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-4 py-2 text-sm font-semibold text-indigo-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
+                disabled={productsQuery.isFetchingNextPage && filtered.length <= visible}
+                onClick={revealMore}
+              >
+                {productsQuery.isFetchingNextPage
+                  ? 'Loading more…'
+                  : filtered.length > visible
+                    ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
+                    : 'Load more products'}
+              </button>
+              <div ref={sentinelRef} className="h-px w-full" aria-hidden />
+            </>
+          ) : null}
+        </>
       )}
 
       {detail ? (

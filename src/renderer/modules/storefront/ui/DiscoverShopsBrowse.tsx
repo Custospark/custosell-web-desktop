@@ -15,6 +15,7 @@ import { ProductStarRating } from './ProductStarRating';
 import { CatalogLoadError } from './CatalogLoadError';
 import { StorefrontQrCode } from './StorefrontQrCode';
 import { shopVisual } from './productVisual';
+import { useRevealMore } from './useRevealMore';
 
 const RENDER_CHUNK = 36;
 const AUTO_PAGE_CAP = 3;
@@ -33,7 +34,6 @@ function shopLocation(shop: StorefrontShop): string {
 export function DiscoverShopsBrowse() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
-  const [visible, setVisible] = useState(RENDER_CHUNK);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedQ(q), SEARCH_DEBOUNCE_MS);
@@ -104,22 +104,17 @@ export function DiscoverShopsBrowse() {
   }, [shops, q, searchQ]);
 
   const listKey = `${searchQ}|${q.trim()}`;
-  const [seen, setSeen] = useState(listKey);
-  if (listKey !== seen) {
-    setSeen(listKey);
-    setVisible(RENDER_CHUNK);
-  }
-
-  const shown = filtered.slice(0, visible);
   const totalMeta = data?.pages[0]?.meta.total;
-  const needsMoreLoaded = visible + RENDER_CHUNK > shops.length && Boolean(hasNextPage);
-
-  const onShowMore = () => {
-    setVisible((n) => n + RENDER_CHUNK);
-    if (needsMoreLoaded && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  };
+  const { visible, sentinelRef, revealMore } = useRevealMore({
+    chunk: RENDER_CHUNK,
+    count: filtered.length,
+    hasNextPage: Boolean(hasNextPage),
+    resetKey: listKey,
+    onLoadMore: () => {
+      if (!isFetchingNextPage) void fetchNextPage();
+    },
+  });
+  const shown = filtered.slice(0, visible);
 
   if (!data && isLoading) {
     return (
@@ -186,18 +181,21 @@ export function DiscoverShopsBrowse() {
             ))}
           </div>
           {filtered.length > visible || hasNextPage ? (
-            <button
-              type="button"
-              className="mx-auto rounded-xl border-2 border-indigo-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-4 py-2 text-sm font-semibold text-indigo-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
-              disabled={isFetchingNextPage && filtered.length <= visible}
-              onClick={onShowMore}
-            >
-              {isFetchingNextPage
-                ? 'Loading more…'
-                : filtered.length > visible
-                  ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
-                  : 'Load more businesses'}
-            </button>
+            <>
+              <button
+                type="button"
+                className="mx-auto rounded-xl border-2 border-indigo-300/90 bg-gradient-to-r from-teal-50 via-white to-cyan-50 px-4 py-2 text-sm font-semibold text-indigo-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
+                disabled={isFetchingNextPage && filtered.length <= visible}
+                onClick={revealMore}
+              >
+                {isFetchingNextPage
+                  ? 'Loading more…'
+                  : filtered.length > visible
+                    ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
+                    : 'Load more businesses'}
+              </button>
+              <div ref={sentinelRef} className="h-px w-full" aria-hidden />
+            </>
           ) : null}
         </>
       )}

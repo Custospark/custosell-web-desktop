@@ -9,9 +9,11 @@ import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import { useRateStorefrontShop, useStorefrontShopsInfinite } from '../api/storefrontQueries';
-import type { StorefrontShop } from '../api/storefrontTypes';
+import type { StorefrontShop, StorefrontShopFilters } from '../api/storefrontTypes';
 import { useDiscoverShell } from './discoverShellContext';
 import { ProductStarRating } from './ProductStarRating';
+import { StorefrontFilterBar } from './StorefrontFilterBar';
+import { hasActiveFilters } from './storefrontFilterUrl';
 import { CatalogLoadError } from './CatalogLoadError';
 import { StorefrontQrCode } from './StorefrontQrCode';
 import { FavoriteHeartButton } from './FavoriteHeartButton';
@@ -35,6 +37,7 @@ function shopLocation(shop: StorefrontShop): string {
 export function DiscoverShopsBrowse() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
+  const [filters, setFilters] = useState<StorefrontShopFilters>({});
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedQ(q), SEARCH_DEBOUNCE_MS);
@@ -52,7 +55,7 @@ export function DiscoverShopsBrowse() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStorefrontShopsInfinite(searchQ);
+  } = useStorefrontShopsInfinite(searchQ, filters);
 
   const pageCount = data?.pages.length ?? 0;
   const autoCap = searchQ ? 8 : AUTO_PAGE_CAP;
@@ -104,7 +107,7 @@ export function DiscoverShopsBrowse() {
     });
   }, [shops, q, searchQ]);
 
-  const listKey = `${searchQ}|${q.trim()}`;
+  const listKey = `${searchQ}|${q.trim()}|${JSON.stringify(filters)}`;
   const totalMeta = data?.pages[0]?.meta.total;
   const { visible, sentinelRef, revealMore } = useRevealMore({
     chunk: RENDER_CHUNK,
@@ -162,17 +165,34 @@ export function DiscoverShopsBrowse() {
         </span>
       </div>
 
+      <StorefrontFilterBar scope="shops" filters={filters} onChange={(next) => setFilters(next as StorefrontShopFilters)} />
+
       {filtered.length === 0 ? (
         <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center', 'rounded-none sm:rounded-2xl')}>
           <Store className="h-10 w-10 text-indigo-600" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
-            {shops.length === 0 && !searchQ ? 'No businesses yet' : `No businesses match “${q.trim()}”`}
+            {shops.length === 0 && !searchQ
+              ? 'No businesses yet'
+              : hasActiveFilters(filters)
+                ? 'No businesses match the current filters'
+                : `No businesses match “${q.trim()}”`}
           </p>
           <p className="mt-1 text-xs text-slate-600">
             {shops.length === 0 && !searchQ
               ? 'Businesses appear when they enable a public storefront.'
-              : 'Try the business name or @username (with or without @).'}
+              : hasActiveFilters(filters)
+                ? 'Try adjusting or clearing the filters above.'
+                : 'Try the business name or @username (with or without @).'}
           </p>
+          {hasActiveFilters(filters) ? (
+            <button
+              type="button"
+              onClick={() => setFilters({})}
+              className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              Clear all filters
+            </button>
+          ) : null}
         </div>
       ) : (
         <>

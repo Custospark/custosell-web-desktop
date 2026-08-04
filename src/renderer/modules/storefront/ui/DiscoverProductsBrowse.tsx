@@ -14,7 +14,9 @@ import { isStorefrontProductOutOfStock } from './storefrontStock';
 import { useRevealMore } from './useRevealMore';
 import { useStorefrontCartActions } from '../cart/storefrontMultiCartContext';
 import { useToast } from '../../../app/contexts/useToast';
-import type { StorefrontProduct } from '../api/storefrontTypes';
+import type { StorefrontProduct, StorefrontProductFilters } from '../api/storefrontTypes';
+import { StorefrontFilterBar } from './StorefrontFilterBar';
+import { hasActiveFilters } from './storefrontFilterUrl';
 
 const RENDER_CHUNK = 36;
 const AUTO_PAGE_CAP = 3;
@@ -26,6 +28,7 @@ export function DiscoverProductsBrowse() {
   const [debouncedQ, setDebouncedQ] = useState('');
   const [category, setCategory] = useState('');
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
+  const [filters, setFilters] = useState<StorefrontProductFilters>({});
   const { data: categories = [] } = useStorefrontCategories();
   const { addProduct } = useStorefrontCartActions();
   const { showToast } = useToast();
@@ -46,7 +49,7 @@ export function DiscoverProductsBrowse() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStorefrontDiscoverInfinite(category, searchQ);
+  } = useStorefrontDiscoverInfinite(category, searchQ, filters);
 
   const pageCount = data?.pages.length ?? 0;
 
@@ -85,7 +88,7 @@ export function DiscoverProductsBrowse() {
     });
   }, [products, q, searchQ]);
 
-  const listKey = `${category}|${q.trim()}`;
+  const listKey = `${category}|${q.trim()}|${JSON.stringify(filters)}`;
   const totalMeta = data?.pages[0]?.meta.total;
   const { visible, sentinelRef, revealMore } = useRevealMore({
     chunk: RENDER_CHUNK,
@@ -202,17 +205,34 @@ export function DiscoverProductsBrowse() {
         </span>
       </div>
 
+      <StorefrontFilterBar scope="products" filters={filters} onChange={(next) => setFilters(next as StorefrontProductFilters)} />
+
       {filtered.length === 0 ? (
         <div className={cn(marketplaceGlassPanel, 'mx-auto flex max-w-md flex-col items-center px-5 py-12 text-center', 'rounded-none sm:rounded-2xl')}>
           <Package className="h-10 w-10 text-amber-700" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
-            {products.length === 0 ? 'No products or services listed' : `No products or services match “${q.trim() || 'filter'}”`}
+            {products.length === 0
+              ? 'No products or services listed'
+              : hasActiveFilters(filters)
+                ? 'No products match the current filters'
+                : `No products or services match “${q.trim() || 'filter'}”`}
           </p>
           <p className="mt-1 text-xs text-slate-600">
             {products.length === 0
               ? 'Products and services appear when businesses list items for their public storefront.'
-              : 'Try another category or search — filtering is instant on this device.'}
+              : hasActiveFilters(filters)
+                ? 'Try adjusting or clearing the filters above.'
+                : 'Try another category or search — filtering is instant on this device.'}
           </p>
+          {hasActiveFilters(filters) ? (
+            <button
+              type="button"
+              onClick={() => setFilters({})}
+              className="mt-4 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+            >
+              Clear all filters
+            </button>
+          ) : null}
         </div>
       ) : (
         <>

@@ -6,8 +6,11 @@ import type {
   PlaceStorefrontOrderPayload,
   PlaceStorefrontOrderResult,
   StorefrontCategory,
+  StorefrontFacets,
   StorefrontProduct,
+  StorefrontProductFilters,
   StorefrontShop,
+  StorefrontShopFilters,
 } from './storefrontTypes';
 import { STOREFRONT_ORDERS_POLL_MS, storefrontKeys } from './storefrontQueryKeys';
 import { optimisticallyRemoveWishlistProducts } from './wishlistQueries';
@@ -50,12 +53,23 @@ function nextPage(meta: PageMeta): number | undefined {
   return cur < last ? cur + 1 : undefined;
 }
 
-async function fetchShopsPage(pageParam: number, q = '') {
+/** Build axios `params` from a filter bag, dropping empty/false values. */
+function toFilterParams(filters: StorefrontShopFilters | StorefrontProductFilters): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(filters)) {
+    if (value === undefined || value === null || value === '' || value === false) continue;
+    out[key] = value as string | number;
+  }
+  return out;
+}
+
+async function fetchShopsPage(pageParam: number, q = '', filters: StorefrontShopFilters = {}) {
   const { data } = await axiosInstance.get(STOREFRONT.SHOPS, {
     params: {
       per_page: 24,
       page: pageParam,
       q: q.trim() || undefined,
+      ...toFilterParams(filters),
     },
   });
   return {
@@ -64,13 +78,14 @@ async function fetchShopsPage(pageParam: number, q = '') {
   };
 }
 
-async function fetchDiscoverPage(pageParam: number, category = '', q = '') {
+async function fetchDiscoverPage(pageParam: number, category = '', q = '', filters: StorefrontProductFilters = {}) {
   const { data } = await axiosInstance.get(STOREFRONT.DISCOVER, {
     params: {
       per_page: 24,
       page: pageParam,
       category: category || undefined,
       q: q.trim() || undefined,
+      ...toFilterParams(filters),
     },
   });
   return {
@@ -79,13 +94,14 @@ async function fetchDiscoverPage(pageParam: number, category = '', q = '') {
   };
 }
 
-async function fetchShopProductsPage(pageParam: number, slug: string, category = '', q = '') {
+async function fetchShopProductsPage(pageParam: number, slug: string, category = '', q = '', filters: StorefrontProductFilters = {}) {
   const { data } = await axiosInstance.get(STOREFRONT.PRODUCTS(slug), {
     params: {
       per_page: 24,
       page: pageParam,
       category: category || undefined,
       q: q.trim() || undefined,
+      ...toFilterParams(filters),
     },
   });
   return {
@@ -115,13 +131,13 @@ export async function prefetchStorefrontCatalogs(queryClient: QueryClient): Prom
   ]);
 }
 
-/** Progressive shops — optional server `q` (name, city, @slug). */
-export function useStorefrontShopsInfinite(q = '') {
+/** Progressive shops — optional server `q` (name, city, @slug) + filters. */
+export function useStorefrontShopsInfinite(q = '', filters: StorefrontShopFilters = {}) {
   const query = q.trim();
   return useInfiniteQuery({
-    queryKey: storefrontKeys.shopsPages(query),
+    queryKey: storefrontKeys.shopsPages(query, filters),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchShopsPage(pageParam, query),
+    queryFn: ({ pageParam }) => fetchShopsPage(pageParam, query, filters),
     getNextPageParam: (last) => nextPage(last.meta),
     staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
@@ -133,12 +149,12 @@ export function useStorefrontShopsInfinite(q = '') {
   });
 }
 
-/** Progressive cross-shop products — optional category + server `q`; text search is server-side. */
-export function useStorefrontDiscoverInfinite(category = '', q = '') {
+/** Progressive cross-shop products — optional category + server `q` + filters; text search is server-side. */
+export function useStorefrontDiscoverInfinite(category = '', q = '', filters: StorefrontProductFilters = {}) {
   return useInfiniteQuery({
-    queryKey: storefrontKeys.discoverPages(category, q),
+    queryKey: storefrontKeys.discoverPages(category, q, filters),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchDiscoverPage(pageParam, category, q),
+    queryFn: ({ pageParam }) => fetchDiscoverPage(pageParam, category, q, filters),
     getNextPageParam: (last) => nextPage(last.meta),
     staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
@@ -147,6 +163,20 @@ export function useStorefrontDiscoverInfinite(category = '', q = '') {
     refetchOnWindowFocus: 'always',
     refetchInterval: CATALOG_REFRESH_MS,
     refetchIntervalInBackground: false,
+  });
+}
+
+/** Live facet options (business categories, locations, types, price bounds) for the filter bar. */
+export function useStorefrontFacets() {
+  return useQuery({
+    queryKey: storefrontKeys.facets(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(STOREFRONT.FACETS);
+      return ((data as { data?: StorefrontFacets }).data ?? data) as StorefrontFacets;
+    },
+    staleTime: 60_000,
+    gcTime: 60 * 60_000,
+    retry: 1,
   });
 }
 
@@ -294,11 +324,11 @@ export function useStorefrontShopProducts(slug: string, category = '') {
 }
 
 /** Progressive per-shop products — page on scroll instead of one giant catalog fetch. */
-export function useStorefrontShopProductsInfinite(slug: string, category = '', q = '') {
+export function useStorefrontShopProductsInfinite(slug: string, category = '', q = '', filters: StorefrontProductFilters = {}) {
   return useInfiniteQuery({
-    queryKey: storefrontKeys.productsPages(slug, category, q),
+    queryKey: storefrontKeys.productsPages(slug, category, q, filters),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchShopProductsPage(pageParam, slug, category, q),
+    queryFn: ({ pageParam }) => fetchShopProductsPage(pageParam, slug, category, q, filters),
     getNextPageParam: (last) => nextPage(last.meta),
     enabled: Boolean(slug),
     staleTime: CATALOG_STALE_MS,

@@ -278,6 +278,7 @@ export const STOREFRONT = {
   DISCOVER: '/storefront/discover',
   SHOPS: '/storefront/shops',
   CATEGORIES: '/storefront/categories',
+  FACETS: '/storefront/facets',
   MY_ORDERS: '/storefront/my-orders',
   MY_ORDER_SALE: (orderId: number) => `/storefront/my-orders/${orderId}/sale`,
   MY_ORDER_INVOICE: (orderId: number) => `/storefront/my-orders/${orderId}/invoice`,

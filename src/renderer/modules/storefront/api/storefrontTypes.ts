@@ -14,6 +14,7 @@ export interface StorefrontShop {
   rating_avg?: number;
   rating_count?: number;
   my_rating?: number | null;
+  category?: { slug: string; name: string } | null;
   social_links?: StorefrontSocialLink[];
 }
 
@@ -107,4 +108,56 @@ export interface MyStorefrontOrder {
   payment_status?: string | null;
   invoice_id?: number | null;
   invoice_number?: string | null;
+}
+
+export type StorefrontSort = 'relevance' | 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'name';
+
+/** Filters for the business/Discover shops list (`/storefront/shops`). */
+export interface StorefrontShopFilters {
+  /** Business category slug (or id). */
+  category?: string;
+  city?: string;
+  country?: string;
+  min_rating?: number;
+  sort?: StorefrontSort | '';
+}
+
+/** Filters for product feeds (`/storefront/discover`, `/storefront/{slug}/products`). */
+export interface StorefrontProductFilters {
+  business_category?: string;
+  type?: string;
+  price_min?: number;
+  price_max?: number;
+  in_stock?: boolean;
+  min_rating?: number;
+  city?: string;
+  country?: string;
+  sort?: StorefrontSort | '';
+}
+
+export interface StorefrontFacetOption {
+  name: string;
+  count: number;
+}
+
+export interface BusinessCategoryFacet {
+  slug: string;
+  name: string;
+  count: number;
+}
+
+export interface ProductTypeFacet {
+  value: string;
+  name: string;
+  count: number;
+}
+
+export interface StorefrontFacets {
+  business_categories: BusinessCategoryFacet[];
+  locations: {
+    countries: StorefrontFacetOption[];
+    cities: StorefrontFacetOption[];
+  };
+  product_types: ProductTypeFacet[];
+  price: { min: number; max: number };
 }

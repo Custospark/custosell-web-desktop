@@ -13,7 +13,7 @@ import {
   useStorefrontShop,
   useStorefrontShopProductsInfinite,
 } from './api/storefrontQueries';
-import type { StorefrontProduct, StorefrontShop } from './api/storefrontTypes';
+import type { StorefrontProduct, StorefrontProductFilters, StorefrontShop } from './api/storefrontTypes';
 import { useStorefrontCartActions } from './cart/storefrontMultiCartContext';
 import { selectStorefrontBagBySlug } from './cart/storefrontCartSlice';
 import { storefrontShareUrl, whatsappShareUrl } from './storefrontShare';
@@ -26,6 +26,8 @@ import { FavoriteHeartButton } from './ui/FavoriteHeartButton';
 import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
 import { useRevealMore } from './ui/useRevealMore';
 import { useDiscoverShell } from './ui/discoverShellContext';
+import { StorefrontFilterBar } from './ui/StorefrontFilterBar';
+import { hasActiveFilters } from './ui/storefrontFilterUrl';
 
 function shopLocationLine(shop: StorefrontShop): string {
   return [shop.address, shop.city, shop.state, shop.country].filter(Boolean).join(', ');
@@ -46,9 +48,10 @@ export default function ShopPage() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
+  const [filters, setFilters] = useState<StorefrontProductFilters>({});
 
   const searchQ = debouncedQ.trim().toLowerCase();
-  const productsQuery = useStorefrontShopProductsInfinite(slug ?? '', '', searchQ);
+  const productsQuery = useStorefrontShopProductsInfinite(slug ?? '', '', searchQ, filters);
 
   const shop = shopQuery.data ?? productsQuery.data?.pages[0]?.shop;
   const products = useMemo(
@@ -80,7 +83,7 @@ export default function ShopPage() {
     chunk: 36,
     count: filtered.length,
     hasNextPage,
-    resetKey: `${slug}|${q.trim().toLowerCase()}`,
+    resetKey: `${slug}|${q.trim().toLowerCase()}|${JSON.stringify(filters)}`,
     onLoadMore: () => {
       if (!productsQuery.isFetchingNextPage) void productsQuery.fetchNextPage();
     },
@@ -286,6 +289,8 @@ export default function ShopPage() {
         </span>
       </div>
 
+      <StorefrontFilterBar scope="shop" filters={filters} onChange={(next) => setFilters(next as StorefrontProductFilters)} currency={currency} />
+
       {productsQuery.isLoading ? (
         <CustosellLoader message="Loading products — fetching what this shop has listed." />
       ) : productsQuery.isError ? (
@@ -301,8 +306,19 @@ export default function ShopPage() {
           />
         </div>
       ) : filtered.length === 0 ? (
-        <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600', 'rounded-none sm:rounded-2xl')}>
-          No products match “{q.trim()}”.
+        <div className={cn(marketplaceGlassPanel, 'flex flex-col items-center px-5 py-10 text-center text-sm text-slate-600', 'rounded-none sm:rounded-2xl')}>
+          <p className="font-semibold text-slate-900">
+            {hasActiveFilters(filters) ? 'No products match the current filters' : `No products match “${q.trim()}”.`}
+          </p>
+          {hasActiveFilters(filters) ? (
+            <button
+              type="button"
+              onClick={() => setFilters({})}
+              className="mt-3 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              Clear all filters
+            </button>
+          ) : null}
         </div>
       ) : (
         <>

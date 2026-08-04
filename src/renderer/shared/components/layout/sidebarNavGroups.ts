@@ -241,6 +241,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
     subItems: [
       { to: ROUTES.ACCOUNT.NOTIFICATIONS, label: 'Notifications', icon: Bell },
       { to: ROUTES.ACCOUNT.PROFILE, label: 'My Profile', icon: UserCog },
+      { to: ROUTES.ACCOUNT.SECURITY, label: 'Security', icon: Shield },
       { to: ROUTES.ACCOUNT.REFERRALS, label: 'Referrals', icon: Gift },
     ],
   },

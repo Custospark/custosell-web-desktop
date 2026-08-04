@@ -33,7 +33,7 @@ const GROUP_INTRO: Record<string, string> = {
   hr: 'People, attendance, leave, and payroll.',
   settings: 'Business profile, branches, sales channels, staff, roles, and module access.',
   guide: 'Tutorials, FAQs, feedback, and help — learn Custosell at your pace.',
-  account: 'Notifications and your profile — keep your account up to date.',
+  account: 'Notifications, your profile, and Security — password, email verification, and two-factor authentication.',
   discover:
     'Order Online — browse businesses, products, and services — and track orders you placed as a buyer. Open it anytime from here — the tour stays in your workspace.',
 };

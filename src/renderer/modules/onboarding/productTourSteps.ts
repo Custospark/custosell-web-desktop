@@ -64,7 +64,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'profile',
     target: 'navbar-profile',
     title: 'Your profile',
-    body: 'Open your account menu for Apps, Tour, Tutorials, FAQs, Notifications, and sign out.',
+    body: 'Open your account menu for My Profile, Security, Apps, Tour, Tutorials, FAQs, Notifications, and sign out.',
     icon: CircleUser,
     tone: 'bg-blue-50 text-blue-600 ring-blue-100',
   },

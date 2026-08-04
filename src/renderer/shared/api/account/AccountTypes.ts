@@ -64,3 +64,42 @@ export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
 }
+
+export type VerificationPurpose = 'email_verification' | 'two_factor';
+
+export interface LoginChallenge {
+  requires_email_verification?: boolean;
+  requires_two_factor?: boolean;
+  email: string;
+  message?: string;
+}
+
+export class LoginChallengeError extends Error {
+  challenge: LoginChallenge;
+
+  constructor(challenge: LoginChallenge) {
+    super(challenge.message || 'Additional verification required.');
+    this.name = 'LoginChallengeError';
+    this.challenge = challenge;
+  }
+}
+
+export interface VerifyCodeRequest {
+  email: string;
+  purpose: VerificationPurpose;
+  code: string;
+}
+
+export interface SendVerificationCodeRequest {
+  email: string;
+  purpose: VerificationPurpose;
+}
+
+export interface ActivityItem {
+  id: number;
+  action: string;
+  context: Record<string, string> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  at: string;
+}

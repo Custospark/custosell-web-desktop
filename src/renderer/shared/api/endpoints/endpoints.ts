@@ -1,7 +1,7 @@
 export { PLATFORM } from './platformEndpoints';
 export { GUIDE } from './guideEndpoints';
 
-export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me', PROFILE: '/auth/profile' };
+export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me', PROFILE: '/auth/profile', VERIFY_SEND: '/auth/verify/send', VERIFY: '/auth/verify', TWO_FACTOR: '/auth/two-factor', ACTIVITY: '/auth/activity' };
 export const PLANS = '/plans';
 export const BUSINESSES = {
   REGISTER: '/businesses/register',

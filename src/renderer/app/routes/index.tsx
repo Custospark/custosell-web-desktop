@@ -137,9 +137,11 @@ const PaymentPage = lazy(() => import('../../modules/auth/PaymentPage'));
 const OnboardingPage = lazy(() => import('../../modules/auth/OnboardingPage'));
 const ForgotPasswordPage = lazy(() => import('../../modules/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../../modules/auth/ResetPasswordPage'));
+const VerifyCodePage = lazy(() => import('../../modules/auth/VerifyCodePage'));
 const ReferralEntryPage = lazy(() => import('../../modules/referral/pages/ReferralEntryPage'));
 const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/PipelineReferralsPage'));
 const AccountReferralsPage = lazy(() => import('../../modules/account/AccountReferralsPage'));
+const AccountSecurityPage = lazy(() => import('../../modules/settings/AccountSecurityPage'));
 const YourToolsPage = lazy(() => import('../../modules/personal/PersonalModulesPage'));
 const IncomeListPage = lazy(() => import('../../modules/expenses/IncomeListPage'));
 const MyBudgetsPage = lazy(() => import('../../modules/expenses/MyBudgetsPage'));
@@ -181,6 +183,7 @@ export function AppRoutes() {
         <Route path={ROUTES.REGISTER} element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<SuspenseWrapper><ForgotPasswordPage /></SuspenseWrapper>} />
         <Route path={ROUTES.RESET_PASSWORD} element={<SuspenseWrapper><ResetPasswordPage /></SuspenseWrapper>} />
+        <Route path={ROUTES.VERIFY_CODE} element={<SuspenseWrapper><VerifyCodePage /></SuspenseWrapper>} />
       </Route>
 
       <Route element={<AuthMiddlewareRoute />}>
@@ -198,6 +201,7 @@ export function AppRoutes() {
               <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
               <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
               <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+              <Route path="security" element={<SuspenseWrapper><AccountSecurityPage /></SuspenseWrapper>} />
               <Route path="referrals" element={<SuspenseWrapper><AccountReferralsPage /></SuspenseWrapper>} />
             </Route>
           </Route>

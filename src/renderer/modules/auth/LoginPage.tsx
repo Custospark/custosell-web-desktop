@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLogin } from '../../shared/api/account/AccountQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -7,6 +7,8 @@ import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { LoginChallengeError } from '../../shared/api/account/AccountTypes';
+import type { VerificationPurpose } from '../../shared/api/account/AccountTypes';
 import {
   isNetworkFailure,
   sanitizeErrorMessage,
@@ -14,13 +16,29 @@ import {
 
 export default function LoginPage() {
   const loginMutation = useLogin();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loginMutation.mutate({ email, password });
+    loginMutation.mutate(
+      { email, password },
+      {
+        onError: (error) => {
+          if (error instanceof LoginChallengeError) {
+            const purpose: VerificationPurpose = error.challenge.requires_two_factor
+              ? 'two_factor'
+              : 'email_verification';
+            navigate(ROUTES.VERIFY_CODE, {
+              state: { email: error.challenge.email, purpose, from: (location.state as { from?: string } | null)?.from },
+            });
+          }
+        },
+      },
+    );
   };
 
   const inputCls = "w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm";

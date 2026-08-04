@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
 import { ProfileSectionCard } from './ProfileSectionCard';
-import { ProfilePasswordSection } from './ProfilePasswordSection';
 import { useMutation } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
@@ -53,8 +52,6 @@ interface ProfileFormState {
   lastName: string;
   email: string;
   localPhone: string;
-  password: string;
-  password_confirmation: string;
 }
 
 export type { ProfileFormState };
@@ -81,8 +78,6 @@ function formFromUser(user: AuthUser): { form: ProfileFormState; countryCode: Co
       lastName,
       email: user.email || '',
       localPhone: parsed.localNumber,
-      password: '',
-      password_confirmation: '',
     },
   };
 }
@@ -111,8 +106,6 @@ export default function ProfileSettingsForm() {
     lastName: '',
     email: '',
     localPhone: '',
-    password: '',
-    password_confirmation: '',
   });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFileSelected, setAvatarFileSelected] = useState(false);
@@ -148,20 +141,15 @@ export default function ProfileSettingsForm() {
       || form.lastName.trim() !== baseline.lastName
       || form.email.trim() !== baseline.email
       || fullPhone !== baseline.phone
-      || form.password.trim().length > 0
       || avatarFileSelected
     );
   }, [baseline, form, fullPhone, isEditing, avatarFileSelected]);
-
-  const passwordsValid =
-    !form.password.trim() || form.password === form.password_confirmation;
 
   const canSave =
     hasChanges
     && form.firstName.trim().length > 0
     && form.lastName.trim().length > 0
     && form.email.trim().length > 0
-    && passwordsValid
     && !isCompletelyOffline;
 
   const mutation = useMutation<ProfileResponse, AxiosError<ProfileError>, FormData>({
@@ -207,10 +195,6 @@ export default function ProfileSettingsForm() {
     formData.append('name', combinedName);
     formData.append('email', form.email.trim());
     if (fullPhone) formData.append('phone', fullPhone);
-    if (form.password.trim()) {
-      formData.append('password', form.password.trim());
-      formData.append('password_confirmation', form.password_confirmation.trim());
-    }
     if (fileRef.current?.files?.[0]) {
       formData.append('avatar', fileRef.current.files[0]);
     }
@@ -405,14 +389,6 @@ export default function ProfileSettingsForm() {
               </div>
             )}
           </ProfileSectionCard>
-
-          {isEditing && (
-            <ProfilePasswordSection
-              form={form}
-              update={update}
-              passwordsValid={passwordsValid}
-            />
-          )}
         </div>
       </div>
 

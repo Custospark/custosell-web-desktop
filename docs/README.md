@@ -158,6 +158,8 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-01-customers-overview-dashboard.md](./adr/2026-08-01-customers-overview-dashboard.md) | Customers analytics overview — `GET /customers/overview`, FE dashboard, segments/frequency/trends/top-5 |
 | [2026-08-01-readonly-email-and-personal-slice-sync.md](./adr/2026-08-01-readonly-email-and-personal-slice-sync.md) | Email read-only in Account Profile; personal-account shared fields mirrored from Business Settings to auth slice |
 | [2026-08-02-branch-transfer-excludes-services.md](./adr/2026-08-02-branch-transfer-excludes-services.md) | Branch stock transfer excludes service items (no branch stock for non-inventory services) |
+| [2026-08-04-storefront-progressive-loading-and-mobile-tabs.md](./adr/2026-08-04-storefront-progressive-loading-and-mobile-tabs.md) | Progressive/paginated loading for shop & discover, mobile tab dedup + "Show more…", server-backed product search |
+| [2026-08-04-storefront-favorite-businesses.md](./adr/2026-08-04-storefront-favorite-businesses.md) | Favorite businesses (shops) — star toggle, Favorites primary tab, FavoritesPage |
 
 ## Modules
 

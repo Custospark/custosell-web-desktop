@@ -6,6 +6,7 @@ const FILTER_KEYS = [
   'category',
   'business_category',
   'type',
+  'currency',
   'price_min',
   'price_max',
   'in_stock',

@@ -126,6 +126,7 @@ export interface StorefrontShopFilters {
 export interface StorefrontProductFilters {
   business_category?: string;
   type?: string;
+  currency?: string;
   price_min?: number;
   price_max?: number;
   in_stock?: boolean;
@@ -152,12 +153,19 @@ export interface ProductTypeFacet {
   count: number;
 }
 
+export interface CurrencyFacet {
+  code: string;
+  name: string;
+  count: number;
+}
+
 export interface StorefrontFacets {
   business_categories: BusinessCategoryFacet[];
   locations: {
     countries: StorefrontFacetOption[];
     cities: StorefrontFacetOption[];
   };
+  currencies: CurrencyFacet[];
   product_types: ProductTypeFacet[];
   price: { min: number; max: number };
 }

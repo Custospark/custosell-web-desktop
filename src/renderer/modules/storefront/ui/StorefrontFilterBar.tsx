@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Check, Filter, MapPin, RotateCcw, Star, X, type LucideIcon } from 'lucide-react';
+import { Check, Coins, Filter, MapPin, RotateCcw, Star, X, type LucideIcon } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import { useStorefrontFacets } from '../api/storefrontQueries';
+import {
+  STOREFRONT_CITIES_REF,
+  STOREFRONT_COUNTRIES,
+  STOREFRONT_CURRENCIES,
+} from '../api/storefrontLocations';
 import type {
   StorefrontProductFilters,
   StorefrontShopFilters,
@@ -59,10 +64,43 @@ export function StorefrontFilterBar({
   const isShopScope = scope === 'shops';
   const isProductScope = scope !== 'shops';
 
-  const businessCategories = facets?.business_categories ?? [];
-  const countries = facets?.locations.countries ?? [];
-  const cities = facets?.locations.cities ?? [];
+  const businessCategories = useMemo(() => facets?.business_categories ?? [], [facets]);
+  const countries = useMemo(() => facets?.locations.countries ?? [], [facets]);
+  const cities = useMemo(() => facets?.locations.cities ?? [], [facets]);
+  const currencies = useMemo(() => facets?.currencies ?? [], [facets]);
   const priceBounds = facets?.price;
+
+  // Never empty: authoritative reference list, but enrich labels with the
+  // live facet count when the server already knows it (keeps counts visible).
+  const countryOptions = useMemo(() => {
+    const withCount = countries.length
+      ? STOREFRONT_COUNTRIES.map((name) => {
+          const facet = countries.find((c) => c.name === name);
+          return facet?.count ? { value: name, label: `${name} (${facet.count})` } : { value: name, label: name };
+        })
+      : STOREFRONT_COUNTRIES.map((name) => ({ value: name, label: name }));
+    return withCount;
+  }, [countries]);
+
+  const cityOptions = useMemo(() => {
+    const withCount = cities.length
+      ? STOREFRONT_CITIES_REF.map((name) => {
+          const facet = cities.find((c) => c.name === name);
+          return facet?.count ? { value: name, label: `${name} (${facet.count})` } : { value: name, label: name };
+        })
+      : STOREFRONT_CITIES_REF.map((name) => ({ value: name, label: name }));
+    return withCount;
+  }, [cities]);
+
+  const currencyOptions = useMemo(() => {
+    const withCount = currencies.length
+      ? STOREFRONT_CURRENCIES.map((c) => {
+          const facet = currencies.find((f) => f.code === c.code);
+          return facet?.count ? { value: c.code, label: `${c.code} — ${c.name} (${facet.count})` } : { value: c.code, label: `${c.code} — ${c.name}` };
+        })
+      : STOREFRONT_CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` }));
+    return withCount;
+  }, [currencies]);
 
   const categoryKey: FilterKey = isShopScope ? 'category' : 'business_category';
   const categoryActive = (filters as Filterable)[categoryKey] as string | undefined;
@@ -100,6 +138,9 @@ export function StorefrontFilterBar({
     }
     if (bag.type) {
       list.push({ id: 'type', label: bag.type === 'service' ? 'Services only' : 'Products only', onRemove: () => setFilter('type', undefined) });
+    }
+    if (bag.currency) {
+      list.push({ id: 'currency', label: `Currency: ${bag.currency}`, onRemove: () => setFilter('currency', undefined) });
     }
     if (bag.price_min !== undefined) {
       list.push({ id: 'price_min', label: `From ${bag.price_min}`, onRemove: () => setFilter('price_min', undefined) });
@@ -200,19 +241,17 @@ export function StorefrontFilterBar({
                 icon={MapPin}
                 label="Country"
                 value={(filters as Filterable).country ?? ''}
-                options={countries.map((c) => ({ value: c.name, label: c.name }))}
+                options={countryOptions}
                 placeholder="All countries"
                 onChange={(v) => setFilter('country', v || undefined)}
-                disabled={countries.length === 0}
               />
               <SelectControl
                 icon={MapPin}
                 label="City / Town"
                 value={(filters as Filterable).city ?? ''}
-                options={cities.map((c) => ({ value: c.name, label: c.name }))}
+                options={cityOptions}
                 placeholder="All cities"
                 onChange={(v) => setFilter('city', v || undefined)}
-                disabled={cities.length === 0}
               />
             </div>
           ) : null}
@@ -229,13 +268,13 @@ export function StorefrontFilterBar({
                   { value: 'service', label: 'Services' },
                 ]}
               />
-              <PriceRange
-                minValue={(filters as StorefrontProductFilters).price_min}
-                maxValue={(filters as StorefrontProductFilters).price_max}
-                bounds={priceBounds}
-                currency={currency}
-                onMin={(v) => setFilter('price_min', v ?? undefined)}
-                onMax={(v) => setFilter('price_max', v ?? undefined)}
+              <SelectControl
+                icon={Coins}
+                label="Currency"
+                value={(filters as StorefrontProductFilters).currency ?? ''}
+                options={currencyOptions}
+                placeholder="Any currency"
+                onChange={(v) => setFilter('currency', v || undefined)}
               />
               <ToggleChip
                 label="In stock"
@@ -243,6 +282,17 @@ export function StorefrontFilterBar({
                 onChange={(v) => setFilter('in_stock', v || undefined)}
               />
             </div>
+          ) : null}
+
+          {isProductScope && (priceBounds || (filters as StorefrontProductFilters).price_min != null || (filters as StorefrontProductFilters).price_max != null) ? (
+            <PriceRange
+              minValue={(filters as StorefrontProductFilters).price_min}
+              maxValue={(filters as StorefrontProductFilters).price_max}
+              bounds={priceBounds}
+              currency={currency}
+              onMin={(v) => setFilter('price_min', v ?? undefined)}
+              onMax={(v) => setFilter('price_max', v ?? undefined)}
+            />
           ) : null}
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

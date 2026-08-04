@@ -1,46 +1,6 @@
 import { Check, type LucideIcon } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
-export function ChipRow({ label, options, value, onSelect, showAll }: {
-  label: string;
-  options: { value: string; label: string; count?: number }[];
-  value: string;
-  onSelect: (value: string) => void;
-  showAll?: boolean;
-}) {
-  const all = [{ value: '', label: 'All' }, ...options];
-  const list = showAll ? all : options;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {list.map((opt) => {
-          const active = opt.value === value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onSelect(active && opt.value === value ? '' : opt.value)}
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition',
-                active
-                  ? 'border-indigo-600 bg-indigo-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50',
-              )}
-            >
-              {opt.label}
-              {typeof opt.count === 'number' ? (
-                <span className={cn('text-[10px]', active ? 'text-indigo-100' : 'text-slate-400')}>{opt.count}</span>
-              ) : null}
-              {active ? <Check className="h-3 w-3" aria-hidden /> : null}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export function SelectControl({ icon: Icon, label, value, options, placeholder, onChange, disabled }: {
   icon: LucideIcon;
   label: string;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Coins, Filter, MapPin, RotateCcw, Search, Star, X } from 'lucide-react';
+import { Building2, Coins, Filter, MapPin, RotateCcw, Search, Star, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import { useStorefrontFacets } from '../api/storefrontQueries';
@@ -14,7 +14,7 @@ import type {
   StorefrontSort,
 } from '../api/storefrontTypes';
 import { activeFilterKeys, hasActiveFilters, type FilterBag } from './storefrontFilterUrl';
-import { ChipRow, PriceRange, SelectControl, SegmentedControl, ToggleChip } from './StorefrontFilterControls';
+import { PriceRange, SelectControl, SegmentedControl, ToggleChip } from './StorefrontFilterControls';
 
 export type FilterScope = 'shops' | 'products' | 'shop';
 type Filterable = StorefrontShopFilters | StorefrontProductFilters;
@@ -256,13 +256,16 @@ export function StorefrontFilterBar({
       {open ? (
         <div className={cn(marketplaceGlassPanel, 'flex flex-col gap-3 p-3', 'rounded-none sm:rounded-xl')}>
           {(scope === 'shops' || scope === 'products') && businessCategories.length > 0 ? (
-            <ChipRow
-              label="Business type"
-              options={businessCategories.map((c) => ({ value: c.slug, label: `${c.name}`, count: c.count }))}
-              value={(draft as Filterable)[categoryKey] as string ?? ''}
-              onSelect={(v) => setFilter(categoryKey, v || undefined)}
-              showAll
-            />
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <SelectControl
+                icon={Building2}
+                label="Business type"
+                value={(draft as Filterable)[categoryKey] as string ?? ''}
+                options={businessCategories.map((c) => ({ value: c.slug, label: `${c.name}${c.count ? ` (${c.count})` : ''}` }))}
+                placeholder="All business types"
+                onChange={(v) => setFilter(categoryKey, v || undefined)}
+              />
+            </div>
           ) : null}
 
           {(scope === 'shops' || scope === 'products') ? (

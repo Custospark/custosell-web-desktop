@@ -147,133 +147,46 @@ export function StorefrontFilterBar({
 
   const pills = useMemo(() => {
     const list: { id: string; label: string; onRemove: () => void }[] = [];
-    const bag = filters as Filterable;
+    const bag = draft as Filterable;
+    const remove = (key: FilterKey) => {
+      setDraft((prev) => {
+        const next: Filterable = { ...prev };
+        delete (next as Record<string, unknown>)[key];
+        return next;
+      });
+    };
     const catValue = bag[categoryKey] as string | undefined;
     if (catValue) {
       const facet = businessCategories.find((c) => c.slug === catValue || String(c.id) === catValue);
-      list.push({
-        id: categoryKey,
-        label: facet?.name ?? catValue,
-        onRemove: () => {
-          setDraft((prev) => {
-            const next: Filterable = { ...prev };
-            delete (next as Record<string, unknown>)[categoryKey];
-            return next;
-          });
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>)[categoryKey];
-          onChange(next);
-        },
-      });
+      list.push({ id: categoryKey, label: facet?.name ?? catValue, onRemove: () => remove(categoryKey) });
     }
     if (bag.city) {
-      list.push({
-        id: 'city',
-        label: `City: ${bag.city}`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).city;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'city', label: `City: ${bag.city}`, onRemove: () => remove('city') });
     }
     if (bag.country) {
-      list.push({
-        id: 'country',
-        label: `Country: ${bag.country}`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).country;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'country', label: `Country: ${bag.country}`, onRemove: () => remove('country') });
     }
     if (bag.type) {
-      list.push({
-        id: 'type',
-        label: bag.type === 'service' ? 'Services only' : 'Products only',
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).type;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'type', label: bag.type === 'service' ? 'Services only' : 'Products only', onRemove: () => remove('type') });
     }
     if (bag.currency) {
-      list.push({
-        id: 'currency',
-        label: `Currency: ${bag.currency}`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).currency;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'currency', label: `Currency: ${bag.currency}`, onRemove: () => remove('currency') });
     }
     if (bag.price_min !== undefined) {
-      list.push({
-        id: 'price_min',
-        label: `From ${bag.price_min}`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).price_min;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'price_min', label: `From ${bag.price_min}`, onRemove: () => remove('price_min') });
     }
     if (bag.price_max !== undefined) {
-      list.push({
-        id: 'price_max',
-        label: `Up to ${bag.price_max}`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).price_max;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'price_max', label: `Up to ${bag.price_max}`, onRemove: () => remove('price_max') });
     }
     if (bag.in_stock) {
-      list.push({
-        id: 'in_stock',
-        label: 'In stock',
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).in_stock;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'in_stock', label: 'In stock', onRemove: () => remove('in_stock') });
     }
     if (bag.min_rating) {
-      list.push({
-        id: 'min_rating',
-        label: `${bag.min_rating}+ stars`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).min_rating;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'min_rating', label: `${bag.min_rating}+ stars`, onRemove: () => remove('min_rating') });
     }
     if (bag.sort) {
       const sortLabel = sortOptions.find((s) => s.value === bag.sort)?.label ?? bag.sort;
-      list.push({
-        id: 'sort',
-        label: `Sort: ${sortLabel}`,
-        onRemove: () => {
-          const next: Filterable = { ...filters };
-          delete (next as Record<string, unknown>).sort;
-          setDraft(next);
-          onChange(next);
-        },
-      });
+      list.push({ id: 'sort', label: `Sort: ${sortLabel}`, onRemove: () => remove('sort') });
     }
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps

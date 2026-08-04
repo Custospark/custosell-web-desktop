@@ -16,7 +16,6 @@ import { useStorefrontFacets } from '../../storefront/api/storefrontQueries';
 import { getJurisdictionLabel } from '../../../shared/utils/taxJurisdictions';
 import { cn } from '../../../shared/utils/cn';
 import {
-  Building2,
   Globe,
   MapPin,
   MapPinned,
@@ -29,10 +28,8 @@ import {
   Scale,
 } from 'lucide-react';
 import {
-  BUSINESS_TYPE_LABELS,
   BusinessSectionCard,
   BusinessViewField,
-  formatBusinessType,
   formatCurrencyLabel,
   iconClass,
   inputClass,
@@ -117,14 +114,14 @@ export function BusinessLocationSection({
             </div>
             <div className="space-y-4">
               <div>
-                <label className={labelClass}>City</label>
+                <label className={labelClass}>Town/City</label>
                 <SearchableSelect
-                  placeholder="Select city / town"
-                  searchPlaceholder="Search cities..."
+                  placeholder="Select town / city"
+                  searchPlaceholder="Search towns / cities..."
                   value={form.city || ''}
                   onChange={(v) => update('city', v || null)}
                   options={STOREFRONT_CITIES_REF.map((city) => ({ value: city, label: city }))}
-                  emptyOption={{ value: '', label: 'No city selected' }}
+                  emptyOption={{ value: '', label: 'No town/city selected' }}
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -256,23 +253,6 @@ export function BusinessLocationSection({
                   </div>
                 </>
               )}
-              <div>
-                <label className={labelClass}>Business type</label>
-                <div className="relative">
-                  <Building2 className={iconClass} aria-hidden />
-                  <select
-                    className={selectClass}
-                    value={form.business_type || ''}
-                    onChange={(e) => update('business_type', e.target.value || null)}
-                    title="Business type"
-                  >
-                    <option value="">Select business type</option>
-                    {Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
             </div>
           )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -352,7 +332,7 @@ export function BusinessLocationSection({
           >
             {baseline.address || '—'}
           </BusinessViewField>
-          <BusinessViewField label="City" icon={<Building className="h-4 w-4 text-blue-600" />}>
+          <BusinessViewField label="Town/City" icon={<Building className="h-4 w-4 text-blue-600" />}>
             {baseline.city || '—'}
           </BusinessViewField>
           <BusinessViewField label="State / region" icon={<MapPinned className="h-4 w-4 text-blue-600" />}>
@@ -376,9 +356,6 @@ export function BusinessLocationSection({
                 {getJurisdictionLabel(baseline.jurisdiction) === 'Not set'
                   ? '—'
                   : getJurisdictionLabel(baseline.jurisdiction)}
-              </BusinessViewField>
-              <BusinessViewField label="Business type" icon={<Building2 className="h-4 w-4 text-blue-600" />}>
-                {formatBusinessType(baseline.business_type)}
               </BusinessViewField>
               <BusinessViewField label="Business category" icon={<Tag className="h-4 w-4 text-blue-600" />}>
                 {businessCategoryLabel || '—'}

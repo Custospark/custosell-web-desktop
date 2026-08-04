@@ -33,13 +33,13 @@ import {
   Coins,
   Camera,
   Image,
+  Tags,
 } from 'lucide-react';
 import {
   emptyForm,
   type BusinessFormSnapshot,
   snapshotFromBusiness,
   snapshotsEqual,
-  formatBusinessType,
   formatLocationLine,
   BusinessSectionCard,
   BusinessViewField,
@@ -48,6 +48,7 @@ import {
 } from './businessSettingsFormShared';
 import { BusinessProfileSection } from './BusinessProfileSection';
 import { BusinessLocationSection } from './BusinessLocationSection';
+import { useStorefrontFacets } from '../../storefront/api/storefrontQueries';
 import { BusinessPaymentSection } from './BusinessPaymentSection';
 import { BusinessSocialSection } from './BusinessSocialSection';
 
@@ -55,6 +56,7 @@ export default function BusinessSettingsForm() {
   const { data: business, isLoading, error } = useBusiness();
   const mutation = useUpdateBusiness();
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
+  const { data: facets } = useStorefrontFacets();
 
   const user = useAppSelector((s) => s.auth.user);
   const isPersonal = user?.account_type === 'personal';
@@ -79,6 +81,10 @@ export default function BusinessSettingsForm() {
   const logoFileRef = useRef<HTMLInputElement>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFileSelected, setLogoFileSelected] = useState(false);
+
+  const selectedCategoryId = business?.business_category_id ?? baseline.form.business_category_id ?? null;
+  const businessCategoryLabel =
+    facets?.business_categories.find((c) => c.id === selectedCategoryId)?.name ?? null;
 
   const resetFromBusiness = useCallback((nextBusiness: NonNullable<typeof business>) => {
     const snapshot = snapshotFromBusiness(nextBusiness);
@@ -289,8 +295,11 @@ export default function BusinessSettingsForm() {
                       : (baseline.form.business_email || formatPhoneDisplay(baseline.form.business_phone) || 'No business contact details yet')}
                   </p>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                    {!isPersonal && baseline.form.business_type ? (
-                      <Badge variant="primary">{formatBusinessType(baseline.form.business_type)}</Badge>
+                    {!isPersonal && businessCategoryLabel ? (
+                      <Badge variant="primary">
+                        <Tags className="mr-1 inline h-3 w-3" aria-hidden />
+                        {businessCategoryLabel}
+                      </Badge>
                     ) : null}
                     {baseline.form.currency ? (
                       <Badge variant="neutral">

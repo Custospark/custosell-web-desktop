@@ -26,6 +26,7 @@ import {
   Coins,
   ChevronDown,
   Scale,
+  RefreshCw,
 } from 'lucide-react';
 import {
   BusinessSectionCard,
@@ -68,7 +69,7 @@ export function BusinessLocationSection({
   currencySearch,
   setCurrencySearch,
 }: BusinessLocationSectionProps) {
-  const { data: facets } = useStorefrontFacets();
+  const { data: facets, refetch: refetchFacets, isFetching: facetsLoading } = useStorefrontFacets();
   const businessCategories = facets?.business_categories ?? [];
   // Build country options from the standard reference list (East Africa first),
   // keeping the existing ISO-code value contract for the country select.
@@ -160,7 +161,20 @@ export function BusinessLocationSection({
                 emptyOption={{ value: '', label: 'No country selected' }}
               />
               <div>
-                <label className={labelClass}>Business category</label>
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Business category</label>
+                  <button
+                    type="button"
+                    onClick={() => refetchFacets()}
+                    disabled={facetsLoading}
+                    title="Refresh categories"
+                    aria-label="Refresh categories"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 transition hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <RefreshCw className={cn('h-3.5 w-3.5', facetsLoading && 'animate-spin')} aria-hidden />
+                    Refresh
+                  </button>
+                </div>
                 <SearchableSelect
                   placeholder="Select category"
                   searchPlaceholder="Search categories..."

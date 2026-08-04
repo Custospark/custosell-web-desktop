@@ -3,7 +3,10 @@ import { Button } from '../../../../shared/components/buttons/Button';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { axiosInstance } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
-import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
+import { useAppSelector } from '../../../../app/store/hooks/useApp';
+import { useLocations } from '../../../settings/api/settings/LocationQueries';
+import type { Location } from '../../../settings/api/settings/LocationTypes';
+import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle, GitBranch } from 'lucide-react';
 
 interface ImportResult {
   imported: number;
@@ -20,10 +23,15 @@ interface ImportModalProps {
 export default function ImportModal({ open, onClose, onImported }: ImportModalProps) {
   const { showToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
+  const { data: locations = [] } = useLocations();
+  const activeLocationId = useAppSelector((s) => s.auth.activeLocationId);
   const [file, setFile] = useState<File | null>(null);
+  const [branchId, setBranchId] = useState<number | null>(activeLocationId);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
+
+  const branchName = (id: number) => locations.find((l) => l.id === id)?.name;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -39,6 +47,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
     try {
       const formData = new FormData();
       formData.append('file', file);
+      if (branchId != null) formData.append('location_id', String(branchId));
       const { data } = await axiosInstance.post<ImportResult>('/products/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 600_000,
@@ -92,6 +101,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
     setFile(null);
     setResult(null);
     setUploadProgress(0);
+    setBranchId(activeLocationId ?? null);
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -108,6 +118,35 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
             <strong>Tax Class</strong> (<code className="text-gray-500">standard</code>,{' '}
             <code className="text-gray-500">exempt</code>, or <code className="text-gray-500">zero_rated</code>).
           </p>
+
+          <div>
+            <label htmlFor="import-branch" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+              <GitBranch className="h-4 w-4 text-gray-400" aria-hidden /> Map products to branch
+            </label>
+            <select
+              id="import-branch"
+              value={branchId ?? ''}
+              onChange={(e) => setBranchId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {activeLocationId != null && (
+                <option value={activeLocationId}>
+                  {branchName(activeLocationId) ?? 'My branch'} (default)
+                </option>
+              )}
+              {locations
+                .filter((l: Location) => l.id !== activeLocationId)
+                .map((l: Location) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                    {l.is_default ? ' (Default)' : ''}
+                  </option>
+                ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-400">
+              Products are mapped to the branch you pick.
+            </p>
+          </div>
 
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>

@@ -5,7 +5,7 @@ import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import ModuleLauncherModal from './ModuleLauncherModal';
 import {
-  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles, LayoutGrid,
+  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles, LayoutGrid, Shield,
 } from 'lucide-react';
 
 interface UserProfileMenuProps {
@@ -64,6 +64,15 @@ export function UserProfileMenu({
           >
             <User className="w-4 h-4 shrink-0" />
             My Profile
+          </Link>
+          <Link
+            to={ROUTES.ACCOUNT.SECURITY}
+            role="menuitem"
+            onClick={onClose}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Shield className="w-4 h-4 shrink-0" />
+            Security
           </Link>
           <button
             type="button"

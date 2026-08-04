@@ -72,28 +72,30 @@ export function BusinessProfileSection({
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Email</label>
-              <div className="relative">
-                <Mail className={iconClass} aria-hidden />
-                <input
-                  className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
-                  type="email"
-                  value={form.email || ''}
-                  readOnly
-                  tabIndex={-1}
-                />
+          {isPersonal && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>Email</label>
+                <div className="relative">
+                  <Mail className={iconClass} aria-hidden />
+                  <input
+                    className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
+                    type="email"
+                    value={form.email || ''}
+                    readOnly
+                    tabIndex={-1}
+                  />
+                </div>
               </div>
+              <PhoneNumberField
+                label="Phone"
+                countryCode={countryCode}
+                onCountryCodeChange={onPhoneCountryChange}
+                value={localPhone}
+                onChange={onLocalPhoneChange}
+              />
             </div>
-            <PhoneNumberField
-              label="Phone"
-              countryCode={countryCode}
-              onCountryCodeChange={onPhoneCountryChange}
-              value={localPhone}
-              onChange={onLocalPhoneChange}
-            />
-          </div>
+          )}
           {!isPersonal && (
             <>
               <div>
@@ -152,12 +154,16 @@ export function BusinessProfileSection({
           <BusinessViewField label={isPersonal ? 'Full name' : 'Business Name'} icon={<Store className="h-4 w-4 text-blue-600" />}>
             {baseline.name || '—'}
           </BusinessViewField>
-          <BusinessViewField label="Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
-            {baseline.email || '—'}
-          </BusinessViewField>
-          <BusinessViewField label="Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
-            {formatPhoneDisplay(baseline.phone)}
-          </BusinessViewField>
+          {isPersonal && (
+            <>
+              <BusinessViewField label="Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
+                {baseline.email || '—'}
+              </BusinessViewField>
+              <BusinessViewField label="Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
+                {formatPhoneDisplay(baseline.phone)}
+              </BusinessViewField>
+            </>
+          )}
           {!isPersonal && (
             <>
               <BusinessViewField label="Website" icon={<Globe2 className="h-4 w-4 text-blue-600" />}>

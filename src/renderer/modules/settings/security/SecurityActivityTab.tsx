@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LogIn, LogOut, ShieldCheck, Mail, KeyRound, ShieldAlert, History } from 'lucide-react';
+import { LogIn, LogOut, ShieldCheck, Mail, KeyRound, ShieldAlert, History, UserCheck } from 'lucide-react';
 import { useAccountActivity } from '../../../shared/api/account/SecurityQueries';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
@@ -14,6 +14,7 @@ const ACTION_META: Record<string, { label: string; cls: string }> = {
   two_factor_enabled: { label: '2FA enabled', cls: 'text-green-600 bg-green-50 border-green-100' },
   two_factor_disabled: { label: '2FA disabled', cls: 'text-amber-600 bg-amber-50 border-amber-100' },
   password_changed: { label: 'Password changed', cls: 'text-amber-600 bg-amber-50 border-amber-100' },
+  profile_updated: { label: 'Profile updated', cls: 'text-teal-600 bg-teal-50 border-teal-100' },
 };
 
 function actionIcon(action: string) {
@@ -26,6 +27,7 @@ function actionIcon(action: string) {
     two_factor_enabled: ShieldCheck,
     two_factor_disabled: ShieldAlert,
     password_changed: KeyRound,
+    profile_updated: UserCheck,
   };
   return icons[action] ?? History;
 }

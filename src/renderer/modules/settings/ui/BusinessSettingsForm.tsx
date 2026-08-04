@@ -182,9 +182,17 @@ export default function BusinessSettingsForm() {
     const payload: UpdateBusinessData = {
       ...form,
       name: form.name?.trim() || '',
-      phone: buildInternationalPhone(countryCode, localPhone) ?? null,
+      business_email: form.business_email?.trim() || null,
       business_phone: buildInternationalPhone(businessPhoneCountryCode, localBusinessPhone) ?? null,
     };
+
+    if (isPersonal) {
+      payload.email = form.email?.trim() || null;
+      payload.phone = buildInternationalPhone(countryCode, localPhone) ?? null;
+    } else {
+      delete payload.email;
+      delete payload.phone;
+    }
 
     mutation.mutate(
       {
@@ -275,7 +283,9 @@ export default function BusinessSettingsForm() {
                 <div className="min-w-0 flex-1 text-center sm:text-left">
                   <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || (isPersonal ? 'Your profile' : 'Your business')}</h2>
                   <p className="mt-1 text-sm text-gray-600">
-                    {baseline.form.email || formatPhoneDisplay(baseline.form.phone) || 'No contact details yet'}
+                    {isPersonal
+                      ? (baseline.form.email || formatPhoneDisplay(baseline.form.phone) || 'No contact details yet')
+                      : (baseline.form.business_email || formatPhoneDisplay(baseline.form.business_phone) || 'No business contact details yet')}
                   </p>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                     {!isPersonal && baseline.form.business_type ? (

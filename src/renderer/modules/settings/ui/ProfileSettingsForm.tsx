@@ -1,14 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from 'react';
 import { ProfileSectionCard } from './ProfileSectionCard';
-import { useMutation } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
-import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { setUser } from '../../../app/store/slices/authSlice';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
-import { useToast } from '../../../app/contexts/useToast';
-import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Badge } from '../../../shared/components/badges/Badge';
 import { Button } from '../../../shared/components/buttons/Button';
 import { PhoneNumberField } from '../../../shared/components/inputs/PhoneNumberField';
@@ -20,6 +15,7 @@ import {
 import type { CountryCode } from '../../../shared/utils/countryCodes';
 import { buildFullName, splitFullName } from '../../../shared/utils/userDisplayName';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import { useInitiateProfileChange, useConfirmProfileChange } from '../../../shared/api/account/SecurityQueries';
 import {
   User,
   Mail,
@@ -29,14 +25,13 @@ import {
   Pencil,
   Building2,
   WifiOff,
+  ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react';
 
 const inputClass =
   'w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors';
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
-
-type ProfileResponse = { data?: AuthUser } | AuthUser;
-type ProfileError = { message?: string };
 
 interface ProfileBaseline {
   firstName: string;
@@ -86,7 +81,6 @@ export default function ProfileSettingsForm() {
   const dispatch = useAppDispatch();
   const authUser = useAppSelector((s) => s.auth.user);
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
-  const { showToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -152,25 +146,11 @@ export default function ProfileSettingsForm() {
     && form.email.trim().length > 0
     && !isCompletelyOffline;
 
-  const mutation = useMutation<ProfileResponse, AxiosError<ProfileError>, FormData>({
-    mutationFn: async (formData) => {
-      const { data } = await axiosInstance.post(`${AUTH.PROFILE}?_method=PUT`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return data;
-    },
-    onSuccess: (data) => {
-      const userData = 'data' in data && data.data ? data.data : data;
-      const user = userData as AuthUser;
-      dispatch(setUser(user));
-      resetFromUser(user);
-      setIsEditing(false);
-      showToast('success', 'Profile updated successfully');
-    },
-    onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to update profile');
-    },
-  });
+  const [pendingChanges, setPendingChanges] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+
+  const initiateMutation = useInitiateProfileChange();
+  const confirmMutation = useConfirmProfileChange();
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -185,20 +165,44 @@ export default function ProfileSettingsForm() {
   const handleCancel = () => {
     if (authUser) resetFromUser(authUser);
     setIsEditing(false);
+    setPendingChanges(null);
+    setCode('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSave) return;
+    initiateMutation.mutate(
+      {
+        name: combinedName,
+        email: form.email.trim(),
+        phone: fullPhone || undefined,
+        avatar: fileRef.current?.files?.[0],
+      },
+      {
+        onSuccess: () => {
+          setPendingChanges(combinedName);
+          setCode('');
+        },
+      },
+    );
+  };
 
-    const formData = new FormData();
-    formData.append('name', combinedName);
-    formData.append('email', form.email.trim());
-    if (fullPhone) formData.append('phone', fullPhone);
-    if (fileRef.current?.files?.[0]) {
-      formData.append('avatar', fileRef.current.files[0]);
-    }
-    mutation.mutate(formData);
+  const handleConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim()) return;
+    confirmMutation.mutate(
+      { code },
+      {
+        onSuccess: (user) => {
+          dispatch(setUser(user));
+          resetFromUser(user);
+          setIsEditing(false);
+          setPendingChanges(null);
+          setCode('');
+        },
+      },
+    );
   };
 
   const roleLabel = authUser?.role?.name
@@ -206,7 +210,7 @@ export default function ProfileSettingsForm() {
     ?? (authUser?.is_platform_admin ? 'Platform admin' : null);
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full min-h-full space-y-6 pb-28">
+    <form onSubmit={pendingChanges ? handleConfirm : handleSubmit} className="relative w-full min-h-full space-y-6 pb-28">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex items-start gap-3">
           <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
@@ -216,7 +220,7 @@ export default function ProfileSettingsForm() {
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Account</p>
             <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Manage your personal information, photo, and password
+              Manage your personal information and photo
             </p>
           </div>
         </div>
@@ -240,6 +244,47 @@ export default function ProfileSettingsForm() {
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>Profile and password changes require an internet connection.</p>
+        </div>
+      )}
+
+      {pendingChanges && (
+        <div className="rounded-xl border-2 border-green-200 bg-white shadow-sm">
+          <div className="flex items-start gap-3 border-b border-green-100 px-4 py-4 sm:px-5">
+            <div className="rounded-xl bg-green-50 p-2.5 text-green-600 shrink-0">
+              <ShieldCheck className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Confirm your profile changes</h2>
+              <p className="mt-0.5 text-sm text-gray-500">
+                We sent a 6-digit security code to your email. Enter it to finish updating your profile.
+              </p>
+            </div>
+          </div>
+          <div className="p-4 sm:p-5">
+            <label className={labelClass}>Security code</label>
+            <div className="relative">
+              <ShieldCheck className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
+              <input
+                className={`${inputClass} pr-10`}
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="6-digit code"
+                autoComplete="one-time-code"
+                autoFocus
+              />
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              The code expires shortly. Your profile won't change until it's confirmed.
+            </p>
+            {confirmMutation.isError && (
+              <p className="mt-2 text-xs font-medium text-red-600">
+                {confirmMutation.error?.response?.data?.message || 'That security code is invalid or has expired.'}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -352,16 +397,15 @@ export default function ProfileSettingsForm() {
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
                       <input
-                        className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
+                        className={inputClass}
                         type="email"
                         value={form.email}
-                        readOnly
-                        tabIndex={-1}
+                        onChange={update('email')}
                         placeholder="Email address"
                         required
                       />
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">Email is your login and cannot be changed.</p>
+                    <p className="mt-1 text-xs text-gray-500">Your login email. Changing it requires a security code.</p>
                   </div>
                   <PhoneNumberField
                     label="Phone"
@@ -396,15 +440,31 @@ export default function ProfileSettingsForm() {
         <div className="sticky bottom-0 z-20 -mx-4 border-t-2 border-gray-200 bg-white/95 px-4 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-medium text-gray-600">
-              {hasChanges ? 'You have unsaved changes' : 'Update your details, then save'}
+              {pendingChanges
+                ? 'Enter the code to confirm your changes'
+                : (hasChanges ? 'You have unsaved changes' : 'Update your details, then save')}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="outline" onClick={handleCancel} disabled={mutation.isPending}>
-                Cancel
-              </Button>
-              <Button type="submit" loading={mutation.isPending} disabled={!canSave}>
-                Save changes
-              </Button>
+              {pendingChanges ? (
+                <>
+                  <Button type="button" variant="ghost" onClick={handleCancel} disabled={confirmMutation.isPending}>
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
+                    Back
+                  </Button>
+                  <Button type="submit" loading={confirmMutation.isPending} disabled={!code.trim()}>
+                    Confirm change
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button type="button" variant="outline" onClick={handleCancel} disabled={initiateMutation.isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" loading={initiateMutation.isPending} disabled={!canSave}>
+                    Save changes
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

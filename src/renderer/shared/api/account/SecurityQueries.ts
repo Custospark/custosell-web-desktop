@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../../app/store/hooks/useApp';
-import { loginSuccess } from '../../../app/store/slices/authSlice';
+import { setUser } from '../../../app/store/slices/authSlice';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
@@ -15,6 +15,7 @@ import type {
   ApiError,
 } from './AccountTypes';
 import { persistLoginCredentials } from '../../../app/store/offline/auth/deviceCredentials';
+import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
 
 export const securityKeys = {
   all: ['account', 'security'] as const,
@@ -102,5 +103,58 @@ export function useAccountActivity() {
     },
     staleTime: 2 * 60 * 1000,
     retry: false,
+  });
+}
+
+export interface ProfileChangeInitiateInput {
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: File;
+}
+
+export function useInitiateProfileChange() {
+  const { showToast } = useToast();
+  return useMutation<{ message: string; requires_profile_confirmation: boolean }, AxiosError<ApiError>, ProfileChangeInitiateInput>({
+    mutationFn: async (payload) => {
+      const formData = new FormData();
+      formData.append('name', payload.name);
+      formData.append('email', payload.email);
+      if (payload.phone) formData.append('phone', payload.phone);
+      if (payload.avatar) formData.append('avatar', payload.avatar);
+      const { data } = await axiosInstance.post<{ message: string; requires_profile_confirmation: boolean }>(
+        AUTH.PROFILE_INITIATE,
+        formData,
+      );
+      return data;
+    },
+    onError: (e) => {
+      showToast('error', e.response?.data?.message || 'Could not start the profile change.');
+    },
+  });
+}
+
+export function useConfirmProfileChange() {
+  const dispatch = useAppDispatch();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  return useMutation<AuthUser, AxiosError<ApiError>, { code: string }>({
+    mutationFn: async (payload) => {
+      const { data } = await axiosInstance.post<{ data: AuthUser }>(AUTH.PROFILE_CONFIRM, payload);
+      return data.data ?? (data as unknown as AuthUser);
+    },
+    onSuccess: async (user) => {
+      dispatch(setUser(user));
+      queryClient.setQueryData(['account', 'profile'], user);
+      try {
+        await updateStoredAuthUser(user);
+      } catch (err) {
+        console.warn('[Profile] Failed to persist profile update to local session:', err);
+      }
+      showToast('success', 'Profile updated successfully.');
+    },
+    onError: (e) => {
+      showToast('error', e.response?.data?.message || 'That security code is invalid or has expired.');
+    },
   });
 }

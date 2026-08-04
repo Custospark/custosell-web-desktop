@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AtSign, Globe, Link2, Link2Off, Plus, Trash2, WifiOff } from 'lucide-react';
 import { Badge } from '../../../shared/components/badges/Badge';
 import { Button } from '../../../shared/components/buttons/Button';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
 import {
@@ -98,7 +99,9 @@ export function BusinessSocialSection() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">Loading social links…</p>
+        <div className="flex justify-center py-10">
+          <CustosellLoader message="Loading social links…" />
+        </div>
       ) : links.length === 0 ? (
         <p className="text-sm text-gray-500">No social links yet. Add one below.</p>
       ) : (

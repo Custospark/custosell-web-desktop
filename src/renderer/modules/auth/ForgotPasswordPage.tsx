@@ -5,14 +5,16 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { useForgotPasswordCooldown } from './useForgotPasswordCooldown';
+import { useResendCooldown } from '../../shared/hooks/useResendCooldown';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const mutation = useForgotPassword();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  const { isOnCooldown, startCooldown, cooldownLabel } = useForgotPasswordCooldown(email);
+  const { isOnCooldown, startCooldown, cooldownLabel } = useResendCooldown(email, {
+    storageKey: 'custosell:forgot-password-cooldown',
+  });
 
   const requestResetLink = () => {
     if (!email.trim() || isOnCooldown || mutation.isPending) return;

@@ -16,6 +16,8 @@ import type { CountryCode } from '../../../shared/utils/countryCodes';
 import { buildFullName, splitFullName } from '../../../shared/utils/userDisplayName';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { useInitiateProfileChange, useConfirmProfileChange } from '../../../shared/api/account/SecurityQueries';
+import { useResendCooldown } from '../../../shared/hooks/useResendCooldown';
+import { ProfileConfirmCodeCard } from './ProfileConfirmCodeCard';
 import {
   User,
   Mail,
@@ -25,7 +27,6 @@ import {
   Pencil,
   Building2,
   WifiOff,
-  ShieldCheck,
   ArrowLeft,
 } from 'lucide-react';
 
@@ -151,6 +152,9 @@ export default function ProfileSettingsForm() {
 
   const initiateMutation = useInitiateProfileChange();
   const confirmMutation = useConfirmProfileChange();
+  const { isOnCooldown, startCooldown, cooldownLabel } = useResendCooldown(form.email, {
+    storageKey: 'custosell:resend-profile-change',
+  });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,6 +187,25 @@ export default function ProfileSettingsForm() {
         onSuccess: () => {
           setPendingChanges(combinedName);
           setCode('');
+          startCooldown();
+        },
+      },
+    );
+  };
+
+  const handleResend = () => {
+    if (isOnCooldown) return;
+    initiateMutation.mutate(
+      {
+        name: combinedName,
+        email: form.email.trim(),
+        phone: fullPhone || undefined,
+        avatar: fileRef.current?.files?.[0],
+      },
+      {
+        onSuccess: () => {
+          setCode('');
+          startCooldown();
         },
       },
     );
@@ -248,44 +271,15 @@ export default function ProfileSettingsForm() {
       )}
 
       {pendingChanges && (
-        <div className="rounded-xl border-2 border-green-200 bg-white shadow-sm">
-          <div className="flex items-start gap-3 border-b border-green-100 px-4 py-4 sm:px-5">
-            <div className="rounded-xl bg-green-50 p-2.5 text-green-600 shrink-0">
-              <ShieldCheck className="h-5 w-5" aria-hidden />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-gray-900">Confirm your profile changes</h2>
-              <p className="mt-0.5 text-sm text-gray-500">
-                We sent a 6-digit security code to your email. Enter it to finish updating your profile.
-              </p>
-            </div>
-          </div>
-          <div className="p-4 sm:p-5">
-            <label className={labelClass}>Security code</label>
-            <div className="relative">
-              <ShieldCheck className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
-              <input
-                className={`${inputClass} pr-10`}
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="6-digit code"
-                autoComplete="one-time-code"
-                autoFocus
-              />
-            </div>
-            <p className="mt-2 text-xs text-gray-500">
-              The code expires shortly. Your profile won't change until it's confirmed.
-            </p>
-            {confirmMutation.isError && (
-              <p className="mt-2 text-xs font-medium text-red-600">
-                {confirmMutation.error?.response?.data?.message || 'That security code is invalid or has expired.'}
-              </p>
-            )}
-          </div>
-        </div>
+        <ProfileConfirmCodeCard
+          code={code}
+          onCodeChange={setCode}
+          onResend={handleResend}
+          isResendPending={initiateMutation.isPending}
+          isResendDisabled={initiateMutation.isPending || isOnCooldown}
+          resendLabel={isOnCooldown ? `Resend available in ${cooldownLabel}` : 'Resend code'}
+          confirmError={confirmMutation.isError ? (confirmMutation.error?.response?.data?.message || 'That security code is invalid or has expired.') : null}
+        />
       )}
 
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">

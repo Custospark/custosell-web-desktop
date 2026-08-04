@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSendVerificationCode, useVerifyCode } from '../../shared/api/account/SecurityQueries';
 import { Button } from '../../shared/components/buttons/Button';
+import { useResendCooldown } from '../../shared/hooks/useResendCooldown';
 import { ShieldCheck, Mail, RefreshCw, Loader2 } from 'lucide-react';
 import type { VerificationPurpose } from '../../shared/api/account/AccountTypes';
 
@@ -15,6 +16,21 @@ export default function VerifyCodeForm({ email, purpose, title, description }: V
   const [code, setCode] = useState('');
   const verifyMutation = useVerifyCode();
   const sendMutation = useSendVerificationCode();
+  const { isOnCooldown, startCooldown, cooldownLabel } = useResendCooldown(`${purpose}:${email}`, {
+    storageKey: 'custosell:resend-verify-code',
+  });
+
+  const handleResend = () => {
+    sendMutation.mutate(
+      { email, purpose },
+      {
+        onSuccess: () => {
+          startCooldown();
+          setCode('');
+        },
+      },
+    );
+  };
 
   const inputCls =
     'w-full pl-11 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm tracking-widest';
@@ -66,12 +82,12 @@ export default function VerifyCodeForm({ email, purpose, title, description }: V
 
         <button
           type="button"
-          onClick={() => sendMutation.mutate({ email, purpose })}
-          disabled={sendMutation.isPending}
+          onClick={handleResend}
+          disabled={sendMutation.isPending || isOnCooldown}
           className="inline-flex w-full items-center justify-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 disabled:opacity-50 cursor-pointer"
         >
           {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
-          Resend code
+          {isOnCooldown ? `Resend available in ${cooldownLabel}` : 'Resend code'}
         </button>
       </form>
     </div>

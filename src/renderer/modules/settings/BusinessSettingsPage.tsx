@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Trash2, ShieldAlert, ShieldCheck, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, Trash2, ShieldAlert, ShieldCheck, Loader2, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import BusinessSettingsForm from './ui/BusinessSettingsForm';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { Modal } from '../../shared/components/modals/Modal';
 import { useBusiness, useInitiateBusinessDelete, useConfirmBusinessDelete } from './api/settings/BusinessQueries';
+import { useResendCooldown } from '../../shared/hooks/useResendCooldown';
 import { inputClass } from '../../shared/utils/inputStyles';
 import { useToast } from '../../app/contexts/useToast';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -29,6 +30,9 @@ export default function BusinessSettingsPage() {
   const [confirmationText, setConfirmationText] = useState('');
   const deleteMutation = useInitiateBusinessDelete();
   const confirmMutation = useConfirmBusinessDelete();
+  const { isOnCooldown, startCooldown, cooldownLabel } = useResendCooldown(user?.email ?? '', {
+    storageKey: 'custosell:resend-account-delete',
+  });
   const { data: business } = useBusiness();
   const { showToast } = useToast();
 
@@ -75,7 +79,23 @@ export default function BusinessSettingsPage() {
     deleteMutation.mutate(
       { password },
       {
-        onSuccess: () => setStep(DeleteStep.Code),
+        onSuccess: () => {
+          setStep(DeleteStep.Code);
+          startCooldown();
+        },
+      },
+    );
+  };
+
+  const handleResendCode = () => {
+    if (isOnCooldown || !password) return;
+    deleteMutation.mutate(
+      { password },
+      {
+        onSuccess: () => {
+          setCode('');
+          startCooldown();
+        },
       },
     );
   };
@@ -297,6 +317,17 @@ export default function BusinessSettingsPage() {
                 <p className="mt-2 text-xs text-gray-500">
                   The code expires shortly. Your account won't be deleted until it's confirmed.
                 </p>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={deleteMutation.isPending || isOnCooldown}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800 disabled:opacity-50 cursor-pointer"
+                  >
+                    {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
+                    {isOnCooldown ? `Resend available in ${cooldownLabel}` : 'Resend code'}
+                  </button>
+                </div>
               </div>
 
               {confirmMutation.isError && (

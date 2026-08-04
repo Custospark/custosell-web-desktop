@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useSendVerificationCode, useVerifyCode, useToggleTwoFactor } from '../../../shared/api/account/SecurityQueries';
 import { Button } from '../../../shared/components/buttons/Button';
+import { useResendCooldown } from '../../../shared/hooks/useResendCooldown';
 import { ProfileSectionCard } from '../ui/ProfileSectionCard';
 import { BadgeCheck, ShieldCheck, Mail, Loader2 } from 'lucide-react';
 
@@ -14,15 +15,26 @@ export default function SecurityVerificationTab() {
   const verifyMutation = useVerifyCode();
   const toggleMutation = useToggleTwoFactor();
 
-  const [code, setCode] = useState('');
-  const [verifyingEmail, setVerifyingEmail] = useState(false);
-
   const email = user?.email ?? '';
 
+  const [code, setCode] = useState('');
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const { isOnCooldown, startCooldown, cooldownLabel } = useResendCooldown(email, {
+    storageKey: 'custosell:resend-email-verify',
+  });
+
   const handleSend = () => {
-    if (!email) return;
+    if (!email || isOnCooldown) return;
     setVerifyingEmail(true);
-    sendMutation.mutate({ email, purpose: 'email_verification' });
+    sendMutation.mutate(
+      { email, purpose: 'email_verification' },
+      {
+        onSuccess: () => {
+          startCooldown();
+          setCode('');
+        },
+      },
+    );
   };
 
   const handleVerify = () => {
@@ -69,9 +81,11 @@ export default function SecurityVerificationTab() {
                   Verify
                 </Button>
               </div>
-              <Button type="button" variant="ghost" className="px-0" onClick={handleSend} disabled={sendMutation.isPending}>
+              <Button type="button" variant="ghost" className="px-0" onClick={handleSend} disabled={sendMutation.isPending || isOnCooldown}>
                 {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {verifyingEmail ? 'Send another code' : 'Send verification code'}
+                {isOnCooldown
+                  ? `Resend available in ${cooldownLabel}`
+                  : (verifyingEmail ? 'Send another code' : 'Send verification code')}
               </Button>
             </div>
           )}

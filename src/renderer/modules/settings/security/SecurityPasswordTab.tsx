@@ -5,7 +5,9 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useToast } from '../../../app/contexts/useToast';
-import { KeyRound, Lock, ShieldCheck, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useResendCooldown } from '../../../shared/hooks/useResendCooldown';
+import { KeyRound, Lock, ShieldCheck, ArrowLeft, Eye, EyeOff, RefreshCw, Loader2 } from 'lucide-react';
 import type { ApiError } from '../../../shared/api/account/AccountTypes';
 
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
@@ -14,6 +16,7 @@ const inputClass =
 
 export default function SecurityPasswordTab() {
   const { showToast } = useToast();
+  const authUser = useAppSelector((s) => s.auth.user);
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -22,6 +25,9 @@ export default function SecurityPasswordTab() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const { isOnCooldown, startCooldown, cooldownLabel } = useResendCooldown(authUser?.email ?? '', {
+    storageKey: 'custosell:resend-password-change',
+  });
 
   const passwordsMatch = password === confirmation;
   const valid = currentPassword.length > 0 && password.length >= 6 && passwordsMatch;
@@ -41,7 +47,7 @@ export default function SecurityPasswordTab() {
     onSuccess: (data, vars) => {
       setPendingNewPassword(vars.password);
       setCode('');
-      setCurrentPassword('');
+      startCooldown();
       showToast('success', data.message);
     },
     onError: (e) => {
@@ -82,6 +88,15 @@ export default function SecurityPasswordTab() {
     confirmMutation.mutate({ code });
   };
 
+  const handleResend = () => {
+    if (!pendingNewPassword || isOnCooldown) return;
+    initiateMutation.mutate({
+      current_password: currentPassword,
+      password: pendingNewPassword,
+      password_confirmation: pendingNewPassword,
+    });
+  };
+
   if (pendingNewPassword) {
     return (
       <form onSubmit={handleConfirm} className="rounded-xl border-2 border-gray-200 bg-white shadow-sm">
@@ -114,6 +129,17 @@ export default function SecurityPasswordTab() {
             />
           </div>
           <p className="mt-2 text-xs text-gray-500">The code expires shortly. Your password won't change until it's confirmed.</p>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={initiateMutation.isPending || isOnCooldown}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800 disabled:opacity-50 cursor-pointer"
+            >
+              {initiateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
+              {isOnCooldown ? `Resend available in ${cooldownLabel}` : 'Resend code'}
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-4 sm:px-5">

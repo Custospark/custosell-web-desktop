@@ -1,4 +1,5 @@
 export interface StorefrontShop {
+  id?: number;
   name: string;
   slug: string;
   description: string | null;

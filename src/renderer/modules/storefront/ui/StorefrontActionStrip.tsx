@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { ArrowLeftRight, Compass, Heart, Home, LayoutList, ShoppingCart, Ellipsis, X } from 'lucide-react';
+import { ArrowLeftRight, Compass, Heart, Home, LayoutList, ShoppingCart, Star, Ellipsis, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
-export type StorefrontStripTab = 'home' | 'discover' | 'browse' | 'cart' | 'wishlist' | 'orders';
+export type StorefrontStripTab = 'home' | 'discover' | 'browse' | 'cart' | 'wishlist' | 'orders' | 'favorites';
 
 interface StorefrontActionStripProps {
   active?: StorefrontStripTab;
@@ -17,15 +17,17 @@ interface StorefrontActionStripProps {
   onCart: () => void;
   onWishlist: () => void;
   onOrders: () => void;
+  onFavorites: () => void;
   cartCount?: number;
   wishlistCount?: number;
   ordersCount?: number;
+  favoritesCount?: number;
   /** Shopping accounts have no Home/Dashboard — Cart becomes a primary tab instead. */
   cartPrimary?: boolean;
   className?: string;
 }
 
-type Tone = 'slate' | 'amber' | 'teal' | 'emerald' | 'rose' | 'blue';
+type Tone = 'slate' | 'amber' | 'teal' | 'emerald' | 'rose' | 'blue' | 'violet';
 
 const activeTone: Record<Tone, string> = {
   slate: 'border-slate-500 bg-slate-100 text-slate-950 ring-1 ring-slate-300/50',
@@ -34,6 +36,7 @@ const activeTone: Record<Tone, string> = {
   emerald: 'border-emerald-500 bg-emerald-100 text-emerald-950 ring-1 ring-emerald-300/50',
   rose: 'border-rose-500 bg-rose-100 text-rose-950 ring-1 ring-rose-300/50',
   blue: 'border-blue-500 bg-blue-100 text-blue-950 ring-1 ring-blue-300/50',
+  violet: 'border-violet-500 bg-violet-100 text-violet-950 ring-1 ring-violet-300/50',
 };
 
 const inactiveTone: Record<Tone, string> = {
@@ -43,6 +46,7 @@ const inactiveTone: Record<Tone, string> = {
   emerald: 'border-emerald-200 bg-gradient-to-b from-emerald-50 to-white text-emerald-900',
   rose: 'border-rose-200 bg-gradient-to-b from-rose-50 to-white text-rose-900',
   blue: 'border-blue-200 bg-gradient-to-b from-blue-50 to-white text-blue-900',
+  violet: 'border-violet-200 bg-gradient-to-b from-violet-50 to-white text-violet-900',
 };
 
 export function StorefrontActionStrip({
@@ -57,9 +61,11 @@ export function StorefrontActionStrip({
   onCart,
   onWishlist,
   onOrders,
+  onFavorites,
   cartCount = 0,
   wishlistCount = 0,
   ordersCount = 0,
+  favoritesCount = 0,
   cartPrimary = false,
   className,
 }: StorefrontActionStripProps) {
@@ -67,31 +73,18 @@ export function StorefrontActionStrip({
   const shopsActive = active === 'browse';
 
   // Tabs already pinned in the main mobile row must not repeat in the More overflow.
-  const primaryTabs = new Set<StorefrontStripTab>(['discover', 'orders', 'cart']);
-  if (!cartPrimary && onHome) primaryTabs.add('home');
+  const primaryTabs = new Set<StorefrontStripTab>(['discover', 'orders', 'cart', 'favorites']);
 
   const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; count: number; countTone?: Tone; onClick: () => void }> = [
-    { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, count: 0, onClick: onBrowse },
-    ...(cartPrimary
-      ? []
-      : [{
-          tab: 'cart' as const,
-          icon: <ShoppingCart className="h-4 w-4" aria-hidden />,
-          label: 'Cart',
-          tone: 'emerald' as Tone,
-          count: cartCount,
-          countTone: 'emerald' as Tone,
-          onClick: onCart,
-        }]),
     {
-      tab: 'orders' as const,
-      icon: <LayoutList className="h-4 w-4" aria-hidden />,
-      label: 'Orders',
-      tone: 'blue' as Tone,
-      count: ordersCount,
-      countTone: 'blue' as Tone,
-      onClick: onOrders,
+      tab: 'home' as const,
+      icon: <Home className="h-4 w-4" aria-hidden />,
+      label: homeLabel,
+      tone: 'slate' as Tone,
+      count: 0,
+      onClick: () => onHome?.(),
     },
+    { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, count: 0, onClick: onBrowse },
     {
       tab: 'wishlist' as const,
       icon: <Heart className={cn('h-4 w-4', wishlistCount > 0 && 'fill-rose-500')} aria-hidden />,
@@ -101,7 +94,7 @@ export function StorefrontActionStrip({
       countTone: 'rose' as Tone,
       onClick: onWishlist,
     },
-  ].filter((t) => !primaryTabs.has(t.tab));
+  ].filter((t) => t.tab !== 'home' || (!cartPrimary && onHome)).filter((t) => !primaryTabs.has(t.tab));
 
   const isActive = (tab: StorefrontStripTab) => {
     if (tab === 'browse') return shopsActive;
@@ -138,6 +131,11 @@ export function StorefrontActionStrip({
               {wishlistCount > 99 ? '99+' : wishlistCount}
             </span>
           ) : null}
+          {tab === 'favorites' && favoritesCount > 0 ? (
+            <span className="absolute -right-2 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+              {favoritesCount > 99 ? '99+' : favoritesCount}
+            </span>
+          ) : null}
         </span>
         <span className="w-full truncate inline-flex items-center justify-center">
           {label}
@@ -155,8 +153,8 @@ export function StorefrontActionStrip({
       )}
       aria-label="Storefront navigation"
     >
-      <div className={cn('grid items-stretch lg:hidden', (!cartPrimary && onHome) ? 'grid-cols-5' : 'grid-cols-4')}>
-        {!cartPrimary && onHome ? tabBtn('home', <Home className="h-4 w-4" aria-hidden />, 'slate', homeLabel, onHome) : null}
+      <div className="grid grid-cols-5 items-stretch lg:hidden">
+        {tabBtn('favorites', <Star className="h-4 w-4" aria-hidden />, 'violet', 'Favorites', onFavorites)}
         {tabBtn('discover', <Compass className="h-4 w-4" aria-hidden />, 'amber', 'Products', onDiscover)}
         {tabBtn('cart', <ShoppingCart className="h-4 w-4" aria-hidden />, 'emerald', 'Cart', onCart)}
         {tabBtn('orders', <LayoutList className="h-4 w-4" aria-hidden />, 'blue', 'Orders', onOrders)}
@@ -271,6 +269,16 @@ export function StorefrontActionStrip({
           count={wishlistCount}
           countTone="rose"
         />
+        <DesktopTab
+          active={active === 'favorites'}
+          onClick={onFavorites}
+          title={favoritesCount > 0 ? `Favorite businesses (${favoritesCount})` : 'Favorite businesses'}
+          tone="violet"
+          icon={<Star className={cn('h-4 w-4 shrink-0', favoritesCount > 0 && 'fill-violet-500')} aria-hidden />}
+          label="Favorites"
+          count={favoritesCount}
+          countTone="violet"
+        />
       </div>
     </nav>
   );
@@ -314,6 +322,9 @@ function DesktopTab({
     blue: active
       ? 'ring-2 ring-blue-300/60 bg-blue-100 text-blue-950 shadow-md border-blue-500'
       : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-sky-50 hover:border-blue-400 hover:from-blue-100 hover:to-sky-100 hover:shadow-md hover:shadow-blue-200/50 text-blue-900',
+    violet: active
+      ? 'ring-2 ring-violet-300/60 bg-violet-100 text-violet-950 shadow-md border-violet-500'
+      : 'border-violet-300/90 bg-gradient-to-r from-violet-50 via-white to-fuchsia-50 hover:border-violet-400 hover:from-violet-100 hover:to-fuchsia-100 hover:shadow-md hover:shadow-violet-200/50 text-violet-900',
   };
 
   return (
@@ -335,7 +346,7 @@ function DesktopTab({
           <span
             className={cn(
               'absolute -top-2.5 left-full ml-1 flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[8px] font-bold leading-[1.15rem] text-white ring-2 ring-white',
-              countTone === 'emerald' ? 'bg-emerald-600' : countTone === 'rose' ? 'bg-rose-600' : 'bg-blue-600',
+              countTone === 'emerald' ? 'bg-emerald-600' : countTone === 'rose' ? 'bg-rose-600' : countTone === 'violet' ? 'bg-violet-600' : 'bg-blue-600',
             )}
           >
             {count > 99 ? '99+' : count}

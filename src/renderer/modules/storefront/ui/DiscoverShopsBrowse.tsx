@@ -14,6 +14,7 @@ import { useDiscoverShell } from './discoverShellContext';
 import { ProductStarRating } from './ProductStarRating';
 import { CatalogLoadError } from './CatalogLoadError';
 import { StorefrontQrCode } from './StorefrontQrCode';
+import { FavoriteHeartButton } from './FavoriteHeartButton';
 import { shopVisual } from './productVisual';
 import { useRevealMore } from './useRevealMore';
 
@@ -203,7 +204,7 @@ export function DiscoverShopsBrowse() {
   );
 }
 
-function ShopTile({ shop }: { shop: StorefrontShop }) {
+export function ShopTile({ shop }: { shop: StorefrontShop }) {
   const visual = shopVisual(shop.name);
   const { Icon, wrap, icon } = visual;
   const location = shopLocation(shop);
@@ -285,12 +286,14 @@ function ShopTile({ shop }: { shop: StorefrontShop }) {
           Explore Offers →
         </Link>
       </div>
-      <StorefrontQrCode
-        slug={shop.slug}
-        size={72}
-        label=""
-        className="w-[4.5rem] shrink-0 self-start"
-      />
+      <div className="flex w-[4.5rem] shrink-0 flex-col items-center gap-1 self-start">
+        <FavoriteHeartButton shop={shop} size="md" />
+        <StorefrontQrCode
+          slug={shop.slug}
+          size={72}
+          label=""
+        />
+      </div>
     </article>
   );
 }

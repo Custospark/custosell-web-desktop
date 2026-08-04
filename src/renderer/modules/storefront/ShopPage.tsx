@@ -22,6 +22,7 @@ import { ProductStarRating } from './ui/ProductStarRating';
 import { StorefrontProductDetailModal } from './ui/StorefrontProductDetailModal';
 import { StorefrontQrCode } from './ui/StorefrontQrCode';
 import { StorefrontSocialLinks } from './ui/StorefrontSocialLinks';
+import { FavoriteHeartButton } from './ui/FavoriteHeartButton';
 import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
 import { useRevealMore } from './ui/useRevealMore';
 import { useDiscoverShell } from './ui/discoverShellContext';
@@ -100,6 +101,7 @@ export default function ShopPage() {
       subtitle: loc ? `@${shop.slug} · ${loc}` : `@${shop.slug}`,
       actions: (
         <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <FavoriteHeartButton shop={shop} size="md" />
           {bagCount > 0 ? (
             <button
               type="button"

@@ -17,4 +17,6 @@ export const storefrontKeys = {
   myOrdersCount: () => [...storefrontKeys.all, 'my-orders-count', 'open'] as const,
   wishlist: () => [...storefrontKeys.all, 'wishlist'] as const,
   wishlistCount: () => [...storefrontKeys.all, 'wishlist-count'] as const,
+  favorites: () => [...storefrontKeys.all, 'favorites'] as const,
+  favoritesCount: () => [...storefrontKeys.all, 'favorites-count'] as const,
 };

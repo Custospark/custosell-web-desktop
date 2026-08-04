@@ -13,10 +13,12 @@ interface ConnectedStorefrontStripProps {
   cartCount?: number;
   wishlistCount?: number;
   ordersCount?: number;
+  favoritesCount?: number;
   onOpenCart: () => void;
   onCloseCart?: () => void;
   onOrdersAuthRequired?: () => void;
   onWishlistAuthRequired?: () => void;
+  onFavoritesAuthRequired?: () => void;
   onGoShops?: () => void;
   onGoProducts?: () => void;
   className?: string;
@@ -30,10 +32,12 @@ export function ConnectedStorefrontStrip({
   cartCount = 0,
   wishlistCount = 0,
   ordersCount = 0,
+  favoritesCount = 0,
   onOpenCart,
   onCloseCart,
   onOrdersAuthRequired,
   onWishlistAuthRequired,
+  onFavoritesAuthRequired,
   onGoShops,
   onGoProducts,
   className,
@@ -62,6 +66,7 @@ export function ConnectedStorefrontStrip({
       cartCount={cartCount}
       wishlistCount={wishlistCount}
       ordersCount={ordersCount}
+      favoritesCount={favoritesCount}
       cartPrimary={shopping}
       homeLabel={token ? 'Dashboard' : 'Home'}
       homeTitle={token ? 'Open your dashboard' : 'Custosell marketing home'}
@@ -121,6 +126,19 @@ export function ConnectedStorefrontStrip({
             return;
           }
           navigate(ROUTES.LOGIN, { state: { from: ROUTES.DISCOVER_MY_ORDERS } });
+        });
+      }}
+      onFavorites={() => {
+        leaveCartThen(() => {
+          if (token) {
+            navigate(ROUTES.DISCOVER_FAVORITES);
+            return;
+          }
+          if (onFavoritesAuthRequired) {
+            onFavoritesAuthRequired();
+            return;
+          }
+          navigate(ROUTES.LOGIN, { state: { from: ROUTES.DISCOVER_FAVORITES } });
         });
       }}
     />

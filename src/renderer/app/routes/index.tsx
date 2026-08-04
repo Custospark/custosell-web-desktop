@@ -126,6 +126,7 @@ const DiscoverLayout = lazy(() => import('../../modules/storefront/DiscoverLayou
 const DiscoverPage = lazy(() => import('../../modules/storefront/DiscoverPage'));
 const MyOrdersPage = lazy(() => import('../../modules/storefront/MyOrdersPage'));
 const WishlistPage = lazy(() => import('../../modules/storefront/WishlistPage'));
+const FavoritesPage = lazy(() => import('../../modules/storefront/FavoritesPage'));
 const ShopPage = lazy(() => import('../../modules/storefront/ShopPage'));
 
 const LandingLayout = lazy(() => import('../../modules/landing/LandingLayout'));
@@ -163,6 +164,7 @@ export function AppRoutes() {
         <Route index element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
         <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
         <Route path="wishlist" element={<SuspenseWrapper><WishlistPage /></SuspenseWrapper>} />
+        <Route path="favorites" element={<SuspenseWrapper><FavoritesPage /></SuspenseWrapper>} />
         <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
       </Route>
 

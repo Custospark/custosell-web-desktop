@@ -9,6 +9,7 @@ import { cn } from '../../shared/utils/cn';
 import { useMarketplaceHeroBackground } from '../inventory/ui/marketplace/marketplaceTheme';
 import { prefetchStorefrontCatalogs, useMyStorefrontOrdersCount } from './api/storefrontQueries';
 import { useWishlistCount } from './api/wishlistQueries';
+import { useFavoritesCount } from './api/favoriteQueries';
 import { useStorefrontCatalogWarmup } from './cart/useStorefrontCatalogWarmup';
 import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
 import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
@@ -37,6 +38,9 @@ function activeTabFromPath(
   if (path === ROUTES.DISCOVER_WISHLIST || path.endsWith('/wishlist')) {
     return 'wishlist';
   }
+  if (path === ROUTES.DISCOVER_FAVORITES) {
+    return 'favorites';
+  }
   if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) return undefined;
   const focus = new URLSearchParams(search).get('focus');
   if (focus === 'products') return 'discover';
@@ -50,6 +54,9 @@ function defaultHeader(pathname: string, search: string): { title: string; subti
   }
   if (path === ROUTES.DISCOVER_WISHLIST || path.endsWith('/wishlist')) {
     return { title: 'Wishlist', subtitle: 'Items you saved to buy later' };
+  }
+  if (path === ROUTES.DISCOVER_FAVORITES) {
+    return { title: 'Favorite Businesses', subtitle: 'Shops you starred to browse again' };
   }
   if (path.startsWith(`${ROUTES.DISCOVER}/shop/`)) {
     return { title: 'Shop', subtitle: 'Order from this business only' };
@@ -70,6 +77,7 @@ function DiscoverShellChrome() {
   const { header, registerSignInOpener } = useDiscoverShell();
   const { lineCount, cartOpen, setCartOpen, openCart } = useStorefrontMultiCart();
   const { data: wishlistCount = 0 } = useWishlistCount(Boolean(token));
+  const { data: favoritesCount = 0 } = useFavoritesCount(Boolean(token));
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginIntent, setLoginIntent] = useState<'orders' | 'general'>('general');
   const pendingLoginSuccess = useRef<(() => void) | null>(null);
@@ -213,10 +221,12 @@ function DiscoverShellChrome() {
           cartCount={lineCount}
           wishlistCount={wishlistCount}
           ordersCount={ordersCount}
+          favoritesCount={favoritesCount}
           onOpenCart={() => openCart()}
           onCloseCart={() => setCartOpen(false)}
           onOrdersAuthRequired={() => openSignIn('orders')}
           onWishlistAuthRequired={() => openSignIn('general')}
+          onFavoritesAuthRequired={() => openSignIn('general')}
           onGoShops={() => goDiscover('shops')}
           onGoProducts={() => goDiscover('products')}
         />

@@ -13,6 +13,7 @@ export const ROUTES = {
   DISCOVER: '/discover',
   DISCOVER_MY_ORDERS: '/discover/my-orders',
   DISCOVER_WISHLIST: '/discover/wishlist',
+  DISCOVER_FAVORITES: '/discover/favorites',
   /** In-app shop catalog (under Discover so strip/browse never fight a catch-all). */
   SHOP: (slug: string) => `/discover/shop/${slug}`,
   /** Public share handle — redirects to SHOP (see ShopShareRedirect). */

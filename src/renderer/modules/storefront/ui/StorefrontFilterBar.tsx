@@ -190,7 +190,7 @@ export function StorefrontFilterBar({
     }
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, categoryKey, businessCategories, sortOptions]);
+  }, [draft, categoryKey, businessCategories, sortOptions]);
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>

@@ -147,13 +147,12 @@ export function StorefrontFilterBar({
 
   const pills = useMemo(() => {
     const list: { id: string; label: string; onRemove: () => void }[] = [];
-    const bag = draft as Filterable;
+    const bag = filters as Filterable;
     const remove = (key: FilterKey) => {
-      setDraft((prev) => {
-        const next: Filterable = { ...prev };
-        delete (next as Record<string, unknown>)[key];
-        return next;
-      });
+      const next: Filterable = { ...filters };
+      delete (next as Record<string, unknown>)[key];
+      setDraft(next);
+      onChange(next);
     };
     const catValue = bag[categoryKey] as string | undefined;
     if (catValue) {

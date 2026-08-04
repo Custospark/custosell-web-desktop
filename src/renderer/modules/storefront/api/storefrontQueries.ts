@@ -64,12 +64,13 @@ async function fetchShopsPage(pageParam: number, q = '') {
   };
 }
 
-async function fetchDiscoverPage(pageParam: number, category = '') {
+async function fetchDiscoverPage(pageParam: number, category = '', q = '') {
   const { data } = await axiosInstance.get(STOREFRONT.DISCOVER, {
     params: {
       per_page: 24,
       page: pageParam,
       category: category || undefined,
+      q: q.trim() || undefined,
     },
   });
   return {
@@ -78,12 +79,13 @@ async function fetchDiscoverPage(pageParam: number, category = '') {
   };
 }
 
-async function fetchShopProductsPage(pageParam: number, slug: string, category = '') {
+async function fetchShopProductsPage(pageParam: number, slug: string, category = '', q = '') {
   const { data } = await axiosInstance.get(STOREFRONT.PRODUCTS(slug), {
     params: {
       per_page: 24,
       page: pageParam,
       category: category || undefined,
+      q: q.trim() || undefined,
     },
   });
   return {
@@ -131,12 +133,12 @@ export function useStorefrontShopsInfinite(q = '') {
   });
 }
 
-/** Progressive cross-shop products — optional category filter; text search is client-side. */
-export function useStorefrontDiscoverInfinite(category = '') {
+/** Progressive cross-shop products — optional category + server `q`; text search is server-side. */
+export function useStorefrontDiscoverInfinite(category = '', q = '') {
   return useInfiniteQuery({
-    queryKey: storefrontKeys.discoverPages(category),
+    queryKey: storefrontKeys.discoverPages(category, q),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchDiscoverPage(pageParam, category),
+    queryFn: ({ pageParam }) => fetchDiscoverPage(pageParam, category, q),
     getNextPageParam: (last) => nextPage(last.meta),
     staleTime: CATALOG_STALE_MS,
     gcTime: CATALOG_GC_MS,
@@ -292,11 +294,11 @@ export function useStorefrontShopProducts(slug: string, category = '') {
 }
 
 /** Progressive per-shop products — page on scroll instead of one giant catalog fetch. */
-export function useStorefrontShopProductsInfinite(slug: string, category = '') {
+export function useStorefrontShopProductsInfinite(slug: string, category = '', q = '') {
   return useInfiniteQuery({
-    queryKey: storefrontKeys.productsPages(slug, category),
+    queryKey: storefrontKeys.productsPages(slug, category, q),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchShopProductsPage(pageParam, slug, category),
+    queryFn: ({ pageParam }) => fetchShopProductsPage(pageParam, slug, category, q),
     getNextPageParam: (last) => nextPage(last.meta),
     enabled: Boolean(slug),
     staleTime: CATALOG_STALE_MS,

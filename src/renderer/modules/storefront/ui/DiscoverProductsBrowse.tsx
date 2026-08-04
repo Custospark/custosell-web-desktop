@@ -18,15 +18,24 @@ import type { StorefrontProduct } from '../api/storefrontTypes';
 
 const RENDER_CHUNK = 36;
 const AUTO_PAGE_CAP = 3;
+const SEARCH_DEBOUNCE_MS = 300;
 
-/** Products from all shops — category chips + progressive fetch + client search. */
+/** Products from all shops — category chips + progressive server search. */
 export function DiscoverProductsBrowse() {
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
   const [category, setCategory] = useState('');
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const { data: categories = [] } = useStorefrontCategories();
   const { addProduct } = useStorefrontCartActions();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQ(q), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(t);
+  }, [q]);
+
+  const searchQ = debouncedQ.trim();
   const {
     data,
     isLoading,
@@ -37,7 +46,7 @@ export function DiscoverProductsBrowse() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStorefrontDiscoverInfinite(category);
+  } = useStorefrontDiscoverInfinite(category, searchQ);
 
   const pageCount = data?.pages.length ?? 0;
 
@@ -47,7 +56,7 @@ export function DiscoverProductsBrowse() {
       && !isFetchingNextPage
       && !isFetchNextPageError
       && pageCount > 0
-      && pageCount < AUTO_PAGE_CAP
+      && pageCount < (searchQ ? 8 : AUTO_PAGE_CAP)
     ) {
       void fetchNextPage();
     }
@@ -57,6 +66,7 @@ export function DiscoverProductsBrowse() {
     isFetchNextPageError,
     fetchNextPage,
     pageCount,
+    searchQ,
   ]);
 
   const products = useMemo(
@@ -64,14 +74,16 @@ export function DiscoverProductsBrowse() {
     [data?.pages],
   );
 
+  // Server already filtered when searchQ is set; light client refine while debounce catches up.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return products;
+    if (needle === searchQ) return products;
     return products.filter((p) => {
       const hay = `${p.name} ${p.business?.name ?? ''} ${p.business?.city ?? ''} ${p.category?.name ?? ''} ${p.type ?? ''}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [products, q]);
+  }, [products, q, searchQ]);
 
   const listKey = `${category}|${q.trim()}`;
   const totalMeta = data?.pages[0]?.meta.total;

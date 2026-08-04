@@ -41,10 +41,13 @@ export default function ShopPage() {
   const { addProduct, openCart } = useStorefrontCartActions();
   const bag = useAppSelector(selectStorefrontBagBySlug(slug ?? ''));
   const shopQuery = useStorefrontShop(slug ?? '');
-  const productsQuery = useStorefrontShopProductsInfinite(slug ?? '');
   const rateShop = useRateStorefrontShop();
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
+
+  const searchQ = debouncedQ.trim().toLowerCase();
+  const productsQuery = useStorefrontShopProductsInfinite(slug ?? '', '', searchQ);
 
   const shop = shopQuery.data ?? productsQuery.data?.pages[0]?.shop;
   const products = useMemo(
@@ -55,14 +58,21 @@ export default function ShopPage() {
   const bagCount = bag?.items.length ?? 0;
   const locationLine = shop ? shopLocationLine(shop) : '';
 
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQ(q), 300);
+    return () => window.clearTimeout(t);
+  }, [q]);
+
+  // Server already filtered once searchQ commits; refine client-side while the debounce catches up.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return products;
+    if (needle === searchQ) return products;
     return products.filter((p) => {
       const hay = `${p.name} ${p.category?.name ?? ''} ${p.type ?? ''}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [products, q]);
+  }, [products, q, searchQ]);
 
   const hasNextPage = productsQuery.hasNextPage ?? false;
   const { visible, sentinelRef, revealMore } = useRevealMore({

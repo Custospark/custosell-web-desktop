@@ -318,7 +318,7 @@ export default function ShopPage() {
                   ? 'Loading more…'
                   : filtered.length > visible
                     ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
-                    : 'Load more products'}
+                    : 'Show more…'}
               </button>
               <div ref={sentinelRef} className="h-px w-full" aria-hidden />
             </>

@@ -226,7 +226,7 @@ export function DiscoverProductsBrowse() {
                   ? 'Loading more…'
                   : filtered.length > visible
                     ? `Show more (${filtered.length - visible}${hasNextPage ? '+' : ''})`
-                    : 'Load more products and services'}
+                    : 'Show more…'}
               </button>
               <div ref={sentinelRef} className="h-px w-full" aria-hidden />
             </>

@@ -225,7 +225,7 @@ export default function BusinessSettingsForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full min-w-0 min-h-full space-y-5 pb-28 sm:space-y-6">
+    <form onSubmit={handleSubmit} className="relative w-full min-w-0 space-y-5 sm:space-y-6">
       <div className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <div className="shrink-0 rounded-xl bg-blue-50 p-2 text-blue-600 sm:p-2.5">
@@ -416,36 +416,36 @@ export default function BusinessSettingsForm() {
             </BusinessSectionCard>
           )}
         </div>
-      </div>
 
-      {isEditing && (
-        <div className="sticky bottom-0 z-20 -mx-3 border-t-2 border-gray-200 bg-white/95 px-3 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6 sm:py-4">
-          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <p className="text-sm font-medium leading-snug text-gray-600">
-              {hasChanges ? 'You have unsaved changes' : isPersonal ? 'Update your preferences, then save' : 'Update your business details, then save'}
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={mutation.isPending}
-                className="w-full sm:w-auto"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                loading={mutation.isPending}
-                disabled={!canSave}
-                className="w-full sm:w-auto"
-              >
-                Save changes
-              </Button>
+        {isEditing && (
+          <div className="border-t-2 border-gray-200 bg-gray-50/80 px-4 py-3 sm:px-6 sm:py-4">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <p className="text-sm font-medium leading-snug text-gray-600">
+                {hasChanges ? 'You have unsaved changes' : isPersonal ? 'Update your preferences, then save' : 'Update your business details, then save'}
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={mutation.isPending}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={mutation.isPending}
+                  disabled={!canSave}
+                  className="w-full sm:w-auto"
+                >
+                  Save changes
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </form>
   );
 }

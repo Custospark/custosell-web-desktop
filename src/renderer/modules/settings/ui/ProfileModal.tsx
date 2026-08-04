@@ -9,7 +9,7 @@ interface ProfileModalProps {
 /**
  * My Profile as a standard modal (ProfileSettingsForm owns its header + save state).
  * Used on Discover so shopping accounts never need the app sidebar.
- * The padded wrapper keeps the form's full-bleed sticky save bar inside the panel.
+ * The padded wrapper keeps the sticky save bar aligned with the form card.
  */
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   return (

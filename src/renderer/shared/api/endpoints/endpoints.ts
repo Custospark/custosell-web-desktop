@@ -12,7 +12,8 @@ export const BUSINESSES = {
   STOREFRONT_PROFILE: '/businesses/storefront-profile',
   SLUG_AVAILABLE: '/businesses/slug-available',
   EXPORT: '/businesses/export',
-  DELETE_ACCOUNT: '/businesses/account',
+  DELETE_ACCOUNT_INITIATE: '/businesses/account/initiate',
+  DELETE_ACCOUNT_CONFIRM: '/businesses/account/confirm',
 };
 export const ROLES = { BASE: '/roles', BY_ID: (id: number) => `/roles/${id}` };
 export const USERS = {

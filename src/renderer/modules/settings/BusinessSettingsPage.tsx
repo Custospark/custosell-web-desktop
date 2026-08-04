@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Trash2, ShieldAlert, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, Trash2, ShieldAlert, ShieldCheck, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import BusinessSettingsForm from './ui/BusinessSettingsForm';
 import { Button } from '../../shared/components/buttons/Button';
 import { Card } from '../../shared/components/cards/Card';
 import { Modal } from '../../shared/components/modals/Modal';
-import { useBusiness, useDeleteBusinessAccount } from './api/settings/BusinessQueries';
+import { useBusiness, useInitiateBusinessDelete, useConfirmBusinessDelete } from './api/settings/BusinessQueries';
 import { inputClass } from '../../shared/utils/inputStyles';
 import { useToast } from '../../app/contexts/useToast';
 import { useAppSelector } from '../../app/store/hooks/useApp';
@@ -12,6 +12,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 const DeleteStep = {
   Confirm: 0,
   Password: 1,
+  Code: 2,
 } as const;
 
 type DeleteStep = (typeof DeleteStep)[keyof typeof DeleteStep];
@@ -24,8 +25,10 @@ export default function BusinessSettingsPage() {
   const [understood, setUnderstood] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState('');
   const [confirmationText, setConfirmationText] = useState('');
-  const deleteMutation = useDeleteBusinessAccount();
+  const deleteMutation = useInitiateBusinessDelete();
+  const confirmMutation = useConfirmBusinessDelete();
   const { data: business } = useBusiness();
   const { showToast } = useToast();
 
@@ -44,6 +47,7 @@ export default function BusinessSettingsPage() {
     setStep(DeleteStep.Confirm);
     setUnderstood(false);
     setPassword('');
+    setCode('');
     setConfirmationText('');
     setDeleteOpen(true);
   };
@@ -52,7 +56,7 @@ export default function BusinessSettingsPage() {
     setStep(DeleteStep.Password);
   };
 
-  const handleConfirmDelete = () => {
+  const handleSendCode = () => {
     if (!understood) {
       showToast('error', 'Please confirm that you understand the consequences before deleting your business account.');
       return;
@@ -68,7 +72,21 @@ export default function BusinessSettingsPage() {
       return;
     }
 
-    deleteMutation.mutate({ password, current_password: password });
+    deleteMutation.mutate(
+      { password },
+      {
+        onSuccess: () => setStep(DeleteStep.Code),
+      },
+    );
+  };
+
+  const handleConfirmDelete = () => {
+    if (!code.trim()) {
+      showToast('error', 'Please enter the security code sent to your email.');
+      return;
+    }
+
+    confirmMutation.mutate({ code });
   };
 
   const handleClose = () => {
@@ -224,7 +242,66 @@ export default function BusinessSettingsPage() {
 
               {deleteMutation.isError && (
                 <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                  {(deleteMutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to delete account'}
+                  {(deleteMutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to start deletion'}
+                </p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="danger"
+                  onClick={handleSendCode}
+                  disabled={!canDelete || deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Sending code...</>
+                  ) : (
+                    <><ShieldCheck className="w-4 h-4 mr-1.5" /> Send security code</>
+                  )}
+                </Button>
+                <Button variant="ghost" onClick={handleClose} disabled={deleteMutation.isPending}>Cancel</Button>
+              </div>
+            </>
+          )}
+
+          {step === DeleteStep.Code && (
+            <>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-full bg-red-50">
+                  <ShieldCheck className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Confirm Deletion</h3>
+                  <p className="text-sm text-gray-500">Enter the security code sent to your email</p>
+                </div>
+              </div>
+
+              <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+                <p className="text-xs text-green-800 font-medium">
+                  We sent a 6-digit security code to <strong>{user?.email}</strong>. Enter it to permanently delete your business account.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Security code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="6-digit code"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  className={inputClass}
+                />
+                <p className="mt-2 text-xs text-gray-500">
+                  The code expires shortly. Your account won't be deleted until it's confirmed.
+                </p>
+              </div>
+
+              {confirmMutation.isError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  {confirmMutation.error?.response?.data?.message || 'That security code is invalid or has expired.'}
                 </p>
               )}
 
@@ -232,15 +309,17 @@ export default function BusinessSettingsPage() {
                 <Button
                   variant="danger"
                   onClick={handleConfirmDelete}
-                  disabled={!canDelete || deleteMutation.isPending}
+                  disabled={!code.trim() || confirmMutation.isPending}
                 >
-                  {deleteMutation.isPending ? (
+                  {confirmMutation.isPending ? (
                     <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Deleting...</>
                   ) : (
                     <><Trash2 className="w-4 h-4 mr-1.5" /> Permanently Delete</>
                   )}
                 </Button>
-                <Button variant="ghost" onClick={handleClose} disabled={deleteMutation.isPending}>Cancel</Button>
+                <Button variant="ghost" onClick={handleClose} disabled={confirmMutation.isPending}>
+                  Back
+                </Button>
               </div>
             </>
           )}

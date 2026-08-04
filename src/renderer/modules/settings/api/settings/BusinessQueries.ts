@@ -305,18 +305,34 @@ export function useBusinessExport() {
   });
 }
 
-export function useDeleteBusinessAccount() {
+export function useInitiateBusinessDelete() {
+  const { showToast } = useToast();
+  return useMutation<{ message: string; requires_delete_confirmation: boolean }, AxiosError<ApiError>, { password: string }>({
+    retry: false,
+    mutationFn: async ({ password }) => {
+      const { data } = await axiosInstance.post<{ message: string; requires_delete_confirmation: boolean }>(
+        BUSINESSES.DELETE_ACCOUNT_INITIATE,
+        { password },
+      );
+      return data;
+    },
+    onError: (e) => {
+      const message = (e.response?.data as { message?: string })?.message ?? 'Failed to start business account deletion';
+      showToast('error', message);
+    },
+  });
+}
+
+export function useConfirmBusinessDelete() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<{ message: string; logged_out: boolean }, AxiosError<ApiError>, { password: string; current_password?: string }>({
+  return useMutation<{ message: string; logged_out: boolean }, AxiosError<ApiError>, { code: string }>({
     retry: false,
-    mutationFn: async ({ password, current_password }) => {
-      const { data } = await axiosInstance.delete(BUSINESSES.DELETE_ACCOUNT, {
-        data: {
-          password,
-          current_password: current_password ?? password,
-        },
-      });
+    mutationFn: async ({ code }) => {
+      const { data } = await axiosInstance.post<{ message: string; logged_out: boolean }>(
+        BUSINESSES.DELETE_ACCOUNT_CONFIRM,
+        { code },
+      );
       return data;
     },
     onSuccess: (data) => {
@@ -325,7 +341,7 @@ export function useDeleteBusinessAccount() {
       window.location.assign(ROUTES.LOGIN);
     },
     onError: (e) => {
-      const message = (e.response?.data as { message?: string })?.message ?? 'Failed to delete business account';
+      const message = (e.response?.data as { message?: string })?.message ?? 'That security code is invalid or has expired.';
       showToast('error', message);
     },
   });

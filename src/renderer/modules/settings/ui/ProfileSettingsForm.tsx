@@ -210,7 +210,7 @@ export default function ProfileSettingsForm() {
     ?? (authUser?.is_platform_admin ? 'Platform admin' : null);
 
   return (
-    <form onSubmit={pendingChanges ? handleConfirm : handleSubmit} className="relative w-full min-h-full space-y-6 pb-28">
+    <form onSubmit={pendingChanges ? handleConfirm : handleSubmit} className="relative w-full space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex items-start gap-3">
           <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 shrink-0">
@@ -288,7 +288,7 @@ export default function ProfileSettingsForm() {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="space-y-4 p-4 sm:p-6">
           {!isEditing && (
             <article className="rounded-xl border-2 border-blue-200 bg-blue-50/40 shadow-sm">
@@ -434,41 +434,41 @@ export default function ProfileSettingsForm() {
             )}
           </ProfileSectionCard>
         </div>
-      </div>
 
-      {isEditing && (
-        <div className="sticky bottom-0 z-20 -mx-4 border-t-2 border-gray-200 bg-white/95 px-4 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-6 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm font-medium text-gray-600">
-              {pendingChanges
-                ? 'Enter the code to confirm your changes'
-                : (hasChanges ? 'You have unsaved changes' : 'Update your details, then save')}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              {pendingChanges ? (
-                <>
-                  <Button type="button" variant="ghost" onClick={handleCancel} disabled={confirmMutation.isPending}>
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Back
-                  </Button>
-                  <Button type="submit" loading={confirmMutation.isPending} disabled={!code.trim()}>
-                    Confirm change
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button type="button" variant="outline" onClick={handleCancel} disabled={initiateMutation.isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" loading={initiateMutation.isPending} disabled={!canSave}>
-                    Save changes
-                  </Button>
-                </>
-              )}
+        {isEditing && (
+          <div className="border-t-2 border-gray-200 bg-gray-50/80 px-4 py-4 sm:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-medium text-gray-600">
+                {pendingChanges
+                  ? 'Enter the code to confirm your changes'
+                  : (hasChanges ? 'You have unsaved changes' : 'Update your details, then save')}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {pendingChanges ? (
+                  <>
+                    <Button type="button" variant="ghost" onClick={handleCancel} disabled={confirmMutation.isPending}>
+                      <ArrowLeft className="h-4 w-4" aria-hidden />
+                      Back
+                    </Button>
+                    <Button type="submit" loading={confirmMutation.isPending} disabled={!code.trim()}>
+                      Confirm change
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={initiateMutation.isPending}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" loading={initiateMutation.isPending} disabled={!canSave}>
+                      Save changes
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </form>
   );
 }

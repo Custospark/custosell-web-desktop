@@ -51,6 +51,9 @@ export default function SubscriptionDropdown() {
   const subscription = user?.business?.subscription;
   const { currency, monthlyPrice } = useDisplayPrices();
 
+  const isOwner = Boolean(user?.is_business_owner);
+  const canManage = isOwner || user?.account_type === 'personal';
+
   const currentPlan = useMemo(() => {
     if (!plans || !subscription) return null;
     return plans.find((p) => p.id === subscription.plan_id) ?? null;
@@ -185,8 +188,9 @@ export default function SubscriptionDropdown() {
             <div className="px-3 py-3 border-b border-gray-200">
               <button
                 type="button"
-                onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
-                className="w-full flex items-center gap-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 p-3 text-left hover:from-blue-600 hover:to-indigo-700 cursor-pointer shadow-sm"
+                onClick={() => { if (!canManage) return; navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
+                disabled={!canManage}
+                className="w-full flex items-center gap-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 p-3 text-left hover:from-blue-600 hover:to-indigo-700 disabled:cursor-default disabled:opacity-60 disabled:hover:from-blue-500 disabled:hover:to-indigo-600 cursor-pointer shadow-sm"
               >
                 <div className="rounded-full bg-white/20 p-2 shrink-0">
                   <Building2 className="w-5 h-5 text-white" />
@@ -211,8 +215,9 @@ export default function SubscriptionDropdown() {
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
-                      className="w-full flex items-center gap-3 p-2 rounded-md text-left hover:bg-gray-50 cursor-pointer"
+                      onClick={() => { if (!canManage) return; navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
+                      disabled={!canManage}
+                      className="w-full flex items-center gap-3 p-2 rounded-md text-left hover:bg-gray-50 cursor-pointer disabled:cursor-default disabled:hover:bg-transparent"
                     >
                       <div className={cn('w-8 h-8 rounded-full flex items-center justify-center ring-1 shrink-0', pc.colors.ring, pc.colors.bg)}>
                         <PIcon className={cn('w-4 h-4', pc.colors.text)} />
@@ -242,24 +247,27 @@ export default function SubscriptionDropdown() {
           <div className="p-2 bg-gray-50/50 space-y-1">
             <button
               type="button"
-              onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-gray-100 cursor-pointer text-gray-700"
+              onClick={() => { if (!canManage) return; navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
+              disabled={!canManage}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-gray-100 disabled:cursor-default disabled:hover:bg-transparent cursor-pointer text-gray-700"
             >
               <Settings className="w-4 h-4" />
               <span>Manage subscription</span>
             </button>
             <button
               type="button"
-              onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-gray-100 cursor-pointer text-gray-700"
+              onClick={() => { if (!canManage) return; navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
+              disabled={!canManage}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-gray-100 disabled:cursor-default disabled:hover:bg-transparent cursor-pointer text-gray-700"
             >
               <CreditCard className="w-4 h-4" />
               <span>Payment history</span>
             </button>
             <button
               type="button"
-              onClick={() => { navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
-              className="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs hover:text-gray-900 cursor-pointer text-gray-500"
+              onClick={() => { if (!canManage) return; navigate(ROUTES.SETTINGS.SUBSCRIPTION); setOpen(false); }}
+              disabled={!canManage}
+              className="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs hover:text-gray-900 disabled:cursor-default disabled:hover:text-gray-500 cursor-pointer text-gray-500"
             >
               Compare all features
             </button>

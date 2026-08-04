@@ -24,7 +24,6 @@ import {
   Menu, ChevronDown, Clock, Wifi, SignalMedium, WifiOff,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { isBusinessOwner } from '../../utils/moduleAccess';
 import { canUseGlobalSearch } from './search/searchTypes';
 
 const NETWORK_STATUS_THEME = {
@@ -306,7 +305,7 @@ export function Navbar() {
 
           <div data-tour="navbar-referral"><ReferralDropdown /></div>
 
-          {isBusinessOwner(user) && <div data-tour="navbar-subscription"><SubscriptionDropdown /></div>}
+          <div data-tour="navbar-subscription"><SubscriptionDropdown /></div>
 
           <div className="shrink-0 pr-3">
             <button

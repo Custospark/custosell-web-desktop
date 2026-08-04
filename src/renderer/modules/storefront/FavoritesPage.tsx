@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTheme';
 import { cn } from '../../shared/utils/cn';
@@ -79,6 +81,12 @@ export default function FavoritesPage() {
         <p className="mt-1 text-xs text-slate-600">
           Browse businesses and tap the star to save them for later.
         </p>
+        <Link
+          to={`${ROUTES.DISCOVER}?focus=shops`}
+          className="mt-4 rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800"
+        >
+          Browse businesses
+        </Link>
       </div>
     );
   }

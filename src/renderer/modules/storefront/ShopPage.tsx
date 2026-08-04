@@ -233,10 +233,10 @@ export default function ShopPage() {
               onRate={applyShopRating}
             />
           </div>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end sm:gap-5">
             <StorefrontSocialLinks
               links={shop.social_links ?? []}
-              className="justify-center sm:justify-end"
+              className="min-w-0 justify-center sm:max-w-lg sm:flex-1 sm:justify-end"
             />
             <StorefrontQrCode
               slug={shop.slug}

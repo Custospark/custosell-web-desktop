@@ -26,6 +26,10 @@ a child resource (the existing offline path is for `UpdateBusinessData` fields).
   shows the spinner on that row's **Save** button (Add stays disabled, not spinning).
 - Removing opens a `useConfirm` dialog (`confirmText: "Remove"`, danger variant) to guard
   against accidental clicks.
+- **Many links are handled responsively:** the settings list caps at `max-h-72` and scrolls
+  internally instead of stretching the card; the storefront links row is `flex-wrap` and
+  takes `flex-1` (up to `max-w-lg`) so icons wrap on narrow screens while the QR stays
+  `shrink-0` beside it.
 
 - While `isCompletelyOffline` the card's controls are disabled and an amber banner
   explains links need an internet connection.

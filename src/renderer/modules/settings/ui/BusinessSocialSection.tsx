@@ -102,7 +102,7 @@ export function BusinessSocialSection() {
       ) : links.length === 0 ? (
         <p className="text-sm text-gray-500">No social links yet. Add one below.</p>
       ) : (
-        <ul className="mb-4 space-y-2">
+        <ul className="mb-4 max-h-72 space-y-2 overflow-y-auto pr-1">
           {links.map((link) => {
             return (
               <li
@@ -180,6 +180,7 @@ export function BusinessSocialSection() {
                         size="sm"
                         disabled={isCompletelyOffline || isSaving || remove.isPending}
                         onClick={() => handleRemove(link)}
+                        title={`Remove ${link.platform}`}
                         aria-label={`Remove ${link.platform}`}
                       >
                         <Trash2 className="h-4 w-4" aria-hidden />

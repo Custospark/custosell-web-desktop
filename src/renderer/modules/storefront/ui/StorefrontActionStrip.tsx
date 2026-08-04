@@ -67,9 +67,8 @@ export function StorefrontActionStrip({
   const shopsActive = active === 'browse';
 
   // Tabs already pinned in the main mobile row must not repeat in the More overflow.
-  const primaryTabs = new Set<StorefrontStripTab>(['discover', 'orders']);
-  if (cartPrimary) primaryTabs.add('cart');
-  else if (onHome) primaryTabs.add('home');
+  const primaryTabs = new Set<StorefrontStripTab>(['discover', 'orders', 'cart']);
+  if (!cartPrimary && onHome) primaryTabs.add('home');
 
   const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; count: number; countTone?: Tone; onClick: () => void }> = [
     { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, count: 0, onClick: onBrowse },
@@ -156,10 +155,10 @@ export function StorefrontActionStrip({
       )}
       aria-label="Storefront navigation"
     >
-      <div className="grid grid-cols-4 items-stretch lg:hidden">
+      <div className={cn('grid items-stretch lg:hidden', (!cartPrimary && onHome) ? 'grid-cols-5' : 'grid-cols-4')}>
         {!cartPrimary && onHome ? tabBtn('home', <Home className="h-4 w-4" aria-hidden />, 'slate', homeLabel, onHome) : null}
-        {cartPrimary ? tabBtn('cart', <ShoppingCart className="h-4 w-4" aria-hidden />, 'emerald', 'Cart', onCart) : null}
         {tabBtn('discover', <Compass className="h-4 w-4" aria-hidden />, 'amber', 'Products', onDiscover)}
+        {tabBtn('cart', <ShoppingCart className="h-4 w-4" aria-hidden />, 'emerald', 'Cart', onCart)}
         {tabBtn('orders', <LayoutList className="h-4 w-4" aria-hidden />, 'blue', 'Orders', onOrders)}
 
         <button

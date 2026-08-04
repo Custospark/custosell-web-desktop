@@ -87,3 +87,24 @@ export interface UpdateBusinessMutationInput {
   data: UpdateBusinessData;
   logoFile?: File;
 }
+
+export interface BusinessSocialLink {
+  id: number;
+  business_id: number;
+  platform: string;
+  url: string;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UpsertBusinessSocialLinkData {
+  platform: string;
+  url: string;
+  sort_order?: number;
+}
+
+export interface StorefrontSocialLink {
+  platform: string;
+  url: string;
+}

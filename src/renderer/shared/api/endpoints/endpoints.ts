@@ -15,6 +15,11 @@ export const BUSINESSES = {
   DELETE_ACCOUNT_INITIATE: '/businesses/account/initiate',
   DELETE_ACCOUNT_CONFIRM: '/businesses/account/confirm',
 };
+export const BUSINESS_SOCIAL_LINKS = {
+  LIST: '/business-social-links',
+  CREATE: '/business-social-links',
+  BY_ID: (id: number) => `/business-social-links/${id}`,
+};
 export const ROLES = { BASE: '/roles', BY_ID: (id: number) => `/roles/${id}` };
 export const USERS = {
   BASE: '/users',

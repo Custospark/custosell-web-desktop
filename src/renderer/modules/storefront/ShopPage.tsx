@@ -21,6 +21,7 @@ import { DiscoverProductCard } from './ui/DiscoverProductCard';
 import { ProductStarRating } from './ui/ProductStarRating';
 import { StorefrontProductDetailModal } from './ui/StorefrontProductDetailModal';
 import { StorefrontQrCode } from './ui/StorefrontQrCode';
+import { StorefrontSocialLinks } from './ui/StorefrontSocialLinks';
 import { isStorefrontProductOutOfStock } from './ui/storefrontStock';
 import { useDiscoverShell } from './ui/discoverShellContext';
 
@@ -160,7 +161,7 @@ export default function ShopPage() {
     submit();
   };
 
-  if (shopQuery.isLoading && !shop) {
+  if (shopQuery.isLoading) {
     return <CustosellLoader message="Loading this shop — pulling the catalog so you can browse and add to cart." />;
   }
 
@@ -232,12 +233,17 @@ export default function ShopPage() {
               onRate={applyShopRating}
             />
           </div>
-          <StorefrontQrCode
-            slug={shop.slug}
-            size={96}
-            showDownload
-            className="mx-auto shrink-0 sm:mx-0"
-          />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+            <StorefrontSocialLinks
+              links={shop.social_links ?? []}
+              className="justify-center sm:justify-end"
+            />
+            <StorefrontQrCode
+              slug={shop.slug}
+              size={96}
+              className="mx-auto shrink-0 sm:mx-0"
+            />
+          </div>
         </div>
       </div>
 

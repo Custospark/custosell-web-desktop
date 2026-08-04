@@ -4,14 +4,16 @@ import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../../app/api/axiosConfig';
 import { useToast } from '../../../../app/contexts/useToast';
 import type { ApiError } from '../../../../shared/api/account/AccountTypes';
-import { BUSINESSES } from '../../../../shared/api/endpoints/endpoints';
+import { BUSINESSES, BUSINESS_SOCIAL_LINKS } from '../../../../shared/api/endpoints/endpoints';
 import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 import type {
   Business,
+  BusinessSocialLink,
   UpdateBusinessData,
   UpdateBusinessMutationInput,
   UpdateStorefrontProfileData,
   UpdateSupplyProfileData,
+  UpsertBusinessSocialLinkData,
 } from './BusinessTypes';
 import { setBusiness, setUser, type AuthUser } from '../../../../app/store/slices/authSlice';
 import { useAppDispatch } from '../../../../app/store/hooks/useApp';
@@ -47,6 +49,11 @@ function appendBusinessFormDataFields(formData: FormData, data: UpdateBusinessDa
 export const businessKeys = {
   all: ['business'] as const,
   mine: () => [...businessKeys.all, 'mine'] as const,
+};
+
+export const socialLinksKeys = {
+  all: ['business-social-links'] as const,
+  list: () => [...socialLinksKeys.all, 'list'] as const,
 };
 
 function businessFromAuth(): Business | null {
@@ -190,6 +197,72 @@ export function useCheckSlugAvailable() {
         { params: { slug } },
       );
       return data;
+    },
+  });
+}
+
+export function useBusinessSocialLinks() {
+  return useQuery<BusinessSocialLink[]>({
+    queryKey: socialLinksKeys.list(),
+    queryFn: async () => {
+      const { data: response } = await axiosInstance.get<{ data: BusinessSocialLink[] }>(BUSINESS_SOCIAL_LINKS.LIST);
+      return response.data;
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    placeholderData: (prev) => prev,
+    retry: (count, err) => !isNetworkFailure(err) && count < 1,
+    networkMode: 'always',
+  });
+}
+
+export function useUpsertBusinessSocialLink() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<BusinessSocialLink, AxiosError<ApiError>, { id?: number; data: UpsertBusinessSocialLinkData }>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async ({ id, data }) => {
+      if (id != null) {
+        const { data: response } = await axiosInstance.put<{ data: BusinessSocialLink }>(
+          BUSINESS_SOCIAL_LINKS.BY_ID(id),
+          data,
+        );
+        return response.data;
+      }
+      const { data: response } = await axiosInstance.post<{ data: BusinessSocialLink }>(
+        BUSINESS_SOCIAL_LINKS.CREATE,
+        data,
+      );
+      return response.data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: socialLinksKeys.all });
+      await qc.invalidateQueries({ queryKey: storefrontKeys.all });
+      showToast('success', 'Social link saved');
+    },
+    onError: (e) => {
+      showToast('error', sanitizeErrorMessage(e, 'Failed to save social link'));
+    },
+  });
+}
+
+export function useDeleteBusinessSocialLink() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<unknown, AxiosError<ApiError>, number>({
+    networkMode: 'online',
+    retry: false,
+    mutationFn: async (id) => {
+      await axiosInstance.delete(BUSINESS_SOCIAL_LINKS.BY_ID(id));
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: socialLinksKeys.all });
+      await qc.invalidateQueries({ queryKey: storefrontKeys.all });
+      showToast('success', 'Social link removed');
+    },
+    onError: (e) => {
+      showToast('error', sanitizeErrorMessage(e, 'Failed to remove social link'));
     },
   });
 }

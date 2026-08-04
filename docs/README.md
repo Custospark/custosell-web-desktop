@@ -132,6 +132,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-12-storefront-buyer-doc-letterhead.md](./adr/2026-07-12-storefront-buyer-doc-letterhead.md) | Buyer receipts/invoices/PDF use shop name, not Custosell |
 | [2026-07-12-storefront-buyer-phone-and-order-eye.md](./adr/2026-07-12-storefront-buyer-phone-and-order-eye.md) | Persist delivery phone for reorders; Eye → line items on My Orders |
 | [2026-07-12-product-percent-discounts.md](./adr/2026-07-12-product-percent-discounts.md) | Product `discount_percent`; storefront struck sale prices; place-order uses effective price |
+| [2026-08-04-business-social-links.md](./adr/2026-08-04-business-social-links.md) | Settings → Business social links (server-only CRUD); storefront links left of QR; QR download removed from shop page |
 | [2026-07-12-unified-receipt-action-bar.md](./adr/2026-07-12-unified-receipt-action-bar.md) | Receipt footers: Download PDF · Print · More (shared `ReceiptActionBar`) |
 | [2026-07-12-cors-cross-browser-preflight.md](./adr/2026-07-12-cors-cross-browser-preflight.md) | CORS preflight fails on Edge/Firefox; `www.` subdomain + explicit origin vs pattern |
 | [2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md](./adr/2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md) | Board gallery underpaint; owner modules-only save; one-time legacy module grant |

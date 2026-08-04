@@ -13,6 +13,12 @@ export interface StorefrontShop {
   rating_avg?: number;
   rating_count?: number;
   my_rating?: number | null;
+  social_links?: StorefrontSocialLink[];
+}
+
+export interface StorefrontSocialLink {
+  platform: string;
+  url: string;
 }
 
 export interface StorefrontProduct {

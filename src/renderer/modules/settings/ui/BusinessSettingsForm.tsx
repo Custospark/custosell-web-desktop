@@ -49,6 +49,7 @@ import {
 import { BusinessProfileSection } from './BusinessProfileSection';
 import { BusinessLocationSection } from './BusinessLocationSection';
 import { BusinessPaymentSection } from './BusinessPaymentSection';
+import { BusinessSocialSection } from './BusinessSocialSection';
 
 export default function BusinessSettingsForm() {
   const { data: business, isLoading, error } = useBusiness();
@@ -415,6 +416,8 @@ export default function BusinessSettingsForm() {
               )}
             </BusinessSectionCard>
           )}
+
+          {!isPersonal && <BusinessSocialSection />}
         </div>
 
         {isEditing && (

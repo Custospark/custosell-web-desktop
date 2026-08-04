@@ -117,3 +117,10 @@ Orders page shows **Online** badge for `source=storefront`, guest phone with tel
 ## Furnished this pass
 
 Discover category chips · Online orders filter/alert on Sales → Orders · buyer cancel open / delete cancelled · stock badges · Discover online-only nav · product detail modal · self-hosted QR · Public shop logo preview · delivery address/city · buyer email/in-app notify.
+
+## Social links (2026-08-04)
+
+Businesses add social/web links under Settings → Business (server-only CRUD, free-text
+platform). Public shop page renders them to the left of the QR code (brand SVGs, globe
+fallback), and the QR "Download PNG" control was removed from the public shop page.
+See `docs/adr/2026-08-04-business-social-links.md`.

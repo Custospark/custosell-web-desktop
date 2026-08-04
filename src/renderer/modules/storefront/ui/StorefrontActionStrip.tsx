@@ -66,6 +66,11 @@ export function StorefrontActionStrip({
   const [moreOpen, setMoreOpen] = useState(false);
   const shopsActive = active === 'browse';
 
+  // Tabs already pinned in the main mobile row must not repeat in the More overflow.
+  const primaryTabs = new Set<StorefrontStripTab>(['discover', 'orders']);
+  if (cartPrimary) primaryTabs.add('cart');
+  else if (onHome) primaryTabs.add('home');
+
   const moreTabs: Array<{ tab: StorefrontStripTab; icon: ReactNode; label: string; tone: Tone; count: number; countTone?: Tone; onClick: () => void }> = [
     { tab: 'browse' as const, icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, label: shopsLabel, tone: 'teal' as Tone, count: 0, onClick: onBrowse },
     ...(cartPrimary
@@ -97,7 +102,7 @@ export function StorefrontActionStrip({
       countTone: 'rose' as Tone,
       onClick: onWishlist,
     },
-  ];
+  ].filter((t) => !primaryTabs.has(t.tab));
 
   const isActive = (tab: StorefrontStripTab) => {
     if (tab === 'browse') return shopsActive;

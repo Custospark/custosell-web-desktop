@@ -11,7 +11,6 @@ import { useToast } from '../../../app/contexts/useToast';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
 import { MODULE_LAUNCHER_CATALOG } from '../../../shared/components/layout/moduleLauncherCatalog';
-import { usePlanAccessibleModules } from '../../../shared/utils/usePlanAccessibleModules';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
@@ -54,17 +53,35 @@ const OWNER_MODULE_TILES = BUSINESS_MODULE_SLUGS.map((slug) => {
   return item;
 });
 
+/** Business modules the owner's plan actually offers (from plan_features), always including settings.
+ *  Never derived from the currently-enabled set, so toggling a module off keeps its tile available. */
+function getPlanBusinessCatalog(user: AuthUser | null | undefined): BusinessModuleSlug[] {
+  const features = user?.business?.subscription?.plan_features as
+    | Record<string, boolean>
+    | undefined;
+  if (!features) {
+    return [...BUSINESS_MODULE_SLUGS];
+  }
+  const result: BusinessModuleSlug[] = [];
+  for (const slug of BUSINESS_MODULE_SLUGS) {
+    if (slug === 'settings' || features[slug] === true) {
+      result.push(slug);
+    }
+  }
+  return result;
+}
+
 export default function OwnerModuleAccessForm() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const user = useAppSelector((s) => s.auth.user);
-  const planModules = usePlanAccessibleModules();
-  const planSlugs = useMemo(() => new Set(planModules), [planModules]);
+  const planCatalog = useMemo(() => getPlanBusinessCatalog(user), [user]);
+  const planSlugs = useMemo(() => new Set<string>(planCatalog), [planCatalog]);
 
   const planAllowedTiles = useMemo(
     () => OWNER_MODULE_TILES.filter((t) => planSlugs.has(t.slug)),
-    [planModules],
+    [planSlugs],
   );
 
   const [modules, setModules] = useState<BusinessModuleSlug[]>([]);
@@ -73,11 +90,14 @@ export default function OwnerModuleAccessForm() {
 
   useEffect(() => {
     if (!user || !isBusinessOwner(user)) return;
+    const nextEstimates = ownerInitialEstimatesFullAccess(user) && planSlugs.has('estimates');
+    const nextHr = ownerInitialHrFullAccess(user) && planSlugs.has('hr');
     queueMicrotask(() => {
       const stored = resolvedOwnerBusinessModules(user);
-      setModules(withRequiredSettings(stored.filter((m) => planSlugs.has(m))));
-      setEstimatesFullAccess(ownerInitialEstimatesFullAccess(user) && planSlugs.has('estimates'));
-      setHrFullAccess(ownerInitialHrFullAccess(user) && planSlugs.has('hr'));
+      const nextModules = withRequiredSettings(stored.filter((m) => planSlugs.has(m)));
+      setModules((prev) => (modulesSignature(prev) === modulesSignature(nextModules) ? prev : nextModules));
+      setEstimatesFullAccess((prev) => (prev === nextEstimates ? prev : nextEstimates));
+      setHrFullAccess((prev) => (prev === nextHr ? prev : nextHr));
     });
   }, [user, planSlugs]);
 

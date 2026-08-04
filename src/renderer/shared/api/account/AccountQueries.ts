@@ -20,8 +20,8 @@ import type {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ApiError,
-  LoginChallengeError,
 } from './AccountTypes';
+import { LoginChallengeError } from './AccountTypes';
 import {
   isCompletelyOffline,
   isNetworkFailure,
@@ -124,7 +124,8 @@ export function useLogin(options?: { redirect?: boolean }) {
         if (axiosErr.response?.status === 403
           && (axiosErr.response.data?.requires_email_verification || axiosErr.response.data?.requires_two_factor)
           && axiosErr.response.data?.email) {
-          throw new LoginChallengeError(axiosErr.response.data);
+          const { email, requires_email_verification, requires_two_factor, message } = axiosErr.response.data;
+          throw new LoginChallengeError({ email, requires_email_verification, requires_two_factor, message });
         }
         throw err;
       }

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../../app/store/hooks/useApp';
-import { setUser } from '../../../app/store/slices/authSlice';
+import { setUser, loginSuccess } from '../../../app/store/slices/authSlice';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';

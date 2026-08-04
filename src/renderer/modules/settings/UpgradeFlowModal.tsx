@@ -42,7 +42,7 @@ export default function UpgradeFlowModal({
     subscription.id, plan.id, upgradeCycle,
   );
 
-  const quoteErrorMessage = quoteErrorObj && (quoteErrorObj as { response?: { data?: { message?: string } } })?.response?.data?.message;
+  const quoteErrorMessage = (quoteErrorObj && (quoteErrorObj as { response?: { data?: { message?: string } } })?.response?.data?.message) ?? undefined;
 
   const referralDiscountUsd = subscription?.referral?.discount_applied
     ? Number(subscription.referral.discount_applied)

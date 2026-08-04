@@ -46,6 +46,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
   const activeLocationId = useAppSelector((s) => s.auth.activeLocationId ?? null);
+  const accountType = useAppSelector((s) => s.auth.user?.account_type);
+  const isPersonal = accountType === 'personal';
   const { taxEnabled: vatEnabled } = useBusinessTaxSettings();
   const activeShiftId = shiftId ?? authShiftId;
 
@@ -178,7 +180,9 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const title = isEditing ? 'Edit Expense' : 'Record Expense';
   const subtitle = isEditing
     ? 'Update the expense details below.'
-    : 'Log a business expense and optionally attach a receipt.';
+    : isPersonal
+      ? 'Track a personal expense and optionally attach a receipt.'
+      : 'Log a business expense and optionally attach a receipt.';
 
   return (
     <Modal isOpen={open} onClose={onClose} title={title} subtitle={subtitle} size="lg">
@@ -194,15 +198,18 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               {isEditing ? 'Edit expense' : 'New expense'}
             </p>
             <p className="text-xs text-orange-700 mt-0.5">
-              {activeShiftId
-                ? 'This expense will be linked to your active shift for handover reporting.'
-                : 'Categorise your spending to track where your money goes.'}
+              {isPersonal
+                ? 'Keep a record of what you spend — receipts stay attached for reference.'
+                : activeShiftId
+                  ? 'This expense will be linked to your active shift for handover reporting.'
+                  : 'Categorise your spending to track where your money goes.'}
             </p>
           </div>
         </div>
 
         {/* Category & Project */}
-        <FormSection icon={Tag} title="Category & Project">
+        <FormSection icon={Tag} title={isPersonal ? 'Category' : 'Category & Project'}>
+          {!isPersonal && (
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Branch</label>
             <select
@@ -217,6 +224,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             </select>
             <p className="mt-1 text-xs text-gray-400">Defaults to your current branch. Used for branch performance reporting.</p>
           </div>
+          )}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
             <select
@@ -228,6 +236,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
+          {!isPersonal && (
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Project (optional)</label>
             <div className="relative">
@@ -243,6 +252,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             </div>
             <p className="mt-1 text-xs text-gray-400">Link to a project for automatic cost allocation.</p>
           </div>
+          )}
+          {!isPersonal && (
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Fixed asset (optional)</label>
             <div className="relative">
@@ -260,6 +271,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             </div>
             <p className="mt-1 text-xs text-gray-400">Link repair or maintenance spend to a fixed asset.</p>
           </div>
+          )}
         </FormSection>
 
         {/* Amount & Date */}
@@ -316,7 +328,9 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               'w-full px-3 py-2.5 border-2 rounded-lg text-sm min-h-[80px] focus:outline-none resize-none',
               errors.description ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
             )}
-            placeholder="What was this expense for? e.g. Office supplies — printer toner and paper"
+            placeholder={isPersonal
+              ? 'What was this expense for? e.g. Groceries, transport, or utilities'
+              : 'What was this expense for? e.g. Office supplies — printer toner and paper'}
           />
           {errors.description && <p className="mt-1 text-xs font-medium text-red-600">{errors.description}</p>}
         </FormSection>
@@ -332,7 +346,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
-                placeholder="e.g. INV-001, Receipt #1234"
+                placeholder={isPersonal ? 'e.g. Market receipt, shop transaction id' : 'e.g. INV-001, Receipt #1234'}
               />
             </div>
           </div>
@@ -354,7 +368,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         </FormSection>
 
         {/* VAT */}
-        {vatEnabled && (
+        {vatEnabled && !isPersonal && (
           <FormSection icon={AlertCircle} title="Input VAT (purchases)">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

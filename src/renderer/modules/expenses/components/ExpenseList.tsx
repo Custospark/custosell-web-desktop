@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useExpenses, useDeleteExpense, useExpenseCategories } from '../api/ExpenseQueries';
 import { useLocations } from '../../settings/api/settings/LocationQueries';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { Table } from '../../../shared/components/tables/Table';
 import { Card } from '../../../shared/components/cards/Card';
 import { Badge } from '../../../shared/components/badges/Badge';
@@ -20,6 +21,8 @@ interface ExpenseListProps {
 export default function ExpenseList({ filters }: ExpenseListProps) {
   const { data: expenses, isLoading, error } = useExpenses(filters);
   const { data: categories } = useExpenseCategories();
+  const accountType = useAppSelector((s) => s.auth.user?.account_type);
+  const isPersonal = accountType === 'personal';
   const { data: locations = [] } = useLocations();
   const locationNameById = useMemo(() => {
     const map = new Map<number, string>();
@@ -30,6 +33,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
   const { confirm } = useConfirm();
   const [editExpense, setEditExpense] = useState<ExpenseWithSyncMeta | null>(null);
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterBranch, setFilterBranch] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
 
@@ -38,10 +42,11 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
     const safe = expenses.filter(Boolean) as ExpenseWithSyncMeta[];
     let result = safe;
     if (filterCategory) result = result.filter((e) => e.expense_category_id === Number(filterCategory));
+    if (filterBranch) result = result.filter((e) => e.location_id === Number(filterBranch));
     if (filterDateFrom) result = result.filter((e) => e.expense_date >= filterDateFrom);
     if (filterDateTo) result = result.filter((e) => e.expense_date <= filterDateTo);
     return result;
-  }, [expenses, filterCategory, filterDateFrom, filterDateTo]);
+  }, [expenses, filterCategory, filterBranch, filterDateFrom, filterDateTo]);
 
   const paginated = usePagination(filtered, 15);
 
@@ -69,6 +74,15 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
               {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
+          {!isPersonal && (
+          <div className="w-48">
+            <select aria-label="Filter expenses by branch" value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="">All Branches</option>
+              {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+          )}
           <div className="w-44">
             <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="From date" />
@@ -84,7 +98,7 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
           columns={[
             { key: 'date', header: 'Date', render: (e) => new Date(e.expense_date).toLocaleDateString() },
             { key: 'category', header: 'Category', render: (e) => e.expense_category?.name || <span className="text-gray-400">—</span> },
-            { key: 'branch', header: 'Branch', render: (e) => e.location?.name || locationNameById.get(e.location_id ?? -1) || <span className="text-gray-400">—</span> },
+            ...(!isPersonal ? [{ key: 'branch', header: 'Branch', render: (e: ExpenseWithSyncMeta) => e.location?.name || locationNameById.get(e.location_id ?? -1) || <span className="text-gray-400">—</span> }] : []),
             { key: 'description', header: 'Description', render: (e) => (
               <div className="flex items-center gap-2">
                 <span>{e.description}</span>

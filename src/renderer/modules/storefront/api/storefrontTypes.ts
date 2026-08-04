@@ -142,6 +142,7 @@ export interface StorefrontFacetOption {
 }
 
 export interface BusinessCategoryFacet {
+  id: number;
   slug: string;
   name: string;
   count: number;

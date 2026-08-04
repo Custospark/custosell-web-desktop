@@ -2,12 +2,18 @@ import type { RefObject } from 'react';
 import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
 import { SearchableSelect } from '../../../shared/components/inputs/SearchableSelect';
 import { CURRENCIES } from '../../../shared/utils/currencies';
-import { getJurisdictionLabel } from '../../../shared/utils/taxJurisdictions';
 import {
   countryCodesByName,
+  findCountryByName,
   findCountryByCode,
   getCountryLabel,
 } from '../../../shared/utils/countryCodes';
+import {
+  STOREFRONT_CITIES_REF,
+  STOREFRONT_COUNTRIES,
+} from '../../storefront/api/storefrontLocations';
+import { useStorefrontFacets } from '../../storefront/api/storefrontQueries';
+import { getJurisdictionLabel } from '../../../shared/utils/taxJurisdictions';
 import { cn } from '../../../shared/utils/cn';
 import {
   Building2,
@@ -65,6 +71,28 @@ export function BusinessLocationSection({
   currencySearch,
   setCurrencySearch,
 }: BusinessLocationSectionProps) {
+  const { data: facets } = useStorefrontFacets();
+  const businessCategories = facets?.business_categories ?? [];
+  // Build country options from the standard reference list (East Africa first),
+  // keeping the existing ISO-code value contract for the country select.
+  const countryOptions = STOREFRONT_COUNTRIES.map((name) => {
+    const entry = findCountryByName(name);
+    return {
+      value: entry?.code ?? name,
+      label: entry ? `${entry.flag} ${name}` : name,
+      group: name === 'Uganda' || ['Kenya', 'Tanzania', 'Rwanda', 'Burundi', 'South Sudan', 'Ethiopia', 'Somalia', 'Djibouti', 'Eritrea'].includes(name)
+        ? 'East Africa'
+        : undefined,
+    };
+  });
+  // Keep any country already saved by the business even if not on the reference list.
+  if (form.country && form.country !== 'Uganda' && !STOREFRONT_COUNTRIES.includes(form.country)) {
+    countryOptions.push({ value: form.country, label: form.country });
+  }
+  const selectedCategoryId = form.business_category_id ? String(form.business_category_id) : '';
+  const businessCategoryLabel =
+    businessCategories.find((c) => c.id === baseline.business_category_id)?.name ?? '';
+
   return (
     <BusinessSectionCard
       icon={MapPin}
@@ -90,15 +118,14 @@ export function BusinessLocationSection({
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>City</label>
-                <div className="relative">
-                  <Building className={iconClass} aria-hidden />
-                  <input
-                    className={inputClass}
-                    value={form.city || ''}
-                    onChange={(e) => update('city', e.target.value || null)}
-                    placeholder="Kampala"
-                  />
-                </div>
+                <SearchableSelect
+                  placeholder="Select city / town"
+                  searchPlaceholder="Search cities..."
+                  value={form.city || ''}
+                  onChange={(v) => update('city', v || null)}
+                  options={STOREFRONT_CITIES_REF.map((city) => ({ value: city, label: city }))}
+                  emptyOption={{ value: '', label: 'No city selected' }}
+                />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -132,12 +159,20 @@ export function BusinessLocationSection({
                 searchPlaceholder="Search countries..."
                 value={selectedCountryCode}
                 onChange={handleCountryChange}
-                options={countryCodesByName.map((c) => ({
-                  value: c.code,
-                  label: `${c.flag} ${c.name}`,
-                }))}
+                options={countryOptions}
                 emptyOption={{ value: '', label: 'No country selected' }}
               />
+              <div>
+                <label className={labelClass}>Business category</label>
+                <SearchableSelect
+                  placeholder="Select category"
+                  searchPlaceholder="Search categories..."
+                  value={selectedCategoryId}
+                  onChange={(v) => update('business_category_id', v ? Number(v) : null)}
+                  options={businessCategories.map((c) => ({ value: String(c.id), label: c.name }))}
+                  emptyOption={{ value: '', label: 'No category selected' }}
+                />
+              </div>
             </div>
           </div>
           {!isPersonal && (
@@ -344,6 +379,9 @@ export function BusinessLocationSection({
               </BusinessViewField>
               <BusinessViewField label="Business type" icon={<Building2 className="h-4 w-4 text-blue-600" />}>
                 {formatBusinessType(baseline.business_type)}
+              </BusinessViewField>
+              <BusinessViewField label="Business category" icon={<Tag className="h-4 w-4 text-blue-600" />}>
+                {businessCategoryLabel || '—'}
               </BusinessViewField>
             </>
           )}

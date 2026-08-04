@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Coins, Filter, MapPin, RotateCcw, Star, X, type LucideIcon } from 'lucide-react';
+import { Coins, Filter, MapPin, RotateCcw, Search, Star, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { marketplaceGlassPanel } from '../../inventory/ui/marketplace/marketplaceTheme';
 import { useStorefrontFacets } from '../api/storefrontQueries';
@@ -14,6 +14,7 @@ import type {
   StorefrontSort,
 } from '../api/storefrontTypes';
 import { activeFilterKeys, hasActiveFilters, type FilterBag } from './storefrontFilterUrl';
+import { ChipRow, PriceRange, SelectControl, SegmentedControl, ToggleChip } from './StorefrontFilterControls';
 
 export type FilterScope = 'shops' | 'products' | 'shop';
 type Filterable = StorefrontShopFilters | StorefrontProductFilters;
@@ -59,8 +60,20 @@ export function StorefrontFilterBar({
 }: StorefrontFilterBarProps) {
   const [open, setOpen] = useState(false);
   const { data: facets } = useStorefrontFacets();
+  // `draft` holds the user's in-progress selections. It is NOT applied to the
+  // server until the user clicks "Search". `filters` is the committed bag.
+  const [committed, setCommitted] = useState(filters);
+  const [draft, setDraft] = useState<FilterBag>(filters);
+  // Re-sync the draft when the committed filters change externally
+  if (committed !== filters) {
+    setCommitted(filters);
+    setDraft(filters);
+  }
+  const hasDraftChanges = useMemo(() => JSON.stringify(draft) !== JSON.stringify(filters), [draft, filters]);
+
   const active = hasActiveFilters(filters);
   const activeCount = activeFilterKeys(filters).length;
+  const draftDirty = hasActiveFilters(draft) && hasDraftChanges;
   const isShopScope = scope === 'shops';
   const isProductScope = scope !== 'shops';
 
@@ -103,19 +116,30 @@ export function StorefrontFilterBar({
   }, [currencies]);
 
   const categoryKey: FilterKey = isShopScope ? 'category' : 'business_category';
-  const categoryActive = (filters as Filterable)[categoryKey] as string | undefined;
 
+  // Update the local draft only. Nothing hits the server until apply() runs.
   const setFilter = (key: FilterKey, value: unknown) => {
-    const next: Filterable = { ...filters };
-    if (value === undefined || value === null || value === '' || value === false) {
-      delete (next as Record<string, unknown>)[key];
-    } else {
-      (next as Record<string, unknown>)[key] = value;
-    }
-    onChange(next);
+    setDraft((prev) => {
+      const next: Filterable = { ...prev };
+      if (value === undefined || value === null || value === '' || value === false) {
+        delete (next as Record<string, unknown>)[key];
+      } else {
+        (next as Record<string, unknown>)[key] = value;
+      }
+      return next;
+    });
   };
 
-  const clearAll = () => onChange({});
+  const apply = () => {
+    onChange({ ...draft });
+    setOpen(false);
+  };
+
+  const clearAll = () => {
+    setDraft({});
+    onChange({});
+    setOpen(false);
+  };
 
   const setSort = (value: string) => setFilter('sort', (value || undefined) as StorefrontSort | undefined);
 
@@ -124,39 +148,132 @@ export function StorefrontFilterBar({
   const pills = useMemo(() => {
     const list: { id: string; label: string; onRemove: () => void }[] = [];
     const bag = filters as Filterable;
-
     const catValue = bag[categoryKey] as string | undefined;
     if (catValue) {
       const facet = businessCategories.find((c) => c.slug === catValue || String(c.id) === catValue);
-      list.push({ id: categoryKey, label: facet?.name ?? catValue, onRemove: () => setFilter(categoryKey, undefined) });
+      list.push({
+        id: categoryKey,
+        label: facet?.name ?? catValue,
+        onRemove: () => {
+          setDraft((prev) => {
+            const next: Filterable = { ...prev };
+            delete (next as Record<string, unknown>)[categoryKey];
+            return next;
+          });
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>)[categoryKey];
+          onChange(next);
+        },
+      });
     }
     if (bag.city) {
-      list.push({ id: 'city', label: `City: ${bag.city}`, onRemove: () => setFilter('city', undefined) });
+      list.push({
+        id: 'city',
+        label: `City: ${bag.city}`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).city;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.country) {
-      list.push({ id: 'country', label: `Country: ${bag.country}`, onRemove: () => setFilter('country', undefined) });
+      list.push({
+        id: 'country',
+        label: `Country: ${bag.country}`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).country;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.type) {
-      list.push({ id: 'type', label: bag.type === 'service' ? 'Services only' : 'Products only', onRemove: () => setFilter('type', undefined) });
+      list.push({
+        id: 'type',
+        label: bag.type === 'service' ? 'Services only' : 'Products only',
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).type;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.currency) {
-      list.push({ id: 'currency', label: `Currency: ${bag.currency}`, onRemove: () => setFilter('currency', undefined) });
+      list.push({
+        id: 'currency',
+        label: `Currency: ${bag.currency}`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).currency;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.price_min !== undefined) {
-      list.push({ id: 'price_min', label: `From ${bag.price_min}`, onRemove: () => setFilter('price_min', undefined) });
+      list.push({
+        id: 'price_min',
+        label: `From ${bag.price_min}`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).price_min;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.price_max !== undefined) {
-      list.push({ id: 'price_max', label: `Up to ${bag.price_max}`, onRemove: () => setFilter('price_max', undefined) });
+      list.push({
+        id: 'price_max',
+        label: `Up to ${bag.price_max}`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).price_max;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.in_stock) {
-      list.push({ id: 'in_stock', label: 'In stock', onRemove: () => setFilter('in_stock', undefined) });
+      list.push({
+        id: 'in_stock',
+        label: 'In stock',
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).in_stock;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.min_rating) {
-      list.push({ id: 'min_rating', label: `${bag.min_rating}+ stars`, onRemove: () => setFilter('min_rating', undefined) });
+      list.push({
+        id: 'min_rating',
+        label: `${bag.min_rating}+ stars`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).min_rating;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     if (bag.sort) {
       const sortLabel = sortOptions.find((s) => s.value === bag.sort)?.label ?? bag.sort;
-      list.push({ id: 'sort', label: `Sort: ${sortLabel}`, onRemove: () => setFilter('sort', undefined) });
+      list.push({
+        id: 'sort',
+        label: `Sort: ${sortLabel}`,
+        onRemove: () => {
+          const next: Filterable = { ...filters };
+          delete (next as Record<string, unknown>).sort;
+          setDraft(next);
+          onChange(next);
+        },
+      });
     }
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,7 +346,7 @@ export function StorefrontFilterBar({
             <ChipRow
               label="Business type"
               options={businessCategories.map((c) => ({ value: c.slug, label: `${c.name}`, count: c.count }))}
-              value={categoryActive ?? ''}
+              value={(draft as Filterable)[categoryKey] as string ?? ''}
               onSelect={(v) => setFilter(categoryKey, v || undefined)}
               showAll
             />
@@ -240,7 +357,7 @@ export function StorefrontFilterBar({
               <SelectControl
                 icon={MapPin}
                 label="Country"
-                value={(filters as Filterable).country ?? ''}
+                value={(draft as Filterable).country ?? ''}
                 options={countryOptions}
                 placeholder="All countries"
                 onChange={(v) => setFilter('country', v || undefined)}
@@ -248,7 +365,7 @@ export function StorefrontFilterBar({
               <SelectControl
                 icon={MapPin}
                 label="City / Town"
-                value={(filters as Filterable).city ?? ''}
+                value={(draft as Filterable).city ?? ''}
                 options={cityOptions}
                 placeholder="All cities"
                 onChange={(v) => setFilter('city', v || undefined)}
@@ -260,7 +377,7 @@ export function StorefrontFilterBar({
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <SegmentedControl
                 label="Item type"
-                value={(filters as StorefrontProductFilters).type ?? ''}
+                value={(draft as StorefrontProductFilters).type ?? ''}
                 onChange={(v) => setFilter('type', v || undefined)}
                 options={[
                   { value: '', label: 'All' },
@@ -271,23 +388,23 @@ export function StorefrontFilterBar({
               <SelectControl
                 icon={Coins}
                 label="Currency"
-                value={(filters as StorefrontProductFilters).currency ?? ''}
+                value={(draft as StorefrontProductFilters).currency ?? ''}
                 options={currencyOptions}
                 placeholder="Any currency"
                 onChange={(v) => setFilter('currency', v || undefined)}
               />
               <ToggleChip
                 label="In stock"
-                checked={Boolean((filters as StorefrontProductFilters).in_stock)}
+                checked={Boolean((draft as StorefrontProductFilters).in_stock)}
                 onChange={(v) => setFilter('in_stock', v || undefined)}
               />
             </div>
           ) : null}
 
-          {isProductScope && (priceBounds || (filters as StorefrontProductFilters).price_min != null || (filters as StorefrontProductFilters).price_max != null) ? (
+          {isProductScope && (priceBounds || (draft as StorefrontProductFilters).price_min != null || (draft as StorefrontProductFilters).price_max != null) ? (
             <PriceRange
-              minValue={(filters as StorefrontProductFilters).price_min}
-              maxValue={(filters as StorefrontProductFilters).price_max}
+              minValue={(draft as StorefrontProductFilters).price_min}
+              maxValue={(draft as StorefrontProductFilters).price_max}
               bounds={priceBounds}
               currency={currency}
               onMin={(v) => setFilter('price_min', v ?? undefined)}
@@ -299,7 +416,7 @@ export function StorefrontFilterBar({
             <SelectControl
               icon={Star}
               label="Minimum rating"
-              value={(filters as Filterable).min_rating !== undefined ? String((filters as Filterable).min_rating) : ''}
+              value={(draft as Filterable).min_rating !== undefined ? String((draft as Filterable).min_rating) : ''}
               options={RATING_OPTIONS}
               placeholder="Any rating"
               onChange={(v) => setFilter('min_rating', v ? Number(v) : undefined)}
@@ -307,179 +424,41 @@ export function StorefrontFilterBar({
             <SelectControl
               icon={Filter}
               label="Sort by"
-              value={(filters as Filterable).sort ?? ''}
+              value={(draft as Filterable).sort ?? ''}
               options={sortOptions}
               placeholder="Default"
               onChange={setSort}
             />
           </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
-function ChipRow({ label, options, value, onSelect, showAll }: {
-  label: string;
-  options: { value: string; label: string; count?: number }[];
-  value: string;
-  onSelect: (value: string) => void;
-  showAll?: boolean;
-}) {
-  const all = [{ value: '', label: 'All' }, ...options];
-  const list = showAll ? all : options;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {list.map((opt) => {
-          const active = opt.value === value;
-          return (
+          <div className="flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
             <button
-              key={opt.value}
               type="button"
-              onClick={() => onSelect(active && opt.value === value ? '' : opt.value)}
+              onClick={() => {
+                setDraft({ ...filters });
+                setOpen(false);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={apply}
+              disabled={!hasDraftChanges}
               className={cn(
-                'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition',
-                active
-                  ? 'border-indigo-600 bg-indigo-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50',
+                'inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-bold transition',
+                hasDraftChanges
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'cursor-not-allowed bg-slate-200 text-slate-400',
               )}
             >
-              {opt.label}
-              {typeof opt.count === 'number' ? (
-                <span className={cn('text-[10px]', active ? 'text-indigo-100' : 'text-slate-400')}>{opt.count}</span>
-              ) : null}
-              {active ? <Check className="h-3 w-3" aria-hidden /> : null}
+              <Search className="h-3.5 w-3.5" aria-hidden />
+              {draftDirty ? `Search (${activeFilterKeys(draft).length})` : 'Search'}
             </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SelectControl({ icon: Icon, label, value, options, placeholder, onChange, disabled }: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-        <Icon className="h-3 w-3" aria-hidden />
-        {label}
-      </span>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <option value="">{placeholder ?? 'Any'}</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function SegmentedControl({ label, value, options, onChange }: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
-      <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
-        {options.map((opt, i) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              'px-3 py-1.5 text-xs font-semibold transition',
-              i > 0 && 'border-l border-slate-200',
-              value === opt.value ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-50',
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ToggleChip({ label, checked, onChange }: {
-  label: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          'inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition',
-          checked
-            ? 'border-emerald-500 bg-emerald-50 text-emerald-900'
-            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
-        )}
-      >
-        <Check className={cn('h-3.5 w-3.5', checked ? 'opacity-100' : 'opacity-0')} aria-hidden />
-        {checked ? 'In stock only' : 'Any stock'}
-      </button>
-    </div>
-  );
-}
-
-function PriceRange({ minValue, maxValue, bounds, currency, onMin, onMax }: {
-  minValue?: number;
-  maxValue?: number;
-  bounds?: { min: number; max: number };
-  currency: string;
-  onMin: (value?: number) => void;
-  onMax: (value?: number) => void;
-}) {
-  const inputCls = 'w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none';
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Price range ({currency})</span>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="number"
-          min={bounds?.min}
-          inputMode="numeric"
-          placeholder={bounds?.min !== undefined ? `Min ${Math.round(bounds.min)}` : 'Min'}
-          value={minValue ?? ''}
-          onChange={(e) => onMin(e.target.value ? Number(e.target.value) : undefined)}
-          className={inputCls}
-        />
-        <span className="text-xs text-slate-400">–</span>
-        <input
-          type="number"
-          min={bounds?.min}
-          inputMode="numeric"
-          placeholder={bounds?.max !== undefined ? `Max ${Math.round(bounds.max)}` : 'Max'}
-          value={maxValue ?? ''}
-          onChange={(e) => onMax(e.target.value ? Number(e.target.value) : undefined)}
-          className={inputCls}
-        />
-      </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

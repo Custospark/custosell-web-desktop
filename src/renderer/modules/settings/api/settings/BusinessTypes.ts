@@ -21,6 +21,7 @@ export interface Business {
   business_phone: string | null;
   timezone: string | null;
   business_type: string | null;
+  business_category_id?: number | null;
   currency: string | null;
   receipt_footer: string | null;
   payment_bank_name: string | null;
@@ -71,6 +72,7 @@ export interface UpdateBusinessData {
   business_phone?: string | null;
   timezone?: string | null;
   business_type?: string | null;
+  business_category_id?: number | null;
   currency?: string | null;
   receipt_footer?: string | null;
   payment_bank_name?: string | null;

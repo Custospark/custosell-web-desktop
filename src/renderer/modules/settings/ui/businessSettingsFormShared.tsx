@@ -30,6 +30,7 @@ export const emptyForm: UpdateBusinessData = {
   prices_include_tax: true,
   timezone: null,
   business_type: null,
+  business_category_id: null,
   currency: null,
   receipt_footer: null,
   payment_bank_name: null,
@@ -90,6 +91,7 @@ type BusinessLike = {
   prices_include_tax?: boolean | null;
   timezone?: string | null;
   business_type?: string | null;
+  business_category_id?: number | null;
   currency?: string | null;
   receipt_footer?: string | null;
   payment_bank_name?: string | null;
@@ -131,6 +133,7 @@ export function snapshotFromBusiness(business: BusinessLike): BusinessFormSnapsh
       prices_include_tax: business.prices_include_tax !== false,
       timezone: business.timezone ?? null,
       business_type: business.business_type ?? null,
+      business_category_id: business.business_category_id ?? null,
       currency: business.currency ?? null,
       receipt_footer: business.receipt_footer ?? null,
       payment_bank_name: business.payment_bank_name ?? null,

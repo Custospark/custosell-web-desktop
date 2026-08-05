@@ -59,6 +59,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
   [ROUTES.HR.LEAVE]: ['leave requests', 'time off', 'vacation', 'holiday', 'apply leave', 'leave balance', 'sick leave'],
   [ROUTES.HR.PAYROLL]: ['pay run', 'salaries', 'wages', 'process payroll', 'pay employees', 'compensation', 'payslip'],
   [ROUTES.HR.TALENT]: ['recruitment', 'hiring', 'job applicants', 'candidates', 'interviews', 'job openings'],
+  [ROUTES.HR.TRANSFERS]: ['transfers', 'staff transfer', 'employee transfer', 'move employee', 'reassign staff', 'branch transfer', 'relocate'],
   [ROUTES.HR.REPORTS]: ['hr analytics', 'staff reports', 'workforce reports', 'hr statistics'],
   [ROUTES.HR.SETTINGS]: ['hr policies', 'configure hr', 'leave policy', 'company policy', 'hr preferences'],
 
@@ -80,6 +81,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
 
   [ROUTES.ACCOUNT.NOTIFICATIONS]: ['alerts', 'messages', 'updates', 'bell', 'announcements'],
   [ROUTES.ACCOUNT.PROFILE]: ['my profile', 'personal details', 'edit profile', 'account info', 'update name', 'change photo', 'my account'],
+  [ROUTES.ACCOUNT.SECURITY]: ['password', 'change password', 'reset password', 'new password', 'update password', 'verify email', 'email verification', 'two-factor', '2fa', 'two factor authentication', 'security code', 'authentication', 'sign-in activity', 'login security', 'account protection', 'secure my account'],
   [ROUTES.ACCOUNT.REFERRALS]: ['refer friends', 'referral program', 'rewards', 'invite friends', 'bonus', 'earn money'],
 
   [ROUTES.SETTINGS.BUSINESS]: ['business profile', 'business details', 'company info', 'business name', 'logo', 'business preferences'],

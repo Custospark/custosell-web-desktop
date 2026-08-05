@@ -58,6 +58,7 @@ export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
   [ROUTES.HR.LEAVE]: 'Manage leave requests and balances.',
   [ROUTES.HR.PAYROLL]: 'Process payroll and pay runs.',
   [ROUTES.HR.TALENT]: 'Recruitment and talent pipeline.',
+  [ROUTES.HR.TRANSFERS]: 'Transfer employees between branches and roles.',
   [ROUTES.HR.REPORTS]: 'HR reports and analytics.',
   [ROUTES.HR.SETTINGS]: 'Configure HR policies and settings.',
 
@@ -79,6 +80,7 @@ export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
 
   [ROUTES.ACCOUNT.NOTIFICATIONS]: 'Your notifications and alerts.',
   [ROUTES.ACCOUNT.PROFILE]: 'Update your profile and preferences.',
+  [ROUTES.ACCOUNT.SECURITY]: 'Change your password, verify your email, and manage two-factor authentication.',
   [ROUTES.ACCOUNT.REFERRALS]: 'Invite others and track your rewards.',
 
   [ROUTES.SETTINGS.BUSINESS]: 'Business profile and preferences.',

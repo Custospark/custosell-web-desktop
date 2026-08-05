@@ -287,6 +287,7 @@ export const STOREFRONT = {
   MY_ORDER: (orderId: number) => `/storefront/my-orders/${orderId}`,
   SHOP: (slug: string) => `/storefront/${slug}`,
   PRODUCTS: (slug: string) => `/storefront/${slug}/products`,
+  PRODUCT: (slug: string, productSlug: string) => `/storefront/${slug}/products/${productSlug}`,
   ORDERS: (slug: string) => `/storefront/${slug}/orders`,
   RATE_PRODUCT: (slug: string, productId: number) =>
     `/storefront/${slug}/products/${productId}/ratings`,

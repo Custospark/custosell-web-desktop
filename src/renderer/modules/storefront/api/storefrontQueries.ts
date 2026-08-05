@@ -341,6 +341,28 @@ export function useStorefrontShopProductsInfinite(slug: string, category = '', q
   });
 }
 
+/**
+ * Single product by its public slug within a shop (`/storefront/{slug}/products/{productSlug}`).
+ * Used to open the detail modal from a shared `?product=` link when the item is
+ * not already in the loaded catalog page.
+ */
+export function useStorefrontShopProduct(slug: string, productSlug: string) {
+  return useQuery({
+    queryKey: storefrontKeys.product(slug, productSlug),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: StorefrontProduct }>(STOREFRONT.PRODUCT(slug, productSlug));
+      return data.data;
+    },
+    enabled: Boolean(slug) && Boolean(productSlug),
+    staleTime: CATALOG_STALE_MS,
+    retry: 1,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: CATALOG_REFRESH_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
 export function usePlaceStorefrontOrder() {
   const queryClient = useQueryClient();
   return useMutation({

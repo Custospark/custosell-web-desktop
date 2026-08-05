@@ -16,8 +16,12 @@ export const ROUTES = {
   DISCOVER_FAVORITES: '/discover/favorites',
   /** In-app shop catalog (under Discover so strip/browse never fight a catch-all). */
   SHOP: (slug: string) => `/discover/shop/${slug}`,
+  /** In-app shop product opened from a shared link (`?product=` opens the detail modal). */
+  SHOP_PRODUCT: (slug: string, productSlug: string) => `/discover/shop/${slug}?product=${encodeURIComponent(productSlug)}`,
   /** Public share handle — redirects to SHOP (see ShopShareRedirect). */
   SHOP_SHARE: (slug: string) => `/@${slug}`,
+  /** Public share handle for a single product — redirects to SHOP_PRODUCT (see ShopShareRedirect). */
+  SHOP_PRODUCT_SHARE: (slug: string, productSlug: string) => `/@${slug}/p/${encodeURIComponent(productSlug)}`,
   DASHBOARD: '/dashboard',
   SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: {

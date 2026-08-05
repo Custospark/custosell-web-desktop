@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { Phone, Search, ShoppingBag, Mail, MapPin } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
@@ -11,6 +11,7 @@ import { marketplaceGlassPanel } from '../inventory/ui/marketplace/marketplaceTh
 import {
   useRateStorefrontShop,
   useStorefrontShop,
+  useStorefrontShopProduct,
   useStorefrontShopProductsInfinite,
 } from './api/storefrontQueries';
 import type { StorefrontProduct, StorefrontProductFilters, StorefrontShop } from './api/storefrontTypes';
@@ -49,6 +50,9 @@ export default function ShopPage() {
   const [debouncedQ, setDebouncedQ] = useState('');
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const [filters, setFilters] = useState<StorefrontProductFilters>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+  const productSlugParam = searchParams.get('product')?.trim().toLowerCase() || null;
+  const sharedProductQuery = useStorefrontShopProduct(slug ?? '', productSlugParam ?? '');
 
   const searchQ = debouncedQ.trim().toLowerCase();
   const productsQuery = useStorefrontShopProductsInfinite(slug ?? '', '', searchQ, filters);
@@ -150,6 +154,22 @@ export default function ShopPage() {
   }, [shop, setHeader, showToast, bagCount, openCart]);
 
   const openDetail = useCallback((product: StorefrontProduct) => setDetail(product), []);
+
+  // A shared `?product=<slug>` link: open that product's detail modal. Prefer the
+  // already-loaded catalog item; fall back to the dedicated shared-product fetch.
+  const sharedDetail = useMemo(() => {
+    if (!productSlugParam) return null;
+    const fromCatalog = products.find((p) => (p.slug && p.slug === productSlugParam) || String(p.id) === productSlugParam);
+    return fromCatalog ?? sharedProductQuery.data ?? null;
+  }, [productSlugParam, products, sharedProductQuery.data]);
+
+  const closeDetail = useCallback(() => {
+    setDetail(null);
+    if (productSlugParam) {
+      searchParams.delete('product');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [productSlugParam, searchParams, setSearchParams]);
   const onAdd = useCallback((product: StorefrontProduct) => {
     if (!shop) return;
     if (isStorefrontProductOutOfStock(product)) {
@@ -354,13 +374,13 @@ export default function ShopPage() {
         </>
       )}
 
-      {detail ? (
+      {detail || sharedDetail ? (
         <StorefrontProductDetailModal
-          product={detail}
+          product={detail ?? sharedDetail!}
           isOpen
-          onClose={() => setDetail(null)}
+          onClose={closeDetail}
           onAdd={onAdd}
-          onRated={setDetail}
+          onRated={(p) => setDetail(p)}
           shopSlug={shop.slug}
           currency={currency}
         />

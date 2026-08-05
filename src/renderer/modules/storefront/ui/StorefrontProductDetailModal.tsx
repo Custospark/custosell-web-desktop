@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Copy } from 'lucide-react';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useToast } from '../../../app/contexts/useToast';
 import { Modal } from '../../../shared/components/modals/Modal';
@@ -7,6 +8,7 @@ import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useRateStorefrontProduct } from '../api/storefrontQueries';
 import type { StorefrontProduct } from '../api/storefrontTypes';
+import { storefrontShareUrl } from '../storefrontShare';
 import { useDiscoverShell } from './discoverShellContext';
 import { ProductStarRating } from './ProductStarRating';
 import { productVisual } from './productVisual';
@@ -73,6 +75,16 @@ export function StorefrontProductDetailModal({
       return;
     }
     submit();
+  };
+
+  const productSlug = product.slug;
+  const copyShareLink = async () => {
+    if (!slug || !productSlug) {
+      showToast('error', 'No share link available for this product yet.');
+      return;
+    }
+    await navigator.clipboard.writeText(storefrontShareUrl(slug, productSlug));
+    showToast('success', 'Product link copied');
   };
 
   return (
@@ -147,6 +159,12 @@ export function StorefrontProductDetailModal({
           <Button type="button" variant="secondary" onClick={onClose}>
             Close
           </Button>
+          {slug && productSlug ? (
+            <Button type="button" variant="secondary" onClick={copyShareLink}>
+              <Copy className="h-4 w-4" aria-hidden />
+              Copy link
+            </Button>
+          ) : null}
         </div>
       </div>
     </Modal>

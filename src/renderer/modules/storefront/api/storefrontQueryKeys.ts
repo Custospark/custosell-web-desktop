@@ -21,6 +21,7 @@ export const storefrontKeys = {
   categories: () => [...storefrontKeys.all, 'categories'] as const,
   facets: () => [...storefrontKeys.all, 'facets'] as const,
   shop: (slug: string) => [...storefrontKeys.all, 'shop', slug] as const,
+  product: (slug: string, productSlug: string) => [...storefrontKeys.all, 'product', slug, productSlug] as const,
   products: (slug: string, category: string) => [...storefrontKeys.all, 'products', slug, category] as const,
   productsPages: (slug: string, category: string, q = '', filters: StorefrontProductFilters = {}) => [...storefrontKeys.all, 'products-pages', slug, category, q.trim(), filterKeyPart(filters)] as const,
   myOrders: (status?: string, q?: string) => [...storefrontKeys.all, 'my-orders', status ?? '', q ?? ''] as const,

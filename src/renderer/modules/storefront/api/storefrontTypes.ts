@@ -25,6 +25,8 @@ export interface StorefrontSocialLink {
 
 export interface StorefrontProduct {
   id: number;
+  /** Public share identity within the shop (unique per business). */
+  slug?: string;
   name: string;
   description: string | null;
   unit_price: string | number;

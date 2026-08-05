@@ -56,6 +56,7 @@ type ModalTarget = PlatformUser[];
 
 export default function PlatformUsersPage() {
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [loginActivityFilter, setLoginActivityFilter] = useState<UserLoginActivity | ''>('');
   const [accountStatusFilter, setAccountStatusFilter] = useState<UserAccountStatus | ''>('');
   const [statusDurationFilter, setStatusDurationFilter] = useState<number | ''>('');
@@ -149,7 +150,9 @@ export default function PlatformUsersPage() {
   }, []);
   const clearSelection = () => setSelectedIds(new Set());
 
-  const handleSearchChange = (v: string) => { setSearch(v); setPage(1); };
+  const handleSearchChange = (v: string) => { setSearchInput(v); };
+  const handleSearchSubmit = () => { setSearch(searchInput.trim()); setPage(1); };
+  const handleSearchClear = () => { setSearchInput(''); setSearch(''); setPage(1); };
   const handleLoginActivityFilterChange = (v: UserLoginActivity | '') => { setLoginActivityFilter(v); setPage(1); };
   const handleStatusDurationFilterChange = (v: number | '') => { setStatusDurationFilter(v); setPage(1); };
   const handleAccountStatusFilterChange = (v: UserAccountStatus | '') => { setAccountStatusFilter(v); setPage(1); };
@@ -308,8 +311,10 @@ export default function PlatformUsersPage() {
       <Card>
         <div className="flex flex-col gap-4 mb-4">
           <PlatformUserFilters
-            search={search}
+            search={searchInput}
             onSearchChange={handleSearchChange}
+            onSearchSubmit={handleSearchSubmit}
+            onSearchClear={handleSearchClear}
             resultCount={rows.length}
             totalCount={data?.total ?? 0}
             loginActivityFilter={loginActivityFilter}

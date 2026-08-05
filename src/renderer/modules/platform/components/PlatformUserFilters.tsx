@@ -1,4 +1,4 @@
-import { CheckSquare, Square, UserCog } from 'lucide-react';
+import { CheckSquare, Search, Square, UserCog } from 'lucide-react';
 import { SearchInput } from '../../../shared/components/inputs/SearchInput';
 import { Button } from '../../../shared/components/buttons/Button';
 import {
@@ -13,6 +13,8 @@ export type BusinessFilterValue = 'all' | 'with_business' | 'no_business' | 'pla
 interface PlatformUserFiltersProps {
   search: string;
   onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
+  onSearchClear: () => void;
   resultCount: number;
   totalCount: number;
   loginActivityFilter: UserLoginActivity | '';
@@ -34,6 +36,8 @@ interface PlatformUserFiltersProps {
 export function PlatformUserFilters({
   search,
   onSearchChange,
+  onSearchSubmit,
+  onSearchClear,
   resultCount,
   totalCount,
   loginActivityFilter,
@@ -55,12 +59,18 @@ export function PlatformUserFilters({
     <>
       <div className="flex flex-col lg:flex-row gap-3">
         <div className="flex-1">
-          <SearchInput
-            placeholder="Search by name, email, phone, business, or role..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            onClear={() => onSearchChange('')}
-          />
+          <div className="flex gap-2">
+            <SearchInput
+              placeholder="Search by name, email, phone, business, or role..."
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') onSearchSubmit(); }}
+              onClear={onSearchClear}
+            />
+            <Button variant="secondary" size="sm" onClick={onSearchSubmit} className="h-[38px] shrink-0">
+              <Search className="w-3.5 h-3.5 mr-1" />Search
+            </Button>
+          </div>
           <p className="text-xs text-gray-400 mt-1">
             {resultCount} match{resultCount === 1 ? '' : 'es'} · {totalCount} total
           </p>

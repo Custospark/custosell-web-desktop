@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, CreditCard, KeyRound, Mail, ShieldCheck, UserCog, Wallet } from 'lucide-react';
+import { CalendarDays, CreditCard, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserCog, Wallet } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { cn } from '../../../shared/utils/cn';
@@ -55,6 +55,7 @@ export function PlatformUserPrivilegesModal({
   const [accountType, setAccountType] = useState<PlatformAccountType | ''>('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [planId, setPlanId] = useState<number | ''>('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | ''>('');
   const [subscriptionStatus, setSubscriptionStatus] = useState<PlatformSubscriptionStatus | ''>('');
@@ -170,18 +171,29 @@ export function PlatformUserPrivilegesModal({
 
           <div>
             <PipelineIconField label="Password" icon={KeyRound}>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isPending}
-                placeholder="Set a new password for this account"
-                aria-invalid={passwordTooShort}
-                className={cn(
-                  pipelineInputClass,
-                  passwordTooShort && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
-                )}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isPending}
+                  placeholder="Set a new password for this account"
+                  aria-invalid={passwordTooShort}
+                  className={cn(
+                    pipelineInputClass,
+                    'pr-10',
+                    passwordTooShort && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </PipelineIconField>
             {passwordTooShort && (
               <p className="mt-1 pl-10 text-xs text-red-600" role="alert">Password must be at least 8 characters.</p>

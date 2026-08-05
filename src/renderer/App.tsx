@@ -13,12 +13,25 @@ import { AppRoutes } from './app/routes';
 import { AuthBootstrap } from './app/components/AuthBootstrap';
 import { LogoutProvider } from './app/contexts/LogoutContext';
 import { ScrollToTop } from './shared/components/routing/ScrollToTop';
+import { unlockAudio } from './app/sound/orderChime';
 import './App.css';
 
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 const Router = isElectron ? HashRouter : BrowserRouter;
 
 const CACHE_VERSION = 'v3';
+
+if (typeof window !== 'undefined') {
+  // Browsers/Electron require a user gesture before an AudioContext can start —
+  // unlock once on the first interaction so polling chimes can play afterwards.
+  const unlockOnce = () => {
+    unlockAudio();
+    window.removeEventListener('pointerdown', unlockOnce);
+    window.removeEventListener('keydown', unlockOnce);
+  };
+  window.addEventListener('pointerdown', unlockOnce, { passive: true });
+  window.addEventListener('keydown', unlockOnce);
+}
 
 const persister = createSyncStoragePersister({
   storage: window.localStorage,

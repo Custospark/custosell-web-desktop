@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Bell, CheckCheck, CheckSquare, ChevronDown, ChevronUp, Inbox, Square, Trash2, X } from 'lucide-react';
+import { Bell, CheckCheck, CheckSquare, ChevronDown, ChevronUp, Inbox, Square, Trash2, Volume2, X } from 'lucide-react';
+import { useSoundPreferences } from '../../app/sound/useSoundPreferences';
 import {
   useBulkDeleteNotifications,
   useDeleteAllNotifications,
@@ -53,6 +54,7 @@ export default function NotificationsPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const { isCompletelyOffline } = useNetworkStatus();
+  const { orderSound, setOrderSound } = useSoundPreferences();
   const { confirm } = useConfirm();
   const params = useMemo(
     () => ({
@@ -206,6 +208,37 @@ export default function NotificationsPage() {
           You are offline. Showing your saved messages — new ones will appear when you are back online.
         </div>
       )}
+
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-3 p-4 sm:p-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+            <Volume2 className="h-5 w-5" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900">Order sound</p>
+            <p className="mt-0.5 text-sm leading-snug text-gray-600">
+              Play a chime when a new online order arrives from your shop.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={orderSound}
+            onClick={() => setOrderSound(!orderSound)}
+            className={cn(
+              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+              orderSound ? 'bg-blue-600' : 'bg-gray-300',
+            )}
+          >
+            <span
+              className={cn(
+                'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                orderSound ? 'translate-x-6' : 'translate-x-1',
+              )}
+            />
+          </button>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-4 border-b border-gray-200">

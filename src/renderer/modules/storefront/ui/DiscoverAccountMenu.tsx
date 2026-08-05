@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, CircleUser, GraduationCap, Heart, LayoutDashboard, LogOut, Package, Gift, UserRound } from 'lucide-react';
+import { Bell, ChevronDown, CircleUser, GraduationCap, Heart, LayoutDashboard, LogOut, Package, Gift, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../../app/contexts/useLogoutActions';
@@ -9,6 +9,7 @@ import { cn } from '../../../shared/utils/cn';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { ReferralsModal } from '../../../modules/referral/components/ReferralsModal';
 import { ProfileModal } from '../../../modules/settings/ui/ProfileModal';
+import { NotificationsModal } from '../../../modules/settings/ui/NotificationsModal';
 
 interface DiscoverAccountMenuProps {
   user: AuthUser;
@@ -34,6 +35,7 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
   const [open, setOpen] = useState(false);
   const [referralsOpen, setReferralsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -156,6 +158,15 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
                 <button
                   type="button"
                   role="menuitem"
+                  onClick={() => { setOpen(false); setNotificationsOpen(true); }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+                >
+                  <Bell className="h-4 w-4 text-slate-600" />
+                  Notifications
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => { setOpen(false); setProfileOpen(true); }}
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
                 >
@@ -202,6 +213,7 @@ export function DiscoverAccountMenu({ user, className, compact = false }: Discov
 
       <ReferralsModal isOpen={referralsOpen} onClose={() => setReferralsOpen(false)} />
       <ProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
+      <NotificationsModal isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </div>
   );
 }

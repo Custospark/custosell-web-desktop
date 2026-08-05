@@ -14,6 +14,7 @@ import { AuthBootstrap } from './app/components/AuthBootstrap';
 import { LogoutProvider } from './app/contexts/LogoutContext';
 import { ScrollToTop } from './shared/components/routing/ScrollToTop';
 import { PwaInstallPrompt } from './shared/components/pwa/PwaInstallPrompt';
+import { ServiceWorkerNotificationsBridge } from './app/sw/ServiceWorkerNotificationsBridge';
 import { unlockAudio } from './app/sound/orderChime';
 import './App.css';
 
@@ -57,6 +58,7 @@ function App() {
         <Router>
           <ScrollToTop />
           <PwaInstallPrompt />
+          <ServiceWorkerNotificationsBridge />
           <LogoutProvider>
             <AppProvider>
               <ToastProvider>

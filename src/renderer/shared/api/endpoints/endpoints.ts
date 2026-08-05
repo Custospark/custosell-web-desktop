@@ -110,6 +110,12 @@ export const NOTIFICATIONS = {
   DELETE: (id: number) => `/notifications/${id}`,
 };
 
+export const WEB_PUSH = {
+  STATUS: '/webpush/status',
+  SUBSCRIBE: '/webpush/subscribe',
+  UNSUBSCRIBE: '/webpush/unsubscribe',
+};
+
 export const INVOICES = {
   BASE: '/invoices',
   BY_ID: (id: number) => `/invoices/${id}`,

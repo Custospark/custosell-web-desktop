@@ -44,6 +44,68 @@ self.addEventListener('message', (event) => {
   }
 });
 
+/*
+ * Web Push
+ * The backend sends an encrypted JSON payload: { title, body, url, icon, tag }.
+ * `url` is an in-app route (origin-relative); `tag` collapses duplicate alerts.
+ */
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'Custosell', body: event.data.text() };
+  }
+
+  const payload = {
+    title: data.title || 'Custosell',
+    body: data.body || '',
+    icon: data.icon || '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: data.tag || undefined,
+    data: { url: data.url || '/account/notifications' },
+  };
+
+  event.waitUntil(
+    self.registration
+      .showNotification(payload.title, {
+        body: payload.body,
+        icon: payload.icon,
+        badge: payload.badge,
+        tag: payload.tag,
+        data: payload.data,
+      })
+      .then(async () => {
+        // Tell any open app window to refresh its unread bell immediately.
+        const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        clients.forEach((client) => client.postMessage({ type: 'PUSH_RECEIVED' }));
+      }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/account/notifications';
+  const absolute = new URL(url, self.location.origin).href;
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of allClients) {
+        if ('focus' in client) {
+          await client.focus();
+          client.postMessage({ type: 'NAVIGATE', url: absolute });
+          return;
+        }
+      }
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(absolute);
+      }
+    })(),
+  );
+});
+
 function isApiRequest(url, method) {
   return API_PATH.test(url.pathname) && method === 'GET';
 }

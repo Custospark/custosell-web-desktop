@@ -20,6 +20,7 @@ import { imperativeToast } from '../../app/contexts/imperativeToast';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 import { cn } from '../../shared/utils/cn';
 import { OrderSoundCard } from './ui/OrderSoundCard';
+import { PushNotificationsCard } from './ui/PushNotificationsCard';
 
 const TYPE_LABELS: Record<string, string> = {
   business_status: 'Account update',
@@ -212,6 +213,8 @@ export default function NotificationsPage() {
       )}
 
       {isBusiness && <OrderSoundCard />}
+
+      <PushNotificationsCard />
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-4 border-b border-gray-200">

@@ -16,7 +16,6 @@ import {
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { useNewOrderChime } from '../../app/sound/useNewOrderChime';
 import { resumeOrderToCart, loadOrderForUpdate } from './api/salesSlice';
 import {
   orderItemsToCartItems,
@@ -73,7 +72,6 @@ export default function OrdersPage() {
 
   const { data: orders = [], isLoading, error, refetch, isFetching } = useOrders(filters, true, { poll: true });
   const { data: allOrders = [] } = useOrders(undefined, true, { poll: true });
-  useNewOrderChime(allOrders);
   const statusCounts = useMemo(() => {
     const counts: Record<OrderStatus | 'all', number> = {
       all: allOrders.length,

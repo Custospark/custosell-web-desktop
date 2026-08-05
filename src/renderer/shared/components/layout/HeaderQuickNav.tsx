@@ -3,6 +3,7 @@ import { ClipboardList, Package, Plus } from 'lucide-react';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useOpenOrders } from '../../../modules/sales/api/orders/useOrderQueries';
+import { useNewOrderChime } from '../../../app/sound/useNewOrderChime';
 import { canAccessModule } from '../../utils/moduleAccess';
 import { cn } from '../../utils/cn';
 
@@ -27,6 +28,7 @@ export function HeaderQuickNav() {
   const canInventory = canAccessModule(user, 'inventory');
   const { data: openOrders } = useOpenOrders(canSales, { poll: canSales });
   const openCount = openOrders?.length ?? 0;
+  useNewOrderChime(openOrders ?? []);
 
   if (!canSales && !canInventory) return null;
 

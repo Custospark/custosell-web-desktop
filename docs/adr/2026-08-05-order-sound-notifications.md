@@ -10,7 +10,7 @@ Notify users with a short synthesized chime + toast when their orders change, us
 
 Two triggers, two surfaces:
 
-1. **Business — Sales → Orders**: when a **new online/storefront order** appears, play a **two-chime** alert (`useNewOrderChime`). Toggle lives at **Account → Notifications** (the `/account/notifications` inbox, which `/settings/notifications` redirects to).
+1. **Business — header Open Orders badge**: when a **new open order** appears in the header's 30s-polled open-orders list, play a **two-chime** alert (`useNewOrderChime`). Because it lives in `HeaderQuickNav` (shown across the whole app), it sounds no matter which page the user is on. Toggle lives at **Account → Notifications** (the `/account/notifications` inbox, which `/settings/notifications` redirects to).
 2. **Buyer — public storefront My Orders**: when an existing order's **status changes**, play a **single chime** (`useOrderStatusChime`). Toggle lives in a new **Notifications modal** opened from the Discover account menu (Profile pattern), i.e. "notifications via modal" for online buyers.
 
 Both fire even when the tab/window is **not focused** (the order list poll hooks already use `refetchIntervalInBackground`). Audio is unlocked on the first user interaction (`pointerdown`/`keydown`) because browsers/Electron require a user gesture before an `AudioContext` can start.
@@ -26,9 +26,9 @@ Both fire even when the tab/window is **not focused** (the order list poll hooks
 - `src/renderer/app/sound/orderChime.ts` — Web Audio synth engine: `playChime(times, freq)`, `playNewOrderChime()` (2 chimes), `playStatusChime()` (1 chime), `unlockAudio()`, `setSoundMuted()`, `isSoundMuted()`.
 - `src/renderer/app/sound/soundPreferences.ts` — `localStorage` persistence (`custosell.sound.prefs.v1`), default `orderSound: true`.
 - `src/renderer/app/sound/useSoundPreferences.ts` — reactive hook; syncs engine mute with stored value.
-- `src/renderer/app/sound/useNewOrderChime.ts` — business-side watcher; baselines first render, alerts on new `source === 'storefront' && status === 'open'` orders.
+- `src/renderer/app/sound/useNewOrderChime.ts` — business-side watcher; baselines first render, alerts on new open orders (source-agnostic — matches the header Open Orders badge).
 - `src/renderer/app/sound/useOrderStatusChime.ts` — buyer-side watcher; baselines first render, alerts on known-order status changes.
-- `src/renderer/modules/sales/OrdersPage.tsx` — calls `useNewOrderChime(allOrders)`.
+- `src/renderer/shared/components/layout/HeaderQuickNav.tsx` — global mount (polls open orders every 30s); calls `useNewOrderChime(openOrders)`.
 - `src/renderer/modules/storefront/MyOrdersPage.tsx` — calls `useOrderStatusChime(allOrders)`.
 - `src/renderer/modules/notifications/NotificationsPage.tsx` — business "Order sound" toggle card (top of inbox).
 - `src/renderer/modules/settings/ui/NotificationsModal.tsx` — buyer "Order status sound" toggle modal.

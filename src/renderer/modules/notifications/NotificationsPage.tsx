@@ -221,7 +221,7 @@ export default function NotificationsPage() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900">Order sound</p>
               <p className="mt-0.5 text-sm leading-snug text-gray-600">
-                Play a chime when a new online order arrives from your shop.
+                Play a chime when a new open order arrives.
               </p>
             </div>
             <button

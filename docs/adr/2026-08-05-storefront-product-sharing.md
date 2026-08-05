@@ -58,8 +58,8 @@ shop links are unchanged.
 
 ## Out of Scope / Notes
 
-- The project-wide `render(RuntimeException …)` handler in `bootstrap/app.php` maps
-  API **404 → 422** (it catches `HttpException`); this affects all storefront 404s,
-  including a pre-existing failure of `test_shop_404_when_storefront_disabled`. Product
-  share tests assert 422 to match current behavior. Fixing the global handler is a
-  separate concern.
+- The project-wide `render(RuntimeException …)` handler in `bootstrap/app.php` used to
+  map API **404 → 422** (it caught `HttpException`). Fixed so `HttpException` subclasses
+  (incl. `NotFoundHttpException`) glue to Laravel's real status code; `ValidationException`
+  and location-limit `RuntimeException` still render 422. Product share tests assert a
+  real 404, and `test_shop_404_when_storefront_disabled` now passes.

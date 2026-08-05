@@ -34,7 +34,7 @@ import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBa
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
 import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 import { PlatformUserStatCards } from './components/PlatformUserStatCards';
-import { Mail, Shield, Trash2, UserCog, KeyRound } from 'lucide-react';
+import { Mail, Shield, Trash2, UserCog, KeyRound, CheckSquare, Square } from 'lucide-react';
 function defaultRange() {
   const to = format(new Date(), 'yyyy-MM-dd');
   const from = format(subDays(new Date(), 29), 'yyyy-MM-dd');

@@ -1,5 +1,6 @@
 import { Package } from 'lucide-react';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
+import { cleanProductName } from '../../shared/utils/cleanProductName';
 import {
   resolveBillTotal,
   resolveDisplaySubtotal,
@@ -40,7 +41,7 @@ export default function PaymentReceiptLineItems({ details, currency = 'UGX' }: P
           {details.lineItems.map((item, i) => (
             <tr key={i} className="border-b border-dashed border-gray-200 last:border-0">
               <td className="py-1 text-gray-800 pr-1">
-                <span className="break-words">{item.name}</span>
+                <span className="break-words">{cleanProductName(item.name)}</span>
                 {(item.refundedQuantity ?? 0) > 0 && (
                   <span className="block text-[10px] text-red-500">({item.refundedQuantity} refunded)</span>
                 )}

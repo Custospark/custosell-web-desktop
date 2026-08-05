@@ -4,6 +4,7 @@ import { Minus, Pencil, Plus, Trash2 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { cleanProductName } from '../../../shared/utils/cleanProductName';
 import { SERVICE_QTY_SOFT_CAP } from '../../inventory/api/products/ProductTypes';
 import QuantityEditModal from '../../sales/ui/QuantityEditModal';
 import { bagTotal, type StorefrontBagContactPatch, type StorefrontCartBag } from '../cart/storefrontCartTypes';
@@ -66,7 +67,7 @@ export function StorefrontBagCheckout({
             return (
               <li key={line.product.id} className="flex items-start justify-between gap-2 text-sm">
                 <div className="min-w-0">
-                  <p className="line-clamp-2 font-medium text-slate-900">{line.product.name}</p>
+                  <p className="line-clamp-2 font-medium text-slate-900">{cleanProductName(line.product.name)}</p>
                   <p className="tabular-nums text-slate-500">
                     {formatCurrency(unit * line.quantity, currency)}
                     {onSale ? (

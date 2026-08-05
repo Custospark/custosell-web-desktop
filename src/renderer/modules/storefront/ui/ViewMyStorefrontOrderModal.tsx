@@ -1,6 +1,7 @@
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Badge } from '../../../shared/components/badges/Badge';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { cleanProductName } from '../../../shared/utils/cleanProductName';
 import type { MyStorefrontOrder } from '../api/storefrontTypes';
 
 interface ViewMyStorefrontOrderModalProps {
@@ -71,7 +72,7 @@ export function ViewMyStorefrontOrderModal({
               {items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-gray-900">{item.product_name}</p>
+                    <p className="truncate font-medium text-gray-900">{cleanProductName(item.product_name)}</p>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-gray-900">

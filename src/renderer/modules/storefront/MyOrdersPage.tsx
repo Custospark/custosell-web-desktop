@@ -10,7 +10,6 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { useOrderStatusChime } from '../../app/sound/useOrderStatusChime';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
@@ -86,7 +85,6 @@ export default function MyOrdersPage() {
   } = useMyStorefrontOrdersList(Boolean(token), { poll: true });
 
   const allOrders = useMemo(() => data?.orders ?? [], [data?.orders]);
-  useOrderStatusChime(allOrders);
 
   // Hydrate last delivery phone/name from the most recent order (cross-device / cleared storage).
   useEffect(() => {

@@ -7,11 +7,12 @@ import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { cn } from '../../shared/utils/cn';
 import { useMarketplaceHeroBackground } from '../inventory/ui/marketplace/marketplaceTheme';
-import { prefetchStorefrontCatalogs, useMyStorefrontOrdersCount } from './api/storefrontQueries';
+import { prefetchStorefrontCatalogs, useMyStorefrontOrdersList } from './api/storefrontQueries';
 import { useWishlistCount } from './api/wishlistQueries';
 import { useFavoritesCount } from './api/favoriteQueries';
 import { useStorefrontCatalogWarmup } from './cart/useStorefrontCatalogWarmup';
 import { useStorefrontMultiCart } from './cart/storefrontMultiCartContext';
+import { useOrderStatusChime } from '../../app/sound/useOrderStatusChime';
 import { ConnectedStorefrontStrip } from './ui/ConnectedStorefrontStrip';
 import { StorefrontCartHub } from './ui/StorefrontCartHub';
 import { StorefrontLoginDialog } from './ui/StorefrontLoginDialog';
@@ -86,7 +87,12 @@ function DiscoverShellChrome() {
   const cartDocked = cartOpen && !prefersSheet;
 
   const path = normalizeDiscoverPath(location.pathname);
-  const { data: ordersCount = 0 } = useMyStorefrontOrdersCount(Boolean(token));
+  // Poll the buyer's orders list here (shared query key with My Orders page) so
+  // status changes alert + the open-orders badge stay live on every Discover tab.
+  const { data: myOrders } = useMyStorefrontOrdersList(Boolean(token), { poll: true });
+  const myOrdersList = myOrders?.orders ?? [];
+  const ordersCount = myOrdersList.filter((o) => o.status === 'open').length;
+  useOrderStatusChime(myOrdersList);
 
   useEffect(() => {
     void prefetchStorefrontCatalogs(queryClient);

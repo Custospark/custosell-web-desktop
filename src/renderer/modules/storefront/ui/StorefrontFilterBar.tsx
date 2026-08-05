@@ -18,7 +18,7 @@ import { PriceRange, SelectControl, SegmentedControl, ToggleChip } from './Store
 
 export type FilterScope = 'shops' | 'products' | 'shop';
 type Filterable = StorefrontShopFilters | StorefrontProductFilters;
-type FilterKey = keyof Filterable & string;
+type FilterKey = keyof StorefrontShopFilters | keyof StorefrontProductFilters;
 
 interface StorefrontFilterBarProps {
   scope: FilterScope;
@@ -148,6 +148,7 @@ export function StorefrontFilterBar({
   const pills = useMemo(() => {
     const list: { id: string; label: string; onRemove: () => void }[] = [];
     const bag = draft as Filterable;
+    const productBag = bag as StorefrontProductFilters;
     const remove = (key: FilterKey) => {
       setDraft((prev) => {
         const next: Filterable = { ...prev };
@@ -155,7 +156,7 @@ export function StorefrontFilterBar({
         return next;
       });
     };
-    const catValue = bag[categoryKey] as string | undefined;
+    const catValue = (bag as Record<string, unknown>)[categoryKey] as string | undefined;
     if (catValue) {
       const facet = businessCategories.find((c) => c.slug === catValue || String(c.id) === catValue);
       list.push({ id: categoryKey, label: facet?.name ?? catValue, onRemove: () => remove(categoryKey) });
@@ -166,19 +167,19 @@ export function StorefrontFilterBar({
     if (bag.country) {
       list.push({ id: 'country', label: `Country: ${bag.country}`, onRemove: () => remove('country') });
     }
-    if (bag.type) {
-      list.push({ id: 'type', label: bag.type === 'service' ? 'Services only' : 'Products only', onRemove: () => remove('type') });
+    if (productBag.type) {
+      list.push({ id: 'type', label: productBag.type === 'service' ? 'Services only' : 'Products only', onRemove: () => remove('type') });
     }
-    if (bag.currency) {
-      list.push({ id: 'currency', label: `Currency: ${bag.currency}`, onRemove: () => remove('currency') });
+    if (productBag.currency) {
+      list.push({ id: 'currency', label: `Currency: ${productBag.currency}`, onRemove: () => remove('currency') });
     }
-    if (bag.price_min !== undefined) {
-      list.push({ id: 'price_min', label: `From ${bag.price_min}`, onRemove: () => remove('price_min') });
+    if (productBag.price_min !== undefined) {
+      list.push({ id: 'price_min', label: `From ${productBag.price_min}`, onRemove: () => remove('price_min') });
     }
-    if (bag.price_max !== undefined) {
-      list.push({ id: 'price_max', label: `Up to ${bag.price_max}`, onRemove: () => remove('price_max') });
+    if (productBag.price_max !== undefined) {
+      list.push({ id: 'price_max', label: `Up to ${productBag.price_max}`, onRemove: () => remove('price_max') });
     }
-    if (bag.in_stock) {
+    if (productBag.in_stock) {
       list.push({ id: 'in_stock', label: 'In stock', onRemove: () => remove('in_stock') });
     }
     if (bag.min_rating) {
@@ -189,7 +190,6 @@ export function StorefrontFilterBar({
       list.push({ id: 'sort', label: `Sort: ${sortLabel}`, onRemove: () => remove('sort') });
     }
     return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, categoryKey, businessCategories, sortOptions]);
 
   return (
@@ -260,7 +260,7 @@ export function StorefrontFilterBar({
               <SelectControl
                 icon={Building2}
                 label="Business type"
-                value={(draft as Filterable)[categoryKey] as string ?? ''}
+                value={((draft as Record<string, unknown>)[categoryKey] as string | undefined) ?? ''}
                 options={businessCategories.map((c) => ({ value: c.slug, label: `${c.name}${c.count ? ` (${c.count})` : ''}` }))}
                 placeholder="All business types"
                 onChange={(v) => setFilter(categoryKey, v || undefined)}

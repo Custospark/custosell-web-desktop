@@ -85,7 +85,7 @@ export function BusinessLocationSection({
   });
   // Keep any country already saved by the business even if not on the reference list.
   if (form.country && form.country !== 'Uganda' && !STOREFRONT_COUNTRIES.includes(form.country)) {
-    countryOptions.push({ value: form.country, label: form.country });
+    countryOptions.push({ value: form.country, label: form.country, group: undefined });
   }
   const selectedCategoryId = form.business_category_id ? String(form.business_category_id) : '';
   const businessCategoryLabel =

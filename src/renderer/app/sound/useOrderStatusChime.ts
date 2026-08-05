@@ -50,7 +50,7 @@ export function useOrderStatusChime(orders: StatusAlertableOrder[]) {
     });
     if (changed.length === 0) return;
 
-    if (prefs.orderSound) playStatusChime();
+    if (prefs.orderSound) playStatusChime(changed[0].status);
     imperativeToast.show(
       'info',
       changed.length === 1

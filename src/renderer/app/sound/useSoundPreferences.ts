@@ -23,9 +23,16 @@ export function useSoundPreferences() {
     setPrefs(next);
   }, []);
 
+  const setBigOrderThreshold = useCallback((threshold: number | null) => {
+    const next = saveSoundPreferences({ bigOrderThreshold: threshold });
+    setPrefs(next);
+  }, []);
+
   return {
     orderSound: prefs.orderSound,
     setOrderSound,
+    bigOrderThreshold: prefs.bigOrderThreshold,
+    setBigOrderThreshold,
   };
 }
 

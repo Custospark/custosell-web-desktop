@@ -1,7 +1,8 @@
-import { Volume2 } from 'lucide-react';
+import { Play, Volume2 } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { cn } from '../../../shared/utils/cn';
 import { useSoundPreferences } from '../../../app/sound/useSoundPreferences';
+import { playPreviewChime } from '../../../app/sound/orderChime';
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -52,6 +53,14 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
             />
           </button>
         </div>
+        <button
+          type="button"
+          onClick={playPreviewChime}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <Play className="h-4 w-4" aria-hidden />
+          Play test sound
+        </button>
       </div>
     </Modal>
   );

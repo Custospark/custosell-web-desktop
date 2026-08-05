@@ -11,10 +11,14 @@ export const SOUND_PREFS_KEY = 'custosell.sound.prefs.v1';
 export interface SoundPreferences {
   /** Play a chime when a new online/storefront order arrives (business + buyer). */
   orderSound: boolean;
+  /** Business "big-order" alert bar — any new open order with total_amount >=
+   *  this plays the urgent chime instead of the normal one. null = disabled. */
+  bigOrderThreshold: number | null;
 }
 
 export const DEFAULT_SOUND_PREFS: SoundPreferences = {
   orderSound: true,
+  bigOrderThreshold: null,
 };
 
 export function loadSoundPreferences(): SoundPreferences {
@@ -26,6 +30,10 @@ export function loadSoundPreferences(): SoundPreferences {
     return {
       orderSound:
         typeof parsed.orderSound === 'boolean' ? parsed.orderSound : DEFAULT_SOUND_PREFS.orderSound,
+      bigOrderThreshold:
+        typeof parsed.bigOrderThreshold === 'number' && parsed.bigOrderThreshold > 0
+          ? parsed.bigOrderThreshold
+          : DEFAULT_SOUND_PREFS.bigOrderThreshold,
     };
   } catch {
     return { ...DEFAULT_SOUND_PREFS };

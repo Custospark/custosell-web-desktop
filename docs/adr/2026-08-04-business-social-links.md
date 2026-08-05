@@ -67,6 +67,19 @@ the 7 known platforms plus a `hasBrandIcon()` helper (eslint-disable for
 - Invalid URL → backend 422 → toast (field error not inline since sections are separate).
 - Duplicate platform → backend upserts; list refresh shows one row.
 
+## UX pass — standard platform select (2026-08-05)
+
+The **add-link** form now offers the standard platforms with configured brand icons
+(Facebook, Instagram, WhatsApp, Twitter/LinkedIn, YouTube, TikTok) in a `<select>`,
+plus a **"Custom platform…"** option that reveals a free-text platform input — keeping
+custom names supported (the stored `platform` stays free-text, no enum change). Platform
+is still editable on existing rows; adding the same platform again updates its URL.
+
+- `STANDARD_PLATFORMS` constant + `CUSTOM_OPTION` sentinel in `BusinessSocialSection.tsx`.
+- `resolveChosenPlatform(selectValue, customValue)` picks the standard choice or falls
+  back to the custom text; empty `custom` keeps the Add button disabled.
+- UI-only change — data model and accessors unchanged.
+
 ## Also in this pass — shop loading state
 
 Clicking any **"Explore Offers"** action (`DiscoverShopsBrowse`, `BusinessStorefrontCard`,

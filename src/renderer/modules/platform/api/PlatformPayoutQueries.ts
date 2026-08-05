@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { PLATFORM } from '../../../shared/api/endpoints/platformEndpoints';
 import { useToast } from '../../../app/contexts/ToastContext';
+import { platformMutationError } from './PlatformQueries';
 import type { PayableEntity, PayoutRecord } from './PlatformPayoutTypes';
 
 export const payoutKeys = {
@@ -54,7 +55,7 @@ export function useRecordPayout() {
       qc.invalidateQueries({ queryKey: payoutKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to record payout');
+      showToast('error', platformMutationError(e, 'Failed to record payout'));
     },
   });
 }
@@ -72,7 +73,7 @@ export function useUpdatePayoutSchedule() {
       qc.invalidateQueries({ queryKey: payoutKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to update schedule');
+      showToast('error', platformMutationError(e, 'Failed to update schedule'));
     },
   });
 }
@@ -90,7 +91,7 @@ export function useCancelPayout() {
       qc.invalidateQueries({ queryKey: payoutKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to cancel payout');
+      showToast('error', platformMutationError(e, 'Failed to cancel payout'));
     },
   });
 }

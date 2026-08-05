@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { PLATFORM } from '../../../shared/api/endpoints/platformEndpoints';
 import { useToast } from '../../../app/contexts/ToastContext';
+import { platformMutationError } from './PlatformQueries';
 import type { CampaignCode, CampaignCodeUsage } from './PlatformTypes';
 
 export const campaignKeys = {
@@ -63,7 +64,7 @@ export function useCreateCampaignCode() {
       qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to create campaign code');
+      showToast('error', platformMutationError(e, 'Failed to create campaign code'));
     },
   });
 }
@@ -82,7 +83,7 @@ export function useUpdateCampaignCode() {
       qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to update campaign code');
+      showToast('error', platformMutationError(e, 'Failed to update campaign code'));
     },
   });
 }
@@ -100,7 +101,7 @@ export function useDeleteCampaignCode() {
       qc.invalidateQueries({ queryKey: campaignKeys.all, refetchType: 'all' });
     },
     onError: (e) => {
-      showToast('error', e.response?.data?.message || 'Failed to delete campaign code');
+      showToast('error', platformMutationError(e, 'Failed to delete campaign code'));
     },
   });
 }

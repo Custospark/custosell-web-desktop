@@ -91,7 +91,7 @@ export function useUpdatePlatformUserStatus() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update user status'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update user status')),
   });
 }
 
@@ -128,7 +128,7 @@ export function useBulkUpdatePlatformUserStatus() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update users'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update users')),
   });
 }
 
@@ -187,7 +187,7 @@ export function useDeletePlatformUser() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to delete user'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to delete user')),
   });
 }
 
@@ -210,7 +210,7 @@ export function useBulkDeletePlatformUsers() {
       showToast(data.skipped > 0 ? 'warning' : 'success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to delete users'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to delete users')),
   });
 }
 
@@ -243,7 +243,7 @@ export function useBulkAssignPlatformRoles() {
       showToast(variant, data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update platform roles'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update platform roles')),
   });
 }
 
@@ -260,7 +260,7 @@ export function useUpdatePlatformUserPrivileges() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update account privileges'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update account privileges')),
   });
 }
 
@@ -283,7 +283,7 @@ export function useBulkUpdatePlatformUserPrivileges() {
       showToast(variant, data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update account privileges'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update account privileges')),
   });
 }
 
@@ -338,7 +338,7 @@ export function useCreatePlatformRole() {
       showToast('success', 'Platform role created.');
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to create role'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to create role')),
   });
 }
 
@@ -355,7 +355,7 @@ export function useUpdatePlatformRole() {
       showToast('success', 'Platform role updated.');
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update role'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update role')),
   });
 }
 
@@ -372,6 +372,6 @@ export function useDeletePlatformRole() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to delete role'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to delete role')),
   });
 }

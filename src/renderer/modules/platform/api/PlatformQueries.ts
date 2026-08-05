@@ -22,9 +22,28 @@ export function isAxiosNotFound(err: unknown): boolean {
   return (err as AxiosError).response?.status === 404;
 }
 
+type PlatformErrorBody = {
+  message?: string;
+  errors?: Record<string, string[] | string> | null;
+};
+
+function firstErrorMessage(body: PlatformErrorBody | undefined): string | null {
+  if (!body?.errors) return null;
+  for (const value of Object.values(body.errors)) {
+    if (Array.isArray(value) && value.length > 0 && value[0]) return value[0];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return null;
+}
+
 export function platformMutationError(err: unknown, fallback: string): string {
-  const axiosErr = err as AxiosError<{ message?: string }>;
-  return axiosErr.response?.data?.message ?? (err instanceof Error ? err.message : fallback);
+  const axiosErr = err as AxiosError<PlatformErrorBody>;
+  const body = axiosErr.response?.data;
+  return firstErrorMessage(body)
+    ?? body?.message
+    ?? (err instanceof Error && err.message && !err.message.includes('Request failed with status code')
+      ? err.message
+      : fallback);
 }
 
 export const platformKeys = {
@@ -109,7 +128,7 @@ export function useUpdateBusinessStatus() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update business status'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update business status')),
   });
 }
 
@@ -137,7 +156,7 @@ export function useBulkUpdateBusinessStatus() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to update businesses'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to update businesses')),
   });
 }
 
@@ -157,7 +176,7 @@ export function useDeleteBusiness() {
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to delete business'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to delete business')),
   });
 }
 
@@ -176,7 +195,7 @@ export function useResetBusinessData() {  const queryClient = useQueryClient();
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to reset business data'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to reset business data')),
   });
 }
 
@@ -196,7 +215,7 @@ export function useBulkDeleteBusinesses() {  const queryClient = useQueryClient(
       showToast('success', data.message);
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
-    onError: (err: Error) => showToast('error', err.message || 'Failed to delete businesses'),
+    onError: (err: Error) => showToast('error', platformMutationError(err, 'Failed to delete businesses')),
   });
 }
 

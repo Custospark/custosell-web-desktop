@@ -28,7 +28,8 @@ Platform operators manage users from Platform › All Users. They needed the abi
 - New `PlatformUserPrivilegesModal` — single-user and bulk modes; plan (active plans only), billing cycle, subscription status, onboarding-fee paid, next billing date, account type, email, password; all fields optional; submit only enabled when a change is present. Remounts per target via a `key` that includes the first target id (no effect-based state reset).
 - New `PlatformUserRowActions` dropdown — Notify / Change status / Platform role / Access & privileges / Delete — mirroring `PlatformBusinessRowActions`.
 - New `PlatformUserFilters` component — search, login-activity, account-status (+duration), user-type, and account-type selects plus select-all and Assign-by-email. Extracted from the page to keep it ≤500 lines.
-- Users and Businesses pages now use server-side pagination (`page`/`per_page` params, meta from `current_page`/`last_page`/`total`), and filter-change handlers reset to page 1.
+- **Modal standard:** all five All Users modals (Status, Notify, Delete, Role, Privileges) converted from bespoke `AnimatePresence` overlays to the shared `Modal` + `PipelineModalHero` + `PipelineFormSection`/`PipelineIconField` pattern used by the Product, Expense, Task/Lead, and business modals. Sticky footer, section cards, icon fields, and consistent tones. State resets via `key` remounts in a new `PlatformUserModals` composite (also keeps the page ≤500 lines).
+- Users and Businesses pages now use server-side pagination (`page`/`per_page` params, meta from `current_page`/`last_page`/`total`), and filter-change handlers reset to page 1. Backend `/platform/users` and `/roles/{id}/members` return the same top-level raw-paginator shape as `/platform/businesses` (was `meta`-wrapped).
 - New hooks `useUpdatePlatformUserPrivileges` and `useBulkUpdatePlatformUserPrivileges`; new endpoints `USER_PRIVILEGES` and `USERS_BULK_PRIVILEGES`.
 
 ## Consequences

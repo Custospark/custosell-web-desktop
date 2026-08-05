@@ -27,12 +27,8 @@ import { Pagination } from '../../shared/components/tables/Pagination';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
-import { PlatformUserStatusModal } from './components/PlatformUserStatusModal';
-import { PlatformUserNotificationModal } from './components/PlatformUserNotificationModal';
-import { PlatformUserDeleteModal } from './components/PlatformUserDeleteModal';
-import { PlatformUserRoleModal } from './components/PlatformUserRoleModal';
-import { PlatformUserPrivilegesModal } from './components/PlatformUserPrivilegesModal';
 import { PlatformUserRowActions } from './components/PlatformUserRowActions';
+import { PlatformUserModals } from './components/PlatformUserModals';
 import { PlatformUserFilters, type BusinessFilterValue } from './components/PlatformUserFilters';
 import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
@@ -278,42 +274,23 @@ export default function PlatformUsersPage() {
 
   return (
     <div className="space-y-6">
-      <PlatformUserStatusModal
-        open={statusTargets !== null}
-        users={statusTargets ?? []}
-        isPending={updateStatus.isPending || bulkUpdateStatus.isPending}
-        onClose={() => setStatusTargets(null)}
-        onConfirm={handleStatusConfirm}
-      />
-      <PlatformUserNotificationModal
-        open={notifyTargets !== null}
-        users={notifyTargets ?? []}
-        isPending={notifyUsers.isPending}
-        onClose={() => setNotifyTargets(null)}
-        onConfirm={handleNotifyConfirm}
-      />
-      <PlatformUserDeleteModal
-        open={deleteTargets !== null}
-        users={deleteTargets ?? []}
-        isPending={deleteUser.isPending || bulkDeleteUsers.isPending}
-        onClose={() => setDeleteTargets(null)}
-        onConfirm={handleDeleteConfirm}
-      />
-      <PlatformUserRoleModal
-        key={roleTargets !== null ? 'open' : 'closed'}
-        open={roleTargets !== null}
-        users={roleTargets ?? []}
-        isPending={bulkAssignRoles.isPending}
-        onClose={() => setRoleTargets(null)}
-        onConfirm={handleRoleConfirm}
-      />
-      <PlatformUserPrivilegesModal
-        key={privilegeTargets !== null ? `open-${privilegeTargets[0]?.id ?? 'bulk'}` : 'closed'}
-        open={privilegeTargets !== null}
-        users={privilegeTargets ?? []}
-        isPending={updatePrivileges.isPending || bulkUpdatePrivileges.isPending}
-        onClose={() => setPrivilegeTargets(null)}
-        onConfirm={handlePrivilegesConfirm}
+      <PlatformUserModals
+        state={{ statusTargets, notifyTargets, deleteTargets, roleTargets, privilegeTargets }}
+        statusPending={updateStatus.isPending || bulkUpdateStatus.isPending}
+        notifyPending={notifyUsers.isPending}
+        deletePending={deleteUser.isPending || bulkDeleteUsers.isPending}
+        rolePending={bulkAssignRoles.isPending}
+        privilegesPending={updatePrivileges.isPending || bulkUpdatePrivileges.isPending}
+        onCloseStatus={() => setStatusTargets(null)}
+        onCloseNotify={() => setNotifyTargets(null)}
+        onCloseDelete={() => setDeleteTargets(null)}
+        onCloseRole={() => setRoleTargets(null)}
+        onClosePrivileges={() => setPrivilegeTargets(null)}
+        onConfirmStatus={handleStatusConfirm}
+        onConfirmNotify={handleNotifyConfirm}
+        onConfirmDelete={handleDeleteConfirm}
+        onConfirmRole={handleRoleConfirm}
+        onConfirmPrivileges={handlePrivilegesConfirm}
       />
 
       <div>

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { KeyRound, ShieldCheck, X } from 'lucide-react';
+import { CalendarDays, CreditCard, KeyRound, Mail, ShieldCheck, UserCog, Wallet } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { cn } from '../../../shared/utils/cn';
-import { selectClass, inputClass } from '../../../shared/utils/inputStyles';
+import { PipelineFormSection, PipelineIconField, pipelineInputClass, pipelineSelectClass } from '../../pipeline/ui/pipelineFormFields';
+import { PipelineModalHero } from '../../pipeline/ui/pipelineFormFields';
 import { usePlans } from '../api/PlanQueries';
 import type {
   PlatformAccountType,
@@ -61,8 +62,6 @@ export function PlatformUserPrivilegesModal({
   const [nextBillingDate, setNextBillingDate] = useState('');
   const [touched, setTouched] = useState(false);
 
-  if (!open || users.length === 0) return null;
-
   const emailInvalid = email !== '' && !EMAIL_RE.test(email);
   const passwordTooShort = password !== '' && password.length < 8;
   const hasAnyChange =
@@ -70,6 +69,11 @@ export function PlatformUserPrivilegesModal({
     || billingCycle !== '' || subscriptionStatus !== '' || onboardingFeePaid !== ''
     || nextBillingDate !== '';
   const canSubmit = hasAnyChange && !emailInvalid && !passwordTooShort;
+
+  const handleClose = () => {
+    if (isPending) return;
+    onClose();
+  };
 
   const buildPayload = (): PlatformPrivilegesPayload => {
     const payload: PlatformPrivilegesPayload = {};
@@ -95,212 +99,195 @@ export function PlatformUserPrivilegesModal({
     : `Privileges — ${single?.name}`;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50"
-            onClick={isPending ? undefined : onClose}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            role="dialog"
-            aria-modal="true"
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isPending}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-            >
-              <X className="w-5 h-5" />
-            </button>
+    <Modal
+      isOpen={open}
+      onClose={handleClose}
+      title={title}
+      subtitle="Grant access and fix accounts"
+      size="lg"
+      bodyClassName="px-4 py-4 sm:px-6"
+    >
+      <div className="space-y-4 sm:space-y-5">
+        <PipelineModalHero
+          icon={ShieldCheck}
+          tone="indigo"
+          title={isBulk ? 'Set privileges for several accounts' : `Privileges for ${single?.name}`}
+          description="Plan, subscription status, onboarding fee, account type, email, and password. Only fields you change are applied."
+        />
 
-            <div className="flex items-start gap-4 pr-6">
-              <div className="p-2.5 rounded-full shrink-0 bg-indigo-50">
-                <ShieldCheck className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Grant access and fix accounts: plan, subscription status, onboarding fee, account
-                  type, email, and password. Only fields you change are applied.
-                </p>
-              </div>
-            </div>
+        {isBulk && (
+          <div className="max-h-28 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/60 divide-y divide-gray-100">
+            {users.map((u) => (
+              <div key={u.id} className="px-3 py-2 truncate text-sm text-gray-800">{u.name} · {u.email}</div>
+            ))}
+          </div>
+        )}
 
-            {isBulk && (
-              <ul className="mt-4 max-h-28 overflow-y-auto text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg divide-y divide-gray-100">
-                {users.map((u) => (
-                  <li key={u.id} className="px-3 py-2 truncate">{u.name} · {u.email}</li>
+        {!isBulk && singleSub && (
+          <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-xs text-gray-600">
+            Current: <span className="font-medium">{singleSub.plan_name ?? 'No plan'}</span> ·{' '}
+            {singleSub.status} · {singleSub.onboarding_fee_paid ? 'onboarding paid' : 'onboarding unpaid'}
+            {singleSub.next_billing_date ? ` · next billing ${new Date(singleSub.next_billing_date).toLocaleDateString()}` : ''}
+          </div>
+        )}
+
+        <PipelineFormSection title="Account" icon={UserCog} description="Account type, email, and password override for this user.">
+          <div>
+            <PipelineIconField label="Account type" icon={UserCog}>
+              <select
+                value={accountType}
+                onChange={(e) => setAccountType(e.target.value as PlatformAccountType | '')}
+                disabled={isPending}
+                className={pipelineSelectClass}
+              >
+                <option value="">Keep current</option>
+                {ACCOUNT_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
-              </ul>
+              </select>
+            </PipelineIconField>
+          </div>
+
+          <div>
+            <PipelineIconField label="Email" icon={Mail}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isPending}
+                placeholder="Fix a wrong signup email"
+                aria-invalid={emailInvalid}
+                className={cn(
+                  pipelineInputClass,
+                  emailInvalid && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
+                )}
+              />
+            </PipelineIconField>
+            {emailInvalid && (
+              <p className="mt-1 pl-10 text-xs text-red-600" role="alert">Enter a valid email address.</p>
             )}
+          </div>
 
-            <form
-              className="mt-5 space-y-4"
-              onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
-              noValidate
-            >
-              {!isBulk && singleSub && (
-                <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-xs text-gray-600">
-                  Current: <span className="font-medium">{singleSub.plan_name ?? 'No plan'}</span> ·{' '}
-                  {singleSub.status} · {singleSub.onboarding_fee_paid ? 'onboarding paid' : 'onboarding unpaid'}
-                  {singleSub.next_billing_date ? ` · next billing ${new Date(singleSub.next_billing_date).toLocaleDateString()}` : ''}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Account type</label>
-                <select
-                  value={accountType}
-                  onChange={(e) => setAccountType(e.target.value as PlatformAccountType | '')}
-                  disabled={isPending}
-                  className={selectClass}
-                >
-                  <option value="">Keep current</option>
-                  {ACCOUNT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Plan</label>
-                  <select
-                    value={planId}
-                    onChange={(e) => setPlanId(e.target.value ? Number(e.target.value) : '')}
-                    disabled={isPending}
-                    className={selectClass}
-                  >
-                    <option value="">Keep current plan</option>
-                    {activePlans.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                  {!singleSub && planId !== '' && (
-                    <p className="text-xs text-emerald-600 mt-1">Creates and activates this plan.</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Billing cycle</label>
-                  <select
-                    value={billingCycle}
-                    onChange={(e) => setBillingCycle(e.target.value as 'monthly' | 'yearly' | '')}
-                    disabled={isPending}
-                    className={selectClass}
-                  >
-                    <option value="">Keep current</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Subscription status</label>
-                  <select
-                    value={subscriptionStatus}
-                    onChange={(e) => setSubscriptionStatus(e.target.value as PlatformSubscriptionStatus | '')}
-                    disabled={isPending}
-                    className={selectClass}
-                  >
-                    <option value="">Keep current</option>
-                    {SUBSCRIPTION_STATUSES.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Onboarding fee</label>
-                  <select
-                    value={onboardingFeePaid}
-                    onChange={(e) => setOnboardingFeePaid(e.target.value === '' ? '' : e.target.value === 'paid')}
-                    disabled={isPending}
-                    className={selectClass}
-                  >
-                    <option value="">Keep current</option>
-                    <option value="paid">Mark as paid</option>
-                    <option value="unpaid">Mark as unpaid</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Next billing date</label>
-                <input
-                  type="date"
-                  value={nextBillingDate}
-                  onChange={(e) => setNextBillingDate(e.target.value)}
-                  disabled={isPending}
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="my-1 border-t border-gray-100" />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isPending}
-                  placeholder="Fix a wrong signup email"
-                  className={cn(inputClass, emailInvalid && 'border-red-500')}
-                />
-                {emailInvalid && (
-                  <p className="text-xs text-red-600 mt-1">Enter a valid email address.</p>
+          <div>
+            <PipelineIconField label="Password" icon={KeyRound}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isPending}
+                placeholder="Set a new password for this account"
+                aria-invalid={passwordTooShort}
+                className={cn(
+                  pipelineInputClass,
+                  passwordTooShort && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
                 )}
-              </div>
+              />
+            </PipelineIconField>
+            {passwordTooShort && (
+              <p className="mt-1 pl-10 text-xs text-red-600" role="alert">Password must be at least 8 characters.</p>
+            )}
+          </div>
+        </PipelineFormSection>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isPending}
-                  placeholder="Set a new password for this account"
-                  className={cn(inputClass, passwordTooShort && 'border-red-500')}
-                />
-                {passwordTooShort && (
-                  <p className="text-xs text-red-600 mt-1">Password must be at least 8 characters.</p>
-                )}
-              </div>
+        <PipelineFormSection title="Subscription" icon={CreditCard} description="Plan, billing cycle, status, onboarding fee, and next billing date.">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <PipelineIconField label="Plan" icon={CreditCard}>
+              <select
+                value={planId}
+                onChange={(e) => setPlanId(e.target.value ? Number(e.target.value) : '')}
+                disabled={isPending}
+                className={pipelineSelectClass}
+              >
+                <option value="">Keep current plan</option>
+                {activePlans.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </PipelineIconField>
+            <PipelineIconField label="Billing cycle" icon={CalendarDays}>
+              <select
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value as 'monthly' | 'yearly' | '')}
+                disabled={isPending}
+                className={pipelineSelectClass}
+              >
+                <option value="">Keep current</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </PipelineIconField>
+          </div>
+          {!singleSub && planId !== '' && (
+            <p className="text-xs text-emerald-600">Creates and activates this plan.</p>
+          )}
 
-              {touched && !canSubmit && (
-                <p className="text-xs text-red-600">Change at least one field to continue.</p>
-              )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <PipelineIconField label="Subscription status" icon={ShieldCheck}>
+              <select
+                value={subscriptionStatus}
+                onChange={(e) => setSubscriptionStatus(e.target.value as PlatformSubscriptionStatus | '')}
+                disabled={isPending}
+                className={pipelineSelectClass}
+              >
+                <option value="">Keep current</option>
+                {SUBSCRIPTION_STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </PipelineIconField>
+            <PipelineIconField label="Onboarding fee" icon={Wallet}>
+              <select
+                value={onboardingFeePaid === '' ? '' : onboardingFeePaid ? 'paid' : 'unpaid'}
+                onChange={(e) => setOnboardingFeePaid(e.target.value === '' ? '' : e.target.value === 'paid')}
+                disabled={isPending}
+                className={pipelineSelectClass}
+              >
+                <option value="">Keep current</option>
+                <option value="paid">Mark as paid</option>
+                <option value="unpaid">Mark as unpaid</option>
+              </select>
+            </PipelineIconField>
+          </div>
 
-              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-lg">
-                <KeyRound className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 leading-relaxed">
-                  Admin is the last line of defense: email and password changes are audited and
-                  take effect immediately. Subscription changes also grant access right away.
-                </p>
-              </div>
+          <div>
+            <PipelineIconField label="Next billing date" icon={CalendarDays}>
+              <input
+                type="date"
+                value={nextBillingDate}
+                onChange={(e) => setNextBillingDate(e.target.value)}
+                disabled={isPending}
+                className={pipelineInputClass}
+              />
+            </PipelineIconField>
+          </div>
+        </PipelineFormSection>
 
-              <div className="flex justify-end gap-3 pt-1">
-                <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending || !canSubmit}>
-                  {isPending ? 'Saving...' : 'Apply privileges'}
-                </Button>
-              </div>
-            </form>
-          </motion.div>
+        {touched && !canSubmit && (
+          <p className="text-xs text-red-600" role="alert">Change at least one field to continue.</p>
+        )}
+
+        <div className="flex items-start gap-2 rounded-lg border border-amber-100 bg-amber-50 p-3">
+          <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <p className="text-xs leading-relaxed text-amber-800">
+            Admin is the last line of defense: email and password changes are audited and take effect immediately. Subscription changes also grant access right away.
+          </p>
         </div>
-      )}
-    </AnimatePresence>
+
+        <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 pt-4 sm:-mx-6 sm:flex-row sm:justify-end sm:px-6">
+          <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending} className="w-full sm:w-auto">
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            loading={isPending}
+            disabled={!canSubmit}
+            className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+          >
+            {isPending ? 'Saving...' : 'Apply privileges'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

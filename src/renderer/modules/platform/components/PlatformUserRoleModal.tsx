@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, X } from 'lucide-react';
+import { AtSign, Shield, UserCheck, UserX, Users } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
+import { Modal } from '../../../shared/components/modals/Modal';
+import { PipelineFormSection, PipelineIconField, pipelineInputClass, pipelineSelectClass } from '../../pipeline/ui/pipelineFormFields';
+import { PipelineModalHero } from '../../pipeline/ui/pipelineFormFields';
 import type { PlatformUser } from '../api/PlatformTypes';
 import { parseUserEmails } from '../api/platformUserValidation';
 import { usePlatformRoles } from '../api/PlatformUserQueries';
-import { selectClass, textareaClass } from '../../../shared/utils/inputStyles';
 
 export interface PlatformUserRoleModalProps {
   open: boolean;
@@ -30,10 +31,13 @@ export function PlatformUserRoleModal({
 
   const parsedExtraEmails = useMemo(() => parseUserEmails(emailInput), [emailInput]);
 
-  if (!open) return null;
-
   const hasTargets = users.length > 0 || parsedExtraEmails.length > 0;
   const canSubmit = Boolean(role) && hasTargets;
+
+  const handleClose = () => {
+    if (isPending) return;
+    onClose();
+  };
 
   const handleSubmit = () => {
     setTouched(true);
@@ -47,112 +51,100 @@ export function PlatformUserRoleModal({
   };
 
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50"
-            onClick={isPending ? undefined : onClose}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg"
-            role="dialog"
-            aria-modal="true"
-          >
-            <button type="button" onClick={onClose} disabled={isPending} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
+    <Modal
+      isOpen={open}
+      onClose={handleClose}
+      title="Platform role"
+      subtitle="Assign or revoke a platform operator role"
+      size="lg"
+      bodyClassName="px-4 py-4 sm:px-6"
+    >
+      <div className="space-y-4 sm:space-y-5">
+        <PipelineModalHero
+          icon={Shield}
+          tone="indigo"
+          title={action === 'assign' ? 'Assign platform role' : 'Revoke platform role'}
+          description="Selected table rows are included automatically. You can also add emails for users not in the current list."
+        />
 
-            <div className="flex items-start gap-4 pr-6">
-              <div className="p-2.5 rounded-full shrink-0 bg-indigo-50">
-                <Shield className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Platform role</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Assign or revoke a platform operator role by email. Selected table rows are included automatically.
-                </p>
-              </div>
+        {users.length > 0 && (
+          <div>
+            <div className="mb-1.5 flex items-center gap-2">
+              <Users className="h-4 w-4 text-gray-500" />
+              <p className="text-xs font-medium text-gray-500">Selected users ({users.length})</p>
             </div>
+            <div className="max-h-20 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/60 divide-y divide-gray-100">
+              {users.map((u) => (
+                <div key={u.id} className="px-3 py-2 truncate text-sm text-gray-800">{u.name} · {u.email}</div>
+              ))}
+            </div>
+          </div>
+        )}
 
-            <form className="mt-5 space-y-4" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} noValidate>
-              {users.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">Selected users ({users.length})</p>
-                  <ul className="max-h-20 overflow-y-auto text-xs text-gray-600 bg-gray-50 border rounded-lg divide-y">
-                    {users.map((u) => (
-                      <li key={u.id} className="px-3 py-2 truncate">{u.name} · {u.email}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+        <PipelineFormSection title="Targets & role" icon={Users} description="Who gets the role change, and which platform role.">
+          <div>
+            <PipelineIconField label="Additional emails" icon={AtSign}>
+              <textarea
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                onBlur={() => setTouched(true)}
+                rows={3}
+                disabled={isPending}
+                placeholder="Paste emails separated by commas or new lines"
+                className={pipelineInputClass}
+              />
+            </PipelineIconField>
+            {parsedExtraEmails.length > 0 && (
+              <p className="mt-1 pl-10 text-xs text-gray-500">{parsedExtraEmails.length} email(s) parsed</p>
+            )}
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Additional emails
-                </label>
-                <textarea
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  onBlur={() => setTouched(true)}
-                  rows={3}
-                  disabled={isPending}
-                  placeholder="Paste emails separated by commas or new lines"
-                  className={textareaClass}
-                />
-                {parsedExtraEmails.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">{parsedExtraEmails.length} email(s) parsed</p>
-                )}
-              </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <PipelineIconField label="Platform role" icon={UserCheck} required>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={isPending || roles.length === 0}
+                className={pipelineSelectClass}
+              >
+                {roles.map((r) => (
+                  <option key={r.id} value={r.name}>{r.name}</option>
+                ))}
+              </select>
+            </PipelineIconField>
+            <PipelineIconField label="Action" icon={action === 'assign' ? UserCheck : UserX} required>
+              <select
+                value={action}
+                onChange={(e) => setAction(e.target.value as 'assign' | 'revoke')}
+                disabled={isPending}
+                className={pipelineSelectClass}
+              >
+                <option value="assign">Assign role</option>
+                <option value="revoke">Revoke role</option>
+              </select>
+            </PipelineIconField>
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Platform role</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    disabled={isPending || roles.length === 0}
-                    className={selectClass}
-                  >
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.name}>{r.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Action</label>
-                  <select
-                    value={action}
-                    onChange={(e) => setAction(e.target.value as 'assign' | 'revoke')}
-                    disabled={isPending}
-                    className={selectClass}
-                  >
-                    <option value="assign">Assign role</option>
-                    <option value="revoke">Revoke role</option>
-                  </select>
-                </div>
-              </div>
+          {touched && !hasTargets && (
+            <p className="text-xs text-red-600" role="alert">Select users or enter at least one email.</p>
+          )}
+        </PipelineFormSection>
 
-              {touched && !hasTargets && (
-                <p className="text-xs text-red-600">Select users or enter at least one email.</p>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="secondary" onClick={onClose} disabled={isPending}>Cancel</Button>
-                <Button type="submit" disabled={isPending || !canSubmit}>
-                  {isPending ? 'Saving...' : action === 'assign' ? 'Assign role' : 'Revoke role'}
-                </Button>
-              </div>
-            </form>
-          </motion.div>
+        <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t border-gray-100 bg-white px-4 pt-4 sm:-mx-6 sm:flex-row sm:justify-end sm:px-6">
+          <Button type="button" variant="secondary" onClick={handleClose} disabled={isPending} className="w-full sm:w-auto">
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            loading={isPending}
+            disabled={!canSubmit}
+            className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+          >
+            {isPending ? 'Saving...' : action === 'assign' ? 'Assign role' : 'Revoke role'}
+          </Button>
         </div>
-      )}
-    </AnimatePresence>
+      </div>
+    </Modal>
   );
 }

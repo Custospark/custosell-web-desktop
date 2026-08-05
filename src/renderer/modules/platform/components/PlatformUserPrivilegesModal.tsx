@@ -75,6 +75,31 @@ export function PlatformUserPrivilegesModal({
     singleSub?.status,
   );
 
+  const filteredPlans = useMemo(() => {
+    if (!accountType) return activePlans;
+    return activePlans.filter((p) => p.type === accountType);
+  }, [activePlans, accountType]);
+
+  const isStorefront = accountType === 'storefront_buyer';
+
+  const handleAccountTypeChange = (next: PlatformAccountType | '') => {
+    setAccountType(next);
+    if (next === 'storefront_buyer') {
+      setPlanId('');
+      setBillingCycle('');
+      setSubscriptionStatus('');
+      setOnboardingFeePaid('');
+      setDateValue('');
+      return;
+    }
+    if (next) {
+      setPlanId((current) => {
+        if (current === '') return current;
+        return activePlans.some((p) => p.id === current && p.type === next) ? current : '';
+      });
+    }
+  };
+
   const emailInvalid = email !== '' && !EMAIL_RE.test(email);
   const passwordTooShort = password !== '' && password.length < 8;
   const hasAnyChange =
@@ -139,19 +164,23 @@ export function PlatformUserPrivilegesModal({
           </div>
         )}
 
-        {!isBulk && singleSub && (
-          <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-xs text-gray-600">
-            Current: <span className="font-medium">{singleSub.plan_name ?? 'No plan'}</span> ·{' '}
-            {singleSub.status} · {singleSub.onboarding_fee_paid ? 'onboarding paid' : 'onboarding unpaid'}
-            {singleSub.next_billing_date ? ` · next billing ${new Date(singleSub.next_billing_date).toLocaleDateString()}` : ''}
-          </div>
-        )}
+        {!isStorefront && (
+          <>
+            {!isBulk && singleSub && (
+              <div className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-xs text-gray-600">
+                Current: <span className="font-medium">{singleSub.plan_name ?? 'No plan'}</span> ·{' '}
+                {singleSub.status} · {singleSub.onboarding_fee_paid ? 'onboarding paid' : 'onboarding unpaid'}
+                {singleSub.next_billing_date ? ` · next billing ${new Date(singleSub.next_billing_date).toLocaleDateString()}` : ''}
+              </div>
+            )}
 
-        {!isBulk && singleSub && subscriptionStatus === '' && dateField !== 'next_billing_date' && singleSub[dateField] && (
-          <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-xs text-indigo-700">
-            The date below applies to the current status ({singleSub.status}): {DATE_FIELD_LABELS[dateField]}{' '}
-            currently {new Date(singleSub[dateField] as string).toLocaleDateString()}. Pick a different status to edit that status' date instead.
-          </div>
+            {!isBulk && singleSub && subscriptionStatus === '' && dateField !== 'next_billing_date' && singleSub[dateField] && (
+              <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-xs text-indigo-700">
+                The date below applies to the current status ({singleSub.status}): {DATE_FIELD_LABELS[dateField]}{' '}
+                currently {new Date(singleSub[dateField] as string).toLocaleDateString()}. Pick a different status to edit that status' date instead.
+              </div>
+            )}
+          </>
         )}
 
         <PipelineFormSection title="Account" icon={UserCog} description="Account type, email, and password override for this user.">
@@ -159,7 +188,7 @@ export function PlatformUserPrivilegesModal({
             <PipelineIconField label="Account type" icon={UserCog}>
               <select
                 value={accountType}
-                onChange={(e) => setAccountType(e.target.value as PlatformAccountType | '')}
+                onChange={(e) => handleAccountTypeChange(e.target.value as PlatformAccountType | '')}
                 disabled={isPending}
                 className={pipelineSelectClass}
               >
@@ -223,6 +252,7 @@ export function PlatformUserPrivilegesModal({
           </div>
         </PipelineFormSection>
 
+        {!isStorefront && (
         <PipelineFormSection title="Subscription" icon={CreditCard} description="Plan, billing cycle, status, onboarding fee, and the status date.">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <PipelineIconField label="Plan" icon={CreditCard}>
@@ -233,7 +263,7 @@ export function PlatformUserPrivilegesModal({
                 className={pipelineSelectClass}
               >
                 <option value="">Keep current plan</option>
-                {activePlans.map((p) => (
+                {filteredPlans.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
@@ -299,6 +329,7 @@ export function PlatformUserPrivilegesModal({
             </p>
           </div>
         </PipelineFormSection>
+        )}
 
         {changeRows.length > 0 && (
           <div className="rounded-lg border border-gray-200 bg-white">

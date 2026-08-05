@@ -17,7 +17,7 @@ export function AppChrome() {
   const canSearch = canUseGlobalSearch(user);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50/30">
+    <div className="flex flex-col h-dvh overflow-hidden bg-gray-50/30">
       <AppStatusBanners />
       <SearchTopBar />
       <Outlet />

@@ -15,7 +15,6 @@ import {
 import {
   computePlatformUserStatsFromList,
   formatUserLoginRecency,
-  matchesStatusDurationFilter,
   resolveUserLoginActivity,
   resolveUserStatus,
   validateUserStatsDateRange,
@@ -86,20 +85,17 @@ export default function PlatformUsersPage() {
 
   const listParams = useMemo(() => {
     const params: Record<string, string> = {
-      sort: 'last_login_at',
-      direction: 'desc',
       page: String(page),
       per_page: String(pageSize),
     };
     if (search.trim()) params.search = search.trim();
     if (accountTypeFilter) params.account_type = accountTypeFilter;
-    if (accountStatusFilter === 'deactivated') params.is_active = '0';
-    if (accountStatusFilter === 'active' || accountStatusFilter === 'warning' || accountStatusFilter === 'notified') {
-      params.is_active = '1';
-    }
-    if (businessFilter === 'with_business') params.is_active = '1';
+    if (accountStatusFilter) params.status = accountStatusFilter;
+    if (statusDurationFilter) params.status_duration_days = String(statusDurationFilter);
+    if (loginActivityFilter) params.login_activity = loginActivityFilter;
+    if (businessFilter !== 'all') params.business = businessFilter;
     return params;
-  }, [search, accountTypeFilter, accountStatusFilter, businessFilter, page, pageSize]);
+  }, [search, accountTypeFilter, accountStatusFilter, statusDurationFilter, loginActivityFilter, businessFilter, page, pageSize]);
 
   const { data: apiStats } = usePlatformUserStats(statsParams, dateValidation.valid);
   const { data, isLoading: listLoading } = usePlatformUsers(listParams);
@@ -117,34 +113,8 @@ export default function PlatformUsersPage() {
   }, [data, dateFrom, dateTo, dateValidation.valid]);
 
   const stats = apiStats ?? fallbackStats;
-  const statsFromClient = !apiStats && Boolean(fallbackStats);
 
-  const rows = useMemo(() => {
-    const list = data?.data ?? [];
-    const q = search.trim().toLowerCase();
-    return list.filter((u) => {
-      const loginActivity = resolveUserLoginActivity(u);
-
-      if (loginActivityFilter && loginActivity !== loginActivityFilter) return false;
-      if (!matchesStatusDurationFilter(u, accountStatusFilter, statusDurationFilter)) return false;
-
-      if (businessFilter === 'with_business' && !u.business_id) return false;
-      if (businessFilter === 'no_business' && u.business_id) return false;
-      if (businessFilter === 'platform_admin' && !u.is_platform_admin) return false;
-      if (accountTypeFilter && u.account_type !== accountTypeFilter) return false;
-
-      if (!q) return true;
-      const name = u.name?.toLowerCase() ?? '';
-      const email = u.email?.toLowerCase() ?? '';
-      return (
-        name.includes(q)
-        || email.includes(q)
-        || (u.phone?.toLowerCase().includes(q) ?? false)
-        || (u.business_name?.toLowerCase().includes(q) ?? false)
-        || displayRole(u).toLowerCase().includes(q)
-      );
-    });
-  }, [data?.data, search, loginActivityFilter, accountStatusFilter, statusDurationFilter, businessFilter, accountTypeFilter]);
+  const rows = useMemo(() => data?.data ?? [], [data]);
 
   const paginated = {
     data: rows,
@@ -180,6 +150,8 @@ export default function PlatformUsersPage() {
   const clearSelection = () => setSelectedIds(new Set());
 
   const handleSearchChange = (v: string) => { setSearch(v); setPage(1); };
+  const handleLoginActivityFilterChange = (v: UserLoginActivity | '') => { setLoginActivityFilter(v); setPage(1); };
+  const handleStatusDurationFilterChange = (v: number | '') => { setStatusDurationFilter(v); setPage(1); };
   const handleAccountStatusFilterChange = (v: UserAccountStatus | '') => { setAccountStatusFilter(v); setPage(1); };
   const handleBusinessFilterChange = (v: BusinessFilterValue) => { setBusinessFilter(v); setPage(1); };
   const handleAccountTypeFilterChange = (v: string) => { setAccountTypeFilter(v); setPage(1); };
@@ -330,7 +302,7 @@ export default function PlatformUsersPage() {
       </div>
 
       {stats && (
-        <PlatformUserStatCards stats={stats} statsFromClient={statsFromClient} rangeLabel={rangeLabel} />
+        <PlatformUserStatCards stats={stats} rangeLabel={rangeLabel} />
       )}
 
       <Card>
@@ -341,11 +313,11 @@ export default function PlatformUsersPage() {
             resultCount={rows.length}
             totalCount={data?.total ?? 0}
             loginActivityFilter={loginActivityFilter}
-            onLoginActivityFilterChange={setLoginActivityFilter}
+            onLoginActivityFilterChange={handleLoginActivityFilterChange}
             accountStatusFilter={accountStatusFilter}
             onAccountStatusFilterChange={handleAccountStatusFilterChange}
             statusDurationFilter={statusDurationFilter}
-            onStatusDurationFilterChange={setStatusDurationFilter}
+            onStatusDurationFilterChange={handleStatusDurationFilterChange}
             businessFilter={businessFilter}
             onBusinessFilterChange={handleBusinessFilterChange}
             accountTypeFilter={accountTypeFilter}

@@ -15,11 +15,10 @@ const cardStyles = {
 
 interface PlatformUserStatCardsProps {
   stats: PlatformUserStats;
-  statsFromClient: boolean;
   rangeLabel: string;
 }
 
-export function PlatformUserStatCards({ stats, statsFromClient, rangeLabel }: PlatformUserStatCardsProps) {
+export function PlatformUserStatCards({ stats, rangeLabel }: PlatformUserStatCardsProps) {
   const statCards = [
     { label: 'Joined Today', value: String(stats.onboarding.today), hint: 'Prioritize welcome onboarding', icon: Calendar, color: 'blue' as const },
     { label: 'Joined This Week', value: String(stats.onboarding.this_week), hint: 'Weekly acquisition pace', icon: TrendingUp, color: 'green' as const },
@@ -34,12 +33,6 @@ export function PlatformUserStatCards({ stats, statsFromClient, rangeLabel }: Pl
 
   return (
     <>
-      {statsFromClient && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-          Summary stats are computed from the loaded user list (up to 500 rows). Platform-wide totals will appear when the stats API is available.
-        </p>
-      )}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;

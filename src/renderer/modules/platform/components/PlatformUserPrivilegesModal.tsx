@@ -12,6 +12,13 @@ import type {
   PlatformSubscriptionStatus,
   PlatformUser,
 } from '../api/PlatformTypes';
+import {
+  DATE_FIELD_BY_STATUS,
+  DATE_FIELD_LABELS,
+  resolveSubscriptionDateField,
+  buildPrivilegeChangeRows,
+  type SubscriptionDateField,
+} from '../utils/privilegeChangeSummary';
 
 export interface PlatformUserPrivilegesModalProps {
   open: boolean;
@@ -60,15 +67,20 @@ export function PlatformUserPrivilegesModal({
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | ''>('');
   const [subscriptionStatus, setSubscriptionStatus] = useState<PlatformSubscriptionStatus | ''>('');
   const [onboardingFeePaid, setOnboardingFeePaid] = useState<boolean | ''>('');
-  const [nextBillingDate, setNextBillingDate] = useState('');
+  const [dateValue, setDateValue] = useState('');
   const [touched, setTouched] = useState(false);
+
+  const dateField: SubscriptionDateField = resolveSubscriptionDateField(
+    subscriptionStatus,
+    singleSub?.status,
+  );
 
   const emailInvalid = email !== '' && !EMAIL_RE.test(email);
   const passwordTooShort = password !== '' && password.length < 8;
   const hasAnyChange =
     accountType !== '' || email !== '' || password !== '' || planId !== ''
     || billingCycle !== '' || subscriptionStatus !== '' || onboardingFeePaid !== ''
-    || nextBillingDate !== '';
+    || dateValue !== '';
   const canSubmit = hasAnyChange && !emailInvalid && !passwordTooShort;
 
   const handleClose = () => {
@@ -85,14 +97,17 @@ export function PlatformUserPrivilegesModal({
     if (billingCycle) payload.billing_cycle = billingCycle;
     if (subscriptionStatus) payload.subscription_status = subscriptionStatus;
     if (onboardingFeePaid !== '') payload.onboarding_fee_paid = onboardingFeePaid;
-    if (nextBillingDate) payload.next_billing_date = nextBillingDate;
+    if (dateValue) payload[dateField] = dateValue;
     return payload;
   };
+
+  const payload = buildPayload();
+  const changeRows = buildPrivilegeChangeRows(payload, single, plans);
 
   const handleSubmit = () => {
     setTouched(true);
     if (!canSubmit) return;
-    onConfirm(buildPayload());
+    onConfirm(payload);
   };
 
   const title = isBulk
@@ -129,6 +144,13 @@ export function PlatformUserPrivilegesModal({
             Current: <span className="font-medium">{singleSub.plan_name ?? 'No plan'}</span> ·{' '}
             {singleSub.status} · {singleSub.onboarding_fee_paid ? 'onboarding paid' : 'onboarding unpaid'}
             {singleSub.next_billing_date ? ` · next billing ${new Date(singleSub.next_billing_date).toLocaleDateString()}` : ''}
+          </div>
+        )}
+
+        {!isBulk && singleSub && subscriptionStatus === '' && dateField !== 'next_billing_date' && singleSub[dateField] && (
+          <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-xs text-indigo-700">
+            The date below applies to the current status ({singleSub.status}): {DATE_FIELD_LABELS[dateField]}{' '}
+            currently {new Date(singleSub[dateField] as string).toLocaleDateString()}. Pick a different status to edit that status' date instead.
           </div>
         )}
 
@@ -201,7 +223,7 @@ export function PlatformUserPrivilegesModal({
           </div>
         </PipelineFormSection>
 
-        <PipelineFormSection title="Subscription" icon={CreditCard} description="Plan, billing cycle, status, onboarding fee, and next billing date.">
+        <PipelineFormSection title="Subscription" icon={CreditCard} description="Plan, billing cycle, status, onboarding fee, and the status date.">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <PipelineIconField label="Plan" icon={CreditCard}>
               <select
@@ -262,17 +284,41 @@ export function PlatformUserPrivilegesModal({
           </div>
 
           <div>
-            <PipelineIconField label="Next billing date" icon={CalendarDays}>
+            <PipelineIconField label={DATE_FIELD_LABELS[dateField]} icon={CalendarDays}>
               <input
                 type="date"
-                value={nextBillingDate}
-                onChange={(e) => setNextBillingDate(e.target.value)}
+                value={dateValue}
+                onChange={(e) => setDateValue(e.target.value)}
                 disabled={isPending}
                 className={pipelineInputClass}
               />
             </PipelineIconField>
+            <p className="mt-1 pl-10 text-xs text-gray-500">
+              Applies to {DATE_FIELD_BY_STATUS[subscriptionStatus || singleSub?.status || 'active']} status —{' '}
+              {subscriptionStatus ? `the status you selected (${subscriptionStatus})` : 'the current status'}.
+            </p>
           </div>
         </PipelineFormSection>
+
+        {changeRows.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Changes to apply
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {changeRows.map((row) => (
+                <li key={row.label} className="flex items-start gap-2 px-3 py-2 text-xs">
+                  <span className="w-32 shrink-0 text-gray-500">{row.label}</span>
+                  <span className={cn('flex-1', row.sensitive && 'text-gray-400')}>
+                    <span className="text-gray-800">{row.from}</span>
+                    <span className="mx-1 text-gray-400">→</span>
+                    <span className={cn('font-medium', row.sensitive ? 'text-gray-600' : 'text-gray-900')}>{row.to}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {touched && !canSubmit && (
           <p className="text-xs text-red-600" role="alert">Change at least one field to continue.</p>

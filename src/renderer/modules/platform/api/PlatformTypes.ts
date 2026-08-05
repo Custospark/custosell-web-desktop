@@ -164,7 +164,13 @@ export interface PlatformUser {
     status: 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'expired';
     billing_cycle?: string | null;
     onboarding_fee_paid: boolean;
+    starts_at?: string | null;
+    trial_ends_at?: string | null;
     next_billing_date?: string | null;
+    grace_period_ends_at?: string | null;
+    suspended_at?: string | null;
+    ends_at?: string | null;
+    cancelled_at?: string | null;
   } | null;
   role_name?: string | null;
   is_platform_admin: boolean;
@@ -190,6 +196,10 @@ export type PlatformPrivilegesPayload = {
   subscription_status?: PlatformSubscriptionStatus;
   onboarding_fee_paid?: boolean;
   next_billing_date?: string;
+  trial_ends_at?: string;
+  grace_period_ends_at?: string;
+  suspended_at?: string;
+  ends_at?: string;
 };
 
 export type UserNotificationIntention =

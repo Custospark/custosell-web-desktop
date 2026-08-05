@@ -21,7 +21,7 @@ import type { BusinessAccountStatus, PlatformBusiness } from './api/PlatformType
 import { PlatformBusinessOnboardingChart } from './PlatformCharts';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
-import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
+import { Pagination } from '../../shared/components/tables/Pagination';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -68,6 +68,9 @@ export default function PlatformBusinessesPage() {
   const [resetTargets, setResetTargets] = useState<ModalTarget | null>(null);
   const [activateTarget, setActivateTarget] = useState<PlatformBusiness | null>(null);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   const dateValidation = useMemo(
     () => validateBusinessStatsDateRange(dateFrom, dateTo),
     [dateFrom, dateTo],
@@ -78,11 +81,18 @@ export default function PlatformBusinessesPage() {
     return { date_from: dateFrom, date_to: dateTo };
   }, [dateFrom, dateTo, dateValidation.valid]);
 
-  const listParams = useMemo(() => ({
-    sort: 'gross_sales_30d',
-    direction: 'desc',
-    per_page: '500',
-  }), []);
+  const listParams = useMemo(() => {
+    const params: Record<string, string> = {
+      sort: 'gross_sales_30d',
+      direction: 'desc',
+      page: String(page),
+      per_page: String(pageSize),
+    };
+    if (search.trim()) params.search = search.trim();
+    if (accountStatusFilter) params.status = accountStatusFilter;
+    if (subscriptionFilter) params.subscription_status = subscriptionFilter;
+    return params;
+  }, [search, accountStatusFilter, subscriptionFilter, page, pageSize]);
 
   const { data: stats, isLoading: statsLoading } = usePlatformBusinessStats(statsParams, dateValidation.valid);
   const { data, isLoading: listLoading } = usePlatformBusinesses(listParams);
@@ -99,10 +109,7 @@ export default function PlatformBusinessesPage() {
     const q = search.trim().toLowerCase();
     return list.filter((b) => {
       if (activityFilter && b.activity_status !== activityFilter) return false;
-      if (accountStatusFilter && b.status !== accountStatusFilter) return false;
       if (!matchesStatusDurationFilter(b, accountStatusFilter, statusDurationFilter)) return false;
-      if (subscriptionFilter === 'none' && b.subscription_status) return false;
-      if (subscriptionFilter && subscriptionFilter !== 'none' && b.subscription_status !== subscriptionFilter) return false;
       if (!q) return true;
       return (
         b.name.toLowerCase().includes(q)
@@ -112,9 +119,17 @@ export default function PlatformBusinessesPage() {
         || (b.owner_phone?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [data?.data, search, activityFilter, accountStatusFilter, statusDurationFilter, subscriptionFilter]);
+  }, [data?.data, search, activityFilter, accountStatusFilter, statusDurationFilter]);
 
-  const paginated = usePagination(rows, 15);
+  const paginated = {
+    data: rows,
+    page: data?.current_page ?? page,
+    totalPages: Math.max(1, data?.last_page ?? 1),
+    totalItems: data?.total ?? rows.length,
+    pageSize: data?.per_page ?? pageSize,
+    setPage: (p: number) => { setPage(p); setSelectedIds(new Set()); },
+    setPageSize: (s: number) => { setPageSize(s); setPage(1); setSelectedIds(new Set()); },
+  };
 
   const tableData = useMemo(
     () => paginated.data.map((b, i) => ({ ...b, __row: (paginated.page - 1) * paginated.pageSize + i + 1 })),
@@ -144,6 +159,10 @@ export default function PlatformBusinessesPage() {
   }, []);
 
   const clearSelection = () => setSelectedIds(new Set());
+
+  const handleSearchChange = (v: string) => { setSearch(v); setPage(1); };
+  const handleAccountStatusChange = (v: BusinessAccountStatus | '') => { setAccountStatusFilter(v); setPage(1); };
+  const handleSubscriptionFilterChange = (v: string) => { setSubscriptionFilter(v); setPage(1); };
 
   const handleStatusConfirm = (
     status: BusinessAccountStatus,
@@ -331,17 +350,17 @@ export default function PlatformBusinessesPage() {
         <div className="flex flex-col gap-4 mb-4">
           <PlatformBusinessFilters
             search={search}
-            onSearchChange={setSearch}
+            onSearchChange={handleSearchChange}
             resultCount={rows.length}
-            totalCount={data?.data?.length ?? 0}
+            totalCount={data?.total ?? 0}
             activityFilter={activityFilter}
             onActivityFilterChange={setActivityFilter}
             accountStatusFilter={accountStatusFilter}
-            onAccountStatusFilterChange={setAccountStatusFilter}
+            onAccountStatusFilterChange={handleAccountStatusChange}
             statusDurationFilter={statusDurationFilter}
             onStatusDurationFilterChange={setStatusDurationFilter}
             subscriptionFilter={subscriptionFilter}
-            onSubscriptionFilterChange={setSubscriptionFilter}
+            onSubscriptionFilterChange={handleSubscriptionFilterChange}
             allSelected={allSelected}
             onToggleAll={toggleAll}
           />

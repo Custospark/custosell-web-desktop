@@ -6,6 +6,7 @@ import { useToast } from '../../../app/contexts/ToastContext';
 import type { NotificationChannel } from '../../notifications/api/NotificationTypes';
 import type {
   PaginatedPlatformResponse,
+  PlatformPrivilegesPayload,
   PlatformUser,
   PlatformUserStats,
   PlatformRole,
@@ -243,6 +244,46 @@ export function useBulkAssignPlatformRoles() {
       void queryClient.invalidateQueries({ queryKey: platformKeys.all });
     },
     onError: (err: Error) => showToast('error', err.message || 'Failed to update platform roles'),
+  });
+}
+
+export function useUpdatePlatformUserPrivileges() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: PlatformPrivilegesPayload }) => {
+      const { data } = await axiosInstance.patch<{ message: string }>(PLATFORM.USER_PRIVILEGES(id), payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      showToast('success', data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', err.message || 'Failed to update account privileges'),
+  });
+}
+
+export function useBulkUpdatePlatformUserPrivileges() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ ids, payload }: { ids: number[]; payload: PlatformPrivilegesPayload }) => {
+      const { data } = await axiosInstance.post<{
+        message: string;
+        processed: number;
+        errors: { email: string; message: string }[];
+        variant?: string;
+      }>(PLATFORM.USERS_BULK_PRIVILEGES, { ids, ...payload });
+      return data;
+    },
+    onSuccess: (data) => {
+      const variant = data.errors.length > 0 || data.variant === 'warning' ? 'warning' : 'success';
+      showToast(variant, data.message);
+      void queryClient.invalidateQueries({ queryKey: platformKeys.all });
+    },
+    onError: (err: Error) => showToast('error', err.message || 'Failed to update account privileges'),
   });
 }
 

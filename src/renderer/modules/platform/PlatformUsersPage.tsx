@@ -9,11 +9,10 @@ import {
   usePlatformUsers,
   usePlatformUserStats,
   useUpdatePlatformUserStatus,
+  useUpdatePlatformUserPrivileges,
+  useBulkUpdatePlatformUserPrivileges,
 } from './api/PlatformUserQueries';
 import {
-  STATUS_DURATION_DAYS,
-  USER_ACCOUNT_STATUSES,
-  USER_STATUS_LABELS,
   computePlatformUserStatsFromList,
   formatUserLoginRecency,
   matchesStatusDurationFilter,
@@ -21,11 +20,10 @@ import {
   resolveUserStatus,
   validateUserStatsDateRange,
 } from './api/platformUserValidation';
-import type { PlatformUser, UserAccountStatus, UserLoginActivity } from './api/PlatformTypes';
+import type { PlatformUser, UserAccountStatus, UserLoginActivity, PlatformPrivilegesPayload } from './api/PlatformTypes';
 import { Card } from '../../shared/components/cards/Card';
 import { Table } from '../../shared/components/tables/Table';
-import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
-import { SearchInput } from '../../shared/components/inputs/SearchInput';
+import { Pagination } from '../../shared/components/tables/Pagination';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
@@ -33,13 +31,14 @@ import { PlatformUserStatusModal } from './components/PlatformUserStatusModal';
 import { PlatformUserNotificationModal } from './components/PlatformUserNotificationModal';
 import { PlatformUserDeleteModal } from './components/PlatformUserDeleteModal';
 import { PlatformUserRoleModal } from './components/PlatformUserRoleModal';
+import { PlatformUserPrivilegesModal } from './components/PlatformUserPrivilegesModal';
+import { PlatformUserRowActions } from './components/PlatformUserRowActions';
+import { PlatformUserFilters, type BusinessFilterValue } from './components/PlatformUserFilters';
 import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
 import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 import { PlatformUserStatCards } from './components/PlatformUserStatCards';
-import {
-  Mail, Shield, Trash2, CheckSquare, Square, UserCog,
-} from 'lucide-react';
+import { Mail, Shield, Trash2, KeyRound } from 'lucide-react';
 function defaultRange() {
   const to = format(new Date(), 'yyyy-MM-dd');
   const from = format(subDays(new Date(), 29), 'yyyy-MM-dd');
@@ -65,7 +64,7 @@ export default function PlatformUsersPage() {
   const [loginActivityFilter, setLoginActivityFilter] = useState<UserLoginActivity | ''>('');
   const [accountStatusFilter, setAccountStatusFilter] = useState<UserAccountStatus | ''>('');
   const [statusDurationFilter, setStatusDurationFilter] = useState<number | ''>('');
-  const [businessFilter, setBusinessFilter] = useState<'all' | 'with_business' | 'no_business' | 'platform_admin'>('all');
+  const [businessFilter, setBusinessFilter] = useState<BusinessFilterValue>('all');
   const [dateFrom, setDateFrom] = useState(defaultRange().from);
   const [dateTo, setDateTo] = useState(defaultRange().to);
   const [dateTouched, setDateTouched] = useState<{ from: boolean; to: boolean }>({ from: false, to: false });
@@ -74,6 +73,11 @@ export default function PlatformUsersPage() {
   const [notifyTargets, setNotifyTargets] = useState<ModalTarget | null>(null);
   const [deleteTargets, setDeleteTargets] = useState<ModalTarget | null>(null);
   const [roleTargets, setRoleTargets] = useState<ModalTarget | null>(null);
+  const [privilegeTargets, setPrivilegeTargets] = useState<ModalTarget | null>(null);
+  const [accountTypeFilter, setAccountTypeFilter] = useState('');
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
 
   const dateValidation = useMemo(
     () => validateUserStatsDateRange(dateFrom, dateTo),
@@ -84,11 +88,22 @@ export default function PlatformUsersPage() {
     return { date_from: dateFrom, date_to: dateTo };
   }, [dateFrom, dateTo, dateValidation.valid]);
 
-  const listParams = useMemo(() => ({
-    sort: 'last_login_at',
-    direction: 'desc',
-    per_page: '500',
-  }), []);
+  const listParams = useMemo(() => {
+    const params: Record<string, string> = {
+      sort: 'last_login_at',
+      direction: 'desc',
+      page: String(page),
+      per_page: String(pageSize),
+    };
+    if (search.trim()) params.search = search.trim();
+    if (accountTypeFilter) params.account_type = accountTypeFilter;
+    if (accountStatusFilter === 'deactivated') params.is_active = '0';
+    if (accountStatusFilter === 'active' || accountStatusFilter === 'warning' || accountStatusFilter === 'notified') {
+      params.is_active = '1';
+    }
+    if (businessFilter === 'with_business') params.is_active = '1';
+    return params;
+  }, [search, accountTypeFilter, accountStatusFilter, businessFilter, page, pageSize]);
 
   const { data: apiStats } = usePlatformUserStats(statsParams, dateValidation.valid);
   const { data, isLoading: listLoading } = usePlatformUsers(listParams);
@@ -98,6 +113,8 @@ export default function PlatformUsersPage() {
   const deleteUser = useDeletePlatformUser();
   const bulkDeleteUsers = useBulkDeletePlatformUsers();
   const bulkAssignRoles = useBulkAssignPlatformRoles();
+  const updatePrivileges = useUpdatePlatformUserPrivileges();
+  const bulkUpdatePrivileges = useBulkUpdatePlatformUserPrivileges();
   const fallbackStats = useMemo(() => {
     if (!dateValidation.valid || !data?.data) return null;
     return computePlatformUserStatsFromList(data.data, dateFrom, dateTo);
@@ -110,16 +127,15 @@ export default function PlatformUsersPage() {
     const list = data?.data ?? [];
     const q = search.trim().toLowerCase();
     return list.filter((u) => {
-      const status = resolveUserStatus(u);
       const loginActivity = resolveUserLoginActivity(u);
 
       if (loginActivityFilter && loginActivity !== loginActivityFilter) return false;
-      if (accountStatusFilter && status !== accountStatusFilter) return false;
       if (!matchesStatusDurationFilter(u, accountStatusFilter, statusDurationFilter)) return false;
 
       if (businessFilter === 'with_business' && !u.business_id) return false;
       if (businessFilter === 'no_business' && u.business_id) return false;
       if (businessFilter === 'platform_admin' && !u.is_platform_admin) return false;
+      if (accountTypeFilter && u.account_type !== accountTypeFilter) return false;
 
       if (!q) return true;
       const name = u.name?.toLowerCase() ?? '';
@@ -132,9 +148,17 @@ export default function PlatformUsersPage() {
         || displayRole(u).toLowerCase().includes(q)
       );
     });
-  }, [data?.data, search, loginActivityFilter, accountStatusFilter, statusDurationFilter, businessFilter]);
+  }, [data?.data, search, loginActivityFilter, accountStatusFilter, statusDurationFilter, businessFilter, accountTypeFilter]);
 
-  const paginated = usePagination(rows, 15);
+  const paginated = {
+    data: rows,
+    page: data?.current_page ?? page,
+    totalPages: Math.max(1, data?.last_page ?? 1),
+    totalItems: data?.total ?? rows.length,
+    pageSize: data?.per_page ?? pageSize,
+    setPage: (p: number) => { setPage(p); setSelectedIds(new Set()); },
+    setPageSize: (s: number) => { setPageSize(s); setPage(1); setSelectedIds(new Set()); },
+  };
 
   const selectedUsers = useMemo(
     () => rows.filter((u) => selectedIds.has(u.id)),
@@ -158,6 +182,11 @@ export default function PlatformUsersPage() {
     });
   }, []);
   const clearSelection = () => setSelectedIds(new Set());
+
+  const handleSearchChange = (v: string) => { setSearch(v); setPage(1); };
+  const handleAccountStatusFilterChange = (v: UserAccountStatus | '') => { setAccountStatusFilter(v); setPage(1); };
+  const handleBusinessFilterChange = (v: BusinessFilterValue) => { setBusinessFilter(v); setPage(1); };
+  const handleAccountTypeFilterChange = (v: string) => { setAccountTypeFilter(v); setPage(1); };
 
   const handleStatusConfirm = (
     status: UserAccountStatus,
@@ -225,8 +254,24 @@ export default function PlatformUsersPage() {
     });
   };
 
+  const handlePrivilegesConfirm = (payload: PlatformPrivilegesPayload) => {
+    if (!privilegeTargets?.length) return;
+    if (privilegeTargets.length === 1) {
+      updatePrivileges.mutate(
+        { id: privilegeTargets[0].id, payload },
+        { onSuccess: () => { setPrivilegeTargets(null); clearSelection(); } },
+      );
+    } else {
+      bulkUpdatePrivileges.mutate(
+        { ids: privilegeTargets.map((u) => u.id), payload },
+        { onSuccess: () => { setPrivilegeTargets(null); clearSelection(); } },
+      );
+    }
+  };
+
   const actionPending = updateStatus.isPending || bulkUpdateStatus.isPending || notifyUsers.isPending
-    || deleteUser.isPending || bulkDeleteUsers.isPending || bulkAssignRoles.isPending;
+    || deleteUser.isPending || bulkDeleteUsers.isPending || bulkAssignRoles.isPending
+    || updatePrivileges.isPending || bulkUpdatePrivileges.isPending;
   if (listLoading) return <LoadingSkeleton variant="table" />;
 
   const rangeLabel = `${stats?.onboarding.range_from ?? dateFrom} to ${stats?.onboarding.range_to ?? dateTo}`;
@@ -261,6 +306,14 @@ export default function PlatformUsersPage() {
         isPending={bulkAssignRoles.isPending}
         onClose={() => setRoleTargets(null)}
         onConfirm={handleRoleConfirm}
+      />
+      <PlatformUserPrivilegesModal
+        key={privilegeTargets !== null ? `open-${privilegeTargets[0]?.id ?? 'bulk'}` : 'closed'}
+        open={privilegeTargets !== null}
+        users={privilegeTargets ?? []}
+        isPending={updatePrivileges.isPending || bulkUpdatePrivileges.isPending}
+        onClose={() => setPrivilegeTargets(null)}
+        onConfirm={handlePrivilegesConfirm}
       />
 
       <div>
@@ -305,79 +358,26 @@ export default function PlatformUsersPage() {
 
       <Card>
         <div className="flex flex-col gap-4 mb-4">
-          <div className="flex flex-col lg:flex-row gap-3">
-            <div className="flex-1">
-              <SearchInput
-                placeholder="Search by name, email, phone, business, or role..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClear={() => setSearch('')}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                {rows.length} match{rows.length === 1 ? '' : 'es'} · {data?.data?.length ?? 0} total loaded
-              </p>
-            </div>
-            <select
-              value={loginActivityFilter}
-              onChange={(e) => setLoginActivityFilter(e.target.value as UserLoginActivity | '')}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
-            >
-              <option value="">All login activity</option>
-              <option value="active">Active — logged in ≤30d</option>
-              <option value="dormant">Dormant — 31–90d since login</option>
-              <option value="churned">Churned — 90d+ since login</option>
-              <option value="never_logged_in">Never logged in</option>
-            </select>
-            <select
-              value={accountStatusFilter}
-              onChange={(e) => {
-                setAccountStatusFilter(e.target.value as UserAccountStatus | '');
-                if (!e.target.value) setStatusDurationFilter('');
-              }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
-            >
-              <option value="">All account statuses</option>
-              {USER_ACCOUNT_STATUSES.map((s) => (
-                <option key={s} value={s}>{USER_STATUS_LABELS[s]}</option>
-              ))}
-            </select>
-            <select
-              value={statusDurationFilter}
-              onChange={(e) => setStatusDurationFilter(e.target.value ? Number(e.target.value) : '')}
-              disabled={!accountStatusFilter}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit disabled:opacity-50"
-              title="Filter users in the selected account status for at least N days"
-            >
-              <option value="">Any duration</option>
-              {STATUS_DURATION_DAYS.map((d) => (
-                <option key={d} value={d}>In status ≥ {d} days</option>
-              ))}
-            </select>
-            <select
-              value={businessFilter}
-              onChange={(e) => setBusinessFilter(e.target.value as typeof businessFilter)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
-            >
-              <option value="all">All user types</option>
-              <option value="with_business">With business</option>
-              <option value="no_business">No business linked</option>
-              <option value="platform_admin">Platform operators</option>
-            </select>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
-            >
-              {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4" />}
-              {allSelected ? 'Deselect all' : `Select all (${rows.length})`}
-            </button>
-            <Button variant="secondary" size="sm" onClick={() => setRoleTargets([])} disabled={actionPending}>
-              <UserCog className="w-3.5 h-3.5 mr-1" />Assign by email
-            </Button>
-          </div>
+          <PlatformUserFilters
+            search={search}
+            onSearchChange={handleSearchChange}
+            resultCount={rows.length}
+            totalCount={data?.total ?? 0}
+            loginActivityFilter={loginActivityFilter}
+            onLoginActivityFilterChange={setLoginActivityFilter}
+            accountStatusFilter={accountStatusFilter}
+            onAccountStatusFilterChange={handleAccountStatusFilterChange}
+            statusDurationFilter={statusDurationFilter}
+            onStatusDurationFilterChange={setStatusDurationFilter}
+            businessFilter={businessFilter}
+            onBusinessFilterChange={handleBusinessFilterChange}
+            accountTypeFilter={accountTypeFilter}
+            onAccountTypeFilterChange={handleAccountTypeFilterChange}
+            allSelected={allSelected}
+            onToggleAll={toggleAll}
+            onAssignByEmail={() => setRoleTargets([])}
+            actionPending={actionPending}
+          />
         </div>
 
         <PlatformBulkActionBar
@@ -395,6 +395,10 @@ export default function PlatformUsersPage() {
           <Button variant="secondary" size="sm" onClick={() => setRoleTargets(selectedUsers)} disabled={actionPending}>
             <UserCog className="w-3.5 h-3.5 mr-1" aria-hidden />
             Assign roles
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setPrivilegeTargets(selectedUsers)} disabled={actionPending}>
+            <KeyRound className="w-3.5 h-3.5 mr-1" aria-hidden />
+            Privileges
           </Button>
           <Button variant="danger" size="sm" onClick={() => setDeleteTargets(selectedUsers)} disabled={actionPending}>
             <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden />
@@ -465,20 +469,15 @@ export default function PlatformUsersPage() {
                   u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'
                 )},
                 { key: 'actions', header: 'Actions', align: 'center', render: (u) => (
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setNotifyTargets([u])} disabled={actionPending} title="Send notification">
-                      <Mail className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setStatusTargets([u])} disabled={actionPending} title="Change status">
-                      <Shield className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setRoleTargets([u])} disabled={actionPending} title="Platform role">
-                      <UserCog className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTargets([u])} disabled={actionPending} title="Delete user">
-                      <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                    </Button>
-                  </div>
+                  <PlatformUserRowActions
+                    user={u}
+                    onNotify={() => setNotifyTargets([u])}
+                    onChangeStatus={() => setStatusTargets([u])}
+                    onAssignRoles={() => setRoleTargets([u])}
+                    onPrivileges={() => setPrivilegeTargets([u])}
+                    onDelete={() => setDeleteTargets([u])}
+                    disabled={actionPending}
+                  />
                 )},
               ]}
               data={paginated.data}

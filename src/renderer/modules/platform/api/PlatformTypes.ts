@@ -151,10 +151,21 @@ export interface PlatformUser {
   email: string;
   phone?: string | null;
   is_active: boolean;
+  account_type?: 'business' | 'personal' | 'storefront_buyer';
   status?: UserAccountStatus;
   status_changed_at?: string | null;
   business_id: number | null;
   business_name: string | null;
+  subscription?: {
+    id: number;
+    plan_id: number;
+    plan_name?: string | null;
+    plan_slug?: string | null;
+    status: 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'expired';
+    billing_cycle?: string | null;
+    onboarding_fee_paid: boolean;
+    next_billing_date?: string | null;
+  } | null;
   role_name?: string | null;
   is_platform_admin: boolean;
   platform_roles?: string[];
@@ -164,6 +175,22 @@ export interface PlatformUser {
 }
 
 export type UserAccountStatus = 'active' | 'warning' | 'notified' | 'restricted' | 'deactivated';
+
+export type PlatformAccountType = 'business' | 'personal' | 'storefront_buyer';
+
+export type PlatformSubscriptionStatus = 'trial' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'expired';
+
+export type PlatformPrivilegesPayload = {
+  ids?: number[];
+  account_type?: PlatformAccountType;
+  email?: string;
+  password?: string;
+  plan_id?: number;
+  billing_cycle?: 'monthly' | 'yearly';
+  subscription_status?: PlatformSubscriptionStatus;
+  onboarding_fee_paid?: boolean;
+  next_billing_date?: string;
+};
 
 export type UserNotificationIntention =
   | 'announcement'

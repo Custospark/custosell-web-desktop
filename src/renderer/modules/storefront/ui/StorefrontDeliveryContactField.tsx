@@ -63,10 +63,10 @@ export function StorefrontDeliveryContactField({
   className,
 }: StorefrontDeliveryContactFieldProps) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(value.customer_name);
-  const [notes, setNotes] = useState(value.notes);
-  const [address, setAddress] = useState(value.delivery_address);
-  const [city, setCity] = useState(value.delivery_city);
+  const [name, setName] = useState(value.customer_name ?? '');
+  const [notes, setNotes] = useState(value.notes ?? '');
+  const [address, setAddress] = useState(value.delivery_address ?? '');
+  const [city, setCity] = useState(value.delivery_city ?? '');
   const [countryCode, setCountryCode] = useState<CountryCode>(getDefaultCountryCode);
   const [localPhone, setLocalPhone] = useState('');
 

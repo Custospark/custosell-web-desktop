@@ -32,6 +32,13 @@ Platform operators manage users from Platform › All Users. They needed the abi
 - Users and Businesses pages now use server-side pagination (`page`/`per_page` params, meta from `current_page`/`last_page`/`total`), and filter-change handlers reset to page 1. Backend `/platform/users` and `/roles/{id}/members` return the same top-level raw-paginator shape as `/platform/businesses` (was `meta`-wrapped).
 - New hooks `useUpdatePlatformUserPrivileges` and `useBulkUpdatePlatformUserPrivileges`; new endpoints `USER_PRIVILEGES` and `USERS_BULK_PRIVILEGES`.
 
+## Update — Status-Aware Dates & Change Summary (2026-08-05)
+
+- The privileges modal now shows the **date field that matches the chosen subscription status** instead of always "Next billing date": trial → trial ends, active → next billing, past due → grace period ends, suspended → suspended at, cancelled/expired → ends at. When no status is selected it falls back to the user's current status (see `resolveSubscriptionDateField`).
+- New **"Changes to apply"** panel renders a before → after row for every field being changed (account type, email, plan, billing cycle, status, onboarding fee, status date). Password is shown as `•••••••• → Will be replaced` because the stored hash cannot be read back.
+- Payload now accepts `trial_ends_at`, `grace_period_ends_at`, `suspended_at`, `ends_at` in addition to `next_billing_date`; `PlatformUser.subscription` exposes all lifecycle dates.
+- New `utils/privilegeChangeSummary.ts` keeps the modal ≤500 lines.
+
 ## Consequences
 
 - Platform admins can self-service subscription/privilege changes; no dev/DB access required for common corrections.

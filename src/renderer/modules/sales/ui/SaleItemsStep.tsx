@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp'
 import { addToCart, updateQuantity, removeFromCart, clearCart, setCustomer, setDiscount } from '../api/salesSlice';
 import { useOpenOrders } from '../api/orders/useOrderQueries';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { Search, Plus, Minus, Trash, ShoppingCart, X, RotateCcw, PauseCircle, Pencil, FileText, Save, ListOrdered, ArrowRight } from 'lucide-react';
+import { Search, Plus, Minus, Trash, ShoppingCart, X, RotateCcw, PauseCircle, Pencil, FileText, Save, ListOrdered } from 'lucide-react';
 import { ProductSearchThumb } from './ProductSearchThumb';
 import HeldOrdersModal from './HeldOrdersModal';
 import HoldOrderModal from './HoldOrderModal';
@@ -18,7 +18,7 @@ import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { findProductByBarcode, matchesProductSearch } from '../../../shared/utils/productSearch';
-import { Button } from '../../../shared/components/buttons/Button';
+import CartSummaryBar from './CartSummaryBar';
 
 interface SaleItemsStepProps {
   onNext: () => void;
@@ -450,21 +450,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
         </div>
 
         {/* Sticky bottom: running total + Continue */}
-        <div className="sticky bottom-0 z-10 shrink-0 bg-white pt-3 pb-2 border-t border-gray-200 mt-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <span className="text-sm font-medium text-gray-600">
-              <span className="font-bold text-gray-900 tabular-nums">{cartItems.length}</span> {cartItems.length === 1 ? 'item' : 'items'} in cart
-            </span>
-            <Button
-              title="Proceed to customer and payment"
-              className="w-full sm:w-auto px-6 h-12 text-base font-semibold"
-              disabled={cartItems.length === 0}
-              onClick={onNext}
-            >
-              Continue to Payment <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </div>
-        </div>
+        <CartSummaryBar count={cartItems.length} subtotal={subtotal} onNext={onNext} />
       </div>
 
       <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />

@@ -146,7 +146,6 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
             setCompletedSale(sale);
             const payments = (sale as Sale & { payments?: Payment[] }).payments;
             setLastPayment(payments?.length ? payments[payments.length - 1] : null);
-            onSaleCompleted?.();
           },
           onError: (err) => {
             const status = (err as { response?: { status?: number } })?.response?.status;
@@ -384,7 +383,20 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
     <SaleCompletedModal
       sale={completedSale}
       lastPayment={lastPayment}
-      onNewSale={() => { setCompletedSale(null); setLastPayment(null); setInvoiceFromSale(null); createSale.reset(); }}
+      onNewSale={() => {
+        setCompletedSale(null);
+        setLastPayment(null);
+        setInvoiceFromSale(null);
+        createSale.reset();
+        onSaleCompleted?.();
+      }}
+      onClose={() => {
+        setCompletedSale(null);
+        setLastPayment(null);
+        setInvoiceFromSale(null);
+        createSale.reset();
+        onSaleCompleted?.();
+      }}
       onGenerateInvoice={() => completedSale && setInvoiceFromSale(completedSale)}
     />
     {invoiceFromSale && (
@@ -397,6 +409,7 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
           setCompletedSale(null);
           setLastPayment(null);
           createSale.reset();
+          onSaleCompleted?.();
         }}
       />
     )}

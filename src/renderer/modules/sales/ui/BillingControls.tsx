@@ -40,6 +40,7 @@ function formatTendered(raw: string): string {
 export function BillingControls() {
   const dispatch = useAppDispatch();
   const [tenderedText, setTenderedText] = useState<string | null>(null);
+  const [discountText, setDiscountText] = useState<string | null>(null);
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
   const amountTendered = useAppSelector((s) => s.sales.amountTendered);
@@ -261,12 +262,30 @@ export function BillingControls() {
               {discountType === 'fixed' && (
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
               )}
-              <input title="Enter discount amount" type="number" min={0}
-                className={`border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 ${discountType === 'fixed' ? 'pl-11 pr-3' : 'pl-3 pr-3'}`}
-                placeholder={discountType === 'percentage' ? '0%' : '0'}
-                value={discountAmount || ''}
-                onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
-                onFocus={(e) => e.target.select()} />
+              {discountType === 'percentage' ? (
+                <input title="Enter discount percentage" type="number" min={0} max={100}
+                  className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 pl-3 pr-3"
+                  placeholder="0%"
+                  value={discountAmount || ''}
+                  onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
+                  onFocus={(e) => e.target.select()} />
+              ) : (
+                <input title="Enter discount amount" type="text" inputMode="decimal" min={0}
+                  className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 pl-11 pr-3"
+                  placeholder="0"
+                  value={discountText ?? (discountAmount > 0 ? formatTendered(String(discountAmount)) : '')}
+                  onChange={(e) => {
+                    const formatted = formatTendered(e.target.value);
+                    setDiscountText(formatted);
+                    const num = Math.round((parseFloat(formatted.replace(/,/g, '')) || 0) * 100) / 100;
+                    dispatch(setDiscount(num));
+                  }}
+                  onFocus={(e) => {
+                    setDiscountText(discountAmount > 0 ? formatTendered(String(discountAmount)) : '');
+                    e.target.select();
+                  }}
+                  onBlur={() => setDiscountText(null)} />
+              )}
               {discountType === 'percentage' && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">%</span>
               )}

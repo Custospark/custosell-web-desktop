@@ -15,7 +15,7 @@ import { contactFromValue, hasResolvableContact, useResolveCustomerContact } fro
 import { customerToContact, type CustomerContactValue } from '../../../shared/utils/customerContactUtils';
 import type { Sale } from '../api/salesTypes';
 import type { Payment } from '../../payments/paymentTypes';
-import { Banknote, Smartphone, CreditCard, Wallet, ArrowDownToLine, WifiOff } from 'lucide-react';
+import { Banknote, Smartphone, CreditCard, Wallet, ArrowDownToLine, ArrowLeft, WifiOff } from 'lucide-react';
 import { HiCheckCircle } from 'react-icons/hi2';
 import InvoiceFromSaleModal from './InvoiceFromSaleModal';
 import SaleCompletedModal from './SaleCompletedModal';
@@ -39,10 +39,11 @@ function formatTendered(raw: string): string {
 
 interface BillingControlsProps {
   onBack?: () => void;
+  itemCount?: number;
   onSaleCompleted?: () => void;
 }
 
-export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
+export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingControlsProps) {
   const dispatch = useAppDispatch();
   const [tenderedText, setTenderedText] = useState<string | null>(null);
   const [discountText, setDiscountText] = useState<string | null>(null);
@@ -378,20 +379,41 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
             </div>
           )}
           {/* Complete Sale Button */}
-          <Button title={isPartialPayment ? 'Record partial payment' : 'Finalize and complete the sale'}
-            className="w-full h-12 text-base font-semibold"
-            onClick={handleCompleteSale}
-            loading={createSale.isPending}
-            disabled={
-              cartItems.length === 0
-              || (isPartialPayment && payNow <= 0)
-              || (!installmentMode && paymentMethod === 'cash' && amountTendered < total)
-              || (installmentMode && payNow <= 0)
-            }
-          >
-            <HiCheckCircle className="w-5 h-5 mr-2" />
-            {isPartialPayment ? `Record ${formatCurrency(payNow)} payment` : 'Complete Sale'}
-          </Button>
+          {/* Complete Sale Button */}
+          <div className="flex items-stretch gap-2">
+            {onBack && (
+              <button
+                type="button"
+                title="Go back to review and change the items in this sale"
+                onClick={onBack}
+                className="group flex shrink-0 items-center gap-1.5 pl-2.5 pr-3 rounded-lg text-sm font-semibold text-blue-700 bg-white border-2 border-blue-300 shadow-sm hover:border-blue-500 hover:bg-blue-50 active:bg-blue-100 transition-all"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+                  <ArrowLeft className="w-4 h-4" />
+                </span>
+                <span className="whitespace-nowrap">Back to Items</span>
+                {typeof itemCount === 'number' && itemCount > 0 && (
+                  <span className="min-w-[22px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold text-center tabular-nums">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+            )}
+            <Button title={isPartialPayment ? 'Record partial payment' : 'Finalize and complete the sale'}
+              className="flex-1 h-12 text-base font-semibold"
+              onClick={handleCompleteSale}
+              loading={createSale.isPending}
+              disabled={
+                cartItems.length === 0
+                || (isPartialPayment && payNow <= 0)
+                || (!installmentMode && paymentMethod === 'cash' && amountTendered < total)
+                || (installmentMode && payNow <= 0)
+              }
+            >
+              <HiCheckCircle className="w-5 h-5 mr-2" />
+              {isPartialPayment ? `Record ${formatCurrency(payNow)} payment` : 'Complete Sale'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

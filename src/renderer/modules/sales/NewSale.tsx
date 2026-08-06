@@ -22,7 +22,11 @@ export default function NewSale() {
         {step === 'items' ? (
           <SaleItemsStep onNext={() => setStep('payment')} />
         ) : (
-          <BillingControls onSaleCompleted={() => setStep('items')} />
+          <BillingControls
+            onBack={goBack}
+            itemCount={itemCount}
+            onSaleCompleted={() => setStep('items')}
+          />
         )}
       </div>
     </div>

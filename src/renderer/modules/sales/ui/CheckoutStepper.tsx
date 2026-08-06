@@ -1,10 +1,8 @@
-import { ArrowLeft, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface CheckoutStepperProps {
   step: 'items' | 'payment';
-  onBack: () => void;
-  itemCount?: number;
 }
 
 type StepState = 'active' | 'done' | 'todo';
@@ -32,7 +30,7 @@ function StepMarker({ index, label, state }: { index: number; label: string; sta
   );
 }
 
-export function CheckoutStepper({ step, onBack, itemCount }: CheckoutStepperProps) {
+export function CheckoutStepper({ step }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -42,34 +40,15 @@ export function CheckoutStepper({ step, onBack, itemCount }: CheckoutStepperProp
           {isPayment ? 'Update customer details and take payment' : 'Search and add products to the sale'}
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        {isPayment && (
-          <button
-            type="button"
-            title="Go back to review and change the items in this sale"
-            onClick={onBack}
-            className="group flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-lg text-sm font-semibold text-blue-700 bg-white border-2 border-blue-300 shadow-sm hover:border-blue-500 hover:bg-blue-50 active:bg-blue-100 transition-all"
-          >
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-            </span>
-            <span className="whitespace-nowrap">Back to Items</span>
-            {typeof itemCount === 'number' && itemCount > 0 && (
-              <span className="min-w-[22px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold text-center tabular-nums">
-                {itemCount}
-              </span>
-            )}
-          </button>
-        )}
 
-        {/* Standard stepper */}
-        <div className="flex items-start">
-          <StepMarker index={1} label="Items" state={isPayment ? 'done' : 'active'} />
-          <div className="flex items-center self-stretch w-8 sm:w-10">
-            <div className={cn('h-0.5 w-full', isPayment ? 'bg-blue-600' : 'bg-gray-200')} />
-          </div>
-          <StepMarker index={2} label="Payment" state={isPayment ? 'active' : 'todo'} />
+      {/* Standard stepper */
+  }
+      <div className="flex items-start">
+        <StepMarker index={1} label="Items" state={isPayment ? 'done' : 'active'} />
+        <div className="flex items-center self-stretch w-8 sm:w-10">
+          <div className={cn('h-0.5 w-full', isPayment ? 'bg-blue-600' : 'bg-gray-200')} />
         </div>
+        <StepMarker index={2} label="Payment" state={isPayment ? 'active' : 'todo'} />
       </div>
     </div>
   );

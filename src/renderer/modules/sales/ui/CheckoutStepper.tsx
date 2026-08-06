@@ -4,6 +4,7 @@ import { cn } from '../../../shared/utils/cn';
 interface CheckoutStepperProps {
   step: 'items' | 'payment';
   onBack: () => void;
+  itemCount?: number;
 }
 
 type StepState = 'active' | 'done' | 'todo';
@@ -31,7 +32,7 @@ function StepMarker({ index, label, state }: { index: number; label: string; sta
   );
 }
 
-export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
+export function CheckoutStepper({ step, onBack, itemCount }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -45,11 +46,19 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
         {isPayment && (
           <button
             type="button"
-            title="Back to items"
+            title="Go back to review and change the items in this sale"
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+            className="group flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-lg text-sm font-semibold text-blue-700 bg-white border-2 border-blue-300 shadow-sm hover:border-blue-500 hover:bg-blue-50 active:bg-blue-100 transition-all"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Items
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </span>
+            <span className="whitespace-nowrap">Back to Items</span>
+            {typeof itemCount === 'number' && itemCount > 0 && (
+              <span className="min-w-[22px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold text-center tabular-nums">
+                {itemCount}
+              </span>
+            )}
           </button>
         )}
 

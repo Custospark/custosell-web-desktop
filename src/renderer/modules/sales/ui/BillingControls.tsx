@@ -26,8 +26,20 @@ import { Button } from '../../../shared/components/buttons/Button';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
 
+function formatTendered(raw: string): string {
+  let cleaned = raw.replace(/[^\d.]/g, '');
+  const firstDot = cleaned.indexOf('.');
+  if (firstDot !== -1) {
+    cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '').slice(0, 2);
+  }
+  const [int = '', dec] = cleaned.split('.');
+  const intFormatted = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return dec !== undefined ? `${intFormatted}.${dec}` : intFormatted;
+}
+
 export function BillingControls() {
   const dispatch = useAppDispatch();
+  const [tenderedText, setTenderedText] = useState<string | null>(null);
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);
   const amountTendered = useAppSelector((s) => s.sales.amountTendered);
@@ -120,6 +132,7 @@ export function BillingControls() {
           onSuccess: (sale) => {
             dispatch(clearCart());
             dispatch(setAmountTendered(0));
+            setTenderedText(null);
             dispatch(setCustomer(null));
             dispatch(setDiscount(0));
             setContact(EMPTY_CUSTOMER_CONTACT);
@@ -208,11 +221,20 @@ export function BillingControls() {
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">{currency}</span>
-              <input title="Enter amount paying now" type="number" min={0} step="100"
+              <input title="Enter amount paying now" type="text" inputMode="decimal" min={0}
                 className="w-full pl-11 pr-28 py-2.5 border border-gray-300 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0" value={amountTendered || ''}
-                onChange={(e) => dispatch(setAmountTendered(parseFloat(e.target.value) || 0))}
-                onFocus={(e) => e.target.select()} />
+                placeholder="0" value={tenderedText ?? (amountTendered > 0 ? formatTendered(String(amountTendered)) : '')}
+                onChange={(e) => {
+                  const formatted = formatTendered(e.target.value);
+                  setTenderedText(formatted);
+                  const num = Math.round((parseFloat(formatted.replace(/,/g, '')) || 0) * 100) / 100;
+                  dispatch(setAmountTendered(num));
+                }}
+                onFocus={(e) => {
+                  setTenderedText(amountTendered > 0 ? formatTendered(String(amountTendered)) : '');
+                  e.target.select();
+                }}
+                onBlur={() => setTenderedText(null)} />
               <button title="Fill exact total" type="button"
                 onClick={() => dispatch(setAmountTendered(total))}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors">

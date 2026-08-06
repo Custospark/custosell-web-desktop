@@ -333,43 +333,41 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
 
           {/* Total */}
           <div className="pt-2">
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
-                <span className="text-sm font-semibold text-white/80">Total</span>
-                <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{formatCurrency(total)}</span>
+            <div className="bg-gray-50 rounded-xl p-4">
+              {(discountValue > 0 || taxBreakdown.taxEnabled) && (
+                <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                  <span>{taxBreakdown.taxEnabled ? 'Subtotal (excl. VAT)' : 'Subtotal'}</span>
+                  <span>{formatCurrency(taxBreakdown.taxEnabled ? taxBreakdown.subtotalNet + taxBreakdown.discountAmount : subtotal)}</span>
+                </div>
+              )}
+              {discountValue > 0 && (
+                <div className="flex justify-between items-center text-sm text-green-600 mb-2">
+                  <span>Discount</span>
+                  <span>-{formatCurrency(discountValue)}</span>
+                </div>
+              )}
+              {taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0 && (
+                <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                  <span>VAT</span>
+                  <span>{formatCurrency(taxBreakdown.taxTotal)}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-base font-semibold text-gray-700">Total</span>
+                <span className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</span>
               </div>
-              <div className="bg-gray-50 px-4 py-4 space-y-1">
-                {(discountValue > 0 || taxBreakdown.taxEnabled) && (
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{taxBreakdown.taxEnabled ? 'Subtotal (excl. VAT)' : 'Subtotal'}</span>
-                    <span>{formatCurrency(taxBreakdown.taxEnabled ? taxBreakdown.subtotalNet + taxBreakdown.discountAmount : subtotal)}</span>
-                  </div>
-                )}
-                {discountValue > 0 && (
-                  <div className="flex justify-between items-center text-sm text-green-600">
-                    <span>Discount</span>
-                    <span>-{formatCurrency(discountValue)}</span>
-                  </div>
-                )}
-                {taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0 && (
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>VAT</span>
-                    <span>{formatCurrency(taxBreakdown.taxTotal)}</span>
-                  </div>
-                )}
-                {paymentMethod === 'cash' && !isPartialPayment && amountTendered > 0 && (
-                  <div className="flex justify-between items-center text-sm text-green-600 mt-2 pt-2 border-t border-gray-200">
-                    <span className="font-medium">Change Due</span>
-                    <span className="text-lg font-bold text-green-600">{formatCurrency(changeDue)}</span>
-                  </div>
-                )}
-                {isPartialPayment && (
-                  <div className="flex justify-between items-center text-sm text-amber-700 mt-2 pt-2 border-t border-gray-200">
-                    <span className="font-medium">Paying now</span>
-                    <span className="text-lg font-bold text-amber-700 tabular-nums">{formatCurrency(payNow)}</span>
-                  </div>
-                )}
-              </div>
+              {paymentMethod === 'cash' && !isPartialPayment && amountTendered > 0 && (
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                  <span className="text-sm font-medium text-green-600">Change Due</span>
+                  <span className="text-xl font-bold text-green-600">{formatCurrency(changeDue)}</span>
+                </div>
+              )}
+              {isPartialPayment && (
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                  <span className="text-sm font-medium text-amber-700">Paying now</span>
+                  <span className="text-xl font-bold text-amber-700 tabular-nums">{formatCurrency(payNow)}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -381,7 +379,7 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
           )}
           {/* Complete Sale Button */}
           <Button title={isPartialPayment ? 'Record partial payment' : 'Finalize and complete the sale'}
-            className="w-full h-14 text-base font-semibold"
+            className="w-full h-12 text-base font-semibold"
             onClick={handleCompleteSale}
             loading={createSale.isPending}
             disabled={

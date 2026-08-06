@@ -164,7 +164,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-05-order-sound-notifications.md](./adr/2026-08-05-order-sound-notifications.md) | Sound notifications for order updates — Web Audio chime, generic sound service, business + buyer toggles |
 | [2026-08-05-platform-user-privileges-and-server-pagination.md](./adr/2026-08-05-platform-user-privileges-and-server-pagination.md) | Platform-admin user privileges modal + row-actions dropdown, server-side Users/Businesses pagination |
 | [2026-08-05-account-type-plan-guard-on-privileges.md](./adr/2026-08-05-account-type-plan-guard-on-privileges.md) | Account type ↔ plan guard on privileges — storefront no subscription, business/personal plans match type |
-| [2026-08-06-checkout-wizard.md](./adr/2026-08-06-checkout-wizard.md) | POS as a 2-step checkout wizard (Items → Customer & Payment) to cut vertical scrolling; `SaleItemsStep` + restored single-card billing step |
+| [2026-08-06-checkout-wizard.md](./adr/2026-08-06-checkout-wizard.md) | POS as a 2-step checkout wizard (Items → Customer & Payment); UX polish pass — standard stepper, dynamic step numbering, back/complete rows, cart summary bar, mobile sticky summary |
 
 ## Modules
 

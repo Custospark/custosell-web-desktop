@@ -33,3 +33,44 @@ The previous layout stacked the search/cart and the customer/payment forms on on
 ## Out of scope
 
 Always same-session UX improvement; no routing, API, sync, or persistence changes.
+
+---
+
+## Update (2026-08-06): Checkout UX polish pass
+
+The wizard was refined into a standard, device-agnostic flow. Only frontend UI changed; the ADR's "Out of scope" still holds (no routing, API, sync, or persistence changes).
+
+### Standard stepper, on-system header (revert of the gradient banner)
+
+`CheckoutStepper.tsx` no longer uses a gradient banner/pills. The header is the on-system "Point of Sale" title + subtitle, and progress is a **standard numbered stepper** (Items → Payment) with circular markers — active = blue filled + `ring-4 ring-blue-100`, done = blue check, todo = outlined gray — and a connector line that fills blue when done. Title + stepper share one same-row group on desktop **and** mobile.
+
+The Items marker is **clickable back** when on the payment step (`onBack` on the step), with a `focus-visible` ring for keyboard users.
+
+### Dynamic step numbering on payment
+
+`BillingControls.tsx` section numbers adapt to context via `showAmountEntry = installmentMode || paymentMethod === 'cash'`:
+
+- **Cash or installments:** Customer (1) · Payment (2) · Amount (3) · Discount (4).
+- **Card / Mobile / Other:** the "Amount received" entry is hidden, so **Discount renumbers to 3** — no dead number with no section.
+
+### Decision-point Back + Complete, no duplicated amount
+
+- **Desktop (lg+):** the right column holds `[← Back to Items (n)] [Complete Sale]` as a `hidden lg:flex` row — the two end-of-flow actions live together at the commitment point.
+- **Mobile (<lg):** `StickyMobileSummary.tsx` is the single canonical control — **Total on its own full-width row above** a `Back to Items (n) | Complete Sale` pair, `sticky bottom-0`, thumb-reach. The in-form Total card is `hidden lg:block` and the in-column Back/Complete row is `hidden lg:flex`, so the amount and the actions are **never shown twice** on small screens.
+
+### Keyboard fast-path + focus hygiene
+
+- **Enter completes** the sale when valid and not already pending. Guarded: the global handler ignores Enter originating inside `input/textarea/select` (prevents accidental completion while typing a customer name/phone); the **Amount input keeps its own Enter fast-path** for cashiers.
+- Payment method buttons carry explicit `title` + `aria-label` (e.g. *"Pay with another method (e.g. cheque, credit, voucher)"*).
+
+### Cart sticky summary bar
+
+`CartSummaryBar.tsx` (extracted when `SaleItemsStep` hit the 500-line cap) pins **"X items in cart" to the left edge and Total to the right edge** (`flex-1 justify-between`) with `Continue to Payment`, so the seller never scrolls the cart table horizontally for the subtotal.
+
+### Open-order consistency
+
+The "Take Order" button badge matches the header "Open Orders" badge: same `bg-red-500`, `99+` cap, and the badge count **polls on the same 30s cadence** as the header so both always agree. `HeldOrdersModal` was made responsive (search/sort row stacks, order cards collapse, actions sink below on small screens). "Other" payment is served by a clear title/aria-label.
+
+### Responsiveness & file-size (refreshed)
+
+Files introduced/stayed ≤ 500 lines by modularizing rather than reverting: `CheckoutStepper`, `BillingControls`, `SaleItemsStep`, `CartSummaryBar`, `StickyMobileSummary`.

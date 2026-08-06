@@ -243,13 +243,13 @@ export default function SubscriptionPaymentModal({
           </button>
           {showReferralInput && (
             <>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
                   placeholder="Enter code"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   type="button"
@@ -272,7 +272,7 @@ export default function SubscriptionPaymentModal({
                     }
                   }}
                   disabled={!referralCode.trim() || applyReferralMutation.isPending}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer sm:w-auto"
                 >
                   {applyReferralMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
                 </button>

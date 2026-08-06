@@ -34,7 +34,7 @@ function StepMarker({ index, label, state }: { index: number; label: string; sta
 export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
   return (
-    <div className="mb-4 pb-3 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+    <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div>
         <h1 className="text-lg sm:text-xl font-bold text-gray-900">Point of Sale</h1>
         <p className="text-xs sm:text-sm text-gray-500">

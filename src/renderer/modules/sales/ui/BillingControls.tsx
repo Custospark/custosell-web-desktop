@@ -176,9 +176,11 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
   return (
     <>
     <div className="flex-1 min-h-0 w-full flex flex-col items-center pb-8">
-      <div className="w-full max-w-xl bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <div className="space-y-5">
-          <CustomerContactField
+      <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
+        {/* LEFT: customer + payment inputs */}
+        <div className="w-full lg:flex-1 min-w-0">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-5">
+            <CustomerContactField
             value={contact}
             onChange={setContact}
             disabled={createSale.isPending || resolveCustomer.isPending}
@@ -220,7 +222,12 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
               <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${installmentMode ? 'left-5' : 'left-0.5'}`} />
             </button>
           </div>
+          </div>
+        </div>
 
+        {/* RIGHT: payment entry + discount + totals + complete */}
+        <div className="w-full lg:flex-1 min-w-0 space-y-4 lg:sticky lg:top-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-4">
           {/* Amount paying now */}
           {(installmentMode || paymentMethod === 'cash') && (
             <div>
@@ -307,6 +314,7 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
             {discountValue > 0 && (
               <p className="text-xs text-green-600 mt-1.5 font-medium">-{formatCurrency(discountValue)} off</p>
             )}
+          </div>
           </div>
 
           {/* Total */}

@@ -34,14 +34,14 @@ function StepMarker({ index, label, state }: { index: number; label: string; sta
 export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
   return (
-    <div className="mb-4 pb-4 border-b border-gray-200">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900">Point of Sale</h1>
-          <p className="text-xs sm:text-sm text-gray-500">
-            {isPayment ? 'Update customer details and take payment' : 'Search and add products to the sale'}
-          </p>
-        </div>
+    <div className="mb-4 pb-3 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div>
+        <h1 className="text-lg sm:text-xl font-bold text-gray-900">Point of Sale</h1>
+        <p className="text-xs sm:text-sm text-gray-500">
+          {isPayment ? 'Update customer details and take payment' : 'Search and add products to the sale'}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
         {isPayment && (
           <button
             type="button"
@@ -52,15 +52,15 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
             <ArrowLeft className="w-4 h-4" /> Back to Items
           </button>
         )}
-      </div>
 
-      {/* Standard stepper */}
-      <div className="mt-4 flex w-full max-w-md items-start">
-        <StepMarker index={1} label="Items" state={isPayment ? 'done' : 'active'} />
-        <div className="flex items-center self-stretch w-8 sm:w-10">
-          <div className={cn('h-0.5 w-full', isPayment ? 'bg-blue-600' : 'bg-gray-200')} />
+        {/* Standard stepper */}
+        <div className="flex items-start">
+          <StepMarker index={1} label="Items" state={isPayment ? 'done' : 'active'} />
+          <div className="flex items-center self-stretch w-8 sm:w-10">
+            <div className={cn('h-0.5 w-full', isPayment ? 'bg-blue-600' : 'bg-gray-200')} />
+          </div>
+          <StepMarker index={2} label="Payment" state={isPayment ? 'active' : 'todo'} />
         </div>
-        <StepMarker index={2} label="Payment" state={isPayment ? 'active' : 'todo'} />
       </div>
     </div>
   );

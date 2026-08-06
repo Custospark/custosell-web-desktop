@@ -21,8 +21,9 @@ The previous layout stacked the search/cart and the customer/payment forms on on
 
 - `NewSale.tsx` → thin orchestrator owning the `step` state, a header, a two-pill stepper (Items → Customer & Payment), a Back-to-Items affordance on step 2, and conditional rendering.
 - New `ui/SaleItemsStep.tsx` → extracts Step 1 UI: animated search bar + results dropdown, cart table, Clear All, secondary action toolbar (Generate/Manage Invoice, Manage Orders, Update/Hold/Take Order), and the wizard's own modals (Held/Hold/Update/Quantity/Invoice). Includes a sticky bottom bar with item count and a `Continue to Payment` CTA that is disabled until the cart has items.
-- `ui/BillingControls.tsx` → Step 2, split into two **equal-width** columns on `lg+` (`flex-1` each) that stack columnar on smaller screens: **left** = Customer, Payment Method, Pay-in-installments; **right** = Amount Tendered, Discount, Total (with Change Due / Paying now), and Complete Sale. No duplicated itemised cart list.
-- After `Complete Sale`, the wizard auto-resets to Step 1 with a fresh cart (`onSaleCompleted` flips the step; `clearCart()` empties the cart).
+- `ui/BillingControls.tsx` → Step 2, split into two **equal-width** columns on `lg+` (`flex-1` each) that stack columnar on smaller screens: **left** = Customer, Payment Method, Pay-in-installments; **right** = Amount Tendered, Discount, Total (with Change Due / Paying now), and Complete Sale. Sections are numbered (1–4) and the Total card / CTA use the shared gradient for a polished finish. No duplicated itemised cart list.
+- `ui/CheckoutStepper.tsx` → shared gradient banner header: step-of-2 counter, tappable Back button, heading/subtitle per step, and a two-segment progress track. Replaces the earlier quiet pill header.
+- After `Complete Sale`, the wizard auto-reset to Step 1 with a fresh cart (`onSaleCompleted` flips the step; `clearCart()` empties the cart); the modal stays visible until the cashier dismisses it.
 
 ## Responsiveness & file-size
 

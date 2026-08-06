@@ -457,7 +457,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
             </span>
             <Button
               title="Proceed to customer and payment"
-              className="w-full sm:w-auto px-6 h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700"
+              className="w-full sm:w-auto px-6 h-12 text-base font-semibold"
               disabled={cartItems.length === 0}
               onClick={onNext}
             >

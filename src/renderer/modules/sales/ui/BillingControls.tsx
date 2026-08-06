@@ -334,7 +334,7 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
           {/* Total */}
           <div className="pt-2">
             <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-br from-blue-600 to-emerald-600 px-4 py-3 flex items-center justify-between">
+              <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
                 <span className="text-sm font-semibold text-white/80">Total</span>
                 <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{formatCurrency(total)}</span>
               </div>
@@ -381,7 +381,7 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
           )}
           {/* Complete Sale Button */}
           <Button title={isPartialPayment ? 'Record partial payment' : 'Finalize and complete the sale'}
-            className="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700"
+            className="w-full h-14 text-base font-semibold"
             onClick={handleCompleteSale}
             loading={createSale.isPending}
             disabled={

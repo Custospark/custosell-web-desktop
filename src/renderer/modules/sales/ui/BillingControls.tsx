@@ -26,6 +26,13 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { StickyMobileSummary } from './StickyMobileSummary';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
+const PAY_SHORT = { cash: 'Cash', mobile_money: 'Mobile', card: 'Card', other: 'Other' };
+const PAY_TITLES = {
+  cash: 'Pay with cash',
+  mobile_money: 'Pay with mobile money',
+  card: 'Pay with card',
+  other: 'Pay with another method (e.g. cheque, credit, voucher)',
+};
 
 function formatTendered(raw: string): string {
   let cleaned = raw.replace(/[^\d.]/g, '');
@@ -187,6 +194,8 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
     <div
       className="flex-1 min-h-0 w-full flex flex-col items-center pb-8"
       onKeyDown={(e) => {
+        const el = e.target as HTMLElement;
+        if (el && el.matches && el.matches('input, textarea, select')) return;
         if (e.key === 'Enter' && !e.shiftKey && canComplete && !createSale.isPending) {
           e.preventDefault();
           handleCompleteSale();
@@ -222,13 +231,13 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
                 const Icon = PAY_ICONS[m];
                 const isActive = paymentMethod === m;
                 return (
-                  <button key={m} title={`Pay with ${m === 'mobile_money' ? 'Mobile Money' : m.charAt(0).toUpperCase() + m.slice(1)}`}
+                  <button key={m} title={PAY_TITLES[m]} aria-label={PAY_TITLES[m]}
                     className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all ${
                       isActive ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={() => dispatch(setPaymentMethod(m))}>
                     <Icon className="w-3.5 h-3.5" />
-                    <span>{m === 'mobile_money' ? 'Mobile' : m.charAt(0).toUpperCase() + m.slice(1)}</span>
+                    <span>{PAY_SHORT[m]}</span>
                   </button>
                 );
               })}
@@ -268,6 +277,12 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
                 <input title="Enter amount paying now" type="text" inputMode="decimal" min={0}
                   className="w-full pl-11 pr-28 py-2.5 border border-gray-300 rounded-lg text-lg font-bold text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0" value={tenderedText ?? (amountTendered > 0 ? formatTendered(String(amountTendered)) : '')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && canComplete && !createSale.isPending) {
+                      e.preventDefault();
+                      handleCompleteSale();
+                    }
+                  }}
                   onChange={(e) => {
                     const formatted = formatTendered(e.target.value);
                     setTenderedText(formatted);
@@ -350,7 +365,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
           </div>
 
           {/* Total */}
-          <div className="pt-2">
+          <div className="hidden lg:block pt-2">
             <div className="bg-gray-50 rounded-xl p-4">
               {(discountValue > 0 || taxBreakdown.taxEnabled) && (
                 <div className="flex justify-between items-center text-sm text-gray-500 mb-2">

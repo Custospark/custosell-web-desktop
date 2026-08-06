@@ -39,7 +39,7 @@ function StepMarker({ index, label, state, onClick }: { index: number; label: st
       type="button"
       onClick={onClick}
       aria-label={`Go back to ${label}`}
-      className="group flex flex-1 flex-col items-center cursor-pointer hover:opacity-90"
+      className="group flex flex-1 flex-col items-center cursor-pointer hover:opacity-90 focus:outline-none focus-visible:rounded-lg focus-visible:ring-4 focus-visible:ring-blue-100"
     >
       {content}
     </button>

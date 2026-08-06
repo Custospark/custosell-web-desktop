@@ -292,8 +292,8 @@ export function BillingControls({ onSaleCompleted }: BillingControlsProps) {
                 )}
                 {discountType === 'percentage' ? (
                   <input title="Enter discount percentage" type="number" min={0} max={100}
-                    className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 pl-3 pr-3"
-                    placeholder="0%"
+className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums w-full py-2.5 pl-3 pr-3"
+                  placeholder="0"
                     value={discountAmount || ''}
                     onChange={(e) => dispatch(setDiscount(parseFloat(e.target.value) || 0))}
                     onFocus={(e) => e.target.select()} />

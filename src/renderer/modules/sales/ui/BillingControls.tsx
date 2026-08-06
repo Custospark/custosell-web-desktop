@@ -397,7 +397,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
           )}
           {/* Complete Sale Button */}
           {/* Complete Sale Button */}
-          <div className="flex items-stretch gap-2">
+          <div className="hidden lg:flex items-stretch gap-2">
             {onBack && (
               <button
                 type="button"
@@ -428,6 +428,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
       </div>
       <StickyMobileSummary
         totalLabel={formatCurrency(total)}
+        itemCount={itemCount}
         canComplete={canComplete}
         loading={createSale.isPending}
         onComplete={handleCompleteSale}

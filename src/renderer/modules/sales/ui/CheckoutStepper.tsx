@@ -3,6 +3,7 @@ import { cn } from '../../../shared/utils/cn';
 
 interface CheckoutStepperProps {
   step: 'items' | 'payment';
+  onBack?: () => void;
 }
 
 type StepState = 'active' | 'done' | 'todo';
@@ -19,18 +20,33 @@ const LABEL_CLASS: Record<StepState, string> = {
   todo: 'text-gray-400',
 };
 
-function StepMarker({ index, label, state }: { index: number; label: string; state: StepState }) {
-  return (
-    <div className="flex flex-1 flex-col items-center">
+function StepMarker({ index, label, state, onClick }: { index: number; label: string; state: StepState; onClick?: () => void }) {
+  const content = (
+    <>
       <div className={cn('flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors', MARKER_CLASS[state])}>
         {state === 'done' ? <Check className="w-4 h-4" /> : index}
       </div>
       <span className={cn('mt-2 text-xs font-semibold', LABEL_CLASS[state])}>{label}</span>
-    </div>
+    </>
+  );
+
+  if (!onClick) {
+    return <div className="flex flex-1 flex-col items-center">{content}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Go back to ${label}`}
+      className="group flex flex-1 flex-col items-center cursor-pointer hover:opacity-90"
+    >
+      {content}
+    </button>
   );
 }
 
-export function CheckoutStepper({ step }: CheckoutStepperProps) {
+export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -44,7 +60,7 @@ export function CheckoutStepper({ step }: CheckoutStepperProps) {
       {/* Standard stepper */
   }
       <div className="flex items-start">
-        <StepMarker index={1} label="Items" state={isPayment ? 'done' : 'active'} />
+        <StepMarker index={1} label="Items" state={isPayment ? 'done' : 'active'} onClick={isPayment ? onBack : undefined} />
         <div className="flex items-center self-stretch w-8 sm:w-10">
           <div className={cn('h-0.5 w-full', isPayment ? 'bg-blue-600' : 'bg-gray-200')} />
         </div>

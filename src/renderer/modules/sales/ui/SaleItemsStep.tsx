@@ -29,7 +29,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const activeOrderId = useAppSelector((s) => s.sales.activeOrderId);
   const activeOrderMode = useAppSelector((s) => s.sales.activeOrderMode);
-  const { data: openOrders = [] } = useOpenOrders();
+  const { data: openOrders = [] } = useOpenOrders(true, { poll: true });
   const { data: products, refetch: refetchProducts, isFetching: isProductsFetching } = useProducts();
   const { confirm } = useConfirm();
 
@@ -439,11 +439,11 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
             </button>
           )}
           <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
-            className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
+            className="relative flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
             <RotateCcw className="w-4 h-4" /> Take Order
             {openOrders.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
-                {openOrders.length}
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
+                {openOrders.length > 99 ? '99+' : openOrders.length}
               </span>
             )}
           </button>

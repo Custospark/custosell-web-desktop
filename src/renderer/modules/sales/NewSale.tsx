@@ -16,7 +16,7 @@ export default function NewSale() {
 
   return (
     <div className="h-full flex flex-col">
-      <CheckoutStepper step={step} onBack={goBack} itemCount={itemCount} />
+      <CheckoutStepper step={step} onBack={goBack} />
 
       <div className="flex-1 min-h-0 flex flex-col">
         {step === 'items' ? (

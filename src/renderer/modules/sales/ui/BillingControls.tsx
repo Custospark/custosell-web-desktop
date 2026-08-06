@@ -23,6 +23,7 @@ import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSetti
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { computeSaleTax } from '../../../shared/utils/taxEngine';
 import { Button } from '../../../shared/components/buttons/Button';
+import { StickyMobileSummary } from './StickyMobileSummary';
 
 const PAY_ICONS = { cash: Banknote, mobile_money: Smartphone, card: CreditCard, other: Wallet };
 
@@ -105,6 +106,12 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
   const changeDue = paymentMethod === 'cash' && !isPartialPayment
     ? Math.max(0, amountTendered - total)
     : 0;
+
+  const canComplete = cartItems.length > 0
+    && !(isPartialPayment && payNow <= 0)
+    && !(!installmentMode && paymentMethod === 'cash' && amountTendered < total)
+    && !(installmentMode && payNow <= 0);
+
   const handleCompleteSale = () => {
     if (cartItems.length === 0) return;
 
@@ -177,7 +184,15 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
 
   return (
     <>
-    <div className="flex-1 min-h-0 w-full flex flex-col items-center pb-8">
+    <div
+      className="flex-1 min-h-0 w-full flex flex-col items-center pb-8"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey && canComplete && !createSale.isPending) {
+          e.preventDefault();
+          handleCompleteSale();
+        }
+      }}
+    >
       <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
         {/* LEFT: customer + payment inputs */}
         <div className="w-full lg:flex-1 min-w-0">
@@ -403,12 +418,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
               className="flex-1 h-12 text-base font-semibold"
               onClick={handleCompleteSale}
               loading={createSale.isPending}
-              disabled={
-                cartItems.length === 0
-                || (isPartialPayment && payNow <= 0)
-                || (!installmentMode && paymentMethod === 'cash' && amountTendered < total)
-                || (installmentMode && payNow <= 0)
-              }
+              disabled={!canComplete}
             >
               <HiCheckCircle className="w-5 h-5 mr-2" />
               {isPartialPayment ? `Record ${formatCurrency(payNow)} payment` : 'Complete Sale'}
@@ -416,6 +426,13 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
           </div>
         </div>
       </div>
+      <StickyMobileSummary
+        totalLabel={formatCurrency(total)}
+        canComplete={canComplete}
+        loading={createSale.isPending}
+        onComplete={handleCompleteSale}
+        onBack={onBack}
+      />
     </div>
     <SaleCompletedModal
       sale={completedSale}

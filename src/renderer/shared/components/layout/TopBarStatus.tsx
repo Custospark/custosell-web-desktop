@@ -65,7 +65,7 @@ export function TopBarStatus() {
         : 'No internet connection — tap to retry';
 
   return (
-    <div className="flex min-w-0 flex-shrink-0 items-center gap-1 sm:gap-2">
+    <div className="hidden min-w-0 flex-shrink-0 items-center gap-1 sm:flex sm:gap-2">
       <button
         type="button"
         onClick={retryConnection}

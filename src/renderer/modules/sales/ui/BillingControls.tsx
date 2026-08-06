@@ -173,6 +173,8 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
     submitSale(customerId);
   };
 
+  const showAmountEntry = installmentMode || paymentMethod === 'cash';
+
   return (
     <>
     <div className="flex-1 min-h-0 w-full flex flex-col items-center pb-8">
@@ -240,7 +242,7 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
         <div className="w-full lg:flex-1 min-w-0 space-y-4 lg:sticky lg:top-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 shadow-sm space-y-5">
           {/* Amount paying now */}
-          {(installmentMode || paymentMethod === 'cash') && (
+          {(showAmountEntry) && (
             <div>
               <div className="flex items-center gap-2.5 mb-2">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">3</div>
@@ -283,7 +285,7 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
           {/* Discount */}
           <div className="border-t border-gray-100 pt-5">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">4</div>
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">{showAmountEntry ? '4' : '3'}</div>
               <p className="text-sm font-semibold text-gray-900">Discount</p>
             </div>
             <div className="flex gap-1.5">
@@ -393,9 +395,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
                 </span>
                 <span className="whitespace-nowrap">Back to Items</span>
                 {typeof itemCount === 'number' && itemCount > 0 && (
-                  <span className="min-w-[22px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold text-center tabular-nums">
-                    {itemCount}
-                  </span>
+                  <span className="text-xs font-bold text-blue-700 tabular-nums">({itemCount})</span>
                 )}
               </button>
             )}

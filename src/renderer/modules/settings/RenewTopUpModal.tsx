@@ -47,6 +47,7 @@ export default function RenewTopUpModal({
 
   const amountUsd = Math.round(months * monthlyRateUsd * 100) / 100;
   const previewAmount = isUsd ? amountUsd : toLocal(amountUsd);
+  const previewMonthlyRate = isUsd ? monthlyRateUsd : toLocal(monthlyRateUsd);
 
   const applyChip = (m: number) => {
     setMonths(m);
@@ -152,9 +153,9 @@ export default function RenewTopUpModal({
         {confirming && (
           <SubscriptionPaymentModal
             planName={plan.name}
-            planPrice={monthlyRateUsd}
+            planPrice={previewMonthlyRate}
             billingCycle={isYearly ? 'yearly' : 'monthly'}
-            amount={amountUsd}
+            amount={previewAmount}
             currency={currency}
             userPhone={userPhone}
             actionLabel="Renew Early"

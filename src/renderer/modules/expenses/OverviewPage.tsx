@@ -17,6 +17,7 @@ import {
   MonthlySpendingTrend,
   IncomeExpenseTrend,
 } from './components/OverviewTrendCharts';
+import BudgetHealthSection from './components/BudgetHealthSection';
 
 const PIE_COLORS = [
   '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444',
@@ -276,6 +277,8 @@ export default function OverviewPage() {
           </div>
         </div>
       </div>
+
+      {isPersonal && <BudgetHealthSection />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {cards.map((card) => {

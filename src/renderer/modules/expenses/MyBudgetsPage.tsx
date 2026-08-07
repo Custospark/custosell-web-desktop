@@ -76,8 +76,8 @@ export default function MyBudgetsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.MONEY)}>
-            <LayoutDashboard className="w-4 h-4 mr-1.5" /> Money summary
+          <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.OVERVIEW)}>
+            <LayoutDashboard className="w-4 h-4 mr-1.5" /> Money overview
           </Button>
           <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.CATEGORIES)}>
             <Settings2 className="w-4 h-4 mr-1.5" /> Manage categories

@@ -147,7 +147,6 @@ const AccountSecurityPage = lazy(() => import('../../modules/settings/AccountSec
 const YourToolsPage = lazy(() => import('../../modules/personal/PersonalModulesPage'));
 const IncomeListPage = lazy(() => import('../../modules/expenses/IncomeListPage'));
 const MyBudgetsPage = lazy(() => import('../../modules/expenses/MyBudgetsPage'));
-const MoneyDashboardPage = lazy(() => import('../../modules/expenses/MoneyDashboardPage'));
 const OverviewPage = lazy(() => import('../../modules/expenses/OverviewPage'));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
@@ -256,7 +255,6 @@ export function AppRoutes() {
               <Route element={<PersonalIncomeMiddleware />}>
                 <Route path={ROUTES.EXPENSES.INCOME} element={<SuspenseWrapper><IncomeListPage /></SuspenseWrapper>} />
                 <Route path={ROUTES.EXPENSES.BUDGETS} element={<SuspenseWrapper><MyBudgetsPage /></SuspenseWrapper>} />
-                <Route path={ROUTES.EXPENSES.MONEY} element={<SuspenseWrapper><MoneyDashboardPage /></SuspenseWrapper>} />
               </Route>
               <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />

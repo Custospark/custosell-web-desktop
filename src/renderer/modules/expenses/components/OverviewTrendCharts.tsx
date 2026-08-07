@@ -93,7 +93,7 @@ export function IncomeExpenseTrend({ data }: IncomeExpenseLineProps) {
           <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
             <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={formatAxisCurrency} />
               <Tooltip
                 formatter={(val, name) => [formatCurrency(Number(val ?? 0)), name === 'income' ? 'Income' : 'Expenses']}

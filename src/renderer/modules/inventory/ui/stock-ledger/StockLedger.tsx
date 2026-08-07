@@ -11,6 +11,7 @@ import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSk
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContext';
+import { SearchableSelect } from '../../../../shared/components/inputs/SearchableSelect';
 import { UserIdentityChip } from '../../../../shared/components/UserIdentityChip';
 import { ClipboardList, Trash2, CheckSquare, Square, RotateCcw } from 'lucide-react';
 
@@ -123,14 +124,17 @@ export default function StockLedger() {
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 flex-wrap shrink-0">
         <div className="w-full sm:w-64">
-          <select className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-            value={filterProductId} onChange={(e) => setFilterProductId(e.target.value)}>
-            <option value="">All Products</option>
-            {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <SearchableSelect
+            placeholder="All Products"
+            searchPlaceholder="Search products..."
+            value={filterProductId}
+            onChange={setFilterProductId}
+            options={(products ?? []).map((p) => ({ value: String(p.id), label: p.name }))}
+            emptyOption={{ value: '', label: 'All Products' }}
+          />
         </div>
         <div className="w-full sm:w-48">
-          <select className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          <select className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             {typeOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>

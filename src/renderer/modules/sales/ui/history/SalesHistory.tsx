@@ -30,6 +30,7 @@ import type { Sale } from '../../api/salesTypes';
 import type { Invoice } from '../../../invoices/api/InvoiceTypes';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 import BranchFilter from '../../../../shared/components/filters/BranchFilter';
+import StatusFilter, { SALE_STATUS_FILTERS } from '../../../../shared/components/filters/StatusFilter';
 
 export default function SalesHistory() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
@@ -39,6 +40,7 @@ export default function SalesHistory() {
   const { confirm } = useConfirm();
   const [search, setSearch] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
   const [invoiceSale, setInvoiceSale] = useState<Sale | null>(null);
   const [existingInvoiceForSale, setExistingInvoiceForSale] = useState<Invoice | null>(null);
@@ -75,11 +77,25 @@ export default function SalesHistory() {
     const branchId = branchFilter ? Number(branchFilter) : null;
     return safe.filter((s) => {
       if (branchId && s.location_id !== branchId) return false;
+      if (statusFilter && s.payment_status !== statusFilter) return false;
       if (!search.trim()) return true;
       const q = search.toLowerCase();
       return s.receipt_number.toLowerCase().includes(q);
     });
-  }, [sales, search, branchFilter]);
+  }, [sales, search, branchFilter, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    if (!sales) return {};
+    const safe = sales.filter(Boolean) as SaleWithSyncMeta[];
+    const counts: Record<string, number> = { '': 0 };
+    for (const s of safe) {
+      if (branchId && s.location_id !== branchId) continue;
+      if (search.trim() && !s.receipt_number.toLowerCase().includes(search.toLowerCase())) continue;
+      counts[''] += 1;
+      counts[s.payment_status] = (counts[s.payment_status] ?? 0) + 1;
+    }
+    return counts;
+  }, [sales, search, branchId]);
 
   const paginated = usePagination(filtered, 15);
 
@@ -198,6 +214,10 @@ export default function SalesHistory() {
             </button>
           )}
         </div>
+      </div>
+
+      <div className="mb-4">
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} options={SALE_STATUS_FILTERS} counts={statusCounts} />
       </div>
 
       <Table<SaleWithSyncMeta>

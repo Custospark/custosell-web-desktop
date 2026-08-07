@@ -20,9 +20,11 @@ import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 import BranchFilter from '../../../../shared/components/filters/BranchFilter';
+import StatusFilter, { SALE_STATUS_FILTERS } from '../../../../shared/components/filters/StatusFilter';
 
 const statusLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
   paid: { label: 'Paid', variant: 'success' },
+  partially_paid: { label: 'Partially Paid', variant: 'warning' },
   partially_refunded: { label: 'Partially Refunded', variant: 'warning' },
   refunded: { label: 'Full Refund', variant: 'danger' },
 };
@@ -35,6 +37,7 @@ export default function RefundPanel() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
   const [receiptSearch, setReceiptSearch] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [refundQtys, setRefundQtys] = useState<Record<number, number>>({});
@@ -54,10 +57,30 @@ export default function RefundPanel() {
   });
 
   const branchId = branchFilter ? Number(branchFilter) : null;
-  const paidSales = (sales ?? []).filter(Boolean)
-    .filter((s) => s.payment_status === 'paid' || s.payment_status === 'partially_refunded')
-    .filter((s) => !branchId || s.location_id === branchId)
-    .filter((s) => !receiptSearch || s.receipt_number.toLowerCase().includes(receiptSearch.toLowerCase()));
+  const filteredSales = useMemo(() => {
+    const list = (sales ?? []).filter(Boolean) as SaleWithSyncMeta[];
+    let rows = statusFilter
+      ? list.filter((s) => s.payment_status === statusFilter)
+      : list.filter((s) => s.payment_status === 'paid' || s.payment_status === 'partially_refunded');
+    if (branchId) rows = rows.filter((s) => s.location_id === branchId);
+    if (receiptSearch.trim()) {
+      const q = receiptSearch.toLowerCase();
+      rows = rows.filter((s) => s.receipt_number.toLowerCase().includes(q));
+    }
+    return rows;
+  }, [sales, statusFilter, branchId, receiptSearch]);
+
+  const statusCounts = useMemo(() => {
+    const list = (sales ?? []).filter(Boolean) as SaleWithSyncMeta[];
+    const counts: Record<string, number> = { '': 0 };
+    for (const s of list) {
+      if (branchId && s.location_id !== branchId) continue;
+      if (receiptSearch.trim() && !s.receipt_number.toLowerCase().includes(receiptSearch.toLowerCase())) continue;
+      counts[''] += 1;
+      counts[s.payment_status] = (counts[s.payment_status] ?? 0) + 1;
+    }
+    return counts;
+  }, [sales, branchId, receiptSearch]);
 
   const saleSubtotal = selectedSale ? parseFloat(selectedSale.subtotal) : 0;
   const saleDiscount = selectedSale ? parseFloat(selectedSale.discount_amount) : 0;
@@ -97,9 +120,9 @@ export default function RefundPanel() {
     setRefundQtys({});
   };
 
-  const paidIds = useMemo(() => paidSales.map((s) => s.id), [paidSales]);
+  const paidIds = useMemo(() => filteredSales.map((s) => s.id), [filteredSales]);
   const allSelected = paidIds.length > 0 && paidIds.every((id) => selectedIds.has(id));
-  const paginated = usePagination(paidSales, 15);
+  const paginated = usePagination(filteredSales, 15);
 
   const toggleAll = () => {
     if (allSelected) {
@@ -212,6 +235,10 @@ export default function RefundPanel() {
               </button>
             )}
           </div>
+        </div>
+
+        <div className="mb-4">
+          <StatusFilter value={statusFilter} onChange={setStatusFilter} options={SALE_STATUS_FILTERS} counts={statusCounts} />
         </div>
 
         <Table<SaleWithSyncMeta>

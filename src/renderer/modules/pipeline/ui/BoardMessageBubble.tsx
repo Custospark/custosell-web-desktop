@@ -5,7 +5,7 @@ import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 import type { PipelineBoardMessage } from '../api/pipelineTypes';
 import { pipelineInputClass } from './pipelineFormFields';
-import { isPersistedMessageId, renderMessageBody } from './pipelineMessageUtils';
+import { isPersistedMessageId, splitMessageBody } from './pipelineMessageUtils';
 import {
   Download,
   FileText,
@@ -66,8 +66,26 @@ export default function MessageBubble({
   canDeleteMessage,
 }: MessageBubbleProps) {
   const persisted = isPersistedMessageId(message.id);
-  const displayBody = renderMessageBody(message.body, message.mentions);
+  const bodySegments = splitMessageBody(message.body, message.mentions);
   const emojiCounts = message.reactions?.emoji_counts ?? {};
+
+  const renderSegments = () =>
+    bodySegments.map((segment, index) =>
+      segment.type === 'mention' ? (
+        <span
+          key={index}
+          className={
+            segment.known
+              ? 'mx-0.5 inline-flex rounded-md bg-blue-100 px-1.5 text-blue-800 ring-1 ring-inset ring-blue-200'
+              : 'mx-0.5 inline-flex rounded-md bg-gray-100 px-1.5 text-gray-700 ring-1 ring-inset ring-gray-200'
+          }
+        >
+          @{segment.label}
+        </span>
+      ) : (
+        <span key={index}>{segment.value}</span>
+      ),
+    );
 
   return (
     <div
@@ -194,7 +212,7 @@ export default function MessageBubble({
             </div>
           </div>
         ) : (
-          <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800">{displayBody}</p>
+          <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800">{renderSegments()}</p>
         )}
         {(message.attachments ?? []).length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">

@@ -6,9 +6,11 @@ import { cn } from '../../../shared/utils/cn';
 import { formatShiftDateTime } from '../../../shared/utils/formatDateTime';
 import MessageBubble from './BoardMessageBubble';
 import BoardMessageComposer from './BoardMessageComposer';
+import BoardConversationUnreadBadge from './BoardConversationUnreadBadge';
 import {
   useBoardConversationActivity,
   useBoardConversationMessages,
+  useBoardConversationSummary,
   useDeleteBoardMessage,
   useMarkBoardConversationRead,
   usePostBoardMessage,
@@ -77,6 +79,8 @@ export default function BoardConversationModal({
   const { data: activity = [], isLoading: activityLoading } = useBoardConversationActivity(boardId, open && tab === 'activity');
   const { data: automations = [], isLoading: automationsLoading } = useBoardAutomations(boardId, open && tab === 'automations');
   const { data: members = [] } = useBoardResourceMembers(boardId, open);
+  const { data: conversationSummary } = useBoardConversationSummary(boardId, open);
+  const unreadCount = conversationSummary?.unread_count ?? 0;
 
   const postMessage = usePostBoardMessage(boardId);
   const updateMessage = useUpdateBoardMessage(boardId);
@@ -131,10 +135,10 @@ export default function BoardConversationModal({
     setShowEmojiPicker(false);
   };
 
-  const insertMention = (userId: number, name: string) => {
+  const insertMention = (userId: number) => {
     setDraft((prev) => {
       const withoutPartial = prev.replace(/@[\w\s]*$/, '');
-      return `${withoutPartial}${formatMentionToken(userId, name)} `;
+      return `${withoutPartial}${formatMentionToken(userId)} `;
     });
     setMentionQuery(null);
   };
@@ -147,10 +151,15 @@ export default function BoardConversationModal({
 
   const handlePost = async () => {
     if (!draft.trim() && pendingFiles.length === 0) return;
+    const mentionNames: Record<string, string> = {};
+    for (const member of members) {
+      if (member.name) mentionNames[String(member.id)] = member.name;
+    }
     await postMessage.mutateAsync({
       body: draft.trim() || '(attachment)',
       parent_id: replyingTo?.id && isPersistedMessageId(replyingTo.id) ? replyingTo.id : null,
       files: pendingFiles,
+      mentionNames,
     });
     setDraft('');
     setPendingFiles([]);
@@ -242,20 +251,7 @@ export default function BoardConversationModal({
                 You have viewer access — discussion is read-only. You cannot post, reply, react, or edit messages.
               </p>
             )}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="relative inline-flex">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
-                {totalMessages > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                    {totalMessages > 99 ? '99+' : totalMessages}
-                  </span>
-                )}
-              </span>
-              <span>
-                <span className="font-semibold text-gray-900">{totalMessages}</span> message
-                {totalMessages === 1 ? '' : 's'}
-              </span>
-            </div>
+            <BoardConversationUnreadBadge totalMessages={totalMessages} unreadCount={unreadCount} />
 
             <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
               {showLoading ? (

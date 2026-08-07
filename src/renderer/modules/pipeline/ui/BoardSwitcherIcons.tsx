@@ -37,8 +37,8 @@ export default function BoardSwitcherIcons({
   const fameData = queryClient.getQueryData<unknown[]>(['wall-of-fame']);
   const fameCount = Array.isArray(fameData) ? fameData.length : 0;
 
-  const badge = (count: number, color: string) => (
-    <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full ${color} px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white`}>
+  const badge = (count: number, color: string, textColor = 'text-white') => (
+    <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full ${color} px-1 text-[9px] font-bold leading-none ${textColor} ring-2 ring-white`}>
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -136,10 +136,16 @@ export default function BoardSwitcherIcons({
               : 'Board discussion'
           }
         >
-          <span className={cn('relative inline-flex shrink-0', conversationUnreadCount > 0 && 'after:absolute after:right-0 after:top-0 after:h-2 after:w-2 after:rounded-full after:bg-blue-500 after:ring-2 after:ring-white')}>
+          <span
+            className={cn('relative inline-flex shrink-0', conversationUnreadCount > 0 && 'after:absolute after:right-0 after:top-0 after:h-2 after:w-2 after:rounded-full after:bg-blue-500 after:ring-2 after:ring-white')}
+          >
             <MessageSquare className={cn('h-4 w-4', conversationUnreadCount > 0 ? 'text-blue-700' : 'text-blue-600')} />
           </span>
-          <span className="hidden sm:inline-flex items-center gap-2">Discussions{conversationMessagesCount > 0 && badge(conversationMessagesCount, conversationUnreadCount > 0 ? 'bg-blue-700' : 'bg-blue-600')}</span>
+          <span className="hidden sm:inline-flex items-center gap-2">
+            Discussions
+            {conversationUnreadCount > 0 && badge(conversationUnreadCount, 'bg-blue-600')}
+            {conversationUnreadCount === 0 && conversationMessagesCount > 0 && badge(conversationMessagesCount, 'bg-gray-300', 'text-gray-700')}
+          </span>
         </button>
       )}
       {allowCreate && (

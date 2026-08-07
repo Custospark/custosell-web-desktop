@@ -19,7 +19,7 @@ interface BoardMessageComposerProps {
   onToggleEmojiPicker: () => void;
   onInsertEmoji: (emoji: string) => void;
   mentionCandidates: { id: number; name?: string | null }[];
-  onInsertMention: (userId: number, name: string) => void;
+  onInsertMention: (userId: number) => void;
   viewer: boolean;
 }
 
@@ -73,7 +73,7 @@ export default function BoardMessageComposer({
             <button
               key={member.id}
               type="button"
-              onClick={() => onInsertMention(member.id, member.name ?? 'User')}
+              onClick={() => onInsertMention(member.id)}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-blue-50"
             >
               <span className="font-medium text-gray-900">{member.name}</span>

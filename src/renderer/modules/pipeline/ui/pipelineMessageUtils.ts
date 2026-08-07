@@ -4,22 +4,46 @@ export function isPersistedMessageId(id: number | null | undefined): id is numbe
 }
 
 /** Insert mention token for user id into message body. */
-export function formatMentionToken(userId: number, _name: string): string {
+export function formatMentionToken(userId: number): string {
   return `@[${userId}]`;
 }
 
-/** Render body with @mentions highlighted for display. */
-export function renderMessageBody(
+export type MentionSegment =
+  | { type: 'text'; value: string }
+  | { type: 'mention'; id: number; label: string; known: boolean };
+
+/** Split message body into plain-text and @mention segments for rich rendering. */
+export function splitMessageBody(
   body: string,
   mentions?: Array<{ user_id: number; user?: { name?: string | null } | null }>,
-): string {
-  let rendered = body;
+): MentionSegment[] {
+  const byName = new Map<number, string>();
   for (const mention of mentions ?? []) {
-    const token = `@[${mention.user_id}]`;
-    const label = mention.user?.name ? `@${mention.user.name}` : token;
-    rendered = rendered.replaceAll(token, label);
+    if (mention.user?.name) byName.set(mention.user_id, mention.user.name);
   }
-  return rendered;
+
+  const segments: MentionSegment[] = [];
+  const regex = /@\[(\d+)\]/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(body)) !== null) {
+    const id = Number(match[1]);
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', value: body.slice(lastIndex, match.index) });
+    }
+    const name = byName.get(id);
+    segments.push({
+      type: 'mention',
+      id,
+      label: name || `Member #${id}`,
+      known: Boolean(name),
+    });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < body.length) {
+    segments.push({ type: 'text', value: body.slice(lastIndex) });
+  }
+  return segments;
 }
 
 export const CONVERSATION_EMOJI_OPTIONS = ['👍', '❤️', '😂', '🎉', '🔥', '👀', '✅', '🙏', '💡', '🚀'] as const;

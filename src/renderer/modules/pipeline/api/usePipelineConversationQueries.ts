@@ -36,6 +36,23 @@ function nextOptimisticMessageId(): number {
   return optimisticMessageId;
 }
 
+function buildOptimisticMentions(
+  body: string,
+  mentionNames?: Record<string, string>,
+): PipelineBoardMessage['mentions'] {
+  const ids = new Set<number>();
+  const regex = /@\[(\d+)\]/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(body)) !== null) {
+    const id = Number(match[1]);
+    if (Number.isInteger(id) && id > 0) ids.add(id);
+  }
+  return Array.from(ids).map((id) => {
+    const name = mentionNames?.[String(id)] || `User ${id}`;
+    return { user_id: id, user: { id, name, avatar: null } };
+  });
+}
+
 export function useBoardConversationSummary(boardId: number, enabled = true, poll = false) {
   return useQuery({
     queryKey: pipelineConversationKeys.summary(boardId),
@@ -121,7 +138,7 @@ export function usePostBoardMessage(boardId: number) {
   const user = useAppSelector((s) => s.auth.user);
 
   return useMutation({
-    mutationFn: async (payload: { body: string; parent_id?: number | null; files?: File[] }) => {
+    mutationFn: async (payload: { body: string; parent_id?: number | null; files?: File[]; mentionNames?: Record<string, string> }) => {
       const { data } = await axiosInstance.post(PIPELINE.BOARD_CONVERSATION_MESSAGES(boardId), {
         body: payload.body,
         parent_id: payload.parent_id ?? null,
@@ -155,6 +172,7 @@ export function usePostBoardMessage(boardId: number) {
         body: payload.body,
         created_at: new Date().toISOString(),
         user: user ? { id: user.id, name: user.name, avatar: user.avatar } : null,
+        mentions: buildOptimisticMentions(payload.body, payload.mentionNames),
         reactions: { likes: 0, dislikes: 0, user_reaction: null, emoji_counts: {} },
         can_edit: true,
         can_delete: true,

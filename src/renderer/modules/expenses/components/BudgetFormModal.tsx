@@ -209,7 +209,7 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
           </div>
         </div>
 
-        <BudgetLinesEditor key={editorKey} value={lines} onChange={handleLinesChange} />
+        <BudgetLinesEditor key={editorKey} value={lines} onChange={handleLinesChange} budgetTarget={plannedAmount ? parseFloat(plannedAmount) : null} />
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>

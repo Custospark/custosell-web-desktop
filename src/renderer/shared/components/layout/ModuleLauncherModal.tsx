@@ -141,7 +141,13 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
   const [query, setQuery] = useState('');
 
   const accessible = useMemo(
-    () => sortLauncherModules(getLauncherModulesForUser(user, planModules)),
+    () => sortLauncherModules(
+      getLauncherModulesForUser(user, planModules).map((item) =>
+        item.slug === 'expenses' && user?.account_type !== 'personal'
+          ? { ...item, label: 'Expenses' }
+          : item,
+      ),
+    ),
     [user, planModules],
   );
 

@@ -73,6 +73,7 @@ export interface BudgetData {
 }
 
 export interface OverviewData {
+  account_type?: 'personal' | 'business';
   total_income: number;
   total_expenses: number;
   net_balance: number;
@@ -81,6 +82,8 @@ export interface OverviewData {
   income_by_source: { source: string; total: number; count: number }[];
   expenses_by_category: { category_id: number | null; category_name: string; total: number; count: number }[];
   monthly_trends: { month: string; income: number; expenses: number }[];
+  daily_spending_trends: { day: number; label: string; expenses: number }[];
+  monthly_spending_trends: { month: number; label: string; expenses: number }[];
   recent_transactions: {
     type: 'income' | 'expense';
     amount: number;

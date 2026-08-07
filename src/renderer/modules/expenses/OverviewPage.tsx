@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { useIncomeOverview } from './api/IncomeQueries';
 import { Wallet, ShoppingCart, TrendingUp, TrendingDown, ArrowRight, RefreshCw } from 'lucide-react';
@@ -11,7 +10,12 @@ import { cn } from '../../shared/utils/cn';
 import { DashboardStatCard } from '../../shared/components/cards/DashboardStatCard';
 import { type CardColor } from '../../shared/components/cards/statCardStyles';
 import { ChartContainer } from '../../shared/components/charts/ChartContainer';
-import { CHART_THEME, formatAxisCurrency } from '../../shared/components/charts/chartPrimitives';
+import { useAppSelector } from '../../app/store/hooks/useApp';
+import {
+  DailySpendingTrend,
+  MonthlySpendingTrend,
+  IncomeExpenseTrend,
+} from './components/OverviewTrendCharts';
 
 const PIE_COLORS = [
   '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444',
@@ -74,17 +78,6 @@ function DonutChart({ data, title, dataKey, nameKey }: {
   );
 }
 
-const MONTH_LABELS: Record<string, string> = {
-  '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May', '06': 'Jun',
-  '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec',
-};
-
-function formatMonth(month: React.ReactNode): string {
-  if (typeof month !== 'string') return '';
-  const [, m] = month.split('-');
-  return MONTH_LABELS[m] ?? month;
-}
-
 interface CardDef {
   label: string;
   value: string;
@@ -96,6 +89,8 @@ interface CardDef {
 
 export default function OverviewPage() {
   const [period, setPeriod] = useState<'thisMonth' | 'lastMonth' | 'thisYear'>('thisMonth');
+  const accountType = useAppSelector((s) => s.auth.user?.account_type);
+  const isPersonal = accountType === 'personal';
   const { data, isLoading, isError, refetch } = useIncomeOverview();
 
   if (isLoading) return <CustosellLoader message="Loading overview…" />;
@@ -116,43 +111,84 @@ export default function OverviewPage() {
   }
 
   const d = data!;
+  const isPersonalData = d.account_type === 'personal';
+  const showIncome = isPersonal && isPersonalData;
 
   const netColor: CardColor = d.net_balance >= 0 ? 'blue' : 'amber';
 
-  const cards: CardDef[] = [
-    {
-      label: 'Total Income',
-      value: formatCurrency(d.total_income),
-      sub: `${d.income_count} record${d.income_count === 1 ? '' : 's'}`,
-      icon: Wallet,
-      color: 'green',
-      badge: 'Income',
-    },
-    {
-      label: 'Total Expenses',
-      value: formatCurrency(d.total_expenses),
-      sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`,
-      icon: ShoppingCart,
-      color: 'amber',
-      badge: 'Expenses',
-    },
-    {
-      label: 'Net Balance',
-      value: formatCurrency(Math.abs(d.net_balance)),
-      sub: d.net_balance >= 0 ? 'You have money left' : 'You are overspending',
-      icon: d.net_balance >= 0 ? TrendingUp : TrendingDown,
-      color: netColor,
-      badge: 'Balance',
-    },
-    {
-      label: 'Transactions',
-      value: String(d.income_count + d.expense_count),
-      sub: `${d.income_count} income, ${d.expense_count} expenses`,
-      icon: ArrowRight,
-      color: 'purple',
-      badge: 'Total',
-    },
-  ];
+  const cards: CardDef[] = showIncome
+    ? [
+        {
+          label: 'Total Income',
+          value: formatCurrency(d.total_income),
+          sub: `${d.income_count} record${d.income_count === 1 ? '' : 's'}`,
+          icon: Wallet,
+          color: 'green',
+          badge: 'Income',
+        },
+        {
+          label: 'Total Expenses',
+          value: formatCurrency(d.total_expenses),
+          sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`,
+          icon: ShoppingCart,
+          color: 'amber',
+          badge: 'Expenses',
+        },
+        {
+          label: 'Net Balance',
+          value: formatCurrency(Math.abs(d.net_balance)),
+          sub: d.net_balance >= 0 ? 'You have money left' : 'You are overspending',
+          icon: d.net_balance >= 0 ? TrendingUp : TrendingDown,
+          color: netColor,
+          badge: 'Balance',
+        },
+        {
+          label: 'Transactions',
+          value: String(d.income_count + d.expense_count),
+          sub: `${d.income_count} income, ${d.expense_count} expenses`,
+          icon: ArrowRight,
+          color: 'purple',
+          badge: 'Total',
+        },
+      ]
+    : [
+        {
+          label: 'Total Expenses',
+          value: formatCurrency(d.total_expenses),
+          sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`,
+          icon: ShoppingCart,
+          color: 'amber',
+          badge: 'Expenses',
+        },
+        {
+          label: 'Monthly Average',
+          value: formatCurrency(d.daily_spending_trends.length ? d.total_expenses / (d.daily_spending_trends.length || 1) * 30 : 0),
+          sub: 'Estimated monthly spend',
+          icon: TrendingUp,
+          color: 'blue',
+          badge: 'Spend',
+        },
+        {
+          label: 'This Year',
+          value: formatCurrency(d.monthly_spending_trends.reduce((sum, m) => sum + m.expenses, 0)),
+          sub: `${d.monthly_spending_trends.filter((m) => m.expenses > 0).length} month${d.monthly_spending_trends.filter((m) => m.expenses > 0).length === 1 ? '' : 's'} with spend`,
+          icon: TrendingDown,
+          color: 'purple',
+          badge: 'Year',
+        },
+        {
+          label: 'Largest Category',
+          value: d.expenses_by_category.length
+            ? formatCurrency(Math.max(...d.expenses_by_category.map((c) => c.total)))
+            : '—',
+          sub: d.expenses_by_category.length
+            ? d.expenses_by_category.reduce((a, b) => (b.total > a.total ? b : a), d.expenses_by_category[0]).category_name
+            : 'No categories yet',
+          icon: Wallet,
+          color: 'green',
+          badge: 'Top',
+        },
+      ];
 
   return (
     <div className="space-y-6">
@@ -162,8 +198,12 @@ export default function OverviewPage() {
             <Wallet className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Income & Expenses Overview</h1>
-            <p className="text-sm text-gray-500">See where your money comes from and where it goes</p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {showIncome ? 'Income & Expenses Overview' : 'Expenses Overview'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {showIncome ? 'See where your money comes from and where it goes' : 'See what you spend and where the money goes'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg p-0.5">
@@ -200,44 +240,55 @@ export default function OverviewPage() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DonutChart
-          data={d.income_by_source}
-          title="Income by Source"
-          dataKey="total"
-          nameKey="source"
-        />
-        <DonutChart
-          data={d.expenses_by_category}
-          title="Expenses by Category"
-          dataKey="total"
-          nameKey="category_name"
-        />
-      </div>
+      {showIncome && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <DonutChart
+            data={d.income_by_source}
+            title="Income by Source"
+            dataKey="total"
+            nameKey="source"
+          />
+          <DonutChart
+            data={d.expenses_by_category}
+            title="Expenses by Category"
+            dataKey="total"
+            nameKey="category_name"
+          />
+        </div>
+      )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-800 mb-4">Income vs Expenses</h3>
-        {d.monthly_trends.length > 0 ? (
-          <ChartContainer className="h-72" minHeight={288}>
-            {(size) => (
-              <ResponsiveContainer width={size.width} height={size.height} debounce={50}>
-                <BarChart data={d.monthly_trends}>
-                  <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={formatAxisCurrency} />
-                  <Tooltip
-                    formatter={(val, name) => [formatCurrency(Number(val ?? 0)), name === 'income' ? 'Income' : 'Expenses']}
-                    labelFormatter={formatMonth}
-                  />
-                  <Bar dataKey="income" fill={CHART_THEME.transactions} radius={[4, 4, 0, 0]} name="income" />
-                  <Bar dataKey="expenses" fill={CHART_THEME.deductions} radius={[4, 4, 0, 0]} name="expenses" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartContainer>
-        ) : (
-          <div className="h-72 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
-            No trend data yet
-          </div>
+      {!showIncome && d.expenses_by_category.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <DonutChart
+            data={d.expenses_by_category}
+            title="Expenses by Category"
+            dataKey="total"
+            nameKey="category_name"
+          />
+          <MonthlySpendingTrend
+            data={d.monthly_spending_trends}
+            title="Spending by Month"
+            subtitle="Expenses across the current year"
+          />
+        </div>
+      )}
+
+      {showIncome && (
+        <IncomeExpenseTrend data={d.monthly_trends} />
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <DailySpendingTrend
+          data={d.daily_spending_trends}
+          title="Daily Spending Trend"
+          subtitle="Expenses per day across the current month"
+        />
+        {showIncome && (
+          <MonthlySpendingTrend
+            data={d.monthly_spending_trends}
+            title="Spending by Month"
+            subtitle="Expenses across the current year"
+          />
         )}
       </div>
 
@@ -271,10 +322,14 @@ export default function OverviewPage() {
         )}
       </div>
 
-      {d.total_income === 0 && d.total_expenses === 0 && (
+      {d.total_expenses === 0 && (showIncome ? d.total_income === 0 : true) && (
         <div className="text-center py-12">
           <Wallet className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No data for this period. Record some income or expenses to see your overview.</p>
+          <p className="text-gray-500 text-sm">
+            {showIncome
+              ? 'No data for this period. Record some income or expenses to see your overview.'
+              : 'No data for this period. Record some expenses to see your overview.'}
+          </p>
         </div>
       )}
     </div>

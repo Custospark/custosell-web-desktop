@@ -87,11 +87,17 @@ export function resolveAccessibleNavGroups(
         subItems: group.subItems.filter((item) => !item.ownerOnly || isBusinessOwner(user)),
       };
     }
-    if (group.label === 'Income & Expenses' && !isPersonal) {
+    if (group.label === 'Income & Expenses') {
+      if (isPersonal) {
+        return group;
+      }
       return {
         ...group,
-        subItems: group.subItems.map((item) =>
-          item.label === 'My Budgets' ? { ...item, label: 'Budgets' } : item,
+        label: 'Expenses',
+        subItems: group.subItems.filter((item) =>
+          item.label !== 'Income' && item.label !== 'My Budgets'
+          // Business accounts handle budgets under Forecasting, not here.
+          && item.label !== 'Budgets',
         ),
       };
     }

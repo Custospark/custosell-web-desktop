@@ -179,8 +179,7 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.EXPENSES.LIST, label: 'Expense List', icon: ListOrdered },
       { to: ROUTES.EXPENSES.CATEGORIES, label: 'Expense Categories', icon: Receipt },
     ],
-  },
-  {
+  },  {
     icon: Files,
     label: 'Documents',
     subItems: [

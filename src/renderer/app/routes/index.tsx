@@ -8,6 +8,7 @@ import { AuthMiddlewareRoute } from './middleware/AuthMiddlewareRoute';
 import { ModuleAccessMiddleware } from './middleware/ModuleAccessMiddleware';
 import { SubscriptionGuard } from './middleware/SubscriptionGuard';
 import { EstimatesAccessMiddleware } from './middleware/EstimatesAccessMiddleware';
+import { PersonalIncomeMiddleware } from './middleware/PersonalIncomeMiddleware';
 import { HrAccessMiddleware, HrIndexRedirect } from './middleware/HrAccessMiddleware';
 import { ModuleLandingRedirect } from './middleware/ModuleLandingRedirect';
 import { AppChrome } from '../../shared/components/layout/AppChrome';
@@ -251,8 +252,10 @@ export function AppRoutes() {
             <Route element={<ModuleAccessMiddleware module="expenses" />}>
               <Route path={ROUTES.EXPENSES.INDEX} element={<Navigate to={ROUTES.EXPENSES.OVERVIEW} replace />} />
               <Route path={ROUTES.EXPENSES.OVERVIEW} element={<SuspenseWrapper><OverviewPage /></SuspenseWrapper>} />
-              <Route path={ROUTES.EXPENSES.INCOME} element={<SuspenseWrapper><IncomeListPage /></SuspenseWrapper>} />
-              <Route path={ROUTES.EXPENSES.BUDGETS} element={<SuspenseWrapper><MyBudgetsPage /></SuspenseWrapper>} />
+              <Route element={<PersonalIncomeMiddleware />}>
+                <Route path={ROUTES.EXPENSES.INCOME} element={<SuspenseWrapper><IncomeListPage /></SuspenseWrapper>} />
+                <Route path={ROUTES.EXPENSES.BUDGETS} element={<SuspenseWrapper><MyBudgetsPage /></SuspenseWrapper>} />
+              </Route>
               <Route path={ROUTES.EXPENSES.LIST} element={<SuspenseWrapper><ExpenseListPage /></SuspenseWrapper>} />
               <Route path={ROUTES.EXPENSES.CATEGORIES} element={<SuspenseWrapper><RecordExpensePage /></SuspenseWrapper>} />
             </Route>

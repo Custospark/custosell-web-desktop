@@ -28,3 +28,7 @@ Personal accounts could not budget their money — `income_target` was business-
 
 - **Money Summary merged into Overview.** The standalone `/expenses/money` page was removed. For personal accounts, `OverviewPage` now renders a `BudgetHealthSection` (affordability banner + up to 3 budget alerts + planned-across-budgets total) above the existing stat cards, charts, and recent transactions. `ROUTES.EXPENSES.MONEY` and the `MoneyDashboardPage` were deleted; the "Money summary" button on My Budgets now points to the Overview. Backend `/money/summary` and `/money/alerts` endpoints remain in use by `BudgetHealthSection`.
 - **"Add item" opens a small modal.** `BudgetLinesEditor` shows plan lines as read-only list rows (name, qty × unit price, line total) with edit/remove controls; "Add item" opens a `Modal` to enter item name, quantity, and unit price with a live line-total preview.
+
+## Amendment (2026-08-07, later)
+
+- **Alerts removed from the Overview.** The `BudgetHealthSection` (affordability banner + budget alerts + planned-across-budgets total) was removed from `OverviewPage` and the component deleted, so the dashboard stays clean and organized. The `useMoneySummary` / `useBudgetAlerts` hooks and backend `/money/summary` + `/money/alerts` endpoints remain available for future use. Budget status is still visible on the **My Budgets** page.

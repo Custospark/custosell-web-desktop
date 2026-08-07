@@ -19,7 +19,7 @@ export const BRAND_LOCKUP = `${PRODUCT_NAME} — ${TAGLINE}`;
  * (`supporting_line`).
  */
 export const SUPPORTING_LINE =
-  'Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';
+  'Custosell is your Business Operating System — Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';
 
 /**
  * Search-engine meta description (meta[name=description], og:description,

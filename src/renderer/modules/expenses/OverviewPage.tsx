@@ -2,7 +2,8 @@ import { useState } from 'react';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from 'recharts';
-import { useIncomeOverview } from './api/IncomeQueries';
+import { useIncomeOverview, type OverviewPeriod } from './api/IncomeQueries';
+import { useLocations } from '../settings/api/settings/LocationQueries';
 import { Wallet, ShoppingCart, TrendingUp, TrendingDown, ArrowRight, RefreshCw } from 'lucide-react';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
@@ -22,11 +23,26 @@ const PIE_COLORS = [
   '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1',
 ];
 
-function DonutChart({ data, title, dataKey, nameKey }: {
+const PERIOD_OPTIONS: { value: OverviewPeriod; label: string }[] = [
+  { value: 'thisMonth', label: 'This Month' },
+  { value: 'lastMonth', label: 'Last Month' },
+  { value: 'thisYear', label: 'This Year' },
+];
+
+function isMonthWindow(period: OverviewPeriod): boolean {
+  return period !== 'thisYear';
+}
+
+function periodLabel(period: OverviewPeriod): string {
+  return period === 'thisMonth' ? 'This Month' : period === 'lastMonth' ? 'Last Month' : 'This Year';
+}
+
+function DonutChart({ data, title, dataKey, nameKey, unit }: {
   data: ReadonlyArray<Record<string, unknown>>;
   title: string;
   dataKey: string;
   nameKey: string;
+  unit?: string;
 }) {
   const empty = !data.length;
   return (
@@ -56,7 +72,7 @@ function DonutChart({ data, title, dataKey, nameKey }: {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(val) => formatCurrency(Number(val ?? 0))} />
+                  <Tooltip formatter={(val) => [formatCurrency(Number(val ?? 0)), unit ?? '']} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -88,10 +104,14 @@ interface CardDef {
 }
 
 export default function OverviewPage() {
-  const [period, setPeriod] = useState<'thisMonth' | 'lastMonth' | 'thisYear'>('thisMonth');
+  const [period, setPeriod] = useState<OverviewPeriod>('thisMonth');
+  const [locationId, setLocationId] = useState<number | undefined>(undefined);
   const accountType = useAppSelector((s) => s.auth.user?.account_type);
   const isPersonal = accountType === 'personal';
-  const { data, isLoading, isError, refetch } = useIncomeOverview();
+  const { data: locations = [] } = useLocations();
+  const { data, isLoading, isError, refetch } = useIncomeOverview(period, locationId);
+
+  const showBranchFilter = !isPersonal && locations.length > 1;
 
   if (isLoading) return <CustosellLoader message="Loading overview…" />;
 
@@ -114,14 +134,29 @@ export default function OverviewPage() {
   const isPersonalData = d.account_type === 'personal';
   const showIncome = isPersonal && isPersonalData;
 
+  const windowIsMonth = isMonthWindow(period);
+  const label = periodLabel(period);
+
   const netColor: CardColor = d.net_balance >= 0 ? 'blue' : 'amber';
+
+  const dailyTotal = d.daily_spending_trends.reduce((sum, p) => sum + p.expenses, 0);
+  const monthlyTotal = d.monthly_spending_trends.reduce((sum, m) => sum + m.expenses, 0);
+  const activeMonths = d.monthly_spending_trends.filter((m) => m.expenses > 0).length;
+
+  const averageValue = windowIsMonth
+    ? (d.daily_spending_trends.length ? dailyTotal / d.daily_spending_trends.length : 0)
+    : (d.monthly_spending_trends.length ? monthlyTotal / d.monthly_spending_trends.length : 0);
+
+  const peakValue = windowIsMonth
+    ? Math.max(0, ...d.daily_spending_trends.map((p) => p.expenses))
+    : Math.max(0, ...d.monthly_spending_trends.map((m) => m.expenses));
 
   const cards: CardDef[] = showIncome
     ? [
         {
           label: 'Total Income',
           value: formatCurrency(d.total_income),
-          sub: `${d.income_count} record${d.income_count === 1 ? '' : 's'}`,
+          sub: `${d.income_count} record${d.income_count === 1 ? '' : 's'} · ${label}`,
           icon: Wallet,
           color: 'green',
           badge: 'Income',
@@ -129,7 +164,7 @@ export default function OverviewPage() {
         {
           label: 'Total Expenses',
           value: formatCurrency(d.total_expenses),
-          sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`,
+          sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'} · ${label}`,
           icon: ShoppingCart,
           color: 'amber',
           badge: 'Expenses',
@@ -155,26 +190,26 @@ export default function OverviewPage() {
         {
           label: 'Total Expenses',
           value: formatCurrency(d.total_expenses),
-          sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'}`,
+          sub: `${d.expense_count} record${d.expense_count === 1 ? '' : 's'} · ${label}`,
           icon: ShoppingCart,
           color: 'amber',
           badge: 'Expenses',
         },
         {
-          label: 'Monthly Average',
-          value: formatCurrency(d.daily_spending_trends.length ? d.total_expenses / (d.daily_spending_trends.length || 1) * 30 : 0),
-          sub: 'Estimated monthly spend',
+          label: windowIsMonth ? 'Daily Average' : 'Monthly Average',
+          value: formatCurrency(averageValue),
+          sub: windowIsMonth ? 'Average spend per day' : 'Average spend per month',
           icon: TrendingUp,
           color: 'blue',
-          badge: 'Spend',
+          badge: 'Average',
         },
         {
-          label: 'This Year',
-          value: formatCurrency(d.monthly_spending_trends.reduce((sum, m) => sum + m.expenses, 0)),
-          sub: `${d.monthly_spending_trends.filter((m) => m.expenses > 0).length} month${d.monthly_spending_trends.filter((m) => m.expenses > 0).length === 1 ? '' : 's'} with spend`,
+          label: windowIsMonth ? 'Busiest Day' : 'Busiest Month',
+          value: formatCurrency(peakValue),
+          sub: windowIsMonth ? 'Highest daily spend in window' : `${activeMonths} month${activeMonths === 1 ? '' : 's'} with spend`,
           icon: TrendingDown,
           color: 'purple',
-          badge: 'Year',
+          badge: 'Peak',
         },
         {
           label: 'Largest Category',
@@ -189,6 +224,11 @@ export default function OverviewPage() {
           badge: 'Top',
         },
       ];
+
+  const branchName = locationId
+    ? locations.find((l) => l.id === locationId)?.name ?? 'Branch'
+    : 'All branches';
+  const scope = `${label.toLowerCase()}${locationId ? ` · ${branchName}` : ''}`;
 
   return (
     <div className="space-y-6">
@@ -206,20 +246,34 @@ export default function OverviewPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg p-0.5">
-          {(['thisMonth', 'lastMonth', 'thisYear'] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPeriod(p)}
-              className={cn(
-                'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
-                period === p ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
-              )}
+        <div className="flex flex-wrap items-center gap-2">
+          {showBranchFilter && (
+            <select
+              value={locationId ?? ''}
+              onChange={(e) => setLocationId(e.target.value ? Number(e.target.value) : undefined)}
+              className="h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {p === 'thisMonth' ? 'This Month' : p === 'lastMonth' ? 'Last Month' : 'This Year'}
-            </button>
-          ))}
+              <option value="">All branches</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
+          )}
+          <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg p-0.5">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPeriod(opt.value)}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
+                  period === opt.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -244,15 +298,17 @@ export default function OverviewPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <DonutChart
             data={d.income_by_source}
-            title="Income by Source"
+            title={`Income by Source · ${label}`}
             dataKey="total"
             nameKey="source"
+            unit="Income"
           />
           <DonutChart
             data={d.expenses_by_category}
-            title="Expenses by Category"
+            title={`Expenses by Category · ${label}`}
             dataKey="total"
             nameKey="category_name"
+            unit="Spent"
           />
         </div>
       )}
@@ -261,14 +317,15 @@ export default function OverviewPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <DonutChart
             data={d.expenses_by_category}
-            title="Expenses by Category"
+            title={`Expenses by Category · ${label}`}
             dataKey="total"
             nameKey="category_name"
+            unit="Spent"
           />
           <MonthlySpendingTrend
             data={d.monthly_spending_trends}
             title="Spending by Month"
-            subtitle="Expenses across the current year"
+            subtitle={`Expenses across ${label.toLowerCase()}`}
           />
         </div>
       )}
@@ -278,22 +335,32 @@ export default function OverviewPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DailySpendingTrend
-          data={d.daily_spending_trends}
-          title="Daily Spending Trend"
-          subtitle="Expenses per day across the current month"
-        />
+        {windowIsMonth ? (
+          <DailySpendingTrend
+            data={d.daily_spending_trends}
+            title="Daily Spending Trend"
+            subtitle={`Expenses per day in ${scope}`}
+          />
+        ) : (
+          <MonthlySpendingTrend
+            data={d.monthly_spending_trends}
+            title="Spending by Month"
+            subtitle={`Expenses across ${scope}`}
+          />
+        )}
         {showIncome && (
           <MonthlySpendingTrend
             data={d.monthly_spending_trends}
             title="Spending by Month"
-            subtitle="Expenses across the current year"
+            subtitle={`Expenses across ${label.toLowerCase()}`}
           />
         )}
       </div>
 
       <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Transactions</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          Recent Transactions {locationId ? `· ${branchName}` : ''}
+        </h3>
         {d.recent_transactions.length > 0 ? (
           <div className="space-y-1">
             {d.recent_transactions.map((t, i) => (

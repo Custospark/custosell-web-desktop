@@ -48,11 +48,32 @@ export function useBudgets(dateFrom?: string, dateTo?: string) {
   });
 }
 
-export function useIncomeOverview() {
+export type OverviewPeriod = 'thisMonth' | 'lastMonth' | 'thisYear';
+
+function overviewRange(period: OverviewPeriod): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  if (period === 'thisYear') {
+    return { dateFrom: `${y}-01-01`, dateTo: `${y}-12-31` };
+  }
+  const target = period === 'lastMonth' ? new Date(y, m - 1, 1) : new Date(y, m, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return {
+    dateFrom: `${target.getFullYear()}-${pad(target.getMonth() + 1)}-01`,
+    dateTo: `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(lastDay)}`,
+  };
+}
+
+export function useIncomeOverview(period: OverviewPeriod = 'thisMonth', locationId?: number) {
+  const { dateFrom, dateTo } = overviewRange(period);
   return useQuery({
-    queryKey: incomeKeys.overview(),
+    queryKey: [...incomeKeys.overview(), { period, locationId }],
     queryFn: async () => {
-      const { data } = await axiosInstance.get<OverviewData>(`${EXPENSES}/overview`);
+      const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo });
+      if (locationId) params.set('location_id', String(locationId));
+      const { data } = await axiosInstance.get<OverviewData>(`${EXPENSES}/overview?${params}`);
       return data;
     },
     staleTime: 0,

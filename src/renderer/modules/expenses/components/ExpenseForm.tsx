@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api/ExpenseQueries';
+import { useExpenseCategories, useCreateExpense, useUpdateExpense, useExpense } from '../api/ExpenseQueries';
+import ExpenseAttachments, { type ExpenseAttachmentsHandle } from './ExpenseAttachments';
+import InputVatSection from './InputVatSection';
+import { FormSection } from './ExpenseFormSection';
 import { useLocations } from '../../settings/api/settings/LocationQueries';
 import { useBillableProjects } from '../../estimates/api/useProjectQueries';
 import { useFixedAssets } from '../../accounting/api/AccountingQueries';
@@ -22,21 +25,6 @@ interface ExpenseFormProps {
   onClose: () => void;
   expense?: Expense | null;
   shiftId?: number | null;
-}
-
-function FormSection({ icon: Icon, title, children }: { icon: typeof Tag; title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-          <Icon className="w-4 h-4 text-gray-400" /> {title}
-        </h3>
-      </div>
-      <div className="p-4 space-y-3">
-        {children}
-      </div>
-    </div>
-  );
 }
 
 export default function ExpenseForm({ open, onClose, expense, shiftId }: ExpenseFormProps) {
@@ -67,12 +55,17 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const [vatAmount, setVatAmount] = useState('');
   const [vatClaimable, setVatClaimable] = useState(false);
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
-  const [receipt, setReceipt] = useState<File | null>(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceInterval, setRecurrenceInterval] = useState('monthly');
   const [nextDueDate, setNextDueDate] = useState('');
   const [errors, setErrors] = useState<{ amount?: string; description?: string; date?: string }>({});
   const [attempted, setAttempted] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+
+  const [savedExpenseId, setSavedExpenseId] = useState<number | null>(expense?.id ?? null);
+  const { data: freshExpense } = useExpense(savedExpenseId ?? 0);
+  const displayExpense = freshExpense ?? expense;
+  const attachmentsRef = useRef<ExpenseAttachmentsHandle>(null);
 
   const amountRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
@@ -99,7 +92,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setIsRecurring(expense.is_recurring);
         setRecurrenceInterval(expense.recurrence_interval || 'monthly');
         setNextDueDate(expense.next_due_date || '');
-        setReceipt(null);
+        setSavedExpenseId(expense.id);
+        setFileUploading(false);
         setErrors({});
         setAttempted(false);
       } else {
@@ -119,7 +113,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setIsRecurring(false);
         setRecurrenceInterval('monthly');
         setNextDueDate('');
-        setReceipt(null);
+        setSavedExpenseId(null);
+        setFileUploading(false);
         setErrors({});
         setAttempted(false);
       }
@@ -139,7 +134,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const nextErrors = validate();
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) {
@@ -169,27 +164,36 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     formData.append('expense_date', expenseDate);
     if (!isEditing && activeShiftId) formData.append('shift_id', String(activeShiftId));
     if (isEditing && expense?.shift_id) formData.append('shift_id', String(expense.shift_id));
-    if (receipt) formData.append('receipt', receipt);
     if (isRecurring) {
       formData.append('is_recurring', '1');
       formData.append('recurrence_interval', recurrenceInterval);
       if (nextDueDate) formData.append('next_due_date', nextDueDate);
     }
 
-    if (isEditing && expense) {
-      updateMutation.mutate({ id: expense.id, data: formData }, { onSuccess: onClose });
-    } else {
-      createMutation.mutate(formData, { onSuccess: onClose });
+    try {
+      let expenseId: number;
+      if (isEditing && expense) {
+        await updateMutation.mutateAsync({ id: expense.id, data: formData });
+        expenseId = expense.id;
+      } else {
+        const created = await createMutation.mutateAsync(formData);
+        expenseId = created.id;
+        setSavedExpenseId(expenseId);
+      }
+      await attachmentsRef.current?.flush(expenseId);
+      onClose();
+    } catch {
+      setFileUploading(false);
     }
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending || fileUploading;
   const title = isEditing ? 'Edit Expense' : 'Record Expense';
   const subtitle = isEditing
     ? 'Update the expense details below.'
     : isPersonal
-      ? 'Track a personal expense and optionally attach a receipt.'
-      : 'Log a business expense and optionally attach a receipt.';
+      ? 'Track a personal expense and optionally attach receipts.'
+      : 'Log a business expense and optionally attach receipts.';
 
   return (
     <Modal isOpen={open} onClose={onClose} title={title} subtitle={subtitle} size="lg">
@@ -346,8 +350,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
           {errors.description && <p className="mt-1 text-xs font-medium text-red-600">{errors.description}</p>}
         </FormSection>
 
-        {/* Reference & Receipt */}
-        <FormSection icon={Paperclip} title="Reference & Receipt">
+        {/* Reference & Attachments */}
+        <FormSection icon={Paperclip} title="Reference & Attachments">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Reference</label>
             <div className="relative">
@@ -362,17 +366,16 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Receipt</label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => setReceipt(e.target.files?.[0] || null)}
-              disabled={isPending}
-              className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-40"
+            <label className="block text-xs font-medium text-gray-600 mb-1">Attachments</label>
+            <ExpenseAttachments
+              ref={attachmentsRef}
+              expenseId={savedExpenseId}
+              attachments={displayExpense?.attachments}
+              onUploadingChange={setFileUploading}
             />
-            {expense?.receipt_url && !receipt && (
-              <p className="text-xs text-gray-400 mt-1">
-                Current: <a href={expense.receipt_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">View receipt</a>
+            {expense?.receipt_url && (
+              <p className="text-xs text-gray-400 mt-2">
+                Previous receipt: <a href={expense.receipt_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">View</a>
               </p>
             )}
           </div>
@@ -380,52 +383,16 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
         {/* VAT */}
         {vatEnabled && !isPersonal && (
-          <FormSection icon={AlertCircle} title="Input VAT (purchases)">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Supplier TIN</label>
-                <input
-                  type="text"
-                  value={supplierTin}
-                  onChange={(e) => setSupplierTin(e.target.value)}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="Supplier tax ID"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Supplier invoice no.</label>
-                <input
-                  type="text"
-                  value={supplierInvoiceNo}
-                  onChange={(e) => setSupplierInvoiceNo(e.target.value)}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="Invoice reference"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">VAT amount</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
-                <input
-                  type="number" min={0} step="0.01"
-                  value={vatAmount}
-                  onChange={(e) => setVatAmount(e.target.value)}
-                  className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={vatClaimable}
-                onChange={(e) => setVatClaimable(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Claimable input VAT</span>
-            </label>
-          </FormSection>
+          <InputVatSection
+            supplierTin={supplierTin}
+            supplierInvoiceNo={supplierInvoiceNo}
+            vatAmount={vatAmount}
+            vatClaimable={vatClaimable}
+            onSupplierTinChange={setSupplierTin}
+            onSupplierInvoiceNoChange={setSupplierInvoiceNo}
+            onVatAmountChange={setVatAmount}
+            onVatClaimableChange={setVatClaimable}
+          />
         )}
 
         {/* Recurrence */}

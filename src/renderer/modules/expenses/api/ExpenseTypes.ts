@@ -23,6 +23,20 @@ export interface UserInfo {
   email: string;
 }
 
+export interface ExpenseAttachment {
+  id: number;
+  expense_id: number;
+  user_id: number | null;
+  type: 'file' | 'link';
+  file_name: string;
+  file_path: string | null;
+  file_url: string | null;
+  link_url: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+  created_at: string | null;
+}
+
 export interface Expense {
   id: number;
   business_id: number;
@@ -42,6 +56,7 @@ export interface Expense {
   vat_amount: string | null;
   vat_claimable: boolean;
   receipt_url: string | null;
+  attachments?: ExpenseAttachment[];
   is_recurring: boolean;
   recurrence_interval: string | null;
   recurrence_end_date: string | null;

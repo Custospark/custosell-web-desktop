@@ -298,12 +298,12 @@ export default function InvoiceBuilderForm({
           )}
         </div>
 
-        <div className={cn('w-full shrink-0', isModal ? 'xl:w-80' : 'lg:w-96')}>
+        <div className={cn('w-full shrink-0 mt-6 lg:mt-0', isModal ? 'xl:w-80' : 'lg:w-96')}>
           <div className={cn(
             'bg-white rounded-xl border border-gray-200 p-5 h-fit space-y-5',
             !isModal && 'lg:sticky lg:top-4',
           )}>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 flex items-start gap-2.5 mt-6 lg:mt-0">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 flex items-start gap-2.5">
               <FileText className="w-4 h-4 shrink-0 mt-0.5" />
               <span className="min-w-0">
                 {isEdit

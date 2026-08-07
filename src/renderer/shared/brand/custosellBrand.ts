@@ -22,6 +22,22 @@ export const SUPPORTING_LINE =
   'Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';
 
 /**
+ * Search-engine meta description (meta[name=description], og:description,
+ * twitter:description). Keep under ~160 chars so search engines use it
+ * verbatim instead of falling back to landing-page body text (e.g. the
+ * marketplace copy). Keep in sync with Frontend `index.html` <head> and
+ * Backend `config/brand.php` (`seo_description`).
+ */
+export const SEO_DESCRIPTION =
+  'Custosell is your Business Operating System — Point of Sale, E-commerce, Inventory, Accounting, HR & Payroll, Invoicing and CRM in one connected system that works with or without the internet.';
+
+/**
+ * Canonical product landing URL used for SEO (og:url, canonical link).
+ * Keep in sync with Backend `config/brand.php` (`url`).
+ */
+export const SEO_URL = 'https://www.custosell.com';
+
+/**
  * Custospark Company Ltd — support / seller contact details.
  * Keep in sync with Backend `config/brand.php` (company_* keys) and
  * `src/renderer/modules/guide/guideSupportConfig.ts` (full phone list).

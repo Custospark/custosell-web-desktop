@@ -127,11 +127,11 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView }: BudgetC
 
       <PacingChart pacing={budget.pacing} />
 
-      <div className="flex items-center justify-between pt-1" onClick={(e) => e.stopPropagation()}>
-        <Button variant="ghost" size="sm" onClick={() => onView(budget)}>
+      <div className="grid grid-cols-2 gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+        <Button variant="outline" size="sm" onClick={() => onView(budget)}>
           <Eye className="w-3.5 h-3.5 mr-1" /> View plan
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => onEdit(budget)}>
+        <Button variant="primary" size="sm" onClick={() => onEdit(budget)}>
           Adjust plan
         </Button>
       </div>

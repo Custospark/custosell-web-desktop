@@ -34,9 +34,7 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
   const [editorKey, setEditorKey] = useState(0);
 
   const loadLines = (source: BudgetLine[]) => {
-    const total = source.reduce((s, l) => s + Number(l.line_total ?? l.quantity * l.unit_price) || 0, 0);
     setLines(source);
-    setPlannedAmount(source.length ? total.toFixed(2) : (parseFloat(String(budget?.planned_amount ?? 0)) || 0).toFixed(2));
   };
 
   useEffect(() => {
@@ -66,8 +64,6 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
 
   const handleLinesChange = (next: BudgetLine[]) => {
     setLines(next);
-    const total = next.reduce((s, l) => s + Math.max(0, Number(l.line_total ?? l.quantity * l.unit_price)) || 0, 0);
-    if (next.length) setPlannedAmount(total.toFixed(2));
   };
 
   const handleSubmit = async () => {
@@ -163,7 +159,7 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
                 />
               </div>
               {lines.length > 0 && (
-                <p className="text-xs text-blue-600 mt-1">Auto-totaled from your shopping list below — you can still adjust it manually.</p>
+                <p className="text-xs text-blue-600 mt-1">Set your target here — your shopping list below is tracked separately and doesn't change it.</p>
               )}
             </div>
 

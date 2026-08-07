@@ -150,8 +150,8 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
         </div>
         <div className="p-4 space-y-3">
           <p className="text-xs text-gray-400">
-            Add the items you plan to buy roughly. The plan auto-totals and becomes your budget target — usually
-            you'll then record actual expenses against this same budget.
+            Add the items you plan to buy roughly. This list is tracked separately from your target — it doesn't
+            change the budget's planned amount.
           </p>
 
           {rows.length > 0 && (
@@ -219,7 +219,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={draft.key ? 'Edit item' : 'Add an item'}
-        subtitle="Add the items you plan to buy roughly — the plan auto-totals into your budget target."
+        subtitle="Add the items you plan to buy roughly — this list is tracked separately from your budget target."
         size="md"
       >
         <div className="space-y-4">

@@ -30,23 +30,37 @@ interface AddLineState {
   unit_price: string;
 }
 
-function toDraft(id: number | null, item: BudgetLine | Partial<BudgetLine>): LineDraft {
-  return {
-    id,
-    item_name: item.item_name ?? '',
-    quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
-    unit_price: Math.max(0, Number(item.unit_price ?? 0) || 0),
-  };
+const lineSeqRef = { n: 0 };
+const newKey = () => `new-${Date.now()}-${lineSeqRef.n++}`;
+
+function buildRows(value: BudgetLine[] | undefined, prev?: LineDraft[]): LineDraft[] {
+  const src = value ?? [];
+  return src.map((line, i) => {
+    const id: number | null = line.id != null ? Number(line.id) : null;
+    if (id != null) {
+      return {
+        id,
+        key: `line-${id}`,
+        item_name: line.item_name ?? '',
+        quantity: Math.max(1, Number(line.quantity ?? 1) || 1),
+        unit_price: Math.max(0, Number(line.unit_price ?? 0) || 0),
+      };
+    }
+    return {
+      id: null,
+      key: prev?.[i]?.key ?? newKey(),
+      item_name: line.item_name ?? '',
+      quantity: Math.max(1, Number(line.quantity ?? 1) || 1),
+      unit_price: Math.max(0, Number(line.unit_price ?? 0) || 0),
+    };
+  });
 }
 
 const EMPTY_DRAFT: AddLineState = { key: null, item_name: '', quantity: '1', unit_price: '' };
 
-let lineSeq = 0;
-const newKey = () => `new-${Date.now()}-${lineSeq++}`;
-
 export default function BudgetLinesEditor({ value, onChange, budgetTarget }: BudgetLinesEditorProps) {
   const [rows, setRows] = useState<LineDraft[]>(
-    () => (value ?? []).map((line) => toDraft(line.id, line)),
+    () => buildRows(value),
   );
   const [prevValue, setPrevValue] = useState<BudgetLine[]>(value);
   const [modalOpen, setModalOpen] = useState(false);
@@ -56,7 +70,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
   // reset on open). Same-content re-renders from our own edits are idempotent.
   if (prevValue !== value) {
     setPrevValue(value);
-    setRows((value ?? []).map((line) => toDraft(line.id, line)));
+    setRows(buildRows(value, rows));
   }
 
   const total = rows.reduce((sum, r) => sum + r.quantity * r.unit_price, 0);

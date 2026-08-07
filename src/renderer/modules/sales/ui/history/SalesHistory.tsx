@@ -192,7 +192,7 @@ export default function SalesHistory() {
           </button>
           {selectedIds.size > 0 && (
             <button onClick={handleDeleteSelected} disabled={deleteMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium">
+              className="hidden items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium">
               <Trash2 className="w-4 h-4" />
               Delete ({selectedIds.size})
             </button>

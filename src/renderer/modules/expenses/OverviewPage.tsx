@@ -294,15 +294,45 @@ export default function OverviewPage() {
         })}
       </div>
 
-      {showIncome && (
+      {showIncome ? (
+        <>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <DonutChart
+              data={d.income_by_source}
+              title={`Income by Source · ${label}`}
+              dataKey="total"
+              nameKey="source"
+              unit="Income"
+            />
+            <DonutChart
+              data={d.expenses_by_category}
+              title={`Expenses by Category · ${label}`}
+              dataKey="total"
+              nameKey="category_name"
+              unit="Spent"
+            />
+          </div>
+
+          <IncomeExpenseTrend data={d.monthly_trends} />
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {windowIsMonth ? (
+              <DailySpendingTrend
+                data={d.daily_spending_trends}
+                title="Daily Spending Trend"
+                subtitle={`Expenses per day in ${scope}`}
+              />
+            ) : (
+              <MonthlySpendingTrend
+                data={d.monthly_spending_trends}
+                title="Spending by Month"
+                subtitle={`Expenses across ${scope}`}
+              />
+            )}
+          </div>
+        </>
+      ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <DonutChart
-            data={d.income_by_source}
-            title={`Income by Source · ${label}`}
-            dataKey="total"
-            nameKey="source"
-            unit="Income"
-          />
           <DonutChart
             data={d.expenses_by_category}
             title={`Expenses by Category · ${label}`}
@@ -310,52 +340,21 @@ export default function OverviewPage() {
             nameKey="category_name"
             unit="Spent"
           />
+          {windowIsMonth ? (
+            <DailySpendingTrend
+              data={d.daily_spending_trends}
+              title="Daily Spending Trend"
+              subtitle={`Expenses per day in ${scope}`}
+            />
+          ) : (
+            <MonthlySpendingTrend
+              data={d.monthly_spending_trends}
+              title="Spending by Month"
+              subtitle={`Expenses across ${scope}`}
+            />
+          )}
         </div>
       )}
-
-      {!showIncome && d.expenses_by_category.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <DonutChart
-            data={d.expenses_by_category}
-            title={`Expenses by Category · ${label}`}
-            dataKey="total"
-            nameKey="category_name"
-            unit="Spent"
-          />
-          <MonthlySpendingTrend
-            data={d.monthly_spending_trends}
-            title="Spending by Month"
-            subtitle={`Expenses across ${label.toLowerCase()}`}
-          />
-        </div>
-      )}
-
-      {showIncome && (
-        <IncomeExpenseTrend data={d.monthly_trends} />
-      )}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {windowIsMonth ? (
-          <DailySpendingTrend
-            data={d.daily_spending_trends}
-            title="Daily Spending Trend"
-            subtitle={`Expenses per day in ${scope}`}
-          />
-        ) : (
-          <MonthlySpendingTrend
-            data={d.monthly_spending_trends}
-            title="Spending by Month"
-            subtitle={`Expenses across ${scope}`}
-          />
-        )}
-        {showIncome && (
-          <MonthlySpendingTrend
-            data={d.monthly_spending_trends}
-            title="Spending by Month"
-            subtitle={`Expenses across ${label.toLowerCase()}`}
-          />
-        )}
-      </div>
 
       <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">

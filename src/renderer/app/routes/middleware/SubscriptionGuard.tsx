@@ -48,25 +48,30 @@ function useSubscriptionAccess() {
   const subscription = user?.business?.subscription;
   const isOnline = useAppSelector(selectIsOnline);
 
-  return useQuery({
+  // Cached truth used by the subscription dropdown — reconcile against it when
+  // the live call is unavailable so the guard never surprises users whose
+  // dropdown already shows they have access.
+  const cachedAccess = subscription ? computeOfflineAccess(subscription) : false;
+
+  const query = useQuery({
     queryKey: ['subscription', 'access'],
     queryFn: async () => {
       const { data } = await axiosInstance.get<AccessResponse>(SUBSCRIPTIONS.ACCESS);
-      console.log('[DEBUG] useSubscriptionAccess - API response:', data, 'has_access:', data?.has_access);
       return data.has_access;
     },
     staleTime: 30_000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    retry: false,
+    retry: 1,
     enabled: isOnline !== false && (!!subscription || user?.business_id != null),
-    placeholderData: () => {
-      if (!isOnline && subscription) {
-        return computeOfflineAccess(subscription);
-      }
-      return undefined;
-    },
   });
+
+  // Only an explicit backend `false` denies access. If the live call is still
+  // loading or failed (undefined), fall back to the cached subscription so we
+  // don't block someone whose dropdown shows an active subscription.
+  const access = query.data === true ? true : (query.data === false ? false : cachedAccess);
+
+  return { ...query, access, cachedAccess };
 }
 
 const SUB_STATUS_INFO: Record<string, { title: string; description: string }> = {
@@ -89,15 +94,15 @@ const SUB_STATUS_INFO: Record<string, { title: string; description: string }> = 
 };
 
 export function SubscriptionGuard() {
-  const { data: hasAccess, isLoading, isFetching } = useSubscriptionAccess();
+  const { access, isLoading, isFetching } = useSubscriptionAccess();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const subscription = user?.business?.subscription;
   const status = subscription?.status as string | undefined;
-  console.log('[DEBUG] SubscriptionGuard - hasAccess:', hasAccess, 'isLoading:', isLoading, 'isFetching:', isFetching, 'sub status:', status, 'sub id:', subscription?.id, 'onboarding_fee_paid:', subscription?.onboarding_fee_paid);
-  console.log('[DEBUG] SubscriptionGuard - user.business_id:', user?.business_id, '!!subscription:', !!subscription, 'user.account_type:', user?.account_type);
 
-  if (isLoading || (isFetching && hasAccess !== true)) {
+  const pendingWithoutSubscription = (isLoading || isFetching) && access === false && !subscription;
+
+  if (pendingWithoutSubscription) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <CustosellLoader />
@@ -105,7 +110,7 @@ export function SubscriptionGuard() {
     );
   }
 
-  if (hasAccess === true) {
+  if (access === true) {
     return <Outlet />;
   }
 

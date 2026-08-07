@@ -246,12 +246,12 @@ export default function OverviewPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           {showBranchFilter && (
             <select
               value={locationId ?? ''}
               onChange={(e) => setLocationId(e.target.value ? Number(e.target.value) : undefined)}
-              className="h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-10 w-full rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:h-9 sm:w-auto"
             >
               <option value="">All branches</option>
               {locations.map((l) => (
@@ -259,14 +259,14 @@ export default function OverviewPage() {
               ))}
             </select>
           )}
-          <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg p-0.5">
+          <div className="flex w-full items-center gap-1.5 bg-gray-100 rounded-lg p-0.5 sm:w-auto">
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setPeriod(opt.value)}
                 className={cn(
-                  'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
+                  'flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors sm:flex-none',
                   period === opt.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
                 )}
               >

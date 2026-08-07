@@ -208,7 +208,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
                 <div className="relative">
@@ -217,7 +217,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                     type="number" step="0.01" min="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
+                    className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     placeholder="0.00"
                     required
                   />
@@ -231,7 +231,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                     type="date"
                     value={incomeDate}
                     onChange={(e) => setIncomeDate(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     required
                   />
                 </div>

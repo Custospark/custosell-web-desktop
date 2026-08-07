@@ -215,7 +215,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             <select
               value={locationId}
               onChange={(e) => setLocationId(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-orange-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="">Select branch</option>
               {locations.map((l) => (
@@ -230,7 +230,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-orange-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="">Select category</option>
               {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -244,7 +244,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white appearance-none focus:border-orange-400 focus:outline-none"
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white appearance-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="">No project (general expense)</option>
                 {(projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -261,7 +261,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               <select
                 value={fixedAssetId}
                 onChange={(e) => setFixedAssetId(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white appearance-none focus:border-orange-400 focus:outline-none"
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white appearance-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="">No company asset</option>
                 {fixedAssets.map((a) => (
@@ -276,7 +276,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
         {/* Amount & Date */}
         <FormSection icon={DollarSign} title="Amount & Date">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Amount *</label>
               <div className="relative">
@@ -289,7 +289,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                   onChange={(e) => { setAmount(e.target.value); clearError('amount'); }}
                   className={cn(
                     'w-full pl-11 pr-3 py-2.5 border-2 rounded-lg text-sm focus:outline-none',
-                    errors.amount ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
+                    errors.amount ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
                   )}
                   placeholder="0"
                 />
@@ -308,7 +308,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                   onChange={(e) => { setExpenseDate(e.target.value); clearError('date'); }}
                   className={cn(
                     'w-full pl-10 pr-3 py-2.5 border-2 rounded-lg text-sm focus:outline-none',
-                    errors.date ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
+                    errors.date ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
                   )}
                 />
               </div>
@@ -326,7 +326,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             onChange={(e) => { setDescription(e.target.value); clearError('description'); }}
             className={cn(
               'w-full px-3 py-2.5 border-2 rounded-lg text-sm min-h-[80px] focus:outline-none resize-none',
-              errors.description ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-orange-400',
+              errors.description ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
             )}
             placeholder={isPersonal
               ? 'What was this expense for? e.g. Groceries, transport, or utilities'
@@ -345,7 +345,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                 type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder={isPersonal ? 'e.g. Market receipt, shop transaction id' : 'e.g. INV-001, Receipt #1234'}
               />
             </div>
@@ -377,7 +377,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                   type="text"
                   value={supplierTin}
                   onChange={(e) => setSupplierTin(e.target.value)}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   placeholder="Supplier tax ID"
                 />
               </div>
@@ -387,7 +387,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                   type="text"
                   value={supplierInvoiceNo}
                   onChange={(e) => setSupplierInvoiceNo(e.target.value)}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   placeholder="Invoice reference"
                 />
               </div>
@@ -400,7 +400,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                   type="number" min={0} step="0.01"
                   value={vatAmount}
                   onChange={(e) => setVatAmount(e.target.value)}
-                  className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                  className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   placeholder="0.00"
                 />
               </div>
@@ -410,7 +410,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                 type="checkbox"
                 checked={vatClaimable}
                 onChange={(e) => setVatClaimable(e.target.checked)}
-                className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700">Claimable input VAT</span>
             </label>
@@ -424,18 +424,18 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               type="checkbox"
               checked={isRecurring}
               onChange={(e) => setIsRecurring(e.target.checked)}
-              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm font-medium text-gray-700">Repeat this expense</span>
           </label>
           {isRecurring && (
-            <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Interval</label>
                 <select
                   value={recurrenceInterval}
                   onChange={(e) => setRecurrenceInterval(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-orange-400 focus:outline-none"
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -451,7 +451,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
                     type="date"
                     value={nextDueDate}
                     onChange={(e) => setNextDueDate(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-orange-400 focus:outline-none"
+                    className="w-full pl-10 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
               </div>

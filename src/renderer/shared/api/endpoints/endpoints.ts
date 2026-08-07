@@ -105,6 +105,7 @@ export const BUDGETS = {
   LINES: (id: number) => `/budgets/${id}/lines`,
   PURCHASE_LINE: (id: number, lineId: number) => `/budgets/${id}/lines/${lineId}/purchase`,
   AFFORDABILITY: (id: number) => `/budgets/${id}/affordability`,
+  DOWNLOAD: (id: number) => `/budgets/${id}/download`,
 };
 export const MONEY = {
   SUMMARY: '/money/summary',

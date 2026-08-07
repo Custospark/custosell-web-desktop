@@ -1,7 +1,7 @@
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { Wallet, Pencil, Trash2, CalendarDays, TrendingUp, TrendingDown, Eye } from 'lucide-react';
+import { Wallet, Pencil, Trash2, CalendarDays, TrendingUp, TrendingDown, Eye, Download, Loader2 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
@@ -14,6 +14,8 @@ interface BudgetCardProps {
   onEdit: (budget: PersonalBudgetSummaryRow) => void;
   onDelete: (budget: PersonalBudgetSummaryRow) => void;
   onView: (budget: PersonalBudgetSummaryRow) => void;
+  onDownload: () => void;
+  downloading?: boolean;
 }
 
 function PacingChart({ pacing }: { pacing: { label: string; budget: number; actual: number }[] }) {
@@ -39,7 +41,7 @@ function PacingChart({ pacing }: { pacing: { label: string; budget: number; actu
   );
 }
 
-export default function BudgetCard({ budget, onEdit, onDelete, onView }: BudgetCardProps) {
+export default function BudgetCard({ budget, onEdit, onDelete, onView, onDownload, downloading }: BudgetCardProps) {
   const over = budget.percentage > 100;
   const color = over ? 'bg-red-500' : budget.percentage > 80 ? 'bg-yellow-500' : 'bg-green-500';
 
@@ -67,6 +69,15 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView }: BudgetC
             title="View budget"
           >
             <Eye className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onDownload}
+            disabled={downloading}
+            className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors disabled:opacity-50"
+            title="Download budget as PDF"
+          >
+            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </button>
           <button
             type="button"
@@ -131,9 +142,15 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView }: BudgetC
         <Button variant="outline" size="sm" onClick={() => onView(budget)}>
           <Eye className="w-3.5 h-3.5 mr-1" /> View plan
         </Button>
-        <Button variant="primary" size="sm" onClick={() => onEdit(budget)}>
-          Adjust plan
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" onClick={onDownload} disabled={downloading}>
+            {downloading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1" />}
+            PDF
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => onEdit(budget)}>
+            Adjust
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -40,6 +40,7 @@ interface MessageBubbleProps {
   canPinMessages: boolean;
   canEditMessage: boolean;
   canDeleteMessage: boolean;
+  memberNames?: Map<number, string>;
 }
 
 export default function MessageBubble({
@@ -64,9 +65,10 @@ export default function MessageBubble({
   canPinMessages,
   canEditMessage,
   canDeleteMessage,
+  memberNames,
 }: MessageBubbleProps) {
   const persisted = isPersistedMessageId(message.id);
-  const bodySegments = splitMessageBody(message.body, message.mentions);
+  const bodySegments = splitMessageBody(message.body, message.mentions, memberNames);
   const emojiCounts = message.reactions?.emoji_counts ?? {};
 
   const renderSegments = () =>

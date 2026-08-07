@@ -11,6 +11,7 @@ import BoardSwitcherIcons from '../ui/BoardSwitcherIcons';
 import BoardCalendarView from '../ui/BoardCalendarView';
 import BoardProgressView from '../ui/BoardProgressView';
 import BoardFameView from '../ui/BoardFameView';
+import BoardMembersView from '../ui/BoardMembersView';
 import PetalBackground from '../ui/PetalBackground';
 import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
 import BoardKanbanPageModals from '../ui/BoardKanbanPageModals';
@@ -227,6 +228,15 @@ export default function BoardKanbanPage() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} workspace={workspace} />
         </div>
+      ) : viewMode === 'members' ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <BoardMembersView
+            board={board}
+            boardId={boardId}
+            workspace={workspace}
+            canManage={canManageSettings}
+          />
+        </div>
       ) : null}
       <div
         className={cn(
@@ -274,6 +284,8 @@ export default function BoardKanbanPage() {
         }}
         conversationMessagesCount={conversationMessagesCount}
         conversationUnreadCount={conversationUnreadCount}
+        onOpenMembers={() => setViewMode((mode) => (mode === 'members' ? 'kanban' : 'members'))}
+        membersActive={viewMode === 'members'}
         onCreateNew={() => setCreateBoardOpen(true)}
       />
       <BoardKanbanPageModals

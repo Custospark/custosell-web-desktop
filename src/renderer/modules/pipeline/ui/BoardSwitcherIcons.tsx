@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp, Trophy } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp, Trophy, Users } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardSwitcherIconsProps {
@@ -13,6 +14,8 @@ interface BoardSwitcherIconsProps {
   onOpenConversation?: () => void;
   conversationMessagesCount?: number;
   conversationUnreadCount?: number;
+  onOpenMembers?: () => void;
+  membersActive?: boolean;
   onCreateNew: () => void;
   allowCreate?: boolean;
   className?: string;
@@ -29,6 +32,8 @@ export default function BoardSwitcherIcons({
   onOpenConversation,
   conversationMessagesCount = 0,
   conversationUnreadCount = 0,
+  onOpenMembers,
+  membersActive = false,
   onCreateNew,
   allowCreate = true,
   className,
@@ -37,9 +42,18 @@ export default function BoardSwitcherIcons({
   const fameData = queryClient.getQueryData<unknown[]>(['wall-of-fame']);
   const fameCount = Array.isArray(fameData) ? fameData.length : 0;
 
-  const badge = (count: number, color: string, textColor = 'text-white') => (
-    <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full ${color} px-1 text-[9px] font-bold leading-none ${textColor} ring-2 ring-white`}>
+  const countBadge = (count: number, color: string) => (
+    <span
+      className={`absolute -top-2.5 -right-2.5 z-10 flex min-w-[15px] h-[15px] items-center justify-center rounded-full px-0.5 text-[8px] font-bold leading-none text-white ring-2 ring-white ${color}`}
+    >
       {count > 99 ? '99+' : count}
+    </span>
+  );
+
+  const iconWithBadge = (icon: ReactNode, count: number, color: string) => (
+    <span className="relative inline-flex h-5 w-5 items-center justify-center">
+      {icon}
+      {count > 0 && countBadge(count, color)}
     </span>
   );
 
@@ -78,8 +92,8 @@ export default function BoardSwitcherIcons({
           title="Board resources"
           aria-label={resourcesCount > 0 ? `Board resources (${resourcesCount})` : 'Board resources'}
         >
-          <FolderOpen className="h-4 w-4 text-emerald-600" />
-          <span className="hidden sm:inline-flex items-center gap-2">Resources{resourcesCount > 0 && badge(resourcesCount, 'bg-emerald-600')}</span>
+          {iconWithBadge(<FolderOpen className="h-4 w-4 text-emerald-600" />, resourcesCount, 'bg-emerald-600')}
+          <span className="hidden sm:inline">Resources</span>
         </button>
       )}
       {onOpenProgress && (
@@ -114,8 +128,8 @@ export default function BoardSwitcherIcons({
           aria-label="Wall of Fame"
           aria-pressed={fameActive}
         >
-          <Trophy className="h-4 w-4 text-amber-600" />
-          <span className="hidden sm:inline-flex items-center gap-2">Fame{fameCount > 0 && badge(fameCount, 'bg-amber-600')}</span>
+          {iconWithBadge(<Trophy className="h-4 w-4 text-amber-600" />, fameCount, 'bg-amber-600')}
+          <span className="hidden sm:inline">Fame</span>
         </button>
       )}
       {onOpenConversation && (
@@ -136,16 +150,30 @@ export default function BoardSwitcherIcons({
               : 'Board discussion'
           }
         >
-          <span
-            className={cn('relative inline-flex shrink-0', conversationUnreadCount > 0 && 'after:absolute after:right-0 after:top-0 after:h-2 after:w-2 after:rounded-full after:bg-blue-500 after:ring-2 after:ring-white')}
-          >
-            <MessageSquare className={cn('h-4 w-4', conversationUnreadCount > 0 ? 'text-blue-700' : 'text-blue-600')} />
-          </span>
-          <span className="hidden sm:inline-flex items-center gap-2">
-            Discussions
-            {conversationUnreadCount > 0 && badge(conversationUnreadCount, 'bg-blue-600')}
-            {conversationUnreadCount === 0 && conversationMessagesCount > 0 && badge(conversationMessagesCount, 'bg-gray-300', 'text-gray-700')}
-          </span>
+          {iconWithBadge(
+            <MessageSquare className={cn('h-4 w-4', conversationUnreadCount > 0 ? 'text-blue-700' : 'text-blue-600')} />,
+            conversationUnreadCount > 0 ? conversationUnreadCount : conversationMessagesCount,
+            conversationUnreadCount > 0 ? 'bg-blue-600' : 'bg-gray-400',
+          )}
+          <span className="hidden sm:inline">Discussions</span>
+        </button>
+      )}
+      {onOpenMembers && (
+        <button
+          type="button"
+          onClick={onOpenMembers}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] sm:px-4 sm:py-2.5',
+            membersActive
+              ? 'border-cyan-500 bg-gradient-to-r from-cyan-100 via-white to-sky-100 text-cyan-900 shadow-md shadow-cyan-200/50'
+              : 'border-cyan-300/90 bg-gradient-to-r from-cyan-50 via-white to-sky-50 text-cyan-800 hover:border-cyan-400 hover:from-cyan-100 hover:to-sky-100 hover:shadow-md hover:shadow-cyan-200/50',
+          )}
+          title="Board members"
+          aria-label="Board members"
+          aria-pressed={membersActive}
+        >
+          <Users className="h-4 w-4 text-cyan-600" />
+          <span className="hidden sm:inline">Members</span>
         </button>
       )}
       {allowCreate && (

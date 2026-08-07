@@ -34,7 +34,7 @@ import {
   canEditBoardConversationMessage,
   canManageBoardSettings,
 } from '../../../shared/utils/moduleAccess';
-import { formatMentionToken, isPersistedMessageId } from './pipelineMessageUtils';
+import { isPersistedMessageId, toMentionTokenBody } from './pipelineMessageUtils';
 import { Activity, CornerDownRight, MessageSquare, Zap } from 'lucide-react';
 
 type ConversationTab = 'chat' | 'activity' | 'automations';
@@ -79,6 +79,13 @@ export default function BoardConversationModal({
   const { data: activity = [], isLoading: activityLoading } = useBoardConversationActivity(boardId, open && tab === 'activity');
   const { data: automations = [], isLoading: automationsLoading } = useBoardAutomations(boardId, open && tab === 'automations');
   const { data: members = [] } = useBoardResourceMembers(boardId, open);
+  const memberNames = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const member of members) {
+      if (member.name) map.set(member.id, member.name);
+    }
+    return map;
+  }, [members]);
   const { data: conversationSummary } = useBoardConversationSummary(boardId, open);
   const unreadCount = conversationSummary?.unread_count ?? 0;
 
@@ -135,10 +142,10 @@ export default function BoardConversationModal({
     setShowEmojiPicker(false);
   };
 
-  const insertMention = (userId: number) => {
+  const insertMention = (userId: number, name: string) => {
     setDraft((prev) => {
       const withoutPartial = prev.replace(/@[\w\s]*$/, '');
-      return `${withoutPartial}${formatMentionToken(userId)} `;
+      return `${withoutPartial}@${name} `;
     });
     setMentionQuery(null);
   };
@@ -151,12 +158,13 @@ export default function BoardConversationModal({
 
   const handlePost = async () => {
     if (!draft.trim() && pendingFiles.length === 0) return;
-    const mentionNames: Record<string, string> = {};
+    const memberNameMap = new Map<number, string>();
     for (const member of members) {
-      if (member.name) mentionNames[String(member.id)] = member.name;
+      if (member.name) memberNameMap.set(member.id, member.name);
     }
+    const { body: tokenBody, mentionNames } = toMentionTokenBody(draft.trim() || '(attachment)', memberNameMap);
     await postMessage.mutateAsync({
-      body: draft.trim() || '(attachment)',
+      body: tokenBody,
       parent_id: replyingTo?.id && isPersistedMessageId(replyingTo.id) ? replyingTo.id : null,
       files: pendingFiles,
       mentionNames,
@@ -276,6 +284,7 @@ export default function BoardConversationModal({
                     showActions: true,
                     canInteract: canContributeResolved,
                     canPinMessages: canModerateConversation,
+                    memberNames,
                   };
                   const canEditRoot = canContributeResolved && canEditBoardConversationMessage(user, thread.root);
                   const canDeleteRoot = canContributeResolved && canDeleteBoardConversationMessage(

@@ -6,7 +6,7 @@ import BoardCollaborationButton from './BoardCollaborationButton';
 import BoardAccessBadges from './BoardAccessBadges';
 import LeadSearchHint from './LeadSearchHint';
 import type { BoardMemberRole } from '../api/boardRoleUtils';
-import { CalendarDays, ChevronDown, ChevronUp, Columns3, LayoutGrid, Search, Settings, Upload, UserPlus, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronUp, Columns3, LayoutGrid, Search, Settings, Upload, UserPlus, Users, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface QueryToken {
@@ -193,6 +193,17 @@ export default function BoardKanbanPageHeader({
               >
                 <CalendarDays className="h-3.5 w-3.5" />
                 Calendar
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange('members')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  viewMode === 'members' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
+                )}
+              >
+                <Users className="h-3.5 w-3.5" />
+                Members
               </button>
             </div>
 

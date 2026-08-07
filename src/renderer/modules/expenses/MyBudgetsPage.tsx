@@ -132,8 +132,35 @@ export default function MyBudgetsPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <DashboardStatCard
+          label="Planned total"
+          value={formatCurrency(d.total_planned)}
+          sub="Across all your budgets"
+          icon={Target}
+          color="blue"
+          badge="Planned"
+        />
+        <DashboardStatCard
+          label="Spent so far"
+          value={formatCurrency(d.total_spend)}
+          sub="From expenses linked to budgets"
+          icon={Wallet}
+          color="amber"
+          badge="Spent"
+        />
+        <DashboardStatCard
+          label="Income in"
+          value={formatCurrency(d.total_income)}
+          sub="From income linked to budgets"
+          icon={PiggyBank}
+          color="blue"
+          badge="Income"
+        />
+      </div>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-md">
+        <div className="relative w-full">
           <div className="relative rounded-lg p-[2px]">
             <motion.div
               className="absolute inset-0 rounded-lg z-0"
@@ -166,7 +193,7 @@ export default function MyBudgetsPage() {
           </div>
         </div>
         {years.length > 1 && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm shrink-0">
             <span className="text-gray-500 text-xs">Year</span>
             <select
               value={yearFilter}
@@ -182,33 +209,6 @@ export default function MyBudgetsPage() {
             </select>
           </div>
         )}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <DashboardStatCard
-          label="Planned total"
-          value={formatCurrency(d.total_planned)}
-          sub="Across all your budgets"
-          icon={Target}
-          color="blue"
-          badge="Planned"
-        />
-        <DashboardStatCard
-          label="Spent so far"
-          value={formatCurrency(d.total_spend)}
-          sub="From expenses linked to budgets"
-          icon={Wallet}
-          color="amber"
-          badge="Spent"
-        />
-        <DashboardStatCard
-          label="Income in"
-          value={formatCurrency(d.total_income)}
-          sub="From income linked to budgets"
-          icon={PiggyBank}
-          color="blue"
-          badge="Income"
-        />
       </div>
 
       {d.budgets.length > 0 ? (

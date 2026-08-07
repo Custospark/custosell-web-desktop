@@ -1,67 +1,120 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 
+import bagImg from '../../../../../../assets/storefont-bg-images/bag.jpg';
+import boutiqueImg from '../../../../../../assets/storefont-bg-images/boutique.jpg';
+import boutique2Img from '../../../../../../assets/storefont-bg-images/boutique_2.jpg';
+import fridgeImg from '../../../../../../assets/storefont-bg-images/fridge.jpg';
+import fridge2Img from '../../../../../../assets/storefont-bg-images/fridge2.jpg';
+import marketConversationImg from '../../../../../../assets/storefont-bg-images/market_conversation.jpg';
+import openshopImg from '../../../../../../assets/storefont-bg-images/openshop.jpg';
+import restaurantImg from '../../../../../../assets/storefont-bg-images/restaurant.jpg';
+import restaurant1Img from '../../../../../../assets/storefont-bg-images/restaurant_1.jpg';
+import retailImg from '../../../../../../assets/storefont-bg-images/retail.jpg';
+import superMarket1Img from '../../../../../../assets/storefont-bg-images/super_market_1.jpg';
+import superMarket2Img from '../../../../../../assets/storefont-bg-images/super_market_2.jpg';
+import supermarket3Img from '../../../../../../assets/storefont-bg-images/supermarket_3.jpg';
+import truckImg from '../../../../../../assets/storefont-bg-images/truck.jpg';
+import truck2Img from '../../../../../../assets/storefont-bg-images/truck_2.jpg';
+import warehouseImg from '../../../../../../assets/storefont-bg-images/warehouse.jpg';
+import wideShopImg from '../../../../../../assets/storefont-bg-images/wide_shop.jpg';
+
 /** Marketplace visual tokens — immersive trade floor inspired by board workspaces. */
 
 export interface MarketplaceHeroSlide {
-  /** Unsplash (or CDN) photo URL */
+  /** Bundled local background photo (served from the app, no network needed) */
   url: string;
   /** Solid color shown while loading / if the image fails */
   fallback: string;
   label: string;
 }
 
-/** Ten wholesale / logistics scenes with distinct solid fallbacks. */
+/** Seventeen local storefront scenes with distinct solid fallbacks. */
 export const MARKETPLACE_HERO_SLIDES: readonly MarketplaceHeroSlide[] = [
   {
-    label: 'warehouse-aisle',
-    url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=2400&q=80',
+    label: 'bag',
+    url: bagImg,
     fallback: '#0f172a',
   },
   {
-    label: 'loading-dock',
-    url: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=2400&q=80',
+    label: 'boutique',
+    url: boutiqueImg,
+    fallback: '#9d174d',
+  },
+  {
+    label: 'boutique-2',
+    url: boutique2Img,
+    fallback: '#7c2d12',
+  },
+  {
+    label: 'fridge',
+    url: fridgeImg,
     fallback: '#134e4a',
   },
   {
-    label: 'pallet-stacks',
-    url: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=2400&q=80',
-    fallback: '#1e293b',
-  },
-  {
-    label: 'shipping-containers',
-    url: 'https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?auto=format&fit=crop&w=2400&q=80',
-    fallback: '#164e63',
-  },
-  {
-    label: 'forklift-floor',
-    url: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=2400&q=80',
-    fallback: '#292524',
-  },
-  {
-    label: 'cargo-bay',
-    url: 'https://images.unsplash.com/photo-1578574577315-52ac8751ddee?auto=format&fit=crop&w=2400&q=80',
-    fallback: '#1c1917',
-  },
-  {
-    label: 'distribution-center',
-    url: 'https://images.unsplash.com/photo-1580674285054-bed31e145faf?auto=format&fit=crop&w=2400&q=80',
-    fallback: '#042f2e',
-  },
-  {
-    label: 'freight-corridor',
-    url: 'https://images.unsplash.com/photo-1616432043562-3671ea2e2340?auto=format&fit=crop&w=2400&q=80',
+    label: 'fridge-2',
+    url: fridge2Img,
     fallback: '#0c4a6e',
   },
   {
-    label: 'shelf-inventory',
-    url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=2400&q=80',
+    label: 'market-conversation',
+    url: marketConversationImg,
+    fallback: '#365314',
+  },
+  {
+    label: 'open-shop',
+    url: openshopImg,
+    fallback: '#1e293b',
+  },
+  {
+    label: 'restaurant',
+    url: restaurantImg,
+    fallback: '#7f1d1d',
+  },
+  {
+    label: 'restaurant-1',
+    url: restaurant1Img,
+    fallback: '#581c87',
+  },
+  {
+    label: 'retail',
+    url: retailImg,
+    fallback: '#164e63',
+  },
+  {
+    label: 'super-market-1',
+    url: superMarket1Img,
     fallback: '#14532d',
   },
   {
-    label: 'truck-yard',
-    url: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=2400&q=80',
+    label: 'super-market-2',
+    url: superMarket2Img,
+    fallback: '#78350f',
+  },
+  {
+    label: 'supermarket-3',
+    url: supermarket3Img,
+    fallback: '#292524',
+  },
+  {
+    label: 'truck',
+    url: truckImg,
+    fallback: '#1c1917',
+  },
+  {
+    label: 'truck-2',
+    url: truck2Img,
     fallback: '#3f3f46',
+  },
+  {
+    label: 'warehouse',
+    url: warehouseImg,
+    fallback: '#042f2e',
+  },
+  {
+    label: 'wide-shop',
+    url: wideShopImg,
+    fallback: '#0c4a6e',
   },
 ] as const;
 
@@ -71,7 +124,7 @@ export const MARKETPLACE_HERO_IMAGE = MARKETPLACE_HERO_SLIDES[0].url;
 const HERO_OVERLAY =
   'linear-gradient(160deg, rgba(15, 23, 42, 0.82) 0%, rgba(15, 23, 42, 0.62) 45%, rgba(15, 23, 42, 0.88) 100%)';
 
-const ROTATE_MS = 30_000;
+const ROTATE_MS = 5_000;
 
 function preloadHero(url: string): Promise<boolean> {
   return new Promise((resolve) => {
@@ -83,8 +136,8 @@ function preloadHero(url: string): Promise<boolean> {
 }
 
 /**
- * Rotates marketplace hero every 30s. Always paints the slide's solid fallback;
- * only layers the photo when it has loaded successfully.
+ * Rotates the marketplace hero every 5s, looping forever. Always paints the
+ * slide's solid fallback; only layers the photo once it has loaded successfully.
  */
 export function useMarketplaceHeroBackground(intervalMs = ROTATE_MS): CSSProperties {
   const [index, setIndex] = useState(0);

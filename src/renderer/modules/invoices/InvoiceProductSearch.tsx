@@ -161,8 +161,8 @@ export function InvoiceProductSearch({ products, autoFocus, onAdd }: InvoiceProd
                             <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-sm font-semibold text-blue-600">{formatCurrency(p.unit_price)}</span>
+                        <td className="px-3 sm:px-4 py-3 text-right">
+                          <span className="text-sm font-semibold text-blue-600 whitespace-nowrap">{formatCurrency(p.unit_price)}</span>
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="p-1.5 rounded-full bg-green-50 text-green-600 inline-flex">

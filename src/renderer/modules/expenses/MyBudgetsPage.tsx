@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useBudgetsIndex, useDeleteBudget } from './api/BudgetQueries';
 import BudgetCard from './components/BudgetCard';
 import BudgetFormModal from './components/BudgetFormModal';
@@ -10,7 +11,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { Target, PiggyBank, Plus, Settings2, Wallet, LayoutDashboard, Search } from 'lucide-react';
+import { Target, PiggyBank, Plus, Settings2, Wallet, LayoutDashboard, Search, X } from 'lucide-react';
 import { DashboardStatCard } from '../../shared/components/cards/DashboardStatCard';
 import { useToast } from '../../app/contexts/useToast';
 import type { PersonalBudgetSummaryRow } from './api/BudgetTypes';
@@ -28,6 +29,7 @@ export default function MyBudgetsPage() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const budgetsList = data?.budgets ?? [];
 
@@ -131,15 +133,37 @@ export default function MyBudgetsPage() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search budgets…"
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          />
+        <div className="relative w-full sm:max-w-md">
+          <div className="relative rounded-lg p-[2px]">
+            <motion.div
+              className="absolute inset-0 rounded-lg z-0"
+              style={{ background: 'linear-gradient(90deg, #2563eb, #059669, #2563eb)', backgroundSize: '300% 100%' }}
+              animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+              transition={{ duration: searchFocused ? 2 : 6, repeat: Infinity, ease: 'linear' }}
+            />
+            <div className="relative rounded-[6px] overflow-hidden bg-white">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${searchFocused ? 'text-blue-500' : 'text-gray-400'}`} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                placeholder="Search your budgets by name…"
+                title="Search budgets"
+                className="w-full pl-9 pr-10 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px] placeholder:text-gray-400"
+              />
+              {searchTerm && (
+                <button
+                  title="Clear search"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
         {years.length > 1 && (
           <div className="flex items-center gap-2 text-sm">

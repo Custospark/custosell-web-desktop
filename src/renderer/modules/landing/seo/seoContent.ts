@@ -100,12 +100,14 @@ export const FEATURE_SEO: FeatureSeo[] = [
     subtitle: 'Close more deals. Move leads across boards so nothing slips.',
     paragraphs: [
       'Custosell includes a sales pipeline and CRM to manage Leads, opportunities, and follow-ups across simple boards. Track every deal in one place and pick up conversations the moment customers return.',
+      'The pipeline is shared, so salespeople, managers, and owners see the same deals and notes in real time. Team collaboration means no one is left guessing who owns a lead or where a deal stands.',
       'Customer records hold contact history and purchase history, so your team has context at the last word.',
     ],
     points: [
       'Kanban-style pipeline for your sales deals',
       'Customer contacts, history, and follow-ups in one list',
       'Shared context so the whole team sees the same customer',
+      'Shared pipelines and notes for real-time team collaboration',
     ],
   },
   {
@@ -114,11 +116,13 @@ export const FEATURE_SEO: FeatureSeo[] = [
     subtitle: 'Quote, deliver, and get paid. Run estimates and projects from first ask to done.',
     paragraphs: [
       'Custosell includes project and productivity tools for businesses that deliver work — quotes, estimates, and project boards that take a job from the first customer request to a finished, paid delivery.',
+      'Project boards are shared across your team, so everyone sees who owns each task, what is due, and what is blocked. Team collaboration keeps estimates, work, and costs moving without endless status-meeting emails.',
       'Because projects live beside invoicing and expense tracking, you can quote a job, track the hours and costs against it, and send an invoice the moment it is done.',
     ],
     points: [
       'Estimates and quotes that turn into projects',
       'Boards to keep tasks and deadlines visible',
+      'Team-owned tasks and shared boards for collaboration',
       'Project costs and revenue tied to your books',
       'Invoicing connected to completed work',
     ],

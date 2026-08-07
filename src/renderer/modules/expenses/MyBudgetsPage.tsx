@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useBudgetsIndex, useDeleteBudget } from './api/BudgetQueries';
 import BudgetCard from './components/BudgetCard';
 import BudgetFormModal from './components/BudgetFormModal';
+import BudgetDetailModal from './components/BudgetDetailModal';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
-import { Target, PiggyBank, Plus, Settings2, Wallet } from 'lucide-react';
+import { Target, PiggyBank, Plus, Settings2, Wallet, LayoutDashboard } from 'lucide-react';
 import { DashboardStatCard } from '../../shared/components/cards/DashboardStatCard';
 import type { PersonalBudgetSummaryRow } from './api/BudgetTypes';
 
@@ -20,6 +21,7 @@ export default function MyBudgetsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<PersonalBudgetSummaryRow | null>(null);
+  const [viewing, setViewing] = useState<PersonalBudgetSummaryRow | null>(null);
 
   const handleNew = () => {
     setEditing(null);
@@ -27,8 +29,15 @@ export default function MyBudgetsPage() {
   };
 
   const handleEdit = (budget: PersonalBudgetSummaryRow) => {
+    setViewing(null);
     setEditing(budget);
     setModalOpen(true);
+  };
+
+  const handleView = (budget: PersonalBudgetSummaryRow) => {
+    setEditing(null);
+    setModalOpen(false);
+    setViewing(budget);
   };
 
   const handleDelete = async (budget: PersonalBudgetSummaryRow) => {
@@ -67,6 +76,9 @@ export default function MyBudgetsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.MONEY)}>
+            <LayoutDashboard className="w-4 h-4 mr-1.5" /> Money summary
+          </Button>
           <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.CATEGORIES)}>
             <Settings2 className="w-4 h-4 mr-1.5" /> Manage categories
           </Button>
@@ -106,7 +118,7 @@ export default function MyBudgetsPage() {
       {d.budgets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {d.budgets.map((budget) => (
-            <BudgetCard key={budget.id} budget={budget} onEdit={handleEdit} onDelete={handleDelete} />
+            <BudgetCard key={budget.id} budget={budget} onEdit={handleEdit} onDelete={handleDelete} onView={handleView} />
           ))}
         </div>
       ) : (
@@ -125,6 +137,11 @@ export default function MyBudgetsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         budget={editing ? { ...editing, planned_amount: editing.planned_amount } : null}
+      />
+      <BudgetDetailModal
+        open={!!viewing}
+        onClose={() => setViewing(null)}
+        budget={viewing}
       />
     </div>
   );

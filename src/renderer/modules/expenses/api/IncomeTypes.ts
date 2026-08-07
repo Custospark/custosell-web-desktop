@@ -21,6 +21,9 @@ export interface IncomeSource {
   source_name: string;
   description: string | null;
   income_date: string;
+  is_recurring: boolean;
+  recurrence_interval: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  next_due_date: string | null;
   attachments?: IncomeAttachment[];
   created_at: string;
   updated_at: string;
@@ -32,6 +35,9 @@ export interface CreateIncomeData {
   source_name: string;
   description?: string | null;
   income_date: string;
+  is_recurring?: boolean;
+  recurrence_interval?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  next_due_date?: string | null;
 }
 
 export type UpdateIncomeData = Partial<CreateIncomeData>;

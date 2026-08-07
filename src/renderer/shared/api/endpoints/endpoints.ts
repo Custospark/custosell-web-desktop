@@ -102,6 +102,13 @@ export const INCOME_SOURCES = '/income-sources';
 export const BUDGETS = {
   BASE: '/budgets',
   BY_ID: (id: number) => `/budgets/${id}`,
+  LINES: (id: number) => `/budgets/${id}/lines`,
+  PURCHASE_LINE: (id: number, lineId: number) => `/budgets/${id}/lines/${lineId}/purchase`,
+  AFFORDABILITY: (id: number) => `/budgets/${id}/affordability`,
+};
+export const MONEY = {
+  SUMMARY: '/money/summary',
+  ALERTS: '/money/alerts',
 };
 export const SYNC = { PUSH: '/sync/push', PULL: '/sync/pull', FULL: '/sync/full' };
 export const NOTIFICATIONS = {

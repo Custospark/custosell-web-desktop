@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { useCreateBudget, useUpdateBudget } from '../api/BudgetQueries';
+import {
+  useCreateBudget, useUpdateBudget, useBudgetDetail, useSyncBudgetLines,
+} from '../api/BudgetQueries';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { Target, Wallet, CalendarDays, FileText, PiggyBank } from 'lucide-react';
-import type { PersonalBudget, PersonalBudgetSummaryRow } from '../api/BudgetTypes';
+import type { PersonalBudget, PersonalBudgetSummaryRow, BudgetLine } from '../api/BudgetTypes';
+import BudgetLinesEditor from './BudgetLinesEditor';
 
 type BudgetLike = Pick<PersonalBudget, 'id' | 'name' | 'description' | 'planned_amount' | 'period_start' | 'period_end'> & Partial<PersonalBudgetSummaryRow>;
 
@@ -14,21 +17,11 @@ interface BudgetFormModalProps {
   budget?: BudgetLike | null;
 }
 
-function syncBudgetForm(
-  budget: BudgetLike | null | undefined,
-  set: (name: string, description: string, amount: string, start: string, end: string) => void,
-) {
-  const name = budget?.name ?? '';
-  const description = budget?.description ?? '';
-  const amount = budget?.planned_amount != null ? parseFloat(String(budget.planned_amount)).toString() : '';
-  const start = budget?.period_start ?? '';
-  const end = budget?.period_end ?? '';
-  set(name, description, amount, start, end);
-}
-
 export default function BudgetFormModal({ open, onClose, budget }: BudgetFormModalProps) {
   const createMutation = useCreateBudget();
   const updateMutation = useUpdateBudget();
+  const { data: existing } = useBudgetDetail(budget?.id ?? 0);
+  const syncMutation = useSyncBudgetLines();
 
   const isEditing = !!budget;
 
@@ -37,20 +30,47 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
   const [plannedAmount, setPlannedAmount] = useState('');
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
+  const [lines, setLines] = useState<BudgetLine[]>([]);
+  const [editorKey, setEditorKey] = useState(0);
+
+  const loadLines = (source: BudgetLine[]) => {
+    const total = source.reduce((s, l) => s + Number(l.line_total ?? l.quantity * l.unit_price) || 0, 0);
+    setLines(source);
+    setPlannedAmount(source.length ? total.toFixed(2) : (parseFloat(String(budget?.planned_amount ?? 0)) || 0).toFixed(2));
+  };
 
   useEffect(() => {
     queueMicrotask(() => {
-      syncBudgetForm(budget, (n, d, a, s, e) => {
-        setName(n);
-        setDescription(d);
-        setPlannedAmount(a);
-        setPeriodStart(s);
-        setPeriodEnd(e);
-      });
+      setName(budget?.name ?? '');
+      setDescription(budget?.description ?? '');
+      setPlannedAmount(budget?.planned_amount != null ? parseFloat(String(budget.planned_amount)).toString() : '');
+      setPeriodStart(budget?.period_start ?? '');
+      setPeriodEnd(budget?.period_end ?? '');
+      if (budget?.id && existing?.lines) {
+        loadLines(existing.lines);
+      } else if (!budget?.id) {
+        setLines([]);
+        setPlannedAmount('');
+      }
+      setEditorKey((k) => k + 1);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [budget, open]);
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (isEditing && budget?.id && existing?.lines) {
+      queueMicrotask(() => loadLines(existing.lines));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing]);
+
+  const handleLinesChange = (next: BudgetLine[]) => {
+    setLines(next);
+    const total = next.reduce((s, l) => s + Math.max(0, Number(l.line_total ?? l.quantity * l.unit_price)) || 0, 0);
+    if (next.length) setPlannedAmount(total.toFixed(2));
+  };
+
+  const handleSubmit = async () => {
     if (!name.trim() || !plannedAmount) return;
     const data = {
       name: name.trim(),
@@ -59,14 +79,26 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
       period_start: periodStart || null,
       period_end: periodEnd || null,
     };
-    if (isEditing && budget) {
-      updateMutation.mutate({ id: budget.id, data }, { onSuccess: onClose });
-    } else {
-      createMutation.mutate(data, { onSuccess: onClose });
+
+    let savedId: number | null;
+    try {
+      if (isEditing && budget) {
+        await updateMutation.mutateAsync({ id: budget.id, data });
+        savedId = budget.id;
+      } else {
+        const created = await createMutation.mutateAsync(data);
+        savedId = created.id;
+      }
+      if (savedId && lines.length) {
+        await syncMutation.mutateAsync({ id: savedId, lines });
+      }
+      onClose();
+    } catch {
+      // covered by mutation toasts
     }
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending || syncMutation.isPending;
   const canSubmit = !!name.trim() && !!plannedAmount && parseFloat(plannedAmount) >= 0;
 
   return (
@@ -77,7 +109,7 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
       subtitle={isEditing ? 'Update your budget goals below.' : 'Give your savings or spending goal a name and a target.'}
       size="lg"
     >
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
+      <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }} className="space-y-5">
 
         <div className="flex items-start gap-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-100 p-4">
           <div className="rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shrink-0 shadow-sm">
@@ -130,6 +162,9 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
                   placeholder="0.00"
                 />
               </div>
+              {lines.length > 0 && (
+                <p className="text-xs text-blue-600 mt-1">Auto-totaled from your shopping list below — you can still adjust it manually.</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -158,9 +193,6 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
                 </div>
               </div>
             </div>
-            <p className="text-xs text-gray-400">
-              Leave the dates empty to keep this budget open-ended. Your expenses and income can be linked to it from their forms.
-            </p>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
@@ -176,6 +208,8 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
             </div>
           </div>
         </div>
+
+        <BudgetLinesEditor key={editorKey} value={lines} onChange={handleLinesChange} />
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>

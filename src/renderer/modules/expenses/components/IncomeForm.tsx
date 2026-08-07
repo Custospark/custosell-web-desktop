@@ -9,7 +9,7 @@ import { useIncomeSource } from '../api/IncomeQueries';
 import { useBudgetsIndex } from '../api/BudgetQueries';
 import BudgetPicker from './BudgetPicker';
 import {
-  Calendar, FileText, Tag, Paperclip, Link, Trash2, File, Wallet,
+  Calendar, FileText, Tag, Paperclip, Link, Trash2, File, Wallet, Repeat,
 } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { formatFileSize } from '../../../shared/utils/formatFileSize';
@@ -73,6 +73,9 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [incomeDate, setIncomeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceInterval, setRecurrenceInterval] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [nextDueDate, setNextDueDate] = useState('');
 
   const [savedIncomeId, setSavedIncomeId] = useState<number | null>(income?.id ?? null);
   const { data: freshIncome } = useIncomeSource(savedIncomeId ?? 0);
@@ -98,6 +101,9 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
         setAmount(parseFloat(income.amount).toString());
         setDescription(income.description || '');
         setIncomeDate(income.income_date.split('T')[0] || income.income_date);
+        setIsRecurring(!!income.is_recurring);
+        setRecurrenceInterval((income.recurrence_interval as typeof recurrenceInterval) ?? 'monthly');
+        setNextDueDate(income.next_due_date?.split('T')[0] || '');
       } else {
         setSavedIncomeId(null);
         setSourceName('');
@@ -105,6 +111,9 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
         setAmount('');
         setDescription('');
         setIncomeDate(new Date().toISOString().split('T')[0]);
+        setIsRecurring(false);
+        setRecurrenceInterval('monthly');
+        setNextDueDate('');
         setLinkUrl('');
         setLinkTitle('');
         setPendingFile(null);
@@ -122,6 +131,9 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
       amount: parseFloat(amount),
       description: description.trim() || null,
       income_date: incomeDate,
+      is_recurring: isRecurring,
+      recurrence_interval: isRecurring ? recurrenceInterval : null,
+      next_due_date: isRecurring ? (nextDueDate || null) : null,
     };
 
     let incomeId: number;
@@ -249,6 +261,55 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
 
         {/* ── Budget ──────────────────────────────────────── */}
         <BudgetPicker value={budgetId} onChange={setBudgetId} budgets={(budgets?.budgets ?? []).map((b) => ({ id: b.id, name: b.name }))} />
+
+        {/* ── Recurring ────────────────────────────────────── */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <Repeat className="w-4 h-4 text-gray-400" /> Repeating income
+            </h3>
+          </div>
+          <div className="p-4 space-y-3">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              This income comes in again on a schedule (e.g. salary, rent)
+            </label>
+            {isRecurring && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeats every</label>
+                  <select
+                    value={recurrenceInterval}
+                    onChange={(e) => setRecurrenceInterval(e.target.value as typeof recurrenceInterval)}
+                    className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  >
+                    <option value="daily">Day</option>
+                    <option value="weekly">Week</option>
+                    <option value="monthly">Month</option>
+                    <option value="yearly">Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Next due (optional)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="date"
+                      value={nextDueDate}
+                      onChange={(e) => setNextDueDate(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* ── Description ──────────────────────────────────── */}
         <div className="rounded-xl border border-gray-200 overflow-hidden">

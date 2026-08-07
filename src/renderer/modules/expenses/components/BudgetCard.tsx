@@ -1,7 +1,7 @@
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { Wallet, Pencil, Trash2, CalendarDays, TrendingUp, TrendingDown } from 'lucide-react';
+import { Wallet, Pencil, Trash2, CalendarDays, TrendingUp, TrendingDown, Eye } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
@@ -13,6 +13,7 @@ interface BudgetCardProps {
   budget: PersonalBudgetSummaryRow;
   onEdit: (budget: PersonalBudgetSummaryRow) => void;
   onDelete: (budget: PersonalBudgetSummaryRow) => void;
+  onView: (budget: PersonalBudgetSummaryRow) => void;
 }
 
 function PacingChart({ pacing }: { pacing: { label: string; budget: number; actual: number }[] }) {
@@ -38,12 +39,12 @@ function PacingChart({ pacing }: { pacing: { label: string; budget: number; actu
   );
 }
 
-export default function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
+export default function BudgetCard({ budget, onEdit, onDelete, onView }: BudgetCardProps) {
   const over = budget.percentage > 100;
   const color = over ? 'bg-red-500' : budget.percentage > 80 ? 'bg-yellow-500' : 'bg-green-500';
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onView(budget)}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -58,7 +59,15 @@ export default function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps
           )}
           {budget.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{budget.description}</p>}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => onView(budget)}
+            className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
+            title="View budget"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
           <button
             type="button"
             onClick={() => onEdit(budget)}
@@ -118,7 +127,10 @@ export default function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps
 
       <PacingChart pacing={budget.pacing} />
 
-      <div className="flex items-center justify-between pt-1">
+      <div className="flex items-center justify-between pt-1" onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="sm" onClick={() => onView(budget)}>
+          <Eye className="w-3.5 h-3.5 mr-1" /> View plan
+        </Button>
         <Button variant="ghost" size="sm" onClick={() => onEdit(budget)}>
           Adjust plan
         </Button>

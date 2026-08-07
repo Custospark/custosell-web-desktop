@@ -189,7 +189,7 @@ export default function StockLedger() {
   return (
     <>
       <Card className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-6 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Stock Ledger</h2>
             <p className="text-sm text-gray-500 mt-1">Inventory movements and audit trail</p>
@@ -203,21 +203,21 @@ export default function StockLedger() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mb-4 flex-wrap shrink-0">
-          <div className="w-64">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 flex-wrap shrink-0">
+          <div className="w-full sm:w-64">
             <select className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
               value={filterProductId} onChange={(e) => setFilterProductId(e.target.value)}>
               <option value="">All Products</option>
               {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
-          <div className="w-48">
+          <div className="w-full sm:w-48">
             <select className="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
               value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               {typeOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:ml-auto">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
               Select All

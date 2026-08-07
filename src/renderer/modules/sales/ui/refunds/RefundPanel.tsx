@@ -178,8 +178,8 @@ export default function RefundPanel() {
           </div>
         )}
 
-        <div className="flex items-center gap-4 mb-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
+          <div className="relative w-full sm:flex-1 sm:min-w-0">
             <div className="relative rounded-lg p-[2px]">
               <motion.div
                 className="absolute inset-0 z-0 rounded-lg"
@@ -198,15 +198,15 @@ export default function RefundPanel() {
               </div>
             </div>
           </div>
-          <BranchFilter value={branchFilter} onChange={setBranchFilter} />
-          <div className="flex items-center gap-2">
+          <BranchFilter className="w-full sm:w-auto" value={branchFilter} onChange={setBranchFilter} />
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-2">
             <button onClick={toggleAll} title="Select all" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               {allSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-400" />}
               Select All
             </button>
             {selectedIds.size > 0 && (
               <button onClick={handleDeleteSelected} disabled={deleteMutation.isPending}
-                className="hidden flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium">
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium">
                 <Trash2 className="w-4 h-4" />
                 Delete ({selectedIds.size})
               </button>

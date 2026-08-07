@@ -41,6 +41,7 @@ export default function SalesHistory() {
   const [search, setSearch] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const branchId = branchFilter ? Number(branchFilter) : null;
   const [paymentsSale, setPaymentsSale] = useState<Sale | null>(null);
   const [invoiceSale, setInvoiceSale] = useState<Sale | null>(null);
   const [existingInvoiceForSale, setExistingInvoiceForSale] = useState<Invoice | null>(null);
@@ -74,7 +75,6 @@ export default function SalesHistory() {
   const filtered = useMemo(() => {
     if (!sales) return [];
     const safe = sales.filter(Boolean) as SaleWithSyncMeta[];
-    const branchId = branchFilter ? Number(branchFilter) : null;
     return safe.filter((s) => {
       if (branchId && s.location_id !== branchId) return false;
       if (statusFilter && s.payment_status !== statusFilter) return false;
@@ -82,7 +82,7 @@ export default function SalesHistory() {
       const q = search.toLowerCase();
       return s.receipt_number.toLowerCase().includes(q);
     });
-  }, [sales, search, branchFilter, statusFilter]);
+  }, [sales, search, branchFilter, statusFilter, branchId]);
 
   const statusCounts = useMemo(() => {
     if (!sales) return {};

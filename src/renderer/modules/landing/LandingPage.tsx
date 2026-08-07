@@ -14,8 +14,6 @@ import {
 } from '../../shared/brand/custosellBrand';
 import { LANDING_MODULES } from './landingModules';
 import TestimonialCarousel from './ui/TestimonialCarousel';
-import { FeatureSeoSections } from './ui/FeatureSeoSections';
-import { SeoFaq } from './ui/SeoFaq';
 import dashboardImg from '../../../../assets/dashboard.png';
 
 const stats = [
@@ -330,9 +328,6 @@ export default function LandingPage() {
           <p className="text-sm text-gray-400">Works offline</p>
         </motion.div>
       </section>
-
-      <FeatureSeoSections />
-      <SeoFaq />
     </>
   );
 }

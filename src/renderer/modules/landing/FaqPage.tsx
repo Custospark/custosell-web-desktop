@@ -26,6 +26,11 @@ const CATEGORIES: { label: string; range: [number, number]; description: string 
     range: [14, 15],
     description: 'Offline capability, security, encryption, and data ownership.',
   },
+  {
+    label: 'Features & Tools',
+    range: [16, 27],
+    description: 'What Custosell includes — POS, accounting, inventory, HR, storefront, CRM, projects, expenses, forecasting, and documents.',
+  },
 ];
 
 function isInRange(item: GuideFaqDto, range: [number, number]): boolean {

@@ -31,7 +31,7 @@ interface BoardMemberCardProps {
   isYou: boolean;
 }function BoardMemberCard({ name, email, avatar, roleLabel, roleBadgeClass, isOwner, isYou }: BoardMemberCardProps) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/60 bg-white/80 p-3 shadow-sm backdrop-blur-sm transition-colors hover:border-blue-200">
+    <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-colors hover:border-blue-200">
       <div className="relative shrink-0">
         <UserAvatar name={name} avatar={avatar} size="md" />
         {isOwner && (
@@ -120,7 +120,7 @@ export default function BoardMembersView({ board, boardId, workspace, canManage 
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5 p-4 sm:p-6">
-      <div className="rounded-xl border border-indigo-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-indigo-600" />
           <h2 className="text-sm font-semibold text-gray-900">Board members</h2>
@@ -151,12 +151,12 @@ export default function BoardMembersView({ board, boardId, workspace, canManage 
       </div>
 
       {!board ? (
-        <p className="rounded-lg border border-dashed border-gray-200 py-6 text-center text-sm text-gray-500">
+        <p className="rounded-lg border border-dashed border-gray-200 bg-white py-6 text-center text-sm text-gray-500">
           Loading members…
         </p>
       ) : isShared ? (
         canManage ? (
-          <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
             <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-blue-900">
               <Users className="h-3.5 w-3.5" />
               Manage members
@@ -171,13 +171,13 @@ export default function BoardMembersView({ board, boardId, workspace, canManage 
             />
           </div>
         ) : (
-          <p className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white/60 px-4 py-3 text-xs text-gray-600">
+          <p className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
             You can view the member roster. Only board owners and managers can invite members or change roles.
           </p>
         )
       ) : (
-        <p className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white/60 px-4 py-3 text-xs text-gray-600">
+        <p className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
           {visibility === 'team'
             ? 'This board is visible to everyone with pipeline or projects access. To control individual access, switch it to Shared from Board settings.'

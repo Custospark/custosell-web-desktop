@@ -24,9 +24,10 @@ import {
   completeOfflineUpdateExpenseCategoryInstant,
   shouldCompleteExpenseCategoryLocally,
 } from '../../../app/store/offline/expenses/completeOfflineExpenseCategory';
-import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { shiftKeys } from '../../shifts/ShiftQueries';
 import { expenseKeys } from '../../../shared/utils/expenseKeys';
+import { budgetKeys } from './BudgetQueries';
+import { dashboardKeys } from '../../dashboard/DashboardQueries'
 import {
   applyExpenseDeleteOptimisticUpdates,
   applyExpenseOptimisticUpdates,
@@ -192,6 +193,7 @@ export function useExpenseCategories() {
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: expenseKeys.all });
   qc.invalidateQueries({ queryKey: expenseKeys.categories() });
+  qc.invalidateQueries({ queryKey: budgetKeys.all });
   qc.invalidateQueries({ queryKey: shiftKeys.all });
   qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
   qc.invalidateQueries({ queryKey: dashboardKeys.branchPerformance() });
@@ -218,9 +220,6 @@ export function useCreateExpense() {
         }
         throw err;
       }
-    },
-    onMutate: async () => {
-      await qc.cancelQueries({ queryKey: expenseKeys.all });
     },
     onSuccess: (expense) => {
       if (!expense) {
@@ -330,8 +329,8 @@ export function useDeleteExpense() {
       applyExpenseDeleteOptimisticUpdates(qc, id, existing?.shift_id);
       return { previous, removed: existing };
     },
-    onSuccess: (_data, id) => {
-      qc.removeQueries({ queryKey: expenseKeys.detail(id) });
+    onSuccess: () => {
+      invalidateAll(qc);
     },
     onError: (e, _id, ctx) => {
       if (ctx?.previous) qc.setQueryData(expenseKeys.list(), ctx.previous);

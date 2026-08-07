@@ -26,6 +26,7 @@ export interface UserInfo {
 export interface Expense {
   id: number;
   business_id: number;
+  budget_id?: number | null;
   expense_category_id: number | null;
   expense_category?: ExpenseCategory | null;
   recorded_by: number | null;
@@ -72,6 +73,7 @@ export interface ExpenseFormPayload {
 
 export interface CreateExpenseData {
   expense_category_id?: number | null;
+  budget_id?: number | null;
   amount: number;
   description: string;
   reference?: string | null;

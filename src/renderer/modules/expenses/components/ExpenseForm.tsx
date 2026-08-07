@@ -5,6 +5,8 @@ import { useExpenseCategories, useCreateExpense, useUpdateExpense } from '../api
 import { useLocations } from '../../settings/api/settings/LocationQueries';
 import { useBillableProjects } from '../../estimates/api/useProjectQueries';
 import { useFixedAssets } from '../../accounting/api/AccountingQueries';
+import { useBudgetsIndex } from '../api/BudgetQueries';
+import BudgetPicker from './BudgetPicker';
 import { cn } from '../../../shared/utils/cn';
 import {
   Tag, DollarSign, Calendar, FileText, Hash, Paperclip, Repeat,
@@ -42,6 +44,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const { data: locations = [] } = useLocations();
   const { data: projects } = useBillableProjects();
   const { data: fixedAssets = [] } = useFixedAssets();
+  const { data: budgets } = useBudgetsIndex({ status: 'active' });
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
   const authShiftId = useAppSelector((s) => s.auth.user?.shift_id ?? null);
@@ -52,6 +55,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const activeShiftId = shiftId ?? authShiftId;
 
   const [categoryId, setCategoryId] = useState('');
+  const [budgetId, setBudgetId] = useState('');
   const [locationId, setLocationId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [fixedAssetId, setFixedAssetId] = useState('');
@@ -80,6 +84,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     queueMicrotask(() => {
       if (expense) {
         setCategoryId(expense.expense_category_id?.toString() || '');
+        setBudgetId(expense.budget_id?.toString() || '');
         setLocationId(expense.location_id?.toString() || '');
         setProjectId('');
         setFixedAssetId(expense.fixed_asset_id?.toString() || '');
@@ -99,6 +104,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
         setAttempted(false);
       } else {
         setCategoryId('');
+        setBudgetId('');
         setLocationId(activeLocationId ? String(activeLocationId) : '');
         setProjectId('');
         setFixedAssetId('');
@@ -147,6 +153,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
     const formData = new FormData();
     if (categoryId) formData.append('expense_category_id', categoryId);
+    if (budgetId) formData.append('budget_id', budgetId);
     if (locationId) formData.append('location_id', locationId);
     if (projectId) formData.append('project_id', projectId);
     if (fixedAssetId) formData.append('fixed_asset_id', fixedAssetId);
@@ -273,6 +280,10 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
           </div>
           )}
         </FormSection>
+
+        {isPersonal && (
+          <BudgetPicker value={budgetId} onChange={setBudgetId} budgets={(budgets?.budgets ?? []).map((b) => ({ id: b.id, name: b.name }))} />
+        )}
 
         {/* Amount & Date */}
         <FormSection icon={DollarSign} title="Amount & Date">

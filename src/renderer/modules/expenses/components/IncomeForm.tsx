@@ -6,6 +6,8 @@ import {
   useUploadIncomeAttachment, useCreateIncomeAttachmentLink, useDeleteIncomeAttachment,
 } from '../api/IncomeQueries';
 import { useIncomeSource } from '../api/IncomeQueries';
+import { useBudgetsIndex } from '../api/BudgetQueries';
+import BudgetPicker from './BudgetPicker';
 import {
   Calendar, FileText, Tag, Paperclip, Link, Trash2, File, Wallet,
 } from 'lucide-react';
@@ -62,10 +64,12 @@ function AttachmentList({ incomeId, attachments }: { incomeId: number; attachmen
 export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
   const createMutation = useCreateIncome();
   const updateMutation = useUpdateIncome();
+  const { data: budgets } = useBudgetsIndex({ status: 'active' });
 
   const isEditing = !!income;
 
   const [sourceName, setSourceName] = useState('');
+  const [budgetId, setBudgetId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [incomeDate, setIncomeDate] = useState(new Date().toISOString().split('T')[0]);
@@ -90,12 +94,14 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
       if (income) {
         setSavedIncomeId(income.id);
         setSourceName(income.source_name);
+        setBudgetId(income.budget_id?.toString() || '');
         setAmount(parseFloat(income.amount).toString());
         setDescription(income.description || '');
         setIncomeDate(income.income_date.split('T')[0] || income.income_date);
       } else {
         setSavedIncomeId(null);
         setSourceName('');
+        setBudgetId('');
         setAmount('');
         setDescription('');
         setIncomeDate(new Date().toISOString().split('T')[0]);
@@ -111,6 +117,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
     if (!sourceName.trim() || !amount) return;
 
     const payload = {
+      budget_id: budgetId ? Number(budgetId) : null,
       source_name: sourceName.trim(),
       amount: parseFloat(amount),
       description: description.trim() || null,
@@ -239,6 +246,9 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
             </div>
           </div>
         </div>
+
+        {/* ── Budget ──────────────────────────────────────── */}
+        <BudgetPicker value={budgetId} onChange={setBudgetId} budgets={(budgets?.budgets ?? []).map((b) => ({ id: b.id, name: b.name }))} />
 
         {/* ── Description ──────────────────────────────────── */}
         <div className="rounded-xl border border-gray-200 overflow-hidden">

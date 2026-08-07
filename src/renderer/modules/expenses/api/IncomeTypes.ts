@@ -16,6 +16,7 @@ export interface IncomeSource {
   id: number;
   business_id: number;
   user_id: number | null;
+  budget_id?: number | null;
   amount: string;
   source_name: string;
   description: string | null;
@@ -26,6 +27,7 @@ export interface IncomeSource {
 }
 
 export interface CreateIncomeData {
+  budget_id?: number | null;
   amount: number;
   source_name: string;
   description?: string | null;

@@ -4,6 +4,7 @@ import { axiosInstance } from '../../../app/api/axiosConfig';
 import { INCOME_SOURCES } from '../../../shared/api/endpoints/endpoints';
 import { EXPENSES } from '../../../shared/api/endpoints/endpoints';
 import type { IncomeSource, CreateIncomeData, UpdateIncomeData, OverviewData, IncomeAttachment, BudgetData } from './IncomeTypes';
+import { budgetKeys } from './BudgetQueries';
 
 export const incomeKeys = {
   all: ['income-sources'] as const,
@@ -92,6 +93,7 @@ export function useCreateIncome() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: incomeKeys.all });
       void qc.invalidateQueries({ queryKey: incomeKeys.overview() });
+      void qc.invalidateQueries({ queryKey: budgetKeys.all });
     },
   });
 }
@@ -106,6 +108,7 @@ export function useUpdateIncome() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: incomeKeys.all });
       void qc.invalidateQueries({ queryKey: incomeKeys.overview() });
+      void qc.invalidateQueries({ queryKey: budgetKeys.all });
     },
   });
 }

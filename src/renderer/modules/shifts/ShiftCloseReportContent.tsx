@@ -1,6 +1,6 @@
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { formatShiftDateTime } from '../../shared/utils/formatDateTime';
-import { PRODUCT_NAME, TAGLINE } from '../../shared/brand/custosellBrand';
+import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { SHIFT_NET_SALES_FORMULA, SHIFT_REPORT_ACCENT, type ShiftCloseReportData } from './shiftCloseReportTypes';
 
 interface ShiftCloseReportContentProps {
@@ -157,11 +157,6 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
       </div>
 
       <footer className="text-center text-[10px] text-gray-400 pt-4 border-t border-gray-200">
-        <p className="text-blue-700 font-semibold mb-0.5">
-          <a href="https://www.custosell.com" className="underline" target="_blank" rel="noreferrer">
-            {TAGLINE}
-          </a>
-        </p>
         <p>
           Powered by{' '}
           <a href="https://www.custosell.com" className="text-blue-600 underline" target="_blank" rel="noreferrer">

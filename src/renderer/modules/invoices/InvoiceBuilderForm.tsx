@@ -253,7 +253,7 @@ export default function InvoiceBuilderForm({
     <>
       <div className={cn(
         'h-full flex gap-6',
-        isModal ? 'flex-col xl:flex-row max-h-[calc(90vh-7rem)]' : 'flex-col lg:flex-row',
+        isModal ? 'flex-col xl:flex-row xl:max-h-[calc(90vh-7rem)]' : 'flex-col lg:flex-row',
       )}>
         <div className={cn('flex-1 flex flex-col min-w-0', isModal && 'min-h-0')}>
           <div className={cn('mb-4 pb-3 border-b border-gray-200', isModal && 'mb-3 pb-2')}>

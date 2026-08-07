@@ -254,7 +254,7 @@ export function PlatformUserPrivilegesModal({
 
         {!isStorefront && (
         <PipelineFormSection title="Subscription" icon={CreditCard} description="Plan, billing cycle, status, onboarding fee, and the status date.">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <PipelineIconField label="Plan" icon={CreditCard}>
               <select
                 value={planId}
@@ -285,7 +285,7 @@ export function PlatformUserPrivilegesModal({
             <p className="text-xs text-emerald-600">Creates and activates this plan.</p>
           )}
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <PipelineIconField label="Subscription status" icon={ShieldCheck}>
               <select
                 value={subscriptionStatus}

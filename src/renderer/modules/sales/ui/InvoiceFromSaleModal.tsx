@@ -131,9 +131,9 @@ export default function InvoiceFromSaleModal({
   const hasSaleDiscount = useMemo(() => {
     if (isViewingExisting) return false;
     if (isLinkedSale) return false;
-    if (discountAmount <= 0) return false;
     const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
     if (subtotal <= 0) return false;
+    if (discountAmount <= 0) return false;
     const discountValue = discountType === 'percentage'
       ? Math.min(subtotal * (discountAmount / 100), subtotal)
       : Math.min(discountAmount, subtotal);

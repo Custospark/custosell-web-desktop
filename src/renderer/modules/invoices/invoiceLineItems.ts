@@ -22,6 +22,22 @@ export function newLineKey(productId?: number | null): string {
   return `new-${productId ?? 'custom'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/**
+ * Fold a per-line discount into the unit price so the invoice line total equals
+ * the discounted amount the customer actually paid (invoice lines carry no
+ * discount field). Falls back to the raw unit price when qty is 0.
+ */
+function lineNetUnitPrice(
+  unitPrice: number,
+  quantity: number,
+  discountAmount?: string | number | null,
+): number {
+  const qty = Math.max(0, quantity);
+  const discount = Number(discountAmount ?? 0);
+  if (qty <= 0) return unitPrice;
+  return Math.max(0, (unitPrice * qty - discount) / qty);
+}
+
 function enrichFromProduct(item: InvoiceItem, products?: Product[]): Pick<InvoiceLineItem, 'unit' | 'tax_percentage' | 'tax_class'> {
   if (!item.product_id || !products?.length) {
     return { unit: null, tax_percentage: null, tax_class: null };
@@ -65,6 +81,7 @@ export function cartItemsToLineItems(
     name: string;
     unit_price: number;
     quantity: number;
+    discount_amount?: number;
     unit?: string | null;
     tax_percentage?: number | string | null;
     tax_class?: string | null;
@@ -74,7 +91,7 @@ export function cartItemsToLineItems(
     lineKey: `cart-${item.product_id}`,
     product_id: item.product_id,
     name: item.name,
-    unit_price: Number(item.unit_price),
+    unit_price: lineNetUnitPrice(item.unit_price, item.quantity, item.discount_amount),
     quantity: Number(item.quantity),
     unit: item.unit ?? null,
     tax_percentage: item.tax_percentage != null ? String(item.tax_percentage) : null,
@@ -82,7 +99,7 @@ export function cartItemsToLineItems(
   }));
 }
 
-/** Map completed sale lines into invoice builder rows (net of refunds). */
+/** Map completed sale lines into invoice builder rows (net of refunds and per-line discounts). */
 export function saleItemsToLineItems(
   saleItems: {
     id: number;
@@ -90,6 +107,7 @@ export function saleItemsToLineItems(
     product_name: string;
     unit_price: string | number;
     quantity: number;
+    discount_amount?: string | number;
     refunded_quantity?: number;
   }[],
 ): InvoiceLineItem[] {
@@ -100,7 +118,7 @@ export function saleItemsToLineItems(
         lineKey: `sale-item-${item.id}`,
         product_id: item.product_id,
         name: item.product_name,
-        unit_price: Number(item.unit_price),
+        unit_price: lineNetUnitPrice(Number(item.unit_price), netQty, item.discount_amount),
         quantity: netQty,
         unit: null,
         tax_percentage: null,

@@ -45,7 +45,7 @@ function TierPicker({ item, onTierChange }: { item: CartItem; onTierChange: Sale
 /** Per-line discount input, shared by the desktop table and mobile card. */
 function LineDiscountInput({ item, onDiscountChange, fluid = false }: { item: CartItem; onDiscountChange: SaleCartTableProps['onDiscountChange']; fluid?: boolean }) {
   return (
-    <div className={fluid ? 'flex-1 min-w-0' : 'w-24'}>
+    <div className={fluid ? 'flex-1 min-w-0' : 'w-24 mx-auto'}>
       <MoneyInput
         title={`Line discount for ${item.name}`}
         value={item.discount_amount}

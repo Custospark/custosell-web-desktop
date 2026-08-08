@@ -1,4 +1,4 @@
-import { Plus, Minus, Trash } from 'lucide-react';
+import { Plus, Minus, Trash, Pencil } from 'lucide-react';
 import type { CartItem } from '../api/salesTypes';
 import type { Product } from '../../inventory/api/products/ProductTypes';
 import { tracksStock, SERVICE_QTY_SOFT_CAP } from '../../inventory/api/products/ProductTypes';
@@ -74,9 +74,12 @@ function QtyStepper(
         <Minus className="w-4 h-4" />
       </button>
       <span title="Click to edit quantity"
-        className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors"
+        className="w-14 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors flex flex-col items-center leading-tight"
         onClick={() => onEditQty(item, product)}>
-        {item.quantity}
+        <span>{item.quantity}</span>
+        <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-blue-500">
+          <Pencil className="w-2.5 h-2.5" /> edit
+        </span>
       </span>
       <button title={atMax ? `Only ${maxStock} in stock` : 'Increase quantity'} type="button"
         onClick={() => onIncreaseQty(item)}

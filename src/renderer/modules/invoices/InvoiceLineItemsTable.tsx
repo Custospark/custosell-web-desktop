@@ -1,4 +1,4 @@
-import { Plus, Minus, Trash, ShoppingCart, RotateCcw, BadgePercent } from 'lucide-react';
+import { Plus, Minus, Trash, ShoppingCart, RotateCcw, BadgePercent, Pencil } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { MoneyInput } from '../../shared/components/inputs/MoneyInput';
@@ -112,9 +112,12 @@ export function InvoiceLineItemsTable({
                             productName: item.name,
                             currentQty: item.quantity,
                           })}
-                          className="w-12 text-center text-base font-semibold text-gray-900 tabular-nums hover:text-blue-600"
+                          className="w-14 text-center text-base font-semibold text-gray-900 tabular-nums hover:text-blue-600 flex flex-col items-center leading-tight"
                         >
-                          {item.quantity}
+                          <span>{item.quantity}</span>
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-blue-500">
+                            <Pencil className="w-2.5 h-2.5" /> edit
+                          </span>
                         </button>
                         <button
                           type="button"

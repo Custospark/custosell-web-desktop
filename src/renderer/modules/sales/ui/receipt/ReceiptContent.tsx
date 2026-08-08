@@ -19,7 +19,13 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
   const discount = parseFloat(sale.discount_amount);
   const taxTotal = parseFloat(sale.tax_total || '0');
   const subtotalBeforeDiscount = Math.max(0, parseFloat(sale.subtotal) + discount);
-  const totalRefunded = (sale.sale_items ?? []).reduce((sum, i) => sum + parseFloat(i.refunded_amount || '0'), 0);
+  const saleItems = sale.sale_items ?? [];
+  // Re-flow each line: unit_price × qty − per-line discount (before the global checkout discount).
+  const lineTotal = (item: Sale['sale_items'][number]) =>
+    Math.max(0, parseFloat(item.unit_price) * item.quantity - parseFloat(item.discount_amount ?? '0'));
+  const linesTotal = saleItems.reduce((sum, i) => sum + lineTotal(i), 0);
+  const subtotalRow = linesTotal > 0 ? linesTotal : subtotalBeforeDiscount;
+  const totalRefunded = saleItems.reduce((sum, i) => sum + parseFloat(i.refunded_amount || '0'), 0);
   const netAmount = Math.max(0, Math.round((parseFloat(sale.total_amount) - totalRefunded) * 100) / 100);
   const amountPaid = parseFloat(String(sale.amount_paid ?? sale.total_amount));
   const balanceDue = Math.max(0, netAmount - amountPaid);
@@ -107,7 +113,11 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
                 <tr key={item.id} className={i < (sale.sale_items?.length ?? 0) - 1 ? 'border-b border-dashed border-gray-300' : ''}>
                   <td className="py-1 text-gray-800 pr-2 break-words">
                     <span>{cleanProductName(item.product_name)}</span>
-                    {refunded && <span className="ml-1.5 text-xs text-red-500">({item.refunded_quantity} refunded)</span>}
+                    {refunded && (
+                      <span className="block ml-0 text-[10px] text-red-500">
+                        {item.refunded_quantity} refunded −{parseFloat(item.refunded_amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
                     {lineDiscount > 0 && (
                       <span className="block text-[10px] text-green-600">
                         disc −{lineDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -119,7 +129,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
                     <span>{unit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     <span className="ml-1 text-[9px] font-semibold text-gray-500">{tierLabel === 'WSP' ? '(WSP)' : '(RP)'}</span>
                   </td>
-                  <td className="py-1 text-right text-gray-800 pl-2 whitespace-nowrap">{parseFloat(item.subtotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td className="py-1 text-right text-gray-800 pl-2 whitespace-nowrap">{lineTotal(item).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                 </tr>
               );
             })}
@@ -130,7 +140,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
         <div className="border-t border-dashed border-gray-400 pt-2 mb-2 space-y-0.5 text-xs">
           <div className="flex justify-between">
             <span className="text-gray-500">Subtotal</span>
-            <span className="text-gray-700">{formatCurrency(subtotalBeforeDiscount)}</span>
+            <span className="text-gray-700">{formatCurrency(subtotalRow)}</span>
           </div>
           {discount > 0 && (
             <div className="flex justify-between">

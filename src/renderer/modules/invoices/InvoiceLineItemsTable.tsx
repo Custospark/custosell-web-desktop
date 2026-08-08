@@ -58,12 +58,12 @@ export function InvoiceLineItemsTable({
             <table className="w-full min-w-[560px]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Price</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Item</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Price</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Discount</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-                  <th className="px-4 py-3 w-10" />
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
+                  <th className="px-4 py-3 w-10 text-center" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -72,7 +72,7 @@ export function InvoiceLineItemsTable({
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-gray-800">{item.name}</span>
                     </td>
-                    <td className="px-4 py-3 text-right hidden sm:table-cell">
+                    <td className="px-4 py-3 text-center hidden sm:table-cell">
                       <span className="text-sm text-gray-600">{formatCurrency(item.unit_price)}</span>
                       {item.priceTier && (
                         <span className="ml-1.5 text-[10px] font-semibold text-gray-400">
@@ -126,7 +126,7 @@ export function InvoiceLineItemsTable({
                         </button>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-center">
                       <span className="text-sm font-bold text-gray-900">{formatCurrency(lineNetTotal(item))}</span>
                     </td>
                     <td className="px-4 py-3 text-center">

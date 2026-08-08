@@ -414,8 +414,8 @@ export default function RefundPanel() {
                             </div>
                             <div className="text-right w-24">
                               <p className="text-sm font-semibold text-gray-800">{formatCurrency(refundAmount)}</p>
-                              {selectedQty > 0 && discountRatio > 0 && (
-                                <p className="text-xs text-green-600">-{formatCurrency(proportionalDiscount)} disc</p>
+                              {selectedQty > 0 && refundAmount > 0 && (
+                                <p className="text-xs text-green-600">refund amount</p>
                               )}
                             </div>
                           </div>

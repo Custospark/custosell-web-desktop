@@ -101,12 +101,12 @@ export function SaleCartDesktopTable({
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Line discount</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Line discount</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
             </tr>
           </thead>
@@ -115,21 +115,21 @@ export function SaleCartDesktopTable({
               const product = products?.find((p) => p.id === item.product_id);
               return (
                 <tr key={`${item.product_id}-${item.price_tier}`} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-sm text-gray-400">{idx + 1}</td>
+                  <td className="px-4 py-3 text-center text-sm text-gray-400">{idx + 1}</td>
                   <td className="px-4 py-3">
                     <span className="text-sm font-medium text-gray-800 truncate block max-w-[150px] sm:max-w-none">{item.name}</span>
                     <div className="mt-1"><TierPicker item={item} onTierChange={onTierChange} /></div>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-center">
                     <span className="text-sm text-gray-600 whitespace-nowrap">{formatCurrency(item.unit_price)}{item.unit ? ` / ${item.unit}` : ''}</span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-center">
                     <LineDiscountInput item={item} onDiscountChange={onDiscountChange} />
                   </td>
                   <td className="px-4 py-3">
                     {QtyStepper(item, product, onEditQty, onDecreaseQty, onIncreaseQty)}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-center">
                     <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{formatCurrency(lineSubtotal(item))}</span>
                   </td>
                   <td className="px-4 py-3 text-center">

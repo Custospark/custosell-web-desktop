@@ -120,7 +120,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
                     )}
                     {lineDiscount > 0 && (
                       <span className="block text-[10px] text-green-600">
-                        disc −{lineDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        Disc −{lineDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     )}
                   </td>

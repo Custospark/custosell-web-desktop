@@ -11,7 +11,9 @@ const TOKEN_CLASS = {
 } as const;
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 interface LeadSearchHintProps {

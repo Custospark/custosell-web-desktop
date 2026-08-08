@@ -76,20 +76,28 @@ export function parseLeadSearchQuery(raw: string): ParsedLeadSearch {
   };
 }
 
-function todayUtcDateString(): string {
-  return new Date().toISOString().slice(0, 10);
+function toLocalDateString(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function todayLocalDateString(): string {
+  return toLocalDateString(new Date());
 }
 
 function leadDueDateString(lead: PipelineLead): string | null {
   const raw = lead.due_date ?? lead.expected_close_date;
   if (!raw) return null;
-  return raw.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  return toLocalDateString(d);
 }
 
 function matchesDueFilter(lead: PipelineLead, filter: ParsedLeadSearch['dueFilter']): boolean {
   if (!filter) return true;
   const dueStr = leadDueDateString(lead);
-  const todayStr = todayUtcDateString();
+  const todayStr = todayLocalDateString();
 
   if (filter === 'overdue') {
     if (lead.status !== 'open') return false;
@@ -101,8 +109,8 @@ function matchesDueFilter(lead: PipelineLead, filter: ParsedLeadSearch['dueFilte
   if (filter === 'week') {
     if (!dueStr) return false;
     const end = new Date();
-    end.setUTCDate(end.getUTCDate() + 7);
-    const endStr = end.toISOString().slice(0, 10);
+    end.setDate(end.getDate() + 7);
+    const endStr = toLocalDateString(end);
     return dueStr >= todayStr && dueStr <= endStr;
   }
   if (typeof filter === 'string') {

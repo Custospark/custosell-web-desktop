@@ -177,8 +177,9 @@ export function usePipelineCalendar(
   return useQuery<PipelineCalendarDay[]>({
     queryKey: pipelineKeys.calendar(boardId, year, month, dateField),
     queryFn: async () => {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const { data } = await axiosInstance.get(
-        `${PIPELINE.BOARD_CALENDAR(boardId)}?year=${year}&month=${month}&date_field=${dateField}`,
+        `${PIPELINE.BOARD_CALENDAR(boardId)}?year=${year}&month=${month}&date_field=${dateField}&timezone=${encodeURIComponent(tz)}`,
       );
       return normalizeList<PipelineCalendarDay>(data);
     },
@@ -196,8 +197,9 @@ export function useAllBoardsCalendar(
   return useQuery<PipelineCalendarDay[]>({
     queryKey: [...pipelineKeys.all, 'calendar', 'all', workspace, year, month, dateField],
     queryFn: async () => {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const { data } = await axiosInstance.get(
-        `${PIPELINE.ALL_BOARDS_CALENDAR}?year=${year}&month=${month}&date_field=${dateField}&workspace=${workspace}`,
+        `${PIPELINE.ALL_BOARDS_CALENDAR}?year=${year}&month=${month}&date_field=${dateField}&workspace=${workspace}&timezone=${encodeURIComponent(tz)}`,
       );
       return normalizeList<PipelineCalendarDay>(data);
     },

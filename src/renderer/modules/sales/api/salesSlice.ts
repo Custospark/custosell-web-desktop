@@ -6,7 +6,7 @@ const initialState: SalesState = {
   paymentMethod: 'cash',
   customerId: null,
   discountAmount: 0,
-  discountType: 'percentage',
+  discountType: 'fixed',
   notes: '',
   amountTendered: 0,
   activeOrderId: null,

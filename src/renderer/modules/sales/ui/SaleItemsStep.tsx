@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp'
 import { addToCart, updateQuantity, removeFromCart, clearCart, setCustomer, setDiscount, setLineTier, setLineDiscount, setAllLinesWholesale, setAllLinesRetail } from '../api/salesSlice';
 import { useOpenOrders } from '../api/orders/useOrderQueries';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { Search, Plus, ShoppingCart, X, RotateCcw, PauseCircle, FileText, Save, ListOrdered } from 'lucide-react';
+import { Search, Plus, ShoppingCart, X, RotateCcw, PauseCircle, FileText, Save, ListOrdered, ShoppingBag, Package } from 'lucide-react';
 import { ProductSearchThumb } from './ProductSearchThumb';
 import HeldOrdersModal from './HeldOrdersModal';
 import HoldOrderModal from './HoldOrderModal';
@@ -305,18 +305,21 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
             </span>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <div className="flex rounded-md border border-gray-200 overflow-hidden">
-                {(['retail', 'wholesale'] as const).map((mode) => {
+                {([
+                  { mode: 'retail', label: 'Retail all', icon: ShoppingBag, activeClass: 'bg-blue-600 text-white', inactiveClass: 'bg-white text-blue-600 hover:bg-blue-50' },
+                  { mode: 'wholesale', label: 'Wholesale all', icon: Package, activeClass: 'bg-green-600 text-white', inactiveClass: 'bg-white text-green-600 hover:bg-green-50' },
+                ] as const).map(({ mode, label, icon: Icon, activeClass, inactiveClass }) => {
                   const active = cartItems.every((c) => c.price_tier === mode);
                   return (
                     <button
                       key={mode}
                       title={mode === 'retail' ? 'Charge all lines at retail price' : 'Charge all lines at wholesale price'}
                       onClick={() => dispatch(mode === 'retail' ? setAllLinesRetail() : setAllLinesWholesale())}
-                      className={`px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                        active ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                      className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                        active ? activeClass : inactiveClass
                       }`}
                     >
-                      {mode === 'retail' ? 'Retail all' : 'Wholesale all'}
+                      <Icon className="w-3.5 h-3.5" /> {label}
                     </button>
                   );
                 })}

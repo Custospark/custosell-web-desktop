@@ -22,6 +22,7 @@ import SaleCompletedModal from './SaleCompletedModal';
 import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { computeSaleTax } from '../../../shared/utils/taxEngine';
+import { formatTendered, parseTendered } from '../../../shared/utils/moneyInput';
 import { Button } from '../../../shared/components/buttons/Button';
 import { StickyMobileSummary } from './StickyMobileSummary';
 
@@ -33,17 +34,6 @@ const PAY_TITLES = {
   card: 'Pay with card',
   other: 'Pay with another method (e.g. cheque, credit, voucher)',
 };
-
-function formatTendered(raw: string): string {
-  let cleaned = raw.replace(/[^\d.]/g, '');
-  const firstDot = cleaned.indexOf('.');
-  if (firstDot !== -1) {
-    cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '').slice(0, 2);
-  }
-  const [int = '', dec] = cleaned.split('.');
-  const intFormatted = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return dec !== undefined ? `${intFormatted}.${dec}` : intFormatted;
-}
 
 interface BillingControlsProps {
   onBack?: () => void;
@@ -97,7 +87,7 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
     }
   }, [contact, customerId, dispatch]);
 
-  const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity, 0);
+  const subtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity - (c.discount_amount ?? 0), 0);
   const discountValue = discountType === 'percentage'
     ? Math.min(subtotal * (discountAmount / 100), subtotal)
     : Math.min(discountAmount, subtotal);
@@ -287,8 +277,7 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
                   onChange={(e) => {
                     const formatted = formatTendered(e.target.value);
                     setTenderedText(formatted);
-                    const num = Math.round((parseFloat(formatted.replace(/,/g, '')) || 0) * 100) / 100;
-                    dispatch(setAmountTendered(num));
+                    dispatch(setAmountTendered(parseTendered(formatted)));
                   }}
                   onFocus={(e) => {
                     setTenderedText(amountTendered > 0 ? formatTendered(String(amountTendered)) : '');
@@ -339,8 +328,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
                     onChange={(e) => {
                       const formatted = formatTendered(e.target.value);
                       setDiscountText(formatted);
-                      const num = Math.round((parseFloat(formatted.replace(/,/g, '')) || 0) * 100) / 100;
-                      dispatch(setDiscount(num));
+                      dispatch(setDiscount(parseTendered(formatted)));
                     }}
                     onFocus={(e) => {
                       setDiscountText(discountAmount > 0 ? formatTendered(String(discountAmount)) : '');
@@ -371,7 +359,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
               {(discountValue > 0 || taxBreakdown.taxEnabled) && (
                 <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
                   <span>{taxBreakdown.taxEnabled ? 'Subtotal (excl. VAT)' : 'Subtotal'}</span>
-                  <span>{formatCurrency(taxBreakdown.taxEnabled ? taxBreakdown.subtotalNet + taxBreakdown.discountAmount : subtotal)}</span>
+                  <span>{formatCurrency(taxBreakdown.taxEnabled ? taxBreakdown.subtotalNet + taxBreakdown.discountAmount : taxBreakdown.grossBeforeDiscount)}</span>
                 </div>
               )}
               {discountValue > 0 && (

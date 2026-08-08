@@ -12,11 +12,13 @@ interface Props {
   productName: string;
   currentQty: number;
   maxQty: number;
+  /** Price tier of the cart line; disambiguates when the same product is added at both retail and wholesale. */
+  tier?: 'retail' | 'wholesale';
   /** When set, updates quantity via callback instead of the sales cart slice. */
   onConfirm?: (quantity: number) => void;
 }
 
-export default function QuantityEditModal({ open, onClose, productId, productName, currentQty, maxQty, onConfirm }: Props) {
+export default function QuantityEditModal({ open, onClose, productId, productName, currentQty, maxQty, tier, onConfirm }: Props) {
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(String(currentQty));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,7 +38,7 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
       if (maxQty > 0 && n > maxQty) return;
       onConfirm(n);
     } else if (n <= maxQty) {
-      dispatch(updateQuantity({ product_id: productId, quantity: n }));
+      dispatch(updateQuantity({ product_id: productId, tier, quantity: n }));
     }
     onClose();
   };

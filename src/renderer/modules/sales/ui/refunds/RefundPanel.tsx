@@ -372,6 +372,7 @@ export default function RefundPanel() {
                   const itemSubtotal = parseFloat(item.unit_price) * selectedQty;
                   const proportionalDiscount = itemSubtotal * discountRatio;
                   const refundAmount = Math.round((itemSubtotal - proportionalDiscount) * 100) / 100;
+                  const lineDiscount = parseFloat(item.discount_amount ?? '0');
                   return (
                     <div key={item.id} className={`rounded-lg border p-3.5 ${item.refunded_quantity > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
                       {maxRefundable > 0 ? (
@@ -380,6 +381,7 @@ export default function RefundPanel() {
                             <p className="text-sm font-medium text-gray-800 truncate">{item.product_name}</p>
                             <p className="text-xs text-gray-500 mt-0.5">
                               Sold: {item.quantity} × {formatCurrency(item.unit_price)}
+                              {lineDiscount > 0 && <span> · line disc. {formatCurrency(lineDiscount)}</span>}
                               {discountRatio > 0 && <span> · incl. {Math.round(discountRatio * 100)}%</span>}
                             </p>
                             {item.refunded_quantity > 0 && (

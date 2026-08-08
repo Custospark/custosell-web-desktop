@@ -35,6 +35,7 @@ export function buildLocalOrder(payload: CreateOrderPayload): OrderWithSyncMeta 
       product_id: item.product_id ?? null,
       product_name: item.product_name ?? 'Item',
       product_price: item.product_price ?? item.unit_price,
+      wholesale_price: item.wholesale_price ?? null,
       quantity: item.quantity,
       unit_price: item.unit_price,
       subtotal: item.subtotal ?? item.unit_price * item.quantity,
@@ -55,8 +56,8 @@ export async function persistOfflineOrderInBackground(
   mutationType: 'create' | 'update' | 'cancel',
 ): Promise<void> {
   let mutationId = '';
-  let method: 'POST' | 'PUT' = 'POST';
-  let url = '/orders';
+  let method: 'POST' | 'PUT';
+  let url: string;
   let data: unknown = payload;
 
   if (mutationType === 'create') {
@@ -107,19 +108,20 @@ export function completeOfflineUpdateOrderInstant(
     ...payload,
     customer_name: payload.customer_name ?? order.customer_name,
     notes: payload.notes ?? order.notes,
-    items: payload.items
-      ? payload.items.map((item, index) => ({
-          id: -(index + 1),
-          product_id: item.product_id ?? null,
-          product_name: item.product_name ?? 'Item',
-          product_price: item.product_price ?? item.unit_price,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          subtotal: item.subtotal ?? item.unit_price * item.quantity,
-          tax_amount: item.tax_amount ?? 0,
-          discount_amount: item.discount_amount ?? 0,
-        }))
-      : order.items,
+items: payload.items
+          ? payload.items.map((item, index) => ({
+              id: -(index + 1),
+              product_id: item.product_id ?? null,
+              product_name: item.product_name ?? 'Item',
+              product_price: item.product_price ?? item.unit_price,
+              wholesale_price: item.wholesale_price ?? null,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              subtotal: item.subtotal ?? item.unit_price * item.quantity,
+              tax_amount: item.tax_amount ?? 0,
+              discount_amount: item.discount_amount ?? 0,
+            }))
+          : order.items,
     updated_at: new Date().toISOString(),
     held_at: new Date().toISOString(),
     _pendingSync: true,

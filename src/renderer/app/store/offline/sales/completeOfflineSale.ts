@@ -33,6 +33,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
     return {
       quantity: item.quantity,
       unit_price: item.unit_price,
+      discount_amount: item.discount_amount ?? 0,
       tax_percentage: product?.tax_percentage ?? null,
       tax_class: product?.tax_class ?? 'standard',
     };
@@ -96,9 +97,9 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
       product_price: item.unit_price.toString(),
       quantity: item.quantity,
       unit_price: item.unit_price.toString(),
-      subtotal: (item.quantity * item.unit_price).toString(),
+      subtotal: (item.quantity * item.unit_price - (item.discount_amount ?? 0)).toString(),
       tax_amount: (taxBreakdown.lineTaxAmounts[i] ?? 0).toString(),
-      discount_amount: '0',
+      discount_amount: item.discount_amount != null ? item.discount_amount.toString() : '0',
       refunded_quantity: 0,
       refunded_amount: '0',
     })),

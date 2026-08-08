@@ -30,37 +30,88 @@ const salesSlice = createSlice({
       product_id: number;
       name: string;
       unit_price: number;
+      wholesale_price?: number | null;
       unit?: string | null;
       tax_percentage?: number | string | null;
       tax_class?: string | null;
+      price_tier?: 'retail' | 'wholesale';
     }>) {
-      const existing = state.cartItems.find((c) => c.product_id === action.payload.product_id);
+      const tier = action.payload.price_tier ?? 'retail';
+      const wholesale = action.payload.wholesale_price ?? null;
+      const effective = tier === 'wholesale' && wholesale != null ? wholesale : action.payload.unit_price;
+      const existing = state.cartItems.find(
+        (c) => c.product_id === action.payload.product_id && c.price_tier === tier,
+      );
       if (existing) {
         existing.quantity += 1;
+        existing.unit_price = effective;
       } else {
         state.cartItems.push({
           product_id: action.payload.product_id,
           name: action.payload.name,
-          unit_price: action.payload.unit_price,
+          unit_price: effective,
           unit: action.payload.unit,
           tax_percentage: action.payload.tax_percentage ?? null,
           tax_class: action.payload.tax_class ?? 'standard',
           quantity: 1,
           discount_amount: 0,
+          price_tier: tier,
+          retail_price: action.payload.unit_price,
+          _wholesale_price: wholesale,
         });
       }
     },
-    updateQuantity(state, action: PayloadAction<{ product_id: number; quantity: number }>) {
+    updateQuantity(state, action: PayloadAction<{ product_id: number; tier?: 'retail' | 'wholesale'; quantity: number }>) {
       const { product_id, quantity } = action.payload;
-      if (quantity <= 0) {
-        state.cartItems = state.cartItems.filter((c) => c.product_id !== product_id);
+      let item: CartItem | undefined;
+      if (action.payload.tier) {
+        item = state.cartItems.find((c) => c.product_id === product_id && c.price_tier === action.payload.tier);
       } else {
-        const item = state.cartItems.find((c) => c.product_id === product_id);
-        if (item) item.quantity = quantity;
+        item = state.cartItems.find((c) => c.product_id === product_id);
+      }
+      if (quantity <= 0) {
+        state.cartItems = item ? state.cartItems.filter((c) => c !== item) : state.cartItems;
+      } else if (item) {
+        item.quantity = quantity;
       }
     },
-    removeFromCart(state, action: PayloadAction<number>) {
-      state.cartItems = state.cartItems.filter((c) => c.product_id !== action.payload);
+    removeFromCart(state, action: PayloadAction<{ product_id: number; tier?: 'retail' | 'wholesale' }>) {
+      state.cartItems = action.payload.tier
+        ? state.cartItems.filter((c) => !(c.product_id === action.payload.product_id && c.price_tier === action.payload.tier))
+        : state.cartItems.filter((c) => c.product_id !== action.payload.product_id);
+    },
+    setLineTier(state, action: PayloadAction<{ product_id: number; tier: 'retail' | 'wholesale' }>) {
+      const item = state.cartItems.find(
+        (c) => c.product_id === action.payload.product_id && c.price_tier !== action.payload.tier,
+      );
+      if (!item) return;
+      item.price_tier = action.payload.tier;
+      item.unit_price = action.payload.tier === 'wholesale' && item._wholesale_price != null
+        ? item._wholesale_price
+        : item.retail_price;
+    },
+    setLineDiscount(state, action: PayloadAction<{ product_id: number; discountAmount: number }>) {
+      const item = state.cartItems.find((c) => c.product_id === action.payload.product_id);
+      if (item) {
+        item.discount_amount = Math.max(0, action.payload.discountAmount);
+      }
+    },
+    /** Charge every cart line at wholesale where the product has a wholesale price. */
+    setAllLinesWholesale(state) {
+      state.cartItems.forEach((c) => {
+        if (c.price_tier === 'wholesale') return;
+        if (c._wholesale_price == null) return;
+        c.price_tier = 'wholesale';
+        c.unit_price = c._wholesale_price;
+      });
+    },
+    /** Reset every wholesale line back to its retail price. */
+    setAllLinesRetail(state) {
+      state.cartItems.forEach((c) => {
+        if (c.price_tier === 'retail') return;
+        c.price_tier = 'retail';
+        c.unit_price = c.retail_price;
+      });
     },
     clearCart(state) {
       state.cartItems = [];
@@ -124,6 +175,7 @@ export const {
   addToCart, updateQuantity, removeFromCart, clearCart,
   setPaymentMethod, setCustomer, setDiscount, setDiscountType, setNotes, setAmountTendered,
   setActiveOrderId, resumeOrderToCart, loadOrderForUpdate, resetSales,
+  setLineTier, setLineDiscount, setAllLinesWholesale, setAllLinesRetail,
 } = salesSlice.actions;
 
 export default salesSlice.reducer;

@@ -1,3 +1,5 @@
+export type CartPriceTier = 'retail' | 'wholesale';
+
 export interface CartItem {
   product_id: number;
   name: string;
@@ -5,6 +7,12 @@ export interface CartItem {
   quantity: number;
   discount_amount: number;
   unit?: string | null;
+  /** Active price tier for this line — wholesale uses wholesale_price as unit_price. */
+  price_tier: CartPriceTier;
+  /** Fixed retail price captured at add time (so tier toggling offline is stable). */
+  retail_price: number;
+  /** Product's wholesale price when set; null otherwise (wholesale toggle hidden). */
+  _wholesale_price: number | null;
   tax_percentage?: number | string | null;
   tax_class?: 'standard' | 'exempt' | 'zero_rated' | string | null;
 }

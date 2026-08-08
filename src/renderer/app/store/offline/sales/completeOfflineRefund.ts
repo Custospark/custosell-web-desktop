@@ -28,7 +28,8 @@ export function applyRefundToSale(sale: Sale, refundData: RefundData): Sale {
 
     const refundAmount =
       refundItem.amount ??
-      parseFloat(item.unit_price) * refundItem.quantity;
+      (parseFloat(item.subtotal || '0') + parseFloat(item.tax_amount || '0')) *
+        (refundItem.quantity / Math.max(1, item.quantity));
     const newRefundedQty = item.refunded_quantity + refundItem.quantity;
     const newRefundedAmount = parseFloat(item.refunded_amount || '0') + refundAmount;
     const lineTax = parseFloat(item.tax_amount || '0');

@@ -120,13 +120,19 @@ export function saleItemsToLineItems(
       const retailPrice = Number(item.product_price ?? 0);
       const tier = item.price_tier
         ?? (retailPrice > 0 && unitPrice < retailPrice ? 'wholesale' : 'retail');
+      const lineDiscount = Number(item.discount_amount ?? 0);
+      // Prorate the line discount to the un-refunded quantity so the invoice
+      // reflects exactly what is still owed on this line.
+      const proratedDiscount = item.quantity > 0
+        ? Math.round((lineDiscount * (netQty / item.quantity)) * 100) / 100
+        : 0;
       return {
         lineKey: `sale-item-${item.id}`,
         product_id: item.product_id,
         name: item.product_name,
         unit_price: unitPrice,
         quantity: netQty,
-        discount_amount: Number(item.discount_amount ?? 0),
+        discount_amount: proratedDiscount,
         unit: null,
         tax_percentage: null,
         tax_class: null,

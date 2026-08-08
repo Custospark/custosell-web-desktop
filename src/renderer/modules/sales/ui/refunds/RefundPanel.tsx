@@ -18,6 +18,7 @@ import { useConfirm } from '../../../../shared/components/Feedback/ConfirmContex
 import { motion } from 'framer-motion';
 import { RotateCcw, Search, Receipt, Trash2, CheckSquare, Square, WifiOff } from 'lucide-react';
 import type { SaleWithSyncMeta } from '../../../../app/store/offline/sales/localSalesStore';
+import type { SaleItem } from '../../api/salesTypes';
 import { grossSaleAmount, netSaleAmount, refundedAmount } from '../../utils/saleAmounts';
 import BranchFilter from '../../../../shared/components/filters/BranchFilter';
 import StatusFilter, { SALE_STATUS_FILTERS } from '../../../../shared/components/filters/StatusFilter';
@@ -82,9 +83,16 @@ export default function RefundPanel() {
     return counts;
   }, [sales, branchId, receiptSearch]);
 
-  const saleSubtotal = selectedSale ? parseFloat(selectedSale.subtotal) : 0;
   const saleDiscount = selectedSale ? parseFloat(selectedSale.discount_amount) : 0;
-  const discountRatio = saleSubtotal > 0 ? saleDiscount / saleSubtotal : 0;
+  const salePaid = selectedSale ? parseFloat(selectedSale.amount_paid || '0') : 0;
+  const saleTotal = selectedSale ? parseFloat(selectedSale.total_amount) : 0;
+
+  /** Portion of the line the customer actually paid, post line + global discounts (incl. tax). */
+  const refundLineAmount = (saleItem: SaleItem, qty: number) => {
+    if (!saleItem || qty <= 0) return 0;
+    const perUnit = (parseFloat(String(saleItem.subtotal)) + parseFloat(String(saleItem.tax_amount ?? '0'))) / Math.max(1, saleItem.quantity);
+    return Math.round(perUnit * qty * 100) / 100;
+  };
 
   const handleRefund = () => {
     if (!selectedSale) return;
@@ -94,19 +102,26 @@ export default function RefundPanel() {
       .map(([id, qty]) => {
         const saleItem = selectedSale.sale_items?.find((i) => i.id === Number(id));
         if (!saleItem) return { id: Number(id), quantity: qty };
-        const itemSubtotal = parseFloat(saleItem.unit_price) * qty;
-        const proportionalDiscount = itemSubtotal * discountRatio;
-        const amount = itemSubtotal - proportionalDiscount;
-        return { id: Number(id), quantity: qty, amount: Math.round(amount * 100) / 100 };
+        return { id: Number(id), quantity: qty, amount: refundLineAmount(saleItem, qty) };
       });
 
     if (items.length === 0) { showToast('error', 'Select items to refund'); return; }
+
+    const totalItemsRefund = items.reduce((sum, it) => sum + (it.amount ?? 0), 0);
+    if (totalItemsRefund > maxRefundTotal + 0.01) {
+      showToast('error', `Refund of ${formatCurrency(totalItemsRefund)} exceeds the ${formatCurrency(maxRefundTotal)} the customer actually paid.`);
+      return;
+    }
 
     refundMutation.mutate({ id: selectedSale.id, data: { items } }, {
       onSuccess: () => {
         setSelectedSale(null);
         setRefundQtys({});
         refetch();
+      },
+      onError: (e) => {
+        const msg = e instanceof Error ? e.message : 'Refund could not be processed';
+        showToast('error', msg);
       },
     });
   };
@@ -173,10 +188,11 @@ export default function RefundPanel() {
       .reduce((sum, [id, qty]) => {
         const item = selectedSale?.sale_items?.find((i) => i.id === Number(id));
         if (!item) return sum;
-        const itemSubtotal = parseFloat(item.unit_price) * qty;
-        return sum + itemSubtotal - itemSubtotal * discountRatio;
+        return sum + refundLineAmount(item, qty);
       }, 0) * 100
   ) / 100;
+  const maxRefundTotal = Math.max(0, Math.min(saleTotal, salePaid) - selectedTotalRefunded);
+  const refundExceedsPaid = refundTotal > maxRefundTotal + 0.01;
 
   if (!sales?.length && (isLoading || isFetching)) return <LoadingSkeleton variant="table" />;
   if (error && !sales?.length) return <EmptyState icon={<Receipt className="w-12 h-12" />} title="Failed to load sales" description="An error occurred" actionLabel="Retry" onAction={() => refetch()} />;
@@ -369,9 +385,7 @@ export default function RefundPanel() {
                 {(selectedSale.sale_items || []).map((item) => {
                   const maxRefundable = item.quantity - item.refunded_quantity;
                   const selectedQty = refundQtys[item.id] || 0;
-                  const itemSubtotal = parseFloat(item.unit_price) * selectedQty;
-                  const proportionalDiscount = itemSubtotal * discountRatio;
-                  const refundAmount = Math.round((itemSubtotal - proportionalDiscount) * 100) / 100;
+                  const refundAmount = refundLineAmount(item, selectedQty);
                   const lineDiscount = parseFloat(item.discount_amount ?? '0');
                   return (
                     <div key={item.id} className={`rounded-lg border p-3.5 ${item.refunded_quantity > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
@@ -382,7 +396,7 @@ export default function RefundPanel() {
                             <p className="text-xs text-gray-500 mt-0.5">
                               Sold: {item.quantity} × {formatCurrency(item.unit_price)}
                               {lineDiscount > 0 && <span> · line disc. {formatCurrency(lineDiscount)}</span>}
-                              {discountRatio > 0 && <span> · incl. {Math.round(discountRatio * 100)}%</span>}
+                              {saleDiscount > 0 && <span> · global disc. {formatCurrency(saleDiscount)}</span>}
                             </p>
                             {item.refunded_quantity > 0 && (
                               <p className="text-xs text-amber-700 font-medium mt-0.5">
@@ -432,6 +446,11 @@ export default function RefundPanel() {
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-medium text-gray-500">Refund Total</span>
                   <span className="text-2xl font-bold text-red-600">{formatCurrency(Math.round(refundTotal * 100) / 100)}</span>
+                  {refundExceedsPaid && (
+                    <span className="text-sm text-red-500 font-medium">
+                      exceeds {formatCurrency(maxRefundTotal)} paid
+                    </span>
+                  )}
                 </div>
               ) : (
                 <span className="text-xs text-gray-400">Enter a refund quantity to continue</span>
@@ -440,7 +459,7 @@ export default function RefundPanel() {
                 <Button variant="outline" onClick={() => { setSelectedSale(null); setRefundQtys({}); }}>
                   Cancel
                 </Button>
-                <Button onClick={handleRefund} loading={refundMutation.isPending} disabled={refundTotal <= 0}>
+                <Button onClick={handleRefund} loading={refundMutation.isPending} disabled={refundTotal <= 0 || refundExceedsPaid}>
                   <RotateCcw className="w-4 h-4 mr-1.5" /> Process Refund
                 </Button>
               </div>

@@ -106,12 +106,17 @@ export default function InvoiceFromSaleModal({
       };
     }
     if (cartItems.length === 0) return undefined;
+    const cartSubtotal = cartItems.reduce((s, c) => s + c.unit_price * c.quantity - (c.discount_amount ?? 0), 0);
+    const cartDiscountValue = discountType === 'percentage'
+      ? Math.min(cartSubtotal * (discountAmount / 100), cartSubtotal)
+      : Math.min(discountAmount, cartSubtotal);
     return {
       lineItems: cartItemsToLineItems(cartItems),
       customerId,
+      saleDiscountAmount: Math.max(0, cartDiscountValue),
       notes: saleNotes || undefined,
     };
-  }, [open, isViewingExisting, isLinkedSale, linkedSale, cartItems, customerId, saleNotes]);
+  }, [open, isViewingExisting, isLinkedSale, linkedSale, cartItems, customerId, saleNotes, discountAmount, discountType]);
 
   const lineCount = seed?.lineItems.length ?? 0;
   const linkedSalePaid = linkedSale ? toAmount(linkedSale.amount_paid) : 0;
@@ -259,8 +264,7 @@ export default function InvoiceFromSaleModal({
             <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
-                The sale checkout discount is not applied to invoices automatically.
-                Adjust line prices below if you need the invoice total to reflect a discount.
+                The sale checkout discount is carried to this invoice automatically and stays editable below.
               </span>
             </div>
           )}

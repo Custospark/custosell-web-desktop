@@ -7,6 +7,7 @@ export interface InvoiceLineItem {
   name: string;
   unit_price: number;
   quantity: number;
+  discount_amount?: number;
   unit?: string | null;
   tax_percentage?: string | null;
   tax_class?: string | null;
@@ -24,20 +25,10 @@ export function newLineKey(productId?: number | null): string {
   return `new-${productId ?? 'custom'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/**
- * Fold a per-line discount into the unit price so the invoice line total equals
- * the discounted amount the customer actually paid (invoice lines carry no
- * discount field). Falls back to the raw unit price when qty is 0.
- */
-function lineNetUnitPrice(
-  unitPrice: number,
-  quantity: number,
-  discountAmount?: string | number | null,
-): number {
-  const qty = Math.max(0, quantity);
-  const discount = Number(discountAmount ?? 0);
-  if (qty <= 0) return unitPrice;
-  return Math.max(0, (unitPrice * qty - discount) / qty);
+export function lineNetTotal(item: Pick<InvoiceLineItem, 'unit_price' | 'quantity' | 'discount_amount'>): number {
+  const qty = Math.max(0, item.quantity);
+  const discount = Number(item.discount_amount ?? 0);
+  return Math.max(0, item.unit_price * qty - discount);
 }
 
 function enrichFromProduct(item: InvoiceItem, products?: Product[]): Pick<InvoiceLineItem, 'unit' | 'tax_percentage' | 'tax_class'> {
@@ -62,6 +53,8 @@ export function invoiceItemsToLineItems(invoice: Invoice, products?: Product[]):
     name: item.description,
     unit_price: Number(item.unit_price),
     quantity: Number(item.quantity),
+    discount_amount: Number(item.discount_amount ?? 0),
+    priceTier: item.price_tier,
     ...enrichFromProduct(item, products),
   }));
 }
@@ -72,7 +65,9 @@ export function lineItemsToPayload(items: InvoiceLineItem[]) {
     description: item.name,
     quantity: item.quantity,
     unit_price: item.unit_price,
-    subtotal: item.quantity * item.unit_price,
+    discount_amount: Number(item.discount_amount ?? 0),
+    price_tier: item.priceTier ?? 'retail',
+    subtotal: lineNetTotal(item),
   }));
 }
 
@@ -94,8 +89,9 @@ export function cartItemsToLineItems(
     lineKey: `cart-${item.product_id}`,
     product_id: item.product_id,
     name: item.name,
-    unit_price: lineNetUnitPrice(item.unit_price, item.quantity, item.discount_amount),
+    unit_price: item.unit_price,
     quantity: Number(item.quantity),
+    discount_amount: Number(item.discount_amount ?? 0),
     unit: item.unit ?? null,
     tax_percentage: item.tax_percentage != null ? String(item.tax_percentage) : null,
     tax_class: item.tax_class ?? null,
@@ -103,7 +99,7 @@ export function cartItemsToLineItems(
   }));
 }
 
-/** Map completed sale lines into invoice builder rows (net of refunds and per-line discounts). */
+/** Map completed sale lines into invoice builder rows (net of refunds, keeping real prices + line discounts). */
 export function saleItemsToLineItems(
   saleItems: {
     id: number;
@@ -128,8 +124,9 @@ export function saleItemsToLineItems(
         lineKey: `sale-item-${item.id}`,
         product_id: item.product_id,
         name: item.product_name,
-        unit_price: lineNetUnitPrice(unitPrice, netQty, item.discount_amount),
+        unit_price: unitPrice,
         quantity: netQty,
+        discount_amount: Number(item.discount_amount ?? 0),
         unit: null,
         tax_percentage: null,
         tax_class: null,

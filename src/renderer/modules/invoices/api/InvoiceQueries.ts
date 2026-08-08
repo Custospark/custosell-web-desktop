@@ -102,8 +102,19 @@ export type UpdateInvoicePayload = {
   location_id?: number | null;
   issue_date: string;
   due_date: string;
+  subtotal?: number;
+  discount_amount?: number;
+  total_amount?: number;
   tax_total?: number;
-  items: { product_id?: number | null; description: string; quantity: number; unit_price: number; subtotal: number }[];
+  items: {
+    product_id?: number | null;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    discount_amount?: number;
+    price_tier?: 'retail' | 'wholesale';
+    subtotal: number;
+  }[];
   notes?: string;
 };
 
@@ -131,8 +142,19 @@ export type CreateInvoicePayload = {
   location_id?: number | null;
   issue_date: string;
   due_date: string;
+  subtotal?: number;
+  discount_amount?: number;
+  total_amount?: number;
   tax_total?: number;
-  items: { product_id?: number | null; description: string; quantity: number; unit_price: number; subtotal: number }[];
+  items: {
+    product_id?: number | null;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    discount_amount?: number;
+    price_tier?: 'retail' | 'wholesale';
+    subtotal: number;
+  }[];
   notes?: string;
 };
 

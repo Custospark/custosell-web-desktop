@@ -5,6 +5,8 @@ export interface InvoiceItem {
   description: string;
   quantity: number;
   unit_price: number;
+  price_tier?: 'retail' | 'wholesale';
+  discount_amount?: number;
   subtotal: number;
 }
 
@@ -46,6 +48,7 @@ export interface Invoice {
   due_date: string;
   status: 'draft' | 'sent' | 'paid' | 'partially_paid' | 'cancelled' | 'overdue';
   subtotal: number;
+  discount_amount?: number;
   tax_total: number;
   total_amount: number;
   amount_paid: number;

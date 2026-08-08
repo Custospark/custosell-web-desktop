@@ -1,12 +1,14 @@
-import { Plus, Minus, Trash, ShoppingCart, RotateCcw } from 'lucide-react';
+import { Plus, Minus, Trash, ShoppingCart, RotateCcw, BadgePercent } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import type { InvoiceLineItem } from './invoiceLineItems';
+import { MoneyInput } from '../../shared/components/inputs/MoneyInput';
+import { lineNetTotal, type InvoiceLineItem } from './invoiceLineItems';
 
 interface InvoiceLineItemsTableProps {
   lineItems: InvoiceLineItem[];
   isModal?: boolean;
   onUpdateQuantity: (lineKey: string, quantity: number) => void;
+  onUpdateDiscount: (lineKey: string, discount: number) => void;
   onEditQuantity: (item: {
     lineKey: string;
     productId: number;
@@ -21,6 +23,7 @@ export function InvoiceLineItemsTable({
   lineItems,
   isModal,
   onUpdateQuantity,
+  onUpdateDiscount,
   onEditQuantity,
   onRemoveItem,
   onClearAll,
@@ -57,6 +60,7 @@ export function InvoiceLineItemsTable({
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Price</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Discount</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
                   <th className="px-4 py-3 w-10" />
@@ -75,6 +79,19 @@ export function InvoiceLineItemsTable({
                           {item.priceTier === 'wholesale' ? '(WSP)' : '(RP)'}
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <BadgePercent className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <MoneyInput
+                          title={`Line discount for ${item.name}`}
+                          value={Number(item.discount_amount ?? 0)}
+                          placeholder="0"
+                          min={0}
+                          className="w-24"
+                          onValueChange={(amount) => onUpdateDiscount(item.lineKey, amount)}
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
@@ -110,7 +127,7 @@ export function InvoiceLineItemsTable({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-sm font-bold text-gray-900">{formatCurrency(item.unit_price * item.quantity)}</span>
+                      <span className="text-sm font-bold text-gray-900">{formatCurrency(lineNetTotal(item))}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button

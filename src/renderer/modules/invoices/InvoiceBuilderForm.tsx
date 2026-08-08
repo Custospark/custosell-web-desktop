@@ -8,6 +8,7 @@ import { computeSaleTax } from '../../shared/utils/taxEngine';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { Button } from '../../shared/components/buttons/Button';
 import { Input } from '../../shared/components/inputs/Input';
+import { MoneyInput } from '../../shared/components/inputs/MoneyInput';
 import CustomerContactField, { EMPTY_CUSTOMER_CONTACT } from '../../shared/components/customers/CustomerContactField';
 import { contactFromValue, useResolveCustomerContact } from '../../shared/hooks/useResolveCustomerContact';
 import {
@@ -86,6 +87,7 @@ export default function InvoiceBuilderForm({
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(defaultDueDate);
   const [notes, setNotes] = useState(() => seed?.notes ?? '');
+  const [discount, setDiscount] = useState<number>(() => seed?.saleDiscountAmount ?? 0);
   const [qtyEdit, setQtyEdit] = useState<{
     lineKey: string;
     productId: number;
@@ -108,6 +110,7 @@ export default function InvoiceBuilderForm({
     setIssueDate(invoice.issue_date.slice(0, 10));
     setDueDate(invoice.due_date.slice(0, 10));
     setNotes(invoice.notes ?? '');
+    setDiscount(invoice.discount_amount ?? 0);
     setFormInitialized(true);
   }, [isEdit, invoice, products, formInitialized]);
 
@@ -121,17 +124,17 @@ export default function InvoiceBuilderForm({
   }
 
   const taxBreakdown = useMemo(() => {
-    const discount = seed?.saleDiscountAmount ?? 0;
     const computed = computeSaleTax(taxSettings, lineItems, discount);
     if (seed?.saleId != null && seed.saleTaxTotal != null) {
       return {
         ...computed,
         taxTotal: seed.saleTaxTotal,
+        discountAmount: discount,
         total: computed.subtotalNet + seed.saleTaxTotal,
       };
     }
     return computed;
-  }, [taxSettings, lineItems, seed]);
+  }, [taxSettings, lineItems, discount, seed]);
 
   const addItem = useCallback((
     id: number,
@@ -182,6 +185,16 @@ export default function InvoiceBuilderForm({
     );
   }
 
+  function updateDiscount(lineKey: string, discountAmount: number) {
+    setLineItems((prev) =>
+      prev.map((i) =>
+        i.lineKey === lineKey
+          ? { ...i, discount_amount: Math.max(0, discountAmount) }
+          : i,
+      ),
+    );
+  }
+
   function removeItem(lineKey: string) {
     setLineItems((prev) => prev.filter((i) => i.lineKey !== lineKey));
   }
@@ -204,10 +217,13 @@ export default function InvoiceBuilderForm({
     location_id: seed?.locationId ?? undefined,
     issue_date: issueDate,
     due_date: dueDate,
+    subtotal: taxBreakdown.subtotalNet,
+    discount_amount: taxBreakdown.discountAmount,
     tax_total: taxBreakdown.taxTotal,
+    total_amount: taxBreakdown.total,
     notes: notes || undefined,
     items: lineItemsToPayload(lineItems),
-  }), [seed?.saleId, seed?.locationId, issueDate, dueDate, taxBreakdown.taxTotal, notes, lineItems]);
+  }), [seed?.saleId, seed?.locationId, issueDate, dueDate, taxBreakdown, notes, lineItems]);
 
   async function resolveCustomerId(): Promise<number | null> {
     if (contact.customerId) return contact.customerId;
@@ -290,6 +306,7 @@ export default function InvoiceBuilderForm({
                 lineItems={lineItems}
                 isModal={isModal}
                 onUpdateQuantity={updateQuantity}
+                onUpdateDiscount={updateDiscount}
                 onEditQuantity={setQtyEdit}
                 onRemoveItem={removeItem}
                 onClearAll={clearAll}
@@ -356,16 +373,41 @@ export default function InvoiceBuilderForm({
             </div>
 
             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              {taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0 && (
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Discount</span>
+                <MoneyInput
+                  title="Invoice global discount"
+                  value={discount}
+                  placeholder="0"
+                  min={0}
+                  className="w-36"
+                  onValueChange={setDiscount}
+                />
+              </div>
+              {(discount > 0 || (taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0)) && (
                 <>
                   <div className="flex justify-between text-sm text-gray-500">
-                    <span>Subtotal (excl. VAT)</span>
-                    <span>{formatCurrency(taxBreakdown.subtotalNet)}</span>
+                    <span>Subtotal before discount</span>
+                    <span>{formatCurrency(taxBreakdown.grossBeforeDiscount)}</span>
                   </div>
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>VAT</span>
-                    <span>{formatCurrency(taxBreakdown.taxTotal)}</span>
-                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Discount</span>
+                      <span className="text-green-600">-{formatCurrency(taxBreakdown.discountAmount)}</span>
+                    </div>
+                  )}
+                  {taxBreakdown.taxEnabled && taxBreakdown.taxTotal > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>Subtotal (excl. VAT)</span>
+                        <span>{formatCurrency(taxBreakdown.subtotalNet)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>VAT</span>
+                        <span>{formatCurrency(taxBreakdown.taxTotal)}</span>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
               <div className="flex justify-between items-center pt-1">

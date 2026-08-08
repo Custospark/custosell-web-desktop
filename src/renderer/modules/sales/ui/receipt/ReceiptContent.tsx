@@ -46,13 +46,13 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
   const shopName = business?.name?.trim() || 'Shop';
 
   return (
-    <div ref={ref} className="receipt-print bg-white border border-gray-200 rounded-xl print:border-0 print:rounded-none print:bg-transparent print:shadow-none text-xs" style={{ maxWidth: '320px' }}>
+    <div ref={ref} className="receipt-print bg-white rounded-xl print:rounded-none print:bg-transparent print:shadow-none text-xs" style={{ maxWidth: '320px' }}>
       <style>{`
         @media print {
-          .receipt-print { max-width: 100% !important; width: 100%; border: none !important; box-shadow: none !important; }
+          .receipt-print { max-width: 100% !important; width: 100%; box-shadow: none !important; }
         }
       `}</style>
-      <div className="max-h-[60vh] overflow-y-auto print:overflow-visible p-4 print:px-2 print:py-3">
+      <div className="p-4 print:px-2 print:py-3">
         <div className="text-center mb-3">
           <h2 className="text-base font-bold text-gray-900 uppercase">{shopName.toUpperCase()}</h2>
           {business?.description && <p className="text-xs text-gray-500 mt-0.5">{business.description}</p>}
@@ -64,7 +64,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
           <p className="text-xs text-gray-500 uppercase tracking-wider mt-1.5">Sales Receipt</p>
         </div>
 
-        <div className="border-t border-dashed border-gray-400 border-b py-2 mb-3 text-xs text-gray-600 space-y-0.5">
+        <div className="border-t border-gray-200 border-b pb-2 mb-3 text-xs text-gray-600 space-y-0.5">
           <div className="flex justify-between">
             <span>Receipt Number</span>
             <span className="font-medium text-gray-800">{sale.receipt_number}</span>

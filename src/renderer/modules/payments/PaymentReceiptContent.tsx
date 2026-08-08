@@ -38,12 +38,12 @@ const PaymentReceiptContent = forwardRef<HTMLDivElement, PaymentReceiptContentPr
     return (
       <div
         ref={ref}
-        className="receipt-print bg-white border border-gray-200 rounded-xl print:border-0 print:rounded-none print:bg-transparent text-xs"
+        className="receipt-print bg-white rounded-xl print:rounded-none print:bg-transparent print:shadow-none text-xs"
         style={{ maxWidth: '320px' }}
       >
         <style>{`
           @media print {
-            .receipt-print { max-width: 100% !important; width: 100%; border: none !important; }
+            .receipt-print { max-width: 100% !important; width: 100%; border: none !important; box-shadow: none !important; }
           }
         `}</style>
         <div className="p-4 print:px-2 print:py-3">

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
-import { Download, Printer } from 'lucide-react';
+import { Download, Printer, FileText } from 'lucide-react';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import ReceiptContent from '../receipt/ReceiptContent';
 import { ReceiptActionBar } from '../receipt/ReceiptActionBar';
@@ -87,44 +87,48 @@ export default function SalePaymentsModal({ sale, open, onClose }: SalePaymentsM
         loading={recordPayment.isPending}
         errorMessage={recordPayment.isError ? getPaymentErrorMessage(recordPayment.error) : null}
         offline={isOffline}
-        onDismissError={() => recordPayment.reset()}
         onSubmit={handleSubmit}
       >
-        <div className="border-t border-gray-100 pt-3 no-print">
-          <button
-            type="button"
-            onClick={() => setShowSummary((v) => !v)}
-            className="text-sm font-medium text-blue-600 hover:text-blue-800"
-          >
-            {showSummary ? 'Hide sale summary receipt' : 'Show sale summary receipt'}
-          </button>
-        </div>
-
-        {showSummary && (
+        {showSummary ? (
           <div className="border-t border-gray-100 pt-4">
-            <p className="mb-3 text-sm font-medium text-gray-700 no-print">Sale summary</p>
+            <p className="mb-3 text-sm font-medium text-gray-700 no-print">Sale summary receipt</p>
             <div className="flex justify-center overflow-x-auto">
               <ReceiptContent ref={receiptRef} sale={activeSale} />
             </div>
-            <ReceiptActionBar
-              className="mt-4"
-              actions={[
-                {
-                  key: 'pdf',
-                  label: 'Download PDF',
-                  icon: <Download className="h-4 w-4" />,
-                  onClick: handleDownloadPdf,
-                },
-                {
-                  key: 'print',
-                  label: 'Print',
-                  icon: <Printer className="h-4 w-4" />,
-                  onClick: handlePrint,
-                },
-              ]}
-            />
+          </div>
+        ) : (
+          <div className="fixed -left-[9999px] top-0 w-[210mm] pointer-events-none" aria-hidden>
+            <ReceiptContent ref={receiptRef} sale={activeSale} />
           </div>
         )}
+        <ReceiptActionBar
+          className="mt-4"
+          actions={[
+            {
+              key: 'pdf',
+              label: 'Download PDF',
+              icon: <Download className="h-4 w-4" />,
+              onClick: handleDownloadPdf,
+              title: 'Save this sale as a PDF file',
+            },
+            {
+              key: 'print',
+              label: 'Print',
+              icon: <Printer className="h-4 w-4" />,
+              onClick: handlePrint,
+              title: 'Print this sale',
+            },
+          ]}
+          moreActions={[
+            {
+              key: 'summary',
+              label: showSummary ? 'Hide sale summary' : 'View sale summary',
+              icon: <FileText className="h-4 w-4" />,
+              onClick: () => setShowSummary((v) => !v),
+              title: 'Toggle the sale summary receipt preview',
+            },
+          ]}
+        />
       </PaymentsPanel>
     </Modal>
   );

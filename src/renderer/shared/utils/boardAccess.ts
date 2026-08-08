@@ -27,6 +27,7 @@ export function canManageProjectTeam(
 }
 
 export type BoardAccessBoard = {
+  business_id?: number | null;
   can_manage_settings?: boolean;
   can_contribute?: boolean;
   current_member_role?: BoardMemberRole | null;
@@ -54,7 +55,12 @@ export function canManageBoardSettings(
     return Number(board.created_by) === user.id;
   }
 
-  if (isBusinessOwner(user)) return true;
+  // A business owner holds board-owner powers only within their own business.
+  // External collaborators who happen to own a different business must not
+  // inherit manage rights (or the manager role) on this board.
+  const ownsBoardBusiness =
+    (board.business_id == null || board.business_id === user.business_id) && isBusinessOwner(user);
+  if (ownsBoardBusiness) return true;
 
   const projectCreatedBy = options?.projectCreatedBy ?? null;
   const ownerId = board.project_id ? (projectCreatedBy ?? board.created_by) : board.created_by;

@@ -194,17 +194,19 @@ export default function BoardKanbanPageHeader({
                 <CalendarDays className="h-3.5 w-3.5" />
                 Calendar
               </button>
-              <button
-                type="button"
-                onClick={() => onViewModeChange('members')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  viewMode === 'members' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
-                )}
-              >
-                <Users className="h-3.5 w-3.5" />
-                Members
-              </button>
+              {showBoardManagementControls && (
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange('members')}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    viewMode === 'members' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
+                  )}
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  Members
+                </button>
+              )}
             </div>
 
             {viewMode === 'kanban' && (

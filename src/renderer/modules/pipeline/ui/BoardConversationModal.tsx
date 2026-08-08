@@ -142,7 +142,7 @@ export default function BoardConversationModal({
     setShowEmojiPicker(false);
   };
 
-  const insertMention = (userId: number, name: string) => {
+  const insertMention = (_userId: number, name: string) => {
     setDraft((prev) => {
       const withoutPartial = prev.replace(/@[\w\s]*$/, '');
       return `${withoutPartial}@${name} `;

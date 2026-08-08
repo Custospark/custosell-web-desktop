@@ -38,6 +38,7 @@ export type PipelineActivityType = 'note' | 'comment' | 'call' | 'email' | 'meet
 export interface PipelineUserRef {
   id: number;
   name: string;
+  email?: string | null;
   avatar?: string | null;
 }
 

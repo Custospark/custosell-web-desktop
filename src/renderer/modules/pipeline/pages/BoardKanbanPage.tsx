@@ -229,14 +229,16 @@ export default function BoardKanbanPage() {
           <BoardCalendarView boardId={boardId} onLeadClick={setSelectedLeadId} isProjectBoard={isTaskBoard} workspace={workspace} />
         </div>
       ) : viewMode === 'members' ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <BoardMembersView
-            board={board}
-            boardId={boardId}
-            workspace={workspace}
-            canManage={canManageSettings}
-          />
-        </div>
+        canManageSettings ? (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <BoardMembersView
+              board={board}
+              boardId={boardId}
+              workspace={workspace}
+              canManage={canManageSettings}
+            />
+          </div>
+        ) : null
       ) : null}
       <div
         className={cn(
@@ -284,7 +286,7 @@ export default function BoardKanbanPage() {
         }}
         conversationMessagesCount={conversationMessagesCount}
         conversationUnreadCount={conversationUnreadCount}
-        onOpenMembers={() => setViewMode((mode) => (mode === 'members' ? 'kanban' : 'members'))}
+        onOpenMembers={showBoardManagementControls ? () => setViewMode((mode) => (mode === 'members' ? 'kanban' : 'members')) : undefined}
         membersActive={viewMode === 'members'}
         onCreateNew={() => setCreateBoardOpen(true)}
       />

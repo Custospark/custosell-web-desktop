@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useBoardTeamMembers } from '../api/usePipelineQueries';
 import type { BoardMemberInput } from '../api/pipelineTypes';
 import type { BoardMemberRole } from '../api/boardRoleUtils';
@@ -70,6 +71,18 @@ export default function BoardMemberPicker({
 
   const subscription = useAppSelector((s) => s.auth.user?.business?.subscription);
   const lookupMutation = useUserLookup();
+  const { confirm } = useConfirm();
+
+  const handleRemove = async (memberUserId: number, memberName: string) => {
+    const confirmed = await confirm({
+      title: `Remove ${memberName}?`,
+      message: `${memberName} will lose access to this board and won't be able to view or contribute to it anymore.`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (confirmed) onChange(value.filter((m) => m.user_id !== memberUserId));
+  };
 
   const staffLoading = isLoading || (isFetching && teamMembers.length === 0);
 
@@ -410,7 +423,7 @@ export default function BoardMemberPicker({
                     </select>
                     <button
                       type="button"
-                      onClick={() => onChange(value.filter((m) => m.user_id !== member.user_id))}
+                      onClick={() => void handleRemove(member.user_id, displayName)}
                       className={cn(
                         'rounded-lg p-1.5 text-gray-400',
                         isLockedOwner ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-50 hover:text-red-600',

@@ -400,8 +400,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
             </div>
           )}
           {/* Complete Sale Button */}
-          {/* Complete Sale Button */}
-          <div className="hidden lg:flex items-stretch gap-2">
+          <div className="hidden lg:flex items-stretch gap-2 mb-4">
             {onBack && (
               <button
                 type="button"
@@ -426,7 +425,7 @@ className="border border-gray-300 rounded-lg text-sm font-bold focus:outline-non
             >
               <HiCheckCircle className="w-5 h-5 mr-2" />
               {isPartialPayment ? `Record ${formatCurrency(payNow)} payment` : 'Complete Sale'}
-            </Button>
+</Button>
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
 export type ReportDatePreset = 'today' | 'week' | 'month' | 'year' | 'custom';
 
+/** Calendar day key in UTC — sale_date/expense_date are stored in UTC. */
 function toDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -12,28 +13,29 @@ export function resolveReportDateRange(
   customFrom: string,
   customTo: string,
 ): { dateFrom: string; dateTo: string } {
-  const today = new Date();
-  const end = toDateKey(today);
+  const nowMs = Date.now();
+  const end = toDateKey(new Date(nowMs));
 
   if (preset === 'today') {
     return { dateFrom: end, dateTo: end };
   }
 
   if (preset === 'week') {
-    const start = new Date(today);
-    const day = start.getDay();
-    const diff = day === 0 ? 6 : day - 1;
-    start.setDate(start.getDate() - diff);
+    const utcDay = new Date(nowMs).getUTCDay();
+    const diff = utcDay === 0 ? 6 : utcDay - 1;
+    const start = new Date(nowMs - diff * 86400000);
     return { dateFrom: toDateKey(start), dateTo: end };
   }
 
   if (preset === 'month') {
-    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const d = new Date(nowMs);
+    const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
     return { dateFrom: toDateKey(start), dateTo: end };
   }
 
   if (preset === 'year') {
-    const start = new Date(today.getFullYear(), 0, 1);
+    const d = new Date(nowMs);
+    const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return { dateFrom: toDateKey(start), dateTo: end };
   }
 

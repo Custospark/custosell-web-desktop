@@ -71,8 +71,8 @@ export default function FixedAssetsPage() {
       key: 'status',
       header: 'Status',
       render: (item: FixedAsset) => (
-        <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', statusColors[item.status] ?? 'bg-gray-100 text-gray-500')}>
-          {item.status.replace('_', ' ')}
+        <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', statusColors[item.status ?? ''] ?? 'bg-gray-100 text-gray-500')}>
+          {item.status ? item.status.replace('_', ' ') : '—'}
         </span>
       ),
     },

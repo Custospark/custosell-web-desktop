@@ -155,7 +155,7 @@ export interface FixedAsset {
   useful_life_months: number;
   purchase_date: string;
   book_value: number;
-  status: 'active' | 'disposed' | 'fully_depreciated';
+  status: 'active' | 'disposed' | 'fully_depreciated' | null;
   notes: string | null;
   monthly_depreciation?: number;
   asset_tag?: string | null;

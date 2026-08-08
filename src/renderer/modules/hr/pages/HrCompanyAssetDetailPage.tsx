@@ -84,7 +84,7 @@ export default function HrCompanyAssetDetailPage() {
         </div>
         <div className={cn(HR_SURFACE.panel, 'p-4')}>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Book status</p>
-          <p className="mt-1 text-sm capitalize text-gray-800">{asset.status.replace('_', ' ')}</p>
+          <p className="mt-1 text-sm capitalize text-gray-800">{asset.status ? asset.status.replace('_', ' ') : '—'}</p>
           <p className="text-xs text-gray-500">Cost {asset.cost.toLocaleString()} · Book {asset.book_value.toLocaleString()}</p>
         </div>
       </div>

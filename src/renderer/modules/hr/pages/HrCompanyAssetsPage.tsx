@@ -133,7 +133,7 @@ export default function HrCompanyAssetsPage() {
                         'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
                         asset.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600',
                       )}>
-                        {asset.status.replace('_', ' ')}
+                        {asset.status ? asset.status.replace('_', ' ') : '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Table } from '../../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
+import RowActionsMenu, { type RowActionItem } from '../../../shared/components/tables/RowActionsMenu';
+import { TypeToConfirmModal } from '../../../shared/components/modals/TypeToConfirmModal';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { useProjects } from '../api/useProjectQueries';
+import { useProjects, useDeleteProject } from '../api/useProjectQueries';
 import type { Project } from '../api/projectTypes';
 import { BudgetProgressBar } from '../ui/estimatesShared';
+import ProjectFormModal from '../ui/ProjectFormModal';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
-import { FolderKanban, Search, Target, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
+import { FolderKanban, Search, Target, TrendingUp, DollarSign, AlertTriangle, Eye, Pencil, Trash2 } from 'lucide-react';
 
 const n = (v: unknown): number => Number(v) || 0;
 
@@ -32,9 +35,13 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function ProjectsPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const { data: projects, isLoading } = useProjects();
+  const deleteProject = useDeleteProject();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -123,6 +130,39 @@ export default function ProjectsPage() {
           {item.due_date ? formatShiftDate(item.due_date) : '—'}
         </span>
       ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (item: Project) => {
+        const actions: RowActionItem[] = [
+          {
+            key: 'view',
+            label: 'View',
+            icon: <Eye className="h-4 w-4 text-gray-400" />,
+            onClick: () => navigate(ROUTES.ESTIMATES.PROJECT_DETAIL(item.id)),
+          },
+          {
+            key: 'edit',
+            label: 'Edit',
+            icon: <Pencil className="h-4 w-4 text-gray-400" />,
+            onClick: () => setEditingProject(item),
+          },
+          {
+            key: 'delete',
+            label: 'Delete',
+            icon: <Trash2 className="h-4 w-4 text-red-500" />,
+            onClick: () => setDeleteTarget(item),
+            dividerBefore: true,
+            danger: true,
+          },
+        ];
+        return (
+          <div className="flex items-center justify-end">
+            <RowActionsMenu items={actions} ariaLabel={`Project ${item.project_number} actions`} />
+          </div>
+        );
+      },
     },
   ];
 
@@ -213,6 +253,30 @@ export default function ProjectsPage() {
           </>
         )}
       </Card>
+
+      <ProjectFormModal
+        open={!!editingProject}
+        onClose={() => setEditingProject(null)}
+        project={editingProject}
+      />
+
+      <TypeToConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={deleteTarget ? `Delete project ${deleteTarget.project_number}` : 'Delete project'}
+        subtitle={deleteTarget?.name}
+        keyword={deleteTarget?.project_number ?? ''}
+        keywordLabel="Project number"
+        message="Deleting this project permanently removes it and its tasks, timesheets, and cost allocations. This cannot be undone."
+        isDeleting={deleteProject.isPending}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteProject.mutate(deleteTarget.id, {
+              onSuccess: () => setDeleteTarget(null),
+            });
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,10 +1,12 @@
-import { useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
+import RowActionsMenu, { type RowActionItem } from '../../../shared/components/tables/RowActionsMenu';
 import { SlideDrawer } from '../../../shared/components/modals/SlideDrawer';
+import { TypeToConfirmModal } from '../../../shared/components/modals/TypeToConfirmModal';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { useToast } from '../../../app/contexts/useToast';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -36,32 +38,6 @@ const cardStyles = {
   indigo: { border: 'border-indigo-500', shadow: 'hover:shadow-indigo-500/20', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700', glow: 'bg-indigo-500/10', hoverBg: 'group-hover:bg-indigo-200' },
 };
 
-function IconAction({
-  title, onClick, loading, disabled, children, className,
-}: {
-  title: string; onClick: () => void; loading?: boolean; disabled?: boolean;
-  children: ReactNode; className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      disabled={disabled || loading}
-      onClick={onClick}
-      className={cn(
-        'inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors',
-        'hover:bg-gray-100 hover:text-gray-800 disabled:opacity-40 disabled:pointer-events-none',
-        className,
-      )}
-    >
-      {loading ? (
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-      ) : children}
-    </button>
-  );
-}
-
 export default function EstimatesPage() {
   const navigate = useNavigate();
   const builderRef = useRef<EstimateBuilderHandle>(null);
@@ -71,6 +47,7 @@ export default function EstimatesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [busyAction, setBusyAction] = useState<{ id: number; type: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Estimate | null>(null);
 
   const { showToast } = useToast();
   const { data: estimates, isLoading } = useEstimates();
@@ -131,15 +108,15 @@ export default function EstimatesPage() {
     }
   }, [showToast]);
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setEditingId(null);
     setDrawerOpen(true);
-  };
+  }, []);
 
-  const openEdit = (id: number) => {
+  const openEdit = useCallback((id: number) => {
     setEditingId(id);
     setDrawerOpen(true);
-  };
+  }, []);
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
@@ -227,50 +204,59 @@ export default function EstimatesPage() {
       render: (item: Estimate) => {
         const isDraft = item.status === 'draft';
         const busy = (type: string) => busyAction?.id === item.id && busyAction.type === type;
+        const actions: RowActionItem[] = [
+          {
+            key: 'view',
+            label: 'View',
+            icon: <Eye className="h-4 w-4 text-gray-400" />,
+            onClick: () => navigate(ROUTES.ESTIMATES.DETAIL(item.id)),
+          },
+          {
+            key: 'edit',
+            label: 'Edit',
+            icon: <Pencil className="h-4 w-4 text-gray-400" />,
+            onClick: () => openEdit(item.id),
+          },
+          ...(isDraft
+            ? [{
+                key: 'send',
+                label: 'Send',
+                icon: <Send className="h-4 w-4 text-gray-400" />,
+                onClick: () => sendEstimate.mutate(item.id),
+                disabled: sendEstimate.isPending && sendEstimate.variables === item.id,
+              }]
+            : []),
+          {
+            key: 'download',
+            label: 'Download PDF',
+            icon: <Download className="h-4 w-4 text-gray-400" />,
+            onClick: () => handlePdfAction(item.id, 'download'),
+            disabled: busy('download'),
+          },
+          {
+            key: 'duplicate',
+            label: 'Duplicate',
+            icon: <Copy className="h-4 w-4 text-gray-400" />,
+            onClick: () => duplicateEstimate.mutate(item.id),
+            disabled: duplicateEstimate.isPending && duplicateEstimate.variables === item.id,
+          },
+          {
+            key: 'delete',
+            label: 'Delete',
+            icon: <Trash2 className="h-4 w-4 text-red-500" />,
+            onClick: () => setDeleteTarget(item),
+            dividerBefore: true,
+            danger: true,
+          },
+        ];
         return (
-          <div className="flex items-center justify-end gap-0.5">
-            <IconAction title="View" onClick={() => navigate(ROUTES.ESTIMATES.DETAIL(item.id))}>
-              <Eye className="h-4 w-4" />
-            </IconAction>
-            {isDraft && (
-              <IconAction title="Edit" onClick={() => openEdit(item.id)}>
-                <Pencil className="h-4 w-4" />
-              </IconAction>
-            )}
-            {isDraft && (
-              <IconAction
-                title="Send"
-                onClick={() => sendEstimate.mutate(item.id)}
-                loading={sendEstimate.isPending && sendEstimate.variables === item.id}
-              >
-                <Send className="h-4 w-4" />
-              </IconAction>
-            )}
-            <IconAction title="Download PDF" onClick={() => handlePdfAction(item.id, 'download')} loading={busy('download')}>
-              <Download className="h-4 w-4" />
-            </IconAction>
-            <IconAction
-              title="Duplicate"
-              onClick={() => duplicateEstimate.mutate(item.id)}
-              loading={duplicateEstimate.isPending && duplicateEstimate.variables === item.id}
-            >
-              <Copy className="h-4 w-4" />
-            </IconAction>
-            {isDraft && (
-              <IconAction
-                title="Delete"
-                onClick={() => deleteEstimate.mutate(item.id)}
-                loading={deleteEstimate.isPending && deleteEstimate.variables === item.id}
-                className="hover:bg-red-50 hover:text-red-600"
-              >
-                <Trash2 className="h-4 w-4" />
-              </IconAction>
-            )}
+          <div className="flex items-center justify-end">
+            <RowActionsMenu items={actions} ariaLabel={`Estimate ${item.estimate_number} actions`} />
           </div>
         );
       },
     },
-  ], [busyAction, deleteEstimate, duplicateEstimate, handlePdfAction, navigate, sendEstimate]);
+  ], [busyAction, duplicateEstimate, handlePdfAction, navigate, openEdit, sendEstimate]);
 
   if (isLoading) {
     return <LoadingSkeleton variant="dashboard" />;
@@ -393,6 +379,24 @@ export default function EstimatesPage() {
           embedded
         />
       </SlideDrawer>
+
+      <TypeToConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={deleteTarget ? `Delete estimate ${deleteTarget.estimate_number}` : 'Delete estimate'}
+        subtitle={deleteTarget?.title}
+        keyword={deleteTarget?.estimate_number ?? ''}
+        keywordLabel="Estimate number"
+        message="Deleting this estimate permanently removes it and its line items. This cannot be undone."
+        isDeleting={deleteEstimate.isPending}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteEstimate.mutate(deleteTarget.id, {
+              onSuccess: () => setDeleteTarget(null),
+            });
+          }
+        }}
+      />
     </div>
   );
 }

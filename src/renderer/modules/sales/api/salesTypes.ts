@@ -25,6 +25,8 @@ export interface SaleItem {
   product_price: string;
   quantity: number;
   unit_price: string;
+  /** Charged price tier for this line — 'wholesale' when sold at wholesale_price. */
+  price_tier?: CartPriceTier;
   subtotal: string;
   tax_amount: string;
   discount_amount: string;
@@ -109,7 +111,7 @@ export interface Sale {
 }
 
 export interface CreateSalePayload {
-  items: { product_id: number; quantity: number; unit_price: number; discount_amount?: number }[];
+  items: { product_id: number; quantity: number; unit_price: number; price_tier?: CartPriceTier; discount_amount?: number }[];
   subtotal: number;
   tax_total?: number;
   discount_amount?: number;

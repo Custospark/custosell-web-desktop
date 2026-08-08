@@ -10,6 +10,8 @@ export interface InvoiceLineItem {
   unit?: string | null;
   tax_percentage?: string | null;
   tax_class?: string | null;
+  /** Charged price tier for this line — retained from the sale/cart so invoices show (RP)/(WSP). */
+  priceTier?: 'retail' | 'wholesale';
 }
 
 export function defaultDueDate(): string {
@@ -82,6 +84,7 @@ export function cartItemsToLineItems(
     unit_price: number;
     quantity: number;
     discount_amount?: number;
+    price_tier?: 'retail' | 'wholesale';
     unit?: string | null;
     tax_percentage?: number | string | null;
     tax_class?: string | null;
@@ -96,6 +99,7 @@ export function cartItemsToLineItems(
     unit: item.unit ?? null,
     tax_percentage: item.tax_percentage != null ? String(item.tax_percentage) : null,
     tax_class: item.tax_class ?? null,
+    priceTier: item.price_tier,
   }));
 }
 
@@ -109,20 +113,27 @@ export function saleItemsToLineItems(
     quantity: number;
     discount_amount?: string | number;
     refunded_quantity?: number;
+    price_tier?: 'retail' | 'wholesale';
+    product_price?: string | number | null;
   }[],
 ): InvoiceLineItem[] {
   return saleItems
     .map((item) => {
       const netQty = item.quantity - (item.refunded_quantity ?? 0);
+      const unitPrice = Number(item.unit_price);
+      const retailPrice = Number(item.product_price ?? 0);
+      const tier = item.price_tier
+        ?? (retailPrice > 0 && unitPrice < retailPrice ? 'wholesale' : 'retail');
       return {
         lineKey: `sale-item-${item.id}`,
         product_id: item.product_id,
         name: item.product_name,
-        unit_price: lineNetUnitPrice(Number(item.unit_price), netQty, item.discount_amount),
+        unit_price: lineNetUnitPrice(unitPrice, netQty, item.discount_amount),
         quantity: netQty,
         unit: null,
         tax_percentage: null,
         tax_class: null,
+        priceTier: tier,
       };
     })
     .filter((item) => item.quantity > 0);

@@ -70,6 +70,11 @@ export function InvoiceLineItemsTable({
                     </td>
                     <td className="px-4 py-3 text-right hidden sm:table-cell">
                       <span className="text-sm text-gray-600">{formatCurrency(item.unit_price)}</span>
+                      {item.priceTier && (
+                        <span className="ml-1.5 text-[10px] font-semibold text-gray-400">
+                          {item.priceTier === 'wholesale' ? '(WSP)' : '(RP)'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-2">

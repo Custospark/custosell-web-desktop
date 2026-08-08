@@ -119,6 +119,7 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
             product_id: c.product_id,
             quantity: c.quantity,
             unit_price: c.unit_price,
+            price_tier: c.price_tier,
             discount_amount: c.discount_amount || 0,
           })),
           subtotal: taxBreakdown.subtotalNet,

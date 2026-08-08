@@ -18,6 +18,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
   const currency = business?.currency || 'UGX';
   const discount = parseFloat(sale.discount_amount);
   const taxTotal = parseFloat(sale.tax_total || '0');
+  const subtotalBeforeDiscount = Math.max(0, parseFloat(sale.subtotal) + discount);
   const totalRefunded = (sale.sale_items ?? []).reduce((sum, i) => sum + parseFloat(i.refunded_amount || '0'), 0);
   const netAmount = Math.max(0, Math.round((parseFloat(sale.total_amount) - totalRefunded) * 100) / 100);
   const amountPaid = parseFloat(String(sale.amount_paid ?? sale.total_amount));
@@ -96,25 +97,40 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
           <tbody>
             {(sale.sale_items ?? []).map((item, i) => {
               const refunded = item.refunded_quantity > 0;
+              const unit = parseFloat(item.unit_price);
+              const retail = parseFloat(item.product_price);
+              const tier = item.price_tier
+                ?? (retail > 0 && unit < retail ? 'wholesale' : 'retail');
+              const tierLabel = tier === 'wholesale' ? 'WSP' : 'RP';
+              const lineDiscount = parseFloat(item.discount_amount ?? '0');
               return (
                 <tr key={item.id} className={i < (sale.sale_items?.length ?? 0) - 1 ? 'border-b border-dashed border-gray-300' : ''}>
                   <td className="py-1 text-gray-800 pr-2 break-words">
                     <span>{cleanProductName(item.product_name)}</span>
                     {refunded && <span className="ml-1.5 text-xs text-red-500">({item.refunded_quantity} refunded)</span>}
+                    {lineDiscount > 0 && (
+                      <span className="block text-[10px] text-green-600">
+                        disc −{lineDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
                   </td>
                   <td className="py-1 text-center text-gray-800 px-2 whitespace-nowrap">{item.quantity}</td>
-                  <td className="py-1 text-right text-gray-800 px-2 whitespace-nowrap">{parseFloat(item.unit_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td className="py-1 text-right text-gray-800 px-2 whitespace-nowrap">
+                    <span>{unit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span className="ml-1 text-[9px] font-semibold text-gray-500">{tierLabel === 'WSP' ? '(WSP)' : '(RP)'}</span>
+                  </td>
                   <td className="py-1 text-right text-gray-800 pl-2 whitespace-nowrap">{parseFloat(item.subtotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        <p className="text-[9px] text-gray-400 mb-3 -mt-2">(RP) Retail price · (WSP) Wholesale price</p>
 
         <div className="border-t border-dashed border-gray-400 pt-2 mb-2 space-y-0.5 text-xs">
           <div className="flex justify-between">
             <span className="text-gray-500">Subtotal</span>
-            <span className="text-gray-700">{formatCurrency(parseFloat(sale.subtotal))}</span>
+            <span className="text-gray-700">{formatCurrency(subtotalBeforeDiscount)}</span>
           </div>
           {discount > 0 && (
             <div className="flex justify-between">

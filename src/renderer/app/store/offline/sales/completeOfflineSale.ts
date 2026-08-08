@@ -97,6 +97,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
       product_price: item.unit_price.toString(),
       quantity: item.quantity,
       unit_price: item.unit_price.toString(),
+      price_tier: item.price_tier ?? 'retail',
       subtotal: (item.quantity * item.unit_price - (item.discount_amount ?? 0)).toString(),
       tax_amount: (taxBreakdown.lineTaxAmounts[i] ?? 0).toString(),
       discount_amount: item.discount_amount != null ? item.discount_amount.toString() : '0',

@@ -307,7 +307,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
               <div className="flex rounded-md border border-gray-200 overflow-hidden">
                 {([
                   { mode: 'retail', label: 'Retail all', icon: ShoppingBag, activeClass: 'bg-blue-600 text-white', inactiveClass: 'bg-white text-blue-600 hover:bg-blue-50' },
-                  { mode: 'wholesale', label: 'Wholesale all', icon: Package, activeClass: 'bg-green-600 text-white', inactiveClass: 'bg-white text-green-600 hover:bg-green-50' },
+                  { mode: 'wholesale', label: 'Wholesale all', icon: Package, activeClass: 'bg-blue-600 text-white', inactiveClass: 'bg-white text-blue-600 hover:bg-blue-50' },
                 ] as const).map(({ mode, label, icon: Icon, activeClass, inactiveClass }) => {
                   const active = cartItems.every((c) => c.price_tier === mode);
                   return (

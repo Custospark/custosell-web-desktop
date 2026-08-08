@@ -70,6 +70,12 @@ function relativeImportExists(fromFile, specifier) {
     path.join(base, 'index.tsx'),
     path.join(base, 'index.js'),
   ];
+  // TypeScript maps a `.js` import specifier to the `.ts` source under
+  // bundler/Node ESM resolution (e.g. `./autoUpdater.js` -> `autoUpdater.ts`).
+  const srcBase = clean.replace(/\.(js|jsx|mjs)$/, (_, ext) => `.${ext === 'mjs' ? 'mts' : ext === 'jsx' ? 'tsx' : 'ts'}`);
+  if (srcBase !== clean) {
+    candidates.push(path.resolve(fromDir, srcBase));
+  }
   return candidates.some((candidate) => fs.existsSync(candidate));
 }
 

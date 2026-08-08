@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu, ipcMain, safeStorage } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initAutoUpdater, installUpdateOnQuitIfReady } from './autoUpdater.js';
+import { initAutoUpdater, installUpdateOnQuitIfReady, restartAndInstallNow, getPendingUpdateVersion } from './autoUpdater.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -163,6 +163,10 @@ ipcMain.handle('secure-store:delete', (_event, key: string) => {
   delete store[key];
   writeSecureStoreFile(store);
 });
+
+ipcMain.handle('app-update:pending-version', () => getPendingUpdateVersion());
+
+ipcMain.handle('app-update:restart-and-install', () => restartAndInstallNow());
 
 app.whenReady().then(() => {
   createWindow();

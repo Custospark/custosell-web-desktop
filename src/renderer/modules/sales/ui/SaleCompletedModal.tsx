@@ -119,7 +119,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
     {createPortal(
     <div className={`fixed inset-0 ${MODAL_Z_INDEX_CLASS} flex items-center justify-center p-3 sm:p-4 pointer-events-none no-print`}>
       <div
-        className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full p-4 sm:p-6 lg:p-8 flex flex-col relative"
+        className="pointer-events-auto bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 w-full p-4 sm:p-6 lg:p-8 flex flex-col relative max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-hidden"
         style={{ maxWidth: '560px' }}
       >
         <button
@@ -159,7 +159,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
           </div>
         )}
 
-        <div className="flex justify-center overflow-x-auto">
+        <div className="flex justify-center overflow-x-auto flex-1 min-h-0 overflow-y-auto">
           <ReceiptContent ref={receiptRef} sale={sale} />
         </div>
 

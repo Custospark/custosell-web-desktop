@@ -1,10 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { replaceEqualDeep } from '@tanstack/query-core';
 import type { AxiosError } from 'axios';
-import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
-import { PIPELINE } from '../../../shared/api/endpoints/endpoints';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import {
+  createPipelineBoard,
+  fetchBoardTeamMembers,
+  fetchPipelineBoard,
+  fetchPipelineBoardKanban,
+  fetchPipelineBoards,
+  updatePipelineBoard as sendBoardUpdate,
+} from './pipelineBoardApiClient';
 import type {
   CreateBoardPayload,
   PipelineBoard,
@@ -56,14 +62,7 @@ export function usePipelineBoards(options?: {
   return useQuery<PipelineBoard[]>({
     queryKey: [...pipelineKeys.boards(), scopeKey],
     queryFn: async () => {
-      const params = estimatesWorkspace
-        ? '?estimates_workspace=1'
-        : projectOnly
-          ? '?project_only=1'
-          : salesOnly
-            ? '?sales_only=1'
-            : '?sales_only=0';
-      const { data } = await axiosInstance.get(`${PIPELINE.BOARDS}${params}`);
+      const { data } = await fetchPipelineBoards({ salesOnly, projectOnly, estimatesWorkspace });
       return normalizeList<PipelineBoard>(data);
     },
     placeholderData: (previousData) => previousData,
@@ -83,9 +82,7 @@ export function useBoardTeamMembers(
   return useQuery<BoardTeamMember[]>({
     queryKey: pipelineKeys.teamMembers(workspace, scope),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(
-        `${PIPELINE.TEAM_MEMBERS}?workspace=${workspace}&scope=${scope}`,
-      );
+      const { data } = await fetchBoardTeamMembers(workspace, scope);
       return normalizeList<BoardTeamMember>(data);
     },
     placeholderData: (previousData) => previousData,
@@ -98,7 +95,7 @@ export function usePipelineBoard(id: number) {
   return useQuery<PipelineBoard>({
     queryKey: pipelineKeys.board(id),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(PIPELINE.BOARD(id));
+      const { data } = await fetchPipelineBoard(id);
       return normalizeItem<PipelineBoard>(data);
     },
     enabled: Boolean(id),
@@ -110,7 +107,7 @@ export function usePipelineKanban(boardId: number, options?: { poll?: boolean })
   return useQuery<PipelineBoard>({
     queryKey: pipelineKeys.kanban(boardId),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(PIPELINE.BOARD_KANBAN(boardId));
+      const { data } = await fetchPipelineBoardKanban(boardId);
       return normalizeItem<PipelineBoard>(data);
     },
     enabled: Boolean(boardId),
@@ -136,7 +133,7 @@ export function useBoardAccessSync(boardId: number, enabled = true) {
   return useQuery({
     queryKey: pipelineKeys.boardAccess(boardId),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(PIPELINE.BOARD(boardId));
+      const { data } = await fetchPipelineBoard(boardId);
       const fresh = normalizeItem<PipelineBoard>(data);
       qc.setQueryData<PipelineBoard>(pipelineKeys.kanban(boardId), (old) =>
         old ? applyBoardAccessFields(old, fresh) : old,
@@ -165,7 +162,7 @@ export function useCreatePipelineBoard() {
 
   return useMutation({
     mutationFn: async (payload: CreateBoardPayload) => {
-      const { data } = await axiosInstance.post(PIPELINE.BOARDS, payload);
+      const { data } = await createPipelineBoard(payload as Record<string, unknown>);
       return normalizeItem<PipelineBoard>(data);
     },
     onSuccess: (board) => {
@@ -245,7 +242,7 @@ export function useUpdatePipelineBoard() {
       silent?: boolean;
     }) => {
       const { id, ...payload } = omitSilent(input);
-      const { data } = await axiosInstance.patch(PIPELINE.BOARD(id), payload);
+      const { data } = await sendBoardUpdate(id, payload as Record<string, unknown>);
       return normalizeItem<PipelineBoard>(data);
     },
     onMutate: async (input) => {

@@ -299,22 +299,31 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
 
 {/* Cart Items Header */}
         {cartItems.length > 0 && (
-          <div className="mb-3 px-1 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cart ({cartItems.length} {cartItems.length > 1 ? 'items' : 'item'})
-              </span>
+          <div className="mb-3 px-1 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Cart ({cartItems.length} {cartItems.length > 1 ? 'items' : 'item'})
+            </span>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <div className="flex rounded-md border border-gray-200 overflow-hidden">
+                {(['retail', 'wholesale'] as const).map((mode) => {
+                  const active = cartItems.every((c) => c.price_tier === mode);
+                  return (
+                    <button
+                      key={mode}
+                      title={mode === 'retail' ? 'Charge all lines at retail price' : 'Charge all lines at wholesale price'}
+                      onClick={() => dispatch(mode === 'retail' ? setAllLinesRetail() : setAllLinesWholesale())}
+                      className={`px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                        active ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {mode === 'retail' ? 'Retail all' : 'Wholesale all'}
+                    </button>
+                  );
+                })}
+              </div>
               <button title="Remove all items from cart" onClick={handleClearAll} className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors shrink-0">
                 <RotateCcw className="w-4 h-4" /> Clear All
               </button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex rounded-md border border-gray-200 overflow-hidden">
-                <button title="Charge all lines at retail price" onClick={() => dispatch(setAllLinesRetail())}
-                  className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-colors">Retail all</button>
-                <button title="Charge all lines at wholesale price" onClick={() => dispatch(setAllLinesWholesale())}
-                  className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-colors">Wholesale all</button>
-              </div>
             </div>
           </div>
         )}

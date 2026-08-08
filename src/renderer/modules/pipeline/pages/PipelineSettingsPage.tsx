@@ -225,7 +225,7 @@ export default function PipelineSettingsPage() {
             return (
               <div key={board.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <Link
-                  to={ROUTES.PIPELINE.BOARD(board.id)}
+                  to={ROUTES.PIPELINE.BOARD(board.code)}
                   className="inline-flex min-w-0 items-center gap-2 font-medium text-gray-900 hover:text-blue-600"
                 >
                   <span

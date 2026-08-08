@@ -49,7 +49,7 @@ interface BoardKanbanPageHeaderProps {
   boardId: number;
   headerMemberRole?: BoardMemberRole | null;
   switcherBoards: PipelineBoard[];
-  boardRoute: (id: number) => string;
+  boardRoute: (boardRef: string | number) => string;
   boardsListRoute: string;
   allowCreateBoard: boolean;
   showBoardManagementControls: boolean;
@@ -145,9 +145,9 @@ export default function BoardKanbanPageHeader({
           </button>
         </div>
 
-        <div className={cn('contents lg:contents', !mobileExpanded && 'hidden lg:flex')}>
+        <div className={cn('contents lg:contents lg:min-w-0 lg:flex-1', !mobileExpanded && 'hidden lg:flex')}>
           {viewMode === 'kanban' && (
-            <div className="relative min-w-0 flex-1">
+            <div className="relative min-w-0 flex-1 basis-0 sm:mr-3">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
               <input
                 ref={searchInputRef}
@@ -170,7 +170,7 @@ export default function BoardKanbanPageHeader({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2 sm:mr-3">
             <div className="inline-flex rounded-lg border border-blue-100 bg-white p-0.5 shadow-sm">
               <button
                 type="button"

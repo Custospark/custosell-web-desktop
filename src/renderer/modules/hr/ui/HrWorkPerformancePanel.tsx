@@ -358,8 +358,8 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
                       <Link
                         to={
                           goal.workspace === 'estimates'
-                            ? ROUTES.ESTIMATES.BOARD(goal.board_id)
-                            : ROUTES.PIPELINE.BOARD(goal.board_id)
+                            ? ROUTES.ESTIMATES.BOARD(goal.board_code ?? goal.board_id)
+                            : ROUTES.PIPELINE.BOARD(goal.board_code ?? goal.board_id)
                         }
                         className="text-xs font-medium text-violet-700 hover:underline"
                       >

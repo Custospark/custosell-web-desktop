@@ -14,7 +14,7 @@ interface BoardSearchMenuProps {
   boards: PipelineBoard[];
   activeBoard: PipelineBoard;
   onCreateBoard: () => void;
-  boardRoute?: (id: number) => string;
+  boardRoute?: (boardRef: string | number) => string;
   boardsListRoute?: string;
   allowCreateBoard?: boolean;
   workspaceLabel?: string;
@@ -82,11 +82,11 @@ export default function BoardSearchMenu({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
 
-  const goToBoard = (id: number) => {
+  const goToBoard = (board: PipelineBoard) => {
     setOpen(false);
     setQuery('');
-    if (id !== activeBoard.id) {
-      navigate(boardRoute(id));
+    if (board.id !== activeBoard.id) {
+      navigate(boardRoute(board.code));
     }
   };
 
@@ -128,7 +128,7 @@ export default function BoardSearchMenu({
               <button
                 key={board.id}
                 type="button"
-                onClick={() => goToBoard(board.id)}
+                onClick={() => goToBoard(board)}
                 className={cn(
                   'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
                   isActive ? 'bg-blue-50' : 'hover:bg-gray-50',

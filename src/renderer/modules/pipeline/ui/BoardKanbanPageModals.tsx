@@ -32,7 +32,7 @@ interface BoardKanbanPageModalsProps {
   allStages: PipelineStage[];
   projectCreatedBy?: number;
   projectMembers: ProjectMember[];
-  boardRoute: (id: number) => string;
+  boardRoute: (boardRef: string | number) => string;
   boardsListRoute: string;
   switcherBoards: PipelineBoard[];
   allBoardsOpen: boolean;

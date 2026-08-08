@@ -8,7 +8,7 @@ export function Main() {
   const location = useLocation();
   const { isCompletelyOffline } = useNetworkStatus();
   const onlineOnly = isCompletelyOffline ? matchOnlineOnlyPath(location.pathname) : null;
-  const pipelineBoardOpen = /^\/(?:pipeline|estimates)\/boards\/\d+/.test(location.pathname);
+  const pipelineBoardOpen = /^\/(?:pipeline|estimates)\/boards\/[^/]+/.test(location.pathname);
   const documentsCabinetOpen = /^\/documents\/cabinets\/\d+/.test(location.pathname);
   const marketplaceOpen = location.pathname === '/inventory/marketplace';
   const flushLayout = pipelineBoardOpen || documentsCabinetOpen || marketplaceOpen;

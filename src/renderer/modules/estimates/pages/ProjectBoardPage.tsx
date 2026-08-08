@@ -18,7 +18,7 @@ export default function ProjectBoardPage() {
   }
 
   if (board?.id) {
-    return <Navigate to={ROUTES.ESTIMATES.BOARD(board.id)} replace />;
+    return <Navigate to={ROUTES.ESTIMATES.BOARD(board.code ?? board.id)} replace />;
   }
 
   return <Navigate to={ROUTES.ESTIMATES.PROJECT_DETAIL(projectId)} replace />;

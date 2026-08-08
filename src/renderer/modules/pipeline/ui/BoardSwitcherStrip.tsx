@@ -9,7 +9,7 @@ interface BoardSwitcherStripProps {
   boards: PipelineBoard[];
   activeBoardId: number;
   onCreateBoard: () => void;
-  boardRoute?: (id: number) => string;
+  boardRoute?: (boardRef: string | number) => string;
   allowCreateBoard?: boolean;
   workspaceLabel?: string;
 }
@@ -42,7 +42,7 @@ export default function BoardSwitcherStrip({
               key={board.id}
               ref={isActive ? activeRef : undefined}
               type="button"
-              onClick={() => navigate(boardRoute(board.id))}
+              onClick={() => navigate(boardRoute(board.code))}
               className={cn(
                 'inline-flex max-w-[200px] shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive

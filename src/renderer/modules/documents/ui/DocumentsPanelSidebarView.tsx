@@ -34,7 +34,7 @@ export function DocumentsPanelSidebarView({ data, actions }: DocumentsPanelSideb
   } = actions;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col lg:flex-row" style={surfaceAppearanceStyle(resolvedAppearance)}>
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row" style={surfaceAppearanceStyle(resolvedAppearance)}>
       {/* Mobile view toggle */}
       <div className="flex shrink-0 border-b border-white/40 bg-white/85 backdrop-blur-sm lg:hidden">
         <button type="button" onClick={() => setMobileView('explorer')}
@@ -52,7 +52,7 @@ export function DocumentsPanelSidebarView({ data, actions }: DocumentsPanelSideb
       {/* Explorer sidebar */}
       <aside className={cn(
         'w-full shrink-0 flex-col p-1.5 sm:p-2 lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96',
-        mobileView === 'explorer' ? 'flex h-full' : 'hidden lg:flex',
+        mobileView === 'explorer' ? 'flex h-full min-h-0 overflow-hidden' : 'hidden lg:flex',
       )}>
         <DocumentExplorer
           cabinetId={effectiveCabinetId} cabinetName={cabinet?.name ?? title}

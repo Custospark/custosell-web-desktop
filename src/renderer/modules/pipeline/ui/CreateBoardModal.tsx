@@ -82,9 +82,9 @@ function CreateBoardModalForm({
     onClose();
   };
 
-  const finishAndOpen = (boardId: number) => {
+  const finishAndOpen = (board: PipelineBoard) => {
     handleClose();
-    navigate(isEstimates ? ROUTES.ESTIMATES.BOARD(boardId) : ROUTES.PIPELINE.BOARD(boardId));
+    navigate(isEstimates ? ROUTES.ESTIMATES.BOARD(board.code ?? board.id) : ROUTES.PIPELINE.BOARD(board.code ?? board.id));
   };
 
   const handleVisibilityChange = (next: PipelineVisibility) => {
@@ -146,7 +146,7 @@ function CreateBoardModalForm({
 
   if (step === 'alerts' && createdBoard) {
     return (
-      <Modal isOpen onClose={() => finishAndOpen(createdBoard.id)} title="Discussion alerts" size="lg">
+      <Modal isOpen onClose={() => finishAndOpen(createdBoard)} title="Discussion alerts" size="lg">
         <div className="space-y-5">
           <PipelineModalHero
             icon={Kanban}
@@ -162,10 +162,10 @@ function CreateBoardModalForm({
             compact
           />
           <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
-            <Button type="button" variant="secondary" onClick={() => finishAndOpen(createdBoard.id)}>
+            <Button type="button" variant="secondary" onClick={() => finishAndOpen(createdBoard)}>
               Skip for now
             </Button>
-            <Button type="button" onClick={() => finishAndOpen(createdBoard.id)}>
+            <Button type="button" onClick={() => finishAndOpen(createdBoard)}>
               Open board
             </Button>
           </div>

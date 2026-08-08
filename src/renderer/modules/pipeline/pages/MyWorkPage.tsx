@@ -54,7 +54,7 @@ export default function MyWorkPage() {
                   </td>
                   <td className="px-4 py-3">
                     {lead.board && (
-                      <Link to={ROUTES.PIPELINE.BOARD(lead.board.id)} className="text-gray-700 hover:text-blue-700">
+                      <Link to={ROUTES.PIPELINE.BOARD(lead.board.code ?? lead.board.id)} className="text-gray-700 hover:text-blue-700">
                         {lead.board.name}
                       </Link>
                     )}

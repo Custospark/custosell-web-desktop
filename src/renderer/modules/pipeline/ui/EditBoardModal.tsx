@@ -181,7 +181,7 @@ function EditBoardModalForm({
     const boardRoute = workspace === 'estimates' || isProjectBoard
       ? ROUTES.ESTIMATES.BOARD
       : ROUTES.PIPELINE.BOARD;
-    navigate(boardRoute(newBoard.id));
+    navigate(boardRoute(newBoard.code ?? newBoard.id));
   };
 
   return (

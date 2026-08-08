@@ -11,7 +11,8 @@ import {
   parseCsvRows,
 } from '../api/documentFileViewUtils';
 import { useDocumentContent, useUpdateDocumentContent } from '../api/useDocumentQueries';
-import { Loader2, Pencil, Save, X } from 'lucide-react';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
+import { Pencil, Save, X } from 'lucide-react';
 
 interface DocumentRichFileViewerProps {
   document: DocumentItem;
@@ -66,8 +67,8 @@ function DocumentTextContentViewer({ document, className, online = true }: Docum
 
   if (isLoading) {
     return (
-      <div className={cn('flex min-h-[240px] items-center justify-center text-sm text-gray-500', className)}>
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading file…
+      <div className={cn('flex min-h-[240px] items-center justify-center', className)}>
+        <CustosellLoader />
       </div>
     );
   }

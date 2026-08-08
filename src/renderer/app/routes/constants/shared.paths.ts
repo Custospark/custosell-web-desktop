@@ -37,7 +37,8 @@ export const ROUTES = {
   PIPELINE: {
     INDEX: '/pipeline',
     BOARDS: '/pipeline/boards',
-    BOARD: (id: number) => `/pipeline/boards/${id}`,
+    /** Route boards by opaque `code` (or legacy numeric id) so raw DB ids never leak into URLs. */
+    BOARD: (boardRef: string | number) => `/pipeline/boards/${boardRef}`,
     MY_WORK: '/pipeline/my-work',
     LEADS: '/pipeline/leads',
     INSIGHTS: '/pipeline/insights',
@@ -57,7 +58,7 @@ export const ROUTES = {
     PROJECTS: '/estimates/projects',
     MY_PROJECTS: '/estimates/my-projects',
     BOARDS: '/estimates/boards',
-    BOARD: (id: number) => `/estimates/boards/${id}`,
+    BOARD: (boardRef: string | number) => `/estimates/boards/${boardRef}`,
     PROJECT_DETAIL: (id: number) => `/estimates/projects/${id}`,
     /** @deprecated Use ESTIMATES.BOARD — redirects from project id to board id */
     PROJECT_BOARD: (id: number) => `/estimates/projects/${id}/board`,

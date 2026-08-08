@@ -3,6 +3,8 @@ import { replaceEqualDeep } from '@tanstack/query-core';
 import type { AxiosError } from 'axios';
 import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
+import { axiosInstance } from '../../../app/api/axiosConfig';
+import { PIPELINE } from '../../../shared/api/endpoints/endpoints';
 import {
   createPipelineBoard,
   fetchBoardTeamMembers,
@@ -162,7 +164,7 @@ export function useCreatePipelineBoard() {
 
   return useMutation({
     mutationFn: async (payload: CreateBoardPayload) => {
-      const { data } = await createPipelineBoard(payload as Record<string, unknown>);
+      const { data } = await createPipelineBoard(payload as unknown as Record<string, unknown>);
       return normalizeItem<PipelineBoard>(data);
     },
     onSuccess: (board) => {

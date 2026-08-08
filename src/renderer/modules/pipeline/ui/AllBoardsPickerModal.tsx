@@ -12,7 +12,7 @@ interface AllBoardsPickerModalProps {
   onClose: () => void;
   boards: PipelineBoard[];
   activeBoardId: number;
-  boardRoute?: (id: number) => string;
+  boardRoute?: (boardRef: string | number) => string;
   boardsListRoute?: string;
   workspace?: 'pipeline' | 'estimates';
 }
@@ -60,7 +60,7 @@ function BoardGrid({
   boards: PipelineBoard[];
   activeBoardId: number;
   showVisibility: boolean;
-  onSelect: (id: number) => void;
+  onSelect: (board: PipelineBoard) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -72,7 +72,7 @@ function BoardGrid({
           showVisibility={showVisibility}
           showRole={showVisibility}
           isActive={board.id === activeBoardId}
-          onSelect={() => onSelect(board.id)}
+          onSelect={() => onSelect(board)}
         />
       ))}
     </div>
@@ -105,11 +105,11 @@ export default function AllBoardsPickerModal({
     };
   }, [filteredBoards, isEstimates]);
 
-  const handleSelect = (id: number) => {
+  const handleSelect = (board: PipelineBoard) => {
     setQuery('');
     onClose();
-    if (id !== activeBoardId) {
-      navigate(boardRoute(id));
+    if (board.id !== activeBoardId) {
+      navigate(boardRoute(board.code));
     }
   };
 

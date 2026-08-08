@@ -32,7 +32,7 @@ function PacingChart({ pacing }: { pacing: { label: string; budget: number; actu
               <YAxis tick={{ fontSize: 10 }} tickFormatter={formatAxisCurrency} width={56} />
               <Tooltip formatter={(val) => formatCurrency(Number(val ?? 0))} labelStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="budget" stroke={CHART_THEME.line} strokeWidth={2} dot={false} name="Planned" />
-              <Line type="monotone" dataKey="actual" stroke={CHART_THEME.primary ?? '#10b981'} strokeWidth={2} dot={false} name="Spent" />
+              <Line type="monotone" dataKey="actual" stroke={CHART_THEME.transactions} strokeWidth={2} dot={false} name="Spent" />
             </LineChart>
           </ResponsiveContainer>
         )}

@@ -44,10 +44,18 @@ export function useBoardKanbanPage() {
   const workspace = workspaceFromPath(location.pathname);
   const queryClient = useQueryClient();
   const { boardId: boardIdParam } = useParams();
-  const boardId = Number(boardIdParam);
+  const boardRef = boardIdParam ?? '';
   const boardsQueryOptions = workspace === 'estimates'
     ? { estimatesWorkspace: true as const, poll: true as const }
     : { salesOnly: true as const, poll: true as const };
+  const { data: boards = [] } = usePipelineBoards(boardsQueryOptions);
+  const boardId = useMemo(() => {
+    if (/^\d+$/.test(boardRef)) {
+      return Number(boardRef);
+    }
+    const match = boards.find((b) => b.code === boardRef);
+    return match ? match.id : 0;
+  }, [boardRef, boards]);
   const {
     data: board,
     isLoading,
@@ -58,7 +66,6 @@ export function useBoardKanbanPage() {
   const { data: boardAccessSnapshot } = useBoardAccessSync(boardId, boardId > 0);
   useBoardAnnouncements(boardId, boardId > 0);
   useBoardPolls(boardId, undefined, boardId > 0);
-  const { data: boards = [] } = usePipelineBoards(boardsQueryOptions);
   const switcherBoards = useMemo(
     () => filterBoardsForWorkspace(boards, workspace),
     [boards, workspace],

@@ -58,7 +58,7 @@ export default function DocumentsCabinetPage() {
 
   return (
     <div
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm pb-20 lg:pb-0"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/50 shadow-sm"
       style={cabinetBgStyle}
     >
       <div className="min-h-0 flex-1">

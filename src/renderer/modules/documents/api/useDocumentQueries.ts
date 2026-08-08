@@ -209,7 +209,7 @@ export function useDocument(id: number, enabled = true) {
   });
 }
 
-type FolderPayload = {
+export type FolderPayload = {
   name: string;
   description?: string | null;
   visibility: FolderVisibility;
@@ -273,7 +273,7 @@ export function useDeleteDocumentFolder() {
   });
 }
 
-type DocumentPayload = {
+export type DocumentPayload = {
   title?: string;
   description?: string | null;
   visibility?: DocumentVisibility;

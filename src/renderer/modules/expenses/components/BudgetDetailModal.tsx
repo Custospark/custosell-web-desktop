@@ -5,12 +5,12 @@ import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import {
   PiggyBank, ShoppingCart, Receipt, Wallet, ArrowRight, CheckCircle2, ShieldCheck, AlertTriangle, Loader2,
 } from 'lucide-react';
-import type { PersonalBudget, BudgetLine } from '../api/BudgetTypes';
+import type { PersonalBudget, PersonalBudgetSummaryRow, BudgetLine } from '../api/BudgetTypes';
 
 interface BudgetDetailModalProps {
   open: boolean;
   onClose: () => void;
-  budget?: PersonalBudget | null;
+  budget?: PersonalBudget | PersonalBudgetSummaryRow | null;
 }
 
 function PlanLineRow({ budgetId, line }: { budgetId: number; line: BudgetLine }) {

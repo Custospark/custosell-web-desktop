@@ -184,7 +184,7 @@ export default function BoardMembersView({ board, boardId, workspace, canManage 
             <p className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs text-gray-600">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
               {visibility === 'team'
-                ? 'This board is visible to everyone with pipeline or projects access. To control individual access, switch it to Shared from Board settings.'
+                ? 'This board is visible to everyone with pipeline or projects access in our organisation. To control individual access, switch it to Shared from Board settings.'
                 : 'This board is private to its owner. Switch it to Shared from Board settings to invite members.'}
             </p>
           )}

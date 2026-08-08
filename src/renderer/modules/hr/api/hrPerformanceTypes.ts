@@ -5,6 +5,7 @@ export interface HrPerformanceGoalItem {
   title: string;
   type: string;
   board_id: number;
+  board_code?: string | null;
   board_name?: string | null;
   workspace?: string | null;
   metric_key: string;
@@ -103,6 +104,7 @@ export interface HrPerformanceSnapshot {
     status: string;
     due_date?: string | null;
     board_id?: number | null;
+    board_code?: string | null;
     board_name?: string | null;
     workspace?: string | null;
     stage_name?: string | null;

@@ -150,10 +150,10 @@ export function resolveAccessibleNavLeaves(
 export function isSidebarSubItemActive(pathname: string, itemTo: string): boolean {
   if (pathname === itemTo) return true;
   if (itemTo === ROUTES.PIPELINE.BOARDS) {
-    return /^\/pipeline\/boards\/\d+/.test(pathname);
+    return /^\/pipeline\/boards\/[^/]+/.test(pathname);
   }
   if (itemTo === ROUTES.ESTIMATES.BOARDS) {
-    return /^\/estimates\/boards\/\d+/.test(pathname) || pathname === ROUTES.ESTIMATES.BOARDS;
+    return /^\/estimates\/boards\/[^/]+/.test(pathname) || pathname === ROUTES.ESTIMATES.BOARDS;
   }
   if (itemTo === ROUTES.ESTIMATES.PROJECTS) {
     return /^\/estimates\/projects\/\d+/.test(pathname);

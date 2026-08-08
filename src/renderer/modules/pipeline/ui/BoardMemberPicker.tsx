@@ -87,6 +87,8 @@ export default function BoardMemberPicker({
   const staffLoading = isLoading || (isFetching && teamMembers.length === 0);
 
   const planLimit = maxBoardMembers ?? subscription?.plan_limits?.max_board_members ?? null;
+  const ownerIncluded = lockedUserId != null ? 1 : 0;
+  const totalMembers = value.length + ownerIncluded;
   const atLimit = planLimit !== null && value.length >= planLimit;
 
   const availableStaff = useMemo(
@@ -169,7 +171,7 @@ export default function BoardMemberPicker({
     return (
       <div className={cn('flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 py-10 text-sm text-blue-700', className)}>
         <Loader2 className="h-5 w-5 animate-spin text-blue-500" aria-hidden />
-        Loading business staff…
+        Loading organisation staff…
       </div>
     );
   }
@@ -215,15 +217,15 @@ export default function BoardMemberPicker({
       {planLimit !== null && (
         <div className="flex items-center justify-between rounded-lg bg-gray-50 border border-gray-200 px-3 py-2">
           <span className="text-xs font-medium text-gray-700">Members</span>
-          <span className={cn('text-xs font-semibold', value.length >= planLimit ? 'text-amber-600' : 'text-gray-900')}>
-            {value.length} / {planLimit}
-            {value.length >= planLimit && ' (limit reached)'}
+          <span className={cn('text-xs font-semibold', atLimit ? 'text-amber-600' : 'text-gray-900')}>
+            {totalMembers} / {planLimit}
+            {atLimit && ' (plan limit reached)'}
           </span>
         </div>
       )}
 
       <p className="text-xs text-gray-500">
-        Search staff from your business or invite any Custosell user by email.
+        Search staff from your organisation or invite any Custosell user by email.
       </p>
 
       <input

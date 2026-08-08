@@ -7,7 +7,8 @@ import { usePipelineBoards } from '../api/usePipelineQueries';
 import { filterBoardsForWorkspace } from '../api/pipelineBoardWorkspace';
 import CreateBoardModal from '../ui/CreateBoardModal';
 import BoardListCard from '../ui/BoardListCard';
-import { Plus, Search } from 'lucide-react';
+import { SearchInput } from '../../../shared/components/inputs/SearchInput';
+import { Plus } from 'lucide-react';
 
 export default function BoardsPage() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -36,14 +37,12 @@ export default function BoardsPage() {
   return (
     <div className="space-y-4 pb-8">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[200px] flex-1 sm:max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="search"
+        <div className="min-w-0 flex-1">
+          <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
             placeholder="Search boards…"
-            className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <Button onClick={() => setCreateOpen(true)} className="inline-flex items-center gap-2">
@@ -62,7 +61,7 @@ export default function BoardsPage() {
           <BoardListCard
             key={board.id}
             board={board}
-            to={ROUTES.PIPELINE.BOARD(board.id)}
+            to={ROUTES.PIPELINE.BOARD(board.code)}
             showVisibility
             showRole
           />

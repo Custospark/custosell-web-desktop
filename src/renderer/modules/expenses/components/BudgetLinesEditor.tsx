@@ -80,7 +80,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
       next
         .filter((r) => r.item_name.trim())
         .map((r) => ({
-          id: r.id,
+          id: r.id ?? 0,
           item_name: r.item_name.trim(),
           quantity: r.quantity,
           unit_price: r.unit_price,

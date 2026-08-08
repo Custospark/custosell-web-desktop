@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp, Trophy, Users } from 'lucide-react';
+import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp, Trophy } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardSwitcherIconsProps {
@@ -14,8 +14,6 @@ interface BoardSwitcherIconsProps {
   onOpenConversation?: () => void;
   conversationMessagesCount?: number;
   conversationUnreadCount?: number;
-  onOpenMembers?: () => void;
-  membersActive?: boolean;
   onCreateNew: () => void;
   allowCreate?: boolean;
   className?: string;
@@ -32,8 +30,6 @@ export default function BoardSwitcherIcons({
   onOpenConversation,
   conversationMessagesCount = 0,
   conversationUnreadCount = 0,
-  onOpenMembers,
-  membersActive = false,
   onCreateNew,
   allowCreate = true,
   className,
@@ -156,24 +152,6 @@ export default function BoardSwitcherIcons({
             conversationUnreadCount > 0 ? 'bg-blue-600' : 'bg-gray-400',
           )}
           <span className="hidden sm:inline">Discussions</span>
-        </button>
-      )}
-      {onOpenMembers && (
-        <button
-          type="button"
-          onClick={onOpenMembers}
-          className={cn(
-            'inline-flex items-center gap-2 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] sm:px-4 sm:py-2.5',
-            membersActive
-              ? 'border-cyan-500 bg-gradient-to-r from-cyan-100 via-white to-sky-100 text-cyan-900 shadow-md shadow-cyan-200/50'
-              : 'border-cyan-300/90 bg-gradient-to-r from-cyan-50 via-white to-sky-50 text-cyan-800 hover:border-cyan-400 hover:from-cyan-100 hover:to-sky-100 hover:shadow-md hover:shadow-cyan-200/50',
-          )}
-          title="Board members"
-          aria-label="Board members"
-          aria-pressed={membersActive}
-        >
-          <Users className="h-4 w-4 text-cyan-600" />
-          <span className="hidden sm:inline">Members</span>
         </button>
       )}
       {allowCreate && (

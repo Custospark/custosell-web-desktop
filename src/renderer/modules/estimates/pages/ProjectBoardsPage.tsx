@@ -88,7 +88,7 @@ export default function ProjectBoardsPage() {
               <BoardListCard
                 key={board.id}
                 board={board}
-                to={ROUTES.ESTIMATES.BOARD(board.id)}
+                to={ROUTES.ESTIMATES.BOARD(board.code)}
                 showVisibility
                 showRole
               />
@@ -105,7 +105,7 @@ export default function ProjectBoardsPage() {
               <BoardListCard
                 key={board.id}
                 board={board}
-                to={ROUTES.ESTIMATES.BOARD(board.id)}
+                to={ROUTES.ESTIMATES.BOARD(board.code)}
                 showVisibility
                 showRole
               />

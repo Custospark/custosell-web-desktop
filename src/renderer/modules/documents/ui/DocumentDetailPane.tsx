@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
 import type { DocumentFolder, DocumentItem } from '../api/documentTypes';
 import { ACCESS_VISIBILITY_LABEL } from '../api/documentAccessLabels';
@@ -188,8 +189,8 @@ export function DocumentDetailPane({
 
   if (loading) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-white text-sm text-gray-500">
-        Loading…
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-white">
+        <CustosellLoader />
       </div>
     );
   }

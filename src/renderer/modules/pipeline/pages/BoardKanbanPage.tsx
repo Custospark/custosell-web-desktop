@@ -111,11 +111,11 @@ export default function BoardKanbanPage() {
   } = useBoardKanbanPage();
 
   if (workspace === 'pipeline' && board && !boardBelongsToPipelineWorkspace(board)) {
-    return <Navigate to={ROUTES.ESTIMATES.BOARD(boardId)} replace />;
+    return <Navigate to={ROUTES.ESTIMATES.BOARD(board.code)} replace />;
   }
 
   if (workspace === 'estimates' && board && !boardBelongsToEstimatesWorkspace(board)) {
-    return <Navigate to={ROUTES.PIPELINE.BOARD(boardId)} replace />;
+    return <Navigate to={ROUTES.PIPELINE.BOARD(board.code)} replace />;
   }
 
   if (isError && !board) {
@@ -286,8 +286,6 @@ export default function BoardKanbanPage() {
         }}
         conversationMessagesCount={conversationMessagesCount}
         conversationUnreadCount={conversationUnreadCount}
-        onOpenMembers={showBoardManagementControls ? () => setViewMode((mode) => (mode === 'members' ? 'kanban' : 'members')) : undefined}
-        membersActive={viewMode === 'members'}
         onCreateNew={() => setCreateBoardOpen(true)}
       />
       <BoardKanbanPageModals

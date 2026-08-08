@@ -93,7 +93,7 @@ export default function CardLinksSection({ leadId, boardId, canEdit = true, onNa
               <Link2 className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
               {link.linked_lead ? (
                 <Link
-                  to={ROUTES.PIPELINE.BOARD(link.linked_lead.board_id)}
+                  to={ROUTES.PIPELINE.BOARD(link.linked_lead.board?.code ?? link.linked_lead.board_id)}
                   onClick={onNavigate}
                   className="flex-1 truncate font-medium text-indigo-700 hover:text-indigo-900 hover:underline"
                   title={`${link.linked_lead.title} · ${link.linked_lead.stage?.name ?? ''}`}
@@ -125,7 +125,7 @@ export default function CardLinksSection({ leadId, boardId, canEdit = true, onNa
               <ExternalLink className="h-3.5 w-3.5 shrink-0 text-amber-400" />
               {link.linked_board ? (
                 <Link
-                  to={ROUTES.PIPELINE.BOARD(link.linked_board.id)}
+                  to={ROUTES.PIPELINE.BOARD(link.linked_board.code ?? link.linked_board.id)}
                   onClick={onNavigate}
                   className="flex-1 truncate font-medium text-amber-700 hover:text-amber-900 hover:underline"
                 >

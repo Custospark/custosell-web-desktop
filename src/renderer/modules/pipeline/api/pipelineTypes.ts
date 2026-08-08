@@ -68,6 +68,7 @@ export interface PipelineStage {
 
 export interface PipelineBoard {
   id: number;
+  code: string;
   business_id: number;
   name: string;
   description: string | null;
@@ -123,11 +124,12 @@ export interface PipelineLeadLink {
     card_type: PipelineCardType;
     board_id: number;
     stage_id: number;
-    board?: { id: number; name: string } | null;
+    board?: { id: number; code?: string; name: string } | null;
     stage?: { id: number; name: string; color: string | null } | null;
   } | null;
   linked_board?: {
     id: number;
+    code?: string;
     name: string;
     workspace?: string | null;
   } | null;
@@ -238,7 +240,7 @@ export interface PipelineLead {
   converted_at: string | null;
   lost_reason: string | null;
   estimate_id?: number | null;
-  board?: { id: number; name: string };
+  board?: { id: number; code?: string; name: string };
   stage?: { id: number; name: string; color: string | null; is_won: boolean; is_lost: boolean };
   assignee?: PipelineUserRef | null;
   assignees?: PipelineUserRef[];

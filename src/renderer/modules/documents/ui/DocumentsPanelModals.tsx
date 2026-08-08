@@ -10,23 +10,26 @@ import { DocumentAccessModal } from './DocumentAccessModal';
 import { DocumentAccessSection } from './DocumentAccessSection';
 import { DocumentFormSection, DocumentIconField, DocumentModalFooter, DocumentModalHero, documentInputClass } from './documentFormFields';
 import SendVaultEmailModal from '../../../shared/components/email/SendVaultEmailModal';
+import { DocumentProgressBar } from './DocumentProgressBar';
 import { FolderPlus, Link2, Shield, Tag, Type, Upload } from 'lucide-react';
 import type { DocumentsPanelData, DocumentsPanelActions, DocumentsPanelModalState } from './useDocumentsPanel';
+import type { DocumentFolder, DocumentItem, DocumentsVaultAppearance } from '../api/documentTypes';
+import type { DocumentPayload, FolderPayload } from '../api/useDocumentQueries';
 
 interface DocumentsPanelModalsProps {
   data: DocumentsPanelData;
   actions: DocumentsPanelActions;
   modalState: DocumentsPanelModalState;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  createFolder: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
-  createLink: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
-  updateFolder: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
-  updateDocument: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
-  updateVaultAppearance: { isPending: boolean; mutateAsync: (args: any) => Promise<any> };
+  createFolder: { isPending: boolean; mutateAsync: (args: FolderPayload) => Promise<DocumentFolder> };
+  createLink: { isPending: boolean; mutateAsync: (args: DocumentPayload & { title: string; url: string }) => Promise<DocumentItem> };
+  updateFolder: { isPending: boolean; mutateAsync: (args: Partial<FolderPayload> & { id: number }) => Promise<DocumentFolder> };
+  updateDocument: { isPending: boolean; mutateAsync: (args: Partial<DocumentPayload> & { id: number }) => Promise<DocumentItem> };
+  updateVaultAppearance: { isPending: boolean; mutateAsync: (args: Partial<DocumentsVaultAppearance>) => Promise<DocumentsVaultAppearance> };
 }
 
 export function DocumentsPanelModals({ data, actions, modalState, fileInputRef, createFolder, createLink, updateFolder, updateDocument, updateVaultAppearance }: DocumentsPanelModalsProps) {
-  const { showSidebar, activeFolderId, cabinet, canContribute, moveTree } = data;
+  const { showSidebar, activeFolderId, cabinet, canContribute, moveTree, transfers } = data;
   const { handleDownload, handleRecordView, handleMoveConfirm, handleRenameConfirm, invalidateDocuments, handleCreateFolder, handleCreateLink, uploadFiles } = actions;
   const { showCreateFolder, showUpload, showLink, showVaultAppearance, previewDoc, moveTarget, renameTarget, accessTarget, folderColorTarget, emailTarget, actionTargetFolderId, folderName, folderVisibility, folderMembers, uploadVisibility, uploadMembers, uploadTags, linkTitle, linkUrl, createFolderParentId } = modalState;
   const { setShowCreateFolder, setShowUpload, setShowLink, setShowVaultAppearance, setPreviewDoc, setFolderName, setFolderVisibility, setFolderMembers, setUploadVisibility, setUploadMembers, setUploadTags, setLinkTitle, setLinkUrl, setCreateFolderParentId, setActionTargetFolderId } = actions;
@@ -73,6 +76,15 @@ export function DocumentsPanelModals({ data, actions, modalState, fileInputRef, 
       <Modal isOpen={showUpload} onClose={() => { setShowUpload(false); setActionTargetFolderId(null); }} title="Upload files" size="lg">
         <div className="space-y-5">
           <DocumentModalHero icon={Upload} title="Upload files" description="Drag files here or browse from your computer." tone="blue" />
+          {transfers.filter((t) => t.kind === 'upload').length > 0 && (
+            <DocumentFormSection title="Uploading files" icon={Upload}>
+              <div className="space-y-3">
+                {transfers.filter((t) => t.kind === 'upload').map((transfer) => (
+                  <DocumentProgressBar key={transfer.id} label={transfer.name} percent={transfer.percent} />
+                ))}
+              </div>
+            </DocumentFormSection>
+          )}
           <DocumentFormSection title="Files" icon={Upload}>
             <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void uploadFiles(e.dataTransfer.files, { closeModal: true }); }}>
               <Upload className="mx-auto h-8 w-8 text-gray-400" />

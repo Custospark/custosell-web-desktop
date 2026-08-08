@@ -17,8 +17,34 @@ function formatTime(hhmm: string): string {
   return `${hour}:${String(m).padStart(2, '0')} ${period}`;
 }
 
+function formatIsoTime(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function formatIsoDate(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-CA');
+}
+
 function formatSlotRange(slot: TimeSlot): string {
-  return `${formatTime(slot.time)} — ${formatTime(slot.end_time)}`;
+  return `${formatIsoTime(slot.time_iso) || formatTime(slot.time)} — ${formatIsoTime(slot.end_time_iso) || formatTime(slot.end_time)}`;
+}
+
+function utcPartsFromSlot(slot: TimeSlot): { date: string; time: string } {
+  if (slot.time_iso) {
+    const iso = new Date(slot.time_iso).toISOString();
+    return { date: iso.slice(0, 10), time: iso.slice(11, 16) };
+  }
+  return { date: '', time: '' };
 }
 
 const DAY_NAMES: Record<number, string> = {
@@ -115,9 +141,12 @@ export default function PublicBookingPage() {
     e.preventDefault();
     if (!selectedDate || !selectedTime || !name.trim() || !token) return;
 
+    const selectedSlot = allSlots.find((s) => s.time === selectedTime) ?? null;
+    const utc = selectedSlot ? utcPartsFromSlot(selectedSlot) : null;
+
     const payload: CreateBookingPayload = {
-      date: selectedDate,
-      time: selectedTime,
+      date: utc?.date || selectedDate,
+      time: utc?.time || selectedTime,
       name: name.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() ? `${countryCode.dial_code}${phone.replace(/\D/g, '')}` : undefined,
@@ -136,6 +165,10 @@ export default function PublicBookingPage() {
   const bookingResponse = createBooking.data;
   const referenceCode = bookingResponse?.reference_code;
   const checkUrl = bookingResponse?.check_url;
+  const selectedSlot = allSlots.find((s) => s.time === selectedTime) ?? null;
+  const selectedLocalDate = selectedSlot ? formatIsoDate(selectedSlot.time_iso) : selectedDate;
+  const selectedLocalTime = selectedSlot ? formatIsoTime(selectedSlot.time_iso) : formatTime(selectedTime);
+  const selectedLocalEnd = selectedSlot ? formatIsoTime(selectedSlot.end_time_iso) : '';
 
   const handleCopyLink = () => {
     if (!checkUrl) return;
@@ -158,9 +191,9 @@ export default function PublicBookingPage() {
         </p>
         <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
           <CalendarDays className="h-3.5 w-3.5" />
-          <span>{selectedDate}</span>
+          <span>{selectedLocalDate}</span>
           <Clock className="ml-1 h-3.5 w-3.5" />
-          <span>{formatTime(selectedTime)}</span>
+          <span>{selectedLocalTime}{selectedLocalEnd ? ` — ${selectedLocalEnd}` : ''}</span>
         </div>
 
         <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -357,9 +390,9 @@ export default function PublicBookingPage() {
 
             <div className="mb-3 flex items-center gap-3 rounded-xl bg-indigo-50 px-4 py-2 text-xs text-indigo-600">
               <CalendarDays className="h-3.5 w-3.5" />
-              <span>{selectedDate}</span>
+              <span>{selectedLocalDate}</span>
               <Clock className="h-3.5 w-3.5" />
-              <span>{formatTime(selectedTime)}</span>
+              <span>{selectedLocalTime}{selectedLocalEnd ? ` — ${selectedLocalEnd}` : ''}</span>
             </div>
 
             <div className="space-y-3">

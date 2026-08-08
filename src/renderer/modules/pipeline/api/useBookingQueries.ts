@@ -36,6 +36,8 @@ export function useBookingInfo(token: string) {
 export interface TimeSlot {
   time: string;
   end_time: string;
+  time_iso: string;
+  end_time_iso: string;
   available: boolean;
 }
 

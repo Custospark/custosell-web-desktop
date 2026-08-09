@@ -1,13 +1,13 @@
-import { useState } from 'react';
 import { usePayoutHistory } from './api/useAccountQueries';
 import type { ReferralEarnings } from '../referral/api/ReferralTypes';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import {
   Users, DollarSign, Clock, TrendingUp, Wallet,
-  Receipt, Check, X, Building2, ChevronLeft, ChevronRight,
+  Receipt, Check, X, Building2,
   FileText, Image,
 } from 'lucide-react';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { PaymentInfoSection } from './components/PaymentInfoSection';
 
 const PAGE_SIZE = 10;
@@ -36,10 +36,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
     .reduce((sum, p) => sum + p.amount, 0);
 
   const referrals = earnings?.referrals ?? [];
-  const [page, setPage] = useState(0);
-  const totalPages = Math.max(1, Math.ceil(referrals.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const pageReferrals = referrals.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const paginated = usePagination(referrals, PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -110,7 +107,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
           </p>
         ) : (
           <div className="space-y-2">
-            {pageReferrals.map((r) => {
+            {paginated.data.map((r) => {
               const st = STATUS_STYLES[r.status] ?? { dot: 'bg-gray-400', label: r.status };
               return (
                 <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
@@ -136,44 +133,14 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
               );
             })}
 
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-gray-400">
-                  Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, referrals.length)} of {referrals.length}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    disabled={safePage === 0}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setPage(i)}
-                      className={cn(
-                        'w-7 h-7 text-xs font-medium rounded-md cursor-pointer',
-                        safePage === i ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100',
-                      )}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                    disabled={safePage === totalPages - 1}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    Next <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={paginated.page}
+              totalPages={paginated.totalPages}
+              totalItems={paginated.totalItems}
+              pageSize={paginated.pageSize}
+              onPageChange={paginated.setPage}
+              onPageSizeChange={paginated.setPageSize}
+            />
           </div>
         )}
       </section>

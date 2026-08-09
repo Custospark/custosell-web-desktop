@@ -104,10 +104,6 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
             {(sale.sale_items ?? []).map((item, i) => {
               const refunded = item.refunded_quantity > 0;
               const unit = parseFloat(item.unit_price);
-              const retail = parseFloat(item.product_price);
-              const tier = item.price_tier
-                ?? (retail > 0 && unit < retail ? 'wholesale' : 'retail');
-              const tierLabel = tier === 'wholesale' ? 'WSP' : 'RP';
               const lineDiscount = parseFloat(item.discount_amount ?? '0');
               return (
                 <tr key={item.id} className={i < (sale.sale_items?.length ?? 0) - 1 ? 'border-b border-dashed border-gray-300' : ''}>
@@ -127,7 +123,6 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
                   <td className="py-1 text-center text-gray-800 px-2 whitespace-nowrap">{item.quantity}</td>
                   <td className="py-1 text-right text-gray-800 px-2 whitespace-nowrap">
                     <span>{unit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                    <span className="ml-1 text-[9px] font-semibold text-gray-500">{tierLabel === 'WSP' ? '(WSP)' : '(RP)'}</span>
                   </td>
                   <td className="py-1 text-right text-gray-800 pl-2 whitespace-nowrap">{lineTotal(item).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                 </tr>
@@ -135,7 +130,6 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
             })}
           </tbody>
         </table>
-        <p className="text-[9px] text-gray-400 mb-3 -mt-2">(RP) Retail price · (WSP) Wholesale price</p>
 
         <div className="border-t border-dashed border-gray-400 pt-2 mb-2 space-y-0.5 text-xs">
           <div className="flex justify-between">

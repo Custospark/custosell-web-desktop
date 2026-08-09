@@ -3,9 +3,13 @@ import { cn } from '../../shared/utils/cn';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { MoneyInput } from '../../shared/components/inputs/MoneyInput';
 import { lineNetTotal, type InvoiceLineItem } from './invoiceLineItems';
+import type { Product } from '../inventory/api/products/ProductTypes';
+import { tracksStock } from '../inventory/api/products/ProductTypes';
 
 interface InvoiceLineItemsTableProps {
   lineItems: InvoiceLineItem[];
+  /** Products catalog used to surface in-stock quantity per line. */
+  products?: Product[];
   isModal?: boolean;
   onUpdateQuantity: (lineKey: string, quantity: number) => void;
   onUpdateDiscount: (lineKey: string, discount: number) => void;
@@ -19,8 +23,20 @@ interface InvoiceLineItemsTableProps {
   onClearAll: () => void;
 }
 
+function InvoiceStockHint({ productId, products }: { productId: number | null; products?: Product[] }) {
+  const product = productId != null ? products?.find((p) => p.id === productId) : undefined;
+  if (!product || !tracksStock(product)) return null;
+  const qty = product.stock_quantity;
+  return (
+    <span className={`block text-[10px] font-medium ${qty > 0 ? 'text-green-600' : 'text-red-500'}`}>
+      {qty > 0 ? `${qty} in stock` : 'Out of stock'}
+    </span>
+  );
+}
+
 export function InvoiceLineItemsTable({
   lineItems,
+  products,
   isModal,
   onUpdateQuantity,
   onUpdateDiscount,
@@ -71,14 +87,10 @@ export function InvoiceLineItemsTable({
                   <tr key={item.lineKey} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-gray-800">{item.name}</span>
+                      <InvoiceStockHint productId={item.product_id} products={products} />
                     </td>
                     <td className="px-4 py-3 text-center hidden sm:table-cell">
                       <span className="text-sm text-gray-600">{formatCurrency(item.unit_price)}</span>
-                      {item.priceTier && (
-                        <span className="ml-1.5 text-[10px] font-semibold text-gray-400">
-                          {item.priceTier === 'wholesale' ? '(WSP)' : '(RP)'}
-                        </span>
-                      )}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <div className="flex items-center justify-center gap-1.5">

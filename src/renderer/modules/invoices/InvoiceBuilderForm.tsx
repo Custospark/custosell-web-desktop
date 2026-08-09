@@ -304,6 +304,7 @@ export default function InvoiceBuilderForm({
 
               <InvoiceLineItemsTable
                 lineItems={lineItems}
+                products={products}
                 isModal={isModal}
                 onUpdateQuantity={updateQuantity}
                 onUpdateDiscount={updateDiscount}

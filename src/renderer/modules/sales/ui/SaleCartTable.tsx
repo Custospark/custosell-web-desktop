@@ -94,6 +94,17 @@ function QtyStepper(
   );
 }
 
+/** In-stock hint under a cart line name — hidden for services. */
+function StockHint({ product }: { product: Product | undefined }) {
+  if (!product || !tracksStock(product)) return null;
+  const qty = product.stock_quantity;
+  return (
+    <span className={`block text-[10px] font-medium ${qty > 0 ? 'text-green-600' : 'text-red-500'}`}>
+      {qty > 0 ? `${qty} in stock` : 'Out of stock'}
+    </span>
+  );
+}
+
 /** Desktop/tablet cart table — hidden on small screens (mobile cards take over). */
 export function SaleCartDesktopTable({
   items, products, onEditQty, onTierChange, onDiscountChange, onRemove, onDecreaseQty, onIncreaseQty,
@@ -122,6 +133,7 @@ export function SaleCartDesktopTable({
                   <td className="px-4 py-3 text-center text-sm text-gray-400">{idx + 1}</td>
                   <td className="px-4 py-3">
                     <span className="text-sm font-medium text-gray-800 truncate block max-w-[150px] sm:max-w-none">{item.name}</span>
+                    <StockHint product={product} />
                     <div className="mt-1"><TierPicker item={item} onTierChange={onTierChange} /></div>
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -173,6 +185,7 @@ function SaleCartMobileCards({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
+                <StockHint product={product} />
                 <div className="mt-1"><TierPicker item={item} onTierChange={onTierChange} /></div>
               </div>
               <button title="Remove item" type="button" onClick={() => onRemove(item)}

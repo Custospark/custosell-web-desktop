@@ -159,7 +159,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
           </div>
         )}
 
-        <div className="flex justify-center overflow-x-auto flex-1 min-h-0 overflow-y-auto">
+        <div className="flex items-start justify-center overflow-x-auto flex-1 min-h-0 overflow-y-auto">
           <ReceiptContent ref={receiptRef} sale={sale} />
         </div>
 

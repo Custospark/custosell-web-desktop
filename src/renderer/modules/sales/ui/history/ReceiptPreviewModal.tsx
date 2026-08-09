@@ -73,7 +73,7 @@ export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPrev
 
   return (
     <Modal isOpen={open} onClose={onClose} title="Receipt Preview" size="sm">
-      <div className="flex justify-center overflow-x-auto">
+      <div className="flex items-start justify-center overflow-x-auto">
         <ReceiptContent ref={receiptRef} sale={sale} />
       </div>
 

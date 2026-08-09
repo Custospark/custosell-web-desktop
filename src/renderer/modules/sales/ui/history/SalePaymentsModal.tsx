@@ -92,7 +92,7 @@ export default function SalePaymentsModal({ sale, open, onClose }: SalePaymentsM
         {showSummary ? (
           <div className="border-t border-gray-100 pt-4">
             <p className="mb-3 text-sm font-medium text-gray-700 no-print">Sale summary receipt</p>
-            <div className="flex justify-center overflow-x-auto">
+            <div className="flex items-start justify-center overflow-x-auto">
               <ReceiptContent ref={receiptRef} sale={activeSale} />
             </div>
           </div>

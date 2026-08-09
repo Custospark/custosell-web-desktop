@@ -1,5 +1,6 @@
-import { Check } from 'lucide-react';
+import { Check, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { useAppContext } from '../../../app/contexts/AppContext';
 
 interface CheckoutStepperProps {
   step: 'items' | 'payment';
@@ -48,6 +49,8 @@ function StepMarker({ index, label, state, onClick }: { index: number; label: st
 
 export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
+  const { state, dispatch } = useAppContext();
+  const isFullscreen = state.posFullscreen;
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div>
@@ -56,6 +59,16 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
           {isPayment ? 'Update customer details and take payment' : 'Search and add products to the sale'}
         </p>
       </div>
+
+      <button
+        type="button"
+        onClick={() => dispatch({ type: 'SET_POS_FULLSCREEN', payload: !isFullscreen })}
+        title={isFullscreen ? 'Exit full-screen cashier mode' : 'Full-screen cashier mode (hides navigation)'}
+        className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors shrink-0"
+      >
+        {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        {isFullscreen ? 'Exit full screen' : 'Full screen'}
+      </button>
 
       {/* Standard stepper */
   }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -25,6 +25,24 @@ export function Layout() {
     if (subscription.onboarding_fee_paid) return;
     navigate(ROUTES.ONBOARDING, { replace: true });
   }, [isAuthenticated, subscription, location.pathname, navigate]);
+
+  // Immersive POS mode is scoped to the cashier page — leaving it exits fullscreen.
+  useEffect(() => {
+    if (state.posFullscreen && location.pathname !== ROUTES.SALES.NEW) {
+      dispatch({ type: 'SET_POS_FULLSCREEN', payload: false });
+    }
+  }, [state.posFullscreen, location.pathname, dispatch]);
+
+  // Immersive POS mode hides all app chrome so the cashier gets maximum screen space.
+  if (state.posFullscreen) {
+    return (
+      <div className="relative flex flex-1 min-h-0 min-w-0 w-full overflow-hidden">
+        <main className="flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-1 min-h-0 min-w-0 w-full overflow-hidden">

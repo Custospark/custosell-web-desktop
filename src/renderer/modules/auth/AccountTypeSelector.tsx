@@ -41,7 +41,7 @@ const OPTIONS: {
   {
     id: 'personal',
     title: 'For personal use',
-    description: 'Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management & more — stay organized and productive. Referral earning tracking.',
+    description: 'Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management & more — stay organized and productive, even offline, and earn rewards with referral tracking.',
     icon: CircleUser,
     iconClass: 'bg-indigo-100 group-hover:bg-indigo-200',
     iconColor: 'text-indigo-700',

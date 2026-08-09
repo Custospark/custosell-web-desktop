@@ -22,13 +22,13 @@ export function CartSummaryBar({ count, subtotal, onNext, actions }: CartSummary
   return (
     <div className="sticky bottom-0 z-10 shrink-0 bg-white pt-3 pb-2 border-t border-gray-200 mt-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3 lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-3 lg:justify-between">
           {actions ? (
             <>
               <span className="text-sm font-medium text-gray-600 lg:hidden shrink-0">
                 <span className="font-bold text-gray-900 tabular-nums">{count}</span> {count === 1 ? 'item' : 'items'} in cart
               </span>
-              <div className="hidden lg:flex items-center gap-2 overflow-x-auto overscroll-x-contain min-w-0 py-1 [&>button]:flex-grow [&>a]:flex-grow [&>button]:justify-center [&>a]:justify-center">
+              <div className="hidden lg:flex flex-1 min-w-0 items-center gap-2 [&>button]:flex-1 [&>a]:flex-1 [&>button]:justify-center [&>a]:justify-center">
                 {actions}
               </div>
             </>

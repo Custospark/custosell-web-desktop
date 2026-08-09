@@ -100,6 +100,9 @@ export function ReferralsContent() {
         <div className="flex items-center gap-2">
           <Gift className="w-5 h-5 text-indigo-600" />
           <h2 className="text-lg font-semibold text-gray-900">Your Referral Code</h2>
+          {earnings?.is_sales_rep && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Sales Rep</span>
+          )}
         </div>
 
         {earningsLoading ? (

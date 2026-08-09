@@ -7,7 +7,7 @@ import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
 import {
   Mail, UserCheck, UserPlus, Handshake, Phone, MapPinned, Landmark,
-  Smartphone, Hash, Building, User, Percent, ToggleLeft,
+  Smartphone, Hash, Building, User, Percent, ToggleLeft, Key, Eye, EyeOff,
 } from 'lucide-react';
 import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
 
@@ -41,6 +41,7 @@ export interface PlatformSalesRep {
 interface SalesRepForm {
   email: string;
   name: string;
+  password: string;
   phone: string;
   region: string;
   payment_method: 'mobile_money' | 'bank' | '';
@@ -60,7 +61,7 @@ const REGIONS = ['Central', 'Eastern', 'Northern', 'Western', 'Kampala'];
 const MM_PROVIDERS = ['MTN Mobile Money', 'Airtel Money'];
 
 const emptyForm: SalesRepForm = {
-  email: '', name: '', phone: '', region: '',
+  email: '', name: '', password: '', phone: '', region: '',
   payment_method: '', mobile_money_provider: '', mobile_money_number: '', mobile_money_name: '',
   bank_name: '', bank_branch: '', bank_account_name: '', bank_account_number: '',
   commission_rate: '', commission_type: 'percentage', is_active: true,
@@ -77,6 +78,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
   const [form, setForm] = useState<SalesRepForm>(() => editing ? {
     email: editing.user?.email ?? '',
     name: editing.user?.name ?? '',
+    password: '',
     phone: editing.phone ?? '',
     region: editing.region ?? '',
     payment_method: editing.payment_method ?? '',
@@ -94,6 +96,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
   const [searchedUser, setSearchedUser] = useState<{ id: number; name: string; email: string } | null>(editing?.user ?? null);
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const reset = () => {
     setForm(emptyForm);
@@ -127,6 +130,10 @@ export function SalesRepFormModal({ show, editing, onClose }: {
   };
 
   const handleSave = async () => {
+    if (!editing && !searchedUser && !form.password) {
+      showToast('error', 'Set a password — a personal account will be created for this rep');
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
@@ -149,6 +156,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
         await axiosInstance.post(SALES_REPS.BASE, {
           email: form.email,
           name: form.name || undefined,
+          password: form.password || undefined,
           commission_rate: form.commission_rate,
           commission_type: form.commission_type,
           is_active: form.is_active,
@@ -225,6 +233,32 @@ export function SalesRepFormModal({ show, editing, onClose }: {
                 </div>
               </div>
             )}
+          {!editing && !searchedUser && form.email && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Key className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-12 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Set a password for their sign-in (min 6)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500">They'll use this to sign in to their personal account and view their Referral Dashboard.</p>
+            </div>
+          )}
           </div>
         )}
 
@@ -399,6 +433,18 @@ export function SalesRepFormModal({ show, editing, onClose }: {
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="is-active" className="text-sm text-gray-700">Active (rep can generate referrals)</label>
+          </div>
+          <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
+            <p className="text-xs font-semibold text-indigo-700">What referees get with this code</p>
+            <p className="mt-0.5 text-xs text-indigo-600">
+              Every business that signs up with this rep&apos;s code gets{' '}
+              <span className="font-semibold">
+                {form.commission_type === 'flat'
+                  ? `$${form.commission_rate || 0} off their first charge`
+                  : `${form.commission_rate || 0}% off their first period`}
+              </span>{' '}
+              — {form.commission_type === 'percentage' ? `${form.commission_rate || 0}% commission to the rep` : 'commission to the rep'}.
+            </p>
           </div>
         </PipelineFormSection>
 

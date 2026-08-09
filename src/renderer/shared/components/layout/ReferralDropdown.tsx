@@ -143,7 +143,7 @@ export default function ReferralDropdown() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900">Referral Program</p>
-                <p className="text-xs text-gray-500">Earn rewards by referring businesses</p>
+                <p className="text-xs text-gray-500">Earn rewards by referring businesses{isSalesRep ? <span className="text-indigo-600 font-medium"> (Sales Rep)</span> : ''}</p>
               </div>
             </div>
           </div>

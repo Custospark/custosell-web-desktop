@@ -18,14 +18,14 @@ export function AccountTypeSelector({ onSelect }: Props) {
         <button
           type="button"
           onClick={() => onSelect('business')}
-          className="animate-sparkle-border flex w-full items-center gap-4 rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md cursor-pointer group"
+          className="animate-sparkle-border flex w-full items-center gap-3 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
-            <Store className="h-6 w-6 text-blue-700" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors sm:h-12 sm:w-12">
+            <Store className="h-5 w-5 text-blue-700 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-gray-900">For my business</p>
-            <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+            <p className="text-sm font-semibold text-gray-900 sm:text-base">For my business</p>
+            <p className="mt-0.5 hidden text-xs text-gray-500 leading-relaxed sm:block">
               Point of Sale, E-commerce Storefront, Inventory, Accounting, HR &amp; Payroll, Invoicing, Expenses, CRM, Forecasting &amp; more — all in one system that works with or without the internet.
             </p>
           </div>
@@ -35,14 +35,14 @@ export function AccountTypeSelector({ onSelect }: Props) {
         <button
           type="button"
           onClick={() => onSelect('shopping')}
-          className="animate-sparkle-border flex w-full items-center gap-4 rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md cursor-pointer group"
+          className="animate-sparkle-border flex w-full items-center gap-3 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors">
-            <ShoppingBag className="h-6 w-6 text-emerald-700" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors sm:h-12 sm:w-12">
+            <ShoppingBag className="h-5 w-5 text-emerald-700 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-gray-900">Online shopping</p>
-            <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+            <p className="text-sm font-semibold text-gray-900 sm:text-base">Online shopping</p>
+            <p className="mt-0.5 hidden text-xs text-gray-500 leading-relaxed sm:block">
               Browse products and services from every business on Custosell, add them to your cart, save to your wishlist, place orders, and track everything in your orders — free, with no setup.
             </p>
           </div>
@@ -52,14 +52,14 @@ export function AccountTypeSelector({ onSelect }: Props) {
         <button
           type="button"
           onClick={() => onSelect('personal')}
-          className="animate-sparkle-border-personal flex w-full items-center gap-4 rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md cursor-pointer group"
+          className="animate-sparkle-border-personal flex w-full items-center gap-3 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors">
-            <CircleUser className="h-6 w-6 text-indigo-700" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors sm:h-12 sm:w-12">
+            <CircleUser className="h-5 w-5 text-indigo-700 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-gray-900">For personal use</p>
-            <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+            <p className="text-sm font-semibold text-gray-900 sm:text-base">For personal use</p>
+            <p className="mt-0.5 hidden text-xs text-gray-500 leading-relaxed sm:block">
               Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management &amp; more — stay organized and productive, even offline.
             </p>
           </div>

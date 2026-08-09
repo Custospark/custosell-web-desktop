@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
-import { useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
+import { useApplyReferralCode, useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
@@ -44,16 +44,16 @@ export default function UpgradeFlowModal({
 
   const quoteErrorMessage = (quoteErrorObj && (quoteErrorObj as { response?: { data?: { message?: string } } })?.response?.data?.message) ?? undefined;
 
-  const referralDiscountUsd = subscription?.referral?.discount_applied
-    ? Number(subscription.referral.discount_applied)
+  const { data: earnings } = useReferralEarnings();
+  const availableCredit = earnings?.available_credit ?? 0;
+  const creditAfterProration = availableCredit > 0
+    ? Math.min(availableCredit, prorationDueUsd || prorationDue)
     : 0;
-  const creditAfterProration = 0;
 
   const paymentCurrency = getPaymentCurrency();
   const { isUsd, toLocal } = useUsdToLocal(paymentCurrency);
   const dueUsd = prorationDueUsd || prorationDue;
-  const appliedDiscountUsd = referralDiscountUsd > 0 ? referralDiscountUsd : creditAfterProration;
-  const netDueUsd = Math.max(0, dueUsd - appliedDiscountUsd);
+  const netDueUsd = Math.max(0, dueUsd - creditAfterProration);
   const formatUsdValue = (usd: number) => isUsd ? formatUSD(usd) : formatCurrency(toLocal(usd), paymentCurrency);
   const formatDue = formatUsdValue(netDueUsd);
 
@@ -98,6 +98,7 @@ export default function UpgradeFlowModal({
       {
         amount,
         currency: paymentCurrency,
+        billingCycle: upgradeCycle,
         phone: userPhone,
         metadata: { action: 'upgrade', to_plan_id: plan.id, billing_cycle: upgradeCycle },
       },
@@ -171,25 +172,16 @@ export default function UpgradeFlowModal({
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Plan price</span>
               <span className="font-semibold text-gray-900">
-                {formatUSD(quote?.new_plan.price_monthly_usd ?? 0)}/{upgradeCycle === 'yearly' ? 'yr' : 'mo'}
+                {formatUSD((upgradeCycle === 'yearly' ? quote?.new_plan.price_yearly_usd ?? 0 : quote?.new_plan.price_monthly_usd ?? 0))}/{upgradeCycle === 'yearly' ? 'yr' : 'mo'}
               </span>
             </div>
-            {referralDiscountUsd > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 flex items-center gap-1">
-                  <Tag className="w-3.5 h-3.5 text-green-600" />
-                  Promo discount
-                </span>
-                <span className="font-semibold text-green-700">-{formatUsdValue(referralDiscountUsd)}</span>
-              </div>
-            )}
-            {creditAfterProration > 0 && referralDiscountUsd <= 0 && (
+            {creditAfterProration > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 flex items-center gap-1">
                   <Wallet className="w-3.5 h-3.5 text-green-600" />
                   Credit applied
                 </span>
-                <span className="font-semibold text-green-700">-{formatUSD(creditAfterProration)}</span>
+                <span className="font-semibold text-green-700">-{formatUsdValue(creditAfterProration)}</span>
               </div>
             )}
             <div className="border-t border-blue-200 pt-2 flex justify-between text-sm">

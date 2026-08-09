@@ -40,20 +40,13 @@ export default function UpgradeFlowConfirmStep({
 
   const { data: earnings } = useReferralEarnings();
   const availableCredit = earnings?.available_credit ?? 0;
-  const referralDiscountUsd = subscription?.referral?.discount_applied
-    ? Number(subscription.referral.discount_applied)
-    : 0;
 
   const { exchangeRate } = useDisplayPrices();
   const toLocal = (usd: number) => {
     if (currency === 'USD' || !exchangeRate) return usd;
     return Math.round(usd * exchangeRate * 100) / 100;
   };
-  const showUsd = (usd: number) => `(${formatUSD(usd)})`;
   const price = (usd: number) => currency === 'USD' ? formatUSD(usd) : formatCurrency(toLocal(usd), currency);
-  const priceUsd = (usd: number) => (
-    <>{price(usd)}{currency !== 'USD' && <span className="text-xs text-gray-400 ml-1.5">{showUsd(usd)}</span>}</>
-  );
 
   if (quoteLoading) {
     return (
@@ -159,16 +152,7 @@ export default function UpgradeFlowConfirmStep({
             <span className="text-gray-600">New plan price</span>
             <span className="font-semibold text-gray-900">{price(pr.charge)}</span>
           </div>
-          {referralDiscountUsd > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 flex items-center gap-1">
-                <Tag className="w-3.5 h-3.5 text-green-600" />
-                Promo discount
-              </span>
-              <span className="font-semibold text-green-700">-{priceUsd(referralDiscountUsd)}</span>
-            </div>
-          )}
-          {availableCredit > 0 && referralDiscountUsd <= 0 && (
+          {availableCredit > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600 flex items-center gap-1">
                 <Wallet className="w-3.5 h-3.5 text-green-600" />
@@ -179,23 +163,14 @@ export default function UpgradeFlowConfirmStep({
           )}
           <div className={cn(
             'border-t pt-2 flex justify-between text-sm',
-            (referralDiscountUsd > 0 || availableCredit > 0) ? 'border-amber-300' : 'border-amber-300',
+            availableCredit > 0 ? 'border-amber-300' : 'border-amber-300',
           )}>
             <span className="font-bold text-gray-800">Amount due today</span>
             <span className="font-bold text-blue-700 text-base">
-              {referralDiscountUsd > 0
-                ? price(Math.max(0, (pr.proration_due_usd ?? 0) - referralDiscountUsd))
-                : availableCredit > 0
-                  ? price(Math.max(0, (pr.proration_due_usd ?? 0) - creditAfterProration))
-                  : price(pr.proration_due)}
+              {price(Math.max(0, (pr.proration_due_usd ?? pr.proration_due) - creditAfterProration))}
             </span>
           </div>
-          {referralDiscountUsd > 0 && (
-            <p className="text-[10px] text-green-700 text-center pt-1">
-              {price(referralDiscountUsd)} promo discount applied
-            </p>
-          )}
-          {availableCredit > 0 && referralDiscountUsd <= 0 && (
+          {availableCredit > 0 && (
             <p className="text-[10px] text-green-700 text-center pt-1">
               {price(availableCredit)} credit available — {price(creditAfterProration)} applied
             </p>

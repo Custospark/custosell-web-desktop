@@ -8,8 +8,9 @@ import {
   pipelineInputClass,
   pipelineSelectClass,
 } from '../pipeline/ui/pipelineFormFields';
+import { CampaignDiscountGuardHint } from './CampaignDiscountGuardHint';
 import {
-  Tag, KeyRound, Percent, BadgePercent, CalendarDays, Timer, Repeat, CalendarClock, Shuffle, Check, Power,
+  Tag, KeyRound, Percent, BadgePercent, CalendarDays, Timer, Repeat, CalendarClock, Shuffle, Check, Power, Lock,
 } from 'lucide-react';
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -52,12 +53,16 @@ export default function PlatformCampaignCodeFormModal({
   isOpen, onClose, onSubmit, isPending, initial, title,
 }: PlatformCampaignCodeFormModalProps) {
   const isEditing = !!initial;
-  const [form, setForm] = useState<CampaignCodeFormData>(() => initial ?? EMPTY_FORM);
+  const [form, setForm] = useState<CampaignCodeFormData>(() => initial
+    ? { ...initial, discount_duration_months: '1' }
+    : EMPTY_FORM);
   const wasOpen = useRef(false);
 
   useEffect(() => {
     if (isOpen && !wasOpen.current) {
-      queueMicrotask(() => setForm(initial ?? EMPTY_FORM));
+      queueMicrotask(() => setForm(initial
+        ? { ...initial, discount_duration_months: '1' }
+        : EMPTY_FORM));
     }
     wasOpen.current = isOpen;
   }, [isOpen, initial]);
@@ -78,7 +83,7 @@ export default function PlatformCampaignCodeFormModal({
       code: form.code,
       owner_type: 'campaign',
       discount_type: form.discount_type,
-      discount_duration_months: form.discount_duration_months ? Number(form.discount_duration_months) : 1,
+      discount_duration_months: 1,
       max_uses: form.max_uses ? Number(form.max_uses) : null,
       expires_at: form.expires_at || null,
       is_active: form.is_active,
@@ -166,19 +171,25 @@ export default function PlatformCampaignCodeFormModal({
                 />
               </PipelineIconField>
             )}
-            <PipelineIconField label="Duration (months)" icon={CalendarDays} hint="How long the discount lasts after redemption">
-              <input
-                type="number"
-                value={form.discount_duration_months}
-                onChange={(e) => set({ discount_duration_months: e.target.value })}
-                placeholder="e.g. 1"
-                className={pipelineInputClass}
-                min="1"
-                max="12"
-              />
+            <PipelineIconField label="Duration (months)" icon={CalendarDays} hint="Campaign codes are single-period — locked to 1">
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
+                <input
+                  type="number"
+                  value={1}
+                  disabled
+                  className={pipelineInputClass.concat(' text-gray-400')}
+                />
+              </div>
             </PipelineIconField>
           </div>
         </PipelineFormSection>
+
+        <CampaignDiscountGuardHint
+          discountType={form.discount_type}
+          discountValue={form.discount_value}
+          discountDurationMonths={form.discount_duration_months}
+        />
 
         <PipelineFormSection
           title="Limits & Expiry"

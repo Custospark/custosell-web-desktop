@@ -10,18 +10,18 @@ interface Props {
 export function AccountTypeSelector({ onSelect }: Props) {
   return (
     <>
-      <p className="text-center text-base font-bold text-gray-900 mb-5">
+      <p className="text-center text-base font-bold text-gray-900 mb-4">
         How will you use {PRODUCT_NAME}?
       </p>
 
-      <div className="space-y-4">
+      <div className="space-y-2.5 sm:space-y-4">
         <button
           type="button"
           onClick={() => onSelect('business')}
-          className="animate-sparkle-border flex w-full items-center gap-3 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
+          className="animate-sparkle-border flex w-full items-center gap-3 rounded-xl border-2 bg-white p-2.5 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors sm:h-12 sm:w-12">
-            <Store className="h-5 w-5 text-blue-700 sm:h-6 sm:w-6" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors sm:h-12 sm:w-12">
+            <Store className="h-4.5 w-4.5 text-blue-700 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 sm:text-base">For my business</p>
@@ -35,10 +35,10 @@ export function AccountTypeSelector({ onSelect }: Props) {
         <button
           type="button"
           onClick={() => onSelect('shopping')}
-          className="animate-sparkle-border flex w-full items-center gap-3 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
+          className="animate-sparkle-border flex w-full items-center gap-3 rounded-xl border-2 bg-white p-2.5 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors sm:h-12 sm:w-12">
-            <ShoppingBag className="h-5 w-5 text-emerald-700 sm:h-6 sm:w-6" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors sm:h-12 sm:w-12">
+            <ShoppingBag className="h-4.5 w-4.5 text-emerald-700 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 sm:text-base">Online shopping</p>
@@ -52,10 +52,10 @@ export function AccountTypeSelector({ onSelect }: Props) {
         <button
           type="button"
           onClick={() => onSelect('personal')}
-          className="animate-sparkle-border-personal flex w-full items-center gap-3 rounded-xl border-2 bg-white p-4 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
+          className="animate-sparkle-border-personal flex w-full items-center gap-3 rounded-xl border-2 bg-white p-2.5 text-left transition-all hover:shadow-md cursor-pointer group sm:gap-4 sm:p-5"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors sm:h-12 sm:w-12">
-            <CircleUser className="h-5 w-5 text-indigo-700 sm:h-6 sm:w-6" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors sm:h-12 sm:w-12">
+            <CircleUser className="h-4.5 w-4.5 text-indigo-700 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 sm:text-base">For personal use</p>
@@ -67,11 +67,11 @@ export function AccountTypeSelector({ onSelect }: Props) {
         </button>
       </div>
 
-      <div className="border-t border-gray-100 pt-4 mt-4">
-        <p className="mb-3 text-center text-sm font-medium text-gray-700">Already have an account?</p>
+      <div className="border-t border-gray-100 pt-3 mt-4">
+        <p className="mb-2 text-center text-sm font-medium text-gray-700">Already have an account?</p>
         <Link
           to={ROUTES.LOGIN}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
         >
           <LogIn className="h-4 w-4" aria-hidden />
           Sign In

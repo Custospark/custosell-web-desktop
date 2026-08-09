@@ -57,10 +57,9 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
       <div className="flex items-center gap-3 min-w-0">
         {isFullscreen && (
           <CustosellBrandLockup
-            showTagline
+            stacked
             logoSize="sm"
             nameClassName="text-sm"
-            taglineClassName="hidden xl:block"
             className="shrink-0 -ml-1"
           />
         )}

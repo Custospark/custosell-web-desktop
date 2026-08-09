@@ -5,6 +5,8 @@ import { TAGLINE } from '../../brand/custosellBrand';
 interface CustosellBrandLockupProps {
   /** Show the tagline underneath the product name. */
   showTagline?: boolean;
+  /** Stack the wordmark below the logo instead of beside it. */
+  stacked?: boolean;
   logoSize?: 'sm' | 'md' | 'lg';
   nameClassName?: string;
   taglineClassName?: string;
@@ -18,18 +20,26 @@ interface CustosellBrandLockupProps {
  */
 export function CustosellBrandLockup({
   showTagline = false,
+  stacked = false,
   logoSize = 'sm',
   nameClassName,
   taglineClassName,
   className,
 }: CustosellBrandLockupProps) {
   return (
-    <div className={cn('flex min-w-0 items-center gap-2', className)}>
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-2',
+        stacked && 'flex-col text-center',
+        className,
+      )}
+    >
       <LogoImage size={logoSize} />
       <div className="min-w-0 leading-tight">
         <span
           className={cn(
             'block truncate font-bold text-blue-600',
+            stacked && 'w-full',
             nameClassName,
           )}
         >

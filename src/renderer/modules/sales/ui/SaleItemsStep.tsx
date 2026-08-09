@@ -100,6 +100,58 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
     }
   };
 
+  const toolbarActions = (
+    <>
+      {cartItems.length > 0 && (
+        <button
+          title="Create a draft invoice from the current cart — adjust items before saving"
+          onClick={() => {
+            setInvoiceSession((s) => s + 1);
+            setInvoiceModalOpen(true);
+          }}
+          className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm whitespace-nowrap"
+        >
+          <FileText className="w-4 h-4" /> Generate Invoice
+        </button>
+      )}
+      <Link to="/invoices" title="View and manage all invoices"
+        className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
+        <FileText className="w-4 h-4" /> Manage Invoices
+      </Link>
+      <Link to={ROUTES.SALES.ORDERS} title="View and manage all orders"
+        className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-indigo-800 bg-indigo-50 border-2 border-indigo-300 rounded-xl hover:bg-indigo-100 hover:border-indigo-400 transition-all shadow-sm whitespace-nowrap">
+        <ListOrdered className="w-4 h-4" /> Manage Orders
+      </Link>
+      {cartItems.length > 0 && activeOrderMode === 'update' && (
+        <button
+          title="Save changes to this open order"
+          onClick={() => setUpdateModalOpen(true)}
+          className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-blue-800 bg-blue-50 border-2 border-blue-400 rounded-xl hover:bg-blue-100 hover:border-blue-500 transition-all shadow-sm whitespace-nowrap"
+        >
+          <Save className="w-4 h-4" /> Update Order
+        </button>
+      )}
+      {cartItems.length > 0 && (
+        <button
+          title="Hold this cart as a new open order"
+          onClick={() => setHoldModalOpen(true)}
+          className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm whitespace-nowrap"
+        >
+          <PauseCircle className="w-4 h-4" /> Hold Order
+        </button>
+      )}
+      <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
+        className="relative flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
+        <RotateCcw className="w-4 h-4" /> Take Order
+        {openOrders.length > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
+            {openOrders.length > 99 ? '99+' : openOrders.length}
+          </span>
+        )}
+      </button>
+    </>
+  );
+
   const addItem = useCallback((
     id: number,
     name: string,
@@ -360,59 +412,13 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
           )}
         </div>
 
-        {/* Secondary action toolbar */}
-        <div className="flex items-center gap-3 overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 pt-3 mt-auto w-max min-w-full">
-          {cartItems.length > 0 && (
-            <button
-              title="Create a draft invoice from the current cart — adjust items before saving"
-              onClick={() => {
-                setInvoiceSession((s) => s + 1);
-                setInvoiceModalOpen(true);
-              }}
-              className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm whitespace-nowrap"
-            >
-              <FileText className="w-4 h-4" /> Generate Invoice
-            </button>
-          )}
-          <Link to="/invoices" title="View and manage all invoices"
-            className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
-            <FileText className="w-4 h-4" /> Manage Invoices
-          </Link>
-          <Link to={ROUTES.SALES.ORDERS} title="View and manage all orders"
-            className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-indigo-800 bg-indigo-50 border-2 border-indigo-300 rounded-xl hover:bg-indigo-100 hover:border-indigo-400 transition-all shadow-sm whitespace-nowrap">
-            <ListOrdered className="w-4 h-4" /> Manage Orders
-          </Link>
-          {cartItems.length > 0 && activeOrderMode === 'update' && (
-            <button
-              title="Save changes to this open order"
-              onClick={() => setUpdateModalOpen(true)}
-              className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-blue-800 bg-blue-50 border-2 border-blue-400 rounded-xl hover:bg-blue-100 hover:border-blue-500 transition-all shadow-sm whitespace-nowrap"
-            >
-              <Save className="w-4 h-4" /> Update Order
-            </button>
-          )}
-          {cartItems.length > 0 && (
-            <button
-              title="Hold this cart as a new open order"
-              onClick={() => setHoldModalOpen(true)}
-              className="flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-xl hover:bg-amber-100 hover:border-amber-500 transition-all shadow-sm whitespace-nowrap"
-            >
-              <PauseCircle className="w-4 h-4" /> Hold Order
-            </button>
-          )}
-          <button title="View and resume held orders" onClick={() => setHeldModalOpen(true)}
-            className="relative flex shrink-0 items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border-2 border-gray-400 rounded-xl hover:bg-gray-50 hover:border-gray-500 transition-all shadow-sm whitespace-nowrap">
-            <RotateCcw className="w-4 h-4" /> Take Order
-            {openOrders.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-bold min-w-[22px] h-[22px] rounded-full flex items-center justify-center px-1.5 shadow-lg ring-2 ring-white">
-                {openOrders.length > 99 ? '99+' : openOrders.length}
-              </span>
-            )}
-          </button>
+        {/* Secondary action toolbar — mobile keeps its own row; desktop moves into the sticky cart bar */}
+        <div className="lg:hidden flex items-center gap-3 overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 pt-3 mt-auto w-max min-w-full">
+          {toolbarActions}
         </div>
 
         {/* Sticky bottom: running total + Continue */}
-        <CartSummaryBar count={cartItems.length} subtotal={subtotal} onNext={onNext} />
+        <CartSummaryBar count={cartItems.length} subtotal={subtotal} onNext={onNext} actions={toolbarActions} />
       </div>
 
       <HeldOrdersModal open={heldModalOpen} onClose={() => setHeldModalOpen(false)} />

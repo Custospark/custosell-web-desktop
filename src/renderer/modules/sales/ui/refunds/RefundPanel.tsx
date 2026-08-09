@@ -84,7 +84,7 @@ export default function RefundPanel() {
   }, [sales, branchId, receiptSearch]);
 
   const saleDiscount = selectedSale ? parseFloat(selectedSale.discount_amount) : 0;
-  const salePaid = selectedSale ? parseFloat(selectedSale.amount_paid || '0') : 0;
+  const salePaid = selectedSale ? parseFloat(String(selectedSale.amount_paid || '0')) : 0;
   const saleTotal = selectedSale ? parseFloat(selectedSale.total_amount) : 0;
 
   /** Portion of the line the customer actually paid, post line + global discounts (incl. tax). */

@@ -96,7 +96,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
       variant: 'warning',
     });
     if (ok) {
-      cartItems.forEach((item) => dispatch(removeFromCart(item.product_id)));
+      cartItems.forEach((item) => dispatch(removeFromCart({ product_id: item.product_id, tier: item.price_tier })));
     }
   };
 

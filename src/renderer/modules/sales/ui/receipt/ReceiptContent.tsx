@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cleanProductName } from '../../../../shared/utils/cleanProductName';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
-import type { Sale } from '../../api/salesTypes';
+import type { Sale, SaleItem } from '../../api/salesTypes';
 
 interface ReceiptContentProps {
   sale: Sale;
@@ -21,7 +21,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
   const subtotalBeforeDiscount = Math.max(0, parseFloat(sale.subtotal) + discount);
   const saleItems = sale.sale_items ?? [];
   // Re-flow each line: unit_price × qty − per-line discount (before the global checkout discount).
-  const lineTotal = (item: Sale['sale_items'][number]) =>
+  const lineTotal = (item: SaleItem) =>
     Math.max(0, parseFloat(item.unit_price) * item.quantity - parseFloat(item.discount_amount ?? '0'));
   const linesTotal = saleItems.reduce((sum, i) => sum + lineTotal(i), 0);
   const subtotalRow = linesTotal > 0 ? linesTotal : subtotalBeforeDiscount;

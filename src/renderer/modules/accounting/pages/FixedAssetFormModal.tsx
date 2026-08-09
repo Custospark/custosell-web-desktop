@@ -153,7 +153,8 @@ export function FixedAssetFormModal({
     if (!resolvedAccountId) return;
     const payload = toPayload(form, resolvedAccountId);
     if (isEdit && asset) {
-      const { book_value: _book, ...updatePayload } = payload;
+      const updatePayload = { ...payload };
+      delete updatePayload.book_value;
       await updateAsset.mutateAsync({ id: asset.id, ...updatePayload });
     } else {
       await createAsset.mutateAsync(payload);
@@ -284,7 +285,7 @@ export function FixedAssetFormModal({
             {isEdit ? (
               <PipelineIconField label="Status" icon={Tag}>
                 <select
-                  value={form.status}
+                  value={form.status ?? ''}
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as FixedAsset['status'] }))}
                   className={pipelineSelectClass}
                 >

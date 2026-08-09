@@ -94,15 +94,18 @@ const SUB_STATUS_INFO: Record<string, { title: string; description: string }> = 
 };
 
 export function SubscriptionGuard() {
-  const { access, isLoading, isFetching } = useSubscriptionAccess();
+  const { access, isLoading, isFetching, isError } = useSubscriptionAccess();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const subscription = user?.business?.subscription;
   const status = subscription?.status as string | undefined;
 
-  const pendingWithoutSubscription = (isLoading || isFetching) && access === false && !subscription;
+  // Keep showing the loader while a decision is still pending or the live call
+  // errored, unless we already have confirmed access — this prevents the
+  // denial card flashing during "Updating account…" / bootstrapping/offline refetch.
+  const pendingDecision = (isLoading || isFetching || isError) && access !== true;
 
-  if (pendingWithoutSubscription) {
+  if (pendingDecision) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <CustosellLoader />

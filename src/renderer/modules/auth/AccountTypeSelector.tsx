@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Store, CircleUser, ShoppingBag, LogIn, ChevronRight, Info, X, Gift } from 'lucide-react';
+import { Store, CircleUser, ShoppingBag, LogIn, ChevronRight, Info, X } from 'lucide-react';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { cn } from '../../shared/utils/cn';
@@ -17,7 +17,6 @@ const OPTIONS: {
   iconClass: string;
   ringClass: string;
   chevronClass: string;
-  benefit?: string;
 }[] = [
   {
     id: 'business',
@@ -42,8 +41,7 @@ const OPTIONS: {
   {
     id: 'personal',
     title: 'For personal use',
-    description: 'Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management & more — stay organized and productive, even offline.',
-    benefit: 'Earn referral rewards — get your own code, share it, and earn credits every time a business you refer subscribes. Track your earnings right from your account.',
+    description: 'Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management & more — stay organized and productive. Referral earning tracking.',
     icon: CircleUser,
     iconClass: 'bg-indigo-100 group-hover:bg-indigo-200',
     iconColor: 'text-indigo-700',
@@ -101,19 +99,6 @@ export function AccountTypeSelector({ onSelect }: Props) {
               {isOpen && (
                 <div className="border-t border-gray-100 px-3 py-3 sm:hidden">
                   <p className="text-xs text-gray-500 leading-relaxed">{opt.description}</p>
-                  {opt.benefit && (
-                    <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-indigo-700 leading-relaxed">
-                      <Gift className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600" />
-                      {opt.benefit}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {opt.benefit && (
-                <div className="mx-3 mb-3 flex items-start gap-2 rounded-lg bg-indigo-50/70 px-3 py-2 sm:mx-5 sm:mb-5">
-                  <Gift className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-                  <p className="text-xs text-indigo-800 leading-relaxed">{opt.benefit}</p>
                 </div>
               )}
             </div>

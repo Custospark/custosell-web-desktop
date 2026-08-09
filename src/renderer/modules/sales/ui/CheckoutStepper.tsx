@@ -1,6 +1,7 @@
 import { Check, Maximize2, RotateCcw } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppContext } from '../../../app/contexts/AppContext';
+import LogoImage from '../../../shared/assets/LogoImage';
 
 interface CheckoutStepperProps {
   step: 'items' | 'payment';
@@ -53,11 +54,14 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   const isFullscreen = state.posFullscreen;
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <div>
-        <h1 className="text-lg sm:text-xl font-bold text-gray-900">Point of Sale</h1>
-        <p className="text-xs sm:text-sm text-gray-500">
-          {isPayment ? 'Update customer details and take payment' : 'Search and add products to the sale'}
-        </p>
+      <div className="flex items-center gap-3 min-w-0">
+        {isFullscreen && <LogoImage size="sm" className="shrink-0 -ml-1" />}
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900">Point of Sale</h1>
+          <p className="text-xs sm:text-sm text-gray-500">
+            {isPayment ? 'Update customer details and take payment' : 'Search and add products to the sale'}
+          </p>
+        </div>
       </div>
 
       <button
@@ -66,8 +70,8 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
         title={isFullscreen ? 'Exit full-screen cashier mode' : 'Full-screen cashier mode (hides navigation)'}
         className={
           isFullscreen
-            ? 'hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border-2 border-amber-400 rounded-lg shadow-sm hover:bg-amber-100 hover:border-amber-500 transition-colors shrink-0'
-            : 'hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors shrink-0'
+            ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border-2 border-amber-400 rounded-lg shadow-sm hover:bg-amber-100 hover:border-amber-500 transition-colors shrink-0'
+            : 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors shrink-0'
         }
       >
         {isFullscreen ? <RotateCcw className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}

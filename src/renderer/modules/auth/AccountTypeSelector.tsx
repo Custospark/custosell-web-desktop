@@ -87,11 +87,12 @@ export function AccountTypeSelector({ onSelect }: Props) {
                 <button
                   type="button"
                   onClick={() => setExpanded(isOpen ? null : opt.id)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer sm:hidden"
+                  className="flex shrink-0 items-center gap-1 rounded-full py-1.5 pl-2 pr-2.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer sm:hidden"
                   aria-label={isOpen ? `Hide description for ${opt.title}` : `Learn more about ${opt.title}`}
                   aria-expanded={isOpen}
                 >
                   {isOpen ? <X className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+                  <span className="text-xs font-medium">{isOpen ? 'Close' : 'Learn more'}</span>
                 </button>
               </div>
 

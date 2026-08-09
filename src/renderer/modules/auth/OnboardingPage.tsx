@@ -80,7 +80,8 @@ export default function OnboardingPage() {
     ? Math.round(availableCredit * exchangeRate * 100) / 100
     : availableCredit;
   const effectiveDiscount = referralDiscountConverted > 0 ? referralDiscountConverted : creditConverted;
-  const totalDue = Math.max(0, fee - effectiveDiscount);
+  const displayFee = canPayLocal ? fee : feeUsd;
+  const totalDue = Math.max(0, displayFee - effectiveDiscount);
   const displayCurrency = canPayLocal ? currency : 'USD';
 
   useEffect(() => {
@@ -256,7 +257,7 @@ export default function OnboardingPage() {
             <div className="text-center">
               <p className="text-sm font-medium text-gray-500">{selectedPlan.name}</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {formatCurrency(Number(fee), currency)}
+                {formatCurrency(Number(displayFee), displayCurrency)}
               </p>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mt-0.5">One-time setup fee</p>
             </div>

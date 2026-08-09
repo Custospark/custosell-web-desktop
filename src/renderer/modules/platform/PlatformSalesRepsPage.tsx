@@ -9,7 +9,7 @@ import { Card } from '../../shared/components/cards/Card';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../app/contexts/useToast';
 import { formatUSD } from '../../shared/utils/formatCurrency';
-import { Search, Plus, Users, TrendingUp, DollarSign, Upload, Trash2 } from 'lucide-react';
+import { Search, Plus, Upload, UserMinus } from 'lucide-react';
 import { SalesRepFormModal } from './PlatformSalesRepFormModal';
 import { SalesRepPayoutModal } from './SalesRepPayoutModal';
 import SalesRepImportModal from './SalesRepImportModal';
@@ -45,27 +45,29 @@ export default function PlatformSalesRepsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => axiosInstance.delete(SALES_REPS.BY_ID(id)),
     onSuccess: () => {
-      showToast('success', 'Sales rep deleted');
+      showToast('success', 'Sales rep removed');
       refetch();
     },
-    onError: () => {
-      showToast('error', 'Failed to delete sales rep');
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      showToast('error', message || 'Failed to remove sales rep');
     },
   });
 
-  const handleDelete = async (r: PlatformSalesRep) => {
+  const handleRemove = async (r: PlatformSalesRep) => {
+    if ((r.pending_commission ?? 0) > 0) {
+      showToast('error', 'Cannot remove — this rep still has unpaid commission');
+      return;
+    }
     const confirmed = await confirm({
-      title: 'Delete sales rep',
-      message: `Permanently delete "${r.user?.name ?? r.user?.email}"? Their referral code will be deactivated and this cannot be undone.`,
-      confirmText: 'Delete',
+      title: 'Remove sales rep',
+      message: `Remove "${r.user?.name ?? r.user?.email}" from the sales rep program? Their referral code will be deactivated and this cannot be undone.`,
+      confirmText: 'Remove',
       variant: 'danger',
     });
     if (confirmed) deleteMutation.mutate(r.id);
   };
 
-  const totalOwed = reps.reduce((s, r) => s + (r.pending_commission ?? 0), 0);
-  const totalPaid = reps.reduce((s, r) => s + (r.paid_commission ?? 0), 0);
-  const activeCount = reps.filter((r) => r.is_active).length;
   const page = usePagination(filtered, 10);
 
   return (
@@ -83,45 +85,6 @@ export default function PlatformSalesRepsPage() {
             <Plus className="mr-2 h-4 w-4" /> Add Sales Rep
           </Button>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Total Reps</p>
-              <p className="text-2xl font-bold text-gray-900">{reps.length}</p>
-              <p className="text-xs text-gray-400">{activeCount} active</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50">
-              <TrendingUp className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Commission Owed</p>
-              <p className="text-2xl font-bold text-gray-900">{formatUSD(totalOwed)}</p>
-              <p className="text-xs text-gray-400">due payouts</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50">
-              <DollarSign className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Paid Out</p>
-              <p className="text-2xl font-bold text-gray-900">{formatUSD(totalPaid)}</p>
-              <p className="text-xs text-gray-400">lifetime</p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       <Card className="p-4">
@@ -187,8 +150,8 @@ export default function PlatformSalesRepsPage() {
                 <button onClick={() => setPayoutRep(r)} className="text-sm font-medium text-green-600 hover:text-green-800">
                   Payouts
                 </button>
-                <button onClick={() => handleDelete(r)} disabled={deleteMutation.isPending} className="text-sm font-medium text-red-600 hover:text-red-800" title="Delete sales rep">
-                  <Trash2 className="h-4 w-4" />
+                <button onClick={() => handleRemove(r)} disabled={deleteMutation.isPending || (r.pending_commission ?? 0) > 0} className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-35 disabled:cursor-not-allowed" title={(r.pending_commission ?? 0) > 0 ? 'Cannot remove — rep still has unpaid commission' : 'Remove sales rep'}>
+                  <UserMinus className="h-4 w-4" />
                 </button>
               </div>
             )},

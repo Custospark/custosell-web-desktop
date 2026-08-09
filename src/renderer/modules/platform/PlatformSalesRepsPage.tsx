@@ -9,9 +9,8 @@ import { Card } from '../../shared/components/cards/Card';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { useToast } from '../../app/contexts/useToast';
 import { formatUSD } from '../../shared/utils/formatCurrency';
-import { Search, Plus, Upload, UserMinus } from 'lucide-react';
+import { Search, Plus, Upload, UserMinus, Pencil } from 'lucide-react';
 import { SalesRepFormModal } from './PlatformSalesRepFormModal';
-import { SalesRepPayoutModal } from './SalesRepPayoutModal';
 import SalesRepImportModal from './SalesRepImportModal';
 import type { PlatformSalesRep } from './PlatformSalesRepFormModal';
 
@@ -23,7 +22,6 @@ export default function PlatformSalesRepsPage() {
   const [showFormModal, setShowFormModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editing, setEditing] = useState<PlatformSalesRep | null>(null);
-  const [payoutRep, setPayoutRep] = useState<PlatformSalesRep | null>(null);
 
   const { data: reps = [], isLoading } = useQuery<PlatformSalesRep[]>({
     queryKey: ['platform', 'sales-reps'],
@@ -144,11 +142,8 @@ export default function PlatformSalesRepsPage() {
             )},
             { key: 'actions', header: 'Actions', render: (r: PlatformSalesRep) => (
               <div className="flex items-center gap-2">
-                <button onClick={() => { setEditing(r); setShowFormModal(true); }} className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                  Edit
-                </button>
-                <button onClick={() => setPayoutRep(r)} className="text-sm font-medium text-green-600 hover:text-green-800">
-                  Payouts
+                <button onClick={() => { setEditing(r); setShowFormModal(true); }} className="text-sm font-medium text-blue-600 hover:text-blue-800" title="Edit sales rep">
+                  <Pencil className="h-4 w-4" />
                 </button>
                 <button onClick={() => handleRemove(r)} disabled={deleteMutation.isPending || (r.pending_commission ?? 0) > 0} className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-35 disabled:cursor-not-allowed" title={(r.pending_commission ?? 0) > 0 ? 'Cannot remove — rep still has unpaid commission' : 'Remove sales rep'}>
                   <UserMinus className="h-4 w-4" />
@@ -180,11 +175,6 @@ export default function PlatformSalesRepsPage() {
           setEditing(null);
           if (refetch_) refetch();
         }}
-      />
-
-      <SalesRepPayoutModal
-        rep={payoutRep}
-        onClose={() => { setPayoutRep(null); refetch(); }}
       />
 
       <SalesRepImportModal

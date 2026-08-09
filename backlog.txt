@@ -1,0 +1,79 @@
+If you look at this carefully, you notice that the information is correct only that our receipt does not show the line discount given for each line item, hence making tracability to final peyment amount hard, so if line disclunts were given, we gotta show them on top of general sales discount given at the billing controlls:
+BUSINESS4
+Sales Receipt
+
+Receipt Number
+BUSI-SAL-260808-6590A56
+Branch
+Main Branch
+Date
+8/9/2026 12:56:49 AM
+Sales Person
+Oscar Opiyo
+Item	Qty	Price (UGX)	Total (UGX)
+Eagle Extra Vodka 750ml	1	23,150.00(WSP)	23,150.00
+Bell Lager Vodka 750ml	1	29,250.00(RP)	29,250.00
+(RP) Retail price · (WSP) Wholesale price
+
+Subtotal
+USh 52,400.00
+Discount
+-USh 5,000.00
+TOTAL
+USh 45,000.00
+Payment Method
+cash
+Amount Tendered
+USh 45,000.00
+Paid
+Thank you for your purchase!
+
+Also  this is the inovice that has to be generated from the above sale, we can see that it ignores the line discounts hence drifting on the exact amount to be paid, so we dont have to ignore line discounts per product/item.
+Billing document for sale BUSI-SAL-260808-6590A56. Sending will not duplicate revenue already posted on the sale.
+2 lines from sale
+2 items total
+·
+USh 45,000.00 already collected on this sale
+Invoice from cart
+Review cart items, adjust quantities, add products, then create a draft
+
+Search by name, SKU, or barcode...
+Items (2)
+Clear All
+Item	Price	Discount	Qty	Total	
+Eagle Extra Vodka 750ml	USh 23,150.00(WSP)	
+0
+
+1
+
+USh 23,150.00	
+Bell Lager Vodka 750ml	USh 29,250.00(RP)	
+0
+
+1
+
+USh 29,250.00	
+Payments on the linked sale carry over to this invoice (USh 45,000.00 collected · paid in full on the sale).
+Customer
+
+Tap to add customer
+Optional — add for receipts & invoices
+Add customer
+Issue Date
+
+08/08/2026
+Due Date
+
+09/07/2026
+Notes (optional)
+Payment terms, delivery instructions...
+Discount
+5,000
+Subtotal before discount
+USh 52,400.00
+Discount
+-USh 5,000.00
+Total
+USh 47,400.00
+Create draft invoice
+Cancel

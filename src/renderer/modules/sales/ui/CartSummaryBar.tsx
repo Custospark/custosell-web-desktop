@@ -28,7 +28,7 @@ export function CartSummaryBar({ count, subtotal, onNext, actions }: CartSummary
               <span className="text-sm font-medium text-gray-600 lg:hidden shrink-0">
                 <span className="font-bold text-gray-900 tabular-nums">{count}</span> {count === 1 ? 'item' : 'items'} in cart
               </span>
-              <div className="hidden lg:flex flex-1 min-w-0 items-center gap-2 [&>button]:flex-1 [&>a]:flex-1 [&>button]:justify-center [&>a]:justify-center">
+              <div className="hidden lg:flex flex-wrap items-center gap-2 min-w-0">
                 {actions}
               </div>
             </>

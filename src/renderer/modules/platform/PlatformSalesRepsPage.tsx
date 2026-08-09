@@ -122,6 +122,9 @@ export default function PlatformSalesRepsPage() {
                 {r.commission_type === 'percentage' ? `${r.commission_rate}%` : formatUSD(r.commission_rate)}
               </span>
             )},
+            { key: 'discount', header: 'Referee Discount', align: 'center', render: (r: PlatformSalesRep) => (
+              <span className="text-sm text-gray-900">{r.discount_rate ?? 20}%</span>
+            )},
             { key: 'referrals', header: 'Referrals', align: 'center', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-gray-900">{r.total_referrals ?? 0}</span>
             )},

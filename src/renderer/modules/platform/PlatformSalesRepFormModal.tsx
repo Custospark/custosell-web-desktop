@@ -7,15 +7,17 @@ import { Button } from '../../shared/components/buttons/Button';
 import { Modal } from '../../shared/components/modals/Modal';
 import {
   Mail, UserCheck, UserPlus, Handshake, Phone, MapPinned, Landmark,
-  Smartphone, Hash, Building, User, Percent, ToggleLeft, Key, Eye, EyeOff,
+  Smartphone, Hash, Building, User, Key, Eye, EyeOff,
 } from 'lucide-react';
 import { PipelineModalHero, PipelineFormSection, PipelineIconField } from '../pipeline/ui/pipelineFormFields';
+import { SalesRepCommissionSection } from './SalesRepCommissionSection';
 
 export interface PlatformSalesRep {
   id: number;
   user_id: number;
   referral_code_id: number;
   commission_rate: string;
+  discount_rate: string;
   commission_type: 'percentage' | 'flat';
   is_active: boolean;
   phone?: string | null;
@@ -53,6 +55,7 @@ interface SalesRepForm {
   bank_account_name: string;
   bank_account_number: string;
   commission_rate: string;
+  discount_rate: string;
   commission_type: 'percentage' | 'flat';
   is_active: boolean;
 }
@@ -64,7 +67,7 @@ const emptyForm: SalesRepForm = {
   email: '', name: '', password: '', phone: '', region: '',
   payment_method: '', mobile_money_provider: '', mobile_money_number: '', mobile_money_name: '',
   bank_name: '', bank_branch: '', bank_account_name: '', bank_account_number: '',
-  commission_rate: '', commission_type: 'percentage', is_active: true,
+  commission_rate: '', discount_rate: '', commission_type: 'percentage', is_active: true,
 };
 
 export function SalesRepFormModal({ show, editing, onClose }: {
@@ -90,6 +93,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
     bank_account_name: editing.bank_account_name ?? '',
     bank_account_number: editing.bank_account_number ?? '',
     commission_rate: String(editing.commission_rate),
+    discount_rate: String(editing.discount_rate ?? 20),
     commission_type: editing.commission_type,
     is_active: editing.is_active,
   } : emptyForm);
@@ -139,6 +143,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
       if (editing) {
         await axiosInstance.put(SALES_REPS.BY_ID(editing.id), {
           commission_rate: form.commission_rate,
+          discount_rate: form.discount_rate,
           commission_type: form.commission_type,
           is_active: form.is_active,
           phone: form.phone || null,
@@ -158,6 +163,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
           name: form.name || undefined,
           password: form.password || undefined,
           commission_rate: form.commission_rate,
+          discount_rate: form.discount_rate,
           commission_type: form.commission_type,
           is_active: form.is_active,
           phone: form.phone || null,
@@ -401,52 +407,13 @@ export function SalesRepFormModal({ show, editing, onClose }: {
           )}
         </PipelineFormSection>
 
-        <PipelineFormSection title="Commission" icon={Percent} description="How this sales rep earns on referrals">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <PipelineIconField label="Commission Rate" icon={Percent} required>
-              <input
-                type="number"
-                step="0.01"
-                value={form.commission_rate}
-                onChange={(e) => setForm((f) => ({ ...f, commission_rate: e.target.value }))}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder={form.commission_type === 'percentage' ? 'e.g. 10' : 'e.g. 50000'}
-              />
-            </PipelineIconField>
-            <PipelineIconField label="Type" icon={ToggleLeft}>
-              <select
-                value={form.commission_type}
-                onChange={(e) => setForm((f) => ({ ...f, commission_type: e.target.value as 'percentage' | 'flat' }))}
-                className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-8 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="percentage">Percentage (%)</option>
-                <option value="flat">Flat</option>
-              </select>
-            </PipelineIconField>
-          </div>
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="is-active"
-              checked={form.is_active}
-              onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label htmlFor="is-active" className="text-sm text-gray-700">Active (rep can generate referrals)</label>
-          </div>
-          <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
-            <p className="text-xs font-semibold text-indigo-700">What referees get with this code</p>
-            <p className="mt-0.5 text-xs text-indigo-600">
-              Every business that signs up with this rep&apos;s code gets{' '}
-              <span className="font-semibold">
-                {form.commission_type === 'flat'
-                  ? `$${form.commission_rate || 0} off their first charge`
-                  : `${form.commission_rate || 0}% off their first period`}
-              </span>{' '}
-              — {form.commission_type === 'percentage' ? `${form.commission_rate || 0}% commission to the rep` : 'commission to the rep'}.
-            </p>
-          </div>
-        </PipelineFormSection>
+        <SalesRepCommissionSection
+          commissionRate={form.commission_rate}
+          discountRate={form.discount_rate}
+          commissionType={form.commission_type}
+          isActive={form.is_active}
+          onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        />
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
           <Button variant="secondary" onClick={() => { reset(); onClose(); }}>Cancel</Button>

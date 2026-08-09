@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { useAppDispatch } from '../../../app/store/hooks/useApp';
+import { Link } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
 import { updateQuantity } from '../api/salesSlice';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Package, Hash, ArrowRight } from 'lucide-react';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { canAccessModule } from '../../../shared/utils/moduleAccess';
 
 interface Props {
   open: boolean;
@@ -20,6 +23,7 @@ interface Props {
 
 export default function QuantityEditModal({ open, onClose, productId, productName, currentQty, maxQty, tier, onConfirm }: Props) {
   const dispatch = useAppDispatch();
+  const authUser = useAppSelector((s) => s.auth.user);
   const [qty, setQty] = useState(String(currentQty));
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -30,6 +34,10 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
       setTimeout(() => inputRef.current?.select(), 100);
     }
   }, [open, currentQty]);
+
+  const parsed = parseInt(qty);
+  const exceedsStock = maxQty > 0 && parsed > maxQty;
+  const isInvalid = !qty || Number.isNaN(parsed) || parsed <= 0 || exceedsStock;
 
   const handleSave = () => {
     const n = parseInt(qty);
@@ -70,14 +78,23 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
               onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
               className="w-full pl-9 pr-3 py-3 border border-gray-300 rounded-lg text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums" />
           </div>
-          {parseInt(qty) > maxQty && maxQty > 0 && (
+          {exceedsStock && (
             <p className="text-xs text-red-500 mt-1">Only {maxQty} in stock</p>
+          )}
+          {exceedsStock && canAccessModule(authUser, 'inventory') && (
+            <p className="text-xs text-blue-600 mt-1">
+              Stock is low —{' '}
+              <Link to={ROUTES.INVENTORY.PRODUCTS} className="underline font-medium" onClick={onClose}>
+                add more stock
+              </Link>{' '}
+              to keep selling this item.
+            </p>
           )}
         </div>
 
         <div className="flex justify-end gap-3 pt-1">
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>
+          <Button disabled={isInvalid} onClick={handleSave}>
             <ArrowRight className="w-4 h-4 mr-1.5" />Update
           </Button>
         </div>

@@ -1,4 +1,4 @@
-import { Check, Maximize2, Minimize2 } from 'lucide-react';
+import { Check, Maximize2, RotateCcw } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppContext } from '../../../app/contexts/AppContext';
 
@@ -64,9 +64,13 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
         type="button"
         onClick={() => dispatch({ type: 'SET_POS_FULLSCREEN', payload: !isFullscreen })}
         title={isFullscreen ? 'Exit full-screen cashier mode' : 'Full-screen cashier mode (hides navigation)'}
-        className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors shrink-0"
+        className={
+          isFullscreen
+            ? 'hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border-2 border-amber-400 rounded-lg shadow-sm hover:bg-amber-100 hover:border-amber-500 transition-colors shrink-0'
+            : 'hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border-2 border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors shrink-0'
+        }
       >
-        {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        {isFullscreen ? <RotateCcw className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
         {isFullscreen ? 'Exit full screen' : 'Full screen'}
       </button>
 

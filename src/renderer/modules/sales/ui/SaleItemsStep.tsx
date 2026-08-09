@@ -180,12 +180,14 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
     taxClass?: string | null,
     wholesale?: number | null,
     tier?: 'retail' | 'wholesale',
+    isService?: boolean,
   ) => {
     dispatch(addToCart({
       product_id: id,
       name,
       unit_price: price,
       wholesale_price: wholesale,
+      is_service: isService,
       unit,
       tax_percentage: taxPercentage,
       tax_class: taxClass,
@@ -211,6 +213,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
       match.tax_class,
       match.wholesale_price != null ? parseFloat(match.wholesale_price) : null,
       undefined,
+      isServiceItem(match),
     );
   }, [search, products, addItem]);
 
@@ -269,9 +272,9 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
                         && (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q)),
                       );
                     if (exact) {
-                      addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class, exact.wholesale_price != null ? parseFloat(exact.wholesale_price) : null, undefined);
+                      addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class, exact.wholesale_price != null ? parseFloat(exact.wholesale_price) : null, undefined, isServiceItem(exact));
                     } else if (results.length > 0 && isSellable(results[0])) {
-                      addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit, results[0].tax_percentage, results[0].tax_class, results[0].wholesale_price != null ? parseFloat(results[0].wholesale_price) : null, undefined);
+                      addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit, results[0].tax_percentage, results[0].tax_class, results[0].wholesale_price != null ? parseFloat(results[0].wholesale_price) : null, undefined, isServiceItem(results[0]));
                     }
                   }
                 }}
@@ -309,7 +312,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
                         <tbody className="divide-y divide-gray-100">
                           {results.map((p) => (
                             <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors"
-                              onMouseDown={() => isSellable(p) && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class, p.wholesale_price != null ? parseFloat(p.wholesale_price) : null, undefined)}>
+                              onMouseDown={() => isSellable(p) && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class, p.wholesale_price != null ? parseFloat(p.wholesale_price) : null, undefined, isServiceItem(p))}>
                               <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                                 <ProductSearchThumb
                                   name={p.name}
@@ -375,12 +378,14 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
               Cart ({cartItems.length} {cartItems.length > 1 ? 'items' : 'item'})
             </span>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {cartItems.some((c) => !c.is_service) && (
               <div className="flex rounded-md border border-gray-200 overflow-hidden">
                 {([
                   { mode: 'retail', label: 'Retail all', icon: ShoppingBag, activeClass: 'bg-blue-600 text-white', inactiveClass: 'bg-white text-blue-600 hover:bg-blue-50' },
                   { mode: 'wholesale', label: 'Wholesale all', icon: Package, activeClass: 'bg-blue-600 text-white', inactiveClass: 'bg-white text-blue-600 hover:bg-blue-50' },
                 ] as const).map(({ mode, label, icon: Icon, activeClass, inactiveClass }) => {
-                  const active = cartItems.every((c) => c.price_tier === mode);
+                  const tiered = cartItems.filter((c) => !c.is_service);
+                  const active = tiered.every((c) => c.price_tier === mode);
                   return (
                     <button
                       key={mode}
@@ -394,7 +399,8 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
                     </button>
                   );
                 })}
-              </div>
+                </div>
+              )}
               <button title="Remove all items from cart" onClick={handleClearAll} className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors shrink-0">
                 <RotateCcw className="w-4 h-4" /> Clear All
               </button>

@@ -20,8 +20,9 @@ function lineSubtotal(item: CartItem): number {
   return Math.max(0, item.unit_price * item.quantity - item.discount_amount);
 }
 
-/** Retail ↕ Wholesale picker for a single cart line (hidden when no wholesale price). */
+/** Retail ↕ Wholesale picker for a single cart line (hidden for services and when no wholesale price). */
 function TierPicker({ item, onTierChange }: { item: CartItem; onTierChange: SaleCartTableProps['onTierChange'] }) {
+  if (item.is_service) return null;
   if (item._wholesale_price == null) return null;
   return (
     <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">

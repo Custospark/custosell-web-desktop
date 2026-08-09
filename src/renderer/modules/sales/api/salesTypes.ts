@@ -13,6 +13,8 @@ export interface CartItem {
   retail_price: number;
   /** Product's wholesale price when set; null otherwise (wholesale toggle hidden). */
   _wholesale_price: number | null;
+  /** Service lines have no stock and never use retail/wholesale tiering. */
+  is_service?: boolean;
   tax_percentage?: number | string | null;
   tax_class?: 'standard' | 'exempt' | 'zero_rated' | string | null;
 }

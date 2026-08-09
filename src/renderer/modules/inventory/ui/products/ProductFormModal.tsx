@@ -256,17 +256,19 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
               discountPercent={form.discount_percent}
               onChange={(v) => update('discount_percent', v)}
             />
-            <PipelineIconField label="Wholesale price (optional)" icon={DollarSign}>
-              <input
-                className={pipelineInputClass}
-                type="number"
-                step="0.01"
-                min={0}
-                value={form.wholesale_price}
-                onChange={(e) => update('wholesale_price', e.target.value)}
-                placeholder="0.00"
-              />
-            </PipelineIconField>
+            {!isService ? (
+              <PipelineIconField label="Wholesale price (optional)" icon={DollarSign}>
+                <input
+                  className={pipelineInputClass}
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={form.wholesale_price}
+                  onChange={(e) => update('wholesale_price', e.target.value)}
+                  placeholder="0.00"
+                />
+              </PipelineIconField>
+            ) : null}
             {!isService ? (
               <PipelineIconField label="Cost price (optional)" icon={DollarSign}>
                 <input

@@ -31,16 +31,19 @@ const salesSlice = createSlice({
       name: string;
       unit_price: number;
       wholesale_price?: number | null;
+      is_service?: boolean;
       unit?: string | null;
       tax_percentage?: number | string | null;
       tax_class?: string | null;
       price_tier?: 'retail' | 'wholesale';
     }>) {
       const tier = action.payload.price_tier ?? 'retail';
-      const wholesale = action.payload.wholesale_price ?? null;
-      const effective = tier === 'wholesale' && wholesale != null ? wholesale : action.payload.unit_price;
+      const isService = action.payload.is_service ?? false;
+      const wholesale = isService ? null : (action.payload.wholesale_price ?? null);
+      const effectiveTier = isService ? 'retail' : tier;
+      const effective = effectiveTier === 'wholesale' && wholesale != null ? wholesale : action.payload.unit_price;
       const existing = state.cartItems.find(
-        (c) => c.product_id === action.payload.product_id && c.price_tier === tier,
+        (c) => c.product_id === action.payload.product_id && c.price_tier === effectiveTier,
       );
       if (existing) {
         existing.quantity += 1;
@@ -55,9 +58,10 @@ const salesSlice = createSlice({
           tax_class: action.payload.tax_class ?? 'standard',
           quantity: 1,
           discount_amount: 0,
-          price_tier: tier,
+          price_tier: effectiveTier,
           retail_price: action.payload.unit_price,
           _wholesale_price: wholesale,
+          is_service: isService,
         });
       }
     },
@@ -84,7 +88,7 @@ const salesSlice = createSlice({
       const item = state.cartItems.find(
         (c) => c.product_id === action.payload.product_id && c.price_tier !== action.payload.tier,
       );
-      if (!item) return;
+      if (!item || item.is_service) return;
       item.price_tier = action.payload.tier;
       item.unit_price = action.payload.tier === 'wholesale' && item._wholesale_price != null
         ? item._wholesale_price
@@ -99,6 +103,7 @@ const salesSlice = createSlice({
     /** Charge every cart line at wholesale where the product has a wholesale price. */
     setAllLinesWholesale(state) {
       state.cartItems.forEach((c) => {
+        if (c.is_service) return;
         if (c.price_tier === 'wholesale') return;
         if (c._wholesale_price == null) return;
         c.price_tier = 'wholesale';
@@ -108,6 +113,7 @@ const salesSlice = createSlice({
     /** Reset every wholesale line back to its retail price. */
     setAllLinesRetail(state) {
       state.cartItems.forEach((c) => {
+        if (c.is_service) return;
         if (c.price_tier === 'retail') return;
         c.price_tier = 'retail';
         c.unit_price = c.retail_price;

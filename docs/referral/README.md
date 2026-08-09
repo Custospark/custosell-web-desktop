@@ -114,21 +114,26 @@ Commission flow (sales rep codes only):
 
 **Scenario:**
 1. Sarah (platform admin) goes to `/platform/sales-reps` → clicks "Add Sales Rep"
-2. Sarah enters Peter's email `peter@custosell.com` in the email field. The system searches and finds Peter's existing user account, showing his name + email in green. Sarah sets commission rate to **10% (percentage)** and clicks Create.
+2. Sarah enters Peter's email `peter@custosell.com` in the email field. The system searches and finds Peter's existing user account, showing his name + email in green. Sarah sets a **20% referee discount** and **30% commission (percentage)** and clicks Create.
 3. If Peter's account doesn't exist yet, Sarah would type the email, see "No user found" in amber, fill in Peter's name, and the system auto-creates the user account + sales rep + referral code in one step.
-4. System creates a ReferralCode owned by `SALES_REP` with code (e.g. `M2X7N4`)
+4. System creates a ReferralCode owned by `SALES_REP` with code (e.g. `M2X7N4`). The code's `discount_value` = 20 (referee discount, independent of the 30% commission).
 5. Peter sees his code on `/pipeline/referrals` and shares it with prospects
 6. Grace registers using Peter's code (e.g. `M2X7N4`)
 7. Grace's subscription activates → Peter's referral becomes ACTIVE
-8. System auto-calculates: Grace's monthly price is 100,000 UGX.
-   Peter's commission = 10% × 100,000 = **10,000 UGX** → stored as `commission_earned`
+8. System auto-calculates on the amount Grace ACTUALLY paid (post-discount): Grace's onboarding charge is 100,000 UGX with 20% off → she pays 80,000 UGX.
+   Peter's commission = 30% × 80,000 = **24,000 UGX** → stored as `commission_earned` (a one-time figure, not recurring)
 9. Peter visits `/pipeline/referrals`:
    - Sees: "Sales Representative Commission"
-   - Rate: 10% | Available to Claim: 10,000 UGX | Total Earned: 10,000 UGX
+   - Rate: 30% | Available to Claim: 24,000 UGX | Total Earned: 24,000 UGX
    - Message: "Contact the Custosell team to claim your pending commission"
 10. Sarah visits `/platform/sales-reps`:
-   - Sees Peter in the list: Code `SALES-M2X7N4`, 1 referral, 10,000 UGX pending, 0 UGX paid out
-   - Total commission owed across all reps: 10,000 UGX
+   - Sees Peter in the list: Code `SALES-M2X7N4`, Referee Discount 20%, 1 referral, 24,000 UGX pending, 0 UGX paid out
+   - Total commission owed across all reps: 24,000 UGX
+
+> **Rates are decoupled & safe-zone guarded:** the referee's discount (`discount_rate`) and the rep's commission
+> (`commission_rate`) are independent dials, enforced so the company ALWAYS keeps the largest share
+> (commission strictly between `d/(1−d)%` and 50%, discount ≤ 30%). Renewals and top-ups never
+> re-trigger commission — the rep is paid once per signup, at activation.
 
 ### Sales Rep Creation — Email-Based Flow
 
@@ -163,7 +168,7 @@ Commission flow (sales rep codes only):
 Sales reps can be imported in bulk from an Excel file, following the same pattern as product import.
 
 **Backend:**
-- `GET /sales-reps/import-template` → downloads `.xlsx` template with columns: Name*, Email*, Phone, Region, Commission Rate*, Commission Type
+- `GET /sales-reps/import-template` → downloads `.xlsx` template with columns: Name*, Email*, Phone, Region, Discount Rate, Commission Rate*, Commission Type
 - `POST /sales-reps/import` → accepts `.xlsx`, `.xls`, or `.csv` (max 20MB, 600s timeout)
 - `SalesRepService::import()` processes rows in batch, validates per row, creates users+reps with auto-generated referral codes
 - Returns `{ imported, errors[], total_rows }`
@@ -269,6 +274,7 @@ This runs three new migrations:
 | `2026_07_25_000004_add_commission_to_referrals_table` | Adds `commission_earned` and `commission_paid` columns |
 | `2026_07_25_000005_add_payout_fields_to_sales_reps_table` | Adds phone, region, payout method, MM/bank fields |
 | `2026_07_25_000006_create_sales_rep_payouts_table` | Creates payouts table for installment tracking |
+| `2026_08_10_000000_add_discount_rate_to_sales_reps_table` | Adds `discount_rate` (referee discount, decoupled from commission); migrates existing reps to 20/30 |
 
 ---
 

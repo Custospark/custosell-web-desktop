@@ -36,7 +36,7 @@ export default function SubscriptionPaymentModal({
   const { data: earnings } = useReferralEarnings();
   const applyReferralMutation = useApplyReferralCode();
   const { isUsd, toLocal } = useUsdToLocal(currency);
-  const availableCreditUsd = paymentType === 'renewal' ? (earnings?.available_credit ?? 0) : 0;
+  const availableCreditUsd = earnings?.available_credit ?? 0;
   const creditApplied = isUsd
     ? Math.min(availableCreditUsd, amount)
     : Math.min(toLocal(availableCreditUsd), amount);

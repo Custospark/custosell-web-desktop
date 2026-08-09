@@ -44,12 +44,22 @@ export default function OnboardingPage() {
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
-  const availableCredit = earnings?.available_credit ?? 0;
-  const referralDiscountUsd = subscription?.referral?.discount_applied
-    ? Number(subscription.referral.discount_applied)
-    : 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const businessPlans = plans?.filter((p) => p.type !== 'personal') ?? [];
+  const availableCredit = earnings?.available_credit ?? 0;
+  const referral = subscription?.referral;
+  const selectedPlanForDiscount = businessPlans.find((p) => p.id === selectedPlanId);
+  const referralDiscountUsd = (() => {
+    if (!referral) return 0;
+    const base = selectedPlanForDiscount ? usdOnboardingFee(selectedPlanForDiscount) : 0;
+    if (referral.discount_type === 'percentage') {
+      return Math.round((base * Number(referral.discount_value ?? 0)) / 100 * 100) / 100;
+    }
+    if (referral.discount_type === 'free_month') {
+      return base;
+    }
+    return Number(referral.discount_applied ?? 0);
+  })();
   const subscribeMutation = useSubscribe();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);

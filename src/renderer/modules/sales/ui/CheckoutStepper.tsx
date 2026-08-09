@@ -1,7 +1,7 @@
 import { Check, Maximize2, RotateCcw } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { useAppContext } from '../../../app/contexts/AppContext';
-import LogoImage from '../../../shared/assets/LogoImage';
+import { CustosellBrandLockup } from '../../../shared/components/brand/CustosellBrandLockup';
 
 interface CheckoutStepperProps {
   step: 'items' | 'payment';
@@ -55,7 +55,15 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="flex items-center gap-3 min-w-0">
-        {isFullscreen && <LogoImage size="sm" className="shrink-0 -ml-1" />}
+        {isFullscreen && (
+          <CustosellBrandLockup
+            showTagline
+            logoSize="sm"
+            nameClassName="text-sm"
+            taglineClassName="hidden xl:block"
+            className="shrink-0 -ml-1"
+          />
+        )}
         <div className="min-w-0">
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">Point of Sale</h1>
           <p className="text-xs sm:text-sm text-gray-500">

@@ -122,8 +122,8 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
   const currentPlanSortOrder = currentPlan?.sort_order ?? 0;
 
   const getPaymentMetadata = (action: PlanAction, plan: Plan): Record<string, unknown> | undefined => {
-    if (action.type === 'upgrade') {
-      return { action: 'upgrade', to_plan_id: plan.id };
+    if (action.type === 'upgrade' || action.type === 'reactivate') {
+      return { action: action.type === 'upgrade' ? 'upgrade' : 'reactivate', to_plan_id: plan.id };
     }
     if (action.type === 'subscribe' || action.type === 'resubscribe') {
       return { action: 'subscribe', plan_id: plan.id };

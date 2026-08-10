@@ -33,22 +33,6 @@ export function useSubscribe() {
   });
 }
 
-export function useReactivate() {
-  const { showToast } = useToast();
-  return useMutation<void, AxiosError<ApiError>, { subscriptionId: number }>({
-    mutationFn: async (payload) => {
-      await axiosInstance.post(SUBSCRIPTIONS.REACTIVATE(payload.subscriptionId));
-    },
-    onSuccess: () => {
-      showToast('success', 'Subscription reactivated successfully');
-    },
-    onError: (error) => {
-      const message = error.response?.data?.message || 'Failed to reactivate subscription.';
-      showToast('error', message);
-    },
-  });
-}
-
 let idempotencyCounter = 0;
 
 function generateIdempotencyKey(): string {

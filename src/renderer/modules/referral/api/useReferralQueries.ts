@@ -69,7 +69,8 @@ export function useGenerateReferralCode() {
         owner_type: 'business',
         discount_type: 'percentage',
         discount_value: 10,
-        reward_type: 'free_month',
+        reward_type: 'percentage',
+        reward_value: 15,
       });
       return data;
     },

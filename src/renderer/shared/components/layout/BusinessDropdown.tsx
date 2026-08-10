@@ -81,7 +81,7 @@ export default function BusinessDropdown() {
   if (!businessName || user?.account_type === 'storefront_buyer') return null;
 
   const links: { label: string; icon: typeof Settings; to: string }[] = [];
-  if (!isPersonal && (isBusiness || isOwner)) {
+  if (!isPersonal && isOwner) {
     links.push({ label: 'Business Settings', icon: Settings, to: ROUTES.SETTINGS.BUSINESS });
   }
   if (isOwner) {

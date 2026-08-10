@@ -2,6 +2,7 @@ import { usePayoutHistory } from './api/useAccountQueries';
 import type { ReferralEarnings } from '../referral/api/ReferralTypes';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 import {
   Users, DollarSign, Clock, TrendingUp, Wallet,
   Receipt, Check, X, Building2,
@@ -26,6 +27,7 @@ const STATUS_PAYOUT_ICONS: Record<string, { icon: React.ReactNode; color: string
 
 export default function AccountReferralsWinsTab({ earnings }: { earnings: ReferralEarnings | undefined }) {
   const { data: payoutHistoryResp, isLoading: historyLoading } = usePayoutHistory();
+  const isBusinessOwner = Boolean(useAppSelector((s) => s.auth.user)?.is_business_owner);
 
   const payoutHistory = payoutHistoryResp ?? [];
 
@@ -64,7 +66,10 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
         </div>
       </div>
 
-      {(earnings?.available_credit ?? 0) > 0 && (
+      {/* Promo credit is a business-level billing asset (used against subscription
+          charges), so it shows to the business owner only — same gate as the
+          subscription dropdown. Staff and personal accounts never see it. */}
+      {isBusinessOwner && (earnings?.available_credit ?? 0) > 0 && (
         <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Wallet className="w-4 h-4 text-green-600" />

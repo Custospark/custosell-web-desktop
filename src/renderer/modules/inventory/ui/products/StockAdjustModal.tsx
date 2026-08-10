@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCreateStockMovement } from '../../api/products/ProductQueries';
 import type { Product } from '../../api/products/ProductTypes';
+import { useLocations } from '../../../settings/api/settings/LocationQueries';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { Button } from '../../../../shared/components/buttons/Button';
 import {
@@ -10,7 +11,7 @@ import {
   pipelineInputClass,
   pipelineSelectClass,
 } from '../../../pipeline/ui/pipelineFormFields';
-import { PackagePlus, Plus, Minus, AlertTriangle, Archive, Tag, ChevronDown, Check, ArrowDownUp } from 'lucide-react';
+import { PackagePlus, Plus, Minus, AlertTriangle, Archive, Tag, ChevronDown, Check, ArrowDownUp, GitBranch } from 'lucide-react';
 
 interface StockAdjustModalProps {
   open: boolean;
@@ -34,8 +35,10 @@ export default function StockAdjustModal({ open, onClose, product }: StockAdjust
   const [direction, setDirection] = useState<'add' | 'remove'>('add');
   const [quantity, setQuantity] = useState(1);
   const [reason, setReason] = useState('');
+  const [locationId, setLocationId] = useState<number | ''>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const createMovement = useCreateStockMovement();
+  const { data: locations = [] } = useLocations();
   const isSubmitting = createMovement.isPending;
 
   useEffect(() => {
@@ -44,6 +47,7 @@ export default function StockAdjustModal({ open, onClose, product }: StockAdjust
       setDirection('add');
       setQuantity(1);
       setReason(addReasons[0].value);
+      setLocationId('');
     });
   }, [open]);
 
@@ -73,6 +77,7 @@ export default function StockAdjustModal({ open, onClose, product }: StockAdjust
         stock_before: product.stock_quantity,
         stock_after: Math.max(0, newStock),
         notes: reason,
+        location_id: locationId === '' ? null : locationId,
       },
       { onSuccess: onClose },
     );
@@ -147,6 +152,22 @@ export default function StockAdjustModal({ open, onClose, product }: StockAdjust
               <span>Stock cannot go below zero.</span>
             </div>
           )}
+        </PipelineFormSection>
+
+        <PipelineFormSection title="Branch" icon={GitBranch}>
+          <PipelineIconField label="Branch receiving this adjustment" icon={GitBranch}>
+            <select
+              className={pipelineSelectClass}
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <option value="">Default branch</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}{l.is_default ? ' (Default)' : ''}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          </PipelineIconField>
         </PipelineFormSection>
 
         <PipelineFormSection title="Reason" icon={Tag}>

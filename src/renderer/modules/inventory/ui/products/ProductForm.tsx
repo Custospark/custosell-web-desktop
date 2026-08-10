@@ -137,14 +137,17 @@ export default function ProductForm() {
               onChange={(e) => updateField('unit_price', parseFloat(e.target.value) || 0)}
               required
             />
-            <Input
-              label="Cost Price (optional)"
-              type="number"
-              step="0.01"
-              min={0}
-              value={formData.cost_price ?? ''}
-              onChange={(e) => updateField('cost_price', e.target.value ? parseFloat(e.target.value) : null)}
-            />
+            <div>
+              <Input
+                label="Cost Price (Buying Price)"
+                type="number"
+                step="0.01"
+                min={0}
+                value={formData.cost_price ?? ''}
+                onChange={(e) => updateField('cost_price', e.target.value ? parseFloat(e.target.value) : null)}
+              />
+              <p className="text-xs text-gray-500 mt-1">What your business paid to buy this from the distributor/supplier.</p>
+            </div>
             <Input
               label="Stock Quantity"
               type="number"

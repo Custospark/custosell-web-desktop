@@ -22,6 +22,7 @@ import DashboardPage from '../../modules/dashboard/DashboardPage';
 import RecordExpensePage from '../../modules/expenses/RecordExpensePage';
 import ExpenseListPage from '../../modules/expenses/ExpenseListPage';
 import ProductsPage from '../../modules/inventory/ProductsPage';
+import InventoryOverviewPage from '../../modules/inventory/OverviewPage';
 import CategoriesPage from '../../modules/inventory/CategoriesPage';
 import StockLedgerPage from '../../modules/inventory/StockLedgerPage';
 import MarketplacePage from '../../modules/inventory/MarketplacePage';
@@ -236,6 +237,7 @@ export function AppRoutes() {
             </Route>
             <Route element={<ModuleAccessMiddleware module="inventory" />}>
               <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
+              <Route path={ROUTES.INVENTORY.OVERVIEW} element={<SuspenseWrapper><InventoryOverviewPage /></SuspenseWrapper>} />
               <Route path={ROUTES.INVENTORY.PRODUCTS} element={<SuspenseWrapper><ProductsPage /></SuspenseWrapper>} />
               <Route path="/inventory/products/new" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
               <Route path="/inventory/products/:id/edit" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />

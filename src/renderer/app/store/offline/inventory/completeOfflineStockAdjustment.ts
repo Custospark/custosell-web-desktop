@@ -16,6 +16,8 @@ function buildLocalStockMovement(payload: CreateStockMovementData): StockMovemen
     business_id: authUser?.business_id ?? 0,
     product_id: payload.product_id,
     sale_item_id: null,
+    location_id: payload.location_id ?? null,
+    to_location_id: null,
     type: payload.type,
     quantity_change: payload.quantity_change,
     stock_before: payload.stock_before,

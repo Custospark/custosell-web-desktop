@@ -15,6 +15,7 @@ const OPTIONS: {
   description: string;
   icon: typeof Store;
   iconClass: string;
+  iconColor: string;
   ringClass: string;
   chevronClass: string;
 }[] = [

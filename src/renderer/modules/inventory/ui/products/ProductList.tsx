@@ -18,7 +18,6 @@ import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { cn } from '../../../../shared/utils/cn';
 import { matchesProductSearch } from '../../../../shared/utils/productSearch';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
-import { ProductStatsCards } from './ProductStatsCards';
 import { isServiceItem } from '../../api/products/ProductTypes';
 import { Package, Plus, Upload, Download, Trash2, CheckSquare, Square, Store, ArrowLeftRight } from 'lucide-react';
 import { avatarUrl } from '../../../../shared/utils/avatarUrl';
@@ -173,8 +172,6 @@ export default function ProductList() {
           </Button>
         </div>
       </div>
-
-      <ProductStatsCards products={products || []} />
 
       <Card>
         <div className="flex items-center gap-4 mb-4 flex-wrap">

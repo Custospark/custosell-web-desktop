@@ -6,4 +6,5 @@ export const inventoryKeys = {
   lowStock: () => [...inventoryKeys.all, 'products', 'low-stock'] as const,
   productStockMovements: (productId: number) => [...inventoryKeys.all, 'products', productId, 'stock-movements'] as const,
   stockMovements: () => [...inventoryKeys.all, 'stock-movements'] as const,
+  overview: () => [...inventoryKeys.all, 'overview'] as const,
 };

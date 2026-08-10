@@ -47,6 +47,7 @@ export const PRODUCTS = {
   IMAGE: (id: number) => `/products/${id}/image`,
   BULK_LISTING: '/products/bulk-listing',
 };
+export const INVENTORY_OVERVIEW = '/inventory/overview';
 export const CUSTOMERS = { BASE: '/customers', OVERVIEW: '/customers/overview', RESOLVE: '/customers/resolve', PURCHASES: (id: number) => `/customers/${id}/purchases` };
 export const SHIFTS = {
   CLOCK_IN: '/shifts/clock-in',

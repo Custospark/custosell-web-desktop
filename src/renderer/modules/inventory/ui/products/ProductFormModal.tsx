@@ -270,7 +270,11 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
               </PipelineIconField>
             ) : null}
             {!isService ? (
-              <PipelineIconField label="Cost price (optional)" icon={DollarSign}>
+              <PipelineIconField
+                label="Cost price (buying price)"
+                icon={DollarSign}
+                hint="What your business paid to buy this from the distributor/supplier"
+              >
                 <input
                   className={pipelineInputClass}
                   type="number"

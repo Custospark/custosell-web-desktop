@@ -72,6 +72,9 @@ export interface StockMovement {
   product_id: number;
   product?: { id: number; name: string } | null;
   sale_item_id: number | null;
+  /** Branch (location) the movement applies to; null falls back to default. */
+  location_id?: number | null;
+  to_location_id?: number | null;
   type: 'purchase' | 'sale' | 'adjustment' | 'return' | 'initial';
   quantity_change: number;
   stock_before: number;
@@ -132,4 +135,6 @@ export interface CreateStockMovementData {
   stock_after: number;
   reference?: string | null;
   notes?: string | null;
+  /** Target branch (location); omitted falls back to the acting user's / default branch. */
+  location_id?: number | null;
 }

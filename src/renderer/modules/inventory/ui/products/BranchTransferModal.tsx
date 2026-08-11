@@ -17,6 +17,7 @@ interface Row {
   product_id: number;
   name: string;
   quantity: number;
+  selected: boolean;
 }
 
 export default function BranchTransferModal({ open, onClose, products }: BranchTransferModalProps) {
@@ -36,7 +37,7 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
       const defaultLoc = activeLocations.find((l) => l.is_default);
       setFromId(defaultLoc?.id ?? activeLocations[0]?.id ?? null);
       setToId(null);
-      setRows(stockProducts.map((p) => ({ product_id: p.id, name: p.name, quantity: 0 })));
+      setRows(stockProducts.map((p) => ({ product_id: p.id, name: p.name, quantity: 0, selected: false })));
     });
   }, [open, stockProducts, activeLocations]);
 
@@ -70,18 +71,19 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
       prev.map((r) => {
         if (r.product_id !== productId) return r;
         const available = stockByProduct.get(r.product_id) ?? 0;
-        return { ...r, quantity: r.quantity > 0 ? 0 : available };
+        return { ...r, selected: !r.selected, quantity: r.selected ? 0 : available };
       }),
     );
   };
 
-  const allChecked = rows.length > 0 && rows.every((r) => r.quantity > 0);
+  const allChecked = rows.length > 0 && rows.every((r) => r.selected);
 
   const handleToggleAll = () => {
     setRows((prev) =>
       prev.map((r) => ({
         ...r,
-        quantity: allChecked ? 0 : (stockByProduct.get(r.product_id) ?? 0),
+        selected: !allChecked,
+        quantity: !allChecked ? (stockByProduct.get(r.product_id) ?? 0) : 0,
       })),
     );
   };
@@ -160,9 +162,9 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
                 <div key={r.product_id} className="flex items-center gap-3 px-4 py-2.5">
                   <input
                     type="checkbox"
-                    checked={r.quantity > 0}
+                    checked={r.selected}
                     onChange={() => handleToggleRow(r.product_id)}
-                    title={r.quantity > 0 ? 'Skip this product' : 'Transfer all available'}
+                    title={r.selected ? 'Skip this product' : 'Transfer all available'}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0"
                   />
                   <div className="flex-1 min-w-0">

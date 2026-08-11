@@ -134,7 +134,15 @@ export function InvoiceLineItemsTable({
                         <button
                           type="button"
                           title="Increase quantity"
-                          onClick={() => onUpdateQuantity(item.lineKey, item.quantity + 1)}
+                          onClick={() => {
+                            const product = item.product_id != null
+                              ? products?.find((p) => p.id === item.product_id)
+                              : undefined;
+                            const maxQty = product && tracksStock(product)
+                              ? product.stock_quantity
+                              : Infinity;
+                            if (item.quantity < maxQty) onUpdateQuantity(item.lineKey, item.quantity + 1);
+                          }}
                           className="w-8 h-8 rounded-full border-2 border-green-400 hover:bg-green-50 text-green-600 flex items-center justify-center"
                         >
                           <Plus className="w-4 h-4" />

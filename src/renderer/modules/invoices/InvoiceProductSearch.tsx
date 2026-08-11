@@ -5,6 +5,7 @@ import { cn } from '../../shared/utils/cn';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { matchesProductSearch, findProductByBarcode } from '../../shared/utils/productSearch';
 import type { Product } from '../inventory/api/products/ProductTypes';
+import { isServiceItem, tracksStock } from '../inventory/api/products/ProductTypes';
 
 export interface InvoiceProductPick {
   id: number;
@@ -142,6 +143,7 @@ export function InvoiceProductSearch({ products, autoFocus, onAdd }: InvoiceProd
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
                       <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase w-10">+</th>
                     </tr>
@@ -160,6 +162,15 @@ export function InvoiceProductSearch({ products, autoFocus, onAdd }: InvoiceProd
                             </div>
                             <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
                           </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {isServiceItem(p) ? (
+                            <span className="text-xs text-blue-600">Service</span>
+                          ) : (
+                            <span className={`text-xs whitespace-nowrap ${tracksStock(p) && p.stock_quantity > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                              {tracksStock(p) && p.stock_quantity > 0 ? `${p.stock_quantity} in stock` : 'Out of stock'}
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 sm:px-4 py-3 text-right">
                           <span className="text-sm font-semibold text-blue-600 whitespace-nowrap">{formatCurrency(p.unit_price)}</span>

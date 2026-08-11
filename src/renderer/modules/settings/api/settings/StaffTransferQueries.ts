@@ -99,6 +99,9 @@ export function useTransferStaff() {
           location: toBranch,
           locations: [toBranch, ...(currentUser.locations ?? []).filter((l) => l.id !== toId)],
         }));
+        // The signed-in operator moved branches — refetch products so New Sale / invoice
+        // searches show the destination branch's stock.
+        void qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
       }
 
       showToast('success', `${transfer.user?.name ?? 'Staff member'} moved to ${transfer.to_location?.name ?? 'new branch'}`);

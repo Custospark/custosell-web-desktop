@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useProducts } from '../inventory/api/products/ProductQueries';
+import { tracksStock, SERVICE_QTY_SOFT_CAP } from '../inventory/api/products/ProductTypes';
 import { useCustomers } from '../sales/api/salesQueries';
 import { useCreateInvoice, useUpdateInvoice } from './api/InvoiceQueries';
 import type { Invoice } from './api/InvoiceTypes';
@@ -73,6 +74,7 @@ export default function InvoiceBuilderForm({
   const updateInvoice = useUpdateInvoice();
   const resolveCustomer = useResolveCustomerContact();
   const isOffline = useAppSelector((s) => s.network.systemStatus === 'offline');
+  const activeLocationId = useAppSelector((s) => s.auth.activeLocationId);
 
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>(
     () => seed?.lineItems?.map((item) => ({ ...item })) ?? [],
@@ -214,7 +216,7 @@ export default function InvoiceBuilderForm({
   const buildPayload = useCallback((resolvedCustomerId: number | null) => ({
     customer_id: resolvedCustomerId,
     sale_id: seed?.saleId ?? undefined,
-    location_id: seed?.locationId ?? undefined,
+    location_id: seed?.locationId ?? activeLocationId ?? undefined,
     issue_date: issueDate,
     due_date: dueDate,
     subtotal: taxBreakdown.subtotalNet,
@@ -223,7 +225,7 @@ export default function InvoiceBuilderForm({
     total_amount: taxBreakdown.total,
     notes: notes || undefined,
     items: lineItemsToPayload(lineItems),
-  }), [seed?.saleId, seed?.locationId, issueDate, dueDate, taxBreakdown, notes, lineItems]);
+  }), [seed?.saleId, seed?.locationId, activeLocationId, issueDate, dueDate, taxBreakdown, notes, lineItems]);
 
   async function resolveCustomerId(): Promise<number | null> {
     if (contact.customerId) return contact.customerId;
@@ -458,7 +460,10 @@ export default function InvoiceBuilderForm({
           productId={qtyEdit.productId}
           productName={qtyEdit.productName}
           currentQty={qtyEdit.currentQty}
-          maxQty={9999}
+          maxQty={(() => {
+            const p = products?.find((x) => x.id === qtyEdit.productId);
+            return p && tracksStock(p) ? p.stock_quantity : SERVICE_QTY_SOFT_CAP;
+          })()}
           onConfirm={(qty) => {
             updateQuantity(qtyEdit.lineKey, qty);
             setQtyEdit(null);

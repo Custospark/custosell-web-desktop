@@ -197,11 +197,14 @@ export default function PipelineReferralsPage() {
                     </span>
                   );
                 }},
-                { key: 'reward', header: 'Reward', render: (r: ReferralRecord) => (
-                  <span className="text-sm text-gray-600">
-                    {r.reward_amount ? formatUSD(r.reward_amount) : '—'}
-                  </span>
-                )},
+                { key: 'reward', header: 'Reward', render: (r: ReferralRecord) => {
+                  const reward = (Number(r.reward_amount) || 0) + (Number(r.commission_earned) || 0);
+                  return (
+                    <span className="text-sm text-gray-600">
+                      {reward > 0 ? formatUSD(reward) : '—'}
+                    </span>
+                  );
+                }},
                 { key: 'date', header: 'Date', render: (r: ReferralRecord) => (
                   <span className="text-sm text-gray-500">
                     {new Date(r.created_at).toLocaleDateString('en-UG')}

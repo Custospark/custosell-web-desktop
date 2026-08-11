@@ -115,7 +115,10 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(r.created_at).toLocaleDateString()}
-                        {Number(r.reward_amount) > 0 && ` · ${formatUSD(Number(r.reward_amount))} earned`}
+                        {(() => {
+                          const reward = (Number(r.reward_amount) || 0) + (Number(r.commission_earned) || 0);
+                          return reward > 0 ? ` · ${formatUSD(reward)} earned` : '';
+                        })()}
                       </p>
                     </div>
                   </div>

@@ -55,8 +55,10 @@ export default function ProductList() {
   const [historyProduct, setHistoryProduct] = useState<ProductWithSyncMeta | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const { data: locations = [] } = useLocations();
-  const [branchFilter, setBranchFilter] = useState<string>('');
+  const activeLocationId = useAppSelector((s) => s.auth.activeLocationId ?? s.auth.user?.location_id ?? null);
+  const [branchFilter, setBranchFilter] = useState<string>(activeLocationId ? String(activeLocationId) : '');
   const [transferOpen, setTransferOpen] = useState(false);
+  const [transferProduct, setTransferProduct] = useState<ProductWithSyncMeta | null>(null);
   const { data: branchStock = [] } = useLocationStock(branchFilter ? Number(branchFilter) : null);
 
   const stockByProduct = useMemo(() => {
@@ -90,7 +92,7 @@ export default function ProductList() {
     if (!products) return [];
     const safe = products.filter(Boolean) as ProductWithSyncMeta[];
     return safe.filter((p) => {
-      if (branchFilter && !stockByProduct.has(p.id)) return false;
+      if (branchFilter && !isServiceItem(p) && !stockByProduct.has(p.id)) return false;
       if (storefrontFilter === 'listed' && !p.listed_for_storefront) return false;
       if (storefrontFilter === 'unlisted' && p.listed_for_storefront) return false;
       if (supplyFilter === 'listed' && !p.listed_for_supply) return false;
@@ -184,7 +186,7 @@ export default function ProductList() {
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             aria-label="Filter by branch"
           >
-            <option value="">All branches</option>
+            <option value="">Select branch</option>
             {locations.map((l) => (
               <option key={l.id} value={l.id}>{l.name}{l.is_default ? ' (Default)' : ''}</option>
             ))}
@@ -313,6 +315,7 @@ export default function ProductList() {
                   onViewHistory={() => setHistoryProduct(item)}
                   onEdit={() => openEdit(item)}
                   onAdjustStock={() => setAdjustingProduct(item)}
+                  onTransfer={() => setTransferProduct(item)}
                   onDelete={() => handleDelete(item)}
                 />
               ),
@@ -376,6 +379,14 @@ export default function ProductList() {
         onClose={() => { setTransferOpen(false); setSelectedIds(new Set()); }}
         products={(products || []).filter((p) => selectedIds.has(p.id))}
       />
+
+      {transferProduct && (
+        <BranchTransferModal
+          open={!!transferProduct}
+          onClose={() => setTransferProduct(null)}
+          products={[transferProduct]}
+        />
+      )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { Store, Package, MoreVertical, Eye, Pencil, PackagePlus, Trash } from 'lucide-react';
+import { Store, Package, MoreVertical, Eye, Pencil, PackagePlus, ArrowLeftRight, Trash } from 'lucide-react';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../../app/store/slices/networkSlice';
 import { useToast } from '../../../../app/contexts/useToast';
@@ -13,6 +13,7 @@ interface ProductRowActionsProps {
   onViewHistory: () => void;
   onEdit: () => void;
   onAdjustStock: () => void;
+  onTransfer: () => void;
   onDelete: () => void;
 }
 
@@ -24,6 +25,7 @@ export default function ProductRowActions({
   onViewHistory,
   onEdit,
   onAdjustStock,
+  onTransfer,
   onDelete,
 }: ProductRowActionsProps) {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
@@ -138,6 +140,11 @@ export default function ProductRowActions({
               {canAdjust && (
                 <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { handleClose(); onAdjustStock(); }}>
                   <PackagePlus className="h-4 w-4 text-blue-600" /> Adjust stock
+                </button>
+              )}
+              {canAdjust && (
+                <button type="button" role="menuitem" className={MENU_ITEM_CLASS} onClick={() => { handleClose(); onTransfer(); }}>
+                  <ArrowLeftRight className="h-4 w-4 text-indigo-600" /> Transfer
                 </button>
               )}
               <div className="my-1 border-t border-gray-100" />

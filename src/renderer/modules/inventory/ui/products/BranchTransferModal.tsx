@@ -65,6 +65,27 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
     setRows((prev) => prev.map((r) => (r.product_id === productId ? { ...r, quantity } : r)));
   };
 
+  const handleToggleRow = (productId: number) => {
+    setRows((prev) =>
+      prev.map((r) => {
+        if (r.product_id !== productId) return r;
+        const available = stockByProduct.get(r.product_id) ?? 0;
+        return { ...r, quantity: r.quantity > 0 ? 0 : available };
+      }),
+    );
+  };
+
+  const allChecked = rows.length > 0 && rows.every((r) => r.quantity > 0);
+
+  const handleToggleAll = () => {
+    setRows((prev) =>
+      prev.map((r) => ({
+        ...r,
+        quantity: allChecked ? 0 : (stockByProduct.get(r.product_id) ?? 0),
+      })),
+    );
+  };
+
   const handleTransfer = () => {
     if (!fromId || !toId) return;
     const items: TransferLine[] = rows
@@ -115,9 +136,20 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
           </label>
         </div>
 
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-700">Products to transfer ({rows.length})</span>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  onChange={handleToggleAll}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                Transfer all available
+              </label>
+              <span className="text-xs text-gray-400">({rows.length})</span>
+            </div>
             <span className="text-xs text-gray-400">Total: {totalQty}</span>
           </div>
           <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
@@ -126,6 +158,13 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
               const over = r.quantity > available;
               return (
                 <div key={r.product_id} className="flex items-center gap-3 px-4 py-2.5">
+                  <input
+                    type="checkbox"
+                    checked={r.quantity > 0}
+                    onChange={() => handleToggleRow(r.product_id)}
+                    title={r.quantity > 0 ? 'Skip this product' : 'Transfer all available'}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 truncate">{r.name}</p>
                     <p className="text-xs text-gray-400">Available: {available}</p>

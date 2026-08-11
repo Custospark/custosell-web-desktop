@@ -251,7 +251,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
               {subscription.next_billing_date
                 ? new Date(subscription.next_billing_date).toLocaleDateString()
                 : 'your billing date'}
-              . No worries here, but you can renew early whenever it suits you.
+              .
             </p>
             <button
               type="button"

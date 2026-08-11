@@ -116,7 +116,7 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
             <select
               value={fromId ?? ''}
               onChange={(e) => setFromId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {activeLocations.map((l) => (
                 <option key={l.id} value={l.id}>{l.name}{l.is_default ? ' (Default)' : ''}</option>
@@ -126,7 +126,7 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
           <label className="text-sm font-medium text-gray-700">
             <span className="block mb-1">To Branch</span>
             <select
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={toId ?? ''}
               onChange={(e) => setToId(e.target.value ? Number(e.target.value) : null)}
             >
@@ -177,7 +177,7 @@ export default function BranchTransferModal({ open, onClose, products }: BranchT
                     max={available}
                     value={r.quantity || ''}
                     onChange={(e) => handleRowChange(r.product_id, Number(e.target.value))}
-                    className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm text-right"
+                    className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm text-right focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   {over && <span className="text-xs text-red-600 w-16">Exceeds</span>}
                 </div>

@@ -9,7 +9,7 @@ import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkele
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
-import RoleFormDrawer from './RoleFormDrawer';
+import RoleFormModal from './RoleFormModal';
 import { Shield, Plus, Pencil, Trash, Star } from 'lucide-react';
 
 export default function RoleList() {
@@ -134,7 +134,7 @@ export default function RoleList() {
         />
       </Card>
 
-      <RoleFormDrawer
+      <RoleFormModal
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         role={editingRole}

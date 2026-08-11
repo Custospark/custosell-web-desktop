@@ -2,7 +2,7 @@ import { UserCog, UserPlus, Link2 } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import type { StaffWithSyncMeta } from '../../../app/store/offline/settings/localStaffStore';
-import RoleFormDrawer from './RoleFormDrawer';
+import RoleFormModal from './RoleFormModal';
 import LocationFormModal from './LocationFormModal';
 import { StaffModuleAccessFields } from './StaffModuleAccessFields';
 import { StaffFormBanners } from './StaffFormBanners';
@@ -148,7 +148,7 @@ export default function StaffFormModal({ open, onClose, staff }: StaffFormModalP
           </HrModalFooter>
         </div>
       </Modal>
-      <RoleFormDrawer open={f.roleDrawerOpen} onClose={() => f.setRoleDrawerOpen(false)} />
+      <RoleFormModal open={f.roleDrawerOpen} onClose={() => f.setRoleDrawerOpen(false)} />
       <LocationFormModal open={f.locationFormOpen} onClose={() => f.setLocationFormOpen(false)} />
     </>
   );

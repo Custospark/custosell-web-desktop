@@ -103,7 +103,7 @@ export function useUpdateShiftOpeningBalance() {
 export function useClockOut() {
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<ShiftWithSyncMeta, AxiosError, { id: number; totals: Record<string, number> }>({
+  return useMutation<ShiftWithSyncMeta, AxiosError, { id: number; totals: Record<string, number | null> }>({
     networkMode: 'always',
     retry: false,
     mutationFn: async ({ id, totals }) => {

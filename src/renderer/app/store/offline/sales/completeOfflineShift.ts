@@ -158,7 +158,7 @@ export async function updateOfflineShiftOpeningBalance(
 async function persistOfflineClockOutInBackground(
   shiftId: number,
   shift: ShiftRecord,
-  totals: Record<string, number>,
+  totals: Record<string, number | null>,
 ): Promise<void> {
   let mutationId = '';
   try {
@@ -185,7 +185,7 @@ async function persistOfflineClockOutInBackground(
 
 export function completeOfflineClockOutInstant(
   shiftId: number,
-  totals: Record<string, number>,
+  totals: Record<string, number | null>,
   currentShift: ShiftRecord | null,
 ): ShiftWithSyncMeta {
   const now = new Date().toISOString();

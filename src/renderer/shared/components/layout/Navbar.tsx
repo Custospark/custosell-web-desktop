@@ -155,7 +155,7 @@ export function Navbar() {
   const user = useAppSelector((s) => s.auth.user);
   const { logout, isLoggingOut } = useLogoutAction();
   const { confirm } = useConfirm();
-  const { requestEndShift, isEnding } = useEndShiftAction();
+  const { endShift: requestEndShift, isEnding } = useEndShiftAction();
   const replayTour = useUpdateOnboarding();
   const { systemStatus, latency, retryConnection } = useNetworkStatus();
   const [dropdownOpen, setDropdownOpen] = useState(false);

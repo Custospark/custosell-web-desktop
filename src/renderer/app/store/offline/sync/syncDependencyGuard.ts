@@ -29,7 +29,7 @@ interface TempIdRecord {
 interface DependencyRef {
   entity: EntityIdKind;
   oldId: number;
-  apply: (serverId: number) => Pick<QueuedMutation, 'url' | 'data'>;
+  apply: (serverId: number) => Partial<Pick<QueuedMutation, 'url' | 'data'>>;
 }
 
 const ORDER_SCOPED_URL = /^\/orders\/(-?\d+)(\/cancel)?$/;
@@ -153,7 +153,7 @@ function collectDependencyRefs(m: QueuedMutation): DependencyRef[] {
         refs.push({
           entity: 'shift',
           oldId: shiftId!,
-          apply: (id) => ({ data: { ...m.data, fields: { ...fields, shift_id: String(id) } } }),
+          apply: (id) => ({ data: { ...(m.data as object), fields: { ...fields, shift_id: String(id) } } }),
         });
       }
       const catId = fields.expense_category_id != null ? Number(fields.expense_category_id) : null;
@@ -161,7 +161,7 @@ function collectDependencyRefs(m: QueuedMutation): DependencyRef[] {
         refs.push({
           entity: 'expense-category',
           oldId: catId!,
-          apply: (id) => ({ data: { ...m.data, fields: { ...fields, expense_category_id: String(id) } } }),
+          apply: (id) => ({ data: { ...(m.data as object), fields: { ...fields, expense_category_id: String(id) } } }),
         });
       }
     }
@@ -176,13 +176,13 @@ async function markDependentFailed(m: QueuedMutation, message: string): Promise<
   if (ORDER_SCOPED_URL.test(m.url) && /^\/orders\//.test(m.url)) {
     await localOrdersStore.markFailedByMutationId(m.id, message);
   } else if (m.method === 'POST' && m.url === '/sales') {
-    await localSalesStore.markFailedByMutationId(m.id, message);
+    await localSalesStore.markFailedByMutationId(m.id);
   } else if (m.method === 'POST' && m.url === '/users') {
     await localStaffStore.markFailedByMutationId(m.id, message);
   } else if (m.method === 'POST' && m.url === '/products') {
     await localProductsStore.markFailedByMutationId(m.id, message);
   } else if (m.method === 'POST' && m.url === '/expenses') {
-    await localExpensesStore.markFailedByMutationId(m.id, message);
+    await localExpensesStore.markFailedByMutationId(m.id);
   }
 }
 
@@ -225,7 +225,7 @@ export async function guardScopedMutations(
 
     let shouldFail = false;
     let failMessage = '';
-    const patches: Pick<QueuedMutation, 'url' | 'data'>[] = [];
+    const patches: Partial<Pick<QueuedMutation, 'url' | 'data'>>[] = [];
     const requeues = new Set<string>();
 
     for (const ref of refs) {

@@ -20,7 +20,7 @@ const cardStyles = {
   amber: { border: 'border-amber-500', shadow: 'hover:shadow-amber-500/20', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', badge: 'bg-amber-100 text-amber-700', glow: 'bg-amber-500/10', hoverBg: 'group-hover:bg-amber-200' },
 };
 
-type StatCardDef = {
+export type StatCardDef = {
   label: string;
   value: string;
   badge: string;

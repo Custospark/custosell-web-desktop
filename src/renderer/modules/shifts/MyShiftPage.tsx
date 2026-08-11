@@ -24,7 +24,7 @@ import ExpenseForm from '../expenses/components/ExpenseForm';
 import ShiftCloseReportContent from './ShiftCloseReportContent';
 import OpeningBalanceModal from './OpeningBalanceModal';
 import EndShiftModal from './EndShiftModal';
-import { StatCard, ShiftTransactionsTable, ShiftExpensesPanel, ShiftHistoryTable } from './shiftComponents';
+import { StatCard, type StatCardDef, ShiftTransactionsTable, ShiftExpensesPanel, ShiftHistoryTable } from './shiftComponents';
 import { buildShiftCloseReportData } from './buildShiftCloseReportData';
 import { canDownloadShiftClosePdf, downloadShiftClosePdf } from './useShiftClosePdf';
 import { CurrentShiftProgressChart, ShiftHistoryTrendChart } from './ShiftCharts';

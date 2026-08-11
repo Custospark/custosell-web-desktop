@@ -1,10 +1,11 @@
 import { usePayoutHistory } from './api/PlatformPayoutQueries';
 import { Button } from '../../shared/components/buttons/Button';
+import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import {
   X, Clock, CheckCircle2, XCircle, Mail, Phone, Smartphone, Building2,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import type { PayableEntity } from './api/PlatformPayoutTypes';
 
 const STATUS_ICONS: Record<string, typeof CheckCircle2> = {
@@ -31,7 +32,15 @@ interface Props {
 }
 
 export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
-  const { data: payouts = [], isLoading } = usePayoutHistory(entity.type, entity.user_id);
+  const { data: payouts = [], isLoading } = usePayoutHistory(entity.type, entity.id);
+  const paginated = usePagination(payouts, 5);
+
+  const formatWhen = (p: { paid_at: string | null; scheduled_at: string | null }): string => {
+    const raw = p.paid_at ?? p.scheduled_at;
+    if (!raw) return '—';
+    const d = new Date(raw);
+    return format(d, 'MMM d, yyyy · h:mm a');
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -102,41 +111,45 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
           ) : payouts.length === 0 ? (
             <div className="text-center py-8 text-sm text-gray-400">No payout records yet</div>
           ) : (
-            <div className="space-y-2">
-              {payouts.map((p) => {
-                const Icon = STATUS_ICONS[p.status] ?? Clock;
-                const color = STATUS_COLORS[p.status] ?? 'text-gray-400';
-                const bg = STATUS_BG[p.status] ?? 'border-gray-100';
-                return (
-                  <div key={p.id} className={`flex items-start justify-between rounded-lg border ${bg} px-4 py-3`}>
-                    <div className="flex items-start gap-3">
-                      <Icon className={`w-4 h-4 mt-0.5 ${color}`} />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{formatUSD(p.amount)}</p>
-                        <p className="text-[11px] text-gray-400 capitalize">{p.status}</p>
-                        {p.notes && (
-                          <p className="text-[11px] text-gray-500 mt-1 italic">{p.notes}</p>
-                        )}
-                        {p.payment_method && (
-                          <p className="text-[10px] text-gray-400 mt-0.5">{p.payment_method}</p>
+            <div className="max-h-[50vh] overflow-y-auto pr-1">
+              <div className="space-y-2">
+                {paginated.data.map((p) => {
+                  const Icon = STATUS_ICONS[p.status] ?? Clock;
+                  const color = STATUS_COLORS[p.status] ?? 'text-gray-400';
+                  const bg = STATUS_BG[p.status] ?? 'border-gray-100';
+                  return (
+                    <div key={p.id} className={`flex items-start justify-between rounded-lg border ${bg} px-4 py-3`}>
+                      <div className="flex items-start gap-3">
+                        <Icon className={`w-4 h-4 mt-0.5 ${color}`} />
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{formatUSD(p.amount)}</p>
+                          <p className="text-[11px] text-gray-400 capitalize">{p.status}</p>
+                          {p.notes && (
+                            <p className="text-[11px] text-gray-500 mt-1 italic">{p.notes}</p>
+                          )}
+                          {p.payment_method && (
+                            <p className="text-[10px] text-gray-400 mt-0.5">{p.payment_method}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-gray-500">{formatWhen(p)}</p>
+                        {p.paid_by_user && (
+                          <p className="text-[10px] text-gray-400">by {p.paid_by_user.name}</p>
                         )}
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-gray-500">
-                        {p.paid_at
-                          ? formatDistanceToNow(new Date(p.paid_at), { addSuffix: true })
-                          : p.scheduled_at
-                            ? formatDistanceToNow(new Date(p.scheduled_at), { addSuffix: true })
-                            : '—'}
-                      </p>
-                      {p.paid_by_user && (
-                        <p className="text-[10px] text-gray-400">by {p.paid_by_user.name}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <Pagination
+                currentPage={paginated.page}
+                totalPages={paginated.totalPages}
+                totalItems={paginated.totalItems}
+                pageSize={paginated.pageSize}
+                onPageChange={paginated.setPage}
+                onPageSizeChange={paginated.setPageSize}
+              />
             </div>
           )}
         </div>

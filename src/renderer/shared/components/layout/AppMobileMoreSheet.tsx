@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import { Compass, Search, X } from 'lucide-react';
@@ -24,6 +24,12 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
   const { isCompletelyOffline } = useNetworkStatus();
   const [browseOpen, setBrowseOpen] = useState(false);
   const [filter, setFilter] = useState('');
+  const activeItemRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    if (!activeItemRef.current) return;
+    activeItemRef.current.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [pathname, filter]);
 
   const filteredLeaves = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -153,6 +159,7 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
                           <NavLink
                             to={leaf.to}
                             onClick={close}
+                            ref={active ? activeItemRef : null}
                             className={cn(
                               'flex items-center gap-3 px-3 py-3 text-sm transition-colors',
                               active

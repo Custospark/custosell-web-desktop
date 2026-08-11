@@ -1,78 +1,39 @@
-import { useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { useRef, useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useActiveShift, useClockIn, useShiftExpenses, useShiftPayments, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
+import { useActiveShift, useShiftExpenses, useShiftPayments, useShiftSales, useShifts, shiftKeys } from './ShiftQueries';
+import { useClockIn } from './ShiftMutations';
 import { useEndShiftAction } from './useEndShiftAction';
-import type { ShiftWithSyncMeta } from '../../app/store/offline/sales/localShiftsStore';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import type { SaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 import { LoadingSkeleton } from '../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../shared/components/cards/EmptyState';
-import { SearchInput } from '../../shared/components/inputs/SearchInput';
-import { Table } from '../../shared/components/tables/Table';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Badge } from '../../shared/components/badges/Badge';
 import { Button } from '../../shared/components/buttons/Button';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { formatShiftTime, formatShiftDate, formatShiftDateTime } from '../../shared/utils/formatDateTime';
+import { formatShiftDateTime } from '../../shared/utils/formatDateTime';
 import { cn } from '../../shared/utils/cn';
-import { Pagination, usePagination } from '../../shared/components/tables/Pagination';
 import { useReactToPrint } from 'react-to-print';
 import {
-  ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut,
-  RefreshCw, WifiOff, ReceiptText, History,
+  ShoppingCart, DollarSign, Smartphone, CreditCard, Printer, Clock, LogOut, RefreshCw, WifiOff, ReceiptText, Banknote,
 } from 'lucide-react';
+import { usePagination } from '../../shared/components/tables/Pagination';
 import ReceiptPreviewModal from '../sales/ui/history/ReceiptPreviewModal';
-import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import ExpenseForm from '../expenses/components/ExpenseForm';
 import ShiftCloseReportContent from './ShiftCloseReportContent';
+import OpeningBalanceModal from './OpeningBalanceModal';
+import EndShiftModal from './EndShiftModal';
+import { StatCard, ShiftTransactionsTable, ShiftExpensesPanel, ShiftHistoryTable } from './shiftComponents';
 import { buildShiftCloseReportData } from './buildShiftCloseReportData';
-import {
-  canDownloadShiftClosePdf,
-  downloadShiftClosePdf,
-} from './useShiftClosePdf';
+import { canDownloadShiftClosePdf, downloadShiftClosePdf } from './useShiftClosePdf';
 import { CurrentShiftProgressChart, ShiftHistoryTrendChart } from './ShiftCharts';
 import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shiftChartSeries';
 import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
-import { grossSaleAmount, netSaleAmount, netSaleTaxAmount, refundedAmount, saleTaxRefundedAmount, toAmount } from '../sales/utils/saleAmounts';
-import { cashHandover, netSales } from '../../shared/utils/accounting';
+import { grossSaleAmount, netSaleTaxAmount, refundedAmount, saleTaxRefundedAmount, toAmount } from '../sales/utils/saleAmounts';
+import { netSales } from '../../shared/utils/accounting';
 import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import { useToast } from '../../app/contexts/useToast';
-
-const cardStyles = {
-  blue: { border: 'border-blue-500', shadow: 'hover:shadow-blue-500/20', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', badge: 'bg-blue-100 text-blue-700', glow: 'bg-blue-500/10', hoverBg: 'group-hover:bg-blue-200' },
-  green: { border: 'border-green-500', shadow: 'hover:shadow-green-500/20', iconBg: 'bg-green-100', iconColor: 'text-green-600', badge: 'bg-green-100 text-green-700', glow: 'bg-green-500/10', hoverBg: 'group-hover:bg-green-200' },
-  indigo: { border: 'border-indigo-500', shadow: 'hover:shadow-indigo-500/20', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', badge: 'bg-indigo-100 text-indigo-700', glow: 'bg-indigo-500/10', hoverBg: 'group-hover:bg-indigo-200' },
-  purple: { border: 'border-purple-500', shadow: 'hover:shadow-purple-500/20', iconBg: 'bg-purple-100', iconColor: 'text-purple-600', badge: 'bg-purple-100 text-purple-700', glow: 'bg-purple-500/10', hoverBg: 'group-hover:bg-purple-200' },
-  amber: { border: 'border-amber-500', shadow: 'hover:shadow-amber-500/20', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', badge: 'bg-amber-100 text-amber-700', glow: 'bg-amber-500/10', hoverBg: 'group-hover:bg-amber-200' },
-};
-
-type StatCardDef = {
-  label: string;
-  value: string;
-  badge: string;
-  icon: typeof ShoppingCart;
-  color: keyof typeof cardStyles;
-  secondary?: ReactNode;
-};
-
-function StatCard({ label, value, badge, icon: Icon, color, secondary }: StatCardDef) {
-  const s = cardStyles[color];
-  return (
-    <div className={`relative overflow-hidden rounded-xl p-6 transition-all duration-300 border-2 bg-gradient-to-br from-white to-white ${s.border} ${s.shadow} hover:-translate-y-0.5 group min-h-[130px] flex flex-col justify-center`}>
-      <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl ${s.glow}`} />
-      <div className="flex items-center justify-between mb-4 relative">
-        <div className={`p-3.5 rounded-xl transition-all duration-300 ${s.iconBg} group-hover:scale-110 ${s.hoverBg}`}>
-          <Icon className={`w-6 h-6 ${s.iconColor}`} />
-        </div>
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.badge}`}>{badge}</span>
-      </div>
-      <p className="text-3xl font-bold text-gray-900 mb-0.5 relative tabular-nums">{value}</p>
-      <p className="text-sm font-medium text-gray-500 relative">{label}</p>
-      {secondary && <p className="text-xs text-gray-500 mt-1 relative">{secondary}</p>}
-    </div>
-  );
-}
 
 export default function MyShiftPage() {
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -82,10 +43,12 @@ export default function MyShiftPage() {
   const { data: shift, isLoading, isRefetching } = useActiveShift();
   const { data: allShifts } = useShifts();
   const clockIn = useClockIn();
-  const { requestEndShift, isEnding } = useEndShiftAction();
+  const { endShift, isEnding, totals } = useEndShiftAction();
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [showEndShift, setShowEndShift] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSyncMeta | null>(null);
   const [search, setSearch] = useState('');
   const { showToast } = useToast();
@@ -116,7 +79,8 @@ export default function MyShiftPage() {
   const cashTotal = collections.cash;
   const mobileTotal = collections.mobile;
   const cardTotal = collections.card;
-  const handoverAmount = cashHandover(cashTotal, shiftExpenseTotal);
+  const openingBalance = Number(shift?.opening_balance ?? 0);
+  const expectedCash = openingBalance + cashTotal - shiftExpenseTotal;
 
   const clockInValue = shift?.clock_in || authUser?.shift_clock_in;
 
@@ -132,12 +96,16 @@ export default function MyShiftPage() {
         shiftExpenses,
         isOfflineCopy: isOffline,
         taxEnabled,
+        openingBalance: openingBalance,
+        countedCash: shift?.counted_cash ?? null,
       }),
     [
       business,
       authUser,
       clockInValue,
       shift?.clock_out,
+      openingBalance,
+      shift?.counted_cash,
       shiftSales,
       shiftPayments,
       shiftExpenses,
@@ -198,9 +166,9 @@ export default function MyShiftPage() {
       color: 'purple',
     },
     {
-      label: 'Cash at handover',
-      value: formatCurrency(handoverAmount),
-      badge: 'Handover',
+      label: 'Expected cash in drawer',
+      value: formatCurrency(expectedCash),
+      badge: 'Drawer',
       icon: ReceiptText,
       color: 'amber',
       secondary: shiftExpenseTotal > 0 ? (
@@ -237,10 +205,6 @@ export default function MyShiftPage() {
     } finally {
       setPdfLoading(false);
     }
-  };
-
-  const handleEndShift = () => {
-    void requestEndShift();
   };
 
   const closeReceiptModal = () => {
@@ -295,10 +259,13 @@ export default function MyShiftPage() {
           <Button variant="outline" onClick={() => setShowReceiptPreview(true)}>
             <Printer className="w-4 h-4 mr-1.5" />Shift Report
           </Button>
+          <Button variant="outline" onClick={() => setShowOpeningBalance(true)}>
+            <Banknote className="w-4 h-4 mr-1.5" />Opening Balance
+          </Button>
           <Button variant="outline" onClick={() => setShowExpenseForm(true)}>
             <ReceiptText className="w-4 h-4 mr-1.5" />Record Expense
           </Button>
-          <Button variant="outline" onClick={handleEndShift} loading={isEnding}>
+          <Button variant="outline" onClick={() => setShowEndShift(true)} loading={isEnding}>
             <LogOut className="w-4 h-4 mr-1.5" />End Shift
           </Button>
         </div>
@@ -376,10 +343,28 @@ export default function MyShiftPage() {
                 <span className="font-bold tabular-nums">{formatCurrency(netShiftTotal)}</span>
               </div>
               <p className="text-xs text-gray-400">Gross − refunds − shift expenses. VAT shown separately above.</p>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Cash at handover</span>
-                <span className="font-bold text-green-700 tabular-nums">{formatCurrency(handoverAmount)}</span>
+              <div className="flex justify-between border-t border-gray-100 pt-2">
+                <span className="text-gray-500">Opening balance</span>
+                <span className="font-semibold tabular-nums">{formatCurrency(openingBalance)}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Cash collected</span>
+                <span className="font-semibold tabular-nums">{formatCurrency(cashTotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Expected cash in drawer</span>
+                <span className="font-bold text-green-700 tabular-nums">{formatCurrency(expectedCash)}</span>
+              </div>
+              <p className="text-xs text-gray-400">Opening balance + cash collected − expenses paid from the drawer.</p>
+              {openingBalance === 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowOpeningBalance(true)}
+                  className="text-xs text-blue-600 hover:underline font-medium"
+                >
+                  Record opening balance
+                </button>
+              )}
             </div>
           </div>
 
@@ -426,172 +411,23 @@ export default function MyShiftPage() {
         <ReceiptPreviewModal sale={selectedSale} open={!!selectedSale} onClose={() => setSelectedSale(null)} />
       )}
       <ExpenseForm open={showExpenseForm} onClose={() => setShowExpenseForm(false)} shiftId={shiftId ?? null} />
-    </div>
-  );
-}
-
-function ShiftTransactionsTable({
-  shiftSales,
-  filteredSales,
-  paginated,
-  search,
-  setSearch,
-  onSelectSale,
-  showVat = false,
-}: {
-  shiftSales: SaleWithSyncMeta[] | undefined;
-  filteredSales: SaleWithSyncMeta[];
-  paginated: ReturnType<typeof usePagination<SaleWithSyncMeta>>;
-  search: string;
-  setSearch: (v: string) => void;
-  onSelectSale: (sale: SaleWithSyncMeta) => void;
-  showVat?: boolean;
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-sm font-semibold text-gray-800 mb-1">Shift Receipts</h3>
-      <p className="text-xs text-gray-500 mb-4">Tap a receipt to preview · amounts after refunds</p>
-      <div className="mb-4">
-        <SearchInput placeholder="Search by receipt number..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
-      </div>
-      {!shiftSales?.length ? (
-        <EmptyState icon={<ShoppingCart className="w-8 h-8" />} title="No transactions yet" description="Sales made during this shift will appear here." />
-      ) : filteredSales.length === 0 ? (
-        <EmptyState icon={<ShoppingCart className="w-8 h-8" />} title="No matching transactions" description="Try a different receipt number." />
-      ) : (
-        <>
-          <Table
-            rowKey={(sale) => sale.id}
-            data={paginated.data}
-            columns={[
-              { key: 'receipt_number', header: 'Receipt', render: (sale) => (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button type="button" onClick={() => onSelectSale(sale)} className="text-blue-600 hover:underline font-medium">
-                    {sale.receipt_number}
-                  </button>
-                  {sale._pendingSync && <Badge variant="warning">Pending sync</Badge>}
-                  {sale._pendingRefundSync && <Badge variant="warning">Refund pending</Badge>}
-                </div>
-              )},
-              { key: 'created_at', header: 'Time', render: (sale) => formatShiftTime(sale.sale_date || sale.created_at) },
-              { key: 'items', header: 'Items', render: (sale) => sale.sale_items?.length || 0 },
-              { key: 'payment_method', header: 'Payment', render: (sale) => {
-                const method = sale.payment_method ?? 'other';
-                return (
-                  <Badge variant={method === 'cash' ? 'success' : method === 'mobile_money' ? 'primary' : 'warning'}>
-                    {method.replace(/_/g, ' ')}
-                  </Badge>
-                );
-              }},
-              ...(showVat ? [{
-                key: 'vat',
-                header: 'VAT',
-                align: 'right' as const,
-                render: (sale: SaleWithSyncMeta) => (
-                  <span className="tabular-nums text-gray-700">{formatCurrency(netSaleTaxAmount(sale))}</span>
-                ),
-              }] : []),
-              { key: 'total_amount', header: 'Net Total', align: 'right', render: (sale) => (
-                <div className="text-right">
-                  <span className="font-semibold">{formatCurrency(netSaleAmount(sale))}</span>
-                  {refundedAmount(sale) > 0 && (
-                    <p className="text-xs text-gray-400">Gross {formatCurrency(grossSaleAmount(sale))}</p>
-                  )}
-                </div>
-              )},
-            ]}
-          />
-          <Pagination
-            currentPage={paginated.page}
-            totalPages={paginated.totalPages}
-            totalItems={paginated.totalItems}
-            pageSize={paginated.pageSize}
-            onPageChange={paginated.setPage}
-            onPageSizeChange={paginated.setPageSize}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function ShiftExpensesPanel({ expenses, total }: { expenses: ExpenseWithSyncMeta[]; total: number }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-            <ReceiptText className="w-4 h-4 text-amber-500 shrink-0" />
-            Shift Expenses
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">Paid from cash drawer · reduces cash at handover</p>
-        </div>
-        {total > 0 && (
-          <span className="text-sm font-bold text-red-600 tabular-nums">-{formatCurrency(total)}</span>
-        )}
-      </div>
-      {expenses.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-6">No shift expenses recorded yet</p>
-      ) : (
-        <div className="space-y-2">
-          {expenses.filter(Boolean).map((expense) => (
-            <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm">
-              <div className="min-w-0">
-                <p className="font-medium text-gray-800 truncate">{expense.description}</p>
-                <p className="text-xs text-gray-500">
-                  {expense.expense_category?.name ?? 'Uncategorized'}
-                  {expense._pendingSync && <Badge variant="warning" className="ml-2">Pending sync</Badge>}
-                </p>
-              </div>
-              <span className="font-bold tabular-nums shrink-0 ml-2">{formatCurrency(toAmount(expense.amount))}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ShiftHistoryTable({ shifts }: { shifts: ShiftWithSyncMeta[] }) {
-  const paginated = usePagination(shifts, 5);
-  if (shifts.length === 0) return null;
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <History className="w-4 h-4 text-gray-500 shrink-0" />
-        Shift History
-      </h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-2 px-2 font-medium text-gray-500 text-xs uppercase">Date</th>
-              <th className="text-right py-2 px-2 font-medium text-gray-500 text-xs uppercase">Net Sales</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.data.map((s) => (
-              <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-2 px-2 text-gray-800">{formatShiftDate(s.clock_in)}</td>
-                <td className="py-2 px-2 text-right font-semibold tabular-nums">
-                  <div className="flex items-center justify-end gap-2">
-                    {formatCurrency(s.total_sales)}
-                    {s._pendingSync && <Badge variant="warning">Pending sync</Badge>}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <Pagination
-        currentPage={paginated.page}
-        totalPages={paginated.totalPages}
-        totalItems={paginated.totalItems}
-        pageSize={paginated.pageSize}
-        onPageChange={paginated.setPage}
-        onPageSizeChange={paginated.setPageSize}
+      <OpeningBalanceModal
+        open={showOpeningBalance}
+        onClose={() => setShowOpeningBalance(false)}
+        shiftId={shiftId ?? null}
+        shift={shift}
+      />
+      <EndShiftModal
+        open={showEndShift}
+        onClose={() => setShowEndShift(false)}
+        shiftId={shiftId ?? null}
+        totals={totals}
+        isEnding={isEnding}
+        onEndShift={endShift}
+        onOpenOpeningBalance={() => {
+          setShowEndShift(false);
+          setShowOpeningBalance(true);
+        }}
       />
     </div>
   );

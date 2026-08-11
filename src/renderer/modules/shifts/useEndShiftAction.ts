@@ -1,28 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { useLogoutAction } from '../../app/contexts/useLogoutActions';
-import { formatCurrency } from '../../shared/utils/formatCurrency';
-import { getUserFirstName } from '../../shared/utils/userDisplayName';
+import { useActiveShift, useShiftExpenses, useShiftPayments, useShiftSales } from './ShiftQueries';
+import { useClockOut } from './ShiftMutations';
 import { cashHandover, netSales } from '../../shared/utils/accounting';
 import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import { grossSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
-import { useActiveShift, useClockOut, useShiftExpenses, useShiftPayments, useShiftSales } from './ShiftQueries';
-
-function buildEndShiftConfirmMessage(
-  firstName: string,
-  transactionCount: number,
-  netShiftTotal: number,
-  handoverAmount: number,
-): string {
-  return `${firstName}, end your shift with ${transactionCount} transaction(s), ${formatCurrency(netShiftTotal)} net sales, and ${formatCurrency(handoverAmount)} cash at handover?\n\nPlease print your shift report before ending your shift.`;
-}
 
 export function useEndShiftAction() {
   const authUser = useAppSelector((s) => s.auth.user);
   const { data: shift } = useActiveShift();
   const clockOut = useClockOut();
-  const { confirm } = useConfirm();
   const { logout } = useLogoutAction();
 
   const shiftId = shift?.id || authUser?.shift_id || null;
@@ -41,58 +29,53 @@ export function useEndShiftAction() {
     const mobileTotal = collections.mobile;
     const cardTotal = collections.card;
     const handoverAmount = cashHandover(cashTotal, shiftExpenseTotal);
+    const openingBalance = Number(shift?.opening_balance ?? 0);
+    const expectedCash = openingBalance + cashTotal - shiftExpenseTotal;
 
     return {
       netShiftTotal,
       cashTotal,
       mobileTotal,
       cardTotal,
+      shiftExpenseTotal,
       handoverAmount,
+      expectedCash,
+      openingBalance,
       transactionCount: shiftSales.length,
     };
-  }, [shiftSales, shiftPayments, shiftExpenses]);
+  }, [shiftSales, shiftPayments, shiftExpenses, shift?.opening_balance]);
 
-  const requestEndShift = useCallback(async () => {
-    if (!shiftId) return false;
+  const endShift = useCallback(
+    async (countedCash?: number | null): Promise<boolean> => {
+      if (!shiftId) return false;
 
-    const firstName = getUserFirstName(authUser?.name);
-    const confirmed = await confirm({
-      title: 'End Shift',
-      message: buildEndShiftConfirmMessage(
-        firstName,
-        totals.transactionCount,
-        totals.netShiftTotal,
-        totals.handoverAmount,
-      ),
-      confirmText: 'End Shift',
-      cancelText: 'Cancel',
-      variant: 'warning',
-    });
-    if (!confirmed) return false;
+      try {
+        await clockOut.mutateAsync({
+          id: shiftId,
+          totals: {
+            total_sales: totals.netShiftTotal,
+            cash: totals.cashTotal,
+            mobile_money: totals.mobileTotal,
+            card: totals.cardTotal,
+            counted_cash: countedCash ?? null,
+          },
+        });
 
-    try {
-      await clockOut.mutateAsync({
-        id: shiftId,
-        totals: {
-          total_sales: totals.netShiftTotal,
-          cash: totals.cashTotal,
-          mobile_money: totals.mobileTotal,
-          card: totals.cardTotal,
-        },
-      });
-
-      void logout();
-      return true;
-    } catch (error) {
-      console.error('Failed to end shift:', error);
-      return false;
-    }
-  }, [authUser?.name, clockOut, confirm, logout, shiftId, totals]);
+        void logout();
+        return true;
+      } catch (error) {
+        console.error('Failed to end shift:', error);
+        return false;
+      }
+    },
+    [clockOut, logout, shiftId, totals],
+  );
 
   return {
-    requestEndShift,
+    endShift,
     isEnding: clockOut.isPending,
     hasActiveShift,
     shiftId,
+    totals,
   };
 }

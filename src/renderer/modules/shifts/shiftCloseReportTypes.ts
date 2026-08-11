@@ -19,6 +19,10 @@ export interface ShiftCloseReportData {
   cardOther: number;
   shiftExpenses: number;
   cashHandover: number;
+  openingBalance: number;
+  expectedCash?: number;
+  countedCash?: number | null;
+  variance?: number | null;
   generatedAt: string;
   /** When true, output VAT lines are shown (separate from net sales). */
   taxEnabled?: boolean;

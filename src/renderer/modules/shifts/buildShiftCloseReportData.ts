@@ -38,6 +38,8 @@ export function buildShiftCloseReportData(params: {
   shiftExpenses: ExpenseWithSyncMeta[];
   isOfflineCopy?: boolean;
   taxEnabled?: boolean;
+  openingBalance?: number;
+  countedCash?: number | null;
 }): ShiftCloseReportData {
   const {
     business,
@@ -49,6 +51,8 @@ export function buildShiftCloseReportData(params: {
     shiftExpenses,
     isOfflineCopy = false,
     taxEnabled = false,
+    openingBalance = 0,
+    countedCash = null,
   } = params;
 
   const grossSales = shiftSales.reduce((sum, sale) => sum + grossSaleAmount(sale), 0);
@@ -89,6 +93,10 @@ export function buildShiftCloseReportData(params: {
     cardOther,
     shiftExpenses: shiftExpenseTotal,
     cashHandover: cashHandover(cash, shiftExpenseTotal),
+    openingBalance,
+    expectedCash: openingBalance + cash - shiftExpenseTotal,
+    countedCash,
+    variance: countedCash !== null ? countedCash - (openingBalance + cash - shiftExpenseTotal) : null,
     generatedAt: new Date().toISOString(),
     taxEnabled,
     outputVat,

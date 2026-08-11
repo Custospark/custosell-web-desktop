@@ -127,6 +127,34 @@ export function completeOfflineClockInInstant(): ShiftWithSyncMeta {
   return { ...shift, _pendingSync: true };
 }
 
+export async function updateOfflineShiftOpeningBalance(
+  shiftId: number,
+  openingBalance: number | null,
+  currentShift: ShiftRecord | null,
+): Promise<ShiftWithSyncMeta> {
+  await localShiftsStore.patchShiftFields(shiftId, { opening_balance: openingBalance });
+
+  await mutationQueue
+    .enqueue({
+      method: 'PUT',
+      url: `/shifts/${shiftId}`,
+      data: { opening_balance: openingBalance },
+      maxRetries: 3,
+    })
+    .catch((err) => {
+      console.error('[OfflineShift] Opening-balance enqueue failed:', err);
+    });
+
+  const updated: ShiftRecord = {
+    ...(currentShift ?? buildLocalShift()),
+    id: shiftId,
+    opening_balance: openingBalance,
+    updated_at: new Date().toISOString(),
+  };
+
+  return { ...updated, _pendingSync: true };
+}
+
 async function persistOfflineClockOutInBackground(
   shiftId: number,
   shift: ShiftRecord,
@@ -144,6 +172,7 @@ async function persistOfflineClockOutInBackground(
         total_cash: totals.cash,
         total_mobile_money: totals.mobile_money,
         total_card: totals.card,
+        counted_cash: totals.counted_cash ?? null,
       },
       maxRetries: 3,
     });

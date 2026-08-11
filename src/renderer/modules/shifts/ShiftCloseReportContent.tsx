@@ -86,7 +86,7 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
       </p>
 
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <SummaryCard label="Cash at handover" value={formatCurrency(data.cashHandover)} highlight />
+        <SummaryCard label="Expected cash in drawer" value={formatCurrency(data.expectedCash ?? 0)} highlight />
         <SummaryCard label="Net sales" value={formatCurrency(data.netSales)} />
         <SummaryCard label="Transactions" value={String(data.transactionCount)} />
         <SummaryCard
@@ -124,10 +124,20 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
             </>
           )}
           <Row label="Net sales" value={formatCurrency(data.netSales)} bold />
+          <Row label="Opening balance" value={formatCurrency(data.openingBalance)} sub />
           <Row label="Cash collected" value={formatCurrency(data.cash)} sub />
           <Row label="Mobile money" value={formatCurrency(data.mobileMoney)} sub />
           <Row label="Card / other" value={formatCurrency(data.cardOther)} sub />
-          <Row label="Cash at handover" value={formatCurrency(data.cashHandover)} bold />
+          <Row label="Expected cash in drawer" value={formatCurrency(data.expectedCash ?? 0)} bold />
+          <Row
+            label="Cash counted"
+            value={data.countedCash != null ? formatCurrency(data.countedCash) : '—'}
+          />
+          <Row
+            label="Variance"
+            value={data.variance != null ? formatCurrency(Math.abs(data.variance)) : '—'}
+            negative={(data.variance ?? 0) < 0}
+          />
         </tbody>
       </table>
 
@@ -136,10 +146,12 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
         style={{ borderColor: SHIFT_REPORT_ACCENT, backgroundColor: '#eff6ff' }}
       >
         <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700 mb-1">
-          Cash at Handover
+          Expected Cash in Drawer
         </p>
-        <p className="text-2xl font-bold tabular-nums text-blue-900">{formatCurrency(data.cashHandover)}</p>
-        <p className="text-[10px] text-gray-500 mt-1">Cash collected minus shift expenses paid from the drawer</p>
+        <p className="text-2xl font-bold tabular-nums text-blue-900">{formatCurrency(data.expectedCash ?? 0)}</p>
+        <p className="text-[10px] text-gray-500 mt-1">
+          Opening balance + cash collected − expenses paid from the drawer
+        </p>
       </div>
 
       <footer className="text-center text-[10px] text-gray-400 pt-4 border-t border-gray-200">

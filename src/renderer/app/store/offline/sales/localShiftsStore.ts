@@ -9,6 +9,8 @@ export interface ShiftRecord {
   user_id: number;
   clock_in: string;
   clock_out: string | null;
+  opening_balance?: number | null;
+  counted_cash?: number | null;
   total_sales: string;
   total_cash: string;
   total_mobile_money: string;
@@ -159,5 +161,16 @@ export const localShiftsStore = {
       .filter((r) => r.operation === 'close')
       .map(toShiftWithSyncMeta)
       .sort((a, b) => new Date(b.clock_in).getTime() - new Date(a.clock_in).getTime());
+  },
+
+  async patchShiftFields(shiftId: number, fields: Partial<ShiftRecord>): Promise<void> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localShifts');
+    const record = all.find(
+      (r) => r.shiftId === shiftId || r.serverId === shiftId || r.shift.id === shiftId,
+    );
+    if (!record) return;
+    record.shift = { ...record.shift, ...fields };
+    await db.put('localShifts', record);
   },
 };

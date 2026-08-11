@@ -1,10 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../app/api/axiosConfig';
 import { store } from '../../app/store/store';
 import { updateShiftContext } from '../../app/store/slices/authSlice';
 import { persistAuthSnapshot } from '../../app/store/offline/auth/persistAuthSnapshot';
-import { useToast } from '../../app/contexts/useToast';
 import { localSalesStore, toSaleWithSyncMeta } from '../../app/store/offline/sales/localSalesStore';
 import { localRefundsStore, mergePendingRefunds } from '../../app/store/offline/sales/localRefundsStore';
 import {
@@ -13,12 +12,6 @@ import {
   type ShiftRecord,
   type ShiftWithSyncMeta,
 } from '../../app/store/offline/sales/localShiftsStore';
-import {
-  completeOfflineClockIn,
-  completeOfflineClockOutInstant,
-  finalizeShiftClose,
-  shouldUseLocalShiftActions,
-} from '../../app/store/offline/sales/completeOfflineShift';
 import { isOptimisticSale } from '../../app/store/offline/sync/offlineCacheReconcile';
 import { resolveAuthBusinessId } from '../../app/store/offline/catalogs/catalogSnapshotUtils';
 import {
@@ -29,7 +22,7 @@ import {
   backupShiftExpensesSnapshot,
   loadShiftExpensesBaseline,
 } from '../../app/store/offline/catalogs/expensesCatalogSnapshot';
-import { isCompletelyOffline, isNetworkFailure, sanitizeErrorMessage, shouldCompleteMutationLocally, shouldUseClientStorage } from '../../app/store/offline/core/offlineQueryUtils';
+import { isCompletelyOffline, isNetworkFailure, shouldUseClientStorage } from '../../app/store/offline/core/offlineQueryUtils';
 import { readWithOfflineStrategy } from '../../app/store/offline/core/offlineReadStrategy';
 import {
   localExpensesStore,
@@ -46,7 +39,7 @@ export interface Shift extends ShiftRecord {
   user?: { data: { id: number; name: string } };
 }
 
-function extractShiftPayload(body: unknown): Shift | null {
+export function extractShiftPayload(body: unknown): Shift | null {
   if (!body || typeof body !== 'object') return null;
   const wrapped = body as { data?: Shift };
   if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) {
@@ -72,6 +65,8 @@ async function persistActiveShiftContext(shift: Shift): Promise<ShiftWithSyncMet
   await persistAuthSnapshot().catch(() => undefined);
   return shift as ShiftWithSyncMeta;
 }
+
+export { persistActiveShiftContext };
 
 function mergeShiftSales(server: Sale[], shiftId: number): Promise<SaleWithSyncMeta[]> {
   return localSalesStore.getByShiftId(shiftId).then(async (local) => {
@@ -380,104 +375,5 @@ export function useShiftExpenses(shiftId: number | null) {
     placeholderData: (prev) => prev ?? [],
     retry: false,
     networkMode: 'offlineFirst',
-  });
-}
-
-export function useClockIn() {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation<ShiftWithSyncMeta, AxiosError>({
-    networkMode: 'always',
-    retry: false,
-    mutationFn: async () => {
-      if (shouldUseLocalShiftActions()) {
-        return completeOfflineClockIn();
-      }
-
-      try {
-        const { data } = await axiosInstance.post(
-          '/shifts',
-          { clock_in: new Date().toISOString(), status: 'active' },
-          { skipAuthRedirect: true },
-        );
-        const shift = extractShiftPayload(data);
-        if (!shift) {
-          throw new Error('Invalid shift response from server');
-        }
-        return persistActiveShiftContext(shift);
-      } catch (err: unknown) {
-        if (shouldCompleteMutationLocally()) {
-          return completeOfflineClockIn();
-        }
-        throw err;
-      }
-    },
-    onSuccess: (shift) => {
-      if (!shift) return;
-      qc.setQueryData(shiftKeys.active(), shift);
-      if (shift._pendingSync) {
-        showToast('success', 'Shift started locally — will sync when online');
-      } else {
-        qc.invalidateQueries({ queryKey: shiftKeys.all });
-        showToast('success', 'Shift started');
-      }
-    },
-    onError: (err) => {
-      showToast('error', sanitizeErrorMessage(err, 'Failed to start shift'));
-    },
-  });
-}
-
-export function useClockOut() {
-  const qc = useQueryClient();
-  const { showToast } = useToast();
-  return useMutation<ShiftWithSyncMeta, AxiosError, { id: number; totals: Record<string, number> }>({
-    networkMode: 'always',
-    retry: false,
-    mutationFn: async ({ id, totals }) => {
-      const currentShift = qc.getQueryData<Shift | null>(shiftKeys.active());
-
-      if (shouldUseLocalShiftActions()) {
-        return completeOfflineClockOutInstant(id, totals, currentShift as ShiftRecord | null);
-      }
-
-      try {
-        const { data } = await axiosInstance.put(
-          `/shifts/${id}`,
-          {
-            clock_out: new Date().toISOString(),
-            status: 'completed',
-            total_sales: totals.total_sales,
-            total_cash: totals.cash,
-            total_mobile_money: totals.mobile_money,
-            total_card: totals.card,
-          },
-
-        );
-        await finalizeShiftClose(id);
-        const shift = extractShiftPayload(data);
-        if (!shift) {
-          throw new Error('Invalid shift response from server');
-        }
-        return shift as ShiftWithSyncMeta;
-      } catch (err: unknown) {
-        if (shouldCompleteMutationLocally()) {
-          return completeOfflineClockOutInstant(id, totals, currentShift as ShiftRecord | null);
-        }
-        throw err;
-      }
-    },
-    onSuccess: (shift) => {
-      if (!shift) return;
-      qc.setQueryData(shiftKeys.active(), null);
-      qc.setQueryData<Shift[]>(shiftKeys.list(), (old) => [shift as Shift, ...(old ?? [])]);
-      if (shift._pendingSync) {
-        showToast('success', 'Shift ended locally — will sync when online');
-      } else {
-        qc.invalidateQueries({ queryKey: shiftKeys.all });
-        showToast('success', 'Shift ended');
-      }
-    },
-    onError: () => showToast('error', 'Failed to end shift'),
   });
 }

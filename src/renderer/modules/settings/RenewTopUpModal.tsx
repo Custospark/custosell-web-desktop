@@ -5,6 +5,8 @@ import { getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
+import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
+import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 
@@ -36,6 +38,7 @@ export default function RenewTopUpModal({
   const [months, setMonths] = useState(3);
   const [custom, setCustom] = useState('');
   const [confirming, setConfirming] = useState(false);
+  const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const currency = getPaymentCurrency();
   const { isUsd, toLocal } = useUsdToLocal(currency);
@@ -131,19 +134,16 @@ export default function RenewTopUpModal({
           </div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
-          <p className="text-sm text-gray-600">
-            Mobile Money: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
-          </p>
-          <p className="text-xs text-gray-400">
-            Adds {months} month{months === 1 ? '' : 's'} to your <span className="capitalize">{isYearly ? 'yearly' : 'monthly'}</span> cycle.
-          </p>
-        </div>
+        <PaymentPhoneField
+          initialPhone={userPhone}
+          onChange={setPhone}
+          label="Mobile Money number"
+        />
 
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          disabled={!userPhone}
+          disabled={!isValidPaymentPhone(phone)}
           className="w-full gap-2 py-3 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center"
         >
           Continue to Payment
@@ -157,7 +157,7 @@ export default function RenewTopUpModal({
             billingCycle={isYearly ? 'yearly' : 'monthly'}
             amount={previewAmount}
             currency={currency}
-            userPhone={userPhone}
+            userPhone={phone ?? ''}
             actionLabel="Renew Early"
             paymentType="topup"
             metadata={{ action: 'topup', topup_months: months }}

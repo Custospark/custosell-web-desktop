@@ -44,6 +44,13 @@ export function buildInternationalPhone(
   return `${countryCode.dial_code}${digits}`;
 }
 
+/** A mobile-money number is usable for STK push when it has 6–15 digits. */
+export function isValidPaymentPhone(fullPhone: string | null | undefined): boolean {
+  if (!fullPhone) return false;
+  const digits = fullPhone.replace(/\D/g, '');
+  return digits.length >= 6 && digits.length <= 15;
+}
+
 export function formatPhoneDisplay(fullPhone: string | null | undefined): string {
   if (!fullPhone?.trim()) return '—';
   const { countryCode, localNumber } = parseInternationalPhone(fullPhone);

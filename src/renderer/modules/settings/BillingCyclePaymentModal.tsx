@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { Button } from '../../shared/components/buttons/Button';
+import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
+import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
@@ -21,6 +23,7 @@ export default function BillingCyclePaymentModal({
 }: BillingCyclePaymentModalProps) {
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [step, setStep] = useState<'confirm' | 'paying' | 'polling' | 'done'>('confirm');
+  const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const initiateMutation = useInitiatePayment('billing_cycle_change' satisfies PaymentType);
   const paymentQuery = useBillingPayment(paymentId);
@@ -35,7 +38,7 @@ export default function BillingCyclePaymentModal({
       {
         amount: amountDueUsd,
         currency: getPaymentCurrency(),
-        phone: userPhone,
+        phone,
         metadata: { action: 'billing_cycle_change' },
       },
       {
@@ -83,14 +86,13 @@ export default function BillingCyclePaymentModal({
               </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
-              <p className="text-sm text-gray-600">
-                Phone: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
-              </p>
-              <p className="text-xs text-gray-400">You'll choose your payment method when you proceed.</p>
-            </div>
+            <PaymentPhoneField
+              initialPhone={userPhone}
+              onChange={setPhone}
+              label="Mobile Money number"
+            />
 
-            <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm" loading={initiateMutation.isPending}>
+            <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm" loading={initiateMutation.isPending} disabled={!isValidPaymentPhone(phone)}>
               Pay {formatUsdValue(amountDueUsd)}
             </Button>
 

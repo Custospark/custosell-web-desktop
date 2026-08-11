@@ -4,6 +4,8 @@ import { useApplyReferralCode, useReferralEarnings } from '../../modules/referra
 import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import { Button } from '../../shared/components/buttons/Button';
+import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
+import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { Loader2, CheckCircle, AlertCircle, X, Wallet, Tag, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
@@ -35,6 +37,7 @@ export default function UpgradeFlowModal({
   const [referralCode, setReferralCode] = useState('');
   const [showReferralInput, setShowReferralInput] = useState(false);
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const applyReferralMutation = useApplyReferralCode();
 
@@ -99,7 +102,7 @@ export default function UpgradeFlowModal({
         amount,
         currency: paymentCurrency,
         billingCycle: upgradeCycle,
-        phone: userPhone,
+        phone,
         metadata: { action: 'upgrade', to_plan_id: plan.id, billing_cycle: upgradeCycle },
       },
       {
@@ -190,12 +193,11 @@ export default function UpgradeFlowModal({
             </div>
           </div>
 
-          <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
-            <p className="text-sm text-gray-600">
-              Phone: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
-            </p>
-            <p className="text-xs text-gray-400">You'll choose your payment method when you proceed.</p>
-          </div>
+          <PaymentPhoneField
+            initialPhone={userPhone}
+            onChange={setPhone}
+            label="Mobile Money number"
+          />
 
           <div className="border border-gray-200 rounded-xl px-4 py-3">
             <button
@@ -262,7 +264,7 @@ export default function UpgradeFlowModal({
           </div>
 
           <Button type="button" onClick={handlePay} className="w-full gap-2 py-3 text-sm"
-            loading={initiateMutation.isPending}>
+            loading={initiateMutation.isPending} disabled={!isValidPaymentPhone(phone)}>
             Pay {formatDue}
           </Button>
 
@@ -332,7 +334,7 @@ export default function UpgradeFlowModal({
               Complete the payment of {formatDue}.
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              Follow the prompts on your phone <span className="font-semibold">{userPhone}</span> to complete the payment.
+              Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
             </p>
           </div>
           <button type="button" onClick={onClose}

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { Button } from '../../shared/components/buttons/Button';
+import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
+import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
@@ -32,6 +34,7 @@ export default function SubscriptionPaymentModal({
   const [referralCode, setReferralCode] = useState('');
   const [showReferralInput, setShowReferralInput] = useState(false);
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const { data: earnings } = useReferralEarnings();
   const applyReferralMutation = useApplyReferralCode();
@@ -54,7 +57,7 @@ export default function SubscriptionPaymentModal({
   const handlePay = () => {
     setPopupBlocked(false);
     initiateMutation.mutate(
-      { amount, currency, billingCycle: billingCycle as 'monthly' | 'yearly', phone: userPhone, metadata, topupMonths },
+      { amount, currency, billingCycle: billingCycle as 'monthly' | 'yearly', phone, metadata, topupMonths },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
@@ -117,7 +120,7 @@ export default function SubscriptionPaymentModal({
               Complete the payment in the opened window.
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              An STK push will be sent to <span className="font-semibold">{userPhone}</span>
+              An STK push will be sent to <span className="font-semibold">{phone}</span>
             </p>
           </div>
           {popupBlocked && (
@@ -222,12 +225,11 @@ export default function SubscriptionPaymentModal({
             </div>
           </div>
 
-        <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
-          <p className="text-sm text-gray-600">
-            Mobile Money: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
-          </p>
-          <p className="text-xs text-gray-400">You can change payment details in next step.</p>
-        </div>
+        <PaymentPhoneField
+          initialPhone={userPhone}
+          onChange={setPhone}
+          label="Mobile Money number"
+        />
 
         <div className="border border-gray-200 rounded-xl px-4 py-3">
           <button
@@ -298,7 +300,7 @@ export default function SubscriptionPaymentModal({
           onClick={handlePay}
           className="w-full gap-2 py-3 text-sm"
           loading={initiateMutation.isPending}
-          disabled={!amount || !userPhone}
+          disabled={!amount || !isValidPaymentPhone(phone)}
         >
           Pay Now
         </Button>

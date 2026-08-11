@@ -10,6 +10,8 @@ import { BILLING } from '../../shared/api/endpoints/endpoints';
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
+import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
+import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import LogoImage from '../../shared/assets/LogoImage';
@@ -37,6 +39,8 @@ export default function OnboardingPage() {
   const [showPromoInput, setShowPromoInput] = useState(false);
   const applyReferralMutation = useApplyReferralCode();
   const { logout } = useLogoutAction();
+  const userPhone = user?.business?.phone || user?.phone || '';
+  const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const handleHome = () => {
     void logout(ROUTES.HOME);
@@ -68,7 +72,6 @@ export default function OnboardingPage() {
   const selectedPlan = businessPlans.find((p) => p.id === selectedPlanId);
   const fee = selectedPlan ? onboardingFee(selectedPlan) : 0;
   const feeUsd = selectedPlan ? usdOnboardingFee(selectedPlan) : 0;
-  const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
   const isPaymentFailed = paymentQuery.data?.data?.status === 'failed';
   const paymentCurrency = getPaymentCurrency();
@@ -130,7 +133,7 @@ export default function OnboardingPage() {
       const metadata = { action: 'subscribe', plan_id: selectedPlanId };
 
       initiateMutation.mutate(
-        { amount: paymentAmount, currency: effectiveCurrency, phone: userPhone, metadata },
+        { amount: paymentAmount, currency: effectiveCurrency, phone, metadata },
         {
           onSuccess: (result) => {
             setPaymentId(result.payment_id);
@@ -333,12 +336,11 @@ export default function OnboardingPage() {
               </div>
             ) : null}
 
-            <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 space-y-0.5">
-              <p className="text-sm text-gray-600">
-                Phone: <span className="font-semibold text-gray-900">{userPhone || 'No phone on file'}</span>
-              </p>
-              <p className="text-xs text-gray-400">You'll choose your payment method when you proceed.</p>
-            </div>
+            <PaymentPhoneField
+              initialPhone={userPhone}
+              onChange={setPhone}
+              label="Mobile Money number"
+            />
 
             {!subscription?.referral?.code && !promoCodeSuccess && (
               <div className="border-t border-gray-100 pt-1">
@@ -408,7 +410,7 @@ export default function OnboardingPage() {
               onClick={handleStartPayment}
               className="w-full gap-2 py-3 text-sm"
               loading={subscribing || initiateMutation.isPending}
-              disabled={!fee || !userPhone}
+              disabled={!fee || !isValidPaymentPhone(phone)}
             >
               <CreditCard className="w-4 h-4" />
               Pay Onboarding Fee
@@ -426,7 +428,7 @@ export default function OnboardingPage() {
                 <Loader2 className="w-6 h-6 animate-spin text-amber-500 mx-auto" />
                 <p className="text-sm font-medium text-amber-800">Check your phone</p>
                 <p className="text-xs text-amber-600">
-                  Enter your PIN on <strong>{userPhone}</strong> to complete payment.
+                  Enter your PIN on <strong>{phone}</strong> to complete payment.
                 </p>
                 {paymentQuery.data?.data?.status === 'failed' && (
                   <div className="space-y-2 pt-2">

@@ -7,12 +7,14 @@ import { useInitiateOnboardingPayment, useBillingPayment, getPaymentCurrency } f
 import { getDefaultRoute } from '../../shared/utils/moduleAccess';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
+import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
+import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
-import { CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { CreditCard, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ export default function PaymentPage() {
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
   const applyReferralMutation = useApplyReferralCode();
+  const userPhone = user?.business?.phone || user?.phone || '';
+  const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
@@ -63,7 +67,6 @@ export default function PaymentPage() {
 
   const fee = plan ? onboardingFee(plan) : 0;
   const feeUsd = plan ? usdOnboardingFee(plan) : 0;
-  const userPhone = user?.business?.phone || user?.phone || '';
   const isPaymentDone = paymentQuery.data?.data?.status === 'completed';
 
   const paymentCurrency = getPaymentCurrency();
@@ -92,7 +95,7 @@ export default function PaymentPage() {
     const sendCurrency = canPayLocal ? paymentCurrency : 'USD';
 
     initiateMutation.mutate(
-      { amount: paymentAmount, currency: sendCurrency, phone: userPhone },
+      { amount: paymentAmount, currency: sendCurrency, phone },
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
@@ -205,18 +208,11 @@ export default function PaymentPage() {
           </div>
         )}
 
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Smartphone className="w-4 h-4 text-gray-400" />
-            Phone Number
-          </div>
-          <p className="text-lg font-semibold text-gray-900">
-            {userPhone || 'No phone on file'}
-          </p>
-          <p className="text-xs text-gray-400">
-            You'll choose your payment method when you proceed.
-          </p>
-        </div>
+        <PaymentPhoneField
+          initialPhone={userPhone}
+          onChange={setPhone}
+          label="Mobile Money number"
+        />
 
         {!subscription?.referral?.code && !promoCodeSuccess && (
           <div>
@@ -287,7 +283,7 @@ export default function PaymentPage() {
             onClick={handlePay}
             className="w-full gap-2 py-3.5 text-base"
             loading={initiateMutation.isPending}
-            disabled={!canPay || !userPhone}
+            disabled={!canPay || !isValidPaymentPhone(phone)}
           >
             <CreditCard className="h-4 w-4" />
             Pay Onboarding Fee
@@ -308,7 +304,7 @@ export default function PaymentPage() {
               <div>
                 <p className="font-semibold text-amber-800">Check your phone</p>
                 <p className="text-sm text-amber-600 mt-1">
-                  An STK push has been sent to <strong>{userPhone}</strong>. Enter your mobile money PIN to complete payment.
+                  An STK push has been sent to <strong>{phone}</strong>. Enter your mobile money PIN to complete payment.
                 </p>
               </div>
             </div>

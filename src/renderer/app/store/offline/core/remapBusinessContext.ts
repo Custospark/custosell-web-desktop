@@ -1,6 +1,7 @@
 import { getOfflineDb } from './offlineDb';
 import { mutationQueue } from '../sync/mutationQueue';
 import { localAuthStore } from '../auth/localAuthStore';
+import { entityIdMapper } from '../sync/entityIdMapper';
 import type { AuthUser } from '../../slices/authSlice';
 
 function patchEntity<T extends Record<string, unknown>>(
@@ -89,7 +90,13 @@ export async function remapBusinessContext(
       mutation.data = patchPayload(mutation.data, oldBusinessId, newBusinessId, oldUserId, newUserId);
       await db.put('mutations', mutation);
     }
+    if (mutation.businessId === oldBusinessId) {
+      mutation.businessId = newBusinessId;
+      await db.put('mutations', mutation);
+    }
   }
+
+  await entityIdMapper.remapBusinessId(oldBusinessId, newBusinessId);
 
   const authRecords = await db.getAll('localAuth') as Array<{
     localId: string;

@@ -83,6 +83,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
+| [2026-08-11-offline-sync-durable-id-maps-dependency-guard.md](./adr/2026-08-11-offline-sync-durable-id-maps-dependency-guard.md) | Offline sync hang fix — durable entity id maps (DB v14), dependency guard in `getPending()`, business-scoped mutation queue |
 | [2026-07-27-businessQueries-subscription-overwrite-gate-fix.md](./adr/2026-07-27-businessQueries-subscription-overwrite-gate-fix.md) | `useBusiness` subscription overwrite → gate redirect loop after onboarding payment |
 | [2026-08-03-renewal-top-up.md](./adr/2026-08-03-renewal-top-up.md) | Renewal top-up picker — flexible prepay (1–60 months), prorated amount, anchored to next_billing_date |
 | [2026-07-25-subscription-persistence-businessQueries-overwrite.md](./adr/2026-07-25-subscription-persistence-businessQueries-overwrite.md) | BusinessQueries `setBusiness` overwrite — subscription drop on `GET /businesses/mine` |

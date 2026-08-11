@@ -1,5 +1,6 @@
 import type { AxiosError } from 'axios';
 import { axiosInstance, queryClient } from '../../../api/axiosConfig';
+import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
 import { localSalesStore } from './localSalesStore';
 import type { QueuedMutation } from '../sync/mutationQueue';
@@ -20,6 +21,7 @@ import {
   sleep,
 } from '../sync/syncErrorUtils';
 import { isOfflineMode } from '../core/offlineQueryUtils';
+import { entityIdMapper } from '../sync/entityIdMapper';
 import { refreshSalesUiAfterCommit } from '../sync/syncCacheRefresh';
 import { applySyncedSaleToCache } from '../sync/offlineCacheReconcile';
 import { commitMutationQueueEntry, commitMutationQueueEntryIfPresent } from '../sync/syncMutationFinalize';
@@ -76,6 +78,8 @@ async function commitSaleSync(
   if (serverSale && localRecord) {
     if (localRecord.sale.id < 0 && serverSale.id > 0) {
       saleIdMap?.set(localRecord.sale.id, serverSale.id);
+      const businessId = store.getState().auth.user?.business_id ?? undefined;
+      await entityIdMapper.rememberId('sale', localRecord.sale.id, serverSale.id, businessId);
     }
     applySyncedSaleToCache(queryClient, localRecord.sale, serverSale);
     // Fiscal_* from SaleService (or pending/failed) now live on the server row in cache.

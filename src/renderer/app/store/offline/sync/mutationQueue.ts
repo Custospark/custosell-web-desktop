@@ -1,5 +1,8 @@
 import { isSyncCoordinatorRunning } from './syncCoordinator';
 import { getOfflineDb } from '../core/offlineDb';
+import { store } from '../../store';
+import { guardScopedMutations } from './syncDependencyGuard';
+import { entityIdMapper } from './entityIdMapper';
 
 export interface QueuedMutation {
   id: string;
@@ -13,6 +16,23 @@ export interface QueuedMutation {
   status: 'queued' | 'syncing' | 'failed' | 'completed';
   lastAttemptAt?: string;
   lastError?: string;
+  businessId?: number;
+}
+
+function getActiveBusinessId(): number | undefined {
+  return store.getState().auth.user?.business_id ?? undefined;
+}
+
+function isAccountScopedAuthMutation(m: QueuedMutation): boolean {
+  return (
+    (m.method === 'POST' && m.url === '/businesses/register')
+    || (m.method === 'POST' && m.url === '/auth/login')
+  );
+}
+
+function sameBusiness(entry: QueuedMutation): boolean {
+  const current = getActiveBusinessId();
+  return entry.businessId == null || current == null || entry.businessId === current;
 }
 
 type MutableMutationPatch = Partial<Pick<QueuedMutation, 'data' | 'method' | 'url' | 'headers' | 'maxRetries'>>;
@@ -43,6 +63,7 @@ export const mutationQueue = {
       createdAt: new Date().toISOString(),
       retryCount: 0,
       status: 'queued',
+      businessId: getActiveBusinessId(),
     };
     console.log('[MutationQueue] enqueue:', { id, url: mutation.url, method: mutation.method, status: 'queued' });
     await db.add('mutations', entry);
@@ -65,6 +86,7 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
     const now = Date.now();
     const coordinatorActive = isSyncCoordinatorRunning();
+    const currentBusinessId = getActiveBusinessId();
 
     for (const mutation of all) {
       if (isStaleSyncingMutation(mutation, now)) {
@@ -75,8 +97,14 @@ export const mutationQueue = {
       }
     }
 
-    const pending = all.filter((m) => m.status === 'queued');
-    return pending;
+    const scoped = all.filter(
+      (m) =>
+        m.status === 'queued'
+        && (isAccountScopedAuthMutation(m) || m.businessId == null || m.businessId === currentBusinessId),
+    );
+
+    const guarded = await guardScopedMutations(scoped, currentBusinessId);
+    return guarded;
   },
 
   async markSyncing(id: string): Promise<void> {
@@ -152,6 +180,29 @@ export const mutationQueue = {
     await db.put('mutations', entry);
   },
 
+  /**
+   * Return a failed mutation to the queue WITHOUT resetting retryCount, so a
+   * dependency re-drive still honors maxRetries and cannot loop forever.
+   */
+  async requeueKeepRetries(id: string): Promise<void> {
+    const db = await getDb();
+    const entry = await db.get('mutations', id);
+    if (!entry) {
+      throw new Error('Queued mutation not found');
+    }
+    if (entry.status === 'completed') {
+      throw new Error('Completed mutations cannot be requeued');
+    }
+    if (entry.status === 'syncing') {
+      throw new Error('Sync in progress; try again shortly');
+    }
+
+    entry.status = 'queued';
+    entry.lastError = undefined;
+    entry.lastAttemptAt = undefined;
+    await db.put('mutations', entry);
+  },
+
   async remove(id: string): Promise<void> {
     const db = await getDb();
     await db.delete('mutations', id);
@@ -184,6 +235,7 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
+      if (!sameBusiness(entry)) continue;
       if (entry.method === 'POST' && entry.url === '/products' && entry.data) {
         const payload = entry.data as { category_id?: number | null };
         if (payload.category_id === oldCategoryId) {
@@ -193,6 +245,8 @@ export const mutationQueue = {
         }
       }
     }
+
+    await entityIdMapper.rememberId('category', oldCategoryId, newCategoryId, getActiveBusinessId());
   },
 
   async remapExpenseCategoryIdInExpenses(oldCategoryId: number, newCategoryId: number): Promise<void> {
@@ -200,6 +254,7 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
+      if (!sameBusiness(entry)) continue;
       if (entry.method === 'POST' && /^\/expenses(\/-?\d+)?$/.test(entry.url) && entry.data) {
         const payload = entry.data as { fields?: { expense_category_id?: string } };
         if (payload.fields?.expense_category_id === String(oldCategoryId)) {
@@ -209,6 +264,8 @@ export const mutationQueue = {
         }
       }
     }
+
+    await entityIdMapper.rememberId('expense-category', oldCategoryId, newCategoryId, getActiveBusinessId());
   },
 
   async remapRoleIdInStaff(oldRoleId: number, newRoleId: number): Promise<void> {
@@ -216,6 +273,7 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
+      if (!sameBusiness(entry)) continue;
       if ((entry.method === 'POST' || entry.method === 'PUT') && /^\/users(\/-?\d+)?$/.test(entry.url) && entry.data) {
         const payload = entry.data as { role_id?: number };
         if (payload.role_id === oldRoleId) {
@@ -225,6 +283,8 @@ export const mutationQueue = {
         }
       }
     }
+
+    await entityIdMapper.rememberId('role', oldRoleId, newRoleId, getActiveBusinessId());
   },
 
   async remapShiftId(oldShiftId: number, newShiftId: number): Promise<void> {
@@ -232,6 +292,8 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
+      if (!sameBusiness(entry)) continue;
+
       if (entry.method === 'PUT' && entry.url === `/shifts/${oldShiftId}`) {
         entry.url = `/shifts/${newShiftId}`;
         await db.put('mutations', entry);
@@ -256,6 +318,8 @@ export const mutationQueue = {
         }
       }
     }
+
+    await entityIdMapper.rememberId('shift', oldShiftId, newShiftId, getActiveBusinessId());
   },
 
   async remapOrderId(oldOrderId: number, newOrderId: number): Promise<void> {
@@ -263,6 +327,8 @@ export const mutationQueue = {
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
+      if (!sameBusiness(entry)) continue;
+
       if (entry.method === 'PUT' && entry.url === `/orders/${oldOrderId}`) {
         entry.url = `/orders/${newOrderId}`;
         await db.put('mutations', entry);
@@ -284,5 +350,7 @@ export const mutationQueue = {
         }
       }
     }
+
+    await entityIdMapper.rememberId('order', oldOrderId, newOrderId, getActiveBusinessId());
   },
 };

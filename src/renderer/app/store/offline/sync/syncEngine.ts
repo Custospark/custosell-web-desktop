@@ -1,45 +1,42 @@
-import { axiosInstance } from '../../../api/axiosConfig';
-import { store } from '../../store';
-import { setBusiness, updateShiftContext } from '../../slices/authSlice';
-import { setActiveOrderId } from '../../../../modules/sales/api/salesSlice';
-import { businessToAuthInfo } from '../../../../modules/settings/api/settings/businessAuthSync';
-import { persistAuthSnapshot } from '../auth/persistAuthSnapshot';
 import { mutationQueue } from './mutationQueue';
-import { isServerOwnedStockReason, stockLedger, type PendingAdjustment } from '../inventory/stockLedger';
-import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
-import { localSalesStore } from '../sales/localSalesStore';
-import { localOrdersStore } from '../sales/localOrdersStore';
-import { localRefundsStore } from '../sales/localRefundsStore';
-import { localShiftsStore, type ShiftRecord } from '../sales/localShiftsStore';
-import { localProductsStore } from '../inventory/localProductsStore';
-import { localCategoriesStore } from '../inventory/localCategoriesStore';
-import { localCustomersStore } from '../customers/localCustomersStore';
-import { localExpensesStore } from '../expenses/localExpensesStore';
-import { localExpenseCategoriesStore } from '../expenses/localExpenseCategoriesStore';
-import { localRolesStore } from '../settings/localRolesStore';
-import { localStaffStore } from '../settings/localStaffStore';
-import { localBusinessSettingsStore } from '../settings/localBusinessSettingsStore';
-import { localGuideFeedbackStore } from '../guide/localGuideFeedbackStore';
-import { buildExpenseFormData } from '../expenses/completeOfflineExpense';
 import type { QueuedMutation } from './mutationQueue';
-import { isAuthMutation } from '../auth/syncAuthEngine';
-import { processSalesInChunks } from '../sales/syncSalesBatch';
-import { processExpenseMutations } from '../expenses/syncExpenses';
+import { localSalesStore } from '../sales/localSalesStore';
+import { localExpensesStore } from '../expenses/localExpensesStore';
 import type { SyncProgressReporter } from './syncProgressReporter';
-import { AuthSyncPauseError, extractErrorMessage, isAuthHttpError } from './syncErrorUtils';
-import type { ExpenseCategory, ExpenseFormPayload } from '../../../../modules/expenses/api/ExpenseTypes';
-import type { Business } from '../../../../modules/settings/api/settings/BusinessTypes';
-import type { Role } from '../../../../modules/settings/api/settings/RoleTypes';
-import type { StaffUser } from '../../../../modules/settings/api/settings/StaffTypes';
-import { commitMutationQueueEntry } from './syncMutationFinalize';
-import { refreshExpenseCategoriesSnapshot } from '../catalogs/expensesCatalogSnapshot';
-import { invalidateAfterItemCommitted } from './syncCacheRefresh';
+import { AuthSyncPauseError } from './syncErrorUtils';
+import { isAuthMutation } from '../auth/syncAuthEngine';
+import { processExpenseMutations } from '../expenses/syncExpenses';
+import { processSalesInChunks } from '../sales/syncSalesBatch';
 import {
   getSaleIdFromScopedUrl,
   isSalePaymentMutation,
   isSaleScopedMutation,
   remapSaleScopedUrl,
 } from './saleSyncRemap';
+import {
+  isCategoryCreateMutation,
+  isExpenseCategoryCreateMutation,
+  isExpenseMutation,
+  isOrderCreateMutation,
+  isProductCreateMutation,
+  isRefundMutation,
+  isRoleCreateMutation,
+  isSaleMutation,
+  isShiftCloseMutation,
+  isShiftOpenMutation,
+  isStaffCreateMutation,
+} from './syncMutators';
+import {
+  processCategoryCreates,
+  processExpenseCategoryCreates,
+  processOrderCreates,
+  processRoleCreates,
+  processShiftOpens,
+  remapOrderScopedUrl,
+  remapShiftCloseUrl,
+} from './syncCreateProcessors';
+import { processMutation } from './syncMutationRunner';
+import { processStockAdjustments } from './syncStock';
 
 async function isSaleScopedMutationBlocked(m: QueuedMutation): Promise<boolean> {
   const saleId = getSaleIdFromScopedUrl(m.url);
@@ -54,33 +51,37 @@ function needsSaleIdRemap(m: QueuedMutation, saleIdMap: Map<number, number>): bo
   return !saleIdMap.has(saleId);
 }
 
-function extractShiftIdFromCloseUrl(url: string): number | null {
-  const match = url.match(/^\/shifts\/(-?\d+)$/);
-  return match ? Number(match[1]) : null;
-}
-
 async function evaluateShiftClose(
   m: QueuedMutation,
   idMap: Map<number, number>,
 ): Promise<{ allow: boolean; warn: boolean }> {
-  const localShiftId = extractShiftIdFromCloseUrl(m.url);
-  if (localShiftId == null) return { allow: true, warn: false };
+  const localShiftId = m.url.match(/^\/shifts\/(-?\d+)$/)?.[1];
+  const shiftId = localShiftId ? Number(localShiftId) : null;
+  if (shiftId == null) return { allow: true, warn: false };
 
-  const shiftIds = new Set<number>([localShiftId]);
-  const mapped = idMap.get(localShiftId);
+  const shiftIds = new Set<number>([shiftId]);
+  const mapped = idMap.get(shiftId);
   if (mapped != null) shiftIds.add(mapped);
 
-  for (const shiftId of shiftIds) {
-    const pendingSales = (await localSalesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'pending');
+  for (const currentShiftId of shiftIds) {
+    const pendingSales = (await localSalesStore.getByShiftId(currentShiftId)).filter(
+      (r) => r.syncStatus === 'pending',
+    );
     if (pendingSales.length > 0) return { allow: false, warn: false };
 
-    const pendingExpenses = (await localExpensesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'pending');
+    const pendingExpenses = (await localExpensesStore.getByShiftId(currentShiftId)).filter(
+      (r) => r.syncStatus === 'pending',
+    );
     if (pendingExpenses.length > 0) return { allow: false, warn: false };
   }
 
-  for (const shiftId of shiftIds) {
-    const failedSales = (await localSalesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'failed');
-    const failedExpenses = (await localExpensesStore.getByShiftId(shiftId)).filter((r) => r.syncStatus === 'failed');
+  for (const currentShiftId of shiftIds) {
+    const failedSales = (await localSalesStore.getByShiftId(currentShiftId)).filter(
+      (r) => r.syncStatus === 'failed',
+    );
+    const failedExpenses = (await localExpensesStore.getByShiftId(currentShiftId)).filter(
+      (r) => r.syncStatus === 'failed',
+    );
     if (failedSales.length > 0 || failedExpenses.length > 0) {
       return { allow: true, warn: true };
     }
@@ -89,605 +90,24 @@ async function evaluateShiftClose(
   return { allow: true, warn: false };
 }
 
-function isSaleMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/sales';
-}
-
-function isOrderCreateMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/orders';
-}
-
-function isOrderMutation(m: QueuedMutation): boolean {
-  return (
-    isOrderCreateMutation(m)
-    || (m.method === 'PUT' && /^\/orders\/-?\d+$/.test(m.url))
-    || (m.method === 'POST' && /^\/orders\/-?\d+\/cancel$/.test(m.url))
-  );
-}
-
-function isShiftOpenMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/shifts';
-}
-
-function isShiftCloseMutation(m: QueuedMutation): boolean {
-  return m.method === 'PUT' && /^\/shifts\/-?\d+$/.test(m.url);
-}
-
-function isRefundMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && /^\/sales\/-?\d+\/refund$/.test(m.url);
-}
-
-function isProductMutation(m: QueuedMutation): boolean {
-  return /^\/products(\/\d+)?$/.test(m.url);
-}
-
-function isCategoryMutation(m: QueuedMutation): boolean {
-  return /^\/categories(\/\d+)?$/.test(m.url);
-}
-
-function isCustomerMutation(m: QueuedMutation): boolean {
-  return /^\/customers(\/\d+)?$/.test(m.url);
-}
-
-function isExpenseMutation(m: QueuedMutation): boolean {
-  return /^\/expenses(\/-?\d+)?$/.test(m.url);
-}
-
-function isExpenseCategoryMutation(m: QueuedMutation): boolean {
-  return /^\/expense-categories(\/-?\d+)?$/.test(m.url);
-}
-
-function isRoleMutation(m: QueuedMutation): boolean {
-  return /^\/roles(\/-?\d+)?$/.test(m.url);
-}
-
-function isStaffMutation(m: QueuedMutation): boolean {
-  return /^\/users(\/-?\d+)?$/.test(m.url);
-}
-
-function isBusinessSettingsMutation(m: QueuedMutation): boolean {
-  return m.url === '/businesses/profile' || m.url === '/businesses/settings';
-}
-
-function isGuideFeedbackMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/guide/feedback';
-}
-
-function isCategoryCreateMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/categories';
-}
-
-function isProductCreateMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/products';
-}
-
-function isExpenseCategoryCreateMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/expense-categories';
-}
-
-function isRoleCreateMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/roles';
-}
-
-function isStaffCreateMutation(m: QueuedMutation): boolean {
-  return m.method === 'POST' && m.url === '/users';
-}
-
-function isExpenseFormPayload(data: unknown): data is ExpenseFormPayload {
-  return Boolean(data && typeof data === 'object' && 'fields' in data);
-}
-
-function extractCategory(responseData: unknown): { id: number } | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: { id: number } };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as { id: number };
-  if ('id' in direct) return direct;
-  return null;
-}
-
-function extractOrder(responseData: unknown): { id: number } | null {
-  return extractCategory(responseData);
-}
-
-function extractExpenseCategory(responseData: unknown): ExpenseCategory | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: ExpenseCategory };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as ExpenseCategory;
-  if ('id' in direct) return direct;
-  return null;
-}
-
-function extractRole(responseData: unknown): Role | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: Role };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as Role;
-  if ('id' in direct) return direct;
-  return null;
-}
-
-async function findServerStaffByEmail(email: unknown): Promise<StaffUser | null> {
-  if (typeof email !== 'string' || !email.trim()) return null;
-
-  const normalizedEmail = email.trim().toLowerCase();
-  const response = await axiosInstance.get<{ data: StaffUser[] }>('/users', { skipAuthRedirect: true });
-  return response.data.data
-    .filter(Boolean)
-    .find((staff) => staff.email.trim().toLowerCase() === normalizedEmail) ?? null;
-}
-
-async function reconcileDuplicateStaffCreate(m: QueuedMutation, message: string): Promise<boolean> {
-  if (!isStaffCreateMutation(m)) return false;
-  if (!/email|duplicate|already|taken/i.test(message)) return false;
-
-  const payload = m.data as { email?: unknown } | undefined;
-  let serverStaff: StaffUser | null;
-  try {
-    serverStaff = await findServerStaffByEmail(payload?.email);
-  } catch {
-    return false;
-  }
-  if (!serverStaff) return false;
-
-  await commitMutationQueueEntry(m.id);
-  await localStaffStore.removeByMutationId(m.id);
-  void invalidateAfterItemCommitted().catch(() => undefined);
-  return true;
-}
-
-async function reconcileDuplicateShiftClose(m: QueuedMutation, status?: number): Promise<boolean> {
-  if (!isShiftCloseMutation(m)) return false;
-  if (status !== 404) return false;
-
-  await commitMutationQueueEntry(m.id);
-  await localShiftsStore.removeByMutationId(m.id);
-  const closedShiftId = extractShiftIdFromCloseUrl(m.url);
-  if (closedShiftId) {
-    store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
-    void persistAuthSnapshot().catch(() => undefined);
-  }
-  void invalidateAfterItemCommitted().catch(() => undefined);
-  return true;
-}
-
-function extractBusiness(responseData: unknown): Business | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: Business };
-  if (wrapped.data && typeof wrapped.data === 'object' && 'id' in wrapped.data) return wrapped.data;
-  const direct = responseData as Business;
-  if ('id' in direct) return direct;
-  return null;
-}
-
-function extractShift(responseData: unknown): ShiftRecord | null {
-  if (!responseData || typeof responseData !== 'object') return null;
-  const wrapped = responseData as { data?: ShiftRecord };
-  if (wrapped.data && typeof wrapped.data === 'object') return wrapped.data;
-  return responseData as ShiftRecord;
-}
-
-export async function processMutation(m: QueuedMutation): Promise<boolean> {
-  const queued = await mutationQueue.getById(m.id);
-  if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) {
-    return true;
-  }
-
-  try {
-    await mutationQueue.markSyncing(m.id);
-
-    const config: {
-      method: QueuedMutation['method'];
-      url: string;
-      data?: unknown;
-      headers?: Record<string, string>;
-    } = {
-      method: m.method,
-      url: m.url,
-      data: m.data,
-      headers: m.headers,
-    };
-
-    if (isExpenseMutation(m) && m.method === 'POST' && isExpenseFormPayload(m.data)) {
-      config.data = buildExpenseFormData(m.data, m.url === '/expenses' ? undefined : { methodOverride: 'PUT' });
-      config.headers = { 'Content-Type': 'multipart/form-data' };
-    }
-
-    const response = await axiosInstance({ ...config, skipAuthRedirect: true } as never);
-
-    await commitMutationQueueEntry(m.id);
-
-    if (isRefundMutation(m)) {
-      await localRefundsStore.removeByMutationId(m.id);
-    }
-
-    if (isShiftCloseMutation(m)) {
-      await localShiftsStore.removeByMutationId(m.id);
-      const closedShiftId = extractShiftIdFromCloseUrl(m.url);
-      if (closedShiftId) {
-        store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
-        void persistAuthSnapshot().catch(() => undefined);
-      }
-    }
-
-    if (isProductMutation(m)) {
-      await localProductsStore.removeByMutationId(m.id);
-    }
-
-    if (isCategoryMutation(m)) {
-      await localCategoriesStore.removeByMutationId(m.id);
-    }
-
-    if (isCustomerMutation(m)) {
-      await localCustomersStore.removeByMutationId(m.id);
-    }
-
-    if (isExpenseMutation(m)) {
-      await localExpensesStore.removeByMutationId(m.id);
-    }
-
-    if (isExpenseCategoryMutation(m)) {
-      await localExpenseCategoriesStore.removeByMutationId(m.id);
-      void refreshExpenseCategoriesSnapshot().catch(() => undefined);
-    }
-
-    if (isRoleMutation(m)) {
-      await localRolesStore.removeByMutationId(m.id);
-    }
-
-    if (isStaffMutation(m)) {
-      await localStaffStore.removeByMutationId(m.id);
-    }
-
-    if (isBusinessSettingsMutation(m)) {
-      const serverBusiness = extractBusiness(response?.data);
-      if (serverBusiness) {
-        store.dispatch(setBusiness(businessToAuthInfo(serverBusiness)));
-      }
-      await localBusinessSettingsStore.removeByMutationId(m.id);
-    }
-
-    if (isGuideFeedbackMutation(m)) {
-      await localGuideFeedbackStore.removeByMutationId(m.id);
-    }
-
-    if (isOrderMutation(m)) {
-      await localOrdersStore.removeByMutationId(m.id);
-    }
-
-    void invalidateAfterItemCommitted().catch(() => undefined);
-    return true;
-  } catch (error: unknown) {
-    if (isAuthHttpError(error)) {
-      throw new AuthSyncPauseError(extractErrorMessage(error, 'Authentication failed'));
-    }
-
-    const err = error as {
-      response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } };
-      message?: string;
-    };
-    const isServerError = err?.response?.status && err.response.status >= 400 && err.response.status < 500;
-    const validationMessage = err?.response?.data?.errors
-      ? Object.values(err.response.data.errors).flat().join(' ')
-      : undefined;
-    const message = validationMessage || err?.response?.data?.message || err?.message || 'Request failed';
-
-    if (await reconcileDuplicateStaffCreate(m, message)) {
-      return true;
-    }
-
-    if (await reconcileDuplicateShiftClose(m, err?.response?.status)) {
-      return true;
-    }
-
-    if (isRefundMutation(m)) {
-      await localRefundsStore.markFailedByMutationId(m.id);
-    }
-    if (isShiftCloseMutation(m)) {
-      await localShiftsStore.markFailedByMutationId(m.id);
-    }
-    if (isShiftOpenMutation(m)) {
-      await localShiftsStore.markFailedByMutationId(m.id);
-    }
-
-    if (isProductMutation(m)) {
-      await localProductsStore.markFailedByMutationId(m.id, message);
-    }
-
-    if (isCategoryMutation(m)) {
-      await localCategoriesStore.markFailedByMutationId(m.id);
-    }
-
-    if (isCustomerMutation(m)) {
-      await localCustomersStore.markFailedByMutationId(m.id);
-    }
-
-    if (isExpenseMutation(m)) {
-      await localExpensesStore.markFailedByMutationId(m.id);
-    }
-
-    if (isExpenseCategoryMutation(m)) {
-      await localExpenseCategoriesStore.markFailedByMutationId(m.id);
-    }
-
-    if (isRoleMutation(m)) {
-      await localRolesStore.markFailedByMutationId(m.id, message);
-    }
-
-    if (isStaffMutation(m)) {
-      await localStaffStore.markFailedByMutationId(m.id, message);
-    }
-
-    if (isBusinessSettingsMutation(m)) {
-      await localBusinessSettingsStore.markFailedByMutationId(m.id);
-    }
-
-    if (isGuideFeedbackMutation(m)) {
-      await localGuideFeedbackStore.markFailedByMutationId(m.id, message);
-    }
-
-    if (isOrderMutation(m)) {
-      await localOrdersStore.markFailedByMutationId(m.id, message);
-    }
-
-    if (isServerError && m.retryCount >= m.maxRetries) {
-      await mutationQueue.markFailed(m.id, message);
-    } else if (isServerError) {
-      await mutationQueue.markFailed(m.id, message);
-    } else {
-      await mutationQueue.markFailed(m.id, message);
-    }
-    return false;
-  }
-}
-
-async function processExpenseCategoryCreates(
-  categoryCreates: QueuedMutation[],
-): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
-  const idMap = new Map<number, number>();
-  let synced = 0;
-  let failed = 0;
-
-  for (const m of categoryCreates) {
-    const queued = await mutationQueue.getById(m.id);
-    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
-
-    const localRecord = (await localExpenseCategoriesStore.getAll()).find((r) => r.mutationId === m.id);
-    const oldCategoryId = localRecord?.category.id ?? null;
-
-    try {
-      await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/expense-categories', m.data, { skipAuthRedirect: true });
-      const serverCategory = extractExpenseCategory(response.data);
-      await commitMutationQueueEntry(m.id);
-      await localExpenseCategoriesStore.removeByMutationId(m.id);
-
-      if (oldCategoryId && serverCategory?.id && oldCategoryId !== serverCategory.id) {
-        idMap.set(oldCategoryId, serverCategory.id);
-        await localExpensesStore.updateCategoryIdInPending(oldCategoryId, serverCategory.id);
-        await mutationQueue.remapExpenseCategoryIdInExpenses(oldCategoryId, serverCategory.id);
-      }
-
-      synced++;
-      void invalidateAfterItemCommitted().catch(() => undefined);
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      const message = err?.response?.data?.message || err?.message || 'Expense category sync failed';
-      await mutationQueue.markFailed(m.id, message);
-      await localExpenseCategoriesStore.markFailedByMutationId(m.id);
-      failed++;
-    }
-  }
-
-  if (synced > 0) {
-    void refreshExpenseCategoriesSnapshot().catch(() => undefined);
-  }
-
-  return { synced, failed, idMap };
-}
-
-async function processRoleCreates(
-  roleCreates: QueuedMutation[],
-): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
-  const idMap = new Map<number, number>();
-  let synced = 0;
-  let failed = 0;
-
-  for (const m of roleCreates) {
-    const queued = await mutationQueue.getById(m.id);
-    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
-
-    const localRecord = (await localRolesStore.getAll()).find((r) => r.mutationId === m.id);
-    const oldRoleId = localRecord?.role.id ?? null;
-
-    try {
-      await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/roles', m.data, { skipAuthRedirect: true });
-      const serverRole = extractRole(response.data);
-      await commitMutationQueueEntry(m.id);
-      await localRolesStore.removeByMutationId(m.id);
-
-      if (oldRoleId && serverRole?.id && oldRoleId !== serverRole.id) {
-        idMap.set(oldRoleId, serverRole.id);
-        await localStaffStore.updateRoleIdInPending(oldRoleId, serverRole.id);
-        await mutationQueue.remapRoleIdInStaff(oldRoleId, serverRole.id);
-      }
-
-      synced++;
-      void invalidateAfterItemCommitted().catch(() => undefined);
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      const message = err?.response?.data?.message || err?.message || 'Role sync failed';
-      await mutationQueue.markFailed(m.id, message);
-      await localRolesStore.markFailedByMutationId(m.id, message);
-      failed++;
-    }
-  }
-
-  return { synced, failed, idMap };
-}
-
-async function processCategoryCreates(
-  categoryCreates: QueuedMutation[],
-): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
-  const idMap = new Map<number, number>();
-  let synced = 0;
-  let failed = 0;
-
-  for (const m of categoryCreates) {
-    const queued = await mutationQueue.getById(m.id);
-    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
-
-    const localRecord = (await localCategoriesStore.getAll()).find((r) => r.mutationId === m.id);
-    const oldCategoryId = localRecord?.category.id ?? null;
-
-    try {
-      await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/categories', m.data, { skipAuthRedirect: true });
-      const serverCategory = extractCategory(response.data);
-      await commitMutationQueueEntry(m.id);
-      await localCategoriesStore.removeByMutationId(m.id);
-
-      if (oldCategoryId && serverCategory?.id && oldCategoryId !== serverCategory.id) {
-        idMap.set(oldCategoryId, serverCategory.id);
-        await localProductsStore.updateCategoryIdInPending(oldCategoryId, serverCategory.id);
-        await mutationQueue.remapCategoryIdInProducts(oldCategoryId, serverCategory.id);
-      }
-
-      synced++;
-      void invalidateAfterItemCommitted().catch(() => undefined);
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      const message = err?.response?.data?.message || err?.message || 'Category sync failed';
-      await mutationQueue.markFailed(m.id, message);
-      await localCategoriesStore.markFailedByMutationId(m.id);
-      failed++;
-    }
-  }
-
-  return { synced, failed, idMap };
-}
-
-async function processOrderCreates(
-  orderCreates: QueuedMutation[],
-): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
-  const idMap = new Map<number, number>();
-  let synced = 0;
-  let failed = 0;
-
-  for (const m of orderCreates) {
-    const queued = await mutationQueue.getById(m.id);
-    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
-
-    const localRecord = (await localOrdersStore.getPending()).find((r) => r.mutationId === m.id);
-    const oldOrderId = localRecord?.order.id ?? null;
-
-    try {
-      await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/orders', m.data, { skipAuthRedirect: true });
-      const serverOrder = extractOrder(response.data);
-      await commitMutationQueueEntry(m.id);
-      await localOrdersStore.removeByMutationId(m.id);
-
-      if (oldOrderId && serverOrder?.id && oldOrderId !== serverOrder.id) {
-        idMap.set(oldOrderId, serverOrder.id);
-        await localSalesStore.updateOrderIdInPending(oldOrderId, serverOrder.id);
-        await mutationQueue.remapOrderId(oldOrderId, serverOrder.id);
-
-        const activeOrderId = store.getState().sales.activeOrderId;
-        if (activeOrderId === oldOrderId) {
-          store.dispatch(setActiveOrderId(serverOrder.id));
-        }
-      }
-
-      synced++;
-      void invalidateAfterItemCommitted().catch(() => undefined);
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      const message = err?.response?.data?.message || err?.message || 'Order sync failed';
-      await mutationQueue.markFailed(m.id, message);
-      await localOrdersStore.markFailedByMutationId(m.id, message);
-      failed++;
-    }
-  }
-
-  return { synced, failed, idMap };
-}
-
-async function processShiftOpens(
-  shiftOpens: QueuedMutation[],
-): Promise<{ synced: number; failed: number; idMap: Map<number, number> }> {
-  const idMap = new Map<number, number>();
-  let synced = 0;
-  let failed = 0;
-
-  for (const m of shiftOpens) {
-    const queued = await mutationQueue.getById(m.id);
-    if (!queued || (queued.status !== 'queued' && queued.status !== 'failed')) continue;
-
-    const localRecord = await localShiftsStore.getByMutationId(m.id);
-    const oldShiftId = localRecord?.shiftId;
-
-    try {
-      await mutationQueue.markSyncing(m.id);
-      const response = await axiosInstance.post('/shifts', m.data, { skipAuthRedirect: true });
-      const serverShift = extractShift(response.data);
-      await commitMutationQueueEntry(m.id);
-      await localShiftsStore.removeByMutationId(m.id);
-
-      if (oldShiftId && serverShift?.id && oldShiftId !== serverShift.id) {
-        idMap.set(oldShiftId, serverShift.id);
-        await localSalesStore.updateShiftIdInPending(oldShiftId, serverShift.id);
-        await localExpensesStore.updateShiftIdInPending(oldShiftId, serverShift.id);
-        await mutationQueue.remapShiftId(oldShiftId, serverShift.id);
-
-        const authUser = store.getState().auth.user;
-        if (authUser?.shift_id === oldShiftId) {
-          store.dispatch(
-            updateShiftContext({
-              shift_id: serverShift.id,
-              shift_clock_in: serverShift.clock_in,
-            }),
-          );
-          void persistAuthSnapshot().catch(() => undefined);
-        }
-      }
-
-      synced++;
-      void invalidateAfterItemCommitted().catch(() => undefined);
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      const message = err?.response?.data?.message || err?.message || 'Shift open sync failed';
-      await mutationQueue.markFailed(m.id, message);
-      await localShiftsStore.markFailedByMutationId(m.id);
-      failed++;
-    }
-  }
-
-  return { synced, failed, idMap };
-}
-
-function remapShiftCloseUrl(url: string, idMap: Map<number, number>): string {
-  const match = url.match(/^\/shifts\/(-?\d+)$/);
-  if (!match) return url;
-  const localId = Number(match[1]);
-  const serverId = idMap.get(localId) ?? localId;
-  return `/shifts/${serverId}`;
-}
-
-function remapOrderScopedUrl(url: string, idMap: Map<number, number>): string {
-  const updateMatch = url.match(/^\/orders\/(-?\d+)$/);
-  if (updateMatch) {
-    const localId = Number(updateMatch[1]);
-    return `/orders/${idMap.get(localId) ?? localId}`;
-  }
-  const cancelMatch = url.match(/^\/orders\/(-?\d+)\/cancel$/);
-  if (cancelMatch) {
-    const localId = Number(cancelMatch[1]);
-    return `/orders/${idMap.get(localId) ?? localId}/cancel`;
-  }
-  return url;
+function isOtherMutation(m: QueuedMutation): boolean {
+  const excluded: ((queued: QueuedMutation) => boolean)[] = [
+    (queued) => isAuthMutation(queued),
+    isShiftOpenMutation,
+    isCategoryCreateMutation,
+    isExpenseCategoryCreateMutation,
+    isRoleCreateMutation,
+    isStaffCreateMutation,
+    isOrderCreateMutation,
+    isSaleMutation,
+    isSalePaymentMutation,
+    isProductCreateMutation,
+    isExpenseMutation,
+    isRefundMutation,
+    isShiftCloseMutation,
+    (queued) => isSaleScopedMutation(queued),
+  ];
+  return !excluded.some((predicate) => predicate(m));
 }
 
 export async function syncAllMutations(reporter?: SyncProgressReporter): Promise<{ synced: number; failed: number }> {
@@ -711,23 +131,7 @@ export async function syncAllMutations(reporter?: SyncProgressReporter): Promise
   const expenseMutations = pending.filter(isExpenseMutation);
   const refundMutations = pending.filter(isRefundMutation);
   const shiftCloses = pending.filter(isShiftCloseMutation);
-  const otherMutations = pending.filter(
-    (m) =>
-      !isAuthMutation(m) &&
-      !isShiftOpenMutation(m) &&
-      !isCategoryCreateMutation(m) &&
-      !isExpenseCategoryCreateMutation(m) &&
-      !isRoleCreateMutation(m) &&
-      !isStaffCreateMutation(m) &&
-      !isOrderCreateMutation(m) &&
-      !isSaleMutation(m) &&
-      !isSalePaymentMutation(m) &&
-      !isProductCreateMutation(m) &&
-      !isExpenseMutation(m) &&
-      !isRefundMutation(m) &&
-      !isShiftCloseMutation(m) &&
-      !isSaleScopedMutation(m),
-  );
+  const otherMutations = pending.filter(isOtherMutation);
 
   let synced = 0;
   let failed = 0;
@@ -889,62 +293,4 @@ export async function runSyncPipeline(reporter?: SyncProgressReporter): Promise<
   return { synced, failed, stockSynced };
 }
 
-function mapLedgerReasonToMovementType(
-  reason: string,
-): 'purchase' | 'adjustment' | 'return' | 'initial' {
-  if (reason === 'refund') return 'return';
-  if (reason === 'purchase' || reason === 'initial') return reason;
-  return 'adjustment';
-}
-
-async function resolveStockMovementSnapshots(
-  adj: PendingAdjustment,
-): Promise<{ stock_before: number; stock_after: number }> {
-  if (adj.stock_before !== undefined && adj.stock_after !== undefined) {
-    return { stock_before: adj.stock_before, stock_after: adj.stock_after };
-  }
-
-  const { data } = await axiosInstance.get<Product | { data: Product }>(
-    `/products/${adj.productId}`,
-    { skipAuthRedirect: true },
-  );
-  const product = data && typeof data === 'object' && 'data' in data ? data.data : (data as Product);
-  const stockBefore = product?.stock_quantity ?? 0;
-  return {
-    stock_before: stockBefore,
-    stock_after: Math.max(0, stockBefore + adj.delta),
-  };
-}
-
-export async function processStockAdjustments(): Promise<number> {
-  const adjustments = await stockLedger.getPendingAdjustments();
-  let synced = 0;
-
-  for (const adj of adjustments) {
-    try {
-      if (isServerOwnedStockReason(adj.reason)) {
-        await stockLedger.markAdjustmentSynced(adj.id);
-        continue;
-      }
-
-      const { stock_before, stock_after } = await resolveStockMovementSnapshots(adj);
-
-      await axiosInstance.post('/stock-movements', {
-        product_id: adj.productId,
-        quantity_change: adj.delta,
-        type: mapLedgerReasonToMovementType(adj.reason),
-        stock_before,
-        stock_after,
-        notes: `Offline sync: ${adj.reason}`,
-      }, { skipAuthRedirect: true });
-      await stockLedger.markAdjustmentSynced(adj.id);
-      synced++;
-      void invalidateAfterItemCommitted().catch(() => undefined);
-    } catch {
-      break;
-    }
-  }
-
-  await stockLedger.clearSynced();
-  return synced;
-}
+export { AuthSyncPauseError };

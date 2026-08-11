@@ -2,6 +2,14 @@
 
 Summary of major offline-related work for documentation traceability.
 
+## 2026-08-11 — Sync hang / cross-account hardening (DB v14)
+
+- **DB v14** — `entityIdMappings` object store (`[entity, oldId]` key; indexes `businessId`, `createdAt`); replaces the order-only map with durable temp→server id maps for **order, sale, category, role, shift, expense-category**.
+- **Cross-account scoping** — `QueuedMutation.businessId` stamped at enqueue; `mutationQueue.getPending()` only returns the current business's queued work (auth register/login exempt). All id-remap helpers skip other accounts' rows. `remapBusinessContext` now rewrites `businessId` on queued mutations + id mappings during offline-registration promote.
+- **Dependency guard** — `guardScopedMutations` runs inside `getPending()`. For any mutation still referencing a negative (temp) id it: waits while the create is queued this pass, re-drives a failed create (`requeueKeepRetries` honors `maxRetries`), remaps via the durable id map once the create has committed, and otherwise fails the dependent with a visible message. This eliminates the infinite "Order mutation waiting for create remap" / "Updating inventory…" state for order updates+cancels, sale payments+refunds, sales/expenses waiting on shift, staff waiting on role, and products waiting on category.
+- **Refactor** — `syncEngine.ts` (950 lines) split into `syncMutators`, `syncExtractors`, `syncCreateProcessors`, `syncMutationRunner`, `syncStock`, `syncDependencyGuard`, `syncDependencyDecider`, `entityIdMapper` (all ≤ 500 lines).
+- **Tests** — `orderDependencyDecider.test.ts` (decider decision table across every entity).
+
 ## 2026-07-11 — POS orders persistence
 
 - **DB v13** — `localOrders` object store

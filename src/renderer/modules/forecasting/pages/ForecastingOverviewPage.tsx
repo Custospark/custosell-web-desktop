@@ -124,7 +124,7 @@ function KpiCard({
         </div>
         <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', s.badge)}>{badge}</span>
       </div>
-      <p className="relative mb-0.5 text-3xl font-bold tabular-nums text-gray-900">{value}</p>
+      <p className="relative mb-0.5 text-2xl font-bold leading-tight tabular-nums break-words text-gray-900 sm:text-3xl">{value}</p>
       <p className="relative text-sm font-medium text-gray-500">{label}</p>
       {hint ? <div className="relative mt-1 text-xs text-gray-500">{hint}</div> : null}
     </div>

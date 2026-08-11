@@ -68,7 +68,7 @@ export default function ForecastingScenariosPage() {
   };
 
   return (
-    <div className="space-y-5 p-4 sm:p-6">
+    <div className="space-y-5">
       <ForecastingPageHeader
         icon={TrendingUp}
         title="What-if scenarios"
@@ -165,7 +165,7 @@ export default function ForecastingScenariosPage() {
         />
       ) : (
         <div className={cn(FORECAST_SURFACE.tableWrap, 'overflow-x-auto')}>
-          <table className="min-w-full text-sm">
+          <table className="min-w-[40rem] text-sm">
             <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
               <tr>
                 <th className="px-3 py-2">Name</th>
@@ -280,7 +280,7 @@ export default function ForecastingScenariosPage() {
           </div>
 
           <div className={cn(FORECAST_SURFACE.tableWrap, 'mt-4 overflow-x-auto')}>
-            <table className="min-w-full text-sm">
+            <table className="min-w-[40rem] text-sm">
               <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
                   <th className="px-3 py-2">Month</th>

@@ -78,7 +78,7 @@ export default function ForecastingBudgetDetailPage() {
 
   if (!budgetId || Number.isNaN(budgetId)) {
     return (
-      <div className="p-6">
+      <div className="space-y-5">
         <ForecastingEmptyState
           title="Invalid budget"
           description="This budget link is not valid."
@@ -95,7 +95,7 @@ export default function ForecastingBudgetDetailPage() {
   }
 
   return (
-    <div className="space-y-5 p-4 sm:p-6">
+    <div className="space-y-5">
       <Link
         to={ROUTES.FORECASTING.BUDGETS}
         className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
@@ -125,13 +125,13 @@ export default function ForecastingBudgetDetailPage() {
             title={budget.name}
             description={`${budget.year} · ${budget.status} · ${budget.lines.length} lines · total ${formatForecastMoney(total)}`}
             actions={
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                 <input
                   type="text"
                   value={rollLabel}
                   onChange={(e) => setRollLabel(e.target.value)}
                   placeholder="Snapshot label (optional)"
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm sm:w-56"
                 />
                 <Button
                   size="sm"
@@ -188,7 +188,7 @@ export default function ForecastingBudgetDetailPage() {
               <p className="text-sm text-gray-500">No lines yet. Add your first zero-based line above.</p>
             ) : (
               <div className={cn(FORECAST_SURFACE.tableWrap, 'overflow-x-auto')}>
-                <table className="min-w-full text-sm">
+                <table className="min-w-[44rem] text-sm">
                   <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                     <tr>
                       <th className="px-3 py-2">Label</th>
@@ -290,7 +290,7 @@ export default function ForecastingBudgetDetailPage() {
 
       {justifyTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-lg">
+          <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-gray-200 bg-white p-5 shadow-lg">
             <h3 className="text-base font-semibold text-gray-900">Justify: {justifyTarget.label}</h3>
             <p className="mt-1 text-sm text-gray-500">Explain why this line starts from zero and deserves funding.</p>
             <textarea

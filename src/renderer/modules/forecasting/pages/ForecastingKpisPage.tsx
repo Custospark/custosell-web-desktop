@@ -20,7 +20,7 @@ export default function ForecastingKpisPage() {
   const { data, isLoading, isError, error, refetch } = useForecastKpis({ mode });
 
   return (
-    <div className="space-y-5 p-4 sm:p-6">
+    <div className="space-y-5">
       <ForecastingPageHeader
         icon={Target}
         title="Forecast KPIs"

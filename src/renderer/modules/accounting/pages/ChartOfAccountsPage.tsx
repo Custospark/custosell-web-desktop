@@ -5,10 +5,13 @@ import { Table } from '../../../shared/components/tables/Table';
 import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
-import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount, useUpdateChartOfAccount, useDeleteChartOfAccount } from '../api/AccountingQueries';
+import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount } from '../api/AccountingQueries';
 import type { ChartOfAccount } from '../api/AccountingTypes';
-import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight, Edit3, Trash2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
+import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { AccountStatusBadge } from '../ui/AccountStatusBadge';
+import { AccountActions } from '../ui/AccountActions';
+import { ChartOfAccountMobileCard } from '../ui/ChartOfAccountMobileCard';
 
 const PAGE_SIZE = 15;
 
@@ -25,9 +28,6 @@ export default function ChartOfAccountsPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [treeView, setTreeView] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState('');
-  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
 
@@ -35,8 +35,6 @@ export default function ChartOfAccountsPage() {
   const { data: accounts, isLoading } = useChartOfAccounts(treeView ? undefined : filters);
   const { data: treeData, isLoading: treeLoading } = useChartOfAccountsTree();
   const createAccount = useCreateChartOfAccount();
-  const updateAccount = useUpdateChartOfAccount();
-  const deleteAccount = useDeleteChartOfAccount();
 
   const filtered = useMemo(() => {
     if (!accounts) return [];
@@ -51,28 +49,6 @@ export default function ChartOfAccountsPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
-
-  function toggleStatus(account: ChartOfAccount) {
-    if (!account.is_system) {
-      updateAccount.mutate({ id: account.id, data: { is_active: !account.is_active } });
-    }
-  }
-
-  function startEdit(account: ChartOfAccount) {
-    setEditingId(account.id);
-    setEditName(account.name);
-  }
-
-  function saveEdit(id: number) {
-    if (editName.trim()) {
-      updateAccount.mutate({ id, data: { name: editName } });
-    }
-    setEditingId(null);
-  }
-
-  function confirmDelete(id: number) {
-    setDeletingId(id);
-  }
 
   const columns = [
     { key: 'code', header: 'Code', sortable: true },
@@ -94,53 +70,14 @@ export default function ChartOfAccountsPage() {
     {
       key: 'is_active',
       header: 'Status',
-      render: (item: ChartOfAccount) => (
-        <button
-          onClick={() => toggleStatus(item)}
-          disabled={item.is_system}
-          className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors',
-            item.is_system ? 'cursor-default' : 'cursor-pointer hover:ring-2 hover:ring-gray-300',
-            item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}
-          title={item.is_system ? 'System account' : 'Click to toggle status'}
-        >
-          {item.is_system ? '' : item.is_active ? <ToggleRight className="w-3 h-3" /> : <ToggleLeft className="w-3 h-3" />}
-          {item.is_active ? 'Active' : 'Inactive'}
-        </button>
-      ),
+      render: (item: ChartOfAccount) => <AccountStatusBadge account={item} />,
     },
     {
       key: 'actions',
       header: '',
       render: (item: ChartOfAccount) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          {editingId === item.id ? (
-            <>
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-32 px-2 py-1 text-sm border border-gray-300 rounded"
-                autoFocus
-              />
-              <button onClick={() => saveEdit(item.id)} className="p-1 text-green-600 hover:text-green-800"><Check className="w-3.5 h-3.5" /></button>
-              <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
-            </>
-          ) : item.is_system ? (
-            <span className="text-xs text-gray-300 italic">System</span>
-          ) : (
-            <>
-              <button onClick={() => startEdit(item)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit name"><Edit3 className="w-3.5 h-3.5" /></button>
-              {deletingId === item.id ? (
-                <>
-                  <span className="text-xs text-red-500">Delete?</span>
-                  <button onClick={() => { deleteAccount.mutate(item.id); setDeletingId(null); }} className="p-1 text-red-600 hover:text-red-800"><Check className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setDeletingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
-                </>
-              ) : (
-                <button onClick={() => confirmDelete(item.id)} className="p-1 text-gray-400 hover:text-red-600" title="Delete account"><Trash2 className="w-3.5 h-3.5" /></button>
-              )}
-            </>
-          )}
+          <AccountActions account={item} />
         </div>
       ),
     },
@@ -149,11 +86,14 @@ export default function ChartOfAccountsPage() {
   function renderTree(node: ChartOfAccount, depth = 0) {
     return (
       <div key={node.id}>
-        <div className={cn('flex items-center gap-2 px-4 py-2 text-sm', depth > 0 && 'ml-6 border-l border-gray-200')}>
-          <span className="font-mono text-gray-500">{node.code}</span>
-          <span className="text-gray-900 font-medium">{node.name}</span>
+        <div className={cn(
+          'min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2 text-sm',
+          depth > 0 && 'ml-3 sm:ml-6 border-l border-gray-200',
+        )}>
+          <span className="font-mono text-gray-500 shrink-0">{node.code}</span>
+          <span className="min-w-0 text-gray-900 font-medium">{node.name}</span>
           <span className="text-gray-400 text-xs">({node.account_type?.name ?? '-'})</span>
-          <span className={cn('capitalize text-xs', node.normal_balance === 'debit' ? 'text-amber-600' : 'text-blue-600')}>
+          <span className={cn('capitalize text-xs shrink-0', node.normal_balance === 'debit' ? 'text-amber-600' : 'text-blue-600')}>
             {node.normal_balance}
           </span>
         </div>
@@ -165,17 +105,17 @@ export default function ChartOfAccountsPage() {
   return (
     <div className="space-y-6">
       <Card>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Chart of Accounts</h1>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Chart of Accounts</h1>
               <p className="text-sm text-gray-500">Manage your general ledger accounts</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={() => setTreeView(!treeView)}>
               {treeView ? <List className="w-4 h-4 mr-1.5" /> : <TreePine className="w-4 h-4 mr-1.5" />}
               {treeView ? 'Flat View' : 'Tree View'}
@@ -189,7 +129,7 @@ export default function ChartOfAccountsPage() {
 
       {!treeView && (
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative w-full sm:flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -203,7 +143,7 @@ export default function ChartOfAccountsPage() {
             options={accountTypeOptions}
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-40"
+            className="w-full sm:w-40"
           />
           <span className="text-xs text-gray-400">{filtered.length} account{filtered.length !== 1 ? 's' : ''}</span>
         </div>
@@ -212,16 +152,28 @@ export default function ChartOfAccountsPage() {
       {treeView ? (
         <Card>
           {treeLoading ? <CustosellLoader /> : (
-            <div className="divide-y divide-gray-100">
-              {treeData?.map((node) => renderTree(node))}
+            <div className="overflow-x-auto">
+              <div className="divide-y divide-gray-100">
+                {treeData?.map((node) => renderTree(node))}
+              </div>
             </div>
           )}
         </Card>
       ) : (
         <>
-          <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
+          <div className="space-y-3 md:hidden">
+            {isLoading ? <CustosellLoader /> : paged.map((item) => (
+              <ChartOfAccountMobileCard key={item.id} account={item} />
+            ))}
+            {!isLoading && paged.length === 0 && (
+              <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">No data</div>
+            )}
+          </div>
+          <div className="hidden md:block">
+            <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
+          </div>
           {pageCount > 1 && (
-            <div className="flex items-center justify-between text-sm text-gray-500">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-500">
               <span>Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
               <div className="flex items-center gap-1">
                 <button onClick={() => setPage(safePage - 1)} disabled={safePage === 0} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>

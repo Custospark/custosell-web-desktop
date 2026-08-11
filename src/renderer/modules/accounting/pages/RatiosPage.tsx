@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import {
   Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts';
@@ -16,247 +16,14 @@ import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelecti
 import { periodFilterToReportParams } from '../utils/periodSelectionUtils';
 import { useReportDownload } from '../../dashboard/DashboardQueries';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
-import type { RatioSet } from '../api/AccountingTypes';
 import {
   Percent, Droplets, TrendingUp, Shield, Zap, Download, FileSpreadsheet, RefreshCw,
-  Lightbulb, AlertTriangle, AlertCircle, CheckCircle, Info,
+  Lightbulb, AlertTriangle, AlertCircle, CheckCircle,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
-
-type RatioFormat = 'decimal' | 'percent' | 'times';
-type HealthStatus = 'healthy' | 'warning' | 'danger';
-
-interface RatioDef {
-  category: keyof RatioSet;
-  key: string;
-  label: string;
-  format: RatioFormat;
-  healthyThreshold: number;
-  warningThreshold: number;
-  higherIsBetter: boolean;
-}
-
-const RATIO_DEFS: RatioDef[] = [
-  { category: 'liquidity', key: 'current_ratio', label: 'Current Ratio', format: 'decimal', healthyThreshold: 2, warningThreshold: 1, higherIsBetter: true },
-  { category: 'liquidity', key: 'quick_ratio', label: 'Quick Ratio', format: 'decimal', healthyThreshold: 1, warningThreshold: 0.5, higherIsBetter: true },
-  { category: 'liquidity', key: 'cash_ratio', label: 'Cash Ratio', format: 'decimal', healthyThreshold: 0.5, warningThreshold: 0.3, higherIsBetter: true },
-  { category: 'profitability', key: 'gross_profit_margin', label: 'Gross Margin', format: 'percent', healthyThreshold: 40, warningThreshold: 20, higherIsBetter: true },
-  { category: 'profitability', key: 'net_profit_margin', label: 'Net Margin', format: 'percent', healthyThreshold: 15, warningThreshold: 5, higherIsBetter: true },
-  { category: 'profitability', key: 'return_on_assets', label: 'ROA', format: 'percent', healthyThreshold: 10, warningThreshold: 5, higherIsBetter: true },
-  { category: 'profitability', key: 'return_on_equity', label: 'ROE', format: 'percent', healthyThreshold: 15, warningThreshold: 10, higherIsBetter: true },
-  { category: 'solvency', key: 'debt_to_equity', label: 'D/E', format: 'decimal', healthyThreshold: 1, warningThreshold: 2, higherIsBetter: false },
-  { category: 'solvency', key: 'debt_ratio', label: 'D/A', format: 'decimal', healthyThreshold: 0.5, warningThreshold: 0.7, higherIsBetter: false },
-  { category: 'solvency', key: 'interest_coverage_ratio', label: 'ICR', format: 'times', healthyThreshold: 3, warningThreshold: 1.5, higherIsBetter: true },
-  { category: 'efficiency', key: 'asset_turnover', label: 'Asset T/O', format: 'times', healthyThreshold: 1.5, warningThreshold: 0.8, higherIsBetter: true },
-  { category: 'efficiency', key: 'inventory_turnover', label: 'Inv T/O', format: 'times', healthyThreshold: 6, warningThreshold: 3, higherIsBetter: true },
-  { category: 'efficiency', key: 'accounts_receivable_turnover', label: 'AR T/O', format: 'times', healthyThreshold: 8, warningThreshold: 4, higherIsBetter: true },
-];
-
-const RATIO_INFO: Record<string, { fullName: string; meaning: string; formula: string; importance: string }> = {
-  current_ratio: {
-    fullName: 'Current Ratio',
-    meaning: 'Measures your ability to pay short-term obligations with short-term assets.',
-    formula: 'Current Assets ÷ Current Liabilities',
-    importance: 'A ratio below 1.0 means liabilities exceed assets — risk of insolvency. Above 2.0 is healthy.',
-  },
-  quick_ratio: {
-    fullName: 'Quick Ratio (Acid Test)',
-    meaning: 'Like the current ratio but excludes inventory. Tests immediate liquidity.',
-    formula: '(Current Assets − Inventory) ÷ Current Liabilities',
-    importance: 'Above 1.0 means you can pay debts without selling inventory.',
-  },
-  cash_ratio: {
-    fullName: 'Cash Ratio',
-    meaning: 'The most conservative liquidity measure — only cash and equivalents.',
-    formula: '(Cash + Bank) ÷ Current Liabilities',
-    importance: 'Above 0.5 means you have emergency cash reserves.',
-  },
-  gross_profit_margin: {
-    fullName: 'Gross Profit Margin',
-    meaning: 'Percentage of revenue retained after paying for products/services sold.',
-    formula: '(Revenue − COGS) ÷ Revenue × 100',
-    importance: 'Shows pricing power and cost efficiency. Below 20% means costs consume most of your revenue.',
-  },
-  net_profit_margin: {
-    fullName: 'Net Profit Margin',
-    meaning: 'Percentage of revenue that becomes profit after ALL expenses.',
-    formula: 'Net Income ÷ Revenue × 100',
-    importance: 'The bottom line. Above 15% is excellent.',
-  },
-  return_on_assets: {
-    fullName: 'Return on Assets (ROA)',
-    meaning: 'How efficiently your assets generate profit.',
-    formula: 'Net Income ÷ Total Assets × 100',
-    importance: 'Measures management effectiveness. Below 5% suggests assets are underperforming.',
-  },
-  return_on_equity: {
-    fullName: 'Return on Equity (ROE)',
-    meaning: 'Return generated on shareholders\' invested capital.',
-    formula: 'Net Income ÷ Shareholders\' Equity × 100',
-    importance: 'Above 15% is excellent. Below 10% may not justify the risk of owning the business.',
-  },
-  debt_to_equity: {
-    fullName: 'Debt-to-Equity Ratio (D/E)',
-    meaning: 'How much debt vs equity the business uses to finance operations.',
-    formula: 'Total Liabilities ÷ Shareholders\' Equity',
-    importance: 'Above 2.0 means heavy debt reliance — higher risk in downturns. Below 1.0 is conservative.',
-  },
-  debt_ratio: {
-    fullName: 'Debt Ratio (D/A)',
-    meaning: 'Proportion of assets financed by debt.',
-    formula: 'Total Liabilities ÷ Total Assets',
-    importance: 'Above 0.5 means creditors own more than half the assets.',
-  },
-  interest_coverage_ratio: {
-    fullName: 'Interest Coverage Ratio (ICR)',
-    meaning: 'How many times operating profit can cover interest payments.',
-    formula: 'Operating Income ÷ Interest Expense',
-    importance: 'Below 1.5 means you risk defaulting on debt. Above 3.0 is comfortable.',
-  },
-  asset_turnover: {
-    fullName: 'Asset Turnover Ratio',
-    meaning: 'How efficiently assets generate sales revenue.',
-    formula: 'Sales ÷ Total Assets',
-    importance: 'Below 0.8 means assets are underutilized. Above 1.5 indicates strong efficiency.',
-  },
-  inventory_turnover: {
-    fullName: 'Inventory Turnover Ratio',
-    meaning: 'How many times inventory is sold and replaced in a period.',
-    formula: 'COGS ÷ Average Inventory',
-    importance: 'Below 3x signals excess inventory tying up cash. Above 6x is healthy.',
-  },
-  accounts_receivable_turnover: {
-    fullName: 'Accounts Receivable Turnover (AR T/O)',
-    meaning: 'How quickly customers pay their debts.',
-    formula: 'Net Sales ÷ Average Accounts Receivable',
-    importance: 'Below 4x means slow collections straining cash flow.',
-  },
-};
-
-function getHealth(value: number | null, def: RatioDef): HealthStatus {
-  if (value === null || value === undefined) return 'danger';
-  if (def.higherIsBetter) {
-    if (value >= def.healthyThreshold) return 'healthy';
-    if (value >= def.warningThreshold) return 'warning';
-    return 'danger';
-  }
-  if (value <= def.healthyThreshold) return 'healthy';
-  if (value <= def.warningThreshold) return 'warning';
-  return 'danger';
-}
-
-function getRatioValue(ratios: RatioSet | undefined, category: keyof RatioSet, key: string): number | null {
-  if (!ratios) return null;
-  const cat = ratios[category];
-  if (!cat) return null;
-  return (cat as Record<string, number | null>)[key] ?? null;
-}
-
-function formatRatioValue(value: number, format: RatioFormat): string {
-  if (format === 'percent') return `${value.toFixed(1)}%`;
-  if (format === 'times') return `${value.toFixed(1)}x`;
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
-function HealthDot({ status }: { status: HealthStatus }) {
-  return (
-    <span
-      className={cn(
-        'w-2 h-2 rounded-full inline-block shrink-0',
-        status === 'healthy' && 'bg-green-500',
-        status === 'warning' && 'bg-amber-400',
-        status === 'danger' && 'bg-red-500',
-      )}
-    />
-  );
-}
-
-function RatioLine({ def, value, selected, onClick, recommendation }: { def: RatioDef; value: number | null; selected: boolean; onClick: () => void; recommendation?: { message: string; action: string; priority: string } | null }) {
-  const health = getHealth(value, def);
-  const formatted = value !== null ? formatRatioValue(value, def.format) : 'N/A';
-  const info = RATIO_INFO[def.key];
-  const [hovered, setHovered] = useState(false);
-  const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
-  const [tipSide, setTipSide] = useState<'left' | 'right'>('left');
-  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const iconColor = health === 'healthy' ? 'text-green-400' : health === 'warning' ? 'text-amber-400' : 'text-red-400';
-
-  const show = useCallback(() => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setHovered(true);
-  }, []);
-
-  const hide = useCallback(() => {
-    closeTimer.current = setTimeout(() => setHovered(false), 200);
-  }, []);
-
-  return (
-    <div className="relative"
-      onMouseEnter={show}
-      onMouseLeave={hide}
-    >
-      <button
-        onClick={onClick}
-        onMouseEnter={(e) => {
-          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          const tooltipW = 360;
-          const spaceRight = window.innerWidth - rect.left;
-          const onRight = spaceRight >= tooltipW;
-          setTipSide(onRight ? 'left' : 'right');
-          setTipPos({
-            top: rect.bottom + 10,
-            left: onRight ? rect.left : rect.right - tooltipW,
-          });
-        }}
-        className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
-          selected
-            ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-        )}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <HealthDot status={health} />
-          <span className="truncate">{def.label}</span>
-          <Info className={cn('w-3 h-3 shrink-0', iconColor)} />
-        </div>
-        <span className="font-semibold tabular-nums shrink-0">{formatted}</span>
-      </button>
-      {hovered && info && (
-        <div
-          className="fixed z-[9999] w-[360px] bg-white rounded-xl shadow-xl border border-blue-200 p-4 text-sm leading-relaxed space-y-2.5"
-          style={{ top: tipPos.top, left: tipPos.left }}
-          onMouseEnter={show}
-          onMouseLeave={hide}
-        >
-          {/* Arrow tip */}
-          <div className={cn('absolute -top-2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-blue-200', tipSide === 'left' ? 'left-4' : 'right-4')} />
-          <div className={cn('absolute -top-[7px] w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white', tipSide === 'left' ? 'left-4' : 'right-4')} />
-
-          <p className="text-sm font-bold text-gray-900">{info.fullName}</p>
-          <p className="text-xs text-gray-600 leading-relaxed">{info.meaning}</p>
-          <div className="bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs text-gray-700 border border-gray-100">{info.formula}</div>
-          <p className="text-xs text-gray-500">{info.importance}</p>
-          {value === null && (
-            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">Insufficient data — this ratio cannot be calculated until relevant accounts have transactions.</p>
-          )}
-          {recommendation && (
-            <div className={cn(
-              'rounded-lg px-3 py-2 text-xs border',
-              recommendation.priority === 'high' ? 'bg-red-50 border-red-100 text-red-700' :
-              recommendation.priority === 'medium' ? 'bg-amber-50 border-amber-100 text-amber-700' :
-              'bg-green-50 border-green-100 text-green-700',
-            )}>
-              <p className="font-semibold mb-0.5">Recommendation</p>
-              <p>{recommendation.message}</p>
-              <p className="mt-1 italic">{recommendation.action}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+import { formatRatioValue, getHealth, getRatioValue, RATIO_DEFS, RATIO_INFO } from '../ui/ratioDefinitions';
+import type { RatioDef } from '../ui/ratioTypes';
+import { RatioLine } from '../ui/RatioLine';
 
 const CATEGORY_META: Record<string, { title: string; icon: React.ElementType; accent: 'blue' | 'green' | 'purple' | 'amber' }> = {
   liquidity: { title: 'Liquidity', icon: Droplets, accent: 'blue' },
@@ -333,24 +100,24 @@ export default function RatiosPage() {
     return `${info.fullName} is in the danger zone.${changeStr}. ${def.higherIsBetter ? 'Immediate action recommended to improve this metric.' : 'High leverage — consider reducing debt urgently.'}`;
   }
 
-  const handleRatioClick = (key: string) => {
+  const handleRatioClick = useCallback((key: string) => {
     setSelectedRatioKey((prev) => (prev === key ? null : key));
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
               <Percent className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-semibold text-gray-900">Financial Ratios Dashboard</h1>
               <p className="text-sm text-gray-500">Key performance indicators and trends</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="w-4 h-4 mr-1.5" />Reload
             </Button>

@@ -89,12 +89,41 @@ export function useHrPayrollAffordabilityMutation() {
   });
 }
 
-export function useHrAuditLogs(filters?: { subject_type?: string }, enabled = true) {
+export interface HrAuditLogPage {
+  items: HrAuditLog[];
+  currentPage: number;
+  perPage: number;
+  total: number;
+  lastPage: number;
+}
+
+interface HrAuditLogMeta {
+  current_page?: number;
+  per_page?: number;
+  total?: number;
+  last_page?: number;
+}
+
+export function useHrAuditLogs(
+  filters: { subject_type?: string } = {},
+  page = 1,
+  perPage = 20,
+  enabled = true,
+) {
   return useQuery({
-    queryKey: hrKeys.auditLogs(filters),
+    queryKey: hrKeys.auditLogs({ ...filters, page, per_page: perPage }),
     queryFn: async () => {
-      const { data } = await axiosInstance.get(HR.AUDIT_LOGS, { params: cleanParams(filters) });
-      return unwrapList<HrAuditLog>(data);
+      const { data } = await axiosInstance.get(HR.AUDIT_LOGS, {
+        params: cleanParams({ ...filters, page, per_page: perPage }),
+      });
+      const body = data as { data?: unknown; meta?: HrAuditLogMeta };
+      return {
+        items: unwrapList<HrAuditLog>(body),
+        currentPage: body.meta?.current_page ?? 1,
+        perPage: body.meta?.per_page ?? perPage,
+        total: body.meta?.total ?? 0,
+        lastPage: body.meta?.last_page ?? 1,
+      } satisfies HrAuditLogPage;
     },
     enabled,
     ...listDefaults,

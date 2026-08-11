@@ -62,7 +62,7 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
         </div>
       )}
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 mb-4 text-[11px] text-gray-700">
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 mb-4 text-center text-[11px] text-gray-700">
         {data.branchName && (
           <>
             <span className="font-semibold text-gray-900">Branch: {data.branchName}</span>
@@ -70,8 +70,6 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
           </>
         )}
         <span className="font-semibold text-gray-900">{data.cashierName}</span>
-        <span className="mx-2 text-gray-300">|</span>
-        <span>In {formatShiftDateTime(data.clockIn)}</span>
         <span className="mx-2 text-gray-300">|</span>
         <span>As of {formatShiftDateTime(data.clockOut ?? data.generatedAt)}</span>
         {data.duration && (

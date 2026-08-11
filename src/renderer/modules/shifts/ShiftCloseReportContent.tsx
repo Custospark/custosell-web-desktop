@@ -39,13 +39,6 @@ function Row({ label, value, bold, negative, sub }: { label: string; value: stri
 
 export default function ShiftCloseReportContent({ data, forPrint = false }: ShiftCloseReportContentProps) {
   const ccy = data.currency;
-  const isClosed = Boolean(data.clockOut);
-
-  const subtitle = isClosed
-    ? [data.clockOut && `Closed ${formatShiftDateTime(data.clockOut)}`, data.duration && `Duration ${data.duration}`]
-        .filter(Boolean)
-        .join(' · ')
-    : `Started ${formatShiftDateTime(data.clockIn)} · Report as of ${formatShiftDateTime(data.generatedAt)}`;
 
   return (
     <div className="bg-white text-gray-800 font-sans mx-auto w-full max-w-[210mm] p-6 print:p-5">
@@ -61,7 +54,6 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
 
       <div className="text-center mb-4">
         <h2 className="text-lg font-bold text-gray-900">Shift Close Report</h2>
-        <p className="text-[11px] text-gray-500 mt-1">{subtitle}</p>
       </div>
 
       {data.isOfflineCopy && !forPrint && (
@@ -71,25 +63,21 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
       )}
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 mb-4 text-[11px] text-gray-700">
+        {data.branchName && (
+          <>
+            <span className="font-semibold text-gray-900">Branch: {data.branchName}</span>
+            <span className="mx-2 text-gray-300">|</span>
+          </>
+        )}
         <span className="font-semibold text-gray-900">{data.cashierName}</span>
         <span className="mx-2 text-gray-300">|</span>
         <span>In {formatShiftDateTime(data.clockIn)}</span>
-        {isClosed && data.clockOut && (
+        <span className="mx-2 text-gray-300">|</span>
+        <span>As of {formatShiftDateTime(data.clockOut ?? data.generatedAt)}</span>
+        {data.duration && (
           <>
             <span className="mx-2 text-gray-300">|</span>
-            <span>Out {formatShiftDateTime(data.clockOut)}</span>
-            {data.duration && (
-              <>
-                <span className="mx-2 text-gray-300">|</span>
-                <span>{data.duration}</span>
-              </>
-            )}
-          </>
-        )}
-        {!isClosed && (
-          <>
-            <span className="mx-2 text-gray-300">|</span>
-            <span>As of {formatShiftDateTime(data.generatedAt)}</span>
+            <span>{data.duration}</span>
           </>
         )}
       </div>

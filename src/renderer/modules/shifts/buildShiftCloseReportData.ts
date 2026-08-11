@@ -74,6 +74,7 @@ export function buildShiftCloseReportData(params: {
     businessPhone: business?.phone ?? null,
     businessEmail: business?.email ?? null,
     currency: business?.currency || 'UGX',
+    branchName: authUser?.location?.name ?? null,
     cashierName: authUser?.name || '—',
     clockIn: resolvedClockIn,
     clockOut,

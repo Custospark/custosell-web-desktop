@@ -4,6 +4,7 @@ export interface ShiftCloseReportData {
   businessPhone?: string | null;
   businessEmail?: string | null;
   currency: string;
+  branchName?: string | null;
   cashierName: string;
   clockIn: string;
   clockOut: string | null;

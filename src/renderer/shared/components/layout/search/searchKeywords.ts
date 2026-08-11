@@ -17,6 +17,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
   [ROUTES.INVOICES.INDEX]: ['sales invoice', 'bill customer', 'invoice customers', 'issue invoice', 'create invoice', 'billing'],
   [ROUTES.INVOICES.SUPPLIER]: ['supplier invoice', 'vendor bill', 'bills from suppliers', 'pay supplier', 'creditor invoice', 'purchase invoice'],
 
+  [ROUTES.INVENTORY.OVERVIEW]: ['inventory overview', 'stock overview', 'inventory dashboard', 'stock dashboard', 'inventory summary', 'stock summary', 'inventory at a glance', 'low stock', 'out of stock', 'stock value'],
   [ROUTES.INVENTORY.PRODUCTS]: ['product catalog', 'add product', 'new product', 'create product', 'product list', 'item list', 'goods', 'product prices', 'price items', 'stock items'],
   [ROUTES.INVENTORY.CATEGORIES]: ['product categories', 'group products', 'organize products', 'category list', 'product types'],
   [ROUTES.INVENTORY.STOCK]: ['stock levels', 'stock movements', 'inventory ledger', 'stock history', 'quantity', 'stock balance', 'movement record', 'stock in', 'stock out'],
@@ -113,7 +114,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
 export const MODULE_LANDING_ROUTES: Record<string, string> = {
   Dashboard: ROUTES.DASHBOARD,
   Sales: ROUTES.SALES.ORDERS,
-  'Inventory & Supply Chain': ROUTES.INVENTORY.PRODUCTS,
+  'Inventory & Supply Chain': ROUTES.INVENTORY.OVERVIEW,
   Customers: ROUTES.CUSTOMERS.INDEX,
   'Online Shopping': ROUTES.DISCOVER,
   'Sales Funnel': ROUTES.PIPELINE.BOARDS,

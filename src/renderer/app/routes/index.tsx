@@ -236,7 +236,7 @@ export function AppRoutes() {
               <Route path={ROUTES.INVOICES.SUPPLIER} element={<SuspenseWrapper><InvoicesPage mode="supplier" /></SuspenseWrapper>} />
             </Route>
             <Route element={<ModuleAccessMiddleware module="inventory" />}>
-              <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />
+              <Route path={ROUTES.INVENTORY.INDEX} element={<Navigate to={ROUTES.INVENTORY.OVERVIEW} replace />} />
               <Route path={ROUTES.INVENTORY.OVERVIEW} element={<SuspenseWrapper><InventoryOverviewPage /></SuspenseWrapper>} />
               <Route path={ROUTES.INVENTORY.PRODUCTS} element={<SuspenseWrapper><ProductsPage /></SuspenseWrapper>} />
               <Route path="/inventory/products/new" element={<Navigate to={ROUTES.INVENTORY.PRODUCTS} replace />} />

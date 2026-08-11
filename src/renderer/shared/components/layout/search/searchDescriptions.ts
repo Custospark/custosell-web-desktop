@@ -15,6 +15,7 @@ export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
   [ROUTES.SALES.MY_SHIFT]: 'Clock in, review your shift, and end it.',
   [ROUTES.INVOICES.INDEX]: 'Create and manage invoices for customers.',
 
+  [ROUTES.INVENTORY.OVERVIEW]: 'Inventory and stock summary at a glance.',
   [ROUTES.INVENTORY.PRODUCTS]: 'Manage your product catalog and prices.',
   [ROUTES.INVENTORY.CATEGORIES]: 'Organize products into categories.',
   [ROUTES.INVENTORY.STOCK]: 'Track stock levels and ledger movements.',

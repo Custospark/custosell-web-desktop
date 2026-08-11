@@ -88,7 +88,7 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
     icon: Package,
     tone: TONE.amber,
     section: 'workspace',
-    getRoute: () => ROUTES.INVENTORY.PRODUCTS,
+    getRoute: () => ROUTES.INVENTORY.OVERVIEW,
   },
   {
     slug: 'customers',

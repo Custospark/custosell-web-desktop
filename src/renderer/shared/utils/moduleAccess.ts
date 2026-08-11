@@ -40,7 +40,7 @@ export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
 export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
   dashboard: ROUTES.DASHBOARD,
   sales: ROUTES.SALES.NEW,
-  inventory: ROUTES.INVENTORY.PRODUCTS,
+  inventory: ROUTES.INVENTORY.OVERVIEW,
   customers: ROUTES.CUSTOMERS.INDEX,
   pipeline: ROUTES.PIPELINE.BOARDS,
   estimates: ROUTES.ESTIMATES.INDEX,

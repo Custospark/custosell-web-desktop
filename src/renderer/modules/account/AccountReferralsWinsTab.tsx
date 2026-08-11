@@ -3,6 +3,7 @@ import type { ReferralEarnings } from '../referral/api/ReferralTypes';
 import { formatUSD } from '../../shared/utils/formatCurrency';
 import { cn } from '../../shared/utils/cn';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import SalesRepBadge from '../../shared/components/referrals/SalesRepBadge';
 import {
   Users, DollarSign, Clock, TrendingUp, Wallet,
   Receipt, Check, X, Building2,
@@ -32,6 +33,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
   const payoutHistory = payoutHistoryResp ?? [];
 
   const totalEarned = (earnings?.total_earned ?? 0) + (earnings?.commission_earned ?? 0);
+  const totalPaid = (earnings?.rewards_paid ?? 0) + (earnings?.commission_paid ?? 0);
 
   const payoutTotalPaid = payoutHistory
     .filter((p) => p.status === 'paid')
@@ -43,6 +45,12 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
   return (
     <div className="space-y-6">
       {/* Earnings summary cards */}
+      {earnings?.is_sales_rep && (
+        <div className="flex items-center gap-2">
+          <SalesRepBadge rate={earnings.commission_rate ?? null} type={earnings.commission_type ?? null} />
+          <span className="text-xs text-gray-500">Commissions are shown on your earnings below</span>
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-gray-50 rounded-lg p-4 text-center">
           <Users className="w-5 h-5 mx-auto text-gray-400 mb-1" />
@@ -56,12 +64,12 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
         </div>
         <div className="bg-gray-50 rounded-lg p-4 text-center">
           <Wallet className="w-5 h-5 mx-auto text-green-500 mb-1" />
-          <p className="text-2xl font-bold text-green-700">{formatUSD(earnings?.rewards_paid ?? 0)}</p>
+          <p className="text-2xl font-bold text-green-700">{formatUSD(totalPaid)}</p>
           <p className="text-xs text-green-600 font-medium">Paid</p>
         </div>
         <div className="bg-amber-50 rounded-lg p-4 text-center">
           <TrendingUp className="w-5 h-5 mx-auto text-amber-400 mb-1" />
-          <p className="text-2xl font-bold text-amber-700">{formatUSD(totalEarned - (earnings?.rewards_paid ?? 0))}</p>
+          <p className="text-2xl font-bold text-amber-700">{formatUSD(totalEarned - totalPaid)}</p>
           <p className="text-xs text-amber-600 font-medium">Bal.</p>
         </div>
       </div>
@@ -76,25 +84,6 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
             <span className="text-sm font-medium text-green-800">Promo credit available</span>
           </div>
           <span className="text-sm font-bold text-green-700">{formatUSD(earnings!.available_credit)}</span>
-        </div>
-      )}
-
-      {earnings?.is_sales_rep && (
-        <div className="bg-indigo-50 rounded-lg p-4 space-y-2">
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-semibold text-gray-700">Sales Rep Commission</span>
-            {earnings.commission_rate && (
-              <span className="text-xs font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">
-                {earnings.commission_rate}{earnings.commission_type === 'percentage' ? '%' : ''}
-              </span>
-            )}
-          </div>
-          <div className="flex gap-4 text-sm">
-            <span className="text-gray-500">Earned: <strong className="text-gray-900">{formatUSD(earnings.commission_earned ?? 0)}</strong></span>
-            <span className="text-gray-500">Bal.: <strong className="text-amber-700">{formatUSD((earnings.commission_earned ?? 0) - (earnings.commission_paid ?? 0))}</strong></span>
-            <span className="text-gray-500">Paid: <strong className="text-green-700">{formatUSD(earnings.commission_paid ?? 0)}</strong></span>
-          </div>
         </div>
       )}
 

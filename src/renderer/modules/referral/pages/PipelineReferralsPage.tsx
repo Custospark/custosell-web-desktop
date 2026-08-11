@@ -1,11 +1,12 @@
 import { useReferralEarnings } from '../api/useReferralQueries';
 import { formatUSD } from '../../../shared/utils/formatCurrency';
-import { Gift, Copy, Check, Users, TrendingUp, Wallet, DollarSign, Percent, QrCode, Download } from 'lucide-react';
+import { Gift, Copy, Check, Users, TrendingUp, Wallet, DollarSign, QrCode, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QRCodeLib from 'qrcode';
 import { Table } from '../../../shared/components/tables/Table';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import type { ReferralRecord } from '../api/ReferralTypes';
+import SalesRepBadge from '../../../shared/components/referrals/SalesRepBadge';
 
 export default function PipelineReferralsPage() {
   const { data: earnings, isLoading } = useReferralEarnings();
@@ -19,6 +20,9 @@ export default function PipelineReferralsPage() {
 
   const referrals = earnings?.referrals ?? [];
   const paginated = usePagination(referrals, 10);
+
+  const totalEarned = (earnings?.total_earned ?? 0) + (earnings?.commission_earned ?? 0);
+  const totalPaid = (earnings?.rewards_paid ?? 0) + (earnings?.commission_paid ?? 0);
 
   useEffect(() => {
     if (showQr && referralUrl && !qrDataUrl) {
@@ -112,6 +116,12 @@ export default function PipelineReferralsPage() {
       </div>
 
       {/* Stats Cards */}
+      {earnings?.is_sales_rep && (
+        <div className="flex items-center gap-2">
+          <SalesRepBadge rate={earnings.commission_rate ?? null} type={earnings.commission_type ?? null} />
+          <span className="text-sm text-gray-500">Commissions are shown on your earnings below</span>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
@@ -132,7 +142,7 @@ export default function PipelineReferralsPage() {
             <div>
               <p className="text-sm text-gray-500">Earned</p>
               <p className="text-xl font-semibold text-gray-900">
-                {earnings ? formatUSD(earnings.total_earned) : formatUSD(0)}
+                {earnings ? formatUSD(totalEarned) : formatUSD(0)}
               </p>
             </div>
           </div>
@@ -144,7 +154,7 @@ export default function PipelineReferralsPage() {
             </div>
             <div>
               <p className="text-sm text-green-600">Paid</p>
-              <p className="text-xl font-semibold text-green-700">{formatUSD(earnings?.rewards_paid ?? 0)}</p>
+              <p className="text-xl font-semibold text-green-700">{formatUSD(totalPaid)}</p>
             </div>
           </div>
         </div>
@@ -155,46 +165,11 @@ export default function PipelineReferralsPage() {
             </div>
             <div>
               <p className="text-sm text-purple-600">Bal.</p>
-              <p className="text-xl font-semibold text-purple-700">{formatUSD((earnings?.total_earned ?? 0) - (earnings?.rewards_paid ?? 0))}</p>
+              <p className="text-xl font-semibold text-purple-700">{formatUSD(totalEarned - totalPaid)}</p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Sales Rep Commission Section */}
-      {earnings?.is_sales_rep && (
-        <div className="rounded-xl border border-purple-200 bg-purple-50 p-5">
-          <div className="flex items-center gap-2 text-purple-800">
-            <Percent className="h-5 w-5" />
-            <span className="font-semibold">Sales Representative Commission</span>
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-sm text-purple-600">Rate</p>
-              <p className="text-lg font-semibold text-purple-900">
-                {earnings.commission_type === 'percentage'
-                  ? `${earnings.commission_rate}%`
-                  : formatUSD(earnings.commission_rate ?? 0)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-purple-600">Bal.</p>
-              <p className="text-lg font-semibold text-purple-900">
-                {formatUSD((earnings.commission_earned ?? 0) - (earnings.commission_paid ?? 0))}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-purple-600">Earned</p>
-              <p className="text-lg font-semibold text-purple-900">
-                {formatUSD(earnings.commission_earned)}
-              </p>
-            </div>
-          </div>
-          <p className="mt-3 text-sm text-purple-600">
-            Contact the Custosell team to claim your pending balance of {formatUSD((earnings.commission_earned ?? 0) - (earnings.commission_paid ?? 0))}.
-          </p>
-        </div>
-      )}
 
       {/* Referral History Table */}
       <div className="rounded-xl border border-gray-200 bg-white">

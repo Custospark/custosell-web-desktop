@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useReferralEarnings, useGenerateReferralCode } from '../../../modules/referral/api/useReferralQueries';
+import SalesRepBadge from '../referrals/SalesRepBadge';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../utils/cn';
 import { formatUSD } from '../../utils/formatCurrency';
@@ -9,7 +10,7 @@ import { canAccessModule } from '../../utils/moduleAccess';
 import QRCodeLib from 'qrcode';
 import {
   Gift, Copy, Check, ExternalLink, Users, DollarSign,
-  TrendingUp, Sparkles, ChevronDown, QrCode, Download, X, Share2, Link,
+  Sparkles, ChevronDown, QrCode, Download, X, Share2, Link,
 } from 'lucide-react';
 
 const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
@@ -109,6 +110,7 @@ export default function ReferralDropdown() {
 
   const hasReferralCode = !!code;
   const totalEarned = (earnings?.total_earned ?? 0) + (earnings?.commission_earned ?? 0);
+  const totalPaid = (earnings?.rewards_paid ?? 0) + (earnings?.commission_paid ?? 0);
 
   return (
     <div ref={ref} className="relative">
@@ -143,8 +145,11 @@ export default function ReferralDropdown() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900">Referral Program</p>
-                <p className="text-xs text-gray-500">Earn rewards by referring businesses{isSalesRep ? <span className="text-indigo-600 font-medium"> (Sales Rep)</span> : ''}</p>
+                <p className="text-xs text-gray-500">Earn rewards by referring businesses</p>
               </div>
+              {isSalesRep && (
+                <SalesRepBadge rate={earnings?.commission_rate ?? null} type={earnings?.commission_type ?? null} />
+              )}
             </div>
           </div>
 
@@ -225,34 +230,16 @@ export default function ReferralDropdown() {
                   </div>
                   <div className="text-center">
                     <DollarSign className="w-4 h-4 mx-auto text-green-600 mb-1" />
-                    <p className="text-lg font-bold text-green-700">{formatUSD(earnings?.rewards_paid ?? 0)}</p>
+                    <p className="text-lg font-bold text-green-700">{formatUSD(totalPaid)}</p>
                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Paid</p>
                   </div>
                   <div className="text-center">
                     <DollarSign className="w-4 h-4 mx-auto text-gray-400 mb-1" />
-                    <p className="text-lg font-bold text-gray-900">{formatUSD(totalEarned - (earnings?.rewards_paid ?? 0))}</p>
+                    <p className="text-lg font-bold text-gray-900">{formatUSD(totalEarned - totalPaid)}</p>
                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Bal.</p>
                   </div>
                 </div>
               </div>
-
-              {isSalesRep && (
-                <div className="px-4 py-2.5 border-b border-gray-100">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
-                    <span className="text-xs font-semibold text-gray-700">Sales Rep Commission</span>
-                    {earnings?.commission_rate && (
-                      <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-                        {earnings.commission_rate}{earnings.commission_type === 'percentage' ? '%' : ''}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Earned: <strong className="text-gray-900">{formatUSD(earnings?.commission_earned ?? 0)}</strong></span>
-                    <span className="text-gray-500">Pending: <strong className="text-amber-700">{formatUSD(earnings?.commission_pending ?? 0)}</strong></span>
-                  </div>
-                </div>
-              )}
 
               {recentReferrals.length > 0 && (
                 <div className="px-4 py-2.5 border-b border-gray-100">

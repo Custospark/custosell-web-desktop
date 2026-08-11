@@ -86,7 +86,7 @@ export function PlatformUserModals({
         onConfirm={onConfirmDelete}
       />
       <PlatformUserRoleModal
-        key={roleTargets !== null ? 'open' : 'closed'}
+        key={roleTargets !== null ? `role-open-${roleTargets[0]?.id ?? 'multi'}` : 'role-closed'}
         open={roleTargets !== null}
         users={roleTargets ?? []}
         isPending={rolePending}
@@ -94,7 +94,7 @@ export function PlatformUserModals({
         onConfirm={onConfirmRole}
       />
       <PlatformUserPrivilegesModal
-        key={privilegeTargets !== null ? `open-${privilegeTargets[0]?.id ?? 'bulk'}` : 'closed'}
+        key={privilegeTargets !== null ? `privileges-open-${privilegeTargets[0]?.id ?? 'multi'}` : 'privileges-closed'}
         open={privilegeTargets !== null}
         users={privilegeTargets ?? []}
         isPending={privilegesPending}

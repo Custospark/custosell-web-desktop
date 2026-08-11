@@ -330,6 +330,7 @@ export default function PlatformUsersPage() {
       <Card>
         <div className="flex flex-col gap-4 mb-4">
           <PlatformUserFilters
+            resultCount={rows.length}
             loginActivityFilter={loginActivityFilter}
             onLoginActivityFilterChange={handleLoginActivityFilterChange}
             accountStatusFilter={accountStatusFilter}

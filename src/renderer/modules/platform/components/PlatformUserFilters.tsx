@@ -10,6 +10,7 @@ import type { UserAccountStatus, UserLoginActivity } from '../api/PlatformTypes'
 export type BusinessFilterValue = 'all' | 'with_business' | 'no_business' | 'platform_admin';
 
 interface PlatformUserFiltersProps {
+  resultCount: number;
   loginActivityFilter: UserLoginActivity | '';
   onLoginActivityFilterChange: (value: UserLoginActivity | '') => void;
   accountStatusFilter: UserAccountStatus | '';
@@ -27,6 +28,7 @@ interface PlatformUserFiltersProps {
 }
 
 export function PlatformUserFilters({
+  resultCount,
   loginActivityFilter,
   onLoginActivityFilterChange,
   accountStatusFilter,

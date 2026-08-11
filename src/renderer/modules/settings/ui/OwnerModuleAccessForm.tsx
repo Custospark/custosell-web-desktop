@@ -173,7 +173,7 @@ export default function OwnerModuleAccessForm() {
   const saveDisabled = !isDirty || saveMutation.isPending;
 
   return (
-    <div className="relative mx-auto w-full max-w-6xl pb-28 sm:pb-10">
+    <div className="relative mx-auto w-full max-w-6xl pb-2 sm:pb-10">
       <div className="mb-5 flex flex-col gap-4 lg:mb-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <div className="shrink-0 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shadow-md shadow-blue-500/20 sm:rounded-2xl sm:p-3">
@@ -289,7 +289,7 @@ export default function OwnerModuleAccessForm() {
 
       <div
         className={cn(
-          'fixed inset-x-0 bottom-0 z-20 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md sm:hidden',
+          'sticky bottom-0 z-20 -mx-4 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md sm:hidden sm:-mx-6 sm:px-6',
           'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
         )}
       >

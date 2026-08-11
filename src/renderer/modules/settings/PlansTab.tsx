@@ -17,6 +17,7 @@ import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
 import PlanCard from './PlanCard';
 import PlanUsageSection from './ui/PlanUsageSection';
+import BillingCycleSwitchModal from './ui/BillingCycleSwitchModal';
 
 interface SubscriptionPaymentState {
   planName: string;
@@ -196,7 +197,13 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
         <div className="flex items-start justify-between">
           <div>
             <p className="text-blue-200 text-sm font-medium mb-1">Current Plan</p>
-            <h2 className="text-2xl font-bold">{currentPlan?.name || 'Unknown Plan'}</h2>
+            <h2 className="text-2xl font-bold">
+              {plansLoading ? (
+                <span className="inline-block h-7 w-40 animate-pulse rounded-lg bg-white/25" aria-hidden="true" />
+              ) : (
+                currentPlan?.name ?? 'Unknown Plan'
+              )}
+            </h2>
           </div>
           <span className={cn('px-3 py-1 rounded-full text-xs font-semibold', statusInfo.bg, statusInfo.text)}>
             {statusInfo.label}
@@ -387,51 +394,30 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       </div>
 
       {pendingCycle && !billingCyclePaymentQuote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Switch to {pendingCycle === 'yearly' ? 'Yearly' : 'Monthly'} Billing?</h3>
-            <p className="text-sm text-gray-600">
-              {pendingCycle === 'yearly'
-                ? 'You\'ll be charged the yearly rate immediately, with credit applied for unused days in your current month.'
-                : 'This change will take effect at the end of your current billing period.'}
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingCycle(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  changeBillingCycleMutation.mutate(
-                    { subscriptionId: Number(subscription.id), billing_cycle: pendingCycle },
-                    {
-                      onSuccess: (data) => {
-                        if (data?.payment_required) {
-                          setBillingCyclePaymentQuote({
-                            proration: (data as Record<string, unknown>).proration as Record<string, unknown>,
-                            billing_cycle: pendingCycle,
-                          });
-                        } else {
-                          setBillingCycle(pendingCycle);
-                          setPendingCycle(null);
-                        }
-                      },
-                      onError: () => setPendingCycle(null),
-                    },
-                  );
-                }}
-                disabled={changeBillingCycleMutation.isPending}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-              >
-                {changeBillingCycleMutation.isPending ? 'Checking...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <BillingCycleSwitchModal
+          pendingCycle={pendingCycle}
+          isPending={changeBillingCycleMutation.isPending}
+          onCancel={() => setPendingCycle(null)}
+          onConfirm={() => {
+            changeBillingCycleMutation.mutate(
+              { subscriptionId: Number(subscription.id), billing_cycle: pendingCycle },
+              {
+                onSuccess: (data) => {
+                  if (data?.payment_required) {
+                    setBillingCyclePaymentQuote({
+                      proration: (data as Record<string, unknown>).proration as Record<string, unknown>,
+                      billing_cycle: pendingCycle,
+                    });
+                  } else {
+                    setBillingCycle(pendingCycle);
+                    setPendingCycle(null);
+                  }
+                },
+                onError: () => setPendingCycle(null),
+              },
+            );
+          }}
+        />
       )}
 
       {billingCyclePaymentQuote && (

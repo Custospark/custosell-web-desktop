@@ -61,7 +61,7 @@ export default function PlatformManagePlansPage() {
     <>
       <PlanFormModal key={editingPlan?.id ?? 'create'} open={drawerOpen} onClose={() => setDrawerOpen(false)} plan={editingPlan} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Plans</h1>
           <p className="text-sm text-gray-500 mt-1">Manage subscription plans, pricing, features, and limits</p>
@@ -82,6 +82,7 @@ export default function PlatformManagePlansPage() {
         </div>
 
         <Table<Plan>
+          minWidth="60rem"
           rowKey={(p) => p.id}
           columns={[
             { key: 'name', header: 'Plan', render: (p) => (

@@ -76,7 +76,7 @@ export default function PlatformRolesPage() {
       />
       <PlatformRoleMembersModal open={membersFor !== null} role={membersFor} onClose={() => setMembersFor(null)} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Platform Roles</h1>
           <p className="text-sm text-gray-500 mt-1">Manage operator roles and permissions for the Custosell platform</p>
@@ -97,6 +97,7 @@ export default function PlatformRolesPage() {
         </div>
 
         <Table<PlatformRole>
+          minWidth="48rem"
           rowKey={(r) => r.id}
           columns={[
             {

@@ -82,7 +82,7 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
         </div>
 
         <div className="p-4">
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-3">
             <div className="rounded-lg bg-gray-50 p-3 text-center">
               <p className="text-lg font-bold text-gray-900">{formatUSD(entity.total_earned)}</p>
               <p className="text-[10px] text-gray-500">Earned</p>

@@ -102,7 +102,7 @@ export default function PlatformManageSubscriptionsPage() {
       </div>
 
       <Card>
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex flex-col gap-4 mb-4 lg:flex-row lg:items-center">
           <div className="flex-1">
             <SearchInput
               placeholder="Search by business or plan..."
@@ -111,7 +111,7 @@ export default function PlatformManageSubscriptionsPage() {
               onClear={() => setSearch('')}
             />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {STATUS_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -130,6 +130,7 @@ export default function PlatformManageSubscriptionsPage() {
         </div>
 
         <Table<PlatformSubscription & { __row: number }>
+          minWidth="72rem"
           rowKey={(s) => s.id}
           columns={[
             { key: '__row', header: '#', align: 'center', render: (s) => (

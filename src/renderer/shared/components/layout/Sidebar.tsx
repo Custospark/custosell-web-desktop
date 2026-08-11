@@ -76,7 +76,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
 
   useEffect(() => {
     if (!activeItemRef.current) return;
-    activeItemRef.current.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    activeItemRef.current.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
   }, [location.pathname, openGroup, isOpen]);
 
   return (

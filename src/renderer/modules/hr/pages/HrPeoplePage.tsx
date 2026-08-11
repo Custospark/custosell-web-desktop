@@ -204,6 +204,7 @@ export default function HrPeoplePage() {
             rowKey={(employee) => employee.id}
             columns={columns}
             data={paginated.data}
+            minWidth="40rem"
             onRowClick={(employee) => navigate(ROUTES.HR.EMPLOYEE(employee.id))}
           />
           <Pagination

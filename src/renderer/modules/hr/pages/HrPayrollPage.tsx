@@ -238,7 +238,7 @@ export default function HrPayrollPage() {
             </p>
           ) : (
             <div className={HR_SURFACE.tableWrap}>
-              <table className="min-w-full text-sm">
+              <table className="min-w-[26rem] text-sm">
                 <thead className="bg-white/60 text-left text-xs font-semibold uppercase text-gray-500">
                   <tr>
                     <th className="px-3 py-2">Employee</th>
@@ -292,7 +292,7 @@ export default function HrPayrollPage() {
           />
         ) : (
           <div className={HR_SURFACE.tableWrap}>
-            <table className="min-w-full text-sm">
+            <table className="min-w-[28rem] text-sm">
               <thead className="bg-white/60 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
                   <th className="px-3 py-2">Period</th>

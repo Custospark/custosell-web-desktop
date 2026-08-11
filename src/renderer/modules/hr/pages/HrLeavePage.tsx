@@ -238,7 +238,7 @@ export default function HrLeavePage() {
             </p>
           ) : (
             <div className={HR_SURFACE.tableWrap}>
-              <table className="min-w-full text-sm">
+              <table className="min-w-[30rem] text-sm">
                 <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                   <tr>
                     <th className="px-3 py-2">Employee</th>

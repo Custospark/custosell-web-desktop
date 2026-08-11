@@ -19,6 +19,7 @@ interface TableProps<T> {
   sortDir?: 'asc' | 'desc';
   onSort?: (key: string) => void;
   rowKey?: (item: T) => string | number;
+  minWidth?: string;
 }
 
 function SkeletonRow({ cols }: { cols: number }) {
@@ -33,11 +34,11 @@ function SkeletonRow({ cols }: { cols: number }) {
   );
 }
 
-export function Table<T>({ columns, data, loading, onRowClick, sortKey, sortDir, onSort, rowKey }: TableProps<T>) {
+export function Table<T>({ columns, data, loading, onRowClick, sortKey, sortDir, onSort, rowKey, minWidth }: TableProps<T>) {
   if (loading) {
     return (
       <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200" style={minWidth ? { minWidth } : undefined}>
           <thead className="bg-gray-50">
             <tr>
               {columns.map((col) => (
@@ -65,7 +66,7 @@ export function Table<T>({ columns, data, loading, onRowClick, sortKey, sortDir,
 
   return (
     <div className="overflow-x-auto border border-gray-200 rounded-lg">
-      <table className="min-w-full divide-y divide-gray-200">
+      <table className="min-w-full divide-y divide-gray-200" style={minWidth ? { minWidth } : undefined}>
         <thead className="bg-gray-50">
           <tr>
             {columns.map((col) => (

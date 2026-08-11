@@ -74,7 +74,7 @@ export default function HrSettingsPage() {
           </p>
         ) : (
           <div className={HR_SURFACE.tableWrap}>
-            <table className="min-w-full text-sm">
+            <table className="min-w-[40rem] text-sm">
               <thead className="bg-white/60 text-left text-xs font-semibold uppercase text-gray-500">
                 <tr>
                   <th className="px-3 py-2">When</th>

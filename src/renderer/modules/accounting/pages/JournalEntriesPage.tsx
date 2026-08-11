@@ -207,8 +207,8 @@ export default function JournalEntriesPage() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -224,7 +224,7 @@ export default function JournalEntriesPage() {
           onChange={setPeriodFilter}
           startYear={startYear}
           endYear={endYear}
-          className="flex-1"
+          className="w-full sm:flex-1"
         />
         <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
       </div>

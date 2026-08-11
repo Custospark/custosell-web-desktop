@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp'
 import { addToCart, updateQuantity, removeFromCart, clearCart, setCustomer, setDiscount, setLineTier, setLineDiscount, setAllLinesWholesale, setAllLinesRetail } from '../api/salesSlice';
 import { useOpenOrders } from '../api/orders/useOrderQueries';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { Search, Plus, ShoppingCart, X, RotateCcw, PauseCircle, FileText, Save, ListOrdered, ShoppingBag, Package } from 'lucide-react';
+import { Search, Plus, ShoppingCart, X, RotateCcw, RefreshCw, PauseCircle, FileText, Save, ListOrdered, ShoppingBag, Package } from 'lucide-react';
 import { ProductSearchThumb } from './ProductSearchThumb';
 import HeldOrdersModal from './HeldOrdersModal';
 import HoldOrderModal from './HoldOrderModal';
@@ -278,10 +278,14 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
                     }
                   }
                 }}
-                className="w-full pl-9 pr-10 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]" />
+                className="w-full pl-9 pr-16 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]" />
+              <button title="Refresh products" onClick={() => void handleReloadProducts()} disabled={isProductsFetching}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-blue-600 disabled:opacity-60 disabled:hover:bg-transparent transition-colors">
+                <RefreshCw className={`w-3.5 h-3.5 ${isProductsFetching ? 'animate-spin' : ''}`} />
+              </button>
               {search && (
                 <button title="Clear search" onClick={() => { setSearch(''); setShowResults(false); searchRef.current?.focus(); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400">
+                  className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}

@@ -393,7 +393,6 @@ export default function PlatformBusinessesPage() {
         ) : (
           <>
             <Table<PlatformBusiness & { __row: number }>
-              minWidth="90rem"
               rowKey={(b) => b.id}
               columns={[
                 { key: '__row', header: '#', align: 'center', render: (b) => (

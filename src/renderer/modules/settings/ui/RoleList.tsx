@@ -73,7 +73,6 @@ export default function RoleList() {
           </div>
         </div>
         <Table<RoleWithSyncMeta>
-          minWidth="40rem"
           rowKey={(r) => r.id}
           columns={[
             { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },

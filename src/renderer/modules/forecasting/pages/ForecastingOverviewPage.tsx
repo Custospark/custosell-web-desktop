@@ -149,7 +149,7 @@ function CashMonthsTable({ months }: { months: ForecastMonthRow[] }) {
 
   return (
     <div className={cn(FORECAST_SURFACE.tableWrap, 'max-h-[28rem] overflow-x-auto overflow-y-auto')}>
-      <table className="w-full min-w-[44rem] text-sm">
+      <table className="w-full min-w-full text-sm">
         <thead className="sticky top-0 z-10 bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
           <tr>
             <th className="whitespace-nowrap px-3 py-2">Month</th>

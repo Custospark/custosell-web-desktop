@@ -250,7 +250,6 @@ export default function PlatformPayoutsPage() {
         {filtered.length > 0 ? (
           <>
             <Table
-              minWidth="80rem"
               columns={[
                 {
                   key: 'index', header: '#',

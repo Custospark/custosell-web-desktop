@@ -96,7 +96,6 @@ export default function LocationList() {
           </div>
         </div>
         <Table<Location>
-          minWidth="40rem"
           rowKey={(l) => l.id}
           columns={[
             { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },

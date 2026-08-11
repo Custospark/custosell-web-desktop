@@ -107,7 +107,6 @@ export default function PlatformSalesRepsPage() {
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <Table
-          minWidth="72rem"
           columns={[
             { key: 'user', header: 'Name', render: (r: PlatformSalesRep) => (
               <div>

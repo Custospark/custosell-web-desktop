@@ -130,7 +130,6 @@ export default function PlatformManageSubscriptionsPage() {
         </div>
 
         <Table<PlatformSubscription & { __row: number }>
-          minWidth="72rem"
           rowKey={(s) => s.id}
           columns={[
             { key: '__row', header: '#', align: 'center', render: (s) => (

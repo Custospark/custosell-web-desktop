@@ -29,11 +29,12 @@ import { Button } from '../../shared/components/buttons/Button';
 import { PlatformUserRowActions } from './components/PlatformUserRowActions';
 import { PlatformUserModals } from './components/PlatformUserModals';
 import { PlatformUserFilters, type BusinessFilterValue } from './components/PlatformUserFilters';
+import { SearchInput } from '../../shared/components/inputs/SearchInput';
 import { PlatformAccountStatusBadge } from './components/PlatformAccountStatusBadge';
 import { PlatformActivityStatusBadge } from './components/PlatformActivityStatusBadge';
 import { PlatformBulkActionBar } from './components/PlatformBulkActionBar';
 import { PlatformUserStatCards } from './components/PlatformUserStatCards';
-import { Mail, Shield, Trash2, UserCog, KeyRound, CheckSquare, Square } from 'lucide-react';
+import { Mail, Shield, Trash2, UserCog, KeyRound, CheckSquare, Square, Search } from 'lucide-react';
 function defaultRange() {
   const to = format(new Date(), 'yyyy-MM-dd');
   const from = format(subDays(new Date(), 29), 'yyyy-MM-dd');
@@ -308,15 +309,27 @@ export default function PlatformUsersPage() {
         <PlatformUserStatCards stats={stats} rangeLabel={rangeLabel} />
       )}
 
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex-1">
+          <SearchInput
+            placeholder="Search by name, email, phone, business, or role..."
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(); }}
+            onClear={handleSearchClear}
+          />
+        </div>
+        <Button variant="secondary" size="sm" onClick={handleSearchSubmit} className="h-[38px] shrink-0">
+          <Search className="w-3.5 h-3.5 mr-1" />Search
+        </Button>
+        <p className="text-xs text-gray-400 sm:mt-3">
+          {rows.length} match{rows.length === 1 ? '' : 'es'} · {data?.total ?? 0} total
+        </p>
+      </div>
+
       <Card>
         <div className="flex flex-col gap-4 mb-4">
           <PlatformUserFilters
-            search={searchInput}
-            onSearchChange={handleSearchChange}
-            onSearchSubmit={handleSearchSubmit}
-            onSearchClear={handleSearchClear}
-            resultCount={rows.length}
-            totalCount={data?.total ?? 0}
             loginActivityFilter={loginActivityFilter}
             onLoginActivityFilterChange={handleLoginActivityFilterChange}
             accountStatusFilter={accountStatusFilter}
@@ -365,7 +378,6 @@ export default function PlatformUsersPage() {
         ) : (
           <>
             <Table<PlatformUser>
-              minWidth="60rem"
               rowKey={(u) => u.id}
               columns={[
                 {

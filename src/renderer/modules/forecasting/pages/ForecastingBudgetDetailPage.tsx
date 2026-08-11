@@ -188,7 +188,7 @@ export default function ForecastingBudgetDetailPage() {
               <p className="text-sm text-gray-500">No lines yet. Add your first zero-based line above.</p>
             ) : (
               <div className={cn(FORECAST_SURFACE.tableWrap, 'overflow-x-auto')}>
-                <table className="min-w-[44rem] text-sm">
+                <table className="min-w-full text-sm">
                   <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
                     <tr>
                       <th className="px-3 py-2">Label</th>

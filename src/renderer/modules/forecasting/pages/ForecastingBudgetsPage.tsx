@@ -102,7 +102,7 @@ export default function ForecastingBudgetsPage() {
         />
       ) : (
         <div className={cn(FORECAST_SURFACE.tableWrap, 'overflow-x-auto')}>
-          <table className="min-w-[36rem] text-sm">
+          <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
               <tr>
                 <th className="px-3 py-2">Year</th>

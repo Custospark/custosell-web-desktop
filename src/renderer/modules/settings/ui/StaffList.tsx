@@ -179,7 +179,6 @@ export default function StaffList() {
         </div>
         <Table<StaffWithSyncMeta>
           rowKey={(s) => s.id}
-          minWidth="52rem"
           columns={[
             { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
             { key: 'name', header: 'Name', render: (item) => (

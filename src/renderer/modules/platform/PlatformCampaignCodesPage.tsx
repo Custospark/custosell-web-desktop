@@ -78,7 +78,6 @@ export default function PlatformCampaignCodesPage() {
       <div className="rounded-xl border border-gray-200 bg-white">
         {codes && codes.length > 0 ? (
           <Table
-            minWidth="60rem"
             columns={[
               {
                 key: 'index',

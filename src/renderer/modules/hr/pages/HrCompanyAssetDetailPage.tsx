@@ -96,7 +96,7 @@ export default function HrCompanyAssetDetailPage() {
           <p className="text-sm text-gray-500">No custody events yet.</p>
         ) : (
           <div className={HR_SURFACE.tableWrap}>
-            <table className="min-w-[40rem] divide-y divide-gray-100 text-sm">
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
               <thead className="bg-white/60 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <tr>
                   <th className="px-4 py-2">When</th>

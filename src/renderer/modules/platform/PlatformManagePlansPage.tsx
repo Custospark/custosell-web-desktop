@@ -82,7 +82,6 @@ export default function PlatformManagePlansPage() {
         </div>
 
         <Table<Plan>
-          minWidth="60rem"
           rowKey={(p) => p.id}
           columns={[
             { key: 'name', header: 'Plan', render: (p) => (

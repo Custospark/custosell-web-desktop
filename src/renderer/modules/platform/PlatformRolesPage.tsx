@@ -97,7 +97,6 @@ export default function PlatformRolesPage() {
         </div>
 
         <Table<PlatformRole>
-          minWidth="48rem"
           rowKey={(r) => r.id}
           columns={[
             {

@@ -71,7 +71,7 @@ export function InvoiceLineItemsTable({
           </div>
         ) : (
           <div className="border border-gray-200 rounded-lg overflow-x-auto">
-            <table className="w-full min-w-[560px]">
+            <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Item</th>

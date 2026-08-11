@@ -135,8 +135,8 @@ export default function ReferralDropdown() {
       </button>
 
       {open && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-16 w-[calc(100vw-2rem)] max-w-sm rounded-xl border border-gray-200 bg-white shadow-xl z-50 lg:absolute lg:left-auto lg:right-0 lg:top-auto lg:-translate-x-0 lg:mt-2 lg:w-80">
-          <div className="px-4 py-3 border-b border-gray-200">
+        <div className="fixed left-1/2 -translate-x-1/2 top-16 w-[calc(100vw-2rem)] max-w-sm max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl z-50 lg:absolute lg:left-auto lg:right-0 lg:top-auto lg:-translate-x-0 lg:mt-2 lg:w-80">
+          <div className="px-4 py-3 border-b border-gray-200 shrink-0">
             <div className="flex items-center gap-2.5 mb-1">
               <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center ring-1 ring-indigo-200 shrink-0">
                 <Gift className="w-4.5 h-4.5 text-indigo-600" />
@@ -165,7 +165,7 @@ export default function ReferralDropdown() {
               </button>
             </div>
           ) : (
-            <>
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               <div className="px-4 py-3 border-b border-gray-100">
                   <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
                     <code className="text-sm font-bold text-gray-900 tracking-wider select-all">{code}</code>
@@ -296,7 +296,7 @@ export default function ReferralDropdown() {
                   </button>
                 )}
               </div>
-            </>
+            </div>
           )}
         </div>
       )}

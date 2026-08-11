@@ -58,7 +58,7 @@ export default function RoleList() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Roles</h1>
           <p className="text-sm text-gray-500 mt-1">Organize staff by job title — module access is set per staff member</p>
@@ -73,6 +73,7 @@ export default function RoleList() {
           </div>
         </div>
         <Table<RoleWithSyncMeta>
+          minWidth="40rem"
           rowKey={(r) => r.id}
           columns={[
             { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },

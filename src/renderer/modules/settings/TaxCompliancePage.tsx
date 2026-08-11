@@ -297,7 +297,7 @@ export default function TaxCompliancePage() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 mb-2">Claimable input VAT</h3>
                   <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="min-w-full text-sm">
+                    <table className="min-w-[36rem] text-sm">
                       <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
                         <tr>
                           <th className="px-3 py-2">Date</th>

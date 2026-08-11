@@ -130,12 +130,12 @@ export default function StaffList() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Staff Management</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your staff users and their roles</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setBranchModalOpen(true)}><GitBranch className="w-4 h-4 mr-1.5" />Add Branch</Button>
           <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Staff</Button>
         </div>
@@ -179,6 +179,7 @@ export default function StaffList() {
         </div>
         <Table<StaffWithSyncMeta>
           rowKey={(s) => s.id}
+          minWidth="52rem"
           columns={[
             { key: 'index', header: '#', render: (_item, idx) => (paginated.page - 1) * paginated.pageSize + idx + 1 },
             { key: 'name', header: 'Name', render: (item) => (

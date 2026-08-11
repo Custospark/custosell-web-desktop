@@ -341,7 +341,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
       <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-6 sm:p-8 overflow-x-auto">
         <h2 className="text-xl font-bold mb-6 text-center text-gray-900">Feature Comparison</h2>
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[48rem] text-sm">
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-3 px-2 font-semibold text-gray-700">Feature</th>

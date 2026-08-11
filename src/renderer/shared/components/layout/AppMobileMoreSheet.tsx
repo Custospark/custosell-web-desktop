@@ -12,6 +12,7 @@ import {
 import { isOnlineOnlyNavTarget, onlineOnlyHoverMessage } from './onlineOnlyNav';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { OfflineDisabledNav } from './OfflineDisabledNav';
+import { useSearchKeyboard } from './search/useSearchKeyboard';
 
 interface AppMobileMoreSheetProps {
   remainingLeaves: AccessibleNavLeaf[];
@@ -22,34 +23,24 @@ interface AppMobileMoreSheetProps {
 export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreSheetProps) {
   const { dispatch } = useAppContext();
   const { isCompletelyOffline } = useNetworkStatus();
+  const { openSearch } = useSearchKeyboard();
   const [browseOpen, setBrowseOpen] = useState(false);
-  const [filter, setFilter] = useState('');
   const activeItemRef = useRef<HTMLAnchorElement | null>(null);
 
   useEffect(() => {
     if (!activeItemRef.current) return;
     activeItemRef.current.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-  }, [pathname, filter]);
-
-  const filteredLeaves = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return remainingLeaves;
-    return remainingLeaves.filter(
-      (leaf) =>
-        leaf.label.toLowerCase().includes(q)
-        || leaf.groupLabel.toLowerCase().includes(q),
-    );
-  }, [remainingLeaves, filter]);
+  }, [pathname]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, AccessibleNavLeaf[]>();
-    for (const leaf of filteredLeaves) {
+    for (const leaf of remainingLeaves) {
       const list = map.get(leaf.groupLabel) ?? [];
       list.push(leaf);
       map.set(leaf.groupLabel, list);
     }
     return Array.from(map.entries());
-  }, [filteredLeaves]);
+  }, [remainingLeaves]);
 
   if (typeof document === 'undefined') return null;
 
@@ -108,24 +99,20 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
 
           {remainingLeaves.length > 4 ? (
             <div className="sticky top-0 z-10 -mx-3 -mt-3 bg-white px-3 py-2.5">
-              <div className="relative">
+              <button
+                type="button"
+                onClick={() => { openSearch(); close(); }}
+                className="relative flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-left text-sm text-slate-400 transition-colors active:bg-slate-100"
+              >
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
-                <input
-                  type="search"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  placeholder="Search anything…"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
+                <span className="truncate">Search anything…</span>
+              </button>
             </div>
           ) : null}
 
           {grouped.length === 0 ? (
             <p className="px-1 py-8 text-center text-sm text-slate-500">
-              {filter.trim()
-                ? 'No shortcuts match — try Browse Custosell, or open Menu.'
-                : 'No extra shortcuts here — use Browse Custosell, or open Menu for the full list.'}
+              No extra shortcuts here — use Browse Custosell, or open Menu for the full list.
             </p>
           ) : (
             <div className="space-y-4">

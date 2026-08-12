@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
-import { useProfile } from '../../shared/api/account/AccountQueries';
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import PaymentPhoneField from '../../shared/components/inputs/PaymentPhoneField';
@@ -9,6 +8,7 @@ import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, Wallet, Tag, ChevronD
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import type { PaymentType } from '../../shared/types';
+import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
 
 interface SubscriptionPaymentModalProps {
   planName: string;
@@ -26,15 +26,6 @@ interface SubscriptionPaymentModalProps {
   onComplete: () => void;
 }
 
-type SubscriptionReferral = {
-  code?: string | null;
-  discount_type?: string | null;
-  discount_value?: string | null;
-  discount_duration_months?: number | null;
-  discount_applied?: string | null;
-  status?: string | null;
-} | null;
-
 export default function SubscriptionPaymentModal({
   planName, planPrice, billingCycle, amount, currency, userPhone,
   actionLabel, paymentType, metadata, topupMonths, refreshing, onClose, onComplete,
@@ -43,15 +34,13 @@ export default function SubscriptionPaymentModal({
   const [initiated, setInitiated] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [showReferralInput, setShowReferralInput] = useState(false);
-  const [referralDiscountUsd, setReferralDiscountUsd] = useState(0);
+  const [appliedReferral, setAppliedReferral] = useState<ReferralRecord | null>(null);
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
   const { data: earnings } = useReferralEarnings();
   const applyReferralMutation = useApplyReferralCode();
-  const { refetch: refetchProfile, data: profileData } = useProfile();
-  const profileReferral = profileData?.business?.subscription?.referral as SubscriptionReferral;
-  const hasAppliedCode = referralDiscountUsd > 0 || !!profileReferral?.code;
+  const hasAppliedCode = !!appliedReferral;
   const { isUsd, toLocal } = useUsdToLocal(currency);
   const availableCreditUsd = earnings?.available_credit ?? 0;
   const creditApplied = isUsd
@@ -61,17 +50,16 @@ export default function SubscriptionPaymentModal({
   // Discount displayed in the same currency as `amount`, mirroring OnboardingPage.
   // Percentages scale with the charged amount (currency-independent); flat amounts
   // and free months use the authoritative USD discount_applied converted once.
+  const appliedDiscountUsd = Number(appliedReferral?.discount_applied ?? 0);
   const discountConverted = (() => {
-    if (profileReferral?.code) {
-      if (profileReferral.discount_type === 'percentage') {
-        return Math.round((amount * Number(profileReferral.discount_value ?? 0)) / 100 * 100) / 100;
-      }
-      if (profileReferral.discount_type === 'free_month') {
-        return billingCycle === 'yearly' ? Math.round((amount / 12) * 100) / 100 : amount;
-      }
-      return isUsd ? Number(profileReferral.discount_applied ?? 0) : toLocal(Number(profileReferral.discount_applied ?? 0));
+    if (!appliedReferral) return 0;
+    if (appliedReferral.discount_type === 'percentage') {
+      return Math.round((amount * Number(appliedReferral.discount_value ?? 0)) / 100 * 100) / 100;
     }
-    return isUsd ? referralDiscountUsd : toLocal(referralDiscountUsd);
+    if (appliedReferral.discount_type === 'free_month') {
+      return billingCycle === 'yearly' ? Math.round((amount / 12) * 100) / 100 : amount;
+    }
+    return isUsd ? appliedDiscountUsd : toLocal(appliedDiscountUsd);
   })();
   const amountAfterDiscount = Math.max(0, amountAfterCredit - discountConverted);
   const formatLocal = (value: number) => formatCurrency(value, currency);
@@ -253,6 +241,11 @@ export default function SubscriptionPaymentModal({
                 </span>
                 <span className="font-semibold text-green-700">
                   -{isUsd ? formatUSD(discountConverted) : formatLocal(discountConverted)}
+                  {!isUsd && appliedDiscountUsd > 0 && (
+                    <span className="text-xs font-normal text-gray-400 ml-1">
+                      (${appliedDiscountUsd.toFixed(2)} USD)
+                    </span>
+                  )}
                 </span>
               </div>
             )}
@@ -277,7 +270,7 @@ export default function SubscriptionPaymentModal({
             <div className="flex items-center gap-2 text-sm text-green-800">
               <CheckCircle className="w-4 h-4 text-green-600" />
               <span>
-                Promo code <span className="font-mono font-medium">{profileReferral?.code ?? ''}</span> applied
+                Promo code <span className="font-mono font-medium">{appliedReferral?.code ?? ''}</span> applied
               </span>
             </div>
             {referralSuccess && (
@@ -319,14 +312,13 @@ export default function SubscriptionPaymentModal({
                         { referral_code: referralCode.trim() },
                         {
                           onSuccess: (data) => {
+                            setAppliedReferral(data?.referral ?? null);
                             const num = Number(data?.referral?.discount_applied ?? 0);
-                            setReferralDiscountUsd(num > 0 ? num : 0);
                             setReferralSuccess(
                               num > 0 ? '$' + num.toFixed(2) + ' discount applied' : 'Code applied successfully'
                             );
                             setReferralCode('');
                             setShowReferralInput(false);
-                            refetchProfile();
                           },
                         },
                       );

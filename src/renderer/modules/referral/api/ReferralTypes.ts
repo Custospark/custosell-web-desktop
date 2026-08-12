@@ -25,6 +25,10 @@ export interface ReferralRecord {
   subscription_id: number;
   referred_business_id: number;
   status: 'pending' | 'active' | 'rewarded';
+  code?: string | null;
+  discount_type?: string | null;
+  discount_value?: string | null;
+  discount_duration_months?: number | null;
   discount_applied: string | null;
   reward_amount: string | null;
   reward_paid: boolean;

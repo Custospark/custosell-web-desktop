@@ -18,12 +18,12 @@ export function AppChrome() {
   const user = useAppSelector((s) => s.auth.user);
   const { state } = useAppContext();
   const { isOpen: searchOpen, closeSearch } = useSearchKeyboard();
-  const canSearch = !state.posFullscreen && canUseGlobalSearch(user);
+  const canSearch = !state.contentFullscreen && canUseGlobalSearch(user);
 
   return (
     <div className="flex flex-col h-dvh overflow-hidden bg-gray-50/30">
-      {!state.posFullscreen && <AppStatusBanners />}
-      {!state.posFullscreen && <SearchTopBar />}
+      {!state.contentFullscreen && <AppStatusBanners />}
+      {!state.contentFullscreen && <SearchTopBar />}
       <Outlet />
       {canSearch && <SearchModal isOpen={searchOpen} onClose={closeSearch} />}
     </div>

@@ -7,8 +7,8 @@ interface AppState {
   mobileMoreOpen: boolean;
   theme: 'light' | 'dark';
   systemStatus: 'online' | 'offline';
-  /** Immersive POS mode: app chrome (sidebar, nav, footer, banners) hidden, cashier UI only. */
-  posFullscreen: boolean;
+  /** Immersive content mode: app chrome (sidebar, nav, footer, banners) hidden, content only. */
+  contentFullscreen: boolean;
 }
 
 type AppAction =
@@ -20,7 +20,7 @@ type AppAction =
   | { type: 'TOGGLE_MOBILE_MORE' }
   | { type: 'TOGGLE_THEME' }
   | { type: 'SET_SYSTEM_STATUS'; payload: 'online' | 'offline' }
-  | { type: 'SET_POS_FULLSCREEN'; payload: boolean };
+  | { type: 'SET_CONTENT_FULLSCREEN'; payload: boolean };
 
 const initialState: AppState = {
   // Closed by default so mobile does not start with the drawer overlay open.
@@ -30,7 +30,7 @@ const initialState: AppState = {
   mobileMoreOpen: false,
   theme: 'light',
   systemStatus: 'online',
-  posFullscreen: false,
+  contentFullscreen: false,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -68,8 +68,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
     case 'SET_SYSTEM_STATUS':
       return { ...state, systemStatus: action.payload };
-    case 'SET_POS_FULLSCREEN':
-      return { ...state, posFullscreen: action.payload };
+    case 'SET_CONTENT_FULLSCREEN':
+      return { ...state, contentFullscreen: action.payload };
     default:
       return state;
   }

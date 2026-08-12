@@ -26,15 +26,20 @@ export function Layout() {
     navigate(ROUTES.ONBOARDING, { replace: true });
   }, [isAuthenticated, subscription, location.pathname, navigate]);
 
-  // Immersive POS mode is scoped to the cashier page — leaving it exits fullscreen.
+  // Immersive content mode is scoped to the cashier page and pipeline/estimates
+  // board detail pages — leaving those routes exits fullscreen.
   useEffect(() => {
-    if (state.posFullscreen && location.pathname !== ROUTES.SALES.NEW) {
-      dispatch({ type: 'SET_POS_FULLSCREEN', payload: false });
+    const onImmersiveRoute =
+      location.pathname === ROUTES.SALES.NEW ||
+      location.pathname.startsWith(`${ROUTES.PIPELINE.BOARDS}/`) ||
+      location.pathname.startsWith(`${ROUTES.ESTIMATES.BOARDS}/`);
+    if (state.contentFullscreen && !onImmersiveRoute) {
+      dispatch({ type: 'SET_CONTENT_FULLSCREEN', payload: false });
     }
-  }, [state.posFullscreen, location.pathname, dispatch]);
+  }, [state.contentFullscreen, location.pathname, dispatch]);
 
-  // Immersive POS mode hides all app chrome so the cashier gets maximum screen space.
-  if (state.posFullscreen) {
+  // Immersive content mode hides all app chrome so the content gets maximum screen space.
+  if (state.contentFullscreen) {
     return (
       <div className="relative flex flex-1 min-h-0 min-w-0 w-full overflow-hidden">
         <main className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 sm:p-6">

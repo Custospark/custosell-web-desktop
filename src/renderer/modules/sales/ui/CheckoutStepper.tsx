@@ -51,7 +51,7 @@ function StepMarker({ index, label, state, onClick }: { index: number; label: st
 export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
   const isPayment = step === 'payment';
   const { state, dispatch } = useAppContext();
-  const isFullscreen = state.posFullscreen;
+  const isFullscreen = state.contentFullscreen;
   return (
     <div className="mb-4 pb-3 border-b border-gray-200 flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="flex items-center gap-3 min-w-0">
@@ -73,7 +73,7 @@ export function CheckoutStepper({ step, onBack }: CheckoutStepperProps) {
 
       <button
         type="button"
-        onClick={() => dispatch({ type: 'SET_POS_FULLSCREEN', payload: !isFullscreen })}
+        onClick={() => dispatch({ type: 'SET_CONTENT_FULLSCREEN', payload: !isFullscreen })}
         title={isFullscreen ? 'Exit full-screen cashier mode' : 'Full-screen cashier mode (hides navigation)'}
         className={
           isFullscreen

@@ -6,8 +6,9 @@ import BoardCollaborationButton from './BoardCollaborationButton';
 import BoardAccessBadges from './BoardAccessBadges';
 import LeadSearchHint from './LeadSearchHint';
 import type { BoardMemberRole } from '../api/boardRoleUtils';
-import { CalendarDays, ChevronDown, ChevronUp, Columns3, LayoutGrid, Search, Settings, Upload, UserPlus, Users, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronUp, Columns3, LayoutGrid, Maximize2, Minimize2, Search, Settings, Upload, UserPlus, Users, X } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
+import { useAppContext } from '../../../app/contexts/AppContext';
 
 interface QueryToken {
   raw: string;
@@ -103,6 +104,10 @@ export default function BoardKanbanPageHeader({
   onApplySearchToken,
 }: BoardKanbanPageHeaderProps) {
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  const { state, dispatch } = useAppContext();
+  const isFullscreen = state.contentFullscreen;
+  const toggleFullscreen = () =>
+    dispatch({ type: 'SET_CONTENT_FULLSCREEN', payload: !isFullscreen });
   return (
     <header className="relative z-30 shrink-0 border-b border-white/40 bg-white/85 px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3">
       <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-indigo-500/80 sm:mb-2">
@@ -171,6 +176,20 @@ export default function BoardKanbanPageHeader({
           )}
 
           <div className="ml-auto flex flex-wrap items-center gap-2 sm:mr-3">
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit full screen (hides navigation)' : 'Full screen (hides navigation)'}
+              className={
+                isFullscreen
+                  ? 'inline-flex items-center gap-1.5 rounded-lg border-2 border-amber-400 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 shadow-sm transition-colors hover:bg-amber-100 hover:border-amber-500'
+                  : 'inline-flex items-center gap-1.5 rounded-lg border-2 border-blue-300 bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 hover:border-blue-400'
+              }
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {isFullscreen ? 'Exit full screen' : 'Full screen'}
+            </button>
+
             <div className="inline-flex rounded-lg border border-blue-100 bg-white p-0.5 shadow-sm">
               <button
                 type="button"

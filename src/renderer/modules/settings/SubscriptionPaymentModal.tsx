@@ -35,17 +35,6 @@ type SubscriptionReferral = {
   status?: string | null;
 } | null;
 
-function referenceDiscount(referral: SubscriptionReferral, planPrice: number, billingCycle: string): number {
-  if (!referral) return 0;
-  if (referral.discount_type === 'percentage') {
-    return Math.round((planPrice * Number(referral.discount_value ?? 0)) / 100 * 100) / 100;
-  }
-  if (referral.discount_type === 'free_month') {
-    return billingCycle === 'yearly' ? Math.round(planPrice / 12 * 100) / 100 : planPrice;
-  }
-  return Number(referral.discount_applied ?? 0);
-}
-
 export default function SubscriptionPaymentModal({
   planName, planPrice, billingCycle, amount, currency, userPhone,
   actionLabel, paymentType, metadata, topupMonths, refreshing, onClose, onComplete,
@@ -61,16 +50,29 @@ export default function SubscriptionPaymentModal({
   const { data: earnings } = useReferralEarnings();
   const applyReferralMutation = useApplyReferralCode();
   const { refetch: refetchProfile, data: profileData } = useProfile();
-  const profileReferral = profileData?.business?.subscription?.referral;
-  const persistedDiscountUsd = referenceDiscount(profileReferral, planPrice, billingCycle);
-  const activeDiscountUsd = referralDiscountUsd > 0 ? referralDiscountUsd : persistedDiscountUsd;
+  const profileReferral = profileData?.business?.subscription?.referral as SubscriptionReferral;
+  const hasAppliedCode = referralDiscountUsd > 0 || !!profileReferral?.code;
   const { isUsd, toLocal } = useUsdToLocal(currency);
   const availableCreditUsd = earnings?.available_credit ?? 0;
   const creditApplied = isUsd
     ? Math.min(availableCreditUsd, amount)
     : Math.min(toLocal(availableCreditUsd), amount);
   const amountAfterCredit = amount - creditApplied;
-  const discountConverted = isUsd ? activeDiscountUsd : toLocal(activeDiscountUsd);
+  // Discount displayed in the same currency as `amount`, mirroring OnboardingPage.
+  // Percentages scale with the charged amount (currency-independent); flat amounts
+  // and free months use the authoritative USD discount_applied converted once.
+  const discountConverted = (() => {
+    if (profileReferral?.code) {
+      if (profileReferral.discount_type === 'percentage') {
+        return Math.round((amount * Number(profileReferral.discount_value ?? 0)) / 100 * 100) / 100;
+      }
+      if (profileReferral.discount_type === 'free_month') {
+        return billingCycle === 'yearly' ? Math.round((amount / 12) * 100) / 100 : amount;
+      }
+      return isUsd ? Number(profileReferral.discount_applied ?? 0) : toLocal(Number(profileReferral.discount_applied ?? 0));
+    }
+    return isUsd ? referralDiscountUsd : toLocal(referralDiscountUsd);
+  })();
   const amountAfterDiscount = Math.max(0, amountAfterCredit - discountConverted);
   const formatLocal = (value: number) => formatCurrency(value, currency);
 
@@ -270,7 +272,23 @@ export default function SubscriptionPaymentModal({
           label="Mobile Money number"
         />
 
-        <div className="border border-gray-200 rounded-xl px-4 py-3">
+        {hasAppliedCode ? (
+          <div className="border border-green-200 bg-green-50 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-green-800">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>
+                Promo code <span className="font-mono font-medium">{profileReferral?.code ?? ''}</span> applied
+              </span>
+            </div>
+            {referralSuccess && (
+              <div className="mt-1 flex items-center gap-1.5 text-sm text-green-700">
+                <CheckCircle className="w-4 h-4" />
+                {referralSuccess}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="border border-gray-200 rounded-xl px-4 py-3">
           <button
             type="button"
             onClick={() => setShowReferralInput((v) => !v)}
@@ -307,6 +325,7 @@ export default function SubscriptionPaymentModal({
                               num > 0 ? '$' + num.toFixed(2) + ' discount applied' : 'Code applied successfully'
                             );
                             setReferralCode('');
+                            setShowReferralInput(false);
                             refetchProfile();
                           },
                         },
@@ -333,7 +352,8 @@ export default function SubscriptionPaymentModal({
               )}
             </>
           )}
-        </div>
+          </div>
+        )}
 
         <Button
           type="button"

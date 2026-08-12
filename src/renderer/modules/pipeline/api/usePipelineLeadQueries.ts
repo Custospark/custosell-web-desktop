@@ -39,6 +39,32 @@ import {
   omitLeadMeta,
 } from './pipelineQueryUtils';
 
+/** Resolve assignee user refs from the board roster so optimistic UI updates instantly. */
+function resolveOptimisticAssignees(
+  board: PipelineBoard,
+  assigneeIds: number[],
+): PipelineUserRef[] {
+  const assignees: PipelineUserRef[] = [];
+  const roster = board.members ?? [];
+  const allKnown = roster
+    .map((m) => m.user)
+    .filter((u): u is PipelineUserRef => u != null);
+  if (board.creator && assigneeIds.includes(board.creator.id)) {
+    assignees.push(board.creator);
+  }
+  for (const user of allKnown) {
+    if (assigneeIds.includes(user.id) && !assignees.some((a) => a.id === user.id)) {
+      assignees.push(user);
+    }
+  }
+  for (const id of assigneeIds) {
+    if (!assignees.some((a) => a.id === id)) {
+      assignees.push({ id, name: `User #${id}` });
+    }
+  }
+  return assignees;
+}
+
 export function usePipelineLeads(filters?: Record<string, string>) {
   const params = filters ? new URLSearchParams(filters).toString() : '';
   return useQuery<PipelineLead[]>({
@@ -93,28 +119,9 @@ export function useCreatePipelineLead() {
         .map((id) => labelMap.get(id))
         .filter((l): l is PipelineLabel => l != null);
 
-      const optimisticAssignees: PipelineUserRef[] = [];
-      if (payload.assignee_ids?.length) {
-        const cachedBoard = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
-        const assigneeIds = payload.assignee_ids;
-        const allKnown = (cachedBoard?.members ?? [])
-          .map((m) => m.user)
-          .filter((u): u is PipelineUserRef => u != null);
-        const creator = cachedBoard?.creator;
-        if (creator && assigneeIds.includes(creator.id)) {
-          optimisticAssignees.push(creator);
-        }
-        for (const m of allKnown) {
-          if (assigneeIds.includes(m.id) && !optimisticAssignees.some((a) => a.id === m.id)) {
-            optimisticAssignees.push(m);
-          }
-        }
-        for (const id of assigneeIds) {
-          if (!optimisticAssignees.some((a) => a.id === id)) {
-            optimisticAssignees.push({ id, name: `User #${id}` });
-          }
-        }
-      }
+      const optimisticAssignees = payload.assignee_ids?.length && previousKanban
+        ? resolveOptimisticAssignees(previousKanban, payload.assignee_ids)
+        : [];
 
       const optimisticLead: PipelineLead = {
         id: tempId,
@@ -202,15 +209,21 @@ export function useUpdatePipelineLead() {
       const previousLead = existing;
       const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
 
+      const optimisticPatch: UpdateLeadPayload = { ...payload };
+      if (payload.assignee_ids && previousKanban) {
+        optimisticPatch.assignees = resolveOptimisticAssignees(previousKanban, payload.assignee_ids);
+        optimisticPatch.assigned_to = payload.assigned_to ?? payload.assignee_ids[0] ?? null;
+      }
+
       if (previousLead) {
-        qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...payload });
-        const historyEntries = buildOptimisticHistoryForUpdate(previousLead, payload);
+        qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...optimisticPatch });
+        const historyEntries = buildOptimisticHistoryForUpdate(previousLead, optimisticPatch);
         if (historyEntries.length > 0) {
           appendLeadActivitiesOptimistic(qc, id, boardId, historyEntries);
         }
       }
       if (previousKanban) {
-        qc.setQueryData(pipelineKeys.kanban(boardId), updateLeadOnKanban(previousKanban, id, payload));
+        qc.setQueryData(pipelineKeys.kanban(boardId), updateLeadOnKanban(previousKanban, id, optimisticPatch));
       }
       return { previousLead, previousKanban, boardId, leadId: id };
     },

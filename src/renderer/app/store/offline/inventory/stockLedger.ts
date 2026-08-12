@@ -139,7 +139,7 @@ export const stockLedger = {
 
   async getPendingAdjustments(): Promise<PendingAdjustment[]> {
     const db = await getOfflineDb();
-    const all = await db.getAll<PendingAdjustment>('adjustments');
+    const all = (await db.getAll('adjustments')) as PendingAdjustment[];
     const bid = activeBusinessId();
     return all.filter(
       (a) => a.syncStatus === 'pending' && (bid === 0 || a.businessId == null || a.businessId === bid),

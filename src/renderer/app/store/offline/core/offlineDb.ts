@@ -1,4 +1,4 @@
-import { openDB, type IDBPDatabase } from 'idb';
+import { openDB, type IDBPDatabase, type IDBPTransaction } from 'idb';
 
 export const OFFLINE_DB_NAME = 'CustosellOffline';
 export const OFFLINE_DB_VERSION = 15;

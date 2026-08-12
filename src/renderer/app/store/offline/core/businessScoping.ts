@@ -17,7 +17,7 @@ export const scopedStore = {
 
   async getAll<T extends { businessId?: number }>(storeName: string): Promise<T[]> {
     const db = await getOfflineDb();
-    const all = await db.getAll<T>(storeName);
+    const all = (await db.getAll(storeName)) as T[];
     const bid = currentBusinessId();
     if (bid == null) return all;
     return all.filter((r) => r.businessId == null || r.businessId === bid);

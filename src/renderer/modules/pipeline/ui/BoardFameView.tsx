@@ -27,6 +27,7 @@ function timeAgo(dateStr: string): string {
 }
 interface BoardFameViewProps {
   canContribute?: boolean;
+  boardId: number;
 }
 
 const TYPE_STYLES: Record<string, { icon: typeof Quote; gradient: string; border: string; badge: string }> = {
@@ -93,8 +94,12 @@ function FameCard({ post, canManage, onEdit }: { post: WallFamePost; canManage: 
       )}
 
       {post.photo_url && (
-        <div className="aspect-[16/9] w-full overflow-hidden bg-gray-100">
-            <img src={avatarUrl(post.photo_url) ?? undefined} alt="" className="h-full w-full object-cover" />
+        <div className="w-full overflow-hidden bg-gray-100 p-3">
+          <img
+            src={avatarUrl(post.photo_url) ?? undefined}
+            alt=""
+            className="mx-auto max-h-72 w-full rounded-lg object-contain"
+          />
         </div>
       )}
 
@@ -174,7 +179,7 @@ function FameCard({ post, canManage, onEdit }: { post: WallFamePost; canManage: 
   );
 }
 
-export default function BoardFameView({ canContribute }: BoardFameViewProps) {
+export default function BoardFameView({ canContribute, boardId }: BoardFameViewProps) {
   const { data: posts = [], isLoading } = useWallFamePosts();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<WallFamePost | null>(null);
@@ -252,11 +257,12 @@ export default function BoardFameView({ canContribute }: BoardFameViewProps) {
       )}
 
       {createOpen && (
-        <CreateWallPostModal open onClose={() => setCreateOpen(false)} />
+        <CreateWallPostModal open boardId={boardId} onClose={() => setCreateOpen(false)} />
       )}
       {editingPost && (
         <CreateWallPostModal
           open
+          boardId={boardId}
           post={editingPost}
           onClose={() => setEditingPost(null)}
         />

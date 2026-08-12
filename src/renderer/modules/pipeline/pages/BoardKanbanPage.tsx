@@ -266,7 +266,7 @@ export default function BoardKanbanPage() {
         />
       </div>
       <div className={cn('min-h-0 flex-1 overflow-y-auto', viewMode !== 'fame' && 'hidden')} aria-hidden={viewMode !== 'fame'} style={fameBgStyle}>
-        <BoardFameView canContribute={canContribute} />
+        <BoardFameView canContribute={canContribute} boardId={boardId} />
       </div>
       <BoardSwitcherIcons
         allowCreate={allowCreateBoard}

@@ -1,13 +1,13 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useCreateWallPost, useUpdateWallPost } from '../api/useWallFameQueries';
 import { pipelineInputClass, PipelineFormSection, PipelineIconField, PipelineModalHero } from './pipelineFormFields';
-import { useStaff } from '../../settings/api/settings/StaffQueries';
+import { usePipelineMemberRoster } from '../api/usePipelineMemberRoster';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import {
   Quote, Megaphone, Trophy, Flag, Sparkles, User, Users,
-  Type, MessageSquare, X, Camera,
+  Type, MessageSquare, X, Camera, Search,
 } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import type { WallFamePost } from '../api/pipelineTypes';
@@ -16,6 +16,7 @@ interface CreateWallPostModalProps {
   open: boolean;
   onClose: () => void;
   post?: WallFamePost | null;
+  boardId?: number;
 }
 
 const POST_TYPES = [
@@ -25,11 +26,11 @@ const POST_TYPES = [
   { value: 'milestone', label: 'Milestone', icon: Flag, description: 'Mark a team achievement' },
 ] as const;
 
-export default function CreateWallPostModal({ open, onClose, post }: CreateWallPostModalProps) {
+export default function CreateWallPostModal({ open, onClose, post, boardId }: CreateWallPostModalProps) {
   const createPost = useCreateWallPost();
   const updatePost = useUpdateWallPost();
   const isEdit = !!post;
-  const { data: staff = [] } = useStaff();
+  const roster = usePipelineMemberRoster(boardId);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [type, setType] = useState<string>(post?.type ?? 'shoutout');
@@ -39,14 +40,23 @@ export default function CreateWallPostModal({ open, onClose, post }: CreateWallP
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<number | null>(post?.staff?.id ?? null);
   const [authorName, setAuthorName] = useState(post?.staff?.name ?? post?.author_name ?? '');
+  const [memberSearch, setMemberSearch] = useState('');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  const selectedStaff = selectedStaffId ? staff.find((s) => s.id === selectedStaffId) : null;
+  const selectedStaff = selectedStaffId ? roster.find((s) => s.id === selectedStaffId) : null;
+
+  const filteredRoster = useMemo(() => {
+    const q = memberSearch.trim().toLowerCase();
+    if (!q) return roster;
+    return roster.filter(
+      (m) => m.name.toLowerCase().includes(q) || (m.email?.toLowerCase().includes(q) ?? false),
+    );
+  }, [roster, memberSearch]);
 
   const handleStaffSelect = (id: number | null) => {
     setSelectedStaffId(id);
     if (id) {
-      const s = staff.find((st) => st.id === id);
+      const s = roster.find((st) => st.id === id);
       if (s) setAuthorName(s.name);
     }
   };
@@ -131,7 +141,7 @@ export default function CreateWallPostModal({ open, onClose, post }: CreateWallP
                 <img
                   src={photoPreview}
                   alt="Preview"
-                  className="h-full w-full rounded-xl object-cover"
+                  className="h-full w-full rounded-xl object-contain"
                 />
                 <button
                   type="button"
@@ -210,11 +220,23 @@ export default function CreateWallPostModal({ open, onClose, post }: CreateWallP
         </PipelineFormSection>
 
         <PipelineFormSection title="Who" icon={Users} description="Celebrate a team member or someone else">
-          {staff.length > 0 && (
+          {roster.length > 0 && (
             <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-500 uppercase tracking-wider">Select a team member</label>
-              <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto rounded-lg border border-gray-200 p-2.5">
-                {staff.filter((s) => s.is_active).map((s) => (
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="search"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  placeholder="Search members by name or email…"
+                  className={cn(pipelineInputClass, 'pl-10 text-sm')}
+                />
+              </div>
+              <div className="mt-2 flex max-h-40 flex-wrap gap-2 overflow-y-auto rounded-lg border border-gray-200 p-2.5">
+                {filteredRoster.length === 0 ? (
+                  <p className="w-full py-2 text-center text-xs text-gray-400">No members match your search.</p>
+                ) : filteredRoster.map((s) => (
                   <button
                     key={s.id}
                     type="button"
@@ -231,7 +253,7 @@ export default function CreateWallPostModal({ open, onClose, post }: CreateWallP
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-xs text-gray-400">Selecting a member auto-fills their name. Click again to deselect.</p>
+              <p className="mt-1.5 text-xs text-gray-400">Select to auto-fill the name, click again to deselect.</p>
             </div>
           )}
 

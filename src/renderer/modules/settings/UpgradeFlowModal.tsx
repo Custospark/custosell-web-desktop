@@ -48,7 +48,7 @@ export default function UpgradeFlowModal({
   const quoteErrorMessage = (quoteErrorObj && (quoteErrorObj as { response?: { data?: { message?: string } } })?.response?.data?.message) ?? undefined;
 
   const { data: earnings } = useReferralEarnings();
-  const availableCredit = earnings?.available_credit ?? 0;
+  const availableCredit = earnings?.business_credit ?? 0;
   const creditAfterProration = availableCredit > 0
     ? Math.min(availableCredit, prorationDueUsd || prorationDue)
     : 0;

@@ -39,7 +39,7 @@ export default function UpgradeFlowConfirmStep({
   const applyReferralMutation = useApplyReferralCode();
 
   const { data: earnings } = useReferralEarnings();
-  const availableCredit = earnings?.available_credit ?? 0;
+  const availableCredit = earnings?.business_credit ?? 0;
 
   const { exchangeRate } = useDisplayPrices();
   const toLocal = (usd: number) => {

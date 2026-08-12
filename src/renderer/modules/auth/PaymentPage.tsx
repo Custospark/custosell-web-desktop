@@ -33,7 +33,7 @@ export default function PaymentPage() {
 
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
-  const availableCredit = earnings?.available_credit ?? 0;
+  const availableCredit = earnings?.business_credit ?? 0;
   const referral = appliedReferral ?? subscription?.referral;
   const referralDiscountUsd = referral?.discount_applied
     ? Number(referral.discount_applied)
@@ -85,8 +85,7 @@ export default function PaymentPage() {
   const creditConverted = canPayLocal && availableCredit > 0 && exchangeRate !== null
     ? Math.round(availableCredit * exchangeRate * 100) / 100
     : availableCredit;
-  const effectiveDiscount = referralDiscountConverted > 0 ? referralDiscountConverted : creditConverted;
-  const totalDue = Math.max(0, displayedFee - effectiveDiscount);
+  const totalDue = Math.max(0, displayedFee - referralDiscountConverted - creditConverted);
   const canPay = canPayLocal ? !!fee : !!feeUsd;
 
   const handlePay = () => {
@@ -164,45 +163,45 @@ export default function PaymentPage() {
                 </p>
               </div>
             )}
-            {referralDiscountUsd > 0 && (
-              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">Promo discount</span>
+            {(referralDiscountUsd > 0 || availableCredit > 0) && (
+              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Onboarding fee</span>
+                  <span className="font-semibold text-gray-900">{formatCurrency(Number(displayedFee), displayCurrency)}</span>
+                </div>
+                {referralDiscountUsd > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-green-700 font-medium">
+                      <Tag className="w-4 h-4 text-green-600" />
+                      Promo discount
+                    </span>
+                    <span className="font-bold text-green-700">
+                      -{formatCurrency(referralDiscountConverted, displayCurrency)}
+                      {canPayLocal && (
+                        <span className="text-xs font-normal text-gray-400 ml-1">
+                          (${referralDiscountUsd.toFixed(2)} USD)
+                        </span>
+                      )}
+                    </span>
                   </div>
-                  <span className="text-sm font-bold text-green-700">
-                    -{formatCurrency(referralDiscountConverted, displayCurrency)}
-                    {canPayLocal && referralDiscountUsd > 0 && (
-                      <span className="text-xs font-normal text-gray-400 ml-1">
-                        (${referralDiscountUsd.toFixed(2)} USD)
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-green-200 pt-1">
-                  <span className="text-sm font-semibold text-gray-800">Total due today</span>
-                  <span className="text-sm font-bold text-blue-700">{formatCurrency(totalDue, displayCurrency)}</span>
-                </div>
-              </div>
-            )}
-            {availableCredit > 0 && referralDiscountUsd <= 0 && (
-              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">Promo credit</span>
+                )}
+                {availableCredit > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-green-700 font-medium">
+                      <Wallet className="w-4 h-4 text-green-600" />
+                      Credit applied
+                    </span>
+                    <span className="font-bold text-green-700">
+                      -{formatCurrency(creditConverted, displayCurrency)}
+                      {canPayLocal && (
+                        <span className="text-xs font-normal text-gray-400 ml-1">
+                          (${availableCredit.toFixed(2)} USD)
+                        </span>
+                      )}
+                    </span>
                   </div>
-                  <span className="text-sm font-bold text-green-700">
-                    -{formatCurrency(creditConverted, displayCurrency)}
-                    {canPayLocal && availableCredit > 0 && (
-                      <span className="text-xs font-normal text-gray-400 ml-1">
-                        (${availableCredit.toFixed(2)} USD)
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-green-200 pt-1">
+                )}
+                <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
                   <span className="text-sm font-semibold text-gray-800">Total due today</span>
                   <span className="text-sm font-bold text-blue-700">{formatCurrency(totalDue, displayCurrency)}</span>
                 </div>

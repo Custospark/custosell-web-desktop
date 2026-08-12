@@ -42,7 +42,7 @@ export default function SubscriptionPaymentModal({
   const applyReferralMutation = useApplyReferralCode();
   const hasAppliedCode = !!appliedReferral;
   const { isUsd, toLocal } = useUsdToLocal(currency);
-  const availableCreditUsd = earnings?.available_credit ?? 0;
+  const availableCreditUsd = earnings?.business_credit ?? 0;
   const creditApplied = isUsd
     ? Math.min(availableCreditUsd, amount)
     : Math.min(toLocal(availableCreditUsd), amount);

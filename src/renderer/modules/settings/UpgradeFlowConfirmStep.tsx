@@ -149,7 +149,7 @@ export default function UpgradeFlowConfirmStep({
             <span className="font-semibold text-green-700">{price(pr.credit)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">New plan price</span>
+            <span className="text-gray-600">New plan value (remaining days)</span>
             <span className="font-semibold text-gray-900">{price(pr.charge)}</span>
           </div>
           {availableCredit > 0 && (

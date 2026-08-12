@@ -12,6 +12,7 @@ import { isValidPaymentPhone } from '../../shared/utils/phoneNumber';
 import { useDisplayPrices } from '../../shared/utils/useDisplayPrices';
 import { formatCurrency } from '../../shared/utils/formatCurrency';
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
+import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { CreditCard, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function PaymentPage() {
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
+  const [appliedReferral, setAppliedReferral] = useState<ReferralRecord | null>(null);
   const applyReferralMutation = useApplyReferralCode();
   const userPhone = user?.business?.phone || user?.phone || '';
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
@@ -32,8 +34,9 @@ export default function PaymentPage() {
   const { currency, onboardingFee, usdOnboardingFee, exchangeRate } = useDisplayPrices();
   const { data: earnings } = useReferralEarnings();
   const availableCredit = earnings?.available_credit ?? 0;
-  const referralDiscountUsd = subscription?.referral?.discount_applied
-    ? Number(subscription.referral.discount_applied)
+  const referral = appliedReferral ?? subscription?.referral;
+  const referralDiscountUsd = referral?.discount_applied
+    ? Number(referral.discount_applied)
     : 0;
   const { data: plans, isLoading: plansLoading } = useActivePlans();
   const plan = plans?.find((p) => p.id === subscription?.plan_id);
@@ -144,18 +147,18 @@ export default function PaymentPage() {
                 </span>
               </div>
             ) : null}
-            {subscription?.referral?.code && (
+            {referral?.code && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 space-y-0.5">
                 <div className="flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-indigo-600" />
                   <span className="text-xs font-semibold text-indigo-700">
-                    Promo code <span className="font-mono">{subscription.referral.code}</span> applied
+                    Promo code <span className="font-mono">{referral.code}</span> applied
                   </span>
                 </div>
                 <p className="text-[11px] text-indigo-600/80 pl-5">
-                  {subscription.referral.discount_type === 'percentage'
-                    ? `${subscription.referral.discount_value}% off your subscription for ${subscription.referral.discount_duration_months ?? 0} month${(subscription.referral.discount_duration_months ?? 0) > 1 ? 's' : ''}`
-                    : subscription.referral.discount_type === 'free_month'
+                  {referral.discount_type === 'percentage'
+                    ? `${referral.discount_value}% off your subscription for ${referral.discount_duration_months ?? 0} month${(referral.discount_duration_months ?? 0) > 1 ? 's' : ''}`
+                    : referral.discount_type === 'free_month'
                       ? 'One month free on your subscription'
                       : 'Discount applied to your subscription'}
                 </p>
@@ -214,7 +217,7 @@ export default function PaymentPage() {
           label="Mobile Money number"
         />
 
-        {!subscription?.referral?.code && !promoCodeSuccess && (
+        {!referral?.code && !promoCodeSuccess && (
           <div>
             <button
               type="button"
@@ -244,11 +247,14 @@ export default function PaymentPage() {
                       applyReferralMutation.mutate(
                         { referral_code: promoCodeInput.trim() },
                         {
-                          onSuccess: () => {
-                            setPromoCodeSuccess('Code applied successfully');
+                          onSuccess: (data) => {
+                            setAppliedReferral(data?.referral ?? null);
+                            const num = Number(data?.referral?.discount_applied ?? 0);
+                            setPromoCodeSuccess(
+                              num > 0 ? '$' + num.toFixed(2) + ' discount applied' : 'Code applied successfully'
+                            );
                             setPromoCodeInput('');
                             setShowPromoInput(false);
-                            refetchProfile();
                           },
                         },
                       );

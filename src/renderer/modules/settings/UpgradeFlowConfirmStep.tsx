@@ -3,8 +3,8 @@ import type { Plan } from '../../shared/types';
 import type { SubscriptionInfo } from '../../app/store/slices/authSlice';
 import type { UpgradeQuote } from '../../shared/api/account/SubscriptionQueries';
 import type { AxiosError } from 'axios';
+import type { ReferralRecord } from '../referral/api/ReferralTypes';
 import { useReferralEarnings, useApplyReferralCode } from '../referral/api/useReferralQueries';
-import { useProfile } from '../../shared/api/account/AccountQueries';
 import { Button } from '../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../shared/components/loading/CustosellLoader';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight, X, ArrowUp, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
@@ -29,14 +29,14 @@ interface UpgradeFlowConfirmStepProps {
 }
 
 export default function UpgradeFlowConfirmStep({
-  plan, subscription, quote, quoteLoading, quoteError, quoteErrorMessage, currency, billingCycle, onBillingCycleChange,
+  plan, quote, quoteLoading, quoteError, quoteErrorMessage, currency, billingCycle, onBillingCycleChange,
   onClose, onConfirm, upgradePending, upgradeError,
 }: UpgradeFlowConfirmStepProps) {
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
+  const [appliedReferral, setAppliedReferral] = useState<ReferralRecord | null>(null);
   const applyReferralMutation = useApplyReferralCode();
-  const { refetch: refetchProfile } = useProfile();
 
   const { data: earnings } = useReferralEarnings();
   const availableCredit = earnings?.available_credit ?? 0;
@@ -177,7 +177,7 @@ export default function UpgradeFlowConfirmStep({
           )}
         </div>
 
-        {!subscription.referral?.code && !promoCodeSuccess && (
+        {!appliedReferral?.code && !promoCodeSuccess && (
           <div className="border-t border-gray-100 pt-1">
             <button
               type="button"
@@ -207,11 +207,14 @@ export default function UpgradeFlowConfirmStep({
                       applyReferralMutation.mutate(
                         { referral_code: promoCodeInput.trim() },
                         {
-                          onSuccess: () => {
-                            setPromoCodeSuccess('Code applied successfully');
+                          onSuccess: (data) => {
+                            setAppliedReferral(data?.referral ?? null);
+                            const num = Number(data?.referral?.discount_applied ?? 0);
+                            setPromoCodeSuccess(
+                              num > 0 ? '$' + num.toFixed(2) + ' discount applied' : 'Code applied successfully'
+                            );
                             setPromoCodeInput('');
                             setShowPromoInput(false);
-                            refetchProfile();
                           },
                         },
                       );

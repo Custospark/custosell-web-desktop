@@ -8,7 +8,7 @@ import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { cn } from '../../../shared/utils/cn';
-import { CheckSquare, Search, Square, UserRound, X } from 'lucide-react';
+import { CheckSquare, Search, UserRound, X } from 'lucide-react';
 
 interface MultiAssigneeSelectProps {
   value: number[];
@@ -22,8 +22,9 @@ interface MultiAssigneeSelectProps {
 /**
  * Assignment picker. Candidates resolve the same roster the Members view uses
  * (board creator + invited board members), plus business staff as a fallback.
- * A modal with search, checkboxes, and select-all keeps assignment usable even
- * on boards with hundreds of members.
+ *
+ * The modal keeps its own draft selection so toggling is instant; "Done" commits
+ * the draft to `onChange` once, and removes fire immediately.
  */
 export default function MultiAssigneeSelect({
   value,
@@ -78,6 +79,7 @@ export default function MultiAssigneeSelect({
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [draft, setDraft] = useState<number[]>([]);
 
   const queryLower = query.trim().toLowerCase();
   const filtered = useMemo(() => {
@@ -89,23 +91,45 @@ export default function MultiAssigneeSelect({
     );
   }, [candidates, queryLower]);
 
-  const allFilteredSelected =
-    filtered.length > 0 && filtered.every((m) => value.includes(m.id));
-
-  const toggleMember = (id: number) => {
-    if (disabled) return;
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+  const openPicker = () => {
+    setDraft(value);
+    setQuery('');
+    setPickerOpen(true);
   };
+
+  const closePicker = () => {
+    setPickerOpen(false);
+    setQuery('');
+  };
+
+  const applyDraft = () => {
+    onChange(draft);
+    closePicker();
+  };
+
+  const toggleDraft = (id: number) => {
+    if (disabled) return;
+    setDraft((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+  };
+
+  const filteredIds = filtered.map((m) => m.id);
+  const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id) => draft.includes(id));
 
   const toggleAllFiltered = () => {
     if (disabled) return;
-    const next = new Set(value);
-    if (allFilteredSelected) {
-      filtered.forEach((m) => next.delete(m.id));
-    } else {
-      filtered.forEach((m) => next.add(m.id));
-    }
-    onChange([...next]);
+    setDraft((prev) => {
+      if (allFilteredSelected) {
+        return prev.filter((v) => !filteredIds.includes(v));
+      }
+      const next = new Set(prev);
+      filteredIds.forEach((id) => next.add(id));
+      return [...next];
+    });
+  };
+
+  const removeSelected = (id: number) => {
+    if (disabled) return;
+    onChange(value.filter((v) => v !== id));
   };
 
   return (
@@ -121,7 +145,7 @@ export default function MultiAssigneeSelect({
               {!disabled && (
                 <button
                   type="button"
-                  onClick={() => toggleMember(member.id)}
+                  onClick={() => removeSelected(member.id)}
                   className="rounded-full p-0.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
                   aria-label={`Remove ${member.name}`}
                 >
@@ -136,29 +160,27 @@ export default function MultiAssigneeSelect({
       <Button
         type="button"
         variant={selected.length > 0 ? 'secondary' : 'outline'}
-        onClick={() => setPickerOpen(true)}
+        onClick={openPicker}
         disabled={disabled || candidates.length === 0}
         className="inline-flex w-full items-center justify-center gap-2"
       >
         <UserRound className="h-4 w-4" aria-hidden />
         {selected.length > 0
-          ? `${selected.length} assignee${selected.length === 1 ? '' : 's'} — change`
-          : 'Assign members'}
+          ? `Manage assignees (${selected.length})`
+          : 'Add assignee'}
       </Button>
-      <p className="text-[11px] text-gray-500">
-        {candidates.length > 0
-          ? `${candidates.length} member${candidates.length === 1 ? '' : 's'} available on this board.`
-          : 'Loading board members…'}
-      </p>
 
       <Modal
         isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => {
+          setPickerOpen(false);
+          setQuery('');
+        }}
         title="Assign members"
-        subtitle={`${value.length} selected of ${candidates.length}`}
+        subtitle={`${draft.length} selected of ${candidates.length}`}
         size="lg"
       >
-        <div className="space-y-3">
+        <div className="space-y-3 pb-1">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70" />
             <input
@@ -171,28 +193,28 @@ export default function MultiAssigneeSelect({
             />
           </div>
 
-          <button
-            type="button"
-            onClick={toggleAllFiltered}
-            disabled={disabled || filtered.length === 0}
-            className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {allFilteredSelected ? (
+          {filtered.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleAllFiltered}
+              disabled={disabled}
+              className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <CheckSquare className="h-4 w-4" aria-hidden />
-            ) : (
-              <Square className="h-4 w-4" aria-hidden />
-            )}
-            {allFilteredSelected
-              ? `Clear all ${filtered.length} shown`
-              : `Assign all ${filtered.length} shown`}
-          </button>
+              {allFilteredSelected
+                ? `Clear all ${filtered.length} shown`
+                : `Assign all ${filtered.length} shown`}
+            </button>
+          )}
 
           <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200">
             {filtered.length === 0 && (
-              <li className="px-4 py-6 text-center text-sm text-gray-500">No members match your search.</li>
+              <li className="px-4 py-6 text-center text-sm text-gray-500">
+                {candidates.length === 0 ? 'Loading board members…' : 'No members match your search.'}
+              </li>
             )}
             {filtered.map((member) => {
-              const isSelected = value.includes(member.id);
+              const isSelected = draft.includes(member.id);
               return (
                 <li key={member.id}>
                   <label
@@ -205,7 +227,7 @@ export default function MultiAssigneeSelect({
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => toggleMember(member.id)}
+                      onChange={() => toggleDraft(member.id)}
                       disabled={disabled}
                       className="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
@@ -214,9 +236,7 @@ export default function MultiAssigneeSelect({
                       <span className="block truncate text-sm font-medium text-gray-900">{member.name}</span>
                       {member.email && <span className="block truncate text-xs text-gray-500">{member.email}</span>}
                     </span>
-                    {isSelected && (
-                      <CheckSquare className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
-                    )}
+                    {isSelected && <CheckSquare className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />}
                   </label>
                 </li>
               );
@@ -224,10 +244,10 @@ export default function MultiAssigneeSelect({
           </ul>
 
           <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-            <Button type="button" variant="secondary" onClick={() => setQuery('')}>
-              Clear search
+            <Button type="button" variant="secondary" onClick={closePicker}>
+              Cancel
             </Button>
-            <Button type="button" onClick={() => setPickerOpen(false)}>
+            <Button type="button" onClick={applyDraft}>
               Done
             </Button>
           </div>

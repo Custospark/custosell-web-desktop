@@ -392,6 +392,7 @@ export interface UpdateLeadPayload {
   source_id?: number | null;
   assigned_to?: number | null;
   assignee_ids?: number[];
+  assignees?: PipelineUserRef[];
   estimated_value?: number | null;
   currency?: string;
   expected_close_date?: string | null;

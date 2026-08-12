@@ -137,11 +137,11 @@ function ensureObjectStores(db: IDBPDatabase): void {
 
 function openOfflineDatabase(): Promise<IDBPDatabase> {
   return openDB(OFFLINE_DB_NAME, OFFLINE_DB_VERSION, {
-    async upgrade(db, oldVersion) {
+    async upgrade(db, oldVersion, _newVersion, transaction) {
       ensureObjectStores(db);
 
       if (oldVersion < 15) {
-        await migrateToV15(db);
+        await migrateToV15(db, transaction);
       }
     },
     blocked() {
@@ -164,11 +164,14 @@ function openOfflineDatabase(): Promise<IDBPDatabase> {
  * records are backfilled from the record's own business_id (products, shifts)
  * or from a linked mutation's businessId.
  */
-async function migrateToV15(db: IDBPDatabase): Promise<void> {
+async function migrateToV15(
+  db: IDBPDatabase,
+  txn: IDBPTransaction<unknown, string[], 'versionchange'>,
+): Promise<void> {
   let oldStockRows: Array<{ productId: number; quantity: number }> = [];
   try {
     if (db.objectStoreNames.contains('stock')) {
-      const rows = await db.transaction('stock', 'readonly').objectStore('stock').getAll() as
+      const rows = (await txn.objectStore('stock').getAll()) as
         | Array<{ productId: number; quantity: number }>
         | undefined;
       oldStockRows = rows ?? [];
@@ -177,7 +180,7 @@ async function migrateToV15(db: IDBPDatabase): Promise<void> {
     console.warn('[OfflineDB] v15 old stock read skipped:', err);
   }
 
-  const productBusiness = await buildProductBusinessMap(db);
+  const productBusiness = await buildProductBusinessMap(txn);
 
   try {
     if (db.objectStoreNames.contains('stock')) {
@@ -190,32 +193,29 @@ async function migrateToV15(db: IDBPDatabase): Promise<void> {
     console.warn('[OfflineDB] v15 stock re-key skipped:', err);
   }
 
-  await reseedStockStore(db, oldStockRows, productBusiness);
+  await reseedStockStore(txn, oldStockRows, productBusiness);
 
-  const scoped = BUSINESS_SCOPED_STORES.filter((s) => db.objectStoreNames.contains(s));
-  if (scoped.length > 0) {
-    const txn = db.transaction(scoped, 'readwrite');
-
-    for (const storeName of scoped) {
-      const store = txn.objectStore(storeName);
-      if (!store.indexNames.contains('businessId')) {
-        store.createIndex('businessId', 'businessId');
-      }
+  const scoped = BUSINESS_SCOPED_STORES.filter((s) => db.objectStoreNames.contains(s) && s !== 'stock');
+  for (const storeName of scoped) {
+    const store = txn.objectStore(storeName);
+    if (store && !store.indexNames.contains('businessId')) {
+      store.createIndex('businessId', 'businessId');
     }
-
-    await backfillBusinessIds(txn, scoped);
-    await txn.done;
   }
+
+  await backfillBusinessIds(txn, scoped);
 }
 
 /** Map every locally-known productId to its businessId, from the server catalog
  *  snapshots (products) and the local pending product records. */
-async function buildProductBusinessMap(db: IDBPDatabase): Promise<Map<number, number>> {
+async function buildProductBusinessMap(
+  txn: IDBPTransaction<unknown, string[], 'versionchange'>,
+): Promise<Map<number, number>> {
   const map = new Map<number, number>();
 
   try {
-    if (db.objectStoreNames.contains('serverCatalogs')) {
-      const records = await db.transaction('serverCatalogs', 'readonly').objectStore('serverCatalogs').getAll() as
+    if (txn.objectStoreNames.contains('serverCatalogs')) {
+      const records = (await txn.objectStore('serverCatalogs').getAll()) as
         | Array<{ entity?: string; items?: Array<{ id: number; business_id?: number }> }>
         | undefined;
       for (const record of records ?? []) {
@@ -230,8 +230,8 @@ async function buildProductBusinessMap(db: IDBPDatabase): Promise<Map<number, nu
   }
 
   try {
-    if (db.objectStoreNames.contains('localProducts')) {
-      const records = await db.transaction('localProducts', 'readonly').objectStore('localProducts').getAll() as
+    if (txn.objectStoreNames.contains('localProducts')) {
+      const records = (await txn.objectStore('localProducts').getAll()) as
         | Array<{ product?: { id: number; business_id?: number } }>
         | undefined;
       for (const record of records ?? []) {
@@ -251,15 +251,14 @@ async function buildProductBusinessMap(db: IDBPDatabase): Promise<Map<number, nu
  *  offline quantity is lost during an offline upgrade. Products whose businessId
  *  cannot be resolved are left for the server catalog re-seed on next sync. */
 async function reseedStockStore(
-  db: IDBPDatabase,
+  txn: IDBPTransaction<unknown, string[], 'versionchange'>,
   oldStockRows: Array<{ productId: number; quantity: number }>,
   productBusiness: Map<number, number>,
 ): Promise<void> {
   if (oldStockRows.length === 0) return;
 
   try {
-    const tx = db.transaction('stock', 'readwrite');
-    const store = tx.objectStore('stock');
+    const store = txn.objectStore('stock');
     const now = new Date().toISOString();
 
     for (const row of oldStockRows) {
@@ -272,8 +271,6 @@ async function reseedStockStore(
         updatedAt: now,
       });
     }
-
-    await tx.done;
   } catch (err) {
     console.warn('[OfflineDB] v15 stock re-seed skipped:', err);
   }
@@ -282,12 +279,10 @@ async function reseedStockStore(
 /** Stamp businessId on legacy records lacking it, using each row's own
  *  business_id (products/shifts) or the linked mutation's businessId. */
 async function backfillBusinessIds(
-  txn: IDBPTransaction,
+  txn: IDBPTransaction<unknown, string[], 'versionchange'>,
   scoped: string[],
 ): Promise<void> {
-  const mutationsStore = txn.db.objectStoreNames.contains('mutations')
-    ? txn.db.transaction('mutations', 'readonly').objectStore('mutations')
-    : null;
+  const mutationsStore = txn.objectStoreNames.contains('mutations') ? txn.objectStore('mutations') : null;
 
   const readMutationBusiness = async (mutationId: string | undefined): Promise<number | undefined> => {
     if (!mutationId || !mutationsStore) return undefined;
@@ -316,7 +311,7 @@ async function backfillBusinessIds(
 
       if (businessId == null) continue;
       rec.businessId = businessId;
-      await store.put(rec);
+      if (store) await store.put(rec);
     }
   }
 }

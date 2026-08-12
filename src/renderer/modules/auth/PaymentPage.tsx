@@ -23,6 +23,7 @@ export default function PaymentPage() {
   const subscription = user?.business?.subscription;
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
@@ -102,6 +103,12 @@ export default function PaymentPage() {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
           setInitiated(true);
+          if (result.redirect_url) {
+            const win = window.open(result.redirect_url, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              setPopupBlocked(true);
+            }
+          }
         },
       }
     );
@@ -316,6 +323,12 @@ export default function PaymentPage() {
 
             {paymentQuery.isFetching && (
               <p className="text-center text-xs text-gray-400">Waiting for payment confirmation...</p>
+            )}
+
+            {popupBlocked && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
+                Pop-up was blocked. Please allow pop-ups for this site or use the payment link in a new tab.
+              </div>
             )}
 
             {paymentQuery.data?.data?.status === 'failed' && (

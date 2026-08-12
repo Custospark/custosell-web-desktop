@@ -32,6 +32,7 @@ export default function UpgradeFlowModal({
   const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
+  const [popupBlocked, setPopupBlocked] = useState(false);
   const [prorationDue, setProrationDue] = useState(0);
   const [prorationDueUsd, setProrationDueUsd] = useState(0);
   const [referralCode, setReferralCode] = useState('');
@@ -93,6 +94,7 @@ export default function UpgradeFlowModal({
 
   const handlePay = () => {
     setStep('polling');
+    setPopupBlocked(false);
     const paymentCurrency = getPaymentCurrency();
     const amount = paymentCurrency === 'USD'
       ? (prorationDueUsd || prorationDue)
@@ -108,6 +110,12 @@ export default function UpgradeFlowModal({
       {
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
+          if (result.redirect_url) {
+            const win = window.open(result.redirect_url, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              setPopupBlocked(true);
+            }
+          }
         },
         onError: (error) => {
           setErrorMessage(error.response?.data?.message || 'Payment initiation failed.');
@@ -337,6 +345,11 @@ export default function UpgradeFlowModal({
               Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
             </p>
           </div>
+          {popupBlocked && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
+              Pop-up was blocked. Please allow pop-ups for this site or use the payment link in a new tab.
+            </div>
+          )}
           <button type="button" onClick={onClose}
             className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors">
             Cancel

@@ -24,6 +24,7 @@ export default function BillingCyclePaymentModal({
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [step, setStep] = useState<'confirm' | 'paying' | 'polling' | 'done'>('confirm');
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
+  const [popupBlocked, setPopupBlocked] = useState(false);
 
   const initiateMutation = useInitiatePayment('billing_cycle_change' satisfies PaymentType);
   const paymentQuery = useBillingPayment(paymentId);
@@ -34,6 +35,7 @@ export default function BillingCyclePaymentModal({
 
   const handlePay = () => {
     setStep('paying');
+    setPopupBlocked(false);
     initiateMutation.mutate(
       {
         amount: amountDueUsd,
@@ -45,6 +47,12 @@ export default function BillingCyclePaymentModal({
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
           setStep('polling');
+          if (result.redirect_url) {
+            const win = window.open(result.redirect_url, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              setPopupBlocked(true);
+            }
+          }
         },
         onError: () => setStep('confirm'),
       },
@@ -109,6 +117,11 @@ export default function BillingCyclePaymentModal({
           <div className="text-center space-y-3">
             <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
             <p className="text-sm text-gray-500">Waiting for payment...</p>
+            {popupBlocked && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
+                Pop-up was blocked. Please allow pop-ups for this site or use the payment link in a new tab.
+              </div>
+            )}
           </div>
         )}
 

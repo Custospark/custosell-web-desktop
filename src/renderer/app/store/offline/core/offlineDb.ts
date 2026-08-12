@@ -157,12 +157,28 @@ function openOfflineDatabase(): Promise<IDBPDatabase> {
  * v14 → v15: business-scope the offline stores so work entered for one business
  * can never leak into another when users share a machine. The `stock` store is
  * re-keyed to ['businessId','productId'] (a keyPath cannot be changed in place,
- * so it is recreated; it is re-seeded from the server catalog on next sync).
+ * so it is recreated). Existing stock rows are carried across by resolving each
+ * productId's businessId from the server catalog and local pending products, so
+ * no offline quantity is lost even if the device is offline at upgrade time.
  * A `businessId` index is added to every business-scoped store, and existing
  * records are backfilled from the record's own business_id (products, shifts)
  * or from a linked mutation's businessId.
  */
 async function migrateToV15(db: IDBPDatabase): Promise<void> {
+  let oldStockRows: Array<{ productId: number; quantity: number }> = [];
+  try {
+    if (db.objectStoreNames.contains('stock')) {
+      const rows = await db.transaction('stock', 'readonly').objectStore('stock').getAll() as
+        | Array<{ productId: number; quantity: number }>
+        | undefined;
+      oldStockRows = rows ?? [];
+    }
+  } catch (err) {
+    console.warn('[OfflineDB] v15 old stock read skipped:', err);
+  }
+
+  const productBusiness = await buildProductBusinessMap(db);
+
   try {
     if (db.objectStoreNames.contains('stock')) {
       db.deleteObjectStore('stock');
@@ -173,6 +189,8 @@ async function migrateToV15(db: IDBPDatabase): Promise<void> {
   } catch (err) {
     console.warn('[OfflineDB] v15 stock re-key skipped:', err);
   }
+
+  await reseedStockStore(db, oldStockRows, productBusiness);
 
   const scoped = BUSINESS_SCOPED_STORES.filter((s) => db.objectStoreNames.contains(s));
   if (scoped.length > 0) {
@@ -187,6 +205,77 @@ async function migrateToV15(db: IDBPDatabase): Promise<void> {
 
     await backfillBusinessIds(txn, scoped);
     await txn.done;
+  }
+}
+
+/** Map every locally-known productId to its businessId, from the server catalog
+ *  snapshots (products) and the local pending product records. */
+async function buildProductBusinessMap(db: IDBPDatabase): Promise<Map<number, number>> {
+  const map = new Map<number, number>();
+
+  try {
+    if (db.objectStoreNames.contains('serverCatalogs')) {
+      const records = await db.transaction('serverCatalogs', 'readonly').objectStore('serverCatalogs').getAll() as
+        | Array<{ entity?: string; items?: Array<{ id: number; business_id?: number }> }>
+        | undefined;
+      for (const record of records ?? []) {
+        if (record.entity !== 'products') continue;
+        for (const item of record.items ?? []) {
+          if (item.id && item.business_id) map.set(item.id, item.business_id);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[OfflineDB] v15 product business map (catalog) skipped:', err);
+  }
+
+  try {
+    if (db.objectStoreNames.contains('localProducts')) {
+      const records = await db.transaction('localProducts', 'readonly').objectStore('localProducts').getAll() as
+        | Array<{ product?: { id: number; business_id?: number } }>
+        | undefined;
+      for (const record of records ?? []) {
+        if (record.product?.id && record.product.business_id) {
+          map.set(record.product.id, record.product.business_id);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[OfflineDB] v15 product business map (local) skipped:', err);
+  }
+
+  return map;
+}
+
+/** Re-populate the re-keyed stock store from the old rows (best-effort) so no
+ *  offline quantity is lost during an offline upgrade. Products whose businessId
+ *  cannot be resolved are left for the server catalog re-seed on next sync. */
+async function reseedStockStore(
+  db: IDBPDatabase,
+  oldStockRows: Array<{ productId: number; quantity: number }>,
+  productBusiness: Map<number, number>,
+): Promise<void> {
+  if (oldStockRows.length === 0) return;
+
+  try {
+    const tx = db.transaction('stock', 'readwrite');
+    const store = tx.objectStore('stock');
+    const now = new Date().toISOString();
+
+    for (const row of oldStockRows) {
+      const businessId = productBusiness.get(row.productId);
+      if (businessId == null || businessId <= 0) continue;
+      await store.put({
+        businessId,
+        productId: row.productId,
+        quantity: Math.max(0, row.quantity),
+        updatedAt: now,
+      });
+    }
+
+    await tx.done;
+  } catch (err) {
+    console.warn('[OfflineDB] v15 stock re-seed skipped:', err);
   }
 }
 

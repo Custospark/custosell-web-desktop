@@ -17,7 +17,7 @@ However, an audit found the **local record stores and the stock ledger were not 
 
 Add business scoping across the whole offline local layer, so no work entered for one business can leak into another on a shared device:
 
-1. **DB v15** (`offlineDb.ts`): add a `businessId` index to every business-scoped store; re-key the `stock` store to a composite `['businessId','productId']` key (a keyPath cannot change in place, so it is recreated — it is re-seeded from the server catalog on next sync). Legacy records are backfilled with `businessId` from the row's own `business_id` (products/shifts) or from the linked mutation's `businessId`.
+1. **DB v15** (`offlineDb.ts`): add a `businessId` index to every business-scoped store; re-key the `stock` store to a composite `['businessId','productId']` key (a keyPath cannot change in place, so it is recreated). **No offline stock quantity is lost during the upgrade**: existing stock rows are read before the re-key and carried across by resolving each productId's businessId from the server catalog snapshots and local pending product records, so stock survives even if the device is offline at upgrade time. Legacy records in the other stores are backfilled with `businessId` from the row's own `business_id` (products/shifts) or from the linked mutation's `businessId`.
 2. **Stock ledger** (`stockLedger.ts`): every entry and adjustment now carries `businessId` (from `getActiveBusinessId()`); `get`/`set`/`adjust`/`batchAdjust`/`getAll` read/write by composite `[businessId, productId]`; `getPendingAdjustments()` filters by the active business. Because `syncStock` drains through this now-scoped method, stock adjustments can no longer be posted to a foreign business's session.
 3. **Per-domain local stores** (13 files): each record interface gains `businessId?: number`, set at save from `getActiveBusinessId()`; `getAll()`/`getPending()` are filtered through a shared `scopedStore` helper (`core/businessScoping.ts`) using the active business. Methods keyed by globally-unique `mutationId`/`localId` (markSynced/removeByMutationId etc.) are intentionally left unfiltered.
 4. **Read/overlay paths** (sales, products, customers, expenses) call the now-scoped `getPending()`, so the UI only ever overlays the active business's pending records.
@@ -29,7 +29,7 @@ The server is already the source of truth and scopes by `business_id`. The leak 
 ## Consequences
 
 - No cross-business visibility or sync leak: stock, products, sales, customers, expenses, orders, refunds, shifts, categories, roles, staff, and settings pending records are all confined to the active business.
-- The `stock` store is re-seeded from the server catalog after the v15 upgrade (existing local stock quantities are restored on next sync).
+- The `stock` store is re-keyed to `['businessId','productId']` in v15 and existing offline quantities are carried across during the migration (resolved via server catalog + local pending products), so there is no stock loss even when the device is offline at upgrade time.
 - Gates: FE `npm run vera:fast` passed; `npx tsc --noEmit` clean; `npx vitest run` 23/23 passed.
 
 ## References

@@ -14,15 +14,6 @@ export default function BoardAccessBadges({ visibility, memberRole, className }:
 
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
-      <span
-        className={cn(
-          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-          vis.className,
-        )}
-      >
-        <vis.icon className="h-3 w-3" aria-hidden />
-        {vis.label}
-      </span>
       {memberRole && (
         <span
           className={cn(
@@ -33,6 +24,15 @@ export default function BoardAccessBadges({ visibility, memberRole, className }:
           {BOARD_ROLE_LABELS[memberRole]}
         </span>
       )}
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+          vis.className,
+        )}
+      >
+        <vis.icon className="h-3 w-3" aria-hidden />
+        {vis.label}
+      </span>
     </div>
   );
 }

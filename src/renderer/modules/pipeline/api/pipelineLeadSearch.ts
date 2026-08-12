@@ -94,6 +94,15 @@ function leadDueDateString(lead: PipelineLead): string | null {
   return toLocalDateString(d);
 }
 
+/** True when the due/close datetime or date has already passed (today counts). */
+export function isOverdueDate(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())) {
+    return dateStr < toLocalDateString(new Date());
+  }
+  return new Date(dateStr) < new Date();
+}
+
 function matchesDueFilter(lead: PipelineLead, filter: ParsedLeadSearch['dueFilter']): boolean {
   if (!filter) return true;
   const dueStr = leadDueDateString(lead);
@@ -101,7 +110,7 @@ function matchesDueFilter(lead: PipelineLead, filter: ParsedLeadSearch['dueFilte
 
   if (filter === 'overdue') {
     if (lead.status !== 'open') return false;
-    return dueStr != null && dueStr < todayStr;
+    return isOverdueDate(lead.due_date ?? lead.expected_close_date);
   }
   if (filter === 'today') {
     return dueStr === todayStr;

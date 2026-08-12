@@ -1,4 +1,5 @@
 import type { PipelineLead } from '../api/pipelineTypes';
+import { isOverdueDate } from '../api/pipelineLeadSearch';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { cn } from '../../../shared/utils/cn';
 import { pipelineInitials } from './pipelineFormFields';
@@ -30,19 +31,6 @@ const PRIORITY_COLORS = {
   urgent: '#ef4444',
 };
 
-function toLocalDateString(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function isOverdue(dateStr: string | null | undefined): boolean {
-  if (!dateStr) return false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())) {
-    return dateStr < toLocalDateString(new Date());
-  }
-  return new Date(dateStr) < new Date();
-}
-
 export default function LeadCard({
   lead,
   stageColor,
@@ -62,7 +50,7 @@ export default function LeadCard({
   const isCard = (lead.card_type ?? 'lead') === 'card';
   const isComplete = lead.status === 'won';
   const dueDate = lead.due_date ?? lead.expected_close_date;
-  const overdue = !isComplete && lead.status === 'open' && isOverdue(dueDate);
+  const overdue = !isComplete && lead.status === 'open' && isOverdueDate(dueDate);
   const checklistTotal = lead.checklist_total ?? 0;
   const checklistDone = lead.checklist_done ?? 0;
   const attachmentsCount = lead.attachments_count ?? 0;

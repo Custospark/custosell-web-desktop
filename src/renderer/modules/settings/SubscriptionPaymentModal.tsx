@@ -265,13 +265,22 @@ export default function SubscriptionPaymentModal({
           label="Mobile Money number"
         />
 
-        {hasAppliedCode ? (
+        {hasAppliedCode && !showReferralInput ? (
           <div className="border border-green-200 bg-green-50 rounded-xl px-4 py-3">
-            <div className="flex items-center gap-2 text-sm text-green-800">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span>
-                Promo code <span className="font-mono font-medium">{appliedReferral?.code ?? ''}</span> applied
-              </span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm text-green-800">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span>
+                  Promo code <span className="font-mono font-medium">{appliedReferral?.code ?? ''}</span> applied
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setReferralSuccess(null); setReferralCode(''); setShowReferralInput(true); }}
+                className="text-xs font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+              >
+                Change
+              </button>
             </div>
             {referralSuccess && (
               <div className="mt-1 flex items-center gap-1.5 text-sm text-green-700">
@@ -289,7 +298,7 @@ export default function SubscriptionPaymentModal({
           >
             <span className="flex items-center gap-2">
               <Tag className="w-4 h-4 text-blue-500" />
-              Have a referral or promo code?
+              {hasAppliedCode ? 'Change promo code' : 'Have a referral or promo code?'}
             </span>
             {showReferralInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>

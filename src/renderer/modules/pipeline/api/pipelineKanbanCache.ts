@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { getApiUrl } from '../../../shared/utils/env';
-import type { PipelineBoard, PipelineLead, PipelineStage } from '../api/pipelineTypes';
+import type { PipelineBoard, PipelineLabel, PipelineLead, PipelineStage } from '../api/pipelineTypes';
 
 /** Resolve gallery or uploaded board background to a loadable image URL. */
 export function resolveBoardBackgroundImageUrl(

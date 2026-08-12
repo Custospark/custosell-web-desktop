@@ -405,6 +405,7 @@ export interface UpdateLeadPayload {
   background_color?: string | null;
   lost_reason?: string | null;
   label_ids?: number[];
+  labels?: PipelineLabel[];
   status?: PipelineLeadStatus;
 }
 

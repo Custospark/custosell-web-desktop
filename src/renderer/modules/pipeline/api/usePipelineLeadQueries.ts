@@ -214,6 +214,14 @@ export function useUpdatePipelineLead() {
         optimisticPatch.assignees = resolveOptimisticAssignees(previousKanban, payload.assignee_ids);
         optimisticPatch.assigned_to = payload.assigned_to ?? payload.assignee_ids[0] ?? null;
       }
+      if (payload.label_ids) {
+        const cachedLabels = qc.getQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId));
+        const labelMap = new Map((cachedLabels ?? []).map((l) => [l.id, l]));
+        const resolved = payload.label_ids
+          .map((id) => labelMap.get(id))
+          .filter((l): l is PipelineLabel => l != null);
+        optimisticPatch.labels = resolved;
+      }
 
       if (previousLead) {
         qc.setQueryData(pipelineKeys.lead(id), { ...previousLead, ...optimisticPatch });

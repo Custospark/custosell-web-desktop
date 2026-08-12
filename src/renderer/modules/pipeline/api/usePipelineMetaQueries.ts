@@ -15,8 +15,10 @@ import type {
 } from './pipelineTypes';
 import {
   addStageToKanban,
+  removeLabelFromKanban,
   removeStageFromKanban,
   reorderStagesOnKanban,
+  updateLabelOnKanban,
   updateStageOnKanban,
 } from './pipelineKanbanCache';
 import { pipelineKeys } from './pipelineQueryKeys';
@@ -326,14 +328,19 @@ export function useUpdatePipelineLabel(boardId: number) {
     },
     onMutate: async ({ id, ...payload }) => {
       await qc.cancelQueries({ queryKey: pipelineKeys.labels(boardId) });
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
       const previous = qc.getQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId));
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
       if (previous) {
         qc.setQueryData(
           pipelineKeys.labels(boardId),
           previous.map((l) => (l.id === id ? { ...l, ...payload } : l)),
         );
       }
-      return { previous };
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), updateLabelOnKanban(previousKanban, id, payload));
+      }
+      return { previous, previousKanban };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: pipelineKeys.labels(boardId) });
@@ -343,6 +350,9 @@ export function useUpdatePipelineLabel(boardId: number) {
     onError: (err, _vars, context) => {
       if (context?.previous) {
         qc.setQueryData(pipelineKeys.labels(boardId), context.previous);
+      }
+      if (context?.previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), context.previousKanban);
       }
       showToast('error', sanitizeErrorMessage(err, 'Could not update label'));
     },
@@ -356,12 +366,32 @@ export function useDeletePipelineLabel(boardId: number) {
     mutationFn: async (id: number) => {
       await axiosInstance.delete(PIPELINE.LABEL(id));
     },
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: pipelineKeys.labels(boardId) });
+      await qc.cancelQueries({ queryKey: pipelineKeys.kanban(boardId) });
+      const previousLabels = qc.getQueryData<PipelineLabel[]>(pipelineKeys.labels(boardId));
+      const previousKanban = qc.getQueryData<PipelineBoard>(pipelineKeys.kanban(boardId));
+
+      if (previousLabels) {
+        qc.setQueryData(pipelineKeys.labels(boardId), previousLabels.filter((l) => l.id !== id));
+      }
+      if (previousKanban) {
+        qc.setQueryData(pipelineKeys.kanban(boardId), removeLabelFromKanban(previousKanban, id));
+      }
+      return { previousLabels, previousKanban, boardId };
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: pipelineKeys.labels(boardId) });
       qc.invalidateQueries({ queryKey: pipelineKeys.kanban(boardId) });
       showToast('success', 'Label deleted');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
+    onError: (err: AxiosError<{ message?: string }>, _vars, context) => {
+      if (context?.previousLabels) {
+        qc.setQueryData(pipelineKeys.labels(context.boardId), context.previousLabels);
+      }
+      if (context?.previousKanban && context.boardId) {
+        qc.setQueryData(pipelineKeys.kanban(context.boardId), context.previousKanban);
+      }
       showToast('error', sanitizeErrorMessage(err, 'Could not delete label'));
     },
   });

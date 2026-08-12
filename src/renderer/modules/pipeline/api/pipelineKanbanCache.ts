@@ -238,6 +238,39 @@ export function addLeadToKanban(board: PipelineBoard, lead: PipelineLead): Pipel
   };
 }
 
+export function updateLabelOnKanban(
+  board: PipelineBoard,
+  labelId: number,
+  partial: Partial<PipelineLabel>,
+): PipelineBoard {
+  if (!board.stages?.length) return board;
+  const patch = (l: PipelineLabel): PipelineLabel => (l.id === labelId ? { ...l, ...partial } : l);
+  return {
+    ...board,
+    stages: board.stages.map((stage) => ({
+      ...stage,
+      leads: (stage.leads ?? []).map((lead) => ({
+        ...lead,
+        labels: (lead.labels ?? []).map(patch),
+      })),
+    })),
+  };
+}
+
+export function removeLabelFromKanban(board: PipelineBoard, labelId: number): PipelineBoard {
+  if (!board.stages?.length) return board;
+  return {
+    ...board,
+    stages: board.stages.map((stage) => ({
+      ...stage,
+      leads: (stage.leads ?? []).map((lead) => ({
+        ...lead,
+        labels: (lead.labels ?? []).filter((l) => l.id !== labelId),
+      })),
+    })),
+  };
+}
+
 export function removeLeadFromKanban(board: PipelineBoard, leadId: number): PipelineBoard {
   if (!board.stages?.length) return board;
   return {

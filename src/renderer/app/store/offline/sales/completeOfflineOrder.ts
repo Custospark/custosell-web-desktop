@@ -1,5 +1,6 @@
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { localOrdersStore, type OrderWithSyncMeta } from './localOrdersStore';
 import type { CreateOrderPayload, PosOrder, UpdateOrderPayload } from '../../../../modules/sales/api/orders/orderTypes';
@@ -93,9 +94,10 @@ export async function persistOfflineOrderInBackground(
 
 export function completeOfflineCreateOrderInstant(payload: CreateOrderPayload): OrderWithSyncMeta {
   const order = buildLocalOrder(payload);
-  void persistOfflineOrderInBackground(order, payload, 'create').catch((err) => {
+  const persist = persistOfflineOrderInBackground(order, payload, 'create').catch((err) => {
     console.error('[OfflineOrder] Background create failed:', err);
   });
+  trackWrite(persist);
   return order;
 }
 
@@ -126,9 +128,10 @@ items: payload.items
     held_at: new Date().toISOString(),
     _pendingSync: true,
   };
-  void persistOfflineOrderInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineOrderInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineOrder] Background update failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -139,8 +142,9 @@ export function completeOfflineCancelOrderInstant(order: PosOrder): OrderWithSyn
     updated_at: new Date().toISOString(),
     _pendingSync: true,
   };
-  void persistOfflineOrderInBackground(cancelled, { id: order.id }, 'cancel').catch((err) => {
+  const persist = persistOfflineOrderInBackground(cancelled, { id: order.id }, 'cancel').catch((err) => {
     console.error('[OfflineOrder] Background cancel failed:', err);
   });
+  trackWrite(persist);
   return cancelled;
 }

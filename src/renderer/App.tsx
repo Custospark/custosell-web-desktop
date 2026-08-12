@@ -15,6 +15,7 @@ import { LogoutProvider } from './app/contexts/LogoutContext';
 import { ScrollToTop } from './shared/components/routing/ScrollToTop';
 import { PwaInstallPrompt } from './shared/components/pwa/PwaInstallPrompt';
 import { ServiceWorkerNotificationsBridge } from './app/sw/ServiceWorkerNotificationsBridge';
+import { installShutdownFlushBarrier } from './app/store/offline/core/shutdownFlushBarrier';
 import { unlockAudio } from './app/sound/orderChime';
 import './App.css';
 
@@ -33,6 +34,8 @@ if (typeof window !== 'undefined') {
   };
   window.addEventListener('pointerdown', unlockOnce, { passive: true });
   window.addEventListener('keydown', unlockOnce);
+
+  installShutdownFlushBarrier();
 }
 
 const persister = createSyncStoragePersister({

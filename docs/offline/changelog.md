@@ -2,6 +2,11 @@
 
 Summary of major offline-related work for documentation traceability.
 
+## 2026-08-13 — Shutdown durability + business-scoped local stores (DB v15)
+
+- **Shutdown durability** — every fire-and-forget IndexedDB write is now tracked via `offlineWriteTracker` (`trackWrite`), and the primary flows (stock adjustment, sale, product create/update) `await` the durable write before the UI reports complete. A shutdown flush barrier (`core/shutdownFlushBarrier.ts`) drains in-flight writes on `pagehide`/`beforeunload`/`visibilitychange(hidden)`, and Electron's `before-quit` sends an `offline:flush-before-quit` IPC that defers `app.quit()` until writes are durable (5s timeout guard). `navigator.storage.persist()` is requested on boot for eviction exemption. Offline data entered by a user now survives a laptop/desktop shutdown and syncs later.
+- **DB v15 — business-scoped local stores** — `businessId` index added to every business-scoped store; the `stock` store re-keyed to composite `['businessId','productId']` (recreated, re-seeded from server catalog); legacy records backfilled from the row's own `business_id` or linked mutation. All 13 per-domain local record stores now persist `businessId` at save and filter `getAll`/`getPending` by the active business via the shared `core/businessScoping.ts` helper. The stock ledger (`get`/`set`/`adjust`/`batchAdjust`/`getPendingAdjustments`) and `syncStock.processStockAdjustments` are confined to the active business. No cross-business visibility or sync leak when users of different businesses share a device.
+
 ## 2026-08-11 — Sync hang / cross-account hardening (DB v14)
 
 - **DB v14** — `entityIdMappings` object store (`[entity, oldId]` key; indexes `businessId`, `createdAt`); replaces the order-only map with durable temp→server id maps for **order, sale, category, role, shift, expense-category**.

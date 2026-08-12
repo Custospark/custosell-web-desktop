@@ -22,10 +22,28 @@ const appUpdates: AppUpdatesBridge = {
   },
 };
 
+export interface OfflineBridge {
+  onFlushRequest: (handler: () => Promise<void>) => void;
+}
+
+const offlineBridge: OfflineBridge = {
+  onFlushRequest: (handler) => {
+    ipcRenderer.on('offline:flush-before-quit', async (event) => {
+      try {
+        await handler();
+      } finally {
+        event.sender.send('offline:flush-before-quit-done');
+      }
+    });
+  },
+};
+
 if (process.contextIsolated) {
   contextBridge.exposeInMainWorld('secureStore', secureStore);
   contextBridge.exposeInMainWorld('appUpdates', appUpdates);
+  contextBridge.exposeInMainWorld('offlineBridge', offlineBridge);
 } else {
   (window as Window & { secureStore?: typeof secureStore }).secureStore = secureStore;
   (window as Window & { appUpdates?: AppUpdatesBridge }).appUpdates = appUpdates;
+  (window as Window & { offlineBridge?: OfflineBridge }).offlineBridge = offlineBridge;
 }

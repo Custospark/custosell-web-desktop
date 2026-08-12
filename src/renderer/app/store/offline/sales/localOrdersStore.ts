@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateOrderPayload, PosOrder, UpdateOrderPayload } from '../../../../modules/sales/api/orders/orderTypes';
 
 export type OrderWithSyncMeta = PosOrder & {
@@ -9,6 +10,7 @@ export type OrderWithSyncMeta = PosOrder & {
 
 export interface LocalOrderRecord {
   localId: string;
+  businessId?: number;
   order: OrderWithSyncMeta;
   payload: CreateOrderPayload | UpdateOrderPayload | { id: number };
   mutationId: string;
@@ -31,6 +33,7 @@ export const localOrdersStore = {
     const localId = order._localId ?? `order-${order.id}`;
     const record: LocalOrderRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       order: { ...order, _localId: localId, _pendingSync: true },
       payload,
       mutationId,
@@ -47,7 +50,7 @@ export const localOrdersStore = {
     if (!db.objectStoreNames.contains('localOrders')) {
       return [];
     }
-    return db.getAll('localOrders');
+    return scopedStore.getPending<LocalOrderRecord>('localOrders');
   },
 
   async removeByMutationId(mutationId: string): Promise<void> {

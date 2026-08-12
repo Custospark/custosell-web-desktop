@@ -1,5 +1,6 @@
 import { queryClient } from '../../../api/axiosConfig';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { stockLedger } from '../inventory/stockLedger';
 import { localRefundsStore } from './localRefundsStore';
 import type { SaleWithSyncMeta } from './localSalesStore';
@@ -116,9 +117,10 @@ export function completeOfflineRefundInstant(
     _localId: (sale as SaleWithSyncMeta)._localId,
   };
 
-  void persistOfflineRefundInBackground(sale.id, refundData, updatedSale, sale).catch((err) => {
+  const persist = persistOfflineRefundInBackground(sale.id, refundData, updatedSale, sale).catch((err) => {
     console.error('[OfflineRefund] Background persist failed:', err);
   });
+  trackWrite(persist);
 
   return updatedSale;
 }

@@ -1,6 +1,7 @@
 import { store } from '../../store';
 import { updateShiftContext } from '../../slices/authSlice';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { localShiftsStore, type ShiftRecord, type ShiftWithSyncMeta } from './localShiftsStore';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { persistAuthSnapshot } from '../auth/persistAuthSnapshot';
@@ -120,10 +121,12 @@ export function completeOfflineClockInInstant(): ShiftWithSyncMeta {
   store.dispatch(
     updateShiftContext({ shift_id: shift.id, shift_clock_in: shift.clock_in }),
   );
-  void persistAuthSnapshot().catch(() => undefined);
-  void persistOfflineClockInInBackground(shift).catch((err) => {
+  const p = persistAuthSnapshot().catch(() => undefined) as Promise<void>;
+  trackWrite(p);
+  const persist = persistOfflineClockInInBackground(shift).catch((err) => {
     console.error('[OfflineShift] Clock-in background persist failed:', err);
   });
+  trackWrite(persist);
   return { ...shift, _pendingSync: true };
 }
 
@@ -203,11 +206,13 @@ export function completeOfflineClockOutInstant(
   };
 
   store.dispatch(updateShiftContext({ shift_id: null, shift_clock_in: null }));
-  void persistAuthSnapshot().catch(() => undefined);
+  const p = persistAuthSnapshot().catch(() => undefined) as Promise<void>;
+  trackWrite(p);
 
-  void persistOfflineClockOutInBackground(shiftId, completed, totals).catch((err) => {
+  const persist = persistOfflineClockOutInBackground(shiftId, completed, totals).catch((err) => {
     console.error('[OfflineShift] Clock-out background persist failed:', err);
   });
+  trackWrite(persist);
 
   return { ...completed, _pendingSync: true };
 }

@@ -1,6 +1,7 @@
 import { queryClient } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { stockLedger } from '../inventory/stockLedger';
 import { localSalesStore, type SaleWithSyncMeta } from './localSalesStore';
 import { buildStockSeedMap } from '../inventory/offlineStockOverlay';
@@ -112,7 +113,7 @@ export function buildLocalSale(payload: CreateSalePayload): SaleWithSyncMeta {
   };
 }
 
-/** Persist to IndexedDB in the background — must not block the sale-complete UI. */
+/** Persist a sale to IndexedDB: stock ledger, mutation queue, and local sale row. */
 export async function persistOfflineSaleInBackground(
   sale: SaleWithSyncMeta,
   payload: CreateSalePayload,
@@ -147,14 +148,15 @@ export async function persistOfflineSaleInBackground(
   sale._localId = localId;
 }
 
-/**
- * Returns immediately for instant UI (modal, cart clear).
- * IndexedDB + mutation queue run asynchronously.
- */
-export function completeOfflineSaleInstant(payload: CreateSalePayload): SaleWithSyncMeta {
+/** Persist to IndexedDB, then resolve. The UI's mutation awaits this so the
+ *  durable write (mutation queue + local sale + stock ledger) is committed
+ *  before the sale is reported complete. */
+export async function completeOfflineSaleInstant(payload: CreateSalePayload): Promise<SaleWithSyncMeta> {
   const sale = buildLocalSale(payload);
-  void persistOfflineSaleInBackground(sale, payload).catch((err) => {
+  const persist = persistOfflineSaleInBackground(sale, payload).catch((err) => {
     console.error('[OfflineSale] Background persist failed:', err);
   });
+  trackWrite(persist);
+  await persist;
   return sale;
 }

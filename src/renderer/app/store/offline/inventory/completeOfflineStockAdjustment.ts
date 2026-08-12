@@ -1,5 +1,6 @@
 import { store } from '../../store';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { stockLedger } from './stockLedger';
 import type { CreateStockMovementData, StockMovement } from '../../../../modules/inventory/api/products/ProductTypes';
 
@@ -45,12 +46,18 @@ export async function persistOfflineStockAdjustmentInBackground(
 }
 
 /**
- * Returns immediately for instant UI. IndexedDB stock ledger + pending adjustment row
- * are written in the background (same pattern as offline sales and product updates).
+ * Persists the stock ledger + pending adjustment row, then resolves. The UI's
+ * mutation awaits this so a durable IndexedDB write is committed before the
+ * action is reported complete — closing the hard-power-loss data-loss window.
  */
-export function completeOfflineStockAdjustmentInstant(payload: CreateStockMovementData): StockMovement {
-  void persistOfflineStockAdjustmentInBackground(payload).catch((err) => {
+export async function completeOfflineStockAdjustmentInstant(
+  payload: CreateStockMovementData,
+): Promise<StockMovement> {
+  const movement = buildLocalStockMovement(payload);
+  const persist = persistOfflineStockAdjustmentInBackground(payload).catch((err) => {
     console.error('[OfflineStockAdjustment] Background persist failed:', err);
   });
-  return buildLocalStockMovement(payload);
+  trackWrite(persist);
+  await persist;
+  return movement;
 }

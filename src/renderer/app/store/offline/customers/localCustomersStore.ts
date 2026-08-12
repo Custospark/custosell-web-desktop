@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateCustomerData, UpdateCustomerData, Customer } from '../../../../modules/customers/api/customers/CustomerTypes';
 
 export type LocalCustomerSyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type CustomerMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalCustomerRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: CustomerMutationType;
   customer: Customer;
@@ -45,6 +47,7 @@ export const localCustomersStore = {
     const localId = newLocalId();
     const record: LocalCustomerRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       customer,
@@ -57,8 +60,7 @@ export const localCustomersStore = {
   },
 
   async getAll(): Promise<LocalCustomerRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localCustomers');
+    return scopedStore.getAll<LocalCustomerRecord>('localCustomers');
   },
 
   async getPending(): Promise<LocalCustomerRecord[]> {

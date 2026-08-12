@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { scopedStore } from '../core/businessScoping';
 import type { Business, UpdateBusinessData } from '../../../../modules/settings/api/settings/BusinessTypes';
 
 export type LocalBusinessSettingsSyncStatus = 'pending' | 'synced' | 'failed';
@@ -58,13 +59,11 @@ export const localBusinessSettingsStore = {
   },
 
   async getAll(): Promise<LocalBusinessSettingsRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localBusinessSettings');
+    return scopedStore.getAll<LocalBusinessSettingsRecord>('localBusinessSettings');
   },
 
   async getPending(): Promise<LocalBusinessSettingsRecord[]> {
-    const all = await this.getAll();
-    return all.filter((r) => r.syncStatus === 'pending' || r.syncStatus === 'failed');
+    return scopedStore.getPending<LocalBusinessSettingsRecord>('localBusinessSettings');
   },
 
   async getLatestPending(): Promise<LocalBusinessSettingsRecord | null> {

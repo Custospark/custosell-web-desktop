@@ -1,5 +1,6 @@
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { localCustomersStore, type CustomerWithSyncMeta } from './localCustomersStore';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import type { CreateCustomerData, UpdateCustomerData, Customer } from '../../../../modules/customers/api/customers/CustomerTypes';
@@ -66,9 +67,10 @@ export async function persistOfflineCustomerInBackground(
 
 export function completeOfflineCreateCustomerInstant(payload: CreateCustomerData): CustomerWithSyncMeta {
   const customer = buildLocalCustomer(payload);
-  void persistOfflineCustomerInBackground(customer, payload, 'create').catch((err) => {
+  const persist = persistOfflineCustomerInBackground(customer, payload, 'create').catch((err) => {
     console.error('[OfflineCustomer] Background persist failed:', err);
   });
+  trackWrite(persist);
   return customer;
 }
 
@@ -80,9 +82,10 @@ export function completeOfflineUpdateCustomerInstant(customer: Customer, payload
     updated_at: new Date().toISOString(),
     _pendingSync: true,
   } as CustomerWithSyncMeta;
-  void persistOfflineCustomerInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineCustomerInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineCustomer] Background persist failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -97,7 +100,8 @@ export function completeOfflineDeleteCustomerInstant(id: number): void {
     last_purchase_at: null,
     _pendingSync: true,
   };
-  void persistOfflineCustomerInBackground(customer, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineCustomerInBackground(customer, { id }, 'delete').catch((err) => {
     console.error('[OfflineCustomer] Background persist failed:', err);
   });
+  trackWrite(persist);
 }

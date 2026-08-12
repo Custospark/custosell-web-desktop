@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateRoleData, Role, UpdateRoleData } from '../../../../modules/settings/api/settings/RoleTypes';
 
 export type LocalRoleSyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type RoleMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalRoleRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: RoleMutationType;
   roleId: number;
@@ -53,6 +55,7 @@ export const localRolesStore = {
     const localId = newLocalId();
     const record: LocalRoleRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       roleId: role.id,
@@ -66,8 +69,7 @@ export const localRolesStore = {
   },
 
   async getAll(): Promise<LocalRoleRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localRoles');
+    return scopedStore.getAll<LocalRoleRecord>('localRoles');
   },
 
   async getPending(): Promise<LocalRoleRecord[]> {

@@ -1,10 +1,12 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateSalePayload, Sale } from '../../../../modules/sales/api/salesTypes';
 
 export type LocalSaleSyncStatus = 'pending' | 'synced' | 'failed';
 
 export interface LocalSaleRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   sale: Sale;
   payload: CreateSalePayload;
@@ -42,6 +44,7 @@ export const localSalesStore = {
     const localId = newLocalId();
     const record: LocalSaleRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       sale,
       payload,
@@ -53,8 +56,7 @@ export const localSalesStore = {
   },
 
   async getAll(): Promise<LocalSaleRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localSales');
+    return scopedStore.getAll<LocalSaleRecord>('localSales');
   },
 
   async getPending(): Promise<LocalSaleRecord[]> {

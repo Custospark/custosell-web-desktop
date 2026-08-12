@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { RefundData, Sale } from '../../../../modules/sales/api/salesTypes';
 import type { SaleWithSyncMeta } from './localSalesStore';
 
@@ -6,6 +7,7 @@ export type LocalRefundSyncStatus = 'pending' | 'synced' | 'failed';
 
 export interface LocalRefundRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   saleId: number;
   refundData: RefundData;
@@ -30,6 +32,7 @@ export const localRefundsStore = {
     const localId = newLocalId();
     const record: LocalRefundRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       saleId,
       refundData,
@@ -42,8 +45,7 @@ export const localRefundsStore = {
   },
 
   async getAll(): Promise<LocalRefundRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localRefunds');
+    return scopedStore.getAll<LocalRefundRecord>('localRefunds');
   },
 
   async getPending(): Promise<LocalRefundRecord[]> {

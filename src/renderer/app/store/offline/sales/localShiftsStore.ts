@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 
 export type LocalShiftSyncStatus = 'pending' | 'synced' | 'failed';
 export type LocalShiftOperation = 'open' | 'close';
@@ -23,6 +24,7 @@ export interface ShiftRecord {
 
 export interface LocalShiftRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   shiftId: number;
   operation: LocalShiftOperation;
@@ -56,6 +58,7 @@ export const localShiftsStore = {
     const localId = newLocalId();
     const record: LocalShiftRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       shiftId: shift.id,
       operation: 'open',
@@ -72,6 +75,7 @@ export const localShiftsStore = {
     const localId = newLocalId();
     const record: LocalShiftRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       shiftId: shift.id,
       operation: 'close',
@@ -84,8 +88,7 @@ export const localShiftsStore = {
   },
 
   async getAll(): Promise<LocalShiftRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localShifts');
+    return scopedStore.getAll<LocalShiftRecord>('localShifts');
   },
 
   async getPending(): Promise<LocalShiftRecord[]> {

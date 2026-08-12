@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { Expense, ExpenseFormPayload, ExpenseWithSyncMeta } from '../../../../modules/expenses/api/ExpenseTypes';
 
 export type LocalExpenseSyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type ExpenseMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalExpenseRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: ExpenseMutationType;
   expense: Expense;
@@ -45,6 +47,7 @@ export const localExpensesStore = {
     const localId = newLocalId();
     const record: LocalExpenseRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       expense,
@@ -59,8 +62,7 @@ export const localExpensesStore = {
   },
 
   async getAll(): Promise<LocalExpenseRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localExpenses');
+    return scopedStore.getAll<LocalExpenseRecord>('localExpenses');
   },
 
   async getPending(): Promise<LocalExpenseRecord[]> {

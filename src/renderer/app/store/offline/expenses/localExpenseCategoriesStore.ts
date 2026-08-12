@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateExpenseCategoryData, ExpenseCategory, ExpenseCategoryWithSyncMeta } from '../../../../modules/expenses/api/ExpenseTypes';
 
 export type LocalExpenseCategorySyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type ExpenseCategoryMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalExpenseCategoryRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: ExpenseCategoryMutationType;
   category: ExpenseCategory;
@@ -42,6 +44,7 @@ export const localExpenseCategoriesStore = {
     const localId = newLocalId();
     const record: LocalExpenseCategoryRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       category,
@@ -54,8 +57,7 @@ export const localExpenseCategoriesStore = {
   },
 
   async getAll(): Promise<LocalExpenseCategoryRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localExpenseCategories');
+    return scopedStore.getAll<LocalExpenseCategoryRecord>('localExpenseCategories');
   },
 
   async getPending(): Promise<LocalExpenseCategoryRecord[]> {

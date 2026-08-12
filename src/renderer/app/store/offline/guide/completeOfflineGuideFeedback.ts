@@ -1,4 +1,5 @@
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import {
   localGuideFeedbackStore,
   type CreateGuideFeedbackPayload,
@@ -65,8 +66,9 @@ export function completeOfflineGuideFeedbackInstant(
   payload: CreateGuideFeedbackPayload,
 ): GuideFeedbackWithSyncMeta {
   const feedback = buildLocalGuideFeedback(payload);
-  void persistOfflineGuideFeedbackInBackground(feedback, payload).catch((err) => {
+  const persist = persistOfflineGuideFeedbackInBackground(feedback, payload).catch((err) => {
     console.error('[OfflineGuideFeedback] Background persist failed:', err);
   });
+  trackWrite(persist);
   return feedback;
 }

@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateCategoryData, Category } from '../../../../modules/inventory/api/products/ProductTypes';
 
 export type LocalCategorySyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type CategoryMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalCategoryRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: CategoryMutationType;
   category: Category;
@@ -45,6 +47,7 @@ export const localCategoriesStore = {
     const localId = newLocalId();
     const record: LocalCategoryRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       category,
@@ -57,8 +60,7 @@ export const localCategoriesStore = {
   },
 
   async getAll(): Promise<LocalCategoryRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localCategories');
+    return scopedStore.getAll<LocalCategoryRecord>('localCategories');
   },
 
   async getPending(): Promise<LocalCategoryRecord[]> {

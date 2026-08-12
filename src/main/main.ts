@@ -14,6 +14,7 @@ if (isDev) {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let quitFlushComplete = false;
 
 function getSecureStorePath(): string {
   return path.join(app.getPath('userData'), 'secure-store.json');
@@ -184,6 +185,23 @@ app.on('before-quit', (event) => {
   const willInstall = installUpdateOnQuitIfReady();
   if (willInstall) {
     event.preventDefault();
+    return;
+  }
+
+  // Defer quit until the renderer has flushed in-flight IndexedDB writes so
+  // offline data survives shutdown. Timeout guards against a hung renderer.
+  if (mainWindow && !mainWindow.isDestroyed() && !quitFlushComplete) {
+    event.preventDefault();
+    quitFlushComplete = true;
+    let done = false;
+    mainWindow.webContents.send('offline:flush-before-quit');
+    const finish = () => {
+      if (done) return;
+      done = true;
+      app.quit();
+    };
+    ipcMain.on('offline:flush-before-quit-done', finish);
+    setTimeout(finish, 5000);
   }
 });
 

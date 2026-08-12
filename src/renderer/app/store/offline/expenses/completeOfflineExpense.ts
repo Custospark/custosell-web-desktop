@@ -1,6 +1,7 @@
 import { queryClient } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { localExpensesStore } from './localExpensesStore';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import type {
@@ -156,9 +157,10 @@ export async function persistOfflineExpenseInBackground(
 export function completeOfflineCreateExpenseInstant(formData: FormData): ExpenseWithSyncMeta {
   const payload = serializeExpenseFormData(formData);
   const expense = buildLocalExpense(payload);
-  void persistOfflineExpenseInBackground(expense, payload, 'create').catch((err) => {
+  const persist = persistOfflineExpenseInBackground(expense, payload, 'create').catch((err) => {
     console.error('[OfflineExpense] Background persist failed:', err);
   });
+  trackWrite(persist);
   return expense;
 }
 
@@ -186,9 +188,10 @@ export function completeOfflineUpdateExpenseInstant(expense: Expense, formData: 
     _pendingSync: true,
     _pendingReceipt: Boolean(payload.receipt),
   };
-  void persistOfflineExpenseInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineExpenseInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineExpense] Background persist failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -219,7 +222,8 @@ export function completeOfflineDeleteExpenseInstant(id: number): void {
     updated_at: '',
     _pendingSync: true,
   };
-  void persistOfflineExpenseInBackground(expense, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineExpenseInBackground(expense, { id }, 'delete').catch((err) => {
     console.error('[OfflineExpense] Background persist failed:', err);
   });
+  trackWrite(persist);
 }

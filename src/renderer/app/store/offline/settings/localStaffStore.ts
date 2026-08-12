@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateStaffData, StaffUser, UpdateStaffData } from '../../../../modules/settings/api/settings/StaffTypes';
 
 export type LocalStaffSyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type StaffMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalStaffRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: StaffMutationType;
   staffId: number;
@@ -54,6 +56,7 @@ export const localStaffStore = {
     const localId = newLocalId();
     const record: LocalStaffRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       staffId: staff.id,
@@ -68,8 +71,7 @@ export const localStaffStore = {
   },
 
   async getAll(): Promise<LocalStaffRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localStaff');
+    return scopedStore.getAll<LocalStaffRecord>('localStaff');
   },
 
   async getPending(): Promise<LocalStaffRecord[]> {

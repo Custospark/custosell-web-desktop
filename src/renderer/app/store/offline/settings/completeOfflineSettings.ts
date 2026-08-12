@@ -4,6 +4,7 @@ import { store } from '../../store';
 import { setBusiness } from '../../slices/authSlice';
 import { businessToAuthInfo } from '../../../../modules/settings/api/settings/businessAuthSync';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { isNetworkFailure, isOfflineMode, shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import { requestSyncWhenOnline } from '../sync/syncPendingIfOnline';
 import { localRolesStore, toRoleWithSyncMeta, type RoleWithSyncMeta } from './localRolesStore';
@@ -94,9 +95,10 @@ export async function persistOfflineRoleInBackground(
 
 export function completeOfflineCreateRoleInstant(payload: CreateRoleData): RoleWithSyncMeta {
   const role = buildLocalRole(payload);
-  void persistOfflineRoleInBackground(role, payload, 'create').catch((err) => {
+  const persist = persistOfflineRoleInBackground(role, payload, 'create').catch((err) => {
     console.error('[OfflineSettings] Role persist failed:', err);
   });
+  trackWrite(persist);
   return role;
 }
 
@@ -110,9 +112,10 @@ export function completeOfflineUpdateRoleInstant(role: Role, payload: UpdateRole
     updated_at: new Date().toISOString(),
     _pendingSync: true,
   };
-  void persistOfflineRoleInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineRoleInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineSettings] Role persist failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -170,9 +173,10 @@ export function completeOfflineDeleteRoleInstant(id: number): void {
     updated_at: '',
     _pendingSync: true,
   };
-  void persistOfflineRoleInBackground(role, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineRoleInBackground(role, { id }, 'delete').catch((err) => {
     console.error('[OfflineSettings] Role persist failed:', err);
   });
+  trackWrite(persist);
 }
 
 export function buildLocalStaff(payload: CreateStaffData, role?: { id: number; name: string } | null): StaffWithSyncMeta {
@@ -239,9 +243,10 @@ export function completeOfflineCreateStaffInstant(
   role?: { id: number; name: string } | null,
 ): StaffWithSyncMeta {
   const staff = buildLocalStaff(payload, role);
-  void persistOfflineStaffInBackground(staff, payload, 'create').catch((err) => {
+  const persist = persistOfflineStaffInBackground(staff, payload, 'create').catch((err) => {
     console.error('[OfflineSettings] Staff persist failed:', err);
   });
+  trackWrite(persist);
   return staff;
 }
 
@@ -259,9 +264,10 @@ export function completeOfflineUpdateStaffInstant(
     updated_at: new Date().toISOString(),
     _pendingSync: true,
   };
-  void persistOfflineStaffInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineStaffInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineSettings] Staff persist failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -341,9 +347,10 @@ export function completeOfflineDeleteStaffInstant(id: number): void {
     updated_at: '',
     _pendingSync: true,
   };
-  void persistOfflineStaffInBackground(staff, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineStaffInBackground(staff, { id }, 'delete').catch((err) => {
     console.error('[OfflineSettings] Staff persist failed:', err);
   });
+  trackWrite(persist);
 }
 
 export async function persistOfflineBusinessInBackground(
@@ -386,9 +393,10 @@ export function completeOfflineUpdateBusinessInstant(
 
   store.dispatch(setBusiness(businessToAuthInfo(updated)));
   queryClient.setQueryData(['business', 'mine'], updated);
-  void persistOfflineBusinessInBackground(updated, payload).catch((err) => {
+  const persist = persistOfflineBusinessInBackground(updated, payload).catch((err) => {
     console.error('[OfflineSettings] Business persist failed:', err);
   });
+  trackWrite(persist);
 
   return updated;
 }

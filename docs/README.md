@@ -86,6 +86,8 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [2026-08-11-offline-sync-durable-id-maps-dependency-guard.md](./adr/2026-08-11-offline-sync-durable-id-maps-dependency-guard.md) | Offline sync hang fix — durable entity id maps (DB v14), dependency guard in `getPending()`, business-scoped mutation queue |
 | [2026-08-13-payment-initiate-opens-redirect-url.md](./adr/2026-08-13-payment-initiate-opens-redirect-url.md) | Every payment surface opens the gateway `redirect_url` (upgrade, billing-cycle, register/payment) + popup-blocked notice |
+| [2026-08-13-business-scope-offline-local-stores-stock.md](./adr/2026-08-13-business-scope-offline-local-stores-stock.md) | Business-scope all offline local stores + stock ledger (DB v15) so shared-device work never leaks between businesses |
+| [2026-08-13-offline-write-durability-across-shutdown.md](./adr/2026-08-13-offline-write-durability-across-shutdown.md) | Offline writes survive shutdown: tracked in-flight writes, awaited primary flows, flush barrier (pagehide/beforeunload/before-quit IPC), storage.persist() |
 | [2026-08-11-responsive-accounting-views.md](./adr/2026-08-11-responsive-accounting-views.md) | Responsive accounting views — COA mobile cards + scroll-safe tree + wrap-safe header; financial-ratio tooltip hover + tap, viewport-clamped |
 | [2026-07-27-businessQueries-subscription-overwrite-gate-fix.md](./adr/2026-07-27-businessQueries-subscription-overwrite-gate-fix.md) | `useBusiness` subscription overwrite → gate redirect loop after onboarding payment |
 | [2026-08-03-renewal-top-up.md](./adr/2026-08-03-renewal-top-up.md) | Renewal top-up picker — flexible prepay (1–60 months), prorated amount, anchored to next_billing_date |

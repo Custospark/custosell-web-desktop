@@ -1,5 +1,6 @@
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { localCategoriesStore, type CategoryWithSyncMeta } from './localCategoriesStore';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import type { CreateCategoryData, Category } from '../../../../modules/inventory/api/products/ProductTypes';
@@ -67,9 +68,10 @@ export async function persistOfflineCategoryInBackground(
 
 export function completeOfflineCreateCategoryInstant(payload: CreateCategoryData): CategoryWithSyncMeta {
   const category = buildLocalCategory(payload);
-  void persistOfflineCategoryInBackground(category, payload, 'create').catch((err) => {
+  const persist = persistOfflineCategoryInBackground(category, payload, 'create').catch((err) => {
     console.error('[OfflineCategory] Background persist failed:', err);
   });
+  trackWrite(persist);
   return category;
 }
 
@@ -80,9 +82,10 @@ export function completeOfflineUpdateCategoryInstant(category: Category, payload
     updated_at: new Date().toISOString(),
     _pendingSync: true,
   };
-  void persistOfflineCategoryInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineCategoryInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineCategory] Background persist failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -97,7 +100,8 @@ export function completeOfflineDeleteCategoryInstant(id: number): void {
     updated_at: '',
     _pendingSync: true,
   };
-  void persistOfflineCategoryInBackground(category, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineCategoryInBackground(category, { id }, 'delete').catch((err) => {
     console.error('[OfflineCategory] Background persist failed:', err);
   });
+  trackWrite(persist);
 }

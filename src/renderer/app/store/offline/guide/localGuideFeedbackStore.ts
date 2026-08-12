@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type {
   GuideFeedbackCategory,
   GuideFeedbackMineDto,
@@ -14,6 +15,7 @@ export interface CreateGuideFeedbackPayload {
 
 export interface LocalGuideFeedbackRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   feedback: GuideFeedbackMineDto;
   payload: CreateGuideFeedbackPayload;
@@ -54,6 +56,7 @@ export const localGuideFeedbackStore = {
     const localId = newLocalId();
     const record: LocalGuideFeedbackRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       feedback,
       payload,
@@ -65,8 +68,7 @@ export const localGuideFeedbackStore = {
   },
 
   async getAll(): Promise<LocalGuideFeedbackRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localGuideFeedback');
+    return scopedStore.getAll<LocalGuideFeedbackRecord>('localGuideFeedback');
   },
 
   async getPending(): Promise<LocalGuideFeedbackRecord[]> {

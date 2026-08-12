@@ -1,5 +1,6 @@
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { localExpenseCategoriesStore } from './localExpenseCategoriesStore';
 import { shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import type {
@@ -75,9 +76,10 @@ export function completeOfflineCreateExpenseCategoryInstant(
   payload: CreateExpenseCategoryData,
 ): ExpenseCategoryWithSyncMeta {
   const category = buildLocalExpenseCategory(payload);
-  void persistOfflineExpenseCategoryInBackground(category, payload, 'create').catch((err) => {
+  const persist = persistOfflineExpenseCategoryInBackground(category, payload, 'create').catch((err) => {
     console.error('[OfflineExpenseCategory] Background persist failed:', err);
   });
+  trackWrite(persist);
   return category;
 }
 
@@ -94,9 +96,10 @@ export function completeOfflineUpdateExpenseCategoryInstant(
     updated_at: new Date().toISOString(),
     _pendingSync: true,
   };
-  void persistOfflineExpenseCategoryInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineExpenseCategoryInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineExpenseCategory] Background persist failed:', err);
   });
+  trackWrite(persist);
   return updated;
 }
 
@@ -113,7 +116,8 @@ export function completeOfflineDeleteExpenseCategoryInstant(id: number): void {
     updated_at: '',
     _pendingSync: true,
   };
-  void persistOfflineExpenseCategoryInBackground(category, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineExpenseCategoryInBackground(category, { id }, 'delete').catch((err) => {
     console.error('[OfflineExpenseCategory] Background persist failed:', err);
   });
+  trackWrite(persist);
 }

@@ -1,4 +1,5 @@
 import { getOfflineDb } from '../core/offlineDb';
+import { getActiveBusinessId, scopedStore } from '../core/businessScoping';
 import type { CreateProductData, UpdateProductData, Product } from '../../../../modules/inventory/api/products/ProductTypes';
 
 export type LocalProductSyncStatus = 'pending' | 'synced' | 'failed';
@@ -7,6 +8,7 @@ export type ProductMutationType = 'create' | 'update' | 'delete';
 
 export interface LocalProductRecord {
   localId: string;
+  businessId?: number;
   mutationId: string;
   mutationType: ProductMutationType;
   product: Product;
@@ -52,6 +54,7 @@ export const localProductsStore = {
     const localId = newLocalId();
     const record: LocalProductRecord = {
       localId,
+      businessId: getActiveBusinessId(),
       mutationId,
       mutationType,
       product,
@@ -64,8 +67,7 @@ export const localProductsStore = {
   },
 
   async getAll(): Promise<LocalProductRecord[]> {
-    const db = await getOfflineDb();
-    return db.getAll('localProducts');
+    return scopedStore.getAll<LocalProductRecord>('localProducts');
   },
 
   async getPending(): Promise<LocalProductRecord[]> {

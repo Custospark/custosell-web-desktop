@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../../api/axiosConfig';
 import { store } from '../../store';
 import { mutationQueue } from '../sync/mutationQueue';
+import { trackWrite } from '../core/offlineWriteTracker';
 import { localProductsStore, toProductWithSyncMeta, type ProductWithSyncMeta } from './localProductsStore';
 import { isCompletelyOffline, isNetworkFailure, shouldCompleteMutationLocally } from '../core/offlineQueryUtils';
 import type { CreateProductData, UpdateProductData, Product } from '../../../../modules/inventory/api/products/ProductTypes';
@@ -169,23 +170,30 @@ export async function persistOfflineProductInBackground(
   }
 }
 
-export function completeOfflineCreateProductInstant(payload: CreateProductData): ProductWithSyncMeta {
+export async function completeOfflineCreateProductInstant(payload: CreateProductData): Promise<ProductWithSyncMeta> {
   const product = buildLocalProduct(payload);
-  void persistOfflineProductInBackground(product, payload, 'create').catch((err) => {
+  const persist = persistOfflineProductInBackground(product, payload, 'create').catch((err) => {
     console.error('[OfflineProduct] Background persist failed:', err);
   });
+  trackWrite(persist);
+  await persist;
   return product;
 }
 
-export function completeOfflineUpdateProductInstant(product: Product, payload: UpdateProductData): ProductWithSyncMeta {
+export async function completeOfflineUpdateProductInstant(
+  product: Product,
+  payload: UpdateProductData,
+): Promise<ProductWithSyncMeta> {
   const updated: ProductWithSyncMeta = {
     ...applyProductPayload(product, payload),
     _pendingSync: true,
     _mutationType: 'update',
   };
-  void persistOfflineProductInBackground(updated, payload, 'update').catch((err) => {
+  const persist = persistOfflineProductInBackground(updated, payload, 'update').catch((err) => {
     console.error('[OfflineProduct] Background persist failed:', err);
   });
+  trackWrite(persist);
+  await persist;
   return updated;
 }
 
@@ -252,7 +260,8 @@ export function completeOfflineDeleteProductInstant(id: number): void {
     _pendingSync: true,
     _mutationType: 'delete',
   };
-  void persistOfflineProductInBackground(product, { id }, 'delete').catch((err) => {
+  const persist = persistOfflineProductInBackground(product, { id }, 'delete').catch((err) => {
     console.error('[OfflineProduct] Background persist failed:', err);
   });
+  trackWrite(persist);
 }

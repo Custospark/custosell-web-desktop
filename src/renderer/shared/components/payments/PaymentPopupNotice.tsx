@@ -87,21 +87,24 @@ export default function PaymentPopupNotice({
     );
   }
 
-  // Normal waiting state: offer the browser alternative as a subtle fallback.
+  // Normal waiting state: offer the browser alternative as a visible button.
   if (!popupBlocked) {
     if (paymentUrl) {
       return (
-        <div className="text-center">
+        <div className="text-center space-y-1.5">
           <button
             type="button"
             onClick={() => openUrl(paymentUrl)}
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-blue-700 hover:decoration-blue-400 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-            {environment === 'mobile'
-              ? 'Prefer a new tab? Complete payment in your browser'
-              : 'Trouble with the popup? Complete payment in your browser'}
+            <ExternalLink className="w-4 h-4" />
+            Open Payment in Browser
           </button>
+          <p className="text-xs text-slate-500">
+            {environment === 'mobile'
+              ? 'Opens a new tab to complete your payment.'
+              : 'Opens in your system browser to complete your payment.'}
+          </p>
         </div>
       );
     }

@@ -167,18 +167,13 @@ export default function PlanCard({
             </div>
           )}
 
-          {plan.onboarding_fee_usd ? (
+          {Number(plan.onboarding_fee_usd ?? 0) > 0 && (
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
               <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
               <p className="text-sm font-bold text-blue-800">{formatUSD(Number(plan.onboarding_fee_usd))}</p>
               {currency !== 'USD' && fee > 0 && (
                 <p className="text-[11px] text-blue-600">≈ {formatCurrency(fee, currency)}</p>
               )}
-            </div>
-          ) : (
-            <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg px-3 py-2">
-              <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">One time set up fee</p>
-              <p className="text-sm font-bold text-blue-800">Free</p>
             </div>
           )}
         </div>

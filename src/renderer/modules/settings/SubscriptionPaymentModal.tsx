@@ -72,7 +72,7 @@ export default function SubscriptionPaymentModal({
   const isDone = paymentQuery.data?.data?.status === 'completed';
   const isFailed = paymentQuery.data?.data?.status === 'failed';
 
-  const { popupBlocked, paymentUrl, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -147,8 +147,8 @@ export default function SubscriptionPaymentModal({
               An STK push will be sent to <span className="font-semibold">{phone}</span>
             </p>
           </div>
-          {popupBlocked && (
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} />
+          {(popupBlocked || openedExternally) && (
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
           )}
 
           {paymentQuery.data?.data?.status === 'failed' && (

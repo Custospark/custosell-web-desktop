@@ -71,7 +71,7 @@ export default function OnboardingPage() {
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
   const { refetch: refetchProfile, isRefetching } = useProfile();
 
-  const { popupBlocked, paymentUrl, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -198,6 +198,8 @@ export default function OnboardingPage() {
         verifying={verifying}
         popupBlocked={popupBlocked}
         paymentUrl={paymentUrl}
+        openedExternally={openedExternally}
+        environment={environment}
         verifyMessage={verifyMessage}
         onReset={() => { closePaymentPopup(); setPaymentId(null); setInitiated(false); setVerifyMessage(null); }}
       />

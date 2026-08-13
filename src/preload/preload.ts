@@ -38,12 +38,22 @@ const offlineBridge: OfflineBridge = {
   },
 };
 
+export interface ShellBridge {
+  openExternal: (url: string) => Promise<boolean>;
+}
+
+const shellBridge: ShellBridge = {
+  openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url) as Promise<boolean>,
+};
+
 if (process.contextIsolated) {
   contextBridge.exposeInMainWorld('secureStore', secureStore);
   contextBridge.exposeInMainWorld('appUpdates', appUpdates);
   contextBridge.exposeInMainWorld('offlineBridge', offlineBridge);
+  contextBridge.exposeInMainWorld('electronShell', shellBridge);
 } else {
   (window as Window & { secureStore?: typeof secureStore }).secureStore = secureStore;
   (window as Window & { appUpdates?: AppUpdatesBridge }).appUpdates = appUpdates;
   (window as Window & { offlineBridge?: OfflineBridge }).offlineBridge = offlineBridge;
+  (window as Window & { electronShell?: ShellBridge }).electronShell = shellBridge;
 }

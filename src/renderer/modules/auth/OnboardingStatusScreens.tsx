@@ -4,6 +4,7 @@ import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
+import type { PaymentEnvironment } from '../../shared/hooks/usePaymentPopup';
 
 interface PaymentDoneScreenProps {
   handleContinue: () => void;
@@ -61,11 +62,13 @@ interface WaitingScreenProps {
   verifying: boolean;
   popupBlocked: boolean;
   paymentUrl?: string | null;
+  openedExternally?: boolean;
+  environment?: PaymentEnvironment;
   verifyMessage: string | null;
   onReset: () => void;
 }
 
-export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, verifyMessage, onReset }: WaitingScreenProps) {
+export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, verifyMessage, onReset }: WaitingScreenProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
@@ -83,8 +86,8 @@ export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, pa
               Complete your payment in the opened window.
             </p>
           </div>
-          {popupBlocked && (
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} />
+          {(popupBlocked || openedExternally) && (
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} openedExternally={openedExternally} environment={environment} />
           )}
           <button
             type="button"

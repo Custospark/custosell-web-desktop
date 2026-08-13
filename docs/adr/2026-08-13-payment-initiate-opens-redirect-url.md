@@ -55,6 +55,17 @@ Applied to every payment-initiation surface:
 - `OnboardingPage` `handleStartPayment` — onboarding plan selection setup fee
 - `OnboardingStatusScreens.WaitingScreen` — renders the fallback notice
 
+## Device-aware expansion (same day)
+
+The synchronous-popup approach alone is not identical on every runtime:
+
+- **Desktop web** — a sized popup (~600px wide) opened synchronously and redirected. A lightweight loading page is painted into the blank window first (`paintLoading`) so it never looks broken while the initiate request is in flight.
+- **Electron** — `window.open` must NOT create an in-app child window, because it would inherit the main window's `nodeIntegration: true` / `contextIsolation: false` settings. Instead:
+  - `main.ts` registers `mainWindow.webContents.setWindowOpenHandler` that denies all raw `window.open` and routes any `http(s)` URL to `shell.openExternal` (the user's default browser).
+  - The renderer calls the new `electronShell.openExternal(url)` bridge (IPC `shell:open-external`, preload-exposed, URL-validated to `http(s)` only) to open the gateway in the system browser. Polling keeps running in-app, so the payment auto-confirms when the user returns.
+  - `openedExternally` flips and `PaymentPopupNotice` shows a blue informational box ("Payment opened in your browser…") with a **Reopen Payment Page** fallback instead of a blocked-popup error.
+- **Mobile web** — popups/window-features are hostile. The hook opens a plain blank tab synchronously (`window.open('', '_blank')`, no features) then redirects it; the notice copy switches to "your payment tab" wording, and the manual fallback opens the gateway from a fresh gesture. Full-page redirect was considered but the backend callback returns JSON (not a resume redirect), so a new tab keeps the app state and polling alive — the seamless behavior mobile users expect.
+
 ## Why frontend-only
 
 The backend contract is already correct and consistent across every payment type — `redirect_url` is present in the initiate response and the post-payment reconciliation is driven by `payment_type`, not by how the frontend opened the page. No server change was required.
@@ -62,14 +73,18 @@ The backend contract is already correct and consistent across every payment type
 ## Consequences
 
 - The PesaPal payment page now reliably opens for every payment flow (upgrade, billing-cycle change, subscribe/renew/top-up, onboarding, register/payment) without being popup-blocked.
-- If a popup is still blocked (rare, e.g. aggressive blockers), the user gets a manual **Open Payment Page** button and clear instructions instead of an infinite spinner.
-- Polling starts only after the popup is opened/redirected, so the user is never "hanging" on a payment screen that has no visible payment page.
-- Gates: FE `npm run vera:fast` (eslint + logic) passed; `npx tsc --noEmit` clean.
+- Electron opens the gateway in the system browser (safer — no Node-enabled child window) with an in-app confirmation on return.
+- Mobile opens a payment tab that keeps app state and polling alive, with mobile-friendly copy and a manual fallback.
+- If a window/tab is still blocked (rare, e.g. aggressive blockers), the user gets a manual **Open Payment Page** button and clear instructions instead of an infinite spinner.
+- Polling starts only after the window is opened/redirected, so the user is never "hanging" on a payment screen that has no visible payment page.
+- Gates: FE `npm run vera:fast` (eslint + logic) passed; `npx tsc --noEmit` clean; Electron `tsc --project src/tsconfig.json --noEmit` clean.
 
 ## References
 
 - `src/renderer/shared/hooks/usePaymentPopup.ts` (new)
 - `src/renderer/shared/components/payments/PaymentPopupNotice.tsx` (new)
+- `src/main/main.ts` — `setWindowOpenHandler` + `shell:open-external` IPC
+- `src/preload/preload.ts` — `electronShell.openExternal` bridge
 - `src/renderer/modules/settings/UpgradeFlowModal.tsx`
 - `src/renderer/modules/settings/SubscriptionPaymentModal.tsx`
 - `src/renderer/modules/settings/BillingCyclePaymentModal.tsx`

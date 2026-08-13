@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain, safeStorage } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, safeStorage, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -95,6 +95,18 @@ function createWindow(): BrowserWindow {
     mainWindow?.focus();
   });
 
+  // Never create arbitrary child windows (which would inherit the main
+  // window's nodeIntegration/contextIsolation settings). Open any external
+  // http(s) URL — payment gateways, PDFs, social links — in the user's default
+  // browser instead. This is both safer and more consistent with how the
+  // web build behaves.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url && /^https?:\/\//i.test(url)) {
+      void shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -168,6 +180,12 @@ ipcMain.handle('secure-store:delete', (_event, key: string) => {
 ipcMain.handle('app-update:pending-version', () => getPendingUpdateVersion());
 
 ipcMain.handle('app-update:restart-and-install', () => restartAndInstallNow());
+
+ipcMain.handle('shell:open-external', (_event, url: unknown) => {
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
+  void shell.openExternal(url);
+  return true;
+});
 
 app.whenReady().then(() => {
   createWindow();

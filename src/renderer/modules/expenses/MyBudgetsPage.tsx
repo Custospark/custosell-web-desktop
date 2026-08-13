@@ -119,15 +119,15 @@ export default function MyBudgetsPage() {
             <p className="text-sm text-gray-500">Your money goals, and how you're tracking against them.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.OVERVIEW)}>
-            <LayoutDashboard className="w-4 h-4 mr-1.5" /> Money overview
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="flex-1 whitespace-nowrap sm:flex-none" onClick={() => navigate(ROUTES.EXPENSES.OVERVIEW)}>
+            <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" /> Money overview
           </Button>
-          <Button variant="outline" onClick={() => navigate(ROUTES.EXPENSES.CATEGORIES)}>
-            <Settings2 className="w-4 h-4 mr-1.5" /> Manage categories
+          <Button variant="outline" size="sm" className="flex-1 whitespace-nowrap sm:flex-none" onClick={() => navigate(ROUTES.EXPENSES.CATEGORIES)}>
+            <Settings2 className="w-3.5 h-3.5 mr-1.5" /> Manage categories
           </Button>
-          <Button onClick={handleNew}>
-            <Plus className="w-4 h-4 mr-1.5" /> New budget
+          <Button size="sm" className="flex-1 whitespace-nowrap sm:flex-none" onClick={handleNew}>
+            <Plus className="w-3.5 h-3.5 mr-1.5" /> New budget
           </Button>
         </div>
       </div>

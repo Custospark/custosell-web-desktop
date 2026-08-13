@@ -178,13 +178,13 @@ export default function PlanCard({
           )}
         </div>
 
-        {plan.trial_days && (
+        {plan.trial_days ? (
           <div className="text-center">
-            <span className="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-4 py-1.5 rounded-full">
-              {plan.trial_days}-day trial after setup
+            <span className="inline-block bg-emerald-50 text-emerald-700 text-xs font-semibold px-4 py-1.5 rounded-full">
+              Enjoy {plan.trial_days} days of free use
             </span>
           </div>
-        )}
+        ) : null}
 
         <div className="flex-1 border-t border-gray-100 pt-4 space-y-3">
           {features.map(([key]) => {

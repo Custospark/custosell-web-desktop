@@ -39,6 +39,11 @@ card now shows **"Subscribe Now"** and routes through the `subscribe` payment fl
 scheduled downgrades and proration upgrades are only valid once a subscription is
 **active** (paid). Trial users now pick any plan by subscribing directly.
 
+Similarly, on **past_due** ("Payment Due") the matrix no longer offers
+`Schedule Downgrade` or `Upgrade` for non-current plans — those require an active
+subscription. It shows **Reactivate** instead (routed through the payment flow with
+`{ action: 'reactivate', to_plan_id }`). The current plan keeps `Pay Outstanding`.
+
 ## Consequences
 
 - New businesses get full module access during trial (Enterprise = everything),

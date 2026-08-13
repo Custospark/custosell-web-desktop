@@ -47,8 +47,8 @@ const MATRIX: Matrix = {
   },
   past_due: {
     current: { type: 'renew', label: 'Pay Outstanding', requiresPayment: true },
-    higher:  { type: 'upgrade', label: 'Upgrade', requiresPayment: true },
-    lower:   { type: 'downgrade', label: 'Schedule Downgrade', requiresPayment: false },
+    higher:  { type: 'reactivate', label: 'Reactivate', requiresPayment: true },
+    lower:   { type: 'reactivate', label: 'Reactivate', requiresPayment: true },
   },
   suspended: {
     current: { type: 'reactivate', label: 'Reactivate', requiresPayment: true },

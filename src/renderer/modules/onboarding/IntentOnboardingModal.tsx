@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Compass, Sparkles } from 'lucide-react';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
 import { cn } from '../../shared/utils/cn';
+import { useAppSelector } from '../../app/store/hooks/useApp';
 import { INTENT_OPTIONS, type OnboardingIntentId } from './onboardingTypes';
 import { useUpdateOnboarding } from './useOnboardingQueries';
 
@@ -12,6 +13,7 @@ interface IntentOnboardingModalProps {
 
 export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
   const update = useUpdateOnboarding();
+  const firstName = useAppSelector((s) => s.auth.user?.name?.trim().split(/\s+/)[0]);
   const [primary, setPrimary] = useState<OnboardingIntentId | null>(null);
   const [secondary, setSecondary] = useState<OnboardingIntentId | null>(null);
 
@@ -32,17 +34,28 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
     setSecondary(id);
   }
 
-  async function handleContinue() {
-    if (!primary) return;
-    await update.mutateAsync({
-      action: 'complete_intent',
-      primary_intent: primary,
-      secondary_intent: secondary,
-    });
+  async function saveIntent() {
+    if (primary) {
+      await update.mutateAsync({
+        action: 'complete_intent',
+        primary_intent: primary,
+        secondary_intent: secondary,
+      });
+    } else {
+      await update.mutateAsync({ action: 'skip_intent' });
+    }
   }
 
-  async function handleSkip() {
-    await update.mutateAsync({ action: 'skip_intent' });
+  async function handleTakeTour() {
+    // Intent save leads to needs_tour=true, so OnboardingGate opens the tour.
+    await saveIntent();
+  }
+
+  async function handleNoThanks() {
+    // Skip the tour first while the intent gate still blocks the tour, so the
+    // tour never flashes between the two optimistic updates.
+    await update.mutateAsync({ action: 'skip_tour' });
+    await saveIntent();
   }
 
   return (
@@ -63,20 +76,21 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
           <Sparkles className="h-6 w-6" aria-hidden />
         </div>
         <h2 className="relative mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-          What brings you to Custosell?
+          Welcome to Custosell{firstName ? `, ${firstName}` : ''}!
         </h2>
         <p className="relative mx-auto mt-2 max-w-xl text-sm text-indigo-50 sm:text-base">
-          You’re in control of a full business workspace — sales, stock, people, books, and more.
-          Pick what matters most. You enable modules anytime in Settings → Module access.
+          Your workspace is ready — sales, stock, people, books, and more, all in one place.
+          Everything works even when your internet doesn't.
         </p>
       </div>
 
       <div className="space-y-4 px-4 py-5 sm:px-6">
-        <p className="text-center text-sm font-medium text-slate-700">
-          {primary
-            ? 'Nice — add a second focus if you want, then continue'
-            : 'Choose your primary goal to get started'}
-        </p>
+        <div className="text-center">
+          <p className="text-sm font-medium text-slate-700">Make it yours (optional)</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Pick what you'll use most — you can change this anytime in Settings → Module access.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {INTENT_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -110,23 +124,28 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
             );
           })}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-          <button
-            type="button"
-            onClick={() => void handleSkip()}
-            disabled={update.isPending}
-            className="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
-          >
-            Skip — take the tour anyway
-          </button>
-          <Button
-            onClick={() => void handleContinue()}
-            disabled={!primary || update.isPending}
-            loading={update.isPending}
-            className="min-w-[9rem]"
-          >
-            Continue
-          </Button>
+        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <Compass className="h-5 w-5 shrink-0 text-indigo-600" aria-hidden />
+            <p className="text-sm font-semibold text-slate-800">Want a quick tour of Custosell?</p>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-600">
+            We'll show you around your workspace in about a minute. No rush — explore on your own anytime.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Button onClick={() => void handleTakeTour()} loading={update.isPending} className="min-w-[11rem]">
+              <Compass className="mr-1.5 h-4 w-4" aria-hidden />
+              Take the tour
+            </Button>
+            <button
+              type="button"
+              onClick={() => void handleNoThanks()}
+              disabled={update.isPending}
+              className="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
+            >
+              No thanks
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

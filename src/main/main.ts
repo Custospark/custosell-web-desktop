@@ -222,10 +222,19 @@ ipcMain.handle('shell:open-external', (_event, url: unknown) => {
 });
 
 ipcMain.handle('payment-window:close', () => {
-  if (paymentWindow && !paymentWindow.isDestroyed()) {
-    paymentWindow.close();
-  }
+  const win = paymentWindow;
   paymentWindow = null;
+  if (win && !win.isDestroyed()) {
+    // Destroy immediately (no graceful close / beforeunload) so closing the
+    // gateway window can never glitch the main window's compositor into white.
+    win.hide();
+    win.destroy();
+  }
+  // Make sure the app window is repainted and refocused after the child goes.
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
   return true;
 });
 

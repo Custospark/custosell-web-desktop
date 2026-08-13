@@ -67,6 +67,7 @@ export const platformSubRoutes = [
   ROUTES.PLATFORM.GUIDE.TUTORIALS,
   ROUTES.PLATFORM.SALES_REPS,
   ROUTES.PLATFORM.PAYOUTS,
+  ROUTES.PLATFORM.CONVERSIONS,
   ROUTES.PLATFORM.CAMPAIGN_CODES,
   ROUTES.PLATFORM.GUIDE.FAQS,
   ROUTES.PLATFORM.GUIDE.FEEDBACK,
@@ -85,6 +86,7 @@ export const platformNavGroup: SidebarNavGroup = {
     { to: ROUTES.PLATFORM.SENT_MESSAGES, label: 'Sent messages', icon: BellRing },
     { to: ROUTES.PLATFORM.SALES_REPS, label: 'Sales Reps', icon: Percent },
     { to: ROUTES.PLATFORM.PAYOUTS, label: 'Payouts', icon: DollarSign },
+    { to: ROUTES.PLATFORM.CONVERSIONS, label: 'Conversions', icon: TrendingUp },
     { to: ROUTES.PLATFORM.CAMPAIGN_CODES, label: 'Campaign Codes', icon: Gift },
   ],
 };

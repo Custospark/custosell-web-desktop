@@ -105,6 +105,7 @@ export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
   [ROUTES.PLATFORM.SENT_MESSAGES]: 'Messages sent across the platform.',
   [ROUTES.PLATFORM.SALES_REPS]: 'Manage sales representatives.',
   [ROUTES.PLATFORM.PAYOUTS]: 'Review and manage sales rep payouts.',
+  [ROUTES.PLATFORM.CONVERSIONS]: 'Trial-to-paid conversion analytics.',
   [ROUTES.PLATFORM.CAMPAIGN_CODES]: 'Manage referral campaign codes.',
 
   [ROUTES.PLATFORM.GUIDE.TUTORIALS]: 'Platform tutorials and guides.',

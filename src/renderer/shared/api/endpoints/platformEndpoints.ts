@@ -15,6 +15,7 @@ export const PLATFORM = {
   BUSINESS_SUBSCRIPTION_ACTIVATE: (id: number) => `/platform/businesses/${id}/subscription`,
   USERS: '/platform/users',
   USER_STATS: '/platform/users/stats',
+  CONVERSIONS: '/platform/conversions',
   USER_STATUS: (id: number) => `/platform/users/${id}/status`,
   USER_PRIVILEGES: (id: number) => `/platform/users/${id}/privileges`,
   USER_DELETE: (id: number) => `/platform/users/${id}`,

@@ -141,6 +141,7 @@ export const ROUTES = {
     SALES_REPS: '/platform/sales-reps',
     CAMPAIGN_CODES: '/platform/campaign-codes',
     PAYOUTS: '/platform/payouts',
+    CONVERSIONS: '/platform/conversions',
     GUIDE: {
       INDEX: '/platform/guide',
       TUTORIALS: '/platform/guide/tutorials',

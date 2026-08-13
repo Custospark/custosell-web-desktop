@@ -212,6 +212,54 @@ export type UserNotificationIntention =
 
 export type UserLoginActivity = 'active' | 'dormant' | 'churned' | 'never_logged_in';
 
+export interface PlatformConversionSummary {
+  trials_started: {
+    today: number;
+    this_week: number;
+    this_month: number;
+    in_range: number;
+  };
+  converted: {
+    today: number;
+    this_week: number;
+    this_month: number;
+    in_range: number;
+  };
+  conversion_rate: number;
+  status_now: {
+    active: number;
+    on_trial: number;
+    past_due: number;
+    cancelled: number;
+    suspended: number;
+  };
+  range_from: string;
+  range_to: string;
+}
+
+export interface PlatformConversionMonth {
+  month: string;
+  label: string;
+  trials_started: number;
+  converted: number;
+  conversion_rate: number;
+}
+
+export interface PlatformConversionByPlan {
+  plan_slug: string;
+  plan_name: string;
+  trials_started: number;
+  converted: number;
+  conversion_rate: number;
+}
+
+export interface PlatformConversionStats {
+  summary: PlatformConversionSummary;
+  monthly: PlatformConversionMonth[];
+  by_plan: PlatformConversionByPlan[];
+  decisions: string[];
+}
+
 export interface PlatformUserGrowthDay {
   date: string;
   signups: number;

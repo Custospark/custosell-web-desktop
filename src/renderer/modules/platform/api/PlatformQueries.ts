@@ -10,6 +10,7 @@ import type {
   PaginatedPlatformResponse,
   PlatformBusiness,
   PlatformBusinessStats,
+  PlatformConversionStats,
   PlatformMetricDay,
   PlatformOverview,
 } from './PlatformTypes';
@@ -54,6 +55,7 @@ export const platformKeys = {
   businessStats: (params: Record<string, string>) => [...platformKeys.all, 'business-stats', params] as const,
   users: (params: Record<string, string>) => [...platformKeys.all, 'users', 'v2', params] as const,
   userStats: (params: Record<string, string>) => [...platformKeys.all, 'user-stats', params] as const,
+  conversions: (params: Record<string, string>) => [...platformKeys.all, 'conversions', params] as const,
   roles: () => [...platformKeys.all, 'roles'] as const,
   roleMembers: (id: number, params: Record<string, string>) => [...platformKeys.all, 'roles', id, 'members', params] as const,
   permissions: () => [...platformKeys.all, 'permissions'] as const,
@@ -79,6 +81,18 @@ export function usePlatformMetrics(days = 7) {
       const { data } = await axiosInstance.get<{ data: PlatformMetricDay[] }>(PLATFORM.METRICS, { params: { days } });
       return data.data;
     },
+    ...platformFreshQuery,
+  });
+}
+
+export function usePlatformConversions(params: Record<string, string> = {}, enabled = true) {
+  return useQuery({
+    queryKey: platformKeys.conversions(params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: PlatformConversionStats }>(PLATFORM.CONVERSIONS, { params });
+      return data.data;
+    },
+    enabled: enabled && Boolean(params.date_from && params.date_to),
     ...platformFreshQuery,
   });
 }

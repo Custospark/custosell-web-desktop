@@ -104,6 +104,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
   [ROUTES.PLATFORM.SENT_MESSAGES]: ['platform messages', 'broadcast', 'announcements', 'sent communications'],
   [ROUTES.PLATFORM.SALES_REPS]: ['representatives', 'sales team', 'rep management', 'sales agents'],
   [ROUTES.PLATFORM.PAYOUTS]: ['commissions', 'rep payouts', 'earnings', 'payout history'],
+  [ROUTES.PLATFORM.CONVERSIONS]: ['conversion rate', 'trial to paid', 'conversion analytics', 'paid subscribers', 'trial analytics'],
   [ROUTES.PLATFORM.CAMPAIGN_CODES]: ['referral codes', 'campaigns', 'promo codes', 'campaign management'],
   [ROUTES.PLATFORM.GUIDE.TUTORIALS]: ['platform tutorials', 'admin guides', 'getting started admin'],
   [ROUTES.PLATFORM.GUIDE.FAQS]: ['platform faqs', 'admin questions', 'platform help'],

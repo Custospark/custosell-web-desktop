@@ -11,6 +11,23 @@ interface PaymentPopupNoticeProps {
   onOpenInBrowser?: (url: string) => void;
 }
 
+/** Open a URL from a user gesture.
+ *  - Electron: MUST use the preload bridge → shell.openExternal (real browser).
+ *    Never window.open, which would create a blank in-app child window.
+ *  - Web/mobile: window.open is fine (real browser tab). */
+function openExternally(url: string, environment: PaymentEnvironment): boolean {
+  if (environment === 'electron') {
+    const bridge = window.electronShell;
+    if (bridge?.openExternal) {
+      void bridge.openExternal(url);
+      return true;
+    }
+    return false;
+  }
+  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  return !!(win && !win.closed);
+}
+
 /**
  * Rendered inside payment polling screens:
  * - When the gateway window opened normally, shows a subtle "Complete payment in
@@ -19,8 +36,9 @@ interface PaymentPopupNoticeProps {
  * - On Electron, when payment was sent to the system browser, shows an
  *   informational "opened in your browser" box.
  *
- * All manual opens happen from a fresh user gesture so they are not subject to
- * popup blockers, and the user is never left stuck on a waiting spinner.
+ * Every open is triggered from a fresh user gesture and routed through
+ * shell.openExternal on Electron — the polling screen is never covered by a
+ * blank in-app window.
  */
 export default function PaymentPopupNotice({
   popupBlocked,
@@ -30,6 +48,17 @@ export default function PaymentPopupNotice({
   onOpenInBrowser,
 }: PaymentPopupNoticeProps) {
   const [manualOpenFailed, setManualOpenFailed] = useState(false);
+
+  const openUrl = (url: string) => {
+    setManualOpenFailed(false);
+    if (onOpenInBrowser) {
+      onOpenInBrowser(url);
+      return;
+    }
+    if (!openExternally(url, environment)) {
+      setManualOpenFailed(true);
+    }
+  };
 
   // Electron: payment opened in the system browser — informational only.
   if (openedExternally) {
@@ -44,15 +73,7 @@ export default function PaymentPopupNotice({
         {paymentUrl ? (
           <button
             type="button"
-            onClick={() => {
-              setManualOpenFailed(false);
-              if (onOpenInBrowser) {
-                onOpenInBrowser(paymentUrl);
-              } else {
-                const win = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-                if (!win || win.closed) setManualOpenFailed(true);
-              }
-            }}
+            onClick={() => openUrl(paymentUrl)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
           >
             <ExternalLinkIcon className="w-3.5 h-3.5" />
@@ -68,12 +89,12 @@ export default function PaymentPopupNotice({
 
   // Normal waiting state: offer the browser alternative as a subtle fallback.
   if (!popupBlocked) {
-    if (paymentUrl && onOpenInBrowser) {
+    if (paymentUrl) {
       return (
         <div className="text-center">
           <button
             type="button"
-            onClick={() => onOpenInBrowser(paymentUrl!)}
+            onClick={() => openUrl(paymentUrl)}
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-blue-700 hover:decoration-blue-400 transition-colors cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -86,17 +107,6 @@ export default function PaymentPopupNotice({
     }
     return null;
   }
-
-  const handleOpenManually = () => {
-    setManualOpenFailed(false);
-    if (!paymentUrl) return;
-    if (onOpenInBrowser) {
-      onOpenInBrowser(paymentUrl);
-    } else {
-      const win = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-      if (!win || win.closed) setManualOpenFailed(true);
-    }
-  };
 
   return (
     <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left space-y-2">
@@ -111,7 +121,7 @@ export default function PaymentPopupNotice({
       {paymentUrl ? (
         <button
           type="button"
-          onClick={handleOpenManually}
+          onClick={() => openUrl(paymentUrl)}
           className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700 transition-colors cursor-pointer"
         >
           <ExternalLink className="w-3.5 h-3.5" />

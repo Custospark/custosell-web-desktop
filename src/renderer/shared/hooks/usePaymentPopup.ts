@@ -15,9 +15,13 @@ declare global {
 }
 
 function detectEnvironment(): PaymentEnvironment {
-  if (typeof navigator === 'undefined') return 'desktop';
-  if (navigator.userAgent.toLowerCase().includes('electron')) return 'electron';
-  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) return 'mobile';
+  if (typeof window === 'undefined') return 'desktop';
+  // The preload bridge is the most reliable Electron marker (it only exists in
+  // the desktop app); userAgent is a secondary check.
+  if (window.electronShell?.openExternal || navigator.userAgent.toLowerCase().includes('electron')) {
+    return 'electron';
+  }
+  if (window.matchMedia('(max-width: 768px)').matches) return 'mobile';
   return 'desktop';
 }
 
@@ -180,6 +184,9 @@ export function usePaymentPopup(): PaymentPopup {
     // Called from a fresh user gesture so it is never popup-blocked.
     setPaymentUrl(url);
     if (environment === 'electron') {
+      // On Electron this MUST go through the IPC bridge to shell.openExternal —
+      // never window.open, which would create a blank in-app child window that
+      // interferes with the app and the polling view.
       setOpenedExternally(true);
       const bridge = window.electronShell;
       if (bridge?.openExternal) {

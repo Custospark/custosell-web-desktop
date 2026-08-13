@@ -9,20 +9,19 @@ interface PaymentPopupNoticeProps {
   environment?: PaymentEnvironment;
 }
 
+const POPUP_NAME = 'custosell_payment_window';
+
 /** Open a URL from a user gesture.
- *  - Electron: use the main-process payment window bridge (in-app modal child).
- *    Never window.open, which would create a blank in-app child window.
+ *  - Electron: window.open with the named frame — main.ts's setWindowOpenHandler
+ *    allows it as the secure in-app modal child window, so it opens inside the
+ *    app (never a blank in-app window, never a system-browser detour).
  *  - Web/mobile: window.open is fine (real browser tab). */
 function openExternally(url: string, environment: PaymentEnvironment): boolean {
-  if (environment === 'electron') {
-    const bridge = window.electronPaymentWindow;
-    if (bridge?.navigate) {
-      void bridge.navigate(url);
-      return true;
-    }
-    return false;
-  }
-  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  const win = window.open(
+    url,
+    environment === 'electron' ? POPUP_NAME : '_blank',
+    'popup=yes,width=600,height=760',
+  );
   return !!(win && !win.closed);
 }
 
@@ -34,9 +33,9 @@ function openExternally(url: string, environment: PaymentEnvironment): boolean {
  * - On Electron, when payment fell back to the system browser, shows an
  *   informational "opened in your browser" box.
  *
- * Every open is triggered from a fresh user gesture and routed through
- * shell.openExternal on Electron — the polling screen is never covered by a
- * blank in-app window.
+ * Every open is triggered from a fresh user gesture. On Electron it targets the
+ * named payment frame (allowed by main.ts as a secure in-app modal child), so
+ * the polling screen is never covered by a blank in-app window.
  */
 export default function PaymentPopupNotice({
   popupBlocked,

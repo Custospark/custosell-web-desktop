@@ -47,14 +47,10 @@ const shellBridge: ShellBridge = {
 };
 
 export interface PaymentWindowBridge {
-  open: () => Promise<boolean>;
-  navigate: (url: string) => Promise<boolean>;
   close: () => Promise<boolean>;
 }
 
 const paymentWindowBridge: PaymentWindowBridge = {
-  open: () => ipcRenderer.invoke('payment-window:open') as Promise<boolean>,
-  navigate: (url: string) => ipcRenderer.invoke('payment-window:navigate', url) as Promise<boolean>,
   close: () => ipcRenderer.invoke('payment-window:close') as Promise<boolean>,
 };
 

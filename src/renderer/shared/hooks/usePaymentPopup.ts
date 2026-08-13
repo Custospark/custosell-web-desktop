@@ -11,14 +11,23 @@ declare global {
     electronShell?: {
       openExternal: (url: string) => Promise<boolean>;
     };
+    electronPaymentWindow?: {
+      open: () => Promise<boolean>;
+      navigate: (url: string) => Promise<boolean>;
+      close: () => Promise<boolean>;
+    };
   }
 }
 
 function detectEnvironment(): PaymentEnvironment {
   if (typeof window === 'undefined') return 'desktop';
-  // The preload bridge is the most reliable Electron marker (it only exists in
-  // the desktop app); userAgent is a secondary check.
-  if (window.electronShell?.openExternal || navigator.userAgent.toLowerCase().includes('electron')) {
+  // The preload bridges are the most reliable Electron markers (they only exist
+  // in the desktop app); userAgent is a secondary check.
+  if (
+    window.electronPaymentWindow?.open ||
+    window.electronShell?.openExternal ||
+    navigator.userAgent.toLowerCase().includes('electron')
+  ) {
     return 'electron';
   }
   if (window.matchMedia('(max-width: 768px)').matches) return 'mobile';
@@ -28,7 +37,8 @@ function detectEnvironment(): PaymentEnvironment {
 /** Paint a lightweight loading page into the blank popup so it never shows an
  *  empty/white window while the initiate request is still in flight. The page is
  *  fully responsive (viewport meta + clamp() font size) so it renders cleanly in
- *  a mobile tab or a desktop popup. */
+ *  a mobile tab or a desktop popup. Only used for web/mobile — Electron renders
+ *  the loading page from the main process instead. */
 function paintLoading(win: Window): void {
   try {
     win.document.open();
@@ -79,10 +89,12 @@ export interface PaymentPopup {
  * - Desktop web: a sized popup (wider, ~600px) opened synchronously, then
  *   redirected to the gateway. A loading page is painted first so the window
  *   never looks broken while the request is in flight.
- * - Electron: the same named popup opens as a secure in-app modal child window
- *   via main.ts's setWindowOpenHandler (nodeIntegration off, no preload bridge).
- *   If it cannot be opened, the gateway falls back to the user's default browser
- *   through the `electronShell` bridge (IPC `shell:open-external`).
+ * - Electron: the gateway opens in a native modal child window owned by the
+ *   MAIN process via the electronPaymentWindow IPC bridge. This is deliberate:
+ *   a renderer-held window.open proxy that goes cross-origin (the gateway) and
+ *   is closed via win.close() can blank the main window's compositor. With the
+ *   main process owning the window, open/navigate/close are clean and closing
+ *   it can never interfere with the user's app screen.
  * - Mobile: a blank tab is opened synchronously (mobile ignores popup window
  *   features and blocks fewer synchronous opens), then redirected. If anything
  *   is still blocked, `popupBlocked` flips so the UI can show a manual
@@ -96,6 +108,10 @@ export function usePaymentPopup(): PaymentPopup {
   const [environment] = useState<PaymentEnvironment>(detectEnvironment);
 
   const closePaymentPopupRef = useCallback(() => {
+    if (environment === 'electron') {
+      void window.electronPaymentWindow?.close();
+      return;
+    }
     const win = popupRef.current;
     if (win && !win.closed) {
       try {
@@ -105,7 +121,7 @@ export function usePaymentPopup(): PaymentPopup {
       }
     }
     popupRef.current = null;
-  }, []);
+  }, [environment]);
 
   // Close the popup/tab when the owning view unmounts so no orphan window lingers.
   useEffect(() => closePaymentPopupRef, [closePaymentPopupRef]);
@@ -114,6 +130,18 @@ export function usePaymentPopup(): PaymentPopup {
     setPopupBlocked(false);
     setOpenedExternally(false);
     setPaymentUrl(null);
+
+    if (environment === 'electron') {
+      // Main-process-owned native modal child window — no window.open, so no
+      // blank in-app child can ever cover the polling screen.
+      const bridge = window.electronPaymentWindow;
+      if (bridge?.open) {
+        void bridge.open();
+        return true;
+      }
+      setPopupBlocked(true);
+      return false;
+    }
 
     const left = Math.max(0, Math.round((window.screen.width - POPUP_WIDTH) / 2));
     const top = Math.max(0, Math.round((window.screen.height - POPUP_HEIGHT) / 3));
@@ -130,9 +158,6 @@ export function usePaymentPopup(): PaymentPopup {
       return true;
     }
 
-    // Desktop web AND Electron: open the named popup synchronously. In Electron,
-    // main.ts's setWindowOpenHandler allows this frame as a secure in-app modal
-    // child window (no nodeIntegration), so the gateway stays inside the app.
     const win = window.open(
       '',
       POPUP_NAME,
@@ -150,19 +175,19 @@ export function usePaymentPopup(): PaymentPopup {
   const redirectPaymentWindow = useCallback((url: string): boolean => {
     setPaymentUrl(url);
 
+    if (environment === 'electron') {
+      // Navigate the main-process-owned modal window to the gateway.
+      const bridge = window.electronPaymentWindow;
+      if (bridge?.navigate) {
+        void bridge.navigate(url);
+        return true;
+      }
+      setPopupBlocked(true);
+      return false;
+    }
+
     const win = popupRef.current;
     if (!win || win.closed) {
-      // Popup/tab couldn't be opened. On Electron, fall back to the system
-      // browser via the preload bridge; elsewhere flip blocked so the UI can
-      // offer a manual open.
-      if (environment === 'electron') {
-        setOpenedExternally(true);
-        const bridge = window.electronShell;
-        if (bridge?.openExternal) {
-          void bridge.openExternal(url);
-          return true;
-        }
-      }
       setPopupBlocked(true);
       return false;
     }

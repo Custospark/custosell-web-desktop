@@ -14,7 +14,91 @@ if (isDev) {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let paymentWindow: BrowserWindow | null = null;
 let quitFlushComplete = false;
+
+/** Lightweight, responsive loading page shown while the gateway URL resolves. */
+const PAYMENT_LOADING_HTML = `
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Custosell Payment</title>
+    <style>
+      html,body{height:100%;margin:0;display:flex;align-items:center;justify-content:center;
+        background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#334155;}
+      .box{text-align:center;padding:24px;}
+      .spin{width:clamp(44px,10vw,64px);height:clamp(44px,10vw,64px);border:5px solid #c7d2fe;
+        border-top-color:#4f46e5;border-radius:50%;animation:s 0.8s linear infinite;
+        margin:0 auto clamp(16px,3vw,20px);}
+      @keyframes s{to{transform:rotate(360deg)}}
+      p{font-size:clamp(16px,4.5vw,22px);font-weight:600;margin:0;line-height:1.4;color:#1e293b}
+    </style>
+  </head>
+  <body>
+    <div class="box"><div class="spin"></div><p>Connecting to secure payment…</p></div>
+  </body>
+</html>`;
+
+function getPaymentLoadingUrl(): string {
+  return `data:text/html;charset=utf-8,${encodeURIComponent(PAYMENT_LOADING_HTML)}`;
+}
+
+/** Open (or reuse) the payment gateway window. A true modal child owned by the
+ *  main process so closing it can never blank or hijack the main window. */
+function openPaymentWindow(): BrowserWindow | null {
+  if (!mainWindow || mainWindow.isDestroyed()) return null;
+
+  if (paymentWindow && !paymentWindow.isDestroyed()) {
+    paymentWindow.show();
+    paymentWindow.focus();
+    return paymentWindow;
+  }
+
+  paymentWindow = new BrowserWindow({
+    width: 600,
+    height: 760,
+    parent: mainWindow,
+    modal: true,
+    autoHideMenuBar: true,
+    backgroundColor: '#f8fafc',
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+    },
+  });
+
+  paymentWindow.once('ready-to-show', () => {
+    paymentWindow?.show();
+    paymentWindow?.focus();
+  });
+
+  paymentWindow.on('closed', () => {
+    paymentWindow = null;
+  });
+
+  void paymentWindow.loadURL(getPaymentLoadingUrl());
+  return paymentWindow;
+}
+
+function navigatePaymentWindow(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  const win = openPaymentWindow();
+  if (!win) return false;
+  void win.loadURL(url);
+  return true;
+}
+
+function closePaymentWindow(): void {
+  if (paymentWindow && !paymentWindow.isDestroyed()) {
+    paymentWindow.close();
+  }
+  paymentWindow = null;
+}
 
 function getSecureStorePath(): string {
   return path.join(app.getPath('userData'), 'secure-store.json');
@@ -96,30 +180,13 @@ function createWindow(): BrowserWindow {
   });
 
   // Window-open policy:
-  // - The payment popup (frameName "custosell_payment_window") is allowed as an
-  //   in-app modal child window, but with safe webPreferences — no nodeIntegration,
-  //   no inherited preload bridge — so the gateway page cannot touch the app.
+  // - The payment gateway is opened as a main-process-owned modal child window
+  //   via IPC (payment-window:open / navigate / close) — never window.open, so
+  //   no blank child window can cover the app.
   // - Any other external http(s) URL (PDFs, social links, etc.) is opened in the
   //   user's default browser via shell.openExternal.
   // - Everything else is denied.
-  mainWindow.webContents.setWindowOpenHandler(({ url, frameName }) => {
-    if (frameName === 'custosell_payment_window') {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 600,
-          height: 760,
-          autoHideMenuBar: true,
-          backgroundColor: '#f8fafc',
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            sandbox: true,
-            webSecurity: true,
-          },
-        },
-      };
-    }
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url && /^https?:\/\//i.test(url)) {
       void shell.openExternal(url);
     }
@@ -203,6 +270,20 @@ ipcMain.handle('app-update:restart-and-install', () => restartAndInstallNow());
 ipcMain.handle('shell:open-external', (_event, url: unknown) => {
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
   void shell.openExternal(url);
+  return true;
+});
+
+ipcMain.handle('payment-window:open', () => {
+  return !!openPaymentWindow();
+});
+
+ipcMain.handle('payment-window:navigate', (_event, url: unknown) => {
+  if (typeof url !== 'string') return false;
+  return navigatePaymentWindow(url);
+});
+
+ipcMain.handle('payment-window:close', () => {
+  closePaymentWindow();
   return true;
 });
 

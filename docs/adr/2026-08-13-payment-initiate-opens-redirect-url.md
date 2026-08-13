@@ -60,11 +60,10 @@ Applied to every payment-initiation surface:
 The synchronous-popup approach alone is not identical on every runtime:
 
 - **Desktop web** — a sized popup (~600px wide) opened synchronously and redirected. A lightweight loading page is painted into the blank window first (`paintLoading`) so it never looks broken while the initiate request is in flight.
-- **Electron** — the payment popup opens as a secure **in-app modal child window**, matching the pre-refactor desktop behavior the user expects:
-  - `main.ts` `setWindowOpenHandler` allows the `custosell_payment_window` frame as a child `BrowserWindow` with safe webPreferences — `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`, no preload bridge — so the gateway page cannot reach the app's Node/preload APIs.
-  - The renderer opens the same named popup synchronously as desktop web; `redirectPaymentWindow` navigates it to the gateway in place.
-  - If the child window cannot be opened, it falls back to the `electronShell.openExternal(url)` bridge (IPC `shell:open-external`, preload-exposed, URL-validated to `http(s)` only) which opens the system browser; `openedExternally` flips and `PaymentPopupNotice` shows the blue "Payment opened in your browser…" box with a **Reopen Payment Page** fallback.
-  - Any other `window.open` for external http(s) URLs (PDFs, social links) is denied and routed to `shell.openExternal`.
+- **Electron** — the payment gateway opens in a **main-process-owned native modal child window**, so closing/cancelling it can never blank or hijack the main app window (it behaves exactly like closing any other modal):
+  - `main.ts` owns the window lifecycle: `openPaymentWindow()` creates a `BrowserWindow` with `parent` + `modal: true` and safe webPreferences (`nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`, no preload bridge). It first loads a responsive "Connecting to secure payment…" loading page, then `navigatePaymentWindow(url)` loads the gateway URL, and `closePaymentWindow()` closes it.
+  - IPC handlers `payment-window:open` / `payment-window:navigate` / `payment-window:close` (preload-exposed via `electronPaymentWindow`) are the only way the renderer interacts with the gateway window. The renderer never holds a `window.open` proxy, so there is no cross-origin compositor blanking when the modal closes.
+  - `setWindowOpenHandler` denies all raw `window.open` and routes external http(s) URLs (PDFs, social links) to `shell.openExternal`.
   - The in-app modal is the **only** payment path — no "Complete payment in your browser" alternative button is shown on the waiting screen (`PaymentPopupNotice` returns null in the normal polling state).
 - **Mobile web** — popups/window-features are hostile. The hook opens a plain blank tab synchronously (`window.open('', '_blank')`, no features) then redirects it; the notice copy switches to "your payment tab" wording, and the manual fallback opens the gateway from a fresh gesture. Full-page redirect was considered but the backend callback returns JSON (not a resume redirect), so a new tab keeps the app state and polling alive — the seamless behavior mobile users expect.
 
@@ -75,7 +74,7 @@ The backend contract is already correct and consistent across every payment type
 ## Consequences
 
 - The PesaPal payment page now reliably opens for every payment flow (upgrade, billing-cycle change, subscribe/renew/top-up, onboarding, register/payment) without being popup-blocked.
-- Electron opens the gateway in an in-app modal child window (secure webPreferences — no Node access) with a system-browser fallback if it can't open.
+- Electron opens the gateway in a main-process-owned in-app modal child window (secure webPreferences — no Node access); closing it never interferes with the app UI the user had open.
 - Mobile opens a payment tab that keeps app state and polling alive, with mobile-friendly copy and a manual fallback.
 - If a window/tab is still blocked (rare, e.g. aggressive blockers), the user gets a manual **Open Payment Page** button and clear instructions instead of an infinite spinner.
 - The in-app modal is the sole payment surface on the waiting screen — no separate browser button is offered.
@@ -86,8 +85,8 @@ The backend contract is already correct and consistent across every payment type
 
 - `src/renderer/shared/hooks/usePaymentPopup.ts` (new)
 - `src/renderer/shared/components/payments/PaymentPopupNotice.tsx` (new)
-- `src/main/main.ts` — `setWindowOpenHandler` + `shell:open-external` IPC
-- `src/preload/preload.ts` — `electronShell.openExternal` bridge
+- `src/main/main.ts` — payment-window:open/navigate/close IPC + modal child window owner
+- `src/preload/preload.ts` — `electronPaymentWindow` + `electronShell` bridges
 - `src/renderer/modules/settings/UpgradeFlowModal.tsx`
 - `src/renderer/modules/settings/SubscriptionPaymentModal.tsx`
 - `src/renderer/modules/settings/BillingCyclePaymentModal.tsx`

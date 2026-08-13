@@ -10,14 +10,14 @@ interface PaymentPopupNoticeProps {
 }
 
 /** Open a URL from a user gesture.
- *  - Electron: MUST use the preload bridge → shell.openExternal (real browser).
+ *  - Electron: use the main-process payment window bridge (in-app modal child).
  *    Never window.open, which would create a blank in-app child window.
  *  - Web/mobile: window.open is fine (real browser tab). */
 function openExternally(url: string, environment: PaymentEnvironment): boolean {
   if (environment === 'electron') {
-    const bridge = window.electronShell;
-    if (bridge?.openExternal) {
-      void bridge.openExternal(url);
+    const bridge = window.electronPaymentWindow;
+    if (bridge?.navigate) {
+      void bridge.navigate(url);
       return true;
     }
     return false;

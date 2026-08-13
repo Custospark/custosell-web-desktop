@@ -22,18 +22,23 @@ function detectEnvironment(): PaymentEnvironment {
 }
 
 /** Paint a lightweight loading page into the blank popup so it never shows an
- *  empty/white window while the initiate request is still in flight. */
+ *  empty/white window while the initiate request is still in flight. The page is
+ *  fully responsive (viewport meta + clamp() font size) so it renders cleanly in
+ *  a mobile tab or a desktop popup. */
 function paintLoading(win: Window): void {
   try {
     win.document.open();
     win.document.write(
       '<!doctype html><html><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<title>Custosell Payment</title>' +
       '<style>html,body{height:100%;margin:0;display:flex;align-items:center;justify-content:center;' +
       'background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#334155;}' +
-      '.box{text-align:center;padding:24px;}.spin{width:40px;height:40px;border:4px solid #c7d2fe;' +
-      'border-top-color:#4f46e5;border-radius:50%;animation:s 0.8s linear infinite;margin:0 auto 12px;}' +
-      '@keyframes s{to{transform:rotate(360deg)}}p{font-size:14px;margin:0}</style></head>' +
+      '.box{text-align:center;padding:24px;}.spin{width:clamp(44px,10vw,64px);height:clamp(44px,10vw,64px);' +
+      'border:5px solid #c7d2fe;border-top-color:#4f46e5;border-radius:50%;animation:s 0.8s linear infinite;' +
+      'margin:0 auto clamp(16px,3vw,20px);}' +
+      '@keyframes s{to{transform:rotate(360deg)}}p{font-size:clamp(16px,4.5vw,22px);font-weight:600;margin:0;' +
+      'line-height:1.4;color:#1e293b}</style></head>' +
       '<body><div class="box"><div class="spin"></div><p>Connecting to secure payment…</p></div></body></html>',
     );
     win.document.close();

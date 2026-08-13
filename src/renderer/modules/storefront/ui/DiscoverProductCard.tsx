@@ -126,7 +126,7 @@ export const DiscoverProductCard = memo(function DiscoverProductCard({
         </p>
         {stars}
         {product.business?.name ? (
-          <p className="truncate text-[11px] text-slate-500">
+          <p className="text-[11px] leading-snug text-slate-500">
             {product.business.name}
             {product.business.city ? ` · ${product.business.city}` : ''}
           </p>

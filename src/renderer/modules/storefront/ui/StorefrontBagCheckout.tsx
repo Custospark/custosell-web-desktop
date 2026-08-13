@@ -50,7 +50,7 @@ export function StorefrontBagCheckout({
     <>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5">
         <div className="mb-3 min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-900">{bag.shop.name}</p>
+          <p className="text-sm font-semibold leading-snug text-slate-900">{bag.shop.name}</p>
           <Link
             to={ROUTES.SHOP(bag.shop.slug)}
             className="text-xs font-semibold text-indigo-800 hover:underline"

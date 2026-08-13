@@ -265,7 +265,7 @@ export function ShopTile({ shop }: { shop: StorefrontShop }) {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
+            <p className="text-sm font-semibold leading-snug text-slate-900">{shop.name}</p>
             <p className="truncate text-[11px] text-indigo-800">@{shop.slug}</p>
             {shop.description ? (
               <p className="mt-1 line-clamp-2 text-xs leading-snug text-slate-600">{shop.description}</p>

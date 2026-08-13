@@ -171,7 +171,7 @@ function DiscoverShellChrome() {
               <p className="hidden text-[11px] font-semibold uppercase tracking-wide text-indigo-800 sm:block">
                 Order Online
               </p>
-              <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
+              <p className="text-sm font-semibold leading-snug text-slate-900 sm:text-base">{title}</p>
               {subtitle ? (
                 <p className="mt-0.5 hidden line-clamp-1 text-xs text-slate-600 sm:block">{subtitle}</p>
               ) : null}

@@ -33,7 +33,7 @@ export const DiscoverShopRow = memo(function DiscoverShopRow({ shop, active = fa
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
+        <p className="text-sm font-semibold leading-snug text-slate-900">{shop.name}</p>
         <p className="truncate text-[11px] text-slate-500">
           @{shop.slug}{shop.city ? ` · ${shop.city}` : ''}
         </p>

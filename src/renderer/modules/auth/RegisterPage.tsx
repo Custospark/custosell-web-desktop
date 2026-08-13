@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
-import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { useValidateReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
@@ -21,8 +20,6 @@ export default function RegisterPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const state = location.state as { planId?: number; billingCycle?: 'monthly' | 'yearly' } | null;
-  const { data: plans, isLoading: plansLoading, isError: plansError } = useActivePlans();
-  const businessPlans = plans?.filter((p) => p.type !== 'personal') ?? [];
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
   const [accountType, setAccountType] = useState<'business' | 'personal' | 'shopping' | null>(null);
@@ -30,11 +27,7 @@ export default function RegisterPage() {
 
   const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
 
-  const defaultPlan = businessPlans.reduce(
-    (highest, plan) => (plan.sort_order > highest.sort_order ? plan : highest),
-    businessPlans[0],
-  );
-  const planId = state?.planId ?? defaultPlan?.id;
+  const planId = state?.planId;
   const billingCycle = state?.billingCycle ?? 'monthly';
   const activeReferralCode = manualReferralCode || referralCode;
 
@@ -94,7 +87,6 @@ export default function RegisterPage() {
 
   const handleBusinessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!planId) return;
     if (form.password_confirmation.length > 0 && !passwordsMatch) return;
 
     const fullPhone = form.phone ? `${countryCode.dial_code}${form.phone.replace(/\D/g, '')}` : undefined;
@@ -110,8 +102,7 @@ export default function RegisterPage() {
       password: form.password,
       password_confirmation: form.password_confirmation,
       privacy_consent: privacyConsent,
-      plan_id: planId,
-      billing_cycle: billingCycle,
+      ...(planId ? { plan_id: planId, billing_cycle: billingCycle } : {}),
       referral_code: activeReferralCode || undefined,
       currency,
     });
@@ -388,19 +379,11 @@ export default function RegisterPage() {
                 <ChevronLeft className="h-4 w-4" />
                 Back
               </button>
-              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={businessMutation.isPending} disabled={!planId || !businessFormValid}>
+              <Button type="submit" className="flex-1 gap-2 py-3.5" loading={businessMutation.isPending} disabled={!businessFormValid}>
                 <UserPlus className="h-4 w-4" aria-hidden />
                 Create Account
               </Button>
             </div>
-            {plansLoading && !planId && (
-              <p className="text-xs text-gray-400 text-center">Loading available plans...</p>
-            )}
-            {!planId && !plansLoading && (
-              <p className="text-xs text-red-500 text-center">
-                {plansError ? 'Plans could not be loaded. Please check your connection and try again.' : 'No plans are currently available. Please try again later.'}
-              </p>
-            )}
           </div>
         )}
       </form>

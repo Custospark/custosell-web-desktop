@@ -47,7 +47,7 @@ export default function PaymentPage() {
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
 
-  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, openPaymentInBrowser, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -334,7 +334,7 @@ export default function PaymentPage() {
               <p className="text-center text-xs text-gray-400">Waiting for payment confirmation...</p>
             )}
 
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} onOpenInBrowser={openPaymentInBrowser} />
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
 
             {paymentQuery.data?.data?.status === 'failed' && (
               <div className="space-y-3">

@@ -27,7 +27,7 @@ export default function BillingCyclePaymentModal({
   const [step, setStep] = useState<'confirm' | 'paying' | 'polling' | 'done'>('confirm');
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
-  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, openPaymentInBrowser, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -125,7 +125,7 @@ export default function BillingCyclePaymentModal({
           <div className="text-center space-y-3">
             <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
             <p className="text-sm text-gray-500">Waiting for payment...</p>
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} onOpenInBrowser={openPaymentInBrowser} />
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
           </div>
         )}
 

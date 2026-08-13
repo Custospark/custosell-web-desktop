@@ -65,7 +65,7 @@ The synchronous-popup approach alone is not identical on every runtime:
   - The renderer opens the same named popup synchronously as desktop web; `redirectPaymentWindow` navigates it to the gateway in place.
   - If the child window cannot be opened, it falls back to the `electronShell.openExternal(url)` bridge (IPC `shell:open-external`, preload-exposed, URL-validated to `http(s)` only) which opens the system browser; `openedExternally` flips and `PaymentPopupNotice` shows the blue "Payment opened in your browser…" box with a **Reopen Payment Page** fallback.
   - Any other `window.open` for external http(s) URLs (PDFs, social links) is denied and routed to `shell.openExternal`.
-  - The waiting screen always offers a subtle **"Complete payment in your browser"** alternative (`openPaymentInBrowser`), so there is always a user-triggered fallback even when the in-app modal opened fine.
+  - The in-app modal is the **only** payment path — no "Complete payment in your browser" alternative button is shown on the waiting screen (`PaymentPopupNotice` returns null in the normal polling state).
 - **Mobile web** — popups/window-features are hostile. The hook opens a plain blank tab synchronously (`window.open('', '_blank')`, no features) then redirects it; the notice copy switches to "your payment tab" wording, and the manual fallback opens the gateway from a fresh gesture. Full-page redirect was considered but the backend callback returns JSON (not a resume redirect), so a new tab keeps the app state and polling alive — the seamless behavior mobile users expect.
 
 ## Why frontend-only
@@ -78,7 +78,7 @@ The backend contract is already correct and consistent across every payment type
 - Electron opens the gateway in an in-app modal child window (secure webPreferences — no Node access) with a system-browser fallback if it can't open.
 - Mobile opens a payment tab that keeps app state and polling alive, with mobile-friendly copy and a manual fallback.
 - If a window/tab is still blocked (rare, e.g. aggressive blockers), the user gets a manual **Open Payment Page** button and clear instructions instead of an infinite spinner.
-- Even when the modal opens normally, an always-visible **"Complete payment in your browser"** link gives users a second path (system browser on Electron, new tab on web/mobile).
+- The in-app modal is the sole payment surface on the waiting screen — no separate browser button is offered.
 - Polling starts only after the window is opened/redirected, so the user is never "hanging" on a payment screen that has no visible payment page.
 - Gates: FE `npm run vera:fast` (eslint + logic) passed; `npx tsc --noEmit` clean; Electron `tsc --project src/tsconfig.json --noEmit` clean.
 

@@ -64,12 +64,11 @@ interface WaitingScreenProps {
   paymentUrl?: string | null;
   openedExternally?: boolean;
   environment?: PaymentEnvironment;
-  onOpenInBrowser?: (url: string) => void;
   verifyMessage: string | null;
   onReset: () => void;
 }
 
-export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, onOpenInBrowser, verifyMessage, onReset }: WaitingScreenProps) {
+export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, verifyMessage, onReset }: WaitingScreenProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
@@ -87,7 +86,7 @@ export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, pa
               Complete your payment in the opened window.
             </p>
           </div>
-          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} openedExternally={openedExternally} environment={environment} onOpenInBrowser={onOpenInBrowser} />
+          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} openedExternally={openedExternally} environment={environment} />
           <button
             type="button"
             onClick={handleVerifyPayment}

@@ -61,9 +61,6 @@ export interface PaymentPopup {
   paymentUrl: string | null;
   openPaymentPopup: () => boolean;
   redirectPaymentWindow: (url: string) => boolean;
-  /** Always-available alternative: open the gateway in the system browser
-   *  (Electron) or a new tab (web/mobile) from a user gesture. */
-  openPaymentInBrowser: (url: string) => boolean;
   closePaymentPopup: () => void;
   resetPaymentPopup: () => void;
 }
@@ -178,32 +175,6 @@ export function usePaymentPopup(): PaymentPopup {
     }
   }, [environment]);
 
-  const openPaymentInBrowser = useCallback((url: string): boolean => {
-    // Always-available alternative: open the gateway in the system browser
-    // (Electron) or a new tab (web/mobile), regardless of the in-app popup.
-    // Called from a fresh user gesture so it is never popup-blocked.
-    setPaymentUrl(url);
-    if (environment === 'electron') {
-      // On Electron this MUST go through the IPC bridge to shell.openExternal —
-      // never window.open, which would create a blank in-app child window that
-      // interferes with the app and the polling view.
-      setOpenedExternally(true);
-      const bridge = window.electronShell;
-      if (bridge?.openExternal) {
-        void bridge.openExternal(url);
-        return true;
-      }
-      setPopupBlocked(true);
-      return false;
-    }
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!win || win.closed) {
-      setPopupBlocked(true);
-      return false;
-    }
-    return true;
-  }, [environment]);
-
   const closePaymentPopup = useCallback(() => {
     closePaymentPopupRef();
     setOpenedExternally(false);
@@ -223,7 +194,6 @@ export function usePaymentPopup(): PaymentPopup {
     paymentUrl,
     openPaymentPopup,
     redirectPaymentWindow,
-    openPaymentInBrowser,
     closePaymentPopup,
     resetPaymentPopup,
   };

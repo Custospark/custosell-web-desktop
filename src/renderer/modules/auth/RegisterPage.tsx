@@ -30,7 +30,11 @@ export default function RegisterPage() {
 
   const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
 
-  const planId = state?.planId ?? businessPlans[0]?.id;
+  const defaultPlan = businessPlans.reduce(
+    (highest, plan) => (plan.sort_order > highest.sort_order ? plan : highest),
+    businessPlans[0],
+  );
+  const planId = state?.planId ?? defaultPlan?.id;
   const billingCycle = state?.billingCycle ?? 'monthly';
   const activeReferralCode = manualReferralCode || referralCode;
 

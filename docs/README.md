@@ -84,6 +84,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
+| [2026-08-13-register-default-highest-tier-plan.md](./adr/2026-08-13-register-default-highest-tier-plan.md) | New business registrations default to the highest-tier plan (full-value trial) instead of the cheapest; explicit pricing-page selection still wins |
 | [2026-08-11-offline-sync-durable-id-maps-dependency-guard.md](./adr/2026-08-11-offline-sync-durable-id-maps-dependency-guard.md) | Offline sync hang fix — durable entity id maps (DB v14), dependency guard in `getPending()`, business-scoped mutation queue |
 | [2026-08-13-payment-initiate-opens-redirect-url.md](./adr/2026-08-13-payment-initiate-opens-redirect-url.md) | Every payment surface opens the gateway `redirect_url` (upgrade, billing-cycle, register/payment) + popup-blocked notice |
 | [2026-08-13-business-scope-offline-local-stores-stock.md](./adr/2026-08-13-business-scope-offline-local-stores-stock.md) | Business-scope all offline local stores + stock ledger (DB v15) so shared-device work never leaks between businesses |

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useRegisterBusiness } from '../../shared/api/account/AccountQueries';
-import { useValidateReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { AuthLayout } from './AuthLayout';
@@ -13,7 +12,7 @@ import { getPhonePlaceholder } from '../../shared/utils/phoneNumber';
 import { CURRENCIES } from '../../shared/utils/currencies';
 import {
   Store, Mail, Lock, User, Phone, ChevronDown, ChevronLeft, Eye, EyeOff,
-  UserPlus, Coins, Tag, CheckCircle, XCircle, ArrowLeft,
+  UserPlus, Coins, ArrowLeft,
 } from 'lucide-react';
 export default function RegisterPage() {
   const businessMutation = useRegisterBusiness();
@@ -23,13 +22,10 @@ export default function RegisterPage() {
   const referralCode = searchParams.get('ref') ?? searchParams.get('campaign') ?? undefined;
 
   const [accountType, setAccountType] = useState<'business' | 'personal' | 'shopping' | null>(null);
-  const [manualReferralCode, setManualReferralCode] = useState('');
-
-  const { data: validation, isFetching: validating } = useValidateReferralCode(manualReferralCode);
 
   const planId = state?.planId;
   const billingCycle = state?.billingCycle ?? 'monthly';
-  const activeReferralCode = manualReferralCode || referralCode;
+  const activeReferralCode = referralCode;
 
   const [form, setForm] = useState({
     owner_first_name: '',
@@ -321,33 +317,6 @@ export default function RegisterPage() {
                 )}
               </div>
             </div>
-
-            <div className="relative">
-              <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Promo or referral code (optional)"
-                value={manualReferralCode}
-                onChange={(e) => setManualReferralCode(e.target.value.toUpperCase())}
-                className={`${inputCls} pr-10`}
-              />
-              {referralCode && !manualReferralCode && (
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5">
-                  <Tag className="w-3 h-3 text-indigo-600" />
-                  <span className="text-xs font-mono font-medium text-indigo-700">{referralCode}</span>
-                </div>
-              )}
-            </div>
-
-            {manualReferralCode.length >= 3 && validating && (
-              <p className="text-xs text-gray-400 mt-1 ml-1">Checking code...</p>
-            )}
-            {manualReferralCode.length >= 3 && !validating && validation && (
-              <p className={`text-xs mt-1 ml-1 flex items-center gap-1 ${validation.valid ? 'text-green-600' : 'text-red-500'}`}>
-                {validation.valid ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                {validation.message}
-              </p>
-            )}
 
             <label className="flex items-center justify-center gap-2 cursor-pointer">
               <input

@@ -151,6 +151,7 @@ export const INTENT_OPTIONS: IntentOption[] = [
 export type OnboardingAction =
   | { action: 'complete_intent'; primary_intent: OnboardingIntentId; secondary_intent?: OnboardingIntentId | null }
   | { action: 'skip_intent' }
+  | { action: 'dismiss_onboarding' }
   | { action: 'tour_step'; tour_step: number }
   | { action: 'complete_tour' }
   | { action: 'skip_tour' }

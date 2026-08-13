@@ -52,10 +52,9 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
   }
 
   async function handleNoThanks() {
-    // Skip the tour first while the intent gate still blocks the tour, so the
-    // tour never flashes between the two optimistic updates.
-    await update.mutateAsync({ action: 'skip_tour' });
-    await saveIntent();
+    // Single combined action: finalize intent (skip) and skip the tour so nothing
+    // is forced and the modal simply closes.
+    await update.mutateAsync({ action: 'dismiss_onboarding' });
   }
 
   return (

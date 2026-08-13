@@ -86,6 +86,13 @@ export function localStateForAction(action: OnboardingAction): Partial<Onboardin
         needs_tour: true,
         tour_step: 0,
       };
+    case 'dismiss_onboarding':
+      return {
+        needs_intent: false,
+        intent_skipped_at: new Date().toISOString(),
+        needs_tour: false,
+        tour_skipped_at: new Date().toISOString(),
+      };
     default:
       return {};
   }

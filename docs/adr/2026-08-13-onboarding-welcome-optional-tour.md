@@ -23,9 +23,12 @@ Rewrite `IntentOnboardingModal` to be welcoming and non-forcing:
 - The bottom now asks **"Want a quick tour of Custosell?"** with two real choices:
   - **Take the tour** → saves the picked intent (or `skip_intent` if none), which leads to
     `needs_tour = true` and opens the tour via `OnboardingGate`.
-  - **No thanks** → runs `skip_tour` first (while the intent gate still blocks the tour,
-    so no flash), then saves/skips the intent. Net state: `needs_intent = false`,
-    `needs_tour = false` — nothing forced.
+- **No thanks** → sends a single **`dismiss_onboarding`** action (new FE+BE contract): it marks the
+  intent as skipped (owner) *and* the tour as skipped in one update. Net state:
+  `needs_intent = false`, `needs_tour = false` — the modal closes and nothing is forced.
+- Because dismissal is persisted on the backend (`intent_skipped_at` + `tour_skipped_at`),
+  onboarding never reappears automatically on later logins — `payloadFor()` reports
+  `needs_intent = false` / `needs_tour = false` for that user.
 - Users can still replay the tour anytime from the navbar (`replay_tour`), so declining
   never permanently hides it.
 

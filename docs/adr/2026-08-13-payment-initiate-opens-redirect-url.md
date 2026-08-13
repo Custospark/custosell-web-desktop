@@ -60,10 +60,12 @@ Applied to every payment-initiation surface:
 The synchronous-popup approach alone is not identical on every runtime:
 
 - **Desktop web** — a sized popup (~600px wide) opened synchronously and redirected. A lightweight loading page is painted into the blank window first (`paintLoading`) so it never looks broken while the initiate request is in flight.
-- **Electron** — `window.open` must NOT create an in-app child window, because it would inherit the main window's `nodeIntegration: true` / `contextIsolation: false` settings. Instead:
-  - `main.ts` registers `mainWindow.webContents.setWindowOpenHandler` that denies all raw `window.open` and routes any `http(s)` URL to `shell.openExternal` (the user's default browser).
-  - The renderer calls the new `electronShell.openExternal(url)` bridge (IPC `shell:open-external`, preload-exposed, URL-validated to `http(s)` only) to open the gateway in the system browser. Polling keeps running in-app, so the payment auto-confirms when the user returns.
-  - `openedExternally` flips and `PaymentPopupNotice` shows a blue informational box ("Payment opened in your browser…") with a **Reopen Payment Page** fallback instead of a blocked-popup error.
+- **Electron** — the payment popup opens as a secure **in-app modal child window**, matching the pre-refactor desktop behavior the user expects:
+  - `main.ts` `setWindowOpenHandler` allows the `custosell_payment_window` frame as a child `BrowserWindow` with safe webPreferences — `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`, no preload bridge — so the gateway page cannot reach the app's Node/preload APIs.
+  - The renderer opens the same named popup synchronously as desktop web; `redirectPaymentWindow` navigates it to the gateway in place.
+  - If the child window cannot be opened, it falls back to the `electronShell.openExternal(url)` bridge (IPC `shell:open-external`, preload-exposed, URL-validated to `http(s)` only) which opens the system browser; `openedExternally` flips and `PaymentPopupNotice` shows the blue "Payment opened in your browser…" box with a **Reopen Payment Page** fallback.
+  - Any other `window.open` for external http(s) URLs (PDFs, social links) is denied and routed to `shell.openExternal`.
+  - The waiting screen always offers a subtle **"Complete payment in your browser"** alternative (`openPaymentInBrowser`), so there is always a user-triggered fallback even when the in-app modal opened fine.
 - **Mobile web** — popups/window-features are hostile. The hook opens a plain blank tab synchronously (`window.open('', '_blank')`, no features) then redirects it; the notice copy switches to "your payment tab" wording, and the manual fallback opens the gateway from a fresh gesture. Full-page redirect was considered but the backend callback returns JSON (not a resume redirect), so a new tab keeps the app state and polling alive — the seamless behavior mobile users expect.
 
 ## Why frontend-only
@@ -73,9 +75,10 @@ The backend contract is already correct and consistent across every payment type
 ## Consequences
 
 - The PesaPal payment page now reliably opens for every payment flow (upgrade, billing-cycle change, subscribe/renew/top-up, onboarding, register/payment) without being popup-blocked.
-- Electron opens the gateway in the system browser (safer — no Node-enabled child window) with an in-app confirmation on return.
+- Electron opens the gateway in an in-app modal child window (secure webPreferences — no Node access) with a system-browser fallback if it can't open.
 - Mobile opens a payment tab that keeps app state and polling alive, with mobile-friendly copy and a manual fallback.
 - If a window/tab is still blocked (rare, e.g. aggressive blockers), the user gets a manual **Open Payment Page** button and clear instructions instead of an infinite spinner.
+- Even when the modal opens normally, an always-visible **"Complete payment in your browser"** link gives users a second path (system browser on Electron, new tab on web/mobile).
 - Polling starts only after the window is opened/redirected, so the user is never "hanging" on a payment screen that has no visible payment page.
 - Gates: FE `npm run vera:fast` (eslint + logic) passed; `npx tsc --noEmit` clean; Electron `tsc --project src/tsconfig.json --noEmit` clean.
 

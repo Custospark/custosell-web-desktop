@@ -7,22 +7,27 @@ interface PaymentPopupNoticeProps {
   paymentUrl: string | null;
   openedExternally?: boolean;
   environment?: PaymentEnvironment;
+  /** Opens the gateway in the system browser / new tab from a user gesture. */
+  onOpenInBrowser?: (url: string) => void;
 }
 
 /**
- * Rendered inside payment polling screens when the gateway window could not be
- * opened, or (Electron) to tell the user the payment opened in their system
- * browser and to return to the app when done.
+ * Rendered inside payment polling screens:
+ * - When the gateway window opened normally, shows a subtle "Complete payment in
+ *   your browser" alternative so the user always has a fallback.
+ * - When blocked, shows a manual "Open Payment Page" button.
+ * - On Electron, when payment was sent to the system browser, shows an
+ *   informational "opened in your browser" box.
  *
- * The "Open Payment Page" button re-opens the gateway URL from a fresh user
- * gesture (so it is not subject to popup blockers), giving the user a manual
- * path instead of leaving them stuck on a waiting spinner.
+ * All manual opens happen from a fresh user gesture so they are not subject to
+ * popup blockers, and the user is never left stuck on a waiting spinner.
  */
 export default function PaymentPopupNotice({
   popupBlocked,
   paymentUrl,
   openedExternally = false,
   environment = 'desktop',
+  onOpenInBrowser,
 }: PaymentPopupNoticeProps) {
   const [manualOpenFailed, setManualOpenFailed] = useState(false);
 
@@ -41,8 +46,12 @@ export default function PaymentPopupNotice({
             type="button"
             onClick={() => {
               setManualOpenFailed(false);
-              const win = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-              if (!win || win.closed) setManualOpenFailed(true);
+              if (onOpenInBrowser) {
+                onOpenInBrowser(paymentUrl);
+              } else {
+                const win = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+                if (!win || win.closed) setManualOpenFailed(true);
+              }
             }}
             className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
           >
@@ -57,14 +66,35 @@ export default function PaymentPopupNotice({
     );
   }
 
-  if (!popupBlocked) return null;
+  // Normal waiting state: offer the browser alternative as a subtle fallback.
+  if (!popupBlocked) {
+    if (paymentUrl && onOpenInBrowser) {
+      return (
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => onOpenInBrowser(paymentUrl!)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-blue-700 hover:decoration-blue-400 transition-colors cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            {environment === 'mobile'
+              ? 'Prefer a new tab? Complete payment in your browser'
+              : 'Trouble with the popup? Complete payment in your browser'}
+          </button>
+        </div>
+      );
+    }
+    return null;
+  }
 
   const handleOpenManually = () => {
     setManualOpenFailed(false);
     if (!paymentUrl) return;
-    const win = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-    if (!win || win.closed) {
-      setManualOpenFailed(true);
+    if (onOpenInBrowser) {
+      onOpenInBrowser(paymentUrl);
+    } else {
+      const win = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+      if (!win || win.closed) setManualOpenFailed(true);
     }
   };
 

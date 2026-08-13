@@ -95,12 +95,31 @@ function createWindow(): BrowserWindow {
     mainWindow?.focus();
   });
 
-  // Never create arbitrary child windows (which would inherit the main
-  // window's nodeIntegration/contextIsolation settings). Open any external
-  // http(s) URL — payment gateways, PDFs, social links — in the user's default
-  // browser instead. This is both safer and more consistent with how the
-  // web build behaves.
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  // Window-open policy:
+  // - The payment popup (frameName "custosell_payment_window") is allowed as an
+  //   in-app modal child window, but with safe webPreferences — no nodeIntegration,
+  //   no inherited preload bridge — so the gateway page cannot touch the app.
+  // - Any other external http(s) URL (PDFs, social links, etc.) is opened in the
+  //   user's default browser via shell.openExternal.
+  // - Everything else is denied.
+  mainWindow.webContents.setWindowOpenHandler(({ url, frameName }) => {
+    if (frameName === 'custosell_payment_window') {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 600,
+          height: 760,
+          autoHideMenuBar: true,
+          backgroundColor: '#f8fafc',
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true,
+            webSecurity: true,
+          },
+        },
+      };
+    }
     if (url && /^https?:\/\//i.test(url)) {
       void shell.openExternal(url);
     }

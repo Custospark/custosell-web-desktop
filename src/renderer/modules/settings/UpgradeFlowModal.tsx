@@ -41,7 +41,7 @@ export default function UpgradeFlowModal({
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
-  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, openPaymentInBrowser, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -353,9 +353,7 @@ export default function UpgradeFlowModal({
               Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
             </p>
           </div>
-          {(popupBlocked || openedExternally) && (
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
-          )}
+          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} onOpenInBrowser={openPaymentInBrowser} />
           <button type="button" onClick={onClose}
             className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors">
             Cancel

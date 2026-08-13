@@ -57,6 +57,9 @@ export interface PaymentPopup {
   paymentUrl: string | null;
   openPaymentPopup: () => boolean;
   redirectPaymentWindow: (url: string) => boolean;
+  /** Always-available alternative: open the gateway in the system browser
+   *  (Electron) or a new tab (web/mobile) from a user gesture. */
+  openPaymentInBrowser: (url: string) => boolean;
   closePaymentPopup: () => void;
   resetPaymentPopup: () => void;
 }
@@ -75,10 +78,10 @@ export interface PaymentPopup {
  * - Desktop web: a sized popup (wider, ~600px) opened synchronously, then
  *   redirected to the gateway. A loading page is painted first so the window
  *   never looks broken while the request is in flight.
- * - Electron: no in-app window at all (would inherit nodeIntegration). The
- *   gateway URL is opened in the user's default browser via
- *   `shell.openExternal` through the `electronShell` bridge — setWindowOpenHandler
- *   in main.ts denies raw window.open and routes http(s) there too.
+ * - Electron: the same named popup opens as a secure in-app modal child window
+ *   via main.ts's setWindowOpenHandler (nodeIntegration off, no preload bridge).
+ *   If it cannot be opened, the gateway falls back to the user's default browser
+ *   through the `electronShell` bridge (IPC `shell:open-external`).
  * - Mobile: a blank tab is opened synchronously (mobile ignores popup window
  *   features and blocks fewer synchronous opens), then redirected. If anything
  *   is still blocked, `popupBlocked` flips so the UI can show a manual
@@ -111,11 +114,6 @@ export function usePaymentPopup(): PaymentPopup {
     setOpenedExternally(false);
     setPaymentUrl(null);
 
-    if (environment === 'electron') {
-      // No in-app popup on Electron — the system browser handles it.
-      return true;
-    }
-
     const left = Math.max(0, Math.round((window.screen.width - POPUP_WIDTH) / 2));
     const top = Math.max(0, Math.round((window.screen.height - POPUP_HEIGHT) / 3));
 
@@ -131,6 +129,9 @@ export function usePaymentPopup(): PaymentPopup {
       return true;
     }
 
+    // Desktop web AND Electron: open the named popup synchronously. In Electron,
+    // main.ts's setWindowOpenHandler allows this frame as a secure in-app modal
+    // child window (no nodeIntegration), so the gateway stays inside the app.
     const win = window.open(
       '',
       POPUP_NAME,
@@ -148,21 +149,19 @@ export function usePaymentPopup(): PaymentPopup {
   const redirectPaymentWindow = useCallback((url: string): boolean => {
     setPaymentUrl(url);
 
-    if (environment === 'electron') {
-      // Open in the system browser. Keep the polling view alive in-app; when the
-      // user returns, payment status updates automatically.
-      setOpenedExternally(true);
-      const bridge = window.electronShell;
-      if (bridge?.openExternal) {
-        void bridge.openExternal(url);
-        return true;
-      }
-      setPopupBlocked(true);
-      return false;
-    }
-
     const win = popupRef.current;
     if (!win || win.closed) {
+      // Popup/tab couldn't be opened. On Electron, fall back to the system
+      // browser via the preload bridge; elsewhere flip blocked so the UI can
+      // offer a manual open.
+      if (environment === 'electron') {
+        setOpenedExternally(true);
+        const bridge = window.electronShell;
+        if (bridge?.openExternal) {
+          void bridge.openExternal(url);
+          return true;
+        }
+      }
       setPopupBlocked(true);
       return false;
     }
@@ -173,6 +172,29 @@ export function usePaymentPopup(): PaymentPopup {
       setPopupBlocked(true);
       return false;
     }
+  }, [environment]);
+
+  const openPaymentInBrowser = useCallback((url: string): boolean => {
+    // Always-available alternative: open the gateway in the system browser
+    // (Electron) or a new tab (web/mobile), regardless of the in-app popup.
+    // Called from a fresh user gesture so it is never popup-blocked.
+    setPaymentUrl(url);
+    if (environment === 'electron') {
+      setOpenedExternally(true);
+      const bridge = window.electronShell;
+      if (bridge?.openExternal) {
+        void bridge.openExternal(url);
+        return true;
+      }
+      setPopupBlocked(true);
+      return false;
+    }
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!win || win.closed) {
+      setPopupBlocked(true);
+      return false;
+    }
+    return true;
   }, [environment]);
 
   const closePaymentPopup = useCallback(() => {
@@ -194,6 +216,7 @@ export function usePaymentPopup(): PaymentPopup {
     paymentUrl,
     openPaymentPopup,
     redirectPaymentWindow,
+    openPaymentInBrowser,
     closePaymentPopup,
     resetPaymentPopup,
   };

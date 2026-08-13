@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUpgrade, useUpgradeQuote, useInitiatePayment, useBillingPayment, getPaymentCurrency } from '../../shared/api/account/SubscriptionQueries';
 import { useApplyReferralCode, useReferralEarnings } from '../../modules/referral/api/useReferralQueries';
 import type { Plan } from '../../shared/types';
@@ -11,6 +11,8 @@ import { Loader2, CheckCircle, AlertCircle, X, Wallet, Tag, ChevronDown, Chevron
 import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import UpgradeFlowConfirmStep from './UpgradeFlowConfirmStep';
+import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
+import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 
 interface UpgradeFlowModalProps {
   plan: Plan;
@@ -32,13 +34,16 @@ export default function UpgradeFlowModal({
   const [upgradeCycle, setUpgradeCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentId, setPaymentId] = useState<number | null>(null);
-  const [popupBlocked, setPopupBlocked] = useState(false);
   const [prorationDue, setProrationDue] = useState(0);
   const [prorationDueUsd, setProrationDueUsd] = useState(0);
   const [referralCode, setReferralCode] = useState('');
   const [showReferralInput, setShowReferralInput] = useState(false);
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
+
+  const { popupBlocked, paymentUrl, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+
+  useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
   const applyReferralMutation = useApplyReferralCode();
 
@@ -93,12 +98,13 @@ export default function UpgradeFlowModal({
   };
 
   const handlePay = () => {
-    setStep('polling');
-    setPopupBlocked(false);
     const paymentCurrency = getPaymentCurrency();
     const amount = paymentCurrency === 'USD'
       ? (prorationDueUsd || prorationDue)
       : prorationDue;
+    // Open the popup synchronously inside the click gesture so browsers don't
+    // block it. We navigate it to the gateway URL once initiate returns.
+    openPaymentPopup();
     initiateMutation.mutate(
       {
         amount,
@@ -111,13 +117,15 @@ export default function UpgradeFlowModal({
         onSuccess: (result) => {
           setPaymentId(result.payment_id);
           if (result.redirect_url) {
-            const win = window.open(result.redirect_url, '_blank');
-            if (!win || win.closed || typeof win.closed === 'undefined') {
-              setPopupBlocked(true);
-            }
+            redirectPaymentWindow(result.redirect_url);
+            setStep('polling');
+          } else {
+            closePaymentPopup();
+            setStep('polling');
           }
         },
         onError: (error) => {
+          closePaymentPopup();
           setErrorMessage(error.response?.data?.message || 'Payment initiation failed.');
           setStep('failed');
         },
@@ -346,9 +354,7 @@ export default function UpgradeFlowModal({
             </p>
           </div>
           {popupBlocked && (
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
-              Pop-up was blocked. Please allow pop-ups for this site or use the payment link in a new tab.
-            </div>
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} />
           )}
           <button type="button" onClick={onClose}
             className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors">

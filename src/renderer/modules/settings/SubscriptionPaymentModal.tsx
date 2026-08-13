@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useInitiatePayment, useBillingPayment } from '../../shared/api/account/SubscriptionQueries';
 import { useReferralEarnings, useApplyReferralCode } from '../../modules/referral/api/useReferralQueries';
 import { Button } from '../../shared/components/buttons/Button';
@@ -9,6 +9,8 @@ import { formatCurrency, formatUSD } from '../../shared/utils/formatCurrency';
 import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import type { PaymentType } from '../../shared/types';
 import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
+import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
+import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 
 interface SubscriptionPaymentModalProps {
   planName: string;
@@ -70,10 +72,14 @@ export default function SubscriptionPaymentModal({
   const isDone = paymentQuery.data?.data?.status === 'completed';
   const isFailed = paymentQuery.data?.data?.status === 'failed';
 
-  const [popupBlocked, setPopupBlocked] = useState(false);
+  const { popupBlocked, paymentUrl, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+
+  useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
   const handlePay = () => {
-    setPopupBlocked(false);
+    // Open the popup synchronously inside the click gesture so browsers don't
+    // block it. We navigate it to the gateway URL once initiate returns.
+    openPaymentPopup();
     initiateMutation.mutate(
       { amount, currency, billingCycle: billingCycle as 'monthly' | 'yearly', phone, metadata, topupMonths },
       {
@@ -81,12 +87,12 @@ export default function SubscriptionPaymentModal({
           setPaymentId(result.payment_id);
           setInitiated(true);
           if (result.redirect_url) {
-            const win = window.open(result.redirect_url, '_blank');
-            if (!win || win.closed || typeof win.closed === 'undefined') {
-              setPopupBlocked(true);
-            }
+            redirectPaymentWindow(result.redirect_url);
+          } else {
+            closePaymentPopup();
           }
         },
+        onError: () => closePaymentPopup(),
       },
     );
   };
@@ -142,9 +148,7 @@ export default function SubscriptionPaymentModal({
             </p>
           </div>
           {popupBlocked && (
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
-              Pop-up was blocked. Please allow pop-ups for this site or use the link below manually.
-            </div>
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} />
           )}
 
           {paymentQuery.data?.data?.status === 'failed' && (

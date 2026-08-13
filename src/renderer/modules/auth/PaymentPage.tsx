@@ -16,6 +16,8 @@ import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
 import { AuthLayout } from './AuthLayout';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { CreditCard, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
+import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -23,7 +25,6 @@ export default function PaymentPage() {
   const subscription = user?.business?.subscription;
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const [initiated, setInitiated] = useState(false);
-  const [popupBlocked, setPopupBlocked] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
@@ -45,6 +46,10 @@ export default function PaymentPage() {
   const { refetch: refetchProfile, isRefetching } = useProfile();
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
+
+  const { popupBlocked, paymentUrl, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+
+  useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
   useEffect(() => {
     if (!user || !subscription) {
@@ -97,6 +102,9 @@ export default function PaymentPage() {
       : Number(feeUsd);
     const sendCurrency = canPayLocal ? paymentCurrency : 'USD';
 
+    // Open the popup synchronously inside the click gesture so browsers don't
+    // block it. We navigate it to the gateway URL once initiate returns.
+    openPaymentPopup();
     initiateMutation.mutate(
       { amount: paymentAmount, currency: sendCurrency, phone },
       {
@@ -104,17 +112,18 @@ export default function PaymentPage() {
           setPaymentId(result.payment_id);
           setInitiated(true);
           if (result.redirect_url) {
-            const win = window.open(result.redirect_url, '_blank');
-            if (!win || win.closed || typeof win.closed === 'undefined') {
-              setPopupBlocked(true);
-            }
+            redirectPaymentWindow(result.redirect_url);
+          } else {
+            closePaymentPopup();
           }
         },
+        onError: () => closePaymentPopup(),
       }
     );
   };
 
   const handleRetry = () => {
+    closePaymentPopup();
     setPaymentId(null);
     setInitiated(false);
   };
@@ -326,9 +335,7 @@ export default function PaymentPage() {
             )}
 
             {popupBlocked && (
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
-                Pop-up was blocked. Please allow pop-ups for this site or use the payment link in a new tab.
-              </div>
+              <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} />
             )}
 
             {paymentQuery.data?.data?.status === 'failed' && (

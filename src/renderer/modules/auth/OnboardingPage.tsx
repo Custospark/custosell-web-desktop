@@ -22,6 +22,7 @@ import { useReferralEarnings, useApplyReferralCode } from '../../modules/referra
 import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
 import { PaymentDoneScreen, WaitingScreen, FailedScreen } from './OnboardingStatusScreens';
 import { useLogoutAction } from '../../app/contexts/useLogoutActions';
+import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -34,7 +35,6 @@ export default function OnboardingPage() {
   const [subscribing, setSubscribing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [popupBlocked, setPopupBlocked] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoCodeSuccess, setPromoCodeSuccess] = useState<string | null>(null);
   const [showPromoInput, setShowPromoInput] = useState(false);
@@ -70,6 +70,10 @@ export default function OnboardingPage() {
   const initiateMutation = useInitiateOnboardingPayment();
   const paymentQuery = useBillingPayment(initiated ? paymentId : null);
   const { refetch: refetchProfile, isRefetching } = useProfile();
+
+  const { popupBlocked, paymentUrl, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+
+  useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
   const selectedPlan = businessPlans.find((p) => p.id === selectedPlanId);
   const fee = selectedPlan ? onboardingFee(selectedPlan) : 0;
@@ -118,7 +122,9 @@ export default function OnboardingPage() {
     if (!selectedPlanId || !fee || !user) return;
 
     setSubscribing(true);
-    setPopupBlocked(false);
+    // Open the popup synchronously inside the click gesture so browsers don't
+    // block it. We navigate it to the gateway URL once initiate returns.
+    openPaymentPopup();
 
     try {
       if (!subscription) {
@@ -141,18 +147,19 @@ export default function OnboardingPage() {
             setInitiated(true);
             setShowModal(false);
             if (result.redirect_url) {
-              const win = window.open(result.redirect_url, '_blank');
-              if (!win || win.closed || typeof win.closed === 'undefined') {
-                setPopupBlocked(true);
-              }
+              redirectPaymentWindow(result.redirect_url);
+            } else {
+              closePaymentPopup();
             }
           },
           onError: () => {
+            closePaymentPopup();
             setSubscribing(false);
           },
         },
       );
     } catch {
+      closePaymentPopup();
       setSubscribing(false);
     }
   };
@@ -190,14 +197,15 @@ export default function OnboardingPage() {
         handleVerifyPayment={handleVerifyPayment}
         verifying={verifying}
         popupBlocked={popupBlocked}
+        paymentUrl={paymentUrl}
         verifyMessage={verifyMessage}
-        onReset={() => { setPaymentId(null); setInitiated(false); setVerifyMessage(null); }}
+        onReset={() => { closePaymentPopup(); setPaymentId(null); setInitiated(false); setVerifyMessage(null); }}
       />
     );
   }
 
   if (isPaymentFailed) {
-    return <FailedScreen onReset={() => { setPaymentId(null); setInitiated(false); }} />;
+    return <FailedScreen onReset={() => { closePaymentPopup(); setPaymentId(null); setInitiated(false); }} />;
   }
 
   return (
@@ -437,7 +445,7 @@ export default function OnboardingPage() {
                 {paymentQuery.data?.data?.status === 'failed' && (
                   <div className="space-y-2 pt-2">
                     <p className="text-xs text-red-600">Payment was not completed.</p>
-                    <Button type="button" onClick={() => { setPaymentId(null); setInitiated(false); }} variant="outline" size="sm">
+                    <Button type="button" onClick={() => { closePaymentPopup(); setPaymentId(null); setInitiated(false); }} variant="outline" size="sm">
                       Try Again
                     </Button>
                   </div>

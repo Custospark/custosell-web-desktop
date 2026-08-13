@@ -3,6 +3,7 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 
 interface PaymentDoneScreenProps {
   handleContinue: () => void;
@@ -59,11 +60,12 @@ interface WaitingScreenProps {
   handleVerifyPayment: () => void;
   verifying: boolean;
   popupBlocked: boolean;
+  paymentUrl?: string | null;
   verifyMessage: string | null;
   onReset: () => void;
 }
 
-export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, verifyMessage, onReset }: WaitingScreenProps) {
+export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, verifyMessage, onReset }: WaitingScreenProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
@@ -82,9 +84,7 @@ export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, ve
             </p>
           </div>
           {popupBlocked && (
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 text-left">
-              Pop-up was blocked. Please allow pop-ups for this site and try again.
-            </div>
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} />
           )}
           <button
             type="button"

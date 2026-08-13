@@ -41,8 +41,9 @@ scheduled downgrades and proration upgrades are only valid once a subscription i
 
 Similarly, on **past_due** ("Payment Due") the matrix no longer offers
 `Schedule Downgrade` or `Upgrade` for non-current plans — those require an active
-subscription. It shows **Reactivate** instead (routed through the payment flow with
-`{ action: 'reactivate', to_plan_id }`). The current plan keeps `Pay Outstanding`.
+subscription. Every plan card (current, higher, lower) shows **Reactivate**
+(routed through the payment flow with `{ action: 'reactivate', to_plan_id }`).
+Reactivating a plan clears the outstanding balance and restores the subscription.
 
 ## Consequences
 

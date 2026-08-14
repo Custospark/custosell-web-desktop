@@ -230,6 +230,40 @@ export default function OverviewPage() {
     : 'All branches';
   const scope = `${label.toLowerCase()}${locationId ? ` · ${branchName}` : ''}`;
 
+  const recentTransactions = (
+    <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
+      <h3 className="text-sm font-semibold text-gray-900 mb-3">
+        Recent Transactions {locationId ? `· ${branchName}` : ''}
+      </h3>
+      {d.recent_transactions.length > 0 ? (
+        <div className="space-y-1">
+          {d.recent_transactions.map((t, i) => (
+            <div key={`${t.type}-${t.id}-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className={cn(
+                  'w-2 h-2 rounded-full shrink-0',
+                  t.type === 'income' ? 'bg-green-500' : 'bg-red-500',
+                )} />
+                <span className="text-sm text-gray-700 truncate">{t.description}</span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-xs text-gray-400">{new Date(t.date).toLocaleDateString()}</span>
+                <span className={cn(
+                  'text-sm font-semibold',
+                  t.type === 'income' ? 'text-green-700' : 'text-red-700',
+                )}>
+                  {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-400 text-center py-6">No transactions yet</p>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -313,8 +347,6 @@ export default function OverviewPage() {
             />
           </div>
 
-          <IncomeExpenseTrend data={d.monthly_trends} />
-
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {windowIsMonth ? (
               <DailySpendingTrend
@@ -329,64 +361,38 @@ export default function OverviewPage() {
                 subtitle={`Expenses across ${scope}`}
               />
             )}
+            {recentTransactions}
           </div>
+
+          <IncomeExpenseTrend data={d.monthly_trends} />
         </>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <DonutChart
-            data={d.expenses_by_category}
-            title={`Expenses by Category · ${label}`}
-            dataKey="total"
-            nameKey="category_name"
-            unit="Spent"
-          />
-          {windowIsMonth ? (
-            <DailySpendingTrend
-              data={d.daily_spending_trends}
-              title="Daily Spending Trend"
-              subtitle={`Expenses per day in ${scope}`}
+        <>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <DonutChart
+              data={d.expenses_by_category}
+              title={`Expenses by Category · ${label}`}
+              dataKey="total"
+              nameKey="category_name"
+              unit="Spent"
             />
-          ) : (
-            <MonthlySpendingTrend
-              data={d.monthly_spending_trends}
-              title="Spending by Month"
-              subtitle={`Expenses across ${scope}`}
-            />
-          )}
-        </div>
-      )}
-
-      <div className="rounded-xl border-2 border-gray-200 bg-white/80 p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">
-          Recent Transactions {locationId ? `· ${branchName}` : ''}
-        </h3>
-        {d.recent_transactions.length > 0 ? (
-          <div className="space-y-1">
-            {d.recent_transactions.map((t, i) => (
-              <div key={`${t.type}-${t.id}-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className={cn(
-                    'w-2 h-2 rounded-full shrink-0',
-                    t.type === 'income' ? 'bg-green-500' : 'bg-red-500',
-                  )} />
-                  <span className="text-sm text-gray-700 truncate">{t.description}</span>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-xs text-gray-400">{new Date(t.date).toLocaleDateString()}</span>
-                  <span className={cn(
-                    'text-sm font-semibold',
-                    t.type === 'income' ? 'text-green-700' : 'text-red-700',
-                  )}>
-                    {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {windowIsMonth ? (
+              <DailySpendingTrend
+                data={d.daily_spending_trends}
+                title="Daily Spending Trend"
+                subtitle={`Expenses per day in ${scope}`}
+              />
+            ) : (
+              <MonthlySpendingTrend
+                data={d.monthly_spending_trends}
+                title="Spending by Month"
+                subtitle={`Expenses across ${scope}`}
+              />
+            )}
           </div>
-        ) : (
-          <p className="text-sm text-gray-400 text-center py-6">No transactions yet</p>
-        )}
-      </div>
+          {recentTransactions}
+        </>
+      )}
 
       {d.total_expenses === 0 && (showIncome ? d.total_income === 0 : true) && (
         <div className="text-center py-12">

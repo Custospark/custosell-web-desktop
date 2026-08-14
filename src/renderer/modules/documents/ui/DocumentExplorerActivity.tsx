@@ -40,7 +40,7 @@ interface DocumentExplorerActivityProps {
 }
 
 export function DocumentExplorerActivity({ cabinetId, enabled = true, className }: DocumentExplorerActivityProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const { data, isLoading, isError, refetch, isFetching } = useDocumentActivity(cabinetId, enabled);
 
   const entries = useMemo(() => data?.data ?? [], [data?.data]);

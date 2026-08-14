@@ -28,7 +28,7 @@ export default function BillingCyclePaymentModal({
   const [step, setStep] = useState<'confirm' | 'paying' | 'polling' | 'done'>('confirm');
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
-  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, dismissGateway, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -71,27 +71,23 @@ export default function BillingCyclePaymentModal({
   const isDone = paymentQuery.data?.data?.status === 'completed';
   const isFailed = paymentQuery.data?.data?.status === 'failed';
 
-  if (step === 'polling' && !isDone && !isFailed && environment === 'electron' && paymentUrl) {
-    return (
-      <PaymentGatewayModal url={paymentUrl} onClose={onClose}>
-        <div className="text-center space-y-3">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
-          <p className="text-lg font-bold text-gray-900">Waiting for payment...</p>
-          <p className="text-xs text-gray-400 mt-2">
-            Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
-          </p>
-          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </PaymentGatewayModal>
-    );
-  }
+  const pollingBody = (
+    <div className="text-center space-y-3">
+      <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+      <p className="text-lg font-bold text-gray-900">Waiting for payment...</p>
+      <p className="text-xs text-gray-400 mt-2">
+        Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
+      </p>
+      <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+      <button
+        type="button"
+        onClick={onClose}
+        className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -145,11 +141,12 @@ export default function BillingCyclePaymentModal({
         )}
 
         {step === 'polling' && !isDone && !isFailed && (
-          <div className="text-center space-y-3">
-            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
-            <p className="text-sm text-gray-500">Waiting for payment...</p>
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
-          </div>
+          <>
+            {pollingBody}
+            {environment === 'electron' && paymentUrl && (
+              <PaymentGatewayModal url={paymentUrl} onClose={dismissGateway} />
+            )}
+          </>
         )}
 
         {step === 'polling' && isDone && (

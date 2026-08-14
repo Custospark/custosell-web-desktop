@@ -42,7 +42,7 @@ export default function UpgradeFlowModal({
   const [referralSuccess, setReferralSuccess] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | undefined>(userPhone || undefined);
 
-  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, closePaymentPopup } = usePaymentPopup();
+  const { environment, popupBlocked, paymentUrl, openedExternally, openPaymentPopup, redirectPaymentWindow, dismissGateway, closePaymentPopup } = usePaymentPopup();
 
   useEffect(() => closePaymentPopup, [closePaymentPopup]);
 
@@ -361,13 +361,12 @@ export default function UpgradeFlowModal({
       </div>
     );
 
-    if (environment === 'electron' && paymentUrl) {
-      return <PaymentGatewayModal url={paymentUrl} onClose={onClose}>{waitingBody}</PaymentGatewayModal>;
-    }
-
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         {waitingBody}
+        {environment === 'electron' && paymentUrl && (
+          <PaymentGatewayModal url={paymentUrl} onClose={dismissGateway} />
+        )}
       </div>
     );
   }

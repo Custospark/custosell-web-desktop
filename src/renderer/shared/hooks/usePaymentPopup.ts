@@ -62,6 +62,9 @@ export interface PaymentPopup {
   paymentUrl: string | null;
   openPaymentPopup: () => boolean;
   redirectPaymentWindow: (url: string) => boolean;
+  /** Close the gateway window/overlay but keep the Waiting-for-Payment flow alive
+   *  (the user can still Verify manually). Mirrors closing the browser popup on web. */
+  dismissGateway: () => void;
   closePaymentPopup: () => void;
   resetPaymentPopup: () => void;
 }
@@ -190,6 +193,17 @@ export function usePaymentPopup(): PaymentPopup {
     setPaymentUrl(null);
   }, [closePaymentPopupRef]);
 
+  const dismissGateway = useCallback(() => {
+    // Hide the gateway window/overlay but keep the Waiting-for-Payment flow so
+    // the user can Verify manually. On Electron this just unmounts the webview
+    // overlay; on web/mobile it closes the popup/tab.
+    if (environment !== 'electron') {
+      closePaymentPopupRef();
+    }
+    setOpenedExternally(false);
+    setPaymentUrl(null);
+  }, [closePaymentPopupRef, environment]);
+
   return {
     environment,
     popupBlocked,
@@ -197,6 +211,7 @@ export function usePaymentPopup(): PaymentPopup {
     paymentUrl,
     openPaymentPopup,
     redirectPaymentWindow,
+    dismissGateway,
     closePaymentPopup,
     resetPaymentPopup,
   };

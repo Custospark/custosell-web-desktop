@@ -65,11 +65,13 @@ interface WaitingScreenProps {
   paymentUrl?: string | null;
   openedExternally?: boolean;
   environment?: PaymentEnvironment;
+  /** Dismiss only the gateway overlay; the Waiting-for-Payment screen stays. */
+  onDismissGateway: () => void;
   verifyMessage: string | null;
   onReset: () => void;
 }
 
-export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, verifyMessage, onReset }: WaitingScreenProps) {
+export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, onDismissGateway, verifyMessage, onReset }: WaitingScreenProps) {
   return (
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -121,45 +123,7 @@ export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, pa
       </div>
 
       {environment === 'electron' && paymentUrl && (
-        <PaymentGatewayModal url={paymentUrl} onClose={onReset}>
-          <div className="text-center space-y-5">
-            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
-            <div>
-              <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Complete your payment in the opened window.
-              </p>
-            </div>
-            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
-            <button
-              type="button"
-              onClick={handleVerifyPayment}
-              disabled={verifying}
-              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {verifying ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <CheckCircle className="w-4 h-4" />
-              )}
-              {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
-            </button>
-            {verifyMessage && (
-              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{verifyMessage}</span>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={onReset}
-              className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
-              aria-label="Cancel and try again"
-            >
-              Cancel and try again
-            </button>
-          </div>
-        </PaymentGatewayModal>
+        <PaymentGatewayModal url={paymentUrl} onClose={onDismissGateway} />
       )}
     </>
   );

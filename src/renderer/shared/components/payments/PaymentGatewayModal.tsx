@@ -1,30 +1,26 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, X } from 'lucide-react';
 
 interface PaymentGatewayModalProps {
   url: string;
-  onClose: () => void;
   /**
-   * The exact "Waiting for Payment" body this surface renders on web/mobile.
-   * Rendered below the embedded gateway so the Electron experience mirrors the
-   * web process flow exactly (status, STK info, manual Verify, Cancel).
+   * Dismiss ONLY the gateway overlay (mirrors closing the browser popup on web).
+   * The Waiting-for-Payment modal underneath stays open so the user can Verify
+   * manually or cancel.
    */
-  children: ReactNode;
+  onClose: () => void;
 }
 
 /**
- * In-app payment gateway modal for Electron. The PesaPal page is embedded with
- * Electron's <webview> INSIDE the app (like any other modal) — no separate
- * BrowserWindow exists, so closing/cancelling is just unmounting a React
- * overlay. The user's app state underneath is never touched.
- *
- * The same "Waiting for Payment" body the web/mobile surfaces render is passed
- * as `children` and shown with the gateway, so the process flow is identical
- * across web, mobile, and Electron.
+ * In-app payment gateway overlay for Electron. The PesaPal page is embedded with
+ * Electron's <webview> and rendered ABOVE the normal "Waiting for Payment" modal —
+ * exactly like the separate browser popup on web. Closing it (X / Cancel / click
+ * outside) only dismisses this overlay; the Waiting-for-Payment modal remains so
+ * the user can Verify manually, then Continue once paid.
  */
-export default function PaymentGatewayModal({ url, onClose, children }: PaymentGatewayModalProps) {
+export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModalProps) {
   const webviewRef = useRef<HTMLWebViewElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -53,13 +49,13 @@ export default function PaymentGatewayModal({ url, onClose, children }: PaymentG
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[20000] flex items-center justify-center p-2 sm:p-4">
+      <div className="fixed inset-0 z-[21000] flex items-center justify-center p-2 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="absolute inset-0 bg-black/50"
+          className="absolute inset-0 bg-black/60"
           onClick={onClose}
         />
 
@@ -76,13 +72,13 @@ export default function PaymentGatewayModal({ url, onClose, children }: PaymentG
               type="button"
               onClick={onClose}
               className="rounded-md p-1 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-800 cursor-pointer"
-              aria-label="Cancel payment"
+              aria-label="Close payment page"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="relative h-[52vh] min-h-[360px] w-full shrink-0 bg-white">
+          <div className="relative h-[78vh] min-h-[440px] w-full bg-white">
             {/* Loading overlay so the embedded page never flashes blank/white. */}
             {loading && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-50">
@@ -111,10 +107,6 @@ export default function PaymentGatewayModal({ url, onClose, children }: PaymentG
               className="h-full w-full"
               allowpopups={true}
             />
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-4 sm:px-6">
-            {children}
           </div>
         </motion.div>
       </div>

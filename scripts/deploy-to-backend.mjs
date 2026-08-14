@@ -51,14 +51,21 @@ function run(cmd, cwd) {
   execSync(cmd, { cwd, stdio: ['pipe', 'inherit', 'inherit'] });
 }
 
-function git(cwd, args) {
-  const out = execSync(`git ${args}`, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
-  return out.toString();
+/** Capture-only git (status/porcelain) — never for push. */
+function gitQuiet(cwd, args) {
+  return execSync(`git ${args}`, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).toString();
+}
+
+/** Interactive git (add/commit/push) — inherit stdio so credential helpers,
+ *  prompts, and progress write to the terminal. Piped stdio on Windows makes
+ *  `git push` fail when the credential helper needs stdin. */
+function gitRun(cwd, args) {
+  execSync(`git ${args}`, { cwd, stdio: 'inherit' });
 }
 
 function hasChanges(cwd, path = '.') {
   try {
-    const out = git(cwd, `status --porcelain -- ${path}`);
+    const out = gitQuiet(cwd, `status --porcelain -- ${path}`);
     return out.trim().length > 0;
   } catch {
     return true; // be safe: attempt commit if we can't tell
@@ -77,12 +84,13 @@ function commitAndPush(cwd, label, path, message) {
     return;
   }
   try {
-    git(cwd, `add -- ${path}`);
-    git(cwd, `commit -m "${message.replace(/"/g, '\\"')}"`);
-    git(cwd, 'push origin HEAD');
+    gitRun(cwd, `add -- ${path}`);
+    gitRun(cwd, `commit -m "${message.replace(/"/g, '\\"')}"`);
+    gitRun(cwd, 'push origin HEAD');
     console.log(`   ${label}: committed + pushed ✔`);
   } catch (err) {
     console.error(`   ${label}: git step failed:\n     ${String(err.message).split('\n')[0]}`);
+    process.exitCode = 1;
   }
 }
 

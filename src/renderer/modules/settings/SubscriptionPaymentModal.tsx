@@ -136,7 +136,7 @@ export default function SubscriptionPaymentModal({
 
   if (initiated && !isFailed) {
     if (environment === 'electron' && paymentUrl) {
-      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} />;
+      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} phone={phone} />;
     }
 
     return (

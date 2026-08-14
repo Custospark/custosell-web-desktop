@@ -200,6 +200,7 @@ export default function OnboardingPage() {
         paymentUrl={paymentUrl}
         openedExternally={openedExternally}
         environment={environment}
+        phone={phone}
         verifyMessage={verifyMessage}
         onReset={() => { closePaymentPopup(); setPaymentId(null); setInitiated(false); setVerifyMessage(null); }}
       />

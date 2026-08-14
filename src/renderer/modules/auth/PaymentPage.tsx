@@ -389,7 +389,7 @@ export default function PaymentPage() {
       </div>
 
       {initiated && !isPaymentDone && environment === 'electron' && paymentUrl && (
-        <PaymentGatewayModal url={paymentUrl} onClose={handleRetry} />
+        <PaymentGatewayModal url={paymentUrl} onClose={handleRetry} phone={phone} />
       )}
     </AuthLayout>
   );

@@ -72,7 +72,7 @@ export default function BillingCyclePaymentModal({
   const isFailed = paymentQuery.data?.data?.status === 'failed';
 
   if (step === 'polling' && !isDone && !isFailed && environment === 'electron' && paymentUrl) {
-    return <PaymentGatewayModal url={paymentUrl} onClose={onClose} />;
+    return <PaymentGatewayModal url={paymentUrl} onClose={onClose} phone={phone} />;
   }
 
   return (

@@ -6,6 +6,8 @@ import { Loader2, X } from 'lucide-react';
 interface PaymentGatewayModalProps {
   url: string;
   onClose: () => void;
+  /** Mobile-money number the STK push is sent to — shown in the polling status. */
+  phone?: string;
 }
 
 /**
@@ -16,7 +18,7 @@ interface PaymentGatewayModalProps {
  *
  * Web/mobile don't render this; they use their own popup/tab flow.
  */
-export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModalProps) {
+export default function PaymentGatewayModal({ url, onClose, phone }: PaymentGatewayModalProps) {
   const webviewRef = useRef<HTMLWebViewElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -106,11 +108,22 @@ export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModa
           </div>
 
           <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-4 py-2.5">
-            <p className="text-xs text-slate-500">Your app stays open — you'll return right here after paying.</p>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
+              <p className="min-w-0 text-xs text-slate-600">
+                Waiting for payment
+                {phone ? (
+                  <>
+                    {' '}— STK push sent to <span className="font-semibold">{phone}</span>
+                  </>
+                ) : null}
+                {' '}— complete it in the window above, we'll confirm automatically.
+              </p>
+            </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 cursor-pointer"
+              className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 cursor-pointer"
             >
               Cancel
             </button>

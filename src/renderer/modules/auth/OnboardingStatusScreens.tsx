@@ -65,11 +65,12 @@ interface WaitingScreenProps {
   paymentUrl?: string | null;
   openedExternally?: boolean;
   environment?: PaymentEnvironment;
+  phone?: string;
   verifyMessage: string | null;
   onReset: () => void;
 }
 
-export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, verifyMessage, onReset }: WaitingScreenProps) {
+export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, phone, verifyMessage, onReset }: WaitingScreenProps) {
   return (
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -121,7 +122,7 @@ export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, pa
       </div>
 
       {environment === 'electron' && paymentUrl && (
-        <PaymentGatewayModal url={paymentUrl} onClose={onReset} />
+        <PaymentGatewayModal url={paymentUrl} onClose={onReset} phone={phone} />
       )}
     </>
   );

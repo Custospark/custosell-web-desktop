@@ -342,7 +342,7 @@ export default function UpgradeFlowModal({
     }
 
     if (environment === 'electron' && paymentUrl) {
-      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} />;
+      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} phone={phone} />;
     }
 
     return (

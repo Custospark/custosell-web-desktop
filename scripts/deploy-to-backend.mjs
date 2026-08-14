@@ -152,6 +152,6 @@ console.log(`   cd /home/u214605677/domains/custosell.com/public_html`);
 console.log(`   rm -rf ${targets.join(' && rm -rf ')}`);
 console.log(`   mkdir -p ${targets.map((t) => t).join(' ')}`);
 console.log(`   for t in ${targets.map((t) => t).join(' ')}; do`);
-console.log(`     cp -r /home/u214605677/domains/staging-api.custosell.com/public/$t/* $t/`);
+console.log(`     cp -rT /home/u214605677/domains/staging-api.custosell.com/public/$t $t   # -T copies dotfiles like .htaccess`);
 console.log(`   done`);
-console.log(`   # .htaccess is already inside each folder — no manual re-add needed\n`);
+console.log(`   # .htaccess is inside the folder — cp -rT (NOT cp .../*) carries it\n`);

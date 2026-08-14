@@ -15,13 +15,19 @@
  * frontend repo is never auto-committed — frontend build output stays out of
  * git (dist/ is gitignored), and unrelated source changes are never swept in.
  *
+ * The SPA .htaccess (deploy/htaccess.staging) is copied into the build folder
+ * with each deploy, so the server copy always carries it — real files are
+ * served with correct MIME types and only non-file routes fall back to
+ * index.html. On the server, wipe + recopy (rm -rf + cp) to keep the folder
+ * consistent, and the .htaccess comes along automatically.
+ *
  * Usage:
  *   npm run build:web            # both staging + production
  *   npm run build:web:staging
  *   npm run build:web:production
  */
 import { execSync } from 'child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -120,6 +126,17 @@ for (const target of targets) {
   cpSync(DIST, dest, { recursive: true });
   console.log(`   copied ${DIST} → ${dest}`);
 
+  // Ship the SPA .htaccess inside the build folder so the server's copy always
+  // carries it — no manual re-add after every deploy. It serves real files with
+  // correct MIME types and only routes non-file paths to index.html.
+  const htaccessSrc = resolve(__dirname, '..', 'deploy', 'htaccess.staging');
+  if (existsSync(htaccessSrc)) {
+    copyFileSync(htaccessSrc, resolve(dest, '.htaccess'));
+    console.log(`   copied .htaccess → ${dest}/.htaccess`);
+  } else {
+    console.warn('   ⚠ deploy/htaccess.staging not found — .htaccess NOT added');
+  }
+
   step(`Commit + push backend: public/${target}`);
   commitAndPush(
     BACKEND_ROOT,
@@ -129,6 +146,12 @@ for (const target of targets) {
   );
 }
 
-console.log(`\n🎉 Done. On the server:\n`);
+console.log(`\n🎉 Done. On the server (per target):\n`);
 console.log(`   git pull origin main`);
-console.log(`   # served at /staging and /production (or your subdomains → these folders)\n`);
+console.log(`   cd /home/u214605677/domains/custosell.com/public_html`);
+console.log(`   rm -rf ${targets.join(' && rm -rf ')}`);
+console.log(`   mkdir -p ${targets.map((t) => t).join(' ')}`);
+console.log(`   for t in ${targets.map((t) => t).join(' ')}; do`);
+console.log(`     cp -r /home/u214605677/domains/staging-api.custosell.com/public/$t/* $t/`);
+console.log(`   done`);
+console.log(`   # .htaccess is already inside each folder — no manual re-add needed\n`);

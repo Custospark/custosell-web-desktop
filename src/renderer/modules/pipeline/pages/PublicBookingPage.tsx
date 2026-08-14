@@ -1,69 +1,24 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarDays, Clock, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Building2, Video, XCircle, Copy, Link, Check, ChevronDown } from 'lucide-react';
+import { Building2, CalendarDays } from 'lucide-react';
 import { useToast } from '../../../app/contexts/useToast';
-import { cn } from '../../../shared/utils/cn';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useBookingInfo, useBookingSlots, useCreateBooking } from '../api/useBookingQueries';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
-import { ensureHttps } from '../ui/bookingHelpers';
 import { countryCodes, type CountryCode } from '../../../shared/utils/countryCodes';
-import type { CreateBookingPayload, TimeSlot } from '../api/useBookingQueries';
-
-function formatTime(hhmm: string): string {
-  const [h, m] = hhmm.split(':').map(Number);
-  const period = h >= 12 ? 'PM' : 'AM';
-  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
-}
-
-function formatIsoTime(iso: string | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const h = d.getHours();
-  const m = d.getMinutes();
-  const period = h >= 12 ? 'PM' : 'AM';
-  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
-}
-
-function formatIsoDate(iso: string | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-CA');
-}
-
-function formatSlotRange(slot: TimeSlot): string {
-  return `${formatIsoTime(slot.time_iso) || formatTime(slot.time)} - ${formatIsoTime(slot.end_time_iso) || formatTime(slot.end_time)}`;
-}
-
-function utcPartsFromSlot(slot: TimeSlot): { date: string; time: string } {
-  if (slot.time_iso) {
-    const iso = new Date(slot.time_iso).toISOString();
-    return { date: iso.slice(0, 10), time: iso.slice(11, 16) };
-  }
-  return { date: '', time: '' };
-}
-
-const DAY_NAMES: Record<number, string> = {
-  1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu',
-  5: 'Fri', 6: 'Sat', 7: 'Sun',
-};
-
-function toDateInputValue(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
+import type { CreateBookingPayload } from '../api/useBookingQueries';
+import BookingDateTimeStep from '../ui/BookingDateTimeStep';
+import BookingDetailsStep from '../ui/BookingDetailsStep';
+import BookingDoneScreen from '../ui/BookingDoneScreen';
+import {
+  addDays,
+  DAY_NAMES,
+  formatIsoDate,
+  formatIsoTime,
+  formatTime,
+  toDateInputValue,
+  utcPartsFromSlot,
+} from '../ui/bookingFormatHelpers';
 
 export default function PublicBookingPage() {
   const { token } = useParams<{ token: string }>();
@@ -80,28 +35,13 @@ export default function PublicBookingPage() {
   const [notes, setNotes] = useState('');
   const [step, setStep] = useState<'datetime' | 'details' | 'done'>('datetime');
   const [countryCode, setCountryCode] = useState<CountryCode>(() => countryCodes.find((c) => c.code === 'UG') || countryCodes[0]);
-  const [search, setSearch] = useState('');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const filtered = countryCodes.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) || c.dial_code.includes(search) || c.code.toLowerCase().includes(search),
-  );
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
 
   const { data: slotsData, isLoading: slotsLoading } = useBookingSlots(token ?? '', selectedDate);
   const createBooking = useCreateBooking(token ?? '');
   const { showToast } = useToast();
-  const [copied, setCopied] = useState(false);
 
   const info = infoData;
-  const allSlots: TimeSlot[] = slotsData?.slots ?? [];
+  const allSlots = slotsData?.slots ?? [];
 
   const availableDayNames = info?.available_days
     ? info.available_days.map((d) => DAY_NAMES[d]).filter(Boolean)
@@ -170,110 +110,30 @@ export default function PublicBookingPage() {
   const selectedLocalTime = selectedSlot ? formatIsoTime(selectedSlot.time_iso) : formatTime(selectedTime);
   const selectedLocalEnd = selectedSlot ? formatIsoTime(selectedSlot.end_time_iso) : '';
 
-  const handleCopyLink = () => {
-    if (!checkUrl) return;
-    navigator.clipboard.writeText(checkUrl);
-    setCopied(true);
-    showToast('success', 'Link copied');
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   if (step === 'done') {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
-          <Clock className="h-8 w-8 text-amber-500" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-900">Request submitted</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Meeting with{' '}
-          <span className="font-semibold text-gray-700">{info.business_name || info.board_name}</span>
-        </p>
-        <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
-          <CalendarDays className="h-3.5 w-3.5" />
-          <span>{selectedLocalDate}</span>
-          <Clock className="ml-1 h-3.5 w-3.5" />
-          <span>{selectedLocalTime}{selectedLocalEnd ? ` - ${selectedLocalEnd}` : ''}</span>
-        </div>
-
-        <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          <Clock className="h-3.5 w-3.5" />
-          <span>Pending approval &mdash; you'll hear back soon</span>
-        </div>
-
-        {referenceCode && (
-          <div className="mx-auto mt-4 rounded-xl border border-gray-100 bg-white p-3 text-left shadow-sm">
-            <p className="mb-1 text-xs font-medium text-gray-500">Reference code</p>
-            <p className="font-mono text-base font-bold tracking-wider text-indigo-700">{referenceCode}</p>
-          </div>
-        )}
-
-        {checkUrl && (
-          <div className="mx-auto mt-3 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/60 p-3 text-left">
-            <p className="mb-1 text-xs font-medium text-indigo-600">Check booking status</p>
-            <p className="mb-1.5 text-[11px] text-indigo-500">
-              Save this link to check if your meeting is confirmed:
-            </p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={checkUrl}
-                className="flex-1 truncate rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs text-indigo-700"
-              />
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className={cn(
-                  'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all',
-                  copied ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700',
-                )}
-              >
-                {copied ? (
-                  <Check className="my-auto mr-1 inline-block h-3 w-3" />
-                ) : (
-                  <Copy className="my-auto mr-1 inline-block h-3 w-3" />
-                )}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {info.meeting_link && (
-          <div className="mx-auto mt-3 rounded-xl border border-gray-100 bg-white p-3 text-left shadow-sm">
-            <p className="mb-1 flex items-center gap-2 text-xs font-medium text-gray-600">
-              <Video className="h-3.5 w-3.5 text-indigo-400" />
-              Meeting link
-            </p>
-            <a
-              href={ensureHttps(info.meeting_link) ?? '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block truncate text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-            >
-              {info.meeting_link}
-            </a>
-          </div>
-        )}
-
-        <p className="mt-4 text-xs text-gray-400">
-          We look forward to speaking with you.
-        </p>
-      </div>
+      <BookingDoneScreen
+        businessName={info.business_name || info.board_name}
+        selectedLocalDate={selectedLocalDate}
+        selectedLocalTime={selectedLocalTime}
+        selectedLocalEnd={selectedLocalEnd}
+        referenceCode={referenceCode}
+        checkUrl={checkUrl}
+        meetingLink={info.meeting_link}
+      />
     );
   }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
-        <div className="mb-6 text-center">
-          {info.logo_path ? (
-            <img src={avatarUrl(info.logo_path) ?? ''} alt="" className="mx-auto mb-3 h-14 w-14 rounded-2xl object-cover shadow-lg" />
-          ) : (
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200">
-              <CalendarDays className="h-6 w-6 text-white" />
-            </div>
-          )}
+      <div className="mb-6 text-center">
+        {info.logo_path ? (
+          <img src={avatarUrl(info.logo_path) ?? ''} alt="" className="mx-auto mb-3 h-14 w-14 rounded-2xl object-cover shadow-lg" />
+        ) : (
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200">
+            <CalendarDays className="h-6 w-6 text-white" />
+          </div>
+        )}
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Schedule a meeting
         </h1>
@@ -291,235 +151,42 @@ export default function PublicBookingPage() {
 
       <div className="rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-200/50">
         {step === 'datetime' && (
-          <div className="p-4 sm:p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-[11px] font-bold text-indigo-600">1</div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">Pick a date & time</h2>
-                <p className="text-xs text-gray-400">Select when you'd like to meet</p>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                <CalendarDays className="mr-1.5 inline-block h-3.5 w-3.5 text-indigo-400" />
-                Date
-              </label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={handleDateChange}
-                min={today}
-                max={maxDate}
-                required
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-
-            {selectedDate && (
-              <div>
-                <label className="mb-2 block text-xs font-medium text-gray-600">
-                  <Clock className="mr-1.5 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Available time slots
-                </label>
-                {slotsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
-                  </div>
-                ) : allSlots.length === 0 ? (
-                  <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                    No slots available for this date. Pick another day.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {allSlots.map((slot) => {
-                      const isTaken = !slot.available;
-                      const isSelected = selectedTime === slot.time;
-                      return (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          disabled={isTaken}
-                          onClick={() => setSelectedTime(slot.time)}
-                          className={`rounded-xl border px-3 py-2.5 text-center text-sm font-medium transition-all ${
-                            isTaken
-                              ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300'
-                              : isSelected
-                                ? 'border-indigo-400 bg-indigo-50 text-indigo-700 shadow-sm'
-                                : 'border-gray-200 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50'
-                          }`}
-                        >
-                          <span className="block text-xs">{formatSlotRange(slot)}</span>
-                          {isTaken && (
-                            <span className="mt-0.5 flex items-center justify-center gap-1 text-[10px] text-gray-400">
-                              <XCircle className="h-3 w-3" />
-                              Taken
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="mt-6 flex justify-end border-t border-gray-100 pt-4">
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!canProceedToDetails}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          <BookingDateTimeStep
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+            selectedTime={selectedTime}
+            onTimeSelect={setSelectedTime}
+            slotsLoading={slotsLoading}
+            slots={allSlots}
+            today={today}
+            maxDate={maxDate}
+            canProceed={canProceedToDetails}
+            onNext={handleNext}
+          />
         )}
 
         {step === 'details' && (
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-[11px] font-bold text-emerald-600">2</div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">Your details</h2>
-                <p className="text-xs text-gray-400">How can we reach you?</p>
-              </div>
-            </div>
-
-            <div className="mb-3 flex items-center gap-3 rounded-xl bg-indigo-50 px-4 py-2 text-xs text-indigo-600">
-              <CalendarDays className="h-3.5 w-3.5" />
-              <span>{selectedLocalDate}</span>
-              <Clock className="h-3.5 w-3.5" />
-              <span>{selectedLocalTime}{selectedLocalEnd ? ` - ${selectedLocalEnd}` : ''}</span>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                  <User className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Your name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="John Doe"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                  <Mail className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="john@example.com"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                  <Phone className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Phone number
-                </label>
-                <div className="flex gap-2">
-                  <div ref={dropdownRef} className="relative shrink-0">
-                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
-                      className="flex h-[42px] items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-sm hover:border-gray-300 transition-colors"
-                    >
-                      <span className="text-lg leading-none">{countryCode.flag}</span>
-                      <span className="text-sm font-medium text-gray-700">{countryCode.dial_code}</span>
-                      <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
-                    </button>
-                    {dropdownOpen && (
-                      <div className="absolute top-full mt-1 left-0 w-72 rounded-xl border border-gray-200 bg-white shadow-lg z-50 max-h-60 overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-100 p-2">
-                          <input type="text" placeholder="Search country..." value={search} onChange={(e) => setSearch(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300" autoFocus />
-                        </div>
-                        {filtered.map((c) => (
-                          <button key={c.code} type="button" onClick={() => { setCountryCode(c); setDropdownOpen(false); setSearch(''); }}
-                            className={`w-full flex items-center gap-3 px-3 py-2 text-xs text-left hover:bg-indigo-50 transition-colors ${c.code === countryCode.code ? 'bg-indigo-50 font-medium' : ''}`}>
-                            <span className="text-lg">{c.flag}</span>
-                            <span className="text-gray-800">{c.name}</span>
-                            <span className="ml-auto text-gray-400">{c.dial_code}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="relative flex-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="700 000 000"
-                      className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                    />
-                  </div>
-                </div>
-                {phone && (
-                  <p className="mt-1 text-xs text-gray-400">Full number: {countryCode.dial_code} {phone}</p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                  <Link className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Meeting link <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="url"
-                  value={meetingLink}
-                  onChange={(e) => setMeetingLink(e.target.value)}
-                  placeholder="https://meet.google.com/xxx"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-                <p className="mt-1 text-[11px] text-gray-400">Optional - add a video link so the host can join online</p>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                  <MessageSquare className="mr-1 inline-block h-3.5 w-3.5 text-indigo-400" />
-                  Meeting notes
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={2}
-                  placeholder="Agenda, topics, or anything else..."
-                  className="w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-              <button
-                type="button"
-                onClick={() => setStep('datetime')}
-                className="text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
-                &larr; Back
-              </button>
-              <button
-                type="submit"
-                disabled={!canSubmit}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {createBooking.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CalendarDays className="h-4 w-4" />
-                )}
-                Confirm booking
-              </button>
-            </div>
-          </form>
+          <BookingDetailsStep
+            selectedLocalDate={selectedLocalDate}
+            selectedLocalTime={selectedLocalTime}
+            selectedLocalEnd={selectedLocalEnd}
+            name={name}
+            onNameChange={setName}
+            email={email}
+            onEmailChange={setEmail}
+            phone={phone}
+            onPhoneChange={setPhone}
+            countryCode={countryCode}
+            onCountryCodeChange={setCountryCode}
+            meetingLink={meetingLink}
+            onMeetingLinkChange={setMeetingLink}
+            notes={notes}
+            onNotesChange={setNotes}
+            canSubmit={canSubmit}
+            submitting={createBooking.isPending}
+            onBack={() => setStep('datetime')}
+            onSubmit={handleSubmit}
+          />
         )}
       </div>
     </div>

@@ -16,6 +16,8 @@
     "react:build:staging": "tsc -b && cross-env VITE_ASSET_BASE=/ vite build --mode staging",
     "build:staging:web": "npm run react:build:staging",
     "build:react": "npm run react:build",
+    "deploy:web:staging": "node scripts/deploy-to-backend.mjs staging",
+    "deploy:web:production": "node scripts/deploy-to-backend.mjs production",
     "lint": "eslint .",
     "vera:fast": "node scripts/vera-fast.mjs",
     "vera:logic": "node scripts/vera-logic.mjs",

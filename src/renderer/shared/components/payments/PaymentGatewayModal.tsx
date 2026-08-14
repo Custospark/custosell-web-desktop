@@ -3,25 +3,6 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, X } from 'lucide-react';
 
-declare global {
-  // Electron's <webview> element (enabled via webviewTag in main.ts). It renders
-  // external web content inline, so the gateway is hosted inside the app modal —
-  // no separate OS window, so dismissing it can never blank the app.
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      webview: React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          src?: string;
-          partition?: string;
-          allowpopups?: string;
-        },
-        HTMLElement
-      >;
-    }
-  }
-}
-
 interface PaymentGatewayModalProps {
   url: string;
   onClose: () => void;
@@ -36,15 +17,12 @@ interface PaymentGatewayModalProps {
  * Web/mobile don't render this; they use their own popup/tab flow.
  */
 export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModalProps) {
-  const webviewRef = useRef<HTMLElement | null>(null);
+  const webviewRef = useRef<HTMLWebViewElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    const wv = webviewRef.current as (HTMLElement & {
-      addEventListener: (name: string, cb: () => void) => void;
-      removeEventListener: (name: string, cb: () => void) => void;
-    }) | null;
+    const wv = webviewRef.current;
     if (!wv) return;
 
     const onLoad = () => {
@@ -123,7 +101,7 @@ export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModa
               ref={(el) => { webviewRef.current = el; }}
               src={url}
               className="h-full w-full"
-              allowpopups="true"
+              allowpopups={true}
             />
           </div>
 

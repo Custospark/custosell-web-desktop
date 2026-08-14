@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useAppContext } from '../../../app/contexts/AppContext';
 import DocumentsPanel from '../ui/DocumentsPanel';
 import AllCabinetsPickerModal from '../ui/AllCabinetsPickerModal';
 import CreateCabinetModal from '../ui/CreateCabinetModal';
@@ -19,6 +20,10 @@ export default function DocumentsCabinetPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { state, dispatch } = useAppContext();
+  const isFullscreen = state.contentFullscreen;
+  const toggleFullscreen = () =>
+    dispatch({ type: 'SET_CONTENT_FULLSCREEN', payload: !isFullscreen });
 
   const folderId = useMemo(() => {
     const raw = params.get('folder_id');
@@ -73,6 +78,8 @@ export default function DocumentsCabinetPage() {
 
       <CabinetSwitcherIcons
         allowSettings={cabinet.can_manage}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
         onOpenAll={() => setPickerOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onCreateNew={() => setCreateOpen(true)}

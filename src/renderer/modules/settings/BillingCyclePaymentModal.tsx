@@ -9,6 +9,7 @@ import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import type { PaymentType } from '../../shared/types';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
+import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
 
 interface BillingCyclePaymentModalProps {
   proration: Record<string, unknown>;
@@ -69,6 +70,10 @@ export default function BillingCyclePaymentModal({
 
   const isDone = paymentQuery.data?.data?.status === 'completed';
   const isFailed = paymentQuery.data?.data?.status === 'failed';
+
+  if (step === 'polling' && !isDone && !isFailed && environment === 'electron' && paymentUrl) {
+    return <PaymentGatewayModal url={paymentUrl} onClose={onClose} />;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

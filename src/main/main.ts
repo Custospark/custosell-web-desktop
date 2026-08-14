@@ -14,7 +14,6 @@ if (isDev) {
 }
 
 let mainWindow: BrowserWindow | null = null;
-let paymentWindow: BrowserWindow | null = null;
 let quitFlushComplete = false;
 
 function getSecureStorePath(): string {
@@ -58,6 +57,7 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      webviewTag: true,
       preload: isDev
         ? path.join(__dirname, '..', 'preload', 'preload.js')
         : path.join(app.getAppPath(), 'preload.js'),
@@ -96,49 +96,16 @@ function createWindow(): BrowserWindow {
     mainWindow?.focus();
   });
 
-  // Window-open policy:
-  // - The payment gateway (frameName "custosell_payment_window") is allowed as a
-  //   child BrowserWindow with safe webPreferences — no nodeIntegration, no
-  //   inherited preload bridge — so the gateway page cannot touch the app. The
-  //   renderer displays it via window.open (reliable) and closes it through the
-  //   main process (payment-window:close), so closing never blanks the app.
-  // - Any other external http(s) URL (PDFs, social links, etc.) is opened in the
-  //   user's default browser via shell.openExternal.
-  // - Everything else is denied.
-  mainWindow.webContents.setWindowOpenHandler(({ url, frameName }) => {
-    if (frameName === 'custosell_payment_window') {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 600,
-          height: 760,
-          autoHideMenuBar: true,
-          backgroundColor: '#f8fafc',
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            sandbox: true,
-            webSecurity: true,
-          },
-        },
-      };
-    }
+  // Window-open policy: the payment gateway is hosted INSIDE the app as a modal
+  // (Electron <webview>) — no separate child BrowserWindow exists, so dismissing
+  // it can never blank the app. Any external http(s) window.open (PDFs, social
+  // links, etc.) opens in the user's default browser via shell.openExternal.
+  // Everything else is denied.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url && /^https?:\/\//i.test(url)) {
       void shell.openExternal(url);
     }
     return { action: 'deny' };
-  });
-
-  // Track the payment window so the main process can close it cleanly. The
-  // renderer deliberately never calls win.close() on the cross-origin proxy
-  // (that caused the white-screen); it asks the main process instead.
-  mainWindow.webContents.on('did-create-window', (child, details) => {
-    if (details.frameName === 'custosell_payment_window') {
-      paymentWindow = child;
-      child.on('closed', () => {
-        if (paymentWindow === child) paymentWindow = null;
-      });
-    }
   });
 
   mainWindow.on('closed', () => {
@@ -218,23 +185,6 @@ ipcMain.handle('app-update:restart-and-install', () => restartAndInstallNow());
 ipcMain.handle('shell:open-external', (_event, url: unknown) => {
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
   void shell.openExternal(url);
-  return true;
-});
-
-ipcMain.handle('payment-window:close', () => {
-  const win = paymentWindow;
-  paymentWindow = null;
-  if (win && !win.isDestroyed()) {
-    // Destroy immediately (no graceful close / beforeunload) so closing the
-    // gateway window can never glitch the main window's compositor into white.
-    win.hide();
-    win.destroy();
-  }
-  // Make sure the app window is repainted and refocused after the child goes.
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.show();
-    mainWindow.focus();
-  }
   return true;
 });
 

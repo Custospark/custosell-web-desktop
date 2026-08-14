@@ -46,24 +46,14 @@ const shellBridge: ShellBridge = {
   openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url) as Promise<boolean>,
 };
 
-export interface PaymentWindowBridge {
-  close: () => Promise<boolean>;
-}
-
-const paymentWindowBridge: PaymentWindowBridge = {
-  close: () => ipcRenderer.invoke('payment-window:close') as Promise<boolean>,
-};
-
 if (process.contextIsolated) {
   contextBridge.exposeInMainWorld('secureStore', secureStore);
   contextBridge.exposeInMainWorld('appUpdates', appUpdates);
   contextBridge.exposeInMainWorld('offlineBridge', offlineBridge);
   contextBridge.exposeInMainWorld('electronShell', shellBridge);
-  contextBridge.exposeInMainWorld('electronPaymentWindow', paymentWindowBridge);
 } else {
   (window as Window & { secureStore?: typeof secureStore }).secureStore = secureStore;
   (window as Window & { appUpdates?: AppUpdatesBridge }).appUpdates = appUpdates;
   (window as Window & { offlineBridge?: OfflineBridge }).offlineBridge = offlineBridge;
   (window as Window & { electronShell?: ShellBridge }).electronShell = shellBridge;
-  (window as Window & { electronPaymentWindow?: PaymentWindowBridge }).electronPaymentWindow = paymentWindowBridge;
 }

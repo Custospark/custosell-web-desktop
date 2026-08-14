@@ -18,6 +18,7 @@ import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { CreditCard, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight, Wallet, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
+import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -386,6 +387,10 @@ export default function PaymentPage() {
           </div>
         )}
       </div>
+
+      {initiated && !isPaymentDone && environment === 'electron' && paymentUrl && (
+        <PaymentGatewayModal url={paymentUrl} onClose={handleRetry} />
+      )}
     </AuthLayout>
   );
 }

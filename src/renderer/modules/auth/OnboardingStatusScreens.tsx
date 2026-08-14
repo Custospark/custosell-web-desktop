@@ -4,6 +4,7 @@ import LogoImage from '../../shared/assets/LogoImage';
 import { PRODUCT_NAME } from '../../shared/brand/custosellBrand';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
+import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
 import type { PaymentEnvironment } from '../../shared/hooks/usePaymentPopup';
 
 interface PaymentDoneScreenProps {
@@ -70,52 +71,59 @@ interface WaitingScreenProps {
 
 export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, paymentUrl, openedExternally, environment, verifyMessage, onReset }: WaitingScreenProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
-        <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
-          <LogoImage size="md" />
-          <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
-        </Link>
-      </header>
-      <main className="flex-1 flex items-center justify-center px-5 py-8">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-5">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
-          <div>
-            <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Complete your payment in the opened window.
-            </p>
-          </div>
-          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} openedExternally={openedExternally} environment={environment} />
-          <button
-            type="button"
-            onClick={handleVerifyPayment}
-            disabled={verifying}
-            className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {verifying ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle className="w-4 h-4" />
-            )}
-            {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
-          </button>
-          {verifyMessage && (
-            <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              <span>{verifyMessage}</span>
+    <>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
+          <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
+            <LogoImage size="md" />
+            <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-5 py-8">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center space-y-5">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+            <div>
+              <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Complete your payment in the opened window.
+              </p>
             </div>
-          )}
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
-          >
-            Cancel and try again
-          </button>
-        </div>
-      </main>
-    </div>
+            <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl ?? null} openedExternally={openedExternally} environment={environment} />
+            <button
+              type="button"
+              onClick={handleVerifyPayment}
+              disabled={verifying}
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {verifying ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4" />
+              )}
+              {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
+            </button>
+            {verifyMessage && (
+              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{verifyMessage}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onReset}
+              className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
+              aria-label="Cancel and try again"
+            >
+              Cancel and try again
+            </button>
+          </div>
+        </main>
+      </div>
+
+      {environment === 'electron' && paymentUrl && (
+        <PaymentGatewayModal url={paymentUrl} onClose={onReset} />
+      )}
+    </>
   );
 }
 

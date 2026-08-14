@@ -13,6 +13,7 @@ import { useUsdToLocal } from '../../shared/utils/useUsdToLocal';
 import UpgradeFlowConfirmStep from './UpgradeFlowConfirmStep';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
+import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
 
 interface UpgradeFlowModalProps {
   plan: Plan;
@@ -338,6 +339,10 @@ export default function UpgradeFlowModal({
           </div>
         </div>
       );
+    }
+
+    if (environment === 'electron' && paymentUrl) {
+      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} />;
     }
 
     return (

@@ -11,6 +11,7 @@ import type { PaymentType } from '../../shared/types';
 import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
+import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
 
 interface SubscriptionPaymentModalProps {
   planName: string;
@@ -134,6 +135,10 @@ export default function SubscriptionPaymentModal({
   }
 
   if (initiated && !isFailed) {
+    if (environment === 'electron' && paymentUrl) {
+      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} />;
+    }
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">

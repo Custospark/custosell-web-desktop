@@ -19,6 +19,7 @@ import { CreditCard, CheckCircle, Loader2, AlertCircle, ChevronLeft, ArrowRight,
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
+import ManualPaymentVerify from '../../shared/components/payments/ManualPaymentVerify';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -336,6 +337,8 @@ export default function PaymentPage() {
             )}
 
             <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+
+            <ManualPaymentVerify paymentId={paymentId} onVerified={() => paymentQuery.refetch()} />
 
             {paymentQuery.data?.data?.status === 'failed' && (
               <div className="space-y-3">

@@ -12,6 +12,7 @@ import type { ReferralRecord } from '../../modules/referral/api/ReferralTypes';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
+import ManualPaymentVerify from '../../shared/components/payments/ManualPaymentVerify';
 
 interface SubscriptionPaymentModalProps {
   planName: string;
@@ -148,6 +149,7 @@ export default function SubscriptionPaymentModal({
           </p>
         </div>
         <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+        <ManualPaymentVerify paymentId={paymentId} onVerified={() => paymentQuery.refetch()} />
 
         {paymentQuery.data?.data?.status === 'failed' && (
           <div className="space-y-2 pt-2">

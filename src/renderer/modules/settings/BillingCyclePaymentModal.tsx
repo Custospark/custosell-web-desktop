@@ -10,6 +10,7 @@ import type { PaymentType } from '../../shared/types';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
+import ManualPaymentVerify from '../../shared/components/payments/ManualPaymentVerify';
 
 interface BillingCyclePaymentModalProps {
   proration: Record<string, unknown>;
@@ -79,6 +80,7 @@ export default function BillingCyclePaymentModal({
         Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
       </p>
       <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+      <ManualPaymentVerify paymentId={paymentId} onVerified={() => paymentQuery.refetch()} />
       <button
         type="button"
         onClick={onClose}

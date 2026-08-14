@@ -14,6 +14,7 @@ import UpgradeFlowConfirmStep from './UpgradeFlowConfirmStep';
 import { usePaymentPopup } from '../../shared/hooks/usePaymentPopup';
 import PaymentPopupNotice from '../../shared/components/payments/PaymentPopupNotice';
 import PaymentGatewayModal from '../../shared/components/payments/PaymentGatewayModal';
+import ManualPaymentVerify from '../../shared/components/payments/ManualPaymentVerify';
 
 interface UpgradeFlowModalProps {
   plan: Plan;
@@ -354,6 +355,7 @@ export default function UpgradeFlowModal({
           </p>
         </div>
         <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+        <ManualPaymentVerify paymentId={paymentId} onVerified={() => paymentQuery.refetch()} />
         <button type="button" onClick={onClose}
           className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors">
           Cancel

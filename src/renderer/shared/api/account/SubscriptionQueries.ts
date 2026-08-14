@@ -159,6 +159,11 @@ export function useConfirmPayment(paymentId: number) {
     onSuccess: (data) => {
       if (data?.success) {
         showToast('success', data.message || 'Payment confirmed.');
+        // Payment was reconciled and the subscription applied — refresh the
+        // user profile so access/modules update immediately (no re-login).
+        queryClient.invalidateQueries({ queryKey: ['account', 'profile'] });
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'access'] });
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
       } else {
         showToast('error', data.message || 'Payment not yet confirmed. Please try again in a moment.');
       }
@@ -168,6 +173,8 @@ export function useConfirmPayment(paymentId: number) {
     onError: (error) => {
       const message = error.response?.data?.message || 'Could not verify the payment right now. Please try again.';
       showToast('error', message);
+      queryClient.invalidateQueries({ queryKey: ['billing', 'history'] });
+      queryClient.invalidateQueries({ queryKey: ['billing', 'payment', paymentId] });
     },
   });
 }

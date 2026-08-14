@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { BILLING } from '../../api/endpoints/endpoints';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
@@ -18,6 +19,7 @@ interface ManualPaymentVerifyProps {
  * the same verify path regardless of device.
  */
 export default function ManualPaymentVerify({ paymentId, onVerified, className }: ManualPaymentVerifyProps) {
+  const queryClient = useQueryClient();
   const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -29,6 +31,11 @@ export default function ManualPaymentVerify({ paymentId, onVerified, className }
       const { data } = await axiosInstance.post(BILLING.CONFIRM(paymentId));
       if (data?.success) {
         onVerified();
+        // Payment reconciled and subscription applied — refresh profile +
+        // access so the UI updates immediately (no re-login needed).
+        queryClient.invalidateQueries({ queryKey: ['account', 'profile'] });
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'access'] });
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
       } else {
         setMessage(data?.message || 'Payment not yet confirmed.');
       }

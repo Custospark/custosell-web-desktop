@@ -7,6 +7,13 @@ import { cn } from '../../utils/cn';
 
 interface PaymentHistoryProps {
   className?: string;
+  /**
+   * 'pending-only' (Plans tab): show just the payments that need syncing and
+   * render nothing when there are none — avoids duplicating the full history
+   * that lives on the History tab.
+   * 'full' (default): show the complete billing activity feed.
+   */
+  mode?: 'pending-only' | 'full';
 }
 
 /**
@@ -16,7 +23,7 @@ interface PaymentHistoryProps {
  * for the real status and auto-approves it. This reduces support tickets for
  * "I paid but my plan didn't update".
  */
-export default function PaymentHistory({ className }: PaymentHistoryProps) {
+export default function PaymentHistory({ className, mode = 'full' }: PaymentHistoryProps) {
   const { data: items = [], isLoading } = useBillingHistory();
 
   const payments = useMemo(
@@ -25,6 +32,12 @@ export default function PaymentHistory({ className }: PaymentHistoryProps) {
   );
 
   const pendingCount = payments.filter((p) => p.status === 'pending').length;
+
+  // Pending-only mode (Plans tab): nothing to reconcile → render nothing so we
+  // don't duplicate the History tab's empty state.
+  if (mode === 'pending-only' && pendingCount === 0) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -42,6 +55,14 @@ export default function PaymentHistory({ className }: PaymentHistoryProps) {
     );
   }
 
+  const visiblePayments = mode === 'pending-only'
+    ? payments.filter((p) => p.status === 'pending')
+    : payments;
+
+  if (visiblePayments.length === 0) {
+    return null;
+  }
+
   return (
     <div className={cn('rounded-2xl border border-gray-200 bg-white/80 p-4 sm:p-5', className)}>
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -55,7 +76,7 @@ export default function PaymentHistory({ className }: PaymentHistoryProps) {
       </div>
 
       <ul className="divide-y divide-gray-100">
-        {payments.map((p) => (
+        {visiblePayments.map((p) => (
           <PaymentHistoryRow key={p.payment_id ?? p.at} item={p} />
         ))}
       </ul>

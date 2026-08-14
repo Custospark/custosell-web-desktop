@@ -267,7 +267,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
       {user?.account_type !== 'personal' && <PlanUsageSection plan={currentPlan} />}
 
-      <PaymentHistory />
+      <PaymentHistory mode="pending-only" />
 
       <div className="flex flex-col items-center gap-3">
         <div className="flex items-center gap-3">

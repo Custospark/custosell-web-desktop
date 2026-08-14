@@ -5,14 +5,22 @@ import { HrEmptyState, HrSectionCard } from './HrSurface';
 import { HrAttendanceStat } from './HrOverviewWidgets';
 import { EmployeeStatusBadge, LeaveStatusBadge } from './HrStatusBadges';
 import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
-import { employeeDisplayName, type AttendanceDayStatus, type EmployeeStatus, type HrLeaveRequest } from '../api/hrTypes';
+import { employeeDisplayName, type AttendanceDayStatus, type HrLeaveRequest } from '../api/hrTypes';
 import { Users } from 'lucide-react';
+
+export interface HrPeopleCounts {
+  total: number;
+  active: number;
+  onboarding: number;
+  onLeave: number;
+  terminated: number;
+}
 
 interface HrOverviewLeftColumnProps {
   today: string;
   attendanceCounts: Record<AttendanceDayStatus, number> & { total: number };
   pendingLeave: HrLeaveRequest[];
-  peopleCounts: Record<EmployeeStatus, number> & { total: number };
+  peopleCounts: HrPeopleCounts;
 }
 
 function LeaveInbox({ requests }: { requests: HrLeaveRequest[] }) {
@@ -41,7 +49,7 @@ function LeaveInbox({ requests }: { requests: HrLeaveRequest[] }) {
   );
 }
 
-function PeopleSnapshot({ counts }: { counts: HrOverviewLeftColumnProps['peopleCounts'] }) {
+function PeopleSnapshot({ counts }: { counts: HrPeopleCounts }) {
   if (counts.total === 0) {
     return (
       <HrEmptyState

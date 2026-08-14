@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { cn } from '../../../shared/utils/cn';
-import type { PipelineUserRef } from '../api/pipelineTypes';
+import type { PipelineBoardAnnouncement } from '../api/pipelineCollaborationTypes';
 import { PipelineUserAttribution } from './pipelineUserAttribution';
 import {
   Bell,
@@ -13,20 +13,6 @@ import {
   Trash2,
 } from 'lucide-react';
 
-export interface BoardNotice {
-  id: number;
-  title: string;
-  body: string;
-  is_pinned?: boolean;
-  is_read: boolean;
-  created_at?: string;
-  creator?: PipelineUserRef | null;
-  read_count?: number | null;
-  team_member_count?: number | null;
-  can_delete?: boolean;
-  can_dismiss?: boolean;
-}
-
 export interface BoardNoticesTabProps {
   currentUserId?: number | null;
   canManage: boolean;
@@ -34,7 +20,7 @@ export interface BoardNoticesTabProps {
   unreadCount: number;
   markingAllRead: boolean;
   loading: boolean;
-  notices: BoardNotice[];
+  notices: PipelineBoardAnnouncement[];
   noticeTitle: string;
   onNoticeTitleChange: (value: string) => void;
   noticeBody: string;

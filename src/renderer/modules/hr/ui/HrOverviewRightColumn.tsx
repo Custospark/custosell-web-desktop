@@ -7,6 +7,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
 import type { HrPayRun } from '../api/hrTypes';
+import type { HrPayrollAffordabilityBurn, HrPayrollAffordabilityCoverage } from '../api/hrPayrollAffordabilityTypes';
 import { AlertTriangle, Building } from 'lucide-react';
 
 export interface PayRunPulse {
@@ -21,16 +22,8 @@ interface HrOverviewRightColumnProps {
   payRunPulse: PayRunPulse;
   affordabilityLoading: boolean;
   affordabilityError: boolean;
-  coverage: {
-    status: string;
-    runway_months: number | null;
-    runway_months_floor: number | null;
-  } | null;
-  burn: {
-    monthly_burn: number;
-    employee_count: number;
-    employees_missing_compensation?: number;
-  } | null;
+  coverage: HrPayrollAffordabilityCoverage | undefined;
+  burn: HrPayrollAffordabilityBurn | undefined;
   pendingOnboardingCount: number;
   draftReviewsCount: number;
   atRiskCount: number;

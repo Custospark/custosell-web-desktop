@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Query } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useToast } from '../../../app/contexts/useToast';
@@ -63,7 +64,7 @@ export function useRunDepreciation() {
   });
 }
 
-function fixedAssetListPredicate(query: { queryKey: unknown[] }): boolean {
+function fixedAssetListPredicate(query: Query): boolean {
   const key = query.queryKey;
   return key[0] === 'accounting' && key[1] === 'fixed-assets' && key[2] !== 'detail';
 }

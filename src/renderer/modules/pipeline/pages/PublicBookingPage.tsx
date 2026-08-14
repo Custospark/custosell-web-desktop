@@ -65,12 +65,12 @@ export default function PublicBookingPage() {
     );
   }
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value);
+  const handleDateChange = (value: string) => {
+    setSelectedDate(value);
     setSelectedTime('');
   };
 
-  const canProceedToDetails = selectedDate && selectedTime;
+  const canProceedToDetails = Boolean(selectedDate && selectedTime);
   const canSubmit = name.trim().length > 0;
 
   const handleNext = () => {

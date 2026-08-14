@@ -17,7 +17,7 @@ export function registerServiceWorker(): void {
 
   window.addEventListener('load', () => {
     void navigator.serviceWorker
-      .register('./sw.js', { scope: './' })
+      .register('./sw.js', { scope: './', updateViaCache: 'none' })
       .then((registration) => {
         registration.addEventListener('updatefound', () => {
           const installing = registration.installing;

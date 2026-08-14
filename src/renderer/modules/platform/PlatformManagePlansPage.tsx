@@ -120,8 +120,8 @@ export default function PlatformManagePlansPage() {
             { key: 'trial_days', header: 'Trial', align: 'center', render: (p) => (
               <span className="text-sm text-gray-600">{p.trial_days ?? '-'} days</span>
             )},
-            { key: 'actions', header: '', render: (p) => (
-              <div className="flex items-center gap-1">
+            { key: 'actions', header: 'Actions', align: 'right', render: (p) => (
+              <div className="flex items-center justify-end gap-1">
                 <Button variant="ghost" size="sm" onClick={() => openEdit(p)} title="Edit plan">
                   <Pencil className="w-3.5 h-3.5" />
                 </Button>

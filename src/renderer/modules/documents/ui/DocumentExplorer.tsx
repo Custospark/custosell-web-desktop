@@ -11,10 +11,13 @@ import { CustosellLoader } from '../../../shared/components/loading/CustosellLoa
 import { Button } from '../../../shared/components/buttons/Button';
 import {
   FilePlus,
+  FolderPlus,
   Home,
+  Upload,
 } from 'lucide-react';
 import DocumentExplorerToolbar from './DocumentExplorerToolbar';
-import { ExplorerFolderNode } from './ExplorerFolderNode';
+import { ExplorerFolderNode, ExplorerFileRow } from './ExplorerFolderNode';
+import { documentMenuItems } from './explorerMenuItems';
 
 export interface DocumentExplorerActions {
   onRenameFolder?: (folder: DocumentFolder) => void;

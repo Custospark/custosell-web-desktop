@@ -31,7 +31,7 @@ interface ExplorerFileRowProps {
   folderPath?: string | null;
 }
 
-function ExplorerFileRow({
+export function ExplorerFileRow({
   doc,
   depth,
   selected,

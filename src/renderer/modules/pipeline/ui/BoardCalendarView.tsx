@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertCircle, Briefcase, Calendar, CalendarDays, ChevronLeft, ChevronRight, Kanban, LayoutGrid,
+  AlertCircle, CalendarDays, ChevronLeft, ChevronRight,
 } from 'lucide-react';
-import { UserIdentityChip } from '../../../shared/components/UserIdentityChip';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Card } from '../../../shared/components/cards/Card';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { usePipelineCalendar, useAllBoardsCalendar } from '../api/usePipelineQueries';
 import type { PipelineCalendarDateField, PipelineCalendarLead } from '../api/pipelineTypes';
-import { PipelineStatusBadge } from './pipelineStatusBadge';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
-import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
 import {
   buildMonthCells,
@@ -21,117 +18,16 @@ import {
   isWeekend,
   toDateKey,
 } from './calendarUtils';
+import { CalendarLeadChip } from './CalendarLeadChip';
+import CalendarViewToolbar from './CalendarViewToolbar';
+import CalendarDayDetailPanel from './CalendarDayDetailPanel';
+import { DATE_KIND_STYLES, DATE_FIELD_OPTIONS } from './calendarViewShared';
 
 interface BoardCalendarViewProps {
   boardId: number;
   onLeadClick: (leadId: number) => void;
   isProjectBoard?: boolean;
   workspace?: 'pipeline' | 'estimates';
-}
-
-const DATE_FIELD_OPTIONS: { value: PipelineCalendarDateField; label: string; shortLabel: string; hint: string }[] = [
-  { value: 'due', label: 'Due dates', shortLabel: 'Due', hint: 'Due date or expected close' },
-  { value: 'start', label: 'Start dates', shortLabel: 'Start', hint: 'When work begins' },
-  { value: 'close', label: 'Close dates', shortLabel: 'Close', hint: 'Expected close only' },
-  { value: 'all', label: 'All dates', shortLabel: 'All', hint: 'Start, due, and close' },
-];
-
-const DATE_KIND_STYLES: Record<string, { ring: string; label: string }> = {
-  start: { ring: 'ring-sky-300', label: 'Start' },
-  due: { ring: 'ring-amber-300', label: 'Due' },
-  close: { ring: 'ring-violet-300', label: 'Close' },
-};
-
-function formatTimeAmPm(time: string | null | undefined): string | null {
-  if (!time) return null;
-  if (time.includes('T')) {
-    const d = new Date(time);
-    if (Number.isNaN(d.getTime())) return null;
-    const h = d.getHours();
-    const m = d.getMinutes();
-    const period = h >= 12 ? 'PM' : 'AM';
-    const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
-  }
-  const m = time.match(/^(\d{1,2}):(\d{2})$/);
-  if (!m) return time;
-  let h = parseInt(m[1], 10);
-  const min = m[2];
-  const period = h >= 12 ? 'PM' : 'AM';
-  if (h > 12) h -= 12;
-  if (h === 0) h = 12;
-  return `${h}:${min} ${period}`;
-}
-
-function sortByTime(leads: PipelineCalendarLead[]): PipelineCalendarLead[] {
-  return [...leads].sort((a, b) => {
-    const ta = a.time ?? '';
-    const tb = b.time ?? '';
-    if (ta < tb) return -1;
-    if (ta > tb) return 1;
-    return 0;
-  });
-}
-
-const PRIORITY_DOT: Record<string, string> = {
-  urgent: 'bg-red-500',
-  high: 'bg-orange-500',
-  medium: 'bg-blue-500',
-  low: 'bg-slate-400',
-};
-
-function CalendarLeadChip({
-  lead,
-  showDateKind,
-  onClick,
-  compact = false,
-}: {
-  lead: PipelineCalendarLead;
-  showDateKind: boolean;
-  onClick: () => void;
-  compact?: boolean;
-}) {
-  const stageColor = lead.stage?.color ?? '#6366f1';
-  const kind = lead.date_kind ? DATE_KIND_STYLES[lead.date_kind] : null;
-
-  if (compact) {
-    return (
-      <span
-        className="h-2 w-2 shrink-0 rounded-full ring-1 ring-white/80"
-        style={{ backgroundColor: stageColor }}
-        title={lead.title}
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={cn(
-        'block w-full rounded-md px-1.5 py-1 text-left text-[11px] font-medium text-white shadow-sm ring-1 ring-inset transition hover:brightness-95',
-        showDateKind && kind?.ring,
-      )}
-      style={{ backgroundColor: stageColor }}
-    >
-      <span className="line-clamp-2 leading-snug">{lead.title}</span>
-      <span className="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] opacity-90">
-        {lead.card_type === 'card' ? (
-          <Kanban className="h-2.5 w-2.5 shrink-0" />
-        ) : (
-          <Briefcase className="h-2.5 w-2.5 shrink-0" />
-        )}
-        {formatTimeAmPm(lead.time) && <span className="font-semibold">{formatTimeAmPm(lead.time)}</span>}
-        {showDateKind && kind && <span>{kind.label}</span>}
-        {lead.priority && (
-          <span className={cn('h-1.5 w-1.5 rounded-full', PRIORITY_DOT[lead.priority] ?? 'bg-white/70')} />
-        )}
-        {lead.estimated_value != null && lead.estimated_value > 0 && (
-          <span className="whitespace-normal break-words">{formatCurrency(lead.estimated_value, lead.currency)}</span>
-        )}
-      </span>
-    </button>
-  );
 }
 
 export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard = false, workspace = 'pipeline' }: BoardCalendarViewProps) {
@@ -212,6 +108,7 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
 
   const selectedLeads = selectedDate ? (leadsByDate.get(selectedDate) ?? []) : [];
   const showDateKind = dateField === 'all';
+  const dateFieldHint = DATE_FIELD_OPTIONS.find((o) => o.value === dateField)?.hint;
 
   useEffect(() => {
     if (!selectedDate || !dayDetailRef.current) return;
@@ -275,7 +172,7 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
             </span>
           </h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            {DATE_FIELD_OPTIONS.find((o) => o.value === dateField)?.hint}
+            {dateFieldHint}
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
@@ -291,77 +188,15 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Show</span>
-          <button
-            type="button"
-            onClick={() => { setScope('board'); setSelectedDate(null); }}
-            className={cn(
-              'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-              scope === 'board'
-                ? 'bg-gray-900 text-white shadow-sm'
-                : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
-            )}
-          >
-            This board
-          </button>
-          <button
-            type="button"
-            onClick={() => { setScope('all'); setSelectedDate(null); }}
-            className={cn(
-              'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-              scope === 'all'
-                ? 'bg-gray-900 text-white shadow-sm'
-                : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
-            )}
-          >
-            All {workspace === 'estimates' ? 'project boards' : 'pipeline boards'}
-          </button>
-        </div>
-
-        <span className="mx-1 h-4 w-px bg-gray-300" />
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Dates</span>
-          {DATE_FIELD_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => { setDateField(opt.value); setSelectedDate(null); }}
-              className={cn(
-                'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-                dateField === opt.value
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
-              )}
-            >
-              {opt.shortLabel}
-            </button>
-          ))}
-        </div>
-
-        <span className="mx-1 h-4 w-px bg-gray-300" />
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">View</span>
-          {(['month', 'week', 'day'] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setViewMode(mode)}
-              className={cn(
-                'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-                viewMode === mode
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
-              )}
-            >
-              {mode === 'month' ? 'Month' : mode === 'week' ? 'Week' : 'Day'}
-            </button>
-          ))}
-        </div>
-      </div>
+      <CalendarViewToolbar
+        scope={scope}
+        onScopeChange={(next) => { setScope(next); setSelectedDate(null); }}
+        dateField={dateField}
+        onDateFieldChange={(next) => { setDateField(next); setSelectedDate(null); }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        workspace={workspace}
+      />
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {[
@@ -492,82 +327,14 @@ export default function BoardCalendarView({ boardId, onLeadClick, isProjectBoard
             </div>
           </div>
 
-          <div ref={dayDetailRef} className="w-full scroll-mt-3 lg:sticky lg:top-3 lg:w-80 xl:w-96">
-          <Card
-            className={cn(
-              'flex w-full flex-col !p-0',
-              selectedDate && 'ring-2 ring-indigo-200 lg:ring-0',
-            )}
-          >
-            <div className="border-b border-gray-100 px-3 py-3 sm:px-4">
-              <h3 className="text-sm font-semibold text-gray-900">
-                {selectedDate ? formatShiftDate(selectedDate) : 'Select a day'}
-              </h3>
-              <p className="text-xs text-gray-500">
-                {selectedDate
-                  ? `${selectedLeads.length} item${selectedLeads.length === 1 ? '' : 's'} scheduled`
-                  : 'Tap a day to see scheduled items'}
-              </p>
-            </div>
-            <div className="max-h-none flex-1 overflow-y-auto p-2 sm:max-h-[420px] sm:p-3 lg:max-h-[calc(100vh-18rem)]">
-              {!selectedDate && (
-                <p className="py-6 text-center text-sm text-gray-500 sm:py-8">No day selected</p>
-              )}
-              {selectedDate && selectedLeads.length === 0 && (
-                <p className="py-6 text-center text-sm text-gray-500 sm:py-8">Nothing scheduled this day</p>
-              )}
-              {sortByTime(selectedLeads).map((lead) => (
-                <button
-                  key={`${lead.id}-${lead.date_kind ?? 'detail'}`}
-                  type="button"
-                  onClick={() => onLeadClick(lead.id)}
-                  className="mb-2 w-full rounded-xl border border-gray-200 bg-white p-3 text-left transition-shadow hover:shadow-md active:scale-[0.99]"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <p className="min-w-0 whitespace-normal break-words font-medium text-gray-900">{lead.title}</p>
-                    <PipelineStatusBadge status={lead.status} />
-                  </div>
-                  <div className="mt-2 space-y-1 text-xs text-gray-500">
-                    {lead.stage && (
-                      <p className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: lead.stage.color ?? '#94a3b8' }} />
-                        {lead.stage.name}
-                      </p>
-                    )}
-                    {scope === 'all' && lead.board && (
-                      <p className="flex items-center gap-1.5">
-                        <LayoutGrid className="h-3 w-3 text-gray-400" />
-                        {lead.board.name}
-                      </p>
-                    )}
-                    {lead.assignee && (
-                      <UserIdentityChip
-                        name={lead.assignee.name}
-                        avatar={lead.assignee.avatar}
-                        size="xs"
-                        className="max-w-full"
-                      />
-                    )}
-                    {showDateKind && lead.date_kind && (
-                      <p>{DATE_KIND_STYLES[lead.date_kind]?.label ?? lead.date_kind} date</p>
-                    )}
-                    {formatTimeAmPm(lead.time) && (
-                      <p className="flex items-center gap-1.5">
-                        <Calendar className="h-3 w-3 text-gray-400" />
-                        {formatTimeAmPm(lead.time)}
-                      </p>
-                    )}
-                    {lead.estimated_value != null && lead.estimated_value > 0 && (
-                      <p className="whitespace-normal break-words font-medium text-emerald-700">
-                        {formatCurrency(lead.estimated_value, lead.currency)}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </Card>
-          </div>
+          <CalendarDayDetailPanel
+            ref={dayDetailRef}
+            selectedDate={selectedDate}
+            leads={selectedLeads}
+            showDateKind={showDateKind}
+            scope={scope}
+            onLeadClick={onLeadClick}
+          />
         </div>
       )}
 

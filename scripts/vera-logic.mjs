@@ -52,6 +52,29 @@ function getChangedTsFiles() {
   return [...files];
 }
 
+function getChangedFiles() {
+  const commands = [
+    'git diff --name-only --diff-filter=ACMRTUXB HEAD',
+    'git diff --cached --name-only --diff-filter=ACMRTUXB',
+    'git ls-files --others --exclude-standard',
+  ];
+  const files = new Set();
+  for (const cmd of commands) {
+    try {
+      const out = execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+      for (const line of out.split('\n')) {
+        const trimmed = line.trim().replace(/\\/g, '/');
+        if (trimmed) {
+          files.add(trimmed);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return [...files];
+}
+
 /** Resolve a relative import specifier to an existing file under ROOT. */
 function relativeImportExists(fromFile, specifier) {
   const clean = specifier.split('?')[0];
@@ -248,10 +271,49 @@ function checkViewInvoiceModalExists() {
   };
 }
 
+// Extensions / paths treated as binary or vendored (reused from normalize-dashes.mjs).
+const BINARY_EXT = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.ico', '.woff', '.woff2',
+  '.ttf', '.eot', '.mp3', '.mp4', '.pdf', '.zip', '.gz', '.wasm',
+]);
+const SKIP_PATHS = ['/node_modules/', '/vendor/', '/dist/', '/.git/'];
+
+function isTextFile(relPath) {
+  if (SKIP_PATHS.some((p) => relPath.includes(p))) return false;
+  const ext = relPath.toLowerCase().slice(relPath.lastIndexOf('.'));
+  return !BINARY_EXT.has(ext);
+}
+
+/** @returns {RuleResult} */
+function checkNoLongDashes(changedFiles) {
+  const offenders = [];
+  for (const file of changedFiles) {
+    if (!isTextFile(file)) continue;
+    const text = read(file);
+    if (text == null) continue;
+    if (/[\u2014\u2013]/.test(text)) {
+      offenders.push(file);
+    }
+  }
+  if (offenders.length) {
+    return {
+      id: 'no-long-dashes',
+      ok: false,
+      detail: `Long dash (em/en) found in changed file(s): ${offenders.slice(0, 8).join(', ')}${offenders.length > 8 ? ` (+${offenders.length - 8} more)` : ''} - use a plain hyphen instead`,
+    };
+  }
+  return {
+    id: 'no-long-dashes',
+    ok: true,
+    detail: 'No em/en dashes in changed files',
+  };
+}
+
 const changed = getChangedTsFiles();
 const results = [
   ...checkFileSizeLimit(changed),
   checkRelativeImports(changed),
+  checkNoLongDashes(getChangedFiles()),
   checkSupplierInvoicesRoute(),
   checkSidebarInvoiceLabels(),
   checkBuyerCannotRecordPaymentUi(),
